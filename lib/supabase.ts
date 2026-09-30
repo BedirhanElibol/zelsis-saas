@@ -1,7 +1,7 @@
 import { createClient, SupabaseClient, Session } from '@supabase/supabase-js';
 import { UserProfile } from '@/components/auth/AuthModal';
 import type { Project } from '@/data/schema';
-import { isPlatformAdminEmail } from '@/lib/subscription-utils';
+import { isPlatformAdminEmail, isFounderGrantExpiry } from '@/lib/subscription-utils';
 
 export { isPlatformAdminEmail };
 
@@ -180,8 +180,7 @@ export function mapSupabaseUserToProfile(supabaseUser: {
     const rawTier = metadata.tier as 'Free' | 'Pro' | 'Enterprise' | undefined;
     const rawExpiresAt = metadata.expiresAt as string | undefined;
 
-    const expiryYear = rawExpiresAt ? new Date(rawExpiresAt).getFullYear() : 0;
-    const isTaintedDate = rawExpiresAt && (rawExpiresAt.includes('2099') || expiryYear > 2028);
+    const isTaintedDate = isFounderGrantExpiry(rawExpiresAt);
 
     if (isTaintedDate || !rawTier || rawTier === 'Free') {
       tier = 'Free';

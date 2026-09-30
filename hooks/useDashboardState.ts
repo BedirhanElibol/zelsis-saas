@@ -7,6 +7,7 @@ import { supabaseSignIn, supabaseSignUp, supabaseResetPassword, supabaseSignOut,
 import { purgeZelsisStorage, safeSetStorageItem } from '@/lib/storage';
 import { getActiveUserAuth } from '@/lib/supabase-client';
 import { canAccessLocalAudit } from '@/lib/env-config';
+import { isFounderGrantExpiry } from '@/lib/subscription-utils';
 import { verifyLicenseKey, generateLicenseKey } from '@/lib/stripe-checkout';
 import { useSearchParams } from 'next/navigation';
 import {
@@ -464,12 +465,10 @@ export function useDashboardState() {
                 resolvedTier = 'Enterprise';
                 expiresAt = '2099-12-31T23:59:59.999Z';
               } else {
-                // Non-founder: strictly reject tainted 2099 founder dates or unauthorized Enterprise tier
-                const rawExpiry = parsedUser.expiresAt;
-                const expiryYear = rawExpiry ? new Date(rawExpiry).getFullYear() : 0;
-                const isTainted = rawExpiry && (rawExpiry.includes('2099') || expiryYear > 2028);
+                // Non-founder: strictly reject tainted 2099 founder dates
+                const isTainted = isFounderGrantExpiry(parsedUser.expiresAt);
 
-                if (isTainted || !parsedUser.tier || parsedUser.tier === 'Free' || parsedUser.tier === 'Enterprise') {
+                if (isTainted || !parsedUser.tier || parsedUser.tier === 'Free') {
                   resolvedTier = 'Free';
                   expiresAt = undefined;
                   localStorage.removeItem('zelsis_license_key');
@@ -482,7 +481,7 @@ export function useDashboardState() {
                     console.warn('[DashboardState] LocalStorage write notice:', writeErr);
                   }
                 } else {
-                  // Legitimate Pro tier candidate: verify license key bound to email
+                  // Legitimate paid tier candidate: verify license key bound to email
                   const savedLicenseKey = localStorage.getItem('zelsis_license_key');
                   if (savedLicenseKey && email) {
                     const licResult = verifyLicenseKey(savedLicenseKey, email);
@@ -562,7 +561,7 @@ export function useDashboardState() {
                         const shouldDowngrade = data.status === 'canceled' && isGenuinelyExpired && !hasValidLic;
 
                         let syncTier = prev.tier;
-                        if (data.active && (data.tier === 'Pro' || (isPlatformAdmin && data.tier === 'Enterprise'))) {
+                        if (data.active && (data.tier === 'Pro' || data.tier === 'Enterprise')) {
                           syncTier = data.tier;
                         } else if (shouldDowngrade) {
                           syncTier = 'Free';
@@ -570,12 +569,8 @@ export function useDashboardState() {
                           syncTier = prev.tier;
                         }
 
-                        if (!isPlatformAdmin) {
-                          if (syncTier === 'Enterprise') syncTier = 'Free';
-                        }
-
                         let updatedExpiresAt = data.expiresAt || prev.expiresAt || (syncTier !== 'Free' ? new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString() : undefined);
-                        if (!isPlatformAdmin && updatedExpiresAt?.includes('2099')) {
+                        if (!isPlatformAdmin && isFounderGrantExpiry(updatedExpiresAt)) {
                           updatedExpiresAt = undefined;
                           syncTier = 'Free';
                         }
@@ -758,7 +753,7 @@ export function useDashboardState() {
                 localStorage.removeItem('shipguard_user');
                 localStorage.removeItem('zelsis_license_key');
                 localStorage.removeItem('shipguard_license_key');
-              } else if (!isPlatformAdmin && (localParsed?.expiresAt?.includes('2099') || localParsed?.tier === 'Enterprise')) {
+              } else if (!isPlatformAdmin && isFounderGrantExpiry(localParsed?.expiresAt)) {
                 // Tainted founder records on non-founder account
                 localStorage.removeItem('zelsis_user');
                 localStorage.removeItem('shipguard_user');
@@ -888,7 +883,7 @@ export function useDashboardState() {
                   localStorage.removeItem('shipguard_user');
                   localStorage.removeItem('zelsis_license_key');
                   localStorage.removeItem('shipguard_license_key');
-                } else if (!isPlatformAdmin && (localParsed?.expiresAt?.includes('2099') || localParsed?.tier === 'Enterprise')) {
+                } else if (!isPlatformAdmin && isFounderGrantExpiry(localParsed?.expiresAt)) {
                   // Tainted metadata detected in local storage for non-founder: purge immediately
                   localStorage.removeItem('zelsis_user');
                   localStorage.removeItem('shipguard_user');
@@ -905,7 +900,7 @@ export function useDashboardState() {
             let savedStatus: 'active' | 'past_due' | 'canceled' = (profile.status as 'active' | 'past_due' | 'canceled') || 'active';
 
             if (!isPlatformAdmin) {
-              if (savedExpiresAt?.includes('2099') || resolvedTier === 'Enterprise') {
+              if (isFounderGrantExpiry(savedExpiresAt)) {
                 resolvedTier = 'Free';
                 savedExpiresAt = undefined;
                 savedStatus = 'canceled';
@@ -919,8 +914,8 @@ export function useDashboardState() {
                 const localEmail = (localParsed?.email || '').toLowerCase().trim();
                 // Strict account isolation: only adopt local session if email matches exactly
                 if (localParsed && localEmail && localEmail === email) {
-                  const isTainted = !isPlatformAdmin && (localParsed.expiresAt?.includes('2099') || localParsed.tier === 'Enterprise');
-                  if (!isTainted && (localParsed?.tier === 'Pro' || (isPlatformAdmin && localParsed?.tier === 'Enterprise'))) {
+                  const isTainted = !isPlatformAdmin && isFounderGrantExpiry(localParsed.expiresAt);
+                  if (!isTainted && (localParsed?.tier === 'Pro' || localParsed?.tier === 'Enterprise')) {
                     const localExpiry = localParsed?.expiresAt ? new Date(localParsed.expiresAt).getTime() : 0;
                     if (localExpiry > Date.now() || !localParsed.expiresAt) {
                       resolvedTier = localParsed.tier;
@@ -937,7 +932,7 @@ export function useDashboardState() {
             const savedLic = localStorage.getItem('zelsis_license_key');
             if (savedLic) {
               const licCheck = verifyLicenseKey(savedLic, email);
-              if (licCheck.valid && (isPlatformAdmin || licCheck.tier === 'Pro') && (isPlatformAdmin || !licCheck.expiresAt?.includes('2099'))) {
+              if (licCheck.valid && licCheck.tier !== 'Free' && (isPlatformAdmin || !licCheck.expiresAt?.includes('2099'))) {
                 resolvedTier = licCheck.tier;
                 if (!savedExpiresAt) savedExpiresAt = licCheck.expiresAt;
                 savedStatus = 'active';
@@ -960,7 +955,7 @@ export function useDashboardState() {
                 });
                 if (syncRes.ok) {
                   const syncData = await syncRes.json();
-                  if (syncData.active && (syncData.tier === 'Pro' || (isPlatformAdmin && syncData.tier === 'Enterprise')) && (isPlatformAdmin || !syncData.expiresAt?.includes('2099'))) {
+                  if (syncData.active && (syncData.tier === 'Pro' || syncData.tier === 'Enterprise') && (isPlatformAdmin || !syncData.expiresAt?.includes('2099'))) {
                     resolvedTier = syncData.tier;
                     savedExpiresAt = syncData.expiresAt;
                     savedStatus = syncData.status || 'active';
@@ -996,7 +991,7 @@ export function useDashboardState() {
               savedStatus = 'canceled';
               localStorage.removeItem('zelsis_license_key');
               localStorage.removeItem('shipguard_license_key');
-            } else if (resolvedTier === 'Pro' && !savedExpiresAt) {
+            } else if (!savedExpiresAt) {
               savedExpiresAt = new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString();
             }
 
