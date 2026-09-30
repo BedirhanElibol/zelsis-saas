@@ -1,6 +1,17 @@
 import * as React from "react"
 
-export const Alert = React.forwardRef<HTMLDivElement, React.HTMLAttributes<HTMLDivElement>>(({ className, ...props }, ref) => <div ref={ref} className={className} {...props} />)
+export const Alert = React.forwardRef<HTMLDivElement, React.HTMLAttributes<HTMLDivElement>>(
+  ({ className, role = "status", "aria-live": ariaLive = "polite", "aria-atomic": ariaAtomic = "true", ...props }, ref) => (
+    <div
+      ref={ref}
+      role={role}
+      aria-live={ariaLive}
+      aria-atomic={ariaAtomic}
+      className={className}
+      {...props}
+    />
+  )
+)
 Alert.displayName = "Alert"
 export const AlertTitle = React.forwardRef<HTMLParagraphElement, React.HTMLAttributes<HTMLHeadingElement>>(({ className, ...props }, ref) => <h5 ref={ref} className={className} {...props} />)
 AlertTitle.displayName = "AlertTitle"

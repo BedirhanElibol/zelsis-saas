@@ -9,7 +9,7 @@ export async function GET(req: NextRequest) {
       return NextResponse.json({ error: 'Email is required' }, { status: 400 });
     }
 
-    const etag = `"${crypto.createHash('md5').update(email).digest('hex')}"`;
+    const etag = `"${crypto.createHash('sha256').update(email).digest('hex')}"`;
     if (req.headers.get('if-none-match') === etag) {
       return new NextResponse(null, { status: 304 });
     }

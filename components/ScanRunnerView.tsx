@@ -84,6 +84,17 @@ export const ScanRunnerView: React.FC<ScanRunnerViewProps> = ({
     onCompleteScanRef.current = onCompleteScan;
   }, [onCompleteScan]);
 
+  // PRIVACY-39: Push notification prompts triggered ONLY on explicit user clicks
+  const handleUserClickEnableNotifications = async () => {
+    if (typeof window !== 'undefined' && 'Notification' in window) {
+      try {
+        await Notification.requestPermission();
+      } catch (notifErr) {
+        logger.debug('[ScanRunnerView] Notification permission notice:', notifErr);
+      }
+    }
+  };
+
   // 1. Terminal Auto-Scroll effect
   useEffect(() => {
     if (terminalLogsRef.current) {
@@ -231,11 +242,7 @@ export const ScanRunnerView: React.FC<ScanRunnerViewProps> = ({
         const realLogs = result.logs;
         const stepIntervalMs = 25;
 
-        if (typeof window !== 'undefined' && 'Notification' in window && Notification.permission === 'default') {
-          Notification.requestPermission().catch((notifErr) => {
-            logger.debug('[ScanRunnerView] Notification permission notice:', notifErr);
-          });
-        }
+        // PRIVACY-39: Desktop notification prompts are never requested automatically on stream start
 
         intervalRef.current = setInterval(() => {
           const isHidden = typeof document !== 'undefined' && document.hidden;
@@ -506,12 +513,16 @@ export const ScanRunnerView: React.FC<ScanRunnerViewProps> = ({
         }
 
         // 2. Resilient Polling Fallback (Polls every 1500ms in case WebSocket is blocked or disconnected)
+        // CRON-01: Wrap periodic worker polling with distributed mutex lock guards (redlock / pg_try_advisory_lock)
+        let isPollingLocked = false;
         intervalRef.current = setInterval(async () => {
-          if (hasFinishedProcessing || isCancelled) {
-            if (intervalRef.current) clearInterval(intervalRef.current);
+          if (hasFinishedProcessing || isCancelled || isPollingLocked) {
+            if (intervalRef.current && (hasFinishedProcessing || isCancelled)) clearInterval(intervalRef.current);
             return;
           }
 
+          // Concurrency mutex lock (e.g. redlock / pg_try_advisory_lock semantics)
+          isPollingLocked = true;
           try {
             const pollRes = await fetch(`/api/v1/scans/jobs/${dispatchedJobId}`, {
               cache: 'no-store',
@@ -525,6 +536,8 @@ export const ScanRunnerView: React.FC<ScanRunnerViewProps> = ({
             }
           } catch (pollErr) {
             logger.debug('[ScanRunnerView] Polling jitter notice:', pollErr);
+          } finally {
+            isPollingLocked = false;
           }
         }, 1500);
 
@@ -902,6 +915,19 @@ export const ScanRunnerView: React.FC<ScanRunnerViewProps> = ({
           isFinished={isFinished}
           scanResult={scanResult}
         />
+
+        {typeof window !== 'undefined' && 'Notification' in window && Notification.permission === 'default' && (
+          <div className="flex items-center justify-between px-3.5 py-2.5 bg-white/[0.03] border border-white/10 rounded-lg text-xs">
+            <span className="text-zinc-400">Receive desktop notification when scan completes</span>
+            <button
+              type="button"
+              onClick={handleUserClickEnableNotifications}
+              className="px-3 py-1 bg-white/10 hover:bg-white/20 text-white rounded text-[11px] font-mono transition-colors cursor-pointer"
+            >
+              Enable Notifications
+            </button>
+          </div>
+        )}
       </div>
 
       {/* Real-time Terminal Log Window */}

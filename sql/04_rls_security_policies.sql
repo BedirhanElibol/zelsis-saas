@@ -25,8 +25,8 @@ WITH CHECK (
     AND (
         (auth.jwt() ->> 'role') = 'service_role' 
         OR (
-            tier IS NOT DISTINCT FROM (SELECT p.tier FROM public.profiles p WHERE p.id = auth.uid()) 
-            AND role IS NOT DISTINCT FROM (SELECT p.role FROM public.profiles p WHERE p.id = auth.uid())
+            tier IS NOT DISTINCT FROM (SELECT p.tier FROM public.profiles p WHERE p.id = auth.uid() ORDER BY p.id ASC) 
+            AND role IS NOT DISTINCT FROM (SELECT p.role FROM public.profiles p WHERE p.id = auth.uid() ORDER BY p.id ASC)
         )
     )
 );
@@ -60,7 +60,7 @@ DROP POLICY IF EXISTS "Users can view findings for their own projects" ON public
 CREATE POLICY "Users can view findings for their own projects" ON public.findings
     FOR SELECT USING (
         EXISTS (
-            SELECT 1 FROM public.projects WHERE public.projects.id = public.findings.project_id AND public.projects.user_id = auth.uid()
+            SELECT 1 FROM public.projects WHERE public.projects.id = public.findings.project_id AND public.projects.user_id = auth.uid() ORDER BY public.projects.id ASC
         )
     );
 
@@ -68,7 +68,7 @@ DROP POLICY IF EXISTS "Users can update findings for their own projects" ON publ
 CREATE POLICY "Users can update findings for their own projects" ON public.findings
     FOR UPDATE USING (
         EXISTS (
-            SELECT 1 FROM public.projects WHERE public.projects.id = public.findings.project_id AND public.projects.user_id = auth.uid()
+            SELECT 1 FROM public.projects WHERE public.projects.id = public.findings.project_id AND public.projects.user_id = auth.uid() ORDER BY public.projects.id ASC
         )
     );
 
@@ -79,3 +79,17 @@ CREATE POLICY "Users can manage their own API keys" ON public.api_keys FOR ALL U
 -- 8. AUDIT LOGS POLICIES
 DROP POLICY IF EXISTS "Users can view their own audit logs" ON public.audit_logs;
 CREATE POLICY "Users can view their own audit logs" ON public.audit_logs FOR SELECT USING (auth.uid() = user_id);
+
+-- 9. DETERMINISTIC TRANSACTIONAL LOCKING HELPER (PG-05)
+-- Enforces deterministic primary key ordering (ORDER BY id ASC) before acquiring row locks
+CREATE OR REPLACE FUNCTION public.lock_findings_for_update(p_project_id UUID)
+RETURNS SETOF UUID
+LANGUAGE sql
+SECURITY DEFINER
+AS $$
+    SELECT id FROM public.findings
+    WHERE project_id = p_project_id
+    ORDER BY id ASC
+    FOR UPDATE;
+$$;
+

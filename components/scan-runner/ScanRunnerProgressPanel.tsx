@@ -5,19 +5,28 @@ interface ScanRunnerProgressPanelProps {
   progress: number;
   isFinished: boolean;
   scanResult: ScanResult | null;
+  stages?: Array<{ label: string; range: [number, number] }>;
 }
+
+const ScanRunnerEmptyState: React.FC = () => (
+  <div className="flex items-center justify-center p-6 text-center text-xs font-mono text-zinc-400">
+    No scan pipeline stages available (no data).
+  </div>
+);
 
 export const ScanRunnerProgressPanel: React.FC<ScanRunnerProgressPanelProps> = ({
   progress,
   isFinished,
   scanResult,
+  stages: customStages,
 }) => {
-  const stages = [
-    { label: 'Connecting & fetching repository',   range: [0,  24] },
-    { label: 'Resolving dependency tree',          range: [25, 49] },
-    { label: 'Running AST security rules',         range: [50, 89] },
-    { label: 'Generating remediation report',      range: [90, 100] },
+  const defaultStages = [
+    { label: 'Connecting & fetching repository',   range: [0,  24] as [number, number] },
+    { label: 'Resolving dependency tree',          range: [25, 49] as [number, number] },
+    { label: 'Running AST security rules',         range: [50, 89] as [number, number] },
+    { label: 'Generating remediation report',      range: [90, 100] as [number, number] },
   ];
+  const stages = customStages || defaultStages;
   const activeStageIdx = isFinished
     ? (scanResult ? 4 : stages.findIndex(({ range }) => progress >= range[0] && progress <= range[1]))
     : stages.findIndex(({ range }) => progress >= range[0] && progress <= range[1]);
@@ -25,7 +34,10 @@ export const ScanRunnerProgressPanel: React.FC<ScanRunnerProgressPanelProps> = (
 
   return (
     <div className="flex flex-col gap-1 bg-[#0A0A0A] rounded-xl border border-white/10 overflow-hidden">
-      {stages.map((stage, idx) => {
+      {!stages || stages.length === 0 ? (
+        <ScanRunnerEmptyState />
+      ) : (
+        stages.map((stage, idx) => {
         let statusIcon: React.ReactNode;
         let statusLabel: string;
         let statusColor: string;
@@ -92,7 +104,8 @@ export const ScanRunnerProgressPanel: React.FC<ScanRunnerProgressPanelProps> = (
             </span>
           </div>
         );
-      })}
+      })
+    )}
       {/* Thin progress line at bottom */}
       <div className="w-full h-[2px] bg-white/5">
         <div

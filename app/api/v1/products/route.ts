@@ -17,7 +17,7 @@ export async function GET(req: NextRequest) {
     });
 
     const bodyString = JSON.stringify(response.items);
-    const etag = `"${crypto.createHash('md5').update(bodyString).digest('hex')}"`;
+    const etag = `"${crypto.createHash('sha256').update(bodyString).digest('hex')}"`;
 
     if (req.headers.get('if-none-match') === etag) {
       return new NextResponse(null, { status: 304 });

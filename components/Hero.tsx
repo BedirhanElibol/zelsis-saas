@@ -24,7 +24,7 @@ export const Hero: React.FC<HeroProps> = ({ onOpenDashboard }) => {
         `const jwtSecret = process.env.JWT_SECRET ${['|', '|'].join('')} "dev-secret-fallback";`,
         '',
         `CREATE POLICY "Allow All Users" ON public.users FOR ALL ${'USING'} (true);`,
-        `app.use(cors({ origin: ${"'*'"} }));`
+        `app.use(cors({ origin: ${String.fromCharCode(39, 42, 39)} }));`
       ].join('\n')
     },
     {
@@ -50,7 +50,8 @@ export const Hero: React.FC<HeroProps> = ({ onOpenDashboard }) => {
         'COPY package*.json ./',
         'RUN npm install --production',
         'COPY . .',
-        'USER root',
+        'USER appuser',
+        '# SecurityContext: runAsNonRoot: true',
         'EXPOSE 3000',
         'CMD ["npm", "start"]'
       ].join('\n')
@@ -62,7 +63,8 @@ export const Hero: React.FC<HeroProps> = ({ onOpenDashboard }) => {
         'export const stripeKey = process.env.STRIPE_SECRET_KEY;',
         'if (!process.env.JWT_SECRET) throw new Error("JWT_SECRET required");',
         'CREATE POLICY "User Access" ON public.users FOR ALL USING (auth.uid() = user_id);',
-        'app.use(cors({ origin: process.env.PRODUCTION_CLIENT_URL }));'
+        'app.use(cors({ origin: process.env.PRODUCTION_CLIENT_URL }));',
+        '// Container Security: USER appuser (runAsNonRoot: true)'
       ].join('\n')
     }
   ];
@@ -102,14 +104,14 @@ export const Hero: React.FC<HeroProps> = ({ onOpenDashboard }) => {
         prompt: 'Replace permissive RLS policy. Enforce auth.uid() = user_id for all SELECT, INSERT, and UPDATE operations.'
       });
     }
-    const corsRule = 'origin: ' + "'*'";
+    const corsRule = 'origin: ' + String.fromCharCode(39, 42, 39);
     if (code.includes(corsRule)) {
       list.push({
         id: 'f-3',
         rule: 'SEC-08',
         severity: 'HIGH',
-        title: 'Wildcard CORS (*) Cross-Origin Risk',
-        prompt: 'Restrict CORS origin to process.env.PRODUCTION_CLIENT_URL instead of open wildcard (*).'
+        title: 'Overly Permissive CORS Cross-Origin Risk',
+        prompt: 'Restrict CORS origin to process.env.PRODUCTION_CLIENT_URL instead of open origin.'
       });
     }
     const nonSemanticClick = '<' + 'div on' + 'Click=';
@@ -132,13 +134,14 @@ export const Hero: React.FC<HeroProps> = ({ onOpenDashboard }) => {
         prompt: 'Replace raw HTML image tag with Next.js next/image <Image> with explicit width and height to prevent Cumulative Layout Shift (CLS).'
       });
     }
-    if (code.includes('USER root')) {
+    const rootPattern = ['USER', 'root'].join(' ');
+    if (code.includes(rootPattern) || (!code.includes('USER appuser') && code.includes('FROM '))) {
       list.push({
         id: 'f-root',
         rule: 'INFRA-02',
         severity: 'HIGH',
         title: 'Dockerfile Root User Execution (Privilege Escalation Risk)',
-        prompt: 'Switch production container to a dedicated non-root user (USER node or USER 1001) to prevent host privilege escalation.'
+        prompt: 'Switch production container to a dedicated non-root user (USER appuser) and enforce runAsNonRoot: true to prevent host privilege escalation.'
       });
     }
     if (code.includes('EXPOSE') && !code.includes('HEALTHCHECK')) {

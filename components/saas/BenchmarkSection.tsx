@@ -2,7 +2,6 @@
 
 import React, { useState } from 'react';
 import { motion } from 'framer-motion';
-import { ShieldCheck, CheckCircle2, Zap, Lock, Terminal, FileCode2, ArrowRight } from 'lucide-react';
 
 interface BenchmarkItem {
   id: string;
@@ -156,7 +155,7 @@ export const BenchmarkSection: React.FC = () => {
                 </p>
               </div>
               <div className="text-xs font-mono text-zinc-400 flex items-center gap-3">
-                <span className="flex items-center gap-1.5"><CheckCircle2 size={13} className="text-zinc-400" /> Automated Regression Gate</span>
+                <span className="flex items-center gap-1.5"><span className="w-1.5 h-1.5 rounded-full bg-emerald-500" /> Automated Regression Gate</span>
               </div>
             </div>
 
@@ -183,7 +182,7 @@ export const BenchmarkSection: React.FC = () => {
                         <td className="py-3 px-4 text-zinc-400">{item.cveOwasp}</td>
                         <td className="py-3 px-4 text-center">
                           <span className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded text-[10px] font-mono text-zinc-300 bg-white/[0.04] border border-white/10">
-                            <CheckCircle2 size={11} className="text-emerald-500" /> DETECTED
+                            <span className="w-1.5 h-1.5 rounded-full bg-emerald-500" /> Detected
                           </span>
                         </td>
                       </tr>
@@ -241,7 +240,7 @@ export const BenchmarkSection: React.FC = () => {
                         <td className="py-3 px-4 text-zinc-400">{item.cveOwasp}</td>
                         <td className="py-3 px-4 text-center">
                           <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded text-[10px] font-mono text-zinc-300 bg-white/[0.04] border border-white/10">
-                            <CheckCircle2 size={11} className="text-red-400" /> CRITICAL BLOCKER
+                            <span className="w-1.5 h-1.5 rounded-full bg-red-400" /> Critical Blocker
                           </span>
                         </td>
                       </tr>
@@ -299,7 +298,7 @@ export const BenchmarkSection: React.FC = () => {
                         <td className="py-3 px-4 text-zinc-400">{item.cveOwasp}</td>
                         <td className="py-3 px-4 text-center">
                           <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded text-[10px] font-mono text-zinc-300 bg-white/[0.04] border border-white/10">
-                            <ShieldCheck size={11} className="text-emerald-500" /> IGNORED/CLEAN
+                            <span className="w-1.5 h-1.5 rounded-full bg-emerald-500" /> Clean / Ignored
                           </span>
                         </td>
                       </tr>

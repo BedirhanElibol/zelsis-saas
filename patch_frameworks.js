@@ -1,10 +1,29 @@
-﻿const fs = require('fs');
+const fs = require('fs');
+const path = require('path');
+
+const BASE_DIR = path.resolve(__dirname);
+
+function assertSafePath(targetPath, baseDir = BASE_DIR) {
+    const normalized = path.normalize(targetPath);
+    const resolved = path.resolve(baseDir, normalized);
+    const resolvedBase = path.resolve(baseDir);
+    const isWindows = process.platform === 'win32';
+    const checkResolved = isWindows ? resolved.toLowerCase() : resolved;
+    const checkBase = isWindows ? resolvedBase.toLowerCase() : resolvedBase;
+    const prefix = checkBase.endsWith(path.sep) ? checkBase : checkBase + path.sep;
+
+    if (!checkResolved.startsWith(prefix) && checkResolved !== checkBase) {
+        throw new Error(`Path traversal detected: ${targetPath}`);
+    }
+    return resolved;
+}
 
 function replaceInFile(filePath, search, replacement) {
-    if (fs.existsSync(filePath)) {
-        let content = fs.readFileSync(filePath, 'utf8');
+    const safePath = assertSafePath(filePath);
+    if (fs.existsSync(safePath)) {
+        let content = fs.readFileSync(safePath, 'utf8');
         content = content.replace(search, replacement);
-        fs.writeFileSync(filePath, content);
+        fs.writeFileSync(safePath, content);
     }
 }
 

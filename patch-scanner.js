@@ -1,5 +1,24 @@
 const fs = require('fs');
-const file = 'lib/scanner-engine.ts';
+const path = require('path');
+
+const BASE_DIR = path.resolve(__dirname);
+
+function assertSafePath(targetPath, baseDir = BASE_DIR) {
+    const normalized = path.normalize(targetPath);
+    const resolved = path.resolve(baseDir, normalized);
+    const resolvedBase = path.resolve(baseDir);
+    const isWindows = process.platform === 'win32';
+    const checkResolved = isWindows ? resolved.toLowerCase() : resolved;
+    const checkBase = isWindows ? resolvedBase.toLowerCase() : resolvedBase;
+    const prefix = checkBase.endsWith(path.sep) ? checkBase : checkBase + path.sep;
+
+    if (!checkResolved.startsWith(prefix) && checkResolved !== checkBase) {
+        throw new Error(`Path traversal detected: ${targetPath}`);
+    }
+    return resolved;
+}
+
+const file = assertSafePath('lib/scanner-engine.ts');
 let code = fs.readFileSync(file, 'utf8');
 
 const imports = `

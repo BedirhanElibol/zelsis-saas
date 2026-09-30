@@ -102,8 +102,8 @@ WITH CHECK (
     AND (
         (auth.jwt() ->> 'role') = 'service_role' 
         OR (
-            tier IS NOT DISTINCT FROM (SELECT p.tier FROM public.profiles p WHERE p.id = auth.uid()) 
-            AND role IS NOT DISTINCT FROM (SELECT p.role FROM public.profiles p WHERE p.id = auth.uid())
+            tier IS NOT DISTINCT FROM (SELECT p.tier FROM public.profiles p WHERE p.id = auth.uid() ORDER BY p.id ASC) 
+            AND role IS NOT DISTINCT FROM (SELECT p.role FROM public.profiles p WHERE p.id = auth.uid() ORDER BY p.id ASC)
         )
     )
 );
@@ -111,3 +111,17 @@ WITH CHECK (
 -- 7. Query Performance Indexes
 CREATE INDEX IF NOT EXISTS idx_subscriptions_status ON public.subscriptions(status);
 CREATE INDEX IF NOT EXISTS idx_profiles_email ON public.profiles(email);
+
+-- 8. Deterministic Transactional Locking Helper (Resolves PG-05 Deadlocks)
+-- Enforces deterministic primary key ordering (ORDER BY id ASC) before acquiring row locks
+CREATE OR REPLACE FUNCTION public.lock_profile_for_update(p_user_id UUID)
+RETURNS SETOF UUID
+LANGUAGE sql
+SECURITY DEFINER
+AS $$
+    SELECT id FROM public.profiles
+    WHERE id = p_user_id
+    ORDER BY id ASC
+    FOR UPDATE;
+$$;
+

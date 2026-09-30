@@ -69,3 +69,34 @@ CREATE TRIGGER trg_scan_jobs_updated_at
     BEFORE UPDATE ON public.scan_jobs
     FOR EACH ROW
     EXECUTE FUNCTION public.handle_scan_job_updated_at();
+
+-- 6. Deterministic Queue Job Dequeue & Lease Acquisition Helper (Resolves PG-05 Deadlocks)
+-- Enforces deterministic primary key ordering (ORDER BY id ASC) before acquiring row locks
+CREATE OR REPLACE FUNCTION public.dequeue_next_scan_job(p_worker_id TEXT DEFAULT 'worker-1', p_lease_seconds INT DEFAULT 300)
+RETURNS SETOF public.scan_jobs
+LANGUAGE plpgsql
+SECURITY DEFINER
+AS $$
+DECLARE
+    v_job_id UUID;
+BEGIN
+    SELECT id INTO v_job_id
+    FROM public.scan_jobs
+    WHERE status = 'QUEUED'
+       OR (status = 'FETCHING' AND lease_until < NOW())
+    ORDER BY id ASC
+    FOR UPDATE SKIP LOCKED
+    LIMIT 1;
+
+    IF v_job_id IS NOT NULL THEN
+        RETURN QUERY
+        UPDATE public.scan_jobs
+        SET status = 'FETCHING',
+            lease_until = NOW() + (p_lease_seconds || ' seconds')::INTERVAL,
+            updated_at = NOW()
+        WHERE id = v_job_id
+        RETURNING *;
+    END IF;
+END;
+$$;
+

@@ -80,14 +80,14 @@ jobs:
 
       - name: Upload Gate Audit Artifact
         if: always()
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@b4b15b8c7c6ac21ea08fcf65892d2ee8f75cf882 # v4.4.3
         with:
           name: zelsis-release-scorecard
           path: zelsis-report.json
 
       - name: Upload SARIF to GitHub Code Scanning
         if: always()
-        uses: github/codeql-action/upload-sarif@v3
+        uses: github/codeql-action/upload-sarif@48ab28a6f5dab2aabab3f02a99993e85f97a3d04 # v3.28.0
         with:
           sarif_file: zelsis-report.sarif
 `;

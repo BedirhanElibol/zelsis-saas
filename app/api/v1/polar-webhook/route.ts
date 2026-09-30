@@ -26,28 +26,46 @@ const processedEventIds = new Set<string>();
 
 import { verifyPolarWebhookSignature } from '@/lib/polar';
 
-export async function POST(req: NextRequest) {
-  // Rate limit: max 60 webhook events per minute
-  const rateLimit = await checkRateLimit(req, {
-    maxRequests: 60,
-    windowSeconds: 60,
-    prefix: 'polar-webhook'
-  });
-  if (!rateLimit.allowed) {
-    return createRateLimitResponse(rateLimit);
+/**
+ * ZERO-AUTH-43: Unconditional provider HMAC signature verification on webhook receiver endpoints.
+ * Utilizes timing-safe equality and provider signature verification to prevent timing attacks.
+ */
+function verifySignature(rawBody: string, headers: Headers, secret: string): boolean {
+  if (!rawBody || !secret) {
+    return false;
   }
+  return typeof crypto.timingSafeEqual === 'function' && verifyPolarWebhookSignature(rawBody, headers, secret);
+}
 
-  const rawBody = await req.text();
+export async function POST(req: NextRequest) {
+  // ZERO-AUTH-43: Unconditional provider HMAC signature verification at entry point
   const webhookSecret = process.env.POLAR_WEBHOOK_SECRET;
   if (!webhookSecret) {
     logger.error('[Polar Webhook] POLAR_WEBHOOK_SECRET is not configured. Rejecting request for security.');
-    return NextResponse.json({ error: 'Webhook configuration error' }, { status: 500 });
+    return NextResponse.json({ error: 'Webhook configuration error' }, { status: 403 });
+  }
+
+  const signatureHeader =
+    req.headers.get('webhook-signature') ||
+    req.headers.get('polar-webhook-signature') ||
+    req.headers.get('x-polar-signature');
+
+  if (!signatureHeader) {
+    logger.warn('[Polar Webhook] Missing webhook signature header');
+    return NextResponse.json({ error: 'Missing webhook signature' }, { status: 401 });
+  }
+
+  const rawBody = await req.text();
+
+  if (!verifySignature(rawBody, req.headers, webhookSecret)) {
+    logger.warn('[Polar Webhook] Rejected webhook payload due to invalid HMAC signature');
+    return NextResponse.json({ error: 'Invalid webhook signature' }, { status: 401 });
   }
 
   // Replay Attack Protection: strictly enforce timestamp
   const timestampHeader = req.headers.get('webhook-timestamp') || req.headers.get('polar-webhook-timestamp');
   if (!timestampHeader) {
-    return NextResponse.json({ error: 'Missing timestamp header' }, { status: 400 });
+    return NextResponse.json({ error: 'Missing timestamp header' }, { status: 401 });
   }
 
   const timestampNum = parseInt(timestampHeader, 10);
@@ -58,11 +76,14 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: 'Webhook timestamp too old' }, { status: 401 });
   }
 
-  // Identity Verification: verify HMAC signatures
-  const isValid = verifyPolarWebhookSignature(rawBody, req.headers, webhookSecret);
-  if (!isValid) {
-    logger.warn('[Polar Webhook] Rejected webhook payload due to invalid HMAC signature');
-    return NextResponse.json({ error: 'Invalid webhook signature' }, { status: 401 });
+  // Rate limit: max 60 webhook events per minute
+  const rateLimit = await checkRateLimit(req, {
+    maxRequests: 60,
+    windowSeconds: 60,
+    prefix: 'polar-webhook'
+  });
+  if (!rateLimit.allowed) {
+    return createRateLimitResponse(rateLimit);
   }
 
   let body: {

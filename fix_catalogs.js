@@ -1,8 +1,25 @@
 const fs = require('fs');
 const path = require('path');
 
+const BASE_DIR = path.resolve(__dirname);
+
+function assertSafePath(targetPath, baseDir = BASE_DIR) {
+    const normalized = path.normalize(targetPath);
+    const resolved = path.resolve(baseDir, normalized);
+    const resolvedBase = path.resolve(baseDir);
+    const isWindows = process.platform === 'win32';
+    const checkResolved = isWindows ? resolved.toLowerCase() : resolved;
+    const checkBase = isWindows ? resolvedBase.toLowerCase() : resolvedBase;
+    const prefix = checkBase.endsWith(path.sep) ? checkBase : checkBase + path.sep;
+
+    if (!checkResolved.startsWith(prefix) && checkResolved !== checkBase) {
+        throw new Error(`Path traversal detected: ${targetPath}`);
+    }
+    return resolved;
+}
+
 function fixZeroTrust() {
-    const file = path.join(__dirname, 'data/catalogs/zero-trust-network-catalog.ts');
+    const file = assertSafePath(path.join(__dirname, 'data/catalogs/zero-trust-network-catalog.ts'));
     let content = fs.readFileSync(file, 'utf8');
 
     // we will find the index of the 11th item and just truncate the array.
@@ -24,7 +41,7 @@ function fixZeroTrust() {
 }
 
 function fixRust() {
-    const file = path.join(__dirname, 'data/catalogs/rust-systems-catalog.ts');
+    const file = assertSafePath(path.join(__dirname, 'data/catalogs/rust-systems-catalog.ts'));
     let content = fs.readFileSync(file, 'utf8');
 
     // The 6th item starts with id: 9606

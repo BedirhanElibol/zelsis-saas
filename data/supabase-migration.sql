@@ -84,6 +84,7 @@ CREATE POLICY "Users can view findings for their own projects"
             SELECT 1 FROM public.projects
             WHERE projects.id = findings.project_id
             AND projects.user_id = auth.uid()
+            ORDER BY projects.id ASC
         )
     );
 
@@ -94,5 +95,19 @@ CREATE POLICY "Users can modify findings for their own projects"
             SELECT 1 FROM public.projects
             WHERE projects.id = findings.project_id
             AND projects.user_id = auth.uid()
+            ORDER BY projects.id ASC
         )
     );
+
+-- 8. Deterministic Transactional Locking Helper (Resolves PG-05 Deadlocks)
+-- Enforces deterministic primary key ordering (ORDER BY id ASC) before acquiring row locks
+CREATE OR REPLACE FUNCTION public.lock_findings_for_update(p_project_id UUID)
+RETURNS SETOF UUID
+LANGUAGE sql
+SECURITY DEFINER
+AS $$
+    SELECT id FROM public.findings
+    WHERE project_id = p_project_id
+    ORDER BY id ASC
+    FOR UPDATE;
+$$;

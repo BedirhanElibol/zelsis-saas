@@ -293,7 +293,7 @@ DROP POLICY IF EXISTS "Users can view findings for their own projects" ON public
 CREATE POLICY "Users can view findings for their own projects" ON public.findings
     FOR SELECT USING (
         EXISTS (
-            SELECT 1 FROM public.projects WHERE public.projects.id = public.findings.project_id AND public.projects.user_id = auth.uid()
+            SELECT 1 FROM public.projects WHERE public.projects.id = public.findings.project_id AND public.projects.user_id = auth.uid() ORDER BY public.projects.id ASC
         )
     );
 
@@ -301,10 +301,24 @@ DROP POLICY IF EXISTS "Users can update findings for their own projects" ON publ
 CREATE POLICY "Users can update findings for their own projects" ON public.findings
     FOR UPDATE USING (
         EXISTS (
-            SELECT 1 FROM public.projects WHERE public.projects.id = public.findings.project_id AND public.projects.user_id = auth.uid()
+            SELECT 1 FROM public.projects WHERE public.projects.id = public.findings.project_id AND public.projects.user_id = auth.uid() ORDER BY public.projects.id ASC
         )
     );
 
 -- API Keys Policies
 DROP POLICY IF EXISTS "Users can manage their own API keys" ON public.api_keys;
 CREATE POLICY "Users can manage their own API keys" ON public.api_keys FOR ALL USING (auth.uid() = user_id);
+
+-- 13. DETERMINISTIC TRANSACTIONAL LOCKING HELPER (PG-05)
+-- Enforces deterministic primary key ordering (ORDER BY id ASC) before acquiring row locks
+CREATE OR REPLACE FUNCTION public.lock_findings_for_update(p_project_id UUID)
+RETURNS SETOF UUID
+LANGUAGE sql
+SECURITY DEFINER
+AS $$
+    SELECT id FROM public.findings
+    WHERE project_id = p_project_id
+    ORDER BY id ASC
+    FOR UPDATE;
+$$;
+
