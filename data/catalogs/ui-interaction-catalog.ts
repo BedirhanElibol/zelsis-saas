@@ -553,7 +553,7 @@ export const UI_INTERACTION_CATALOG: UiRule[] = [
     code: 'UI-INTERACT-29',
     title: "Tab Component Lacking Arrow Key Keyboard Navigation",
     category: "Accessibility & WCAG",
-    clichePattern: "Tabs switchable only via mouse clicks; arrow keys do nothing (WCAG 2.1 Tab pattern)",
+    clichePattern: "Tabs switchable only via mouse clicks; arrow keys do nothing (WCAG 2.2 Tab pattern)",
     whyAiDoesIt: "AI binds onClick to tab buttons without implementing arrow key navigation",
     zelsisSolution: "Implement Left/Right arrow key handlers to switch active tabs per WAI-ARIA pattern."
   },

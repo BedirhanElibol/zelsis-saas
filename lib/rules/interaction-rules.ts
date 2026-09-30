@@ -742,7 +742,7 @@ export function evaluateInteractionRules(file: CodeFile, lines: string[], cleanC
             snippet: lines[matchLineIdx] || '<detected interaction flaw>',
             reproductionSteps: [
                 `Scanned component interaction handlers in ${file.path}:${lineNum}.`,
-                "Detected tablist lacking arrow key keyboard navigation handlers: Tabs switchable only via mouse clicks; arrow keys do nothing (WCAG 2.1 Tab pattern)"
+                "Detected tablist lacking arrow key keyboard navigation handlers: Tabs switchable only via mouse clicks; arrow keys do nothing (WCAG 2.2 Tab pattern)"
             ],
             remediationPrompt: "Implement Left/Right arrow key handlers to switch active tabs per WAI-ARIA pattern.",
             status: 'OPEN',

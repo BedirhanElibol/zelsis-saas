@@ -1,8 +1,8 @@
 /**
- * Frontend Performance, WCAG 2.1 AA & SEO Quality Rules (Option B)
+ * Frontend Performance, WCAG 2.2 AA & SEO Quality Rules (Option B)
  *
  * Rules:
- * 1. UI-A11Y-01 (Rule ID 1026): WCAG 2.1 AA Focus & Label Validation
+ * 1. UI-A11Y-01 (Rule ID 1026): WCAG 2.2 AA Focus & Label Validation
  * 2. UI-PERF-01 (Rule ID 1027): Core Web Vitals & Next.js Image Optimization
  * 3. UI-SEO-01  (Rule ID 1028): Social OpenGraph & Semantic Metadata
  */
@@ -27,7 +27,7 @@ export function evaluateFrontendRules(file: CodeFile, lines: string[], cleanCont
         return { findings, logs };
     const ts = new Date().toLocaleTimeString();
     // =========================================================================
-    // a) UI-A11Y-01 (Rule ID 1026: WCAG 2.1 AA Focus & Label Validation)
+    // a) UI-A11Y-01 (Rule ID 1026: WCAG 2.2 AA Focus & Label Validation)
     // =========================================================================
     const hasOutlineNone = /(?:focus:)?outline-none\b|outline:\s*none/i.test(cleanContent);
     const hasFocusRing = /focus(?:-visible)?:ring|focus-visible:outline|focus:border/i.test(cleanContent);
@@ -67,7 +67,7 @@ export function evaluateFrontendRules(file: CodeFile, lines: string[], cleanCont
             id: `frontend-${Date.now()}-${findingCounter.count++}`,
             ruleId: 1026,
             type: 'VIBEPOLISH',
-            title: 'WCAG 2.1 AA: Interactive Input Missing Accessible Label or Keyboard Focus Ring',
+            title: 'WCAG 2.2 AA: Interactive Input Missing Accessible Label or Keyboard Focus Ring',
             severity: 'MEDIUM',
             category: 'Accessibility (WCAG)',
             filePath: file.path,
@@ -81,12 +81,12 @@ export function evaluateFrontendRules(file: CodeFile, lines: string[], cleanCont
                         ? 'Detected interactive form input (<input>, <textarea>, or <select>) missing aria-label, aria-labelledby, or id for screen reader label binding.'
                         : 'Detected outline-none / outline: none stripping default keyboard focus indicators without focus-visible:ring replacement.'
             ],
-            remediationPrompt: `Add missing aria-label or associated <label htmlFor="..."> to interactive form elements in ${file.path}. Replace outline-none with focus-visible:ring-2 focus-visible:ring-emerald-500 focus-visible:outline-none to preserve WCAG 2.1 AA keyboard focus indicators.`,
+            remediationPrompt: `Add missing aria-label or associated <label htmlFor="..."> to interactive form elements in ${file.path}. Replace outline-none with focus-visible:ring-2 focus-visible:ring-emerald-500 focus-visible:outline-none to preserve WCAG 2.2 AA keyboard focus indicators.`,
             status: 'OPEN',
             owner: 'Frontend Team',
             falsePositive: false
         });
-        logs.push(`[${ts}] ♿ MEDIUM: UI-A11Y-01 WCAG 2.1 AA Focus / Label issue detected in ${file.path}:${lineNum}`);
+        logs.push(`[${ts}] ♿ MEDIUM: UI-A11Y-01 WCAG 2.2 AA Focus / Label issue detected in ${file.path}:${lineNum}`);
     }
     // =========================================================================
     // b) UI-PERF-01 (Rule ID 1027: Core Web Vitals & Next.js Image Optimization)
@@ -249,7 +249,7 @@ export function evaluateFrontendRules(file: CodeFile, lines: string[], cleanCont
                     id: `frontend-${Date.now()}-${findingCounter.count++}`,
                     ruleId: 1029,
                     type: 'VIBEPOLISH',
-                    title: 'WCAG 2.1 AA: Non-Semantic Clickable Container Missing Keyboard Accessibility',
+                    title: 'WCAG 2.2 AA: Non-Semantic Clickable Container Missing Keyboard Accessibility',
                     severity: 'HIGH',
                     category: 'Accessibility (WCAG)',
                     filePath: file.path,
@@ -259,7 +259,7 @@ export function evaluateFrontendRules(file: CodeFile, lines: string[], cleanCont
                         `Scanned JSX component markup at ${file.path}:${lineNum}.`,
                         'Detected non-semantic container (<div> or <span>) with an onClick handler but lacking role="button", tabIndex={0}, and onKeyDown keyboard listener. Keyboard and screen reader users cannot activate this element.'
                     ],
-                    remediationPrompt: `Replace non-semantic <div onClick=...> in ${file.path}:${lineNum} with a semantic <button onClick=...> element, or add role="button" tabIndex={0} onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') handleClick(); }} to comply with WCAG 2.1 AA accessibility guidelines.`,
+                    remediationPrompt: `Replace non-semantic <div onClick=...> in ${file.path}:${lineNum} with a semantic <button onClick=...> element, or add role="button" tabIndex={0} onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') handleClick(); }} to comply with WCAG 2.2 AA accessibility guidelines.`,
                     status: 'OPEN',
                     owner: 'Frontend Team',
                     falsePositive: false
