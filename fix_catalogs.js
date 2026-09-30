@@ -19,8 +19,12 @@ function assertSafePath(targetPath, baseDir = BASE_DIR) {
 }
 
 function fixZeroTrust() {
-    const file = assertSafePath(path.join(__dirname, 'data/catalogs/zero-trust-network-catalog.ts'));
-    let content = fs.readFileSync(file, 'utf8');
+    const rawPath = path.join(__dirname, 'data/catalogs/zero-trust-network-catalog.ts');
+    const normalizedPath = path.normalize(rawPath);
+    if (!path.resolve(normalizedPath).startsWith(BASE_DIR)) {
+        throw new Error('Path traversal detected');
+    }
+    let content = fs.readFileSync(normalizedPath, 'utf8');
 
     // we will find the index of the 11th item and just truncate the array.
     // The 11th item starts with id: 13111 or 'SDP-01' again but with [Spec-2].
@@ -36,13 +40,17 @@ function fixZeroTrust() {
     // replace OWASP A01:2021 with OWASP A01:2025
     content = content.replace(/OWASP A(\d{2}):2021/g, 'OWASP A$1:2025');
 
-    fs.writeFileSync(file, content, 'utf8');
+    fs.writeFileSync(normalizedPath, content, 'utf8');
     console.log('Fixed zero-trust-network-catalog.ts');
 }
 
 function fixRust() {
-    const file = assertSafePath(path.join(__dirname, 'data/catalogs/rust-systems-catalog.ts'));
-    let content = fs.readFileSync(file, 'utf8');
+    const rawPath = path.join(__dirname, 'data/catalogs/rust-systems-catalog.ts');
+    const normalizedPath = path.normalize(rawPath);
+    if (!path.resolve(normalizedPath).startsWith(BASE_DIR)) {
+        throw new Error('Path traversal detected');
+    }
+    let content = fs.readFileSync(normalizedPath, 'utf8');
 
     // The 6th item starts with id: 9606
     const match6 = content.indexOf('  {\n    id: 9606,');
@@ -52,7 +60,7 @@ function fixRust() {
 
     content = content.replace(/OWASP A(\d{2}):2021/g, 'OWASP A$1:2025');
 
-    fs.writeFileSync(file, content, 'utf8');
+    fs.writeFileSync(normalizedPath, content, 'utf8');
     console.log('Fixed rust-systems-catalog.ts');
 }
 

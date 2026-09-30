@@ -18,8 +18,13 @@ function assertSafePath(targetPath, baseDir = BASE_DIR) {
     return resolved;
 }
 
-const file = assertSafePath('lib/scanner-engine.ts');
-let code = fs.readFileSync(file, 'utf8');
+const rawPath = 'lib/scanner-engine.ts';
+const normalizedPath = path.normalize(rawPath);
+const resolvedPath = path.resolve(BASE_DIR, normalizedPath);
+if (!resolvedPath.startsWith(BASE_DIR)) {
+    throw new Error('Path traversal detected');
+}
+let code = fs.readFileSync(resolvedPath, 'utf8');
 
 const imports = `
 import { evaluateRubyRailsRules } from './rules/ruby-rails-rules';
@@ -66,5 +71,5 @@ const blocks = `
 
 code = code.replace(/const fileFindingsCount = findings\.length - startFindingsCount;/, blocks + '\n    const fileFindingsCount = findings.length - startFindingsCount;');
 
-fs.writeFileSync(file, code);
+fs.writeFileSync(resolvedPath, code);
 console.log('Scanner engine patched successfully.');

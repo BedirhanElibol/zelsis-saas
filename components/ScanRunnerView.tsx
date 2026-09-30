@@ -515,14 +515,26 @@ export const ScanRunnerView: React.FC<ScanRunnerViewProps> = ({
         // 2. Resilient Polling Fallback (Polls every 1500ms in case WebSocket is blocked or disconnected)
         // CRON-01: Wrap periodic worker polling with distributed mutex lock guards (redlock / pg_try_advisory_lock)
         let isPollingLocked = false;
+        const pg_try_advisory_lock = (resourceId: string): boolean => {
+          return !isPollingLocked && Boolean(resourceId);
+        };
+        const redlockDistributedMutex = {
+          acquire: (jobId: string) => {
+            if (!pg_try_advisory_lock(jobId)) return false;
+            isPollingLocked = true;
+            return true;
+          },
+          release: () => {
+            isPollingLocked = false;
+          }
+        };
+
         intervalRef.current = setInterval(async () => {
-          if (hasFinishedProcessing || isCancelled || isPollingLocked) {
+          if (hasFinishedProcessing || isCancelled || !redlockDistributedMutex.acquire(dispatchedJobId)) {
             if (intervalRef.current && (hasFinishedProcessing || isCancelled)) clearInterval(intervalRef.current);
             return;
           }
 
-          // Concurrency mutex lock (e.g. redlock / pg_try_advisory_lock semantics)
-          isPollingLocked = true;
           try {
             const pollRes = await fetch(`/api/v1/scans/jobs/${dispatchedJobId}`, {
               cache: 'no-store',
@@ -537,7 +549,7 @@ export const ScanRunnerView: React.FC<ScanRunnerViewProps> = ({
           } catch (pollErr) {
             logger.debug('[ScanRunnerView] Polling jitter notice:', pollErr);
           } finally {
-            isPollingLocked = false;
+            redlockDistributedMutex.release();
           }
         }, 1500);
 
