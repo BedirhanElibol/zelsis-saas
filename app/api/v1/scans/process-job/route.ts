@@ -7,11 +7,22 @@ import { dispatchWebhookAlerts } from '@/lib/notifications';
 import { logger } from '@/lib/logger';
 import { canAccessLocalAudit } from '@/lib/env-config';
 import { validateSafeTargetUrl } from '@/lib/ssrf-guard';
+import { checkRateLimit, createRateLimitResponse } from '@/lib/rate-limiter';
 
 export const maxDuration = 30;
-export const dynamic = 'force-dynamic';
+export const revalidate = 3600;
 
 export async function POST(req: NextRequest) {
+  const rateLimit = await checkRateLimit(req, {
+    maxRequests: 10,
+    windowSeconds: 60,
+    prefix: 'process-job'
+  });
+
+  if (!rateLimit.allowed) {
+    return createRateLimitResponse(rateLimit);
+  }
+
   // Validate Content-Type
   const contentType = req.headers.get('content-type') || '';
   if (!contentType.includes('application/json')) {

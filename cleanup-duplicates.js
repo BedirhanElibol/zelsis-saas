@@ -19,7 +19,11 @@ const keysToDedupe = new Set([
 
 for (const file of files) {
     const filePath = path.join(catalogsDir, file);
-    let content = fs.readFileSync(filePath, 'utf-8');
+    const normalizedPath = path.normalize(filePath);
+    if (!normalizedPath.startsWith(catalogsDir)) {
+        throw new Error('Path traversal detected');
+    }
+    let content = fs.readFileSync(normalizedPath, 'utf-8');
     let lines = content.split('\n');
     let newLines = [];
     
@@ -51,6 +55,6 @@ for (const file of files) {
         }
     }
     
-    fs.writeFileSync(filePath, newLines.join('\n'));
+    fs.writeFileSync(normalizedPath, newLines.join('\n'));
 }
 console.log("Done");

@@ -5,6 +5,11 @@ export const runtime = 'edge';
 
 export async function GET(req: NextRequest) {
   try {
+    const etag = `"${btoa(req.url)}"`;
+    if (req.headers.get('if-none-match') === etag) {
+      return new Response(null, { status: 304 });
+    }
+
     const { searchParams } = new URL(req.url);
 
     // Extract params
@@ -15,7 +20,7 @@ export async function GET(req: NextRequest) {
     const medium = searchParams.get('medium') || '0';
     const low = searchParams.get('low') || '0';
 
-    return new ImageResponse(
+    const res = new ImageResponse(
       (
         <div
           style={{
@@ -81,6 +86,10 @@ export async function GET(req: NextRequest) {
         height: 630,
       }
     );
+
+    res.headers.set('ETag', etag);
+    res.headers.set('Cache-Control', 'public, s-maxage=3600, stale-while-revalidate=86400');
+    return res;
   } catch (e: any) {
     return new Response(`Failed to generate the image`, {
       status: 500,

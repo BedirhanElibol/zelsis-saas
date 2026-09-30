@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useState } from 'react';
+import Image from 'next/image';
 import { Terminal, GitPullRequest, ShieldCheck, Copy, CheckCircle2, Download, Settings2, Sliders, CheckSquare, AlertTriangle, Lock, ArrowRight, FileCode } from 'lucide-react';
 import { Project, UserTier } from '@/data/schema';
 import { isCicdViewAllowed } from '@/lib/quota-manager';
@@ -358,12 +359,14 @@ jobs:
               <input 
                 type="text" 
                 readOnly 
+                aria-label="Public Dashboard Link"
                 value={`https://zelsis.com/report/${project?.id || 'demo'}`} 
-                className="flex-1 bg-[#0A0A0A] border border-white/10 rounded-lg px-3 py-2 text-xs font-mono text-zinc-300 focus:outline-none"
+                className="flex-1 bg-[#0A0A0A] border border-white/10 rounded-lg px-3 py-2 text-xs font-mono text-zinc-300 focus-visible:ring-2 focus-visible:ring-emerald-500 focus-visible:outline-none"
               />
               <button 
                 onClick={() => copyToClipboard(`https://zelsis.com/report/${project?.id || 'demo'}`, () => {})}
                 className="btn btn-secondary p-2 rounded-lg"
+                aria-label="Copy public dashboard link"
               >
                 <Copy size={14} />
               </button>
@@ -374,18 +377,20 @@ jobs:
               Markdown Badge (README.md)
             </span>
             <div className="mb-3">
-              <img src={`https://img.shields.io/badge/Zelsis_Score-${minScore}%25-emerald?style=flat-square`} alt="Zelsis Score" className="h-5" />
+              <Image src={`https://img.shields.io/badge/Zelsis_Score-${minScore}%25-emerald?style=flat-square`} alt="Zelsis Score" width={100} height={20} className="h-5 w-auto" unoptimized />
             </div>
             <div className="flex items-center gap-2">
               <input 
                 type="text" 
                 readOnly 
+                aria-label="Markdown Badge"
                 value={`[![Zelsis Score](https://img.shields.io/badge/Zelsis_Score-${minScore}%25-emerald?style=flat-square)](https://zelsis.com/report/${project?.id || 'demo'})`} 
-                className="flex-1 bg-[#0A0A0A] border border-white/10 rounded-lg px-3 py-2 text-xs font-mono text-zinc-300 focus:outline-none"
+                className="flex-1 bg-[#0A0A0A] border border-white/10 rounded-lg px-3 py-2 text-xs font-mono text-zinc-300 focus-visible:ring-2 focus-visible:ring-emerald-500 focus-visible:outline-none"
               />
               <button 
                 onClick={() => copyToClipboard(`[![Zelsis Score](https://img.shields.io/badge/Zelsis_Score-${minScore}%25-emerald?style=flat-square)](https://zelsis.com/report/${project?.id || 'demo'})`, () => {})}
                 className="btn btn-secondary p-2 rounded-lg"
+                aria-label="Copy markdown badge"
               >
                 <Copy size={14} />
               </button>

@@ -10,7 +10,7 @@ import { createClient } from '@supabase/supabase-js';
 // Long-running batch background tasks (>15s) must be queued to async workers (SQS/Inngest/QStash)
 // to prevent gateway 504 timeouts, client connection hanging, and serverless compute exhaustion (OWASP A04:2021).
 export const maxDuration = 15;
-export const dynamic = 'force-dynamic';
+export const revalidate = 3600;
 
 const GITHUB_RATE_LIMIT_MESSAGE =
   'GitHub API rate limit reached (60 req/hr). Add a GitHub Personal Access Token (PAT) in Settings to unlock 5,000 req/hr.';

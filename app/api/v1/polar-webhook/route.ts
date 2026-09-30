@@ -39,17 +39,30 @@ export async function POST(req: NextRequest) {
 
   const rawBody = await req.text();
   const webhookSecret = process.env.POLAR_WEBHOOK_SECRET;
-  if (process.env.NODE_ENV === 'production' && !webhookSecret) {
-    logger.error('[Polar Webhook] POLAR_WEBHOOK_SECRET is not configured in production environment. Rejecting request for security.');
+  if (!webhookSecret) {
+    logger.error('[Polar Webhook] POLAR_WEBHOOK_SECRET is not configured. Rejecting request for security.');
     return NextResponse.json({ error: 'Webhook configuration error' }, { status: 500 });
   }
 
-  if (webhookSecret) {
-    const isValid = verifyPolarWebhookSignature(rawBody, req.headers, webhookSecret);
-    if (!isValid) {
-      logger.warn('[Polar Webhook] Rejected webhook payload due to invalid HMAC signature');
-      return NextResponse.json({ error: 'Invalid webhook signature' }, { status: 401 });
-    }
+  // Replay Attack Protection: strictly enforce timestamp
+  const timestampHeader = req.headers.get('webhook-timestamp') || req.headers.get('polar-webhook-timestamp');
+  if (!timestampHeader) {
+    return NextResponse.json({ error: 'Missing timestamp header' }, { status: 400 });
+  }
+
+  const timestampNum = parseInt(timestampHeader, 10);
+  const nowSec = Math.floor(Date.now() / 1000);
+  const eventSec = timestampNum > 1e11 ? Math.floor(timestampNum / 1000) : timestampNum;
+  if (Math.abs(nowSec - eventSec) > 300) {
+    logger.warn('[Polar Webhook] Rejected webhook payload due to stale timestamp (replay attack protection)');
+    return NextResponse.json({ error: 'Webhook timestamp too old' }, { status: 401 });
+  }
+
+  // Identity Verification: verify HMAC signatures
+  const isValid = verifyPolarWebhookSignature(rawBody, req.headers, webhookSecret);
+  if (!isValid) {
+    logger.warn('[Polar Webhook] Rejected webhook payload due to invalid HMAC signature');
+    return NextResponse.json({ error: 'Invalid webhook signature' }, { status: 401 });
   }
 
   let body: {

@@ -8,7 +8,11 @@ let descriptions = {};
 
 for (const file of files) {
     const filePath = path.join(catalogsDir, file);
-    const content = fs.readFileSync(filePath, 'utf-8');
+    const normalizedPath = path.normalize(filePath);
+    if (!normalizedPath.startsWith(catalogsDir)) {
+        throw new Error('Path traversal detected');
+    }
+    const content = fs.readFileSync(normalizedPath, 'utf-8');
     
     // match descriptions
     const descMatches = content.match(/description:\s*['"](.*?)['"]/g);

@@ -1,11 +1,17 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createPolar } from '@polar-sh/sdk/2026-10';
+import crypto from 'crypto';
 
 export async function GET(req: NextRequest) {
   try {
     const email = req.nextUrl.searchParams.get('email');
     if (!email) {
       return NextResponse.json({ error: 'Email is required' }, { status: 400 });
+    }
+
+    const etag = `"${crypto.createHash('md5').update(email).digest('hex')}"`;
+    if (req.headers.get('if-none-match') === etag) {
+      return new NextResponse(null, { status: 304 });
     }
 
     if (!process.env.POLAR_ACCESS_TOKEN) {
@@ -33,7 +39,10 @@ export async function GET(req: NextRequest) {
     });
 
     // Redirect to the customer portal
-    return NextResponse.redirect(session.customer_portal_url);
+    const res = NextResponse.redirect(session.customer_portal_url);
+    res.headers.set('ETag', etag);
+    res.headers.set('Cache-Control', 'public, s-maxage=3600, stale-while-revalidate=86400');
+    return res;
   } catch (error) {
     console.error('Error creating customer portal session:', error);
     return NextResponse.json({ error: 'Internal Server Error' }, { status: 500 });

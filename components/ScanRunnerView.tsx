@@ -8,6 +8,9 @@ import { fetchGithubRepositoryData, isValidGithubUrl, parseGithubUrl, extractRep
 import { isValidWebUrl, fetchWebsiteAuditData } from '@/lib/website-scanner';
 import { Terminal, CheckCircle2, Copy, Check, Search, Clock, Zap, Lock, Key, RotateCcw, Database, Layers } from 'lucide-react';
 import { TerminalLogWindow } from '@/components/scan/TerminalLogWindow';
+import { ScanRunnerHeader } from '@/components/scan-runner/ScanRunnerHeader';
+import { ScanRunnerProgressPanel } from '@/components/scan-runner/ScanRunnerProgressPanel';
+import { ScanRunnerCompleteBanner } from '@/components/scan-runner/ScanRunnerCompleteBanner';
 import { canAccessLocalAudit } from '@/lib/env-config';
 import { PrivateRepoTokenModal } from '@/components/dashboard/PrivateRepoTokenModal';
 import { ComponentErrorBoundary } from '@/components/common/ComponentErrorBoundary';
@@ -882,193 +885,23 @@ export const ScanRunnerView: React.FC<ScanRunnerViewProps> = ({
     <div className="flex flex-col gap-5 sm:gap-6 w-full max-w-full overflow-hidden">
       {/* Header & File Inspection Status */}
       <div className="bg-[#141414] border border-white/10 rounded-xl p-4 sm:p-8 flex flex-col gap-4">
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-          <div className="min-w-0 flex-1">
-            <h1 className="text-lg sm:text-xl font-extrabold text-[#EDEDED] truncate">
-              Sequential AST Audit: {project.name || extractRepoDisplayName(project.repoUrl) || 'Target Repository'}
-            </h1>
-            <div className="text-xs text-[#A1A1AA] mt-1">
-              <span className="truncate">Automated security clearance &amp; UX quality gates</span>
-            </div>
-          </div>
-
-          <div className="flex items-center gap-3 shrink-0 self-end sm:self-auto">
-            {!isFinished && (
-              <button
-                onClick={handleAbortScan}
-                className="btn btn-secondary text-xs px-3 py-1.5 text-red-400 border-red-500/30 hover:bg-red-500/10 font-bold font-mono"
-              >
-                Abort Audit
-              </button>
-            )}
-            <div className="text-xl sm:text-2xl font-extrabold text-[#EDEDED] font-mono">
-              {progress}%
-            </div>
-          </div>
-        </div>
-
-        {/* Current Active File Card */}
-        <div className="bg-[#0A0A0A] p-3 sm:p-4 rounded-xl border border-white/10 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
-          <div className="flex items-center gap-3 min-w-0 flex-1 w-full">
-            <div className="w-8 h-8 rounded-lg bg-white/5 border border-white/10 flex items-center justify-center font-mono font-bold text-xs text-white shrink-0">
-              AST
-            </div>
-            <div className="min-w-0 flex-1">
-              <div className="text-[0.68rem] text-[#A1A1AA] font-bold uppercase tracking-wider font-mono">
-                {isFinished ? 'Audit Execution Status:' : 'Currently Inspecting File:'}
-              </div>
-              <div className="text-xs font-mono font-bold mt-0.5 truncate text-white">
-                {isFinished
-                  ? scanResult
-                    ? `All ${queuedFilesCount} Source Files Inspected & Verified`
-                    : (project?.repoUrl === 'local' || safeLower(project?.repoUrl) === 'local') && !canAccessLocalAudit()
-                    ? 'Local workspace self-audit is available only in local development.'
-                    : 'Audit Terminated'
-                  : currentFileName}
-              </div>
-            </div>
-          </div>
-
-          <div className="flex items-center gap-3 text-xs font-mono text-[#A1A1AA] shrink-0 w-full sm:w-auto justify-between sm:justify-end">
-            <div className="flex items-center gap-1.5 bg-white/5 px-2.5 py-1 rounded border border-white/10 shrink-0">
-              <Clock size={12} className="text-white" />
-              <span>Elapsed: {Math.floor(elapsedSeconds / 60)}m {elapsedSeconds % 60}s</span>
-            </div>
-            {queuedFilesCount > 0 && (
-              <span className="text-white font-bold hidden md:inline">
-                {queuedFilesCount.toLocaleString()} Files
-              </span>
-            )}
-          </div>
-        </div>
-
-        {/* Target Architecture & Multi-Database Stack Banner */}
-        <div className="flex flex-wrap items-center justify-between gap-2.5 px-3.5 py-2.5 bg-[#0D0D14] border border-white/10 rounded-xl">
-          <div className="flex items-center gap-2">
-            <Database size={14} className="text-cyan-400 shrink-0" />
-            <span className="text-[11px] font-mono font-bold text-zinc-300 uppercase tracking-wider">
-              Target Architecture:
-            </span>
-          </div>
-          <div className="flex flex-wrap items-center gap-1.5">
-            {scanResult?.detectedDatabases && scanResult.detectedDatabases.length > 0 ? (
-              scanResult.detectedDatabases.map((db) => (
-                <span
-                  key={db}
-                  className="px-2 py-0.5 rounded text-[10px] font-mono font-bold bg-cyan-500/10 text-cyan-300 border border-cyan-500/30"
-                >
-                  {db}
-                </span>
-              ))
-            ) : (
-              <span className="px-2 py-0.5 rounded text-[10px] font-mono font-bold bg-white/5 text-zinc-400 border border-white/10">
-                Universal (Postgres · MySQL · MongoDB · Redis · SQLite)
-              </span>
-            )}
-            {scanResult?.detectedOrms && scanResult.detectedOrms.map((orm) => (
-              <span
-                key={orm}
-                className="px-2 py-0.5 rounded text-[10px] font-mono font-bold bg-blue-500/10 text-blue-300 border border-blue-500/30"
-              >
-                {orm}
-              </span>
-            ))}
-          </div>
-        </div>
+        <ScanRunnerHeader
+          project={project}
+          isFinished={isFinished}
+          progress={progress}
+          handleAbortScan={handleAbortScan}
+          scanResult={scanResult}
+          queuedFilesCount={queuedFilesCount}
+          currentFileName={currentFileName}
+          elapsedSeconds={elapsedSeconds}
+        />
 
         {/* 4-Stage Status Panel */}
-        {(() => {
-          const stages = [
-            { label: 'Connecting & fetching repository',   range: [0,  24] },
-            { label: 'Resolving dependency tree',          range: [25, 49] },
-            { label: 'Running AST security rules',         range: [50, 89] },
-            { label: 'Generating remediation report',      range: [90, 100] },
-          ];
-          const activeStageIdx = isFinished
-            ? (scanResult ? 4 : stages.findIndex(({ range }) => progress >= range[0] && progress <= range[1]))
-            : stages.findIndex(({ range }) => progress >= range[0] && progress <= range[1]);
-          const isFailedOrAborted = isFinished && !scanResult;
-
-          return (
-            <div className="flex flex-col gap-1 bg-[#0A0A0A] rounded-xl border border-white/10 overflow-hidden">
-              {stages.map((stage, idx) => {
-                let statusIcon: React.ReactNode;
-                let statusLabel: string;
-                let statusColor: string;
-                let textColor: string;
-
-                if (isFailedOrAborted) {
-                  if (idx < activeStageIdx) {
-                    statusIcon = <span className="text-emerald-400 font-bold shrink-0">✓</span>;
-                    statusLabel = 'Done';
-                    statusColor = 'text-emerald-400';
-                    textColor = 'text-zinc-400';
-                  } else if (idx === activeStageIdx || (activeStageIdx === -1 && idx === 0)) {
-                    statusIcon = <span className="text-red-400 font-bold shrink-0 font-mono">✕</span>;
-                    statusLabel = 'Aborted';
-                    statusColor = 'text-red-400 font-bold';
-                    textColor = 'text-red-300 font-medium';
-                  } else {
-                    statusIcon = <span className="text-zinc-600 font-bold shrink-0 font-mono">—</span>;
-                    statusLabel = 'Skipped';
-                    statusColor = 'text-zinc-600';
-                    textColor = 'text-zinc-600';
-                  }
-                } else if (isFinished && scanResult) {
-                  statusIcon = <span className="text-emerald-400 font-bold shrink-0">✓</span>;
-                  statusLabel = 'Done';
-                  statusColor = 'text-emerald-400';
-                  textColor = 'text-zinc-400';
-                } else {
-                  const isDone = idx < activeStageIdx;
-                  const isActive = idx === activeStageIdx;
-                  if (isDone) {
-                    statusIcon = <span className="text-emerald-400 font-bold shrink-0">✓</span>;
-                    statusLabel = 'Done';
-                    statusColor = 'text-emerald-400';
-                    textColor = 'text-zinc-400';
-                  } else if (isActive) {
-                    statusIcon = <span className="w-2 h-2 rounded-full bg-blue-400 animate-pulse shrink-0 inline-block" />;
-                    statusLabel = `${progress}%`;
-                    statusColor = 'text-blue-400';
-                    textColor = 'text-white font-bold';
-                  } else {
-                    statusIcon = <span className="w-2 h-2 rounded-full bg-white/20 shrink-0 inline-block" />;
-                    statusLabel = 'Wait';
-                    statusColor = 'text-zinc-700';
-                    textColor = 'text-zinc-600';
-                  }
-                }
-
-                return (
-                  <div
-                    key={stage.label}
-                    className={`flex items-center justify-between px-4 py-2.5 text-xs font-mono border-b border-white/5 last:border-b-0 transition-colors ${
-                      !isFinished && idx === activeStageIdx ? 'bg-white/[0.04]' : ''
-                    }`}
-                  >
-                    <div className="flex items-center gap-3 min-w-0">
-                      {statusIcon}
-                      <span className={`truncate ${textColor}`}>
-                        Stage {idx + 1}: {stage.label}
-                      </span>
-                    </div>
-                    <span className={`text-[10px] shrink-0 ml-4 ${statusColor}`}>
-                      {statusLabel}
-                    </span>
-                  </div>
-                );
-              })}
-              {/* Thin progress line at bottom */}
-              <div className="w-full h-[2px] bg-white/5">
-                <div
-                  className={`h-full transition-all duration-150 ${isFailedOrAborted ? 'bg-red-500/60' : 'bg-blue-500/60'}`}
-                  style={{ width: `${progress}%` }}
-                />
-              </div>
-            </div>
-          );
-        })()}
+        <ScanRunnerProgressPanel
+          progress={progress}
+          isFinished={isFinished}
+          scanResult={scanResult}
+        />
       </div>
 
       {/* Real-time Terminal Log Window */}
@@ -1083,116 +916,27 @@ export const ScanRunnerView: React.FC<ScanRunnerViewProps> = ({
       </ComponentErrorBoundary>
 
       {/* Complete Action Banner & Button */}
-      {isFinished && (
-        <div className="bg-[#141414] border border-white/10 rounded-xl p-6 flex flex-col sm:flex-row items-center justify-between gap-4 shadow-2xl animate-fade-in">
-          {scanResult ? (
-            <>
-              <div className="flex items-center gap-4">
-                <div className="w-12 h-12 rounded-xl bg-white/5 border border-white/10 flex items-center justify-center shrink-0">
-                  <CheckCircle2 size={24} className="text-white" />
-                </div>
-                <div>
-                  <div className="flex items-center gap-2">
-                    <span className="text-xs font-mono font-extrabold text-white uppercase tracking-wider">
-                      AST CLEARANCE SCAN COMPLETE
-                    </span>
-                    <span className={`px-2 py-0.5 rounded text-[0.65rem] font-bold ${
-                      scanResult.gateStatus === 'FAILED' ? 'bg-red-500/20 text-red-400 border border-red-500/30' : 'bg-white/5 text-white border border-white/10'
-                    }`}>
-                      GATE: {scanResult.gateStatus}
-                    </span>
-                    <span className="text-[0.65rem] font-bold text-amber-400 bg-amber-500/10 border border-amber-500/20 px-2 py-0.5 rounded font-mono">
-                      Auto-opening report in {countdownSeconds}s...
-                    </span>
-                  </div>
-                  <p className="text-sm font-bold text-[#EDEDED] mt-0.5">
-                    Audited {queuedFilesCount} files · Found {scanResult.findings.length} security &amp; UX issues (Readiness Score: {scanResult.score}/100)
-                  </p>
-                </div>
-              </div>
-
-              <button
-                className="btn btn-primary px-8 py-4 text-xs font-bold uppercase tracking-wider rounded-xl shadow-lg shrink-0 flex items-center gap-2 bg-white text-black hover:bg-neutral-200 transition-all"
-                onClick={() => {
-                  hasCompletedRef.current = true;
-                  onCompleteScanRef.current(scanResult);
-                }}
-              >
-                <CheckCircle2 size={18} />
-                <span>View Full Audit Report ({scanResult.findings.length} Issues)</span>
-              </button>
-            </>
-          ) : (
-            <>
-              <div className="flex items-center gap-4">
-                <div className="w-12 h-12 rounded-xl bg-red-500/10 border border-red-500/20 flex items-center justify-center shrink-0">
-                  <span className="text-red-400 font-bold text-lg font-mono">!</span>
-                </div>
-                <div>
-                  <div className="flex items-center gap-2">
-                    <span className="text-xs font-mono font-extrabold text-red-400 uppercase tracking-wider">
-                      AUDIT RESTRICTED
-                    </span>
-                  </div>
-                  <p className="text-sm font-bold text-[#EDEDED] mt-0.5">
-                    {scanFailureReason || ((project?.repoUrl === 'local' || safeLower(project?.repoUrl) === 'local') && !canAccessLocalAudit()
-                      ? 'Local workspace self-audit is available only in local development.'
-                      : 'Audit execution was stopped before completion.')}
-                  </p>
-                </div>
-              </div>
-
-              <div className="flex items-center gap-3">
-                {(!scanFailureReason?.includes('rate limit') &&
-                  !scanFailureReason?.includes('GitHub anonymous') &&
-                  (scanFailureReason?.includes('Pro feature') || scanFailureReason?.includes('Monthly Free Scan Limit') || scanFailureReason?.includes('Upgrade to Zelsis Pro'))) && (
-                  <button
-                    onClick={() => onOpenCheckout?.('Pro')}
-                    className="btn btn-primary px-5 py-3 text-xs font-bold uppercase tracking-wider rounded-xl shadow-lg shrink-0 flex items-center gap-2 bg-emerald-500 hover:bg-emerald-400 text-black transition-all font-mono cursor-pointer"
-                  >
-                    <Lock size={14} />
-                    <span>Upgrade to Pro ($19/mo)</span>
-                  </button>
-                )}
-
-                {(scanFailureReason?.includes('Private') || scanFailureReason?.includes('token') || scanFailureReason?.includes('Token') || scanFailureReason?.includes('PAT') || scanFailureReason?.includes('rate limit')) &&
-                  !scanFailureReason?.includes('not found') &&
-                  !scanFailureReason?.includes('404') && (
-                  <button
-                    onClick={() => setIsPrivateTokenModalOpen(true)}
-                    className="btn btn-primary px-5 py-3 text-xs font-bold uppercase tracking-wider rounded-xl shadow-lg shrink-0 flex items-center gap-2 bg-white text-black hover:bg-neutral-200 transition-all font-mono cursor-pointer"
-                  >
-                    <Key size={14} />
-                    <span>{scanFailureReason?.includes('rate limit') ? 'Add Free GitHub Token (5,000 req/hr)' : 'Enter GitHub Token'}</span>
-                  </button>
-                )}
-
-                {scanFailureReason?.includes('Settings') && (
-                  <a
-                    href="/dashboard?nav=settings"
-                    className="btn btn-secondary px-5 py-3 text-xs font-bold uppercase tracking-wider rounded-xl shadow-lg shrink-0 flex items-center gap-2 border border-amber-500/30 text-amber-400 hover:bg-amber-500/10 transition-all font-mono"
-                    onClick={() => {
-                      hasCompletedRef.current = true;
-                    }}
-                  >
-                    <span>Configure in Settings</span>
-                  </a>
-                )}
-
-                <button
-                  className="btn btn-secondary px-6 py-3 text-xs font-bold uppercase tracking-wider rounded-xl shadow-lg shrink-0 flex items-center gap-2 border border-white/10 hover:bg-white/10 text-white transition-all font-mono"
-                  onClick={() => {
-                    hasCompletedRef.current = true;
-                    onCompleteScanRef.current();
-                  }}
-                >
-                  <span>Return to Dashboard</span>
-                </button>
-              </div>
-            </>
-          )}
-        </div>
-      )}
+      <ScanRunnerCompleteBanner
+        isFinished={isFinished}
+        scanResult={scanResult}
+        project={project}
+        queuedFilesCount={queuedFilesCount}
+        countdownSeconds={countdownSeconds}
+        scanFailureReason={scanFailureReason}
+        onViewReport={() => {
+          hasCompletedRef.current = true;
+          onCompleteScanRef.current(scanResult || undefined);
+        }}
+        onReturnToDashboard={() => {
+          hasCompletedRef.current = true;
+          onCompleteScanRef.current();
+        }}
+        onConfigureSettings={() => {
+          hasCompletedRef.current = true;
+        }}
+        onOpenCheckout={onOpenCheckout}
+        setIsPrivateTokenModalOpen={setIsPrivateTokenModalOpen}
+      />
 
       <PrivateRepoTokenModal
         isOpen={isPrivateTokenModalOpen}

@@ -80,7 +80,6 @@ export const BenchmarkSection: React.FC = () => {
         {/* Header */}
         <div className="flex flex-col gap-3 text-center max-w-3xl mx-auto">
           <div className="inline-flex items-center gap-2 justify-center text-xs font-mono uppercase tracking-wider text-zinc-300 bg-white/[0.04] border border-white/10 px-3 py-1 rounded-full self-center">
-            <ShieldCheck size={13} className="text-zinc-400" />
             <span>Deterministic Exploit Benchmark</span>
           </div>
           <h2 className="text-3xl sm:text-4xl lg:text-5xl font-extrabold text-white tracking-tight">

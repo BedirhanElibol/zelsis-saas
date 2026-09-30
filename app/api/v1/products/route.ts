@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createPolar } from '@polar-sh/sdk/2026-10';
+import crypto from 'crypto';
 
 export async function GET(req: NextRequest) {
   try {
@@ -15,7 +16,17 @@ export async function GET(req: NextRequest) {
       is_archived: false,
     });
 
-    return NextResponse.json(response.items);
+    const bodyString = JSON.stringify(response.items);
+    const etag = `"${crypto.createHash('md5').update(bodyString).digest('hex')}"`;
+
+    if (req.headers.get('if-none-match') === etag) {
+      return new NextResponse(null, { status: 304 });
+    }
+
+    const res = NextResponse.json(response.items);
+    res.headers.set('ETag', etag);
+    res.headers.set('Cache-Control', 'public, s-maxage=3600, stale-while-revalidate=86400');
+    return res;
   } catch (error) {
     console.error('Error fetching Polar products:', error);
     return NextResponse.json({ error: 'Internal Server Error' }, { status: 500 });

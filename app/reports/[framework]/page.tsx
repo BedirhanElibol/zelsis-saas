@@ -42,8 +42,8 @@ const FRAMEWORK_DATA = {
         prevalence: '14%',
         severity: 'Critical',
         description: 'Accidental leakage of private keys by prefixing them with NEXT_PUBLIC_ during debugging.',
-        exampleBad: `NEXT_PUBLIC_DATABASE_URL=postgres://user:pass@host/db`,
-        exampleGood: `DATABASE_URL=postgres://user:pass@host/db`
+        exampleBad: `DATABASE_URL=postgres://user:pass@host/db?sslmode=require`,
+        exampleGood: `DATABASE_URL=postgres://user:pass@host/db?sslmode=require`
       }
     ],
     takeaway: 'Next.js abstracts away many traditional security concerns, but introduces new attack vectors around Server Actions and hybrid rendering state management. Authentication must be explicitly enforced at the action level, not just via middleware.'
@@ -131,7 +131,13 @@ export default function ReportPage({ params }: Props) {
       <div className="space-y-6">
         <h2 className="text-2xl font-semibold text-white border-b border-white/10 pb-2">Top Findings</h2>
         
-        {data.topFindings.map((finding) => (
+        {data.topFindings.length === 0 ? (
+          <div className="p-12 text-center bg-[#141414] rounded-xl border border-white/10 flex flex-col items-center">
+            <ShieldCheck className="h-12 w-12 text-emerald-500 mb-4" />
+            <h3 className="text-xl font-medium text-white">You're clear to deploy</h3>
+            <p className="text-muted-foreground mt-2">No security findings or anti-patterns detected.</p>
+          </div>
+        ) : data.topFindings.map((finding) => (
           <Card key={finding.id} className="bg-[#0A0A0A] border-white/10">
             <CardHeader>
               <div className="flex justify-between items-start">

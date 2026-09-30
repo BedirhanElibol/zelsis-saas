@@ -2,7 +2,7 @@
 
 import React, { useState } from 'react';
 import { Project, Finding } from '@/data/schema';
-import { ShieldCheck, Palette, Layers, Activity, AlertTriangle, ArrowRight, Play, Copy, CheckCircle2, X } from 'lucide-react';
+import { ShieldCheck, Palette, Layers, Activity, AlertTriangle, ArrowRight, Play, Copy, CheckCircle2, X, Loader2 } from 'lucide-react';
 
 export interface DemoShowcaseBannerProps {
   onFocusQuickAudit?: () => void;
@@ -17,23 +17,29 @@ export const DemoShowcaseBanner: React.FC<DemoShowcaseBannerProps> = ({
 }) => {
   const [repoInput, setRepoInput] = useState('');
   const [isDismissed, setIsDismissed] = useState(false);
+  const [isPending, setIsPending] = useState(false);
 
   if (isDismissed) return null;
 
-  const handleAuditClick = (e: React.FormEvent) => {
+  const handleAuditClick = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (repoInput.trim() && onFocusQuickAudit) {
-      // Pass the repoInput logic outwards if needed, or simply focus the target input and set its value.
-      const targetInput = document.querySelector('input[aria-label="Target repository or deployment URL"]') as HTMLInputElement | null;
-      if (targetInput) {
-        targetInput.value = repoInput;
-        // trigger a change event to update the react state
-        const event = new Event('input', { bubbles: true });
-        targetInput.dispatchEvent(event);
+    setIsPending(true);
+    try {
+      if (repoInput.trim() && onFocusQuickAudit) {
+        // Pass the repoInput logic outwards if needed, or simply focus the target input and set its value.
+        const targetInput = document.querySelector('input[aria-label="Target repository or deployment URL"]') as HTMLInputElement | null;
+        if (targetInput) {
+          targetInput.value = repoInput;
+          // trigger a change event to update the react state
+          const event = new Event('input', { bubbles: true });
+          targetInput.dispatchEvent(event);
+        }
+        await onFocusQuickAudit();
+      } else {
+        if (onFocusQuickAudit) await onFocusQuickAudit();
       }
-      onFocusQuickAudit();
-    } else {
-      if (onFocusQuickAudit) onFocusQuickAudit();
+    } finally {
+      setIsPending(false);
     }
   };
 
@@ -87,15 +93,17 @@ export const DemoShowcaseBanner: React.FC<DemoShowcaseBannerProps> = ({
             type="text"
             placeholder="https://github.com/your-org/your-repo"
             value={repoInput}
+            aria-label="Target repository URL"
             onChange={(e) => setRepoInput(e.target.value)}
-            className="flex-1 bg-[#0A0A0A] border border-white/10 rounded-lg px-4 py-2 text-sm font-mono text-white focus:outline-none focus:border-white/30"
+            className="flex-1 bg-[#0A0A0A] border border-white/10 rounded-lg px-4 py-2 text-sm font-mono text-white focus-visible:ring-2 focus-visible:ring-emerald-500 focus-visible:outline-none"
           />
           <button
             type="submit"
-            className="btn btn-secondary text-xs font-mono font-bold px-4 py-2 rounded-lg border-white/10 hover:bg-white/5 text-white flex items-center gap-1.5 transition-colors shrink-0"
+            disabled={isPending}
+            className="btn btn-secondary text-xs font-mono font-bold px-4 py-2 rounded-lg border-white/10 hover:bg-white/5 text-white flex items-center gap-1.5 transition-colors shrink-0 disabled:opacity-50"
           >
-            <Play size={13} fill="currentColor" />
-            <span>Hızlı Analiz (Quick Scan)</span>
+            {isPending ? <Loader2 className="w-3 h-3 animate-spin" /> : <Play size={13} fill="currentColor" />}
+            <span>{isPending ? 'Starting...' : 'Hızlı Analiz (Quick Scan)'}</span>
           </button>
         </form>
         <span className="text-[10px] text-zinc-400 font-mono ml-auto hidden sm:block">No account required</span>
@@ -229,7 +237,7 @@ ${openFindings.map((f, i) => `${i + 1}. [${f.severity}] ${f.title} (${f.filePath
         <div
           role="button"
           tabIndex={0}
-          className="bg-[#141414] border border-white/10 rounded-xl focus-visible:ring-1 focus-visible:ring-white/20 outline-none"
+          className="bg-[#141414] border border-white/10 rounded-xl focus-visible:ring-2 focus-visible:ring-emerald-500 focus-visible:outline-none"
           style={{ padding: '20px', cursor: 'pointer' }}
           onClick={() => onNavigateTab('security')}
           onKeyDown={(e) => {
@@ -255,7 +263,7 @@ ${openFindings.map((f, i) => `${i + 1}. [${f.severity}] ${f.title} (${f.filePath
         <div
           role="button"
           tabIndex={0}
-          className="bg-[#141414] border border-white/10 rounded-xl focus-visible:ring-1 focus-visible:ring-white/20 outline-none"
+          className="bg-[#141414] border border-white/10 rounded-xl focus-visible:ring-2 focus-visible:ring-emerald-500 focus-visible:outline-none"
           style={{ padding: '20px', cursor: 'pointer' }}
           onClick={() => onNavigateTab('vibepolish')}
           onKeyDown={(e) => {
@@ -281,7 +289,7 @@ ${openFindings.map((f, i) => `${i + 1}. [${f.severity}] ${f.title} (${f.filePath
         <div
           role="button"
           tabIndex={0}
-          className="bg-[#141414] border border-white/10 rounded-xl focus-visible:ring-1 focus-visible:ring-white/20 outline-none"
+          className="bg-[#141414] border border-white/10 rounded-xl focus-visible:ring-2 focus-visible:ring-emerald-500 focus-visible:outline-none"
           style={{ padding: '20px', cursor: 'pointer' }}
           onClick={() => onNavigateTab('aimaster')}
           onKeyDown={(e) => {

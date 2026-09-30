@@ -187,7 +187,7 @@ Enforce strict OWASP Top 10 compliance, eliminate AI design clichés, and provid
         <div className="flex flex-wrap items-center gap-4 text-xs text-[#A1A1AA] font-mono">
           <div className="flex items-center gap-2 bg-white/5 border border-white/10 px-3 py-1.5 rounded-lg">
             <span>Environment:</span>
-            <select aria-label="Environment" className="bg-transparent border-none text-white font-medium focus:outline-none cursor-pointer">
+            <select aria-label="Environment" className="bg-transparent border-none text-white font-medium focus-visible:ring-2 focus-visible:ring-emerald-500 focus-visible:outline-none cursor-pointer">
               <option value="auto">Auto-detect ({safeProject.framework})</option>
               <option value="nextjs">Next.js / React</option>
               <option value="python">Python (FastAPI/Django)</option>

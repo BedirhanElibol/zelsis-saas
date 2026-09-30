@@ -47,19 +47,23 @@ export function WaitlistForm({ source = 'direct', framework = '' }: { source?: s
   }
 
   return (
-    <form onSubmit={handleSubmit} className="flex w-full max-w-sm items-center space-x-2">
-      <Input
-        type="email"
-        placeholder="Enter your email"
-        value={email}
-        onChange={(e: React.ChangeEvent<HTMLInputElement>) => setEmail(e.target.value)}
-        required
-        disabled={loading}
-        className="bg-[#141414] border-white/10 text-white"
-      />
-      <Button type="submit" disabled={loading} className="bg-white text-black hover:bg-gray-200">
-        {loading ? <Loader2 className="h-4 w-4 animate-spin" /> : 'Get Early Access'}
-      </Button>
+    <form onSubmit={handleSubmit} className="flex flex-col w-full max-w-sm gap-2">
+      <div className="flex w-full items-center space-x-2">
+        <Input
+          type="email"
+          placeholder="Enter your email"
+          aria-label="Email address"
+          value={email}
+          onChange={(e: React.ChangeEvent<HTMLInputElement>) => setEmail(e.target.value)}
+          required
+          disabled={loading}
+          className="bg-[#141414] border-white/10 text-white focus-visible:ring-2 focus-visible:ring-emerald-500 focus-visible:outline-none"
+        />
+        <Button type="submit" disabled={loading} className="bg-white text-black hover:bg-gray-200">
+          {loading ? <Loader2 className="h-4 w-4 animate-spin" /> : 'Get Early Access'}
+        </Button>
+      </div>
+      <p className="text-[10px] text-zinc-400">By submitting, you agree to our Privacy Policy and Terms of Service</p>
     </form>
   );
 }

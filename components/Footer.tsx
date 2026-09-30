@@ -68,6 +68,7 @@ export const Footer: React.FC = () => {
           <a href="/privacy" className="hover:text-white transition-colors">Privacy &amp; Cookies</a>
           <a href="/terms" className="hover:text-white transition-colors">Terms of Service</a>
           <a href="/refund" className="hover:text-white transition-colors">Refund Policy</a>
+          <a href="/do-not-sell" className="hover:text-white transition-colors">Do Not Sell or Share My Personal Information</a>
           <button
             type="button"
             onClick={() => {
