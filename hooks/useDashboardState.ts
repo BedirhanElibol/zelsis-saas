@@ -38,6 +38,8 @@ export function useDashboardState() {
   const [isScanning, setIsScanning] = useState<boolean>(false);
   const [inspectingFinding, setInspectingFinding] = useState<Finding | null>(null);
   const [user, setUser] = useState<UserProfile | null>(null);
+  // Only a server-verified Supabase session unlocks the dashboard
+  const [authStatus, setAuthStatus] = useState<'loading' | 'authenticated' | 'unauthenticated'>('loading');
   const authParam = searchParams.get('auth');
   const [isAuthModalOpen, setIsAuthModalOpen] = useState<boolean>(() => {
     if (!authParam) return false;
@@ -121,15 +123,6 @@ export function useDashboardState() {
     repoUrl: string;
     framework?: string;
   }): Promise<{ allowed: boolean; reason?: string; scanId?: string; projectId?: string }> => {
-    const isPlatformAdmin = isPlatformAdminEmail(user?.email);
-    if (isPlatformAdmin) {
-      return {
-        allowed: true,
-        scanId: `admin-scan-${Date.now()}`,
-        projectId: scanDetails.projectId
-      };
-    }
-
     try {
       const { accessToken } = await getActiveUserAuth();
       const headers: Record<string, string> = {
@@ -152,6 +145,10 @@ export function useDashboardState() {
       });
 
       const data = await res.json();
+      if (res.status === 401) {
+        setAuthStatus('unauthenticated');
+        return { allowed: false, reason: data.error || 'Please sign in to run audits.' };
+      }
       if (!res.ok || !data.allowed) {
         return {
           allowed: false,
@@ -300,14 +297,6 @@ export function useDashboardState() {
           localStorage.removeItem('shipguard_selected_project_id');
           localStorage.removeItem('zelsis_projects');
           localStorage.removeItem('zelsis_selected_project_id');
-          if (typeof window !== 'undefined') {
-            for (let i = localStorage.length - 1; i >= 0; i--) {
-              const key = localStorage.key(i);
-              if (key && (key.startsWith('zelsis_user_projects_') || key.startsWith('shipguard_user_projects_'))) {
-                localStorage.removeItem(key);
-              }
-            }
-          }
           const cleanProjects = getBaseProjects();
           setProjects(cleanProjects);
           setSelectedProject(MOCK_PROJECTS[0]);
@@ -372,18 +361,6 @@ export function useDashboardState() {
           currentProjects = currentProjects.filter(
             (p) => p.repoUrl !== 'local' && p.id !== 'proj-zelsis-self' && p.id !== 'proj-shipguard-self'
           );
-        }
-
-        // For Free tier or signed-out users, cap custom projects to at most 1 active repo + starter demo
-        const isFreeTier = !user || user.tier === 'Free';
-        if (isFreeTier) {
-          const customList = currentProjects.filter(
-            (p) => !p.id.startsWith('proj-preset') && p.id !== 'proj-shipguard-self' && p.id !== 'proj-saas-starter'
-          );
-          if (customList.length > 1) {
-            const starter = currentProjects.find((p) => p.id === 'proj-saas-starter') || MOCK_PROJECTS[0];
-            currentProjects = [starter, customList[0]];
-          }
         }
 
         if (currentProjects.length === 0) {

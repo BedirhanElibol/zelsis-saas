@@ -221,7 +221,7 @@ export async function POST(req: NextRequest) {
           const { data: profile } = await client
             .from('profiles')
             .select('id, email, tier, status')
-            .ilike('email', email)
+            .ilike('email', email.replace(/[\\%_]/g, (c) => `\\${c}`))
             .maybeSingle();
 
           if (profile?.id) {

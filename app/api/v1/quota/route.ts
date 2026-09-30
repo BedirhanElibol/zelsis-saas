@@ -117,9 +117,8 @@ export async function GET(req: NextRequest) {
       .eq('id', userId)
       .maybeSingle();
 
-    let planTier: 'Free' | 'Pro' | 'Enterprise' = (profile?.tier as any) || (sub?.plan_tier as any) || 'Free';
+    let planTier: 'Free' | 'Pro' | 'Enterprise' = (sub?.plan_tier as any) || (profile?.tier as any) || 'Free';
     let status = sub?.status || profile?.status || 'active';
-    let monthlyQuota = sub?.monthly_scan_quota ?? (planTier === 'Free' ? FREE_SCAN_LIMIT : 1000);
     let scansUsed = sub?.scans_used_this_month ?? 0;
     let periodEnd = sub?.current_period_end ? new Date(sub.current_period_end) : new Date(Date.now() + 30 * 24 * 60 * 60 * 1000);
 
@@ -129,7 +128,13 @@ export async function GET(req: NextRequest) {
       scansUsed = 0;
       const newEnd = new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString();
       periodEnd = new Date(newEnd);
+      // A paid period that elapsed without a webhook renewal no longer grants paid access
+      if (planTier !== 'Free') {
+        planTier = 'Free';
+        status = 'canceled';
+      }
     }
+    const monthlyQuota = planTier === 'Free' ? FREE_SCAN_LIMIT : (sub?.monthly_scan_quota ?? 1000);
 
     const isUnlimited = planTier !== 'Free';
     const remaining = isUnlimited ? 'Unlimited' : Math.max(0, monthlyQuota - scansUsed);
@@ -194,69 +199,21 @@ export async function POST(req: NextRequest) {
   const ip = getClientIp(req);
   const adminClient = getAdminClient();
 
-  // 1. Handle Anonymous / Guest Scans
+  // 1. Scans require an authenticated account
   if (!user) {
-    const guestRateLimit = await checkRateLimit(req, {
-      maxRequests: 3,
-      windowSeconds: 86400,
-      prefix: `guest-quota-${ip}`
-    });
-
-    if (!guestRateLimit.allowed) {
-      return NextResponse.json(
-        {
-          allowed: false,
-          error: 'Free anonymous scan limit reached for your IP address. Please sign in or create a free account to continue auditing.',
-          scansUsed: 3,
-          scansLimit: 3,
-          remaining: 0
-        },
-        { status: 402 }
-      );
-    }
-
-    if (adminClient && SERVICE_ROLE_KEY && action === 'consume_scan') {
-      try {
-        await adminClient.from('audit_logs').insert({
-          user_id: null,
-          action: 'GUEST_SCAN_EXECUTED',
-          entity_type: 'scan',
-          entity_id: body.repoUrl || 'unknown',
-          metadata: {
-            repoUrl: body.repoUrl,
-            ipAddress: ip,
-            framework: body.framework
-          },
-          ip_address: ip
-        });
-      } catch (logErr) {
-        logger.warn('[Quota API] Guest audit log notice:', logErr);
-      }
-    }
-
-    const guestScansUsed = Math.max(1, guestRateLimit.limit - guestRateLimit.remaining);
-    return NextResponse.json({
-      allowed: true,
-      scansUsed: guestScansUsed,
-      scansLimit: 3,
-      remaining: guestRateLimit.remaining,
-      guest: true
-    });
+    return NextResponse.json(
+      {
+        allowed: false,
+        error: 'Please sign in or create a free account to run audits.',
+        status: 'unauthenticated'
+      },
+      { status: 401 }
+    );
   }
 
   const userId = user.id;
   const userEmail = (user.email || '').toLowerCase().trim();
   const isAdmin = isPlatformAdminEmail(userEmail);
-
-  if (isAdmin) {
-    return NextResponse.json({
-      allowed: true,
-      scansUsed: 0,
-      scansLimit: 'Unlimited',
-      remaining: 'Unlimited',
-      scanId: `scan-${Date.now()}`
-    });
-  }
 
   if (!adminClient) {
     return NextResponse.json({
@@ -282,10 +239,15 @@ export async function POST(req: NextRequest) {
       .eq('id', userId)
       .maybeSingle();
 
-    const planTier: 'Free' | 'Pro' | 'Enterprise' = (profile?.tier as any) || (sub?.plan_tier as any) || 'Free';
+    // Billing period elapsed: Free quota rolls over, unrenewed paid plans fall back to Free
+    const periodElapsed = Boolean(sub?.current_period_end && new Date(sub.current_period_end).getTime() < Date.now());
+    const storedTier: 'Free' | 'Pro' | 'Enterprise' = (sub?.plan_tier as any) || (profile?.tier as any) || 'Free';
+    const planTier: 'Free' | 'Pro' | 'Enterprise' = isAdmin
+      ? 'Enterprise'
+      : (periodElapsed ? 'Free' : storedTier);
     const isFree = planTier === 'Free';
-    const monthlyQuota = sub?.monthly_scan_quota ?? FREE_SCAN_LIMIT;
-    const currentScansUsed = sub?.scans_used_this_month ?? 0;
+    const monthlyQuota = isFree ? FREE_SCAN_LIMIT : (sub?.monthly_scan_quota ?? FREE_SCAN_LIMIT);
+    const currentScansUsed = periodElapsed ? 0 : (sub?.scans_used_this_month ?? 0);
 
     // 3. ACTION: CONSUME_SCAN
     if (action === 'consume_scan') {
@@ -305,12 +267,21 @@ export async function POST(req: NextRequest) {
       }
 
       const newScansUsed = currentScansUsed + 1;
-      if (SERVICE_ROLE_KEY) {
+      if (SERVICE_ROLE_KEY && isFree && sub) {
+        const now = Date.now();
         await adminClient
           .from('subscriptions')
           .update({
+            ...(periodElapsed
+              ? {
+                  plan_tier: 'Free',
+                  status: storedTier === 'Free' ? (sub.status || 'active') : 'canceled',
+                  current_period_start: new Date(now).toISOString(),
+                  current_period_end: new Date(now + 30 * 24 * 60 * 60 * 1000).toISOString()
+                }
+              : {}),
             scans_used_this_month: newScansUsed,
-            updated_at: new Date().toISOString()
+            updated_at: new Date(now).toISOString()
           })
           .eq('user_id', userId);
       }
@@ -324,6 +295,7 @@ export async function POST(req: NextRequest) {
           .from('projects')
           .select('id')
           .eq('id', rawProjectId)
+          .eq('user_id', userId)
           .maybeSingle();
         if (existingProj?.id) {
           targetProjectId = existingProj.id;
@@ -417,7 +389,20 @@ export async function POST(req: NextRequest) {
     // 4. ACTION: COMPLETE_SCAN (Updates final scan metrics)
     if (action === 'complete_scan') {
       const scanId = body.scanId;
-      if (scanId && SERVICE_ROLE_KEY) {
+      const isUuidScan = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(scanId || '');
+      if (isUuidScan && SERVICE_ROLE_KEY) {
+        // Ownership check: only the scan owner may finalize it
+        const { data: ownedScan } = await adminClient
+          .from('scans')
+          .select('id, project_id')
+          .eq('id', scanId)
+          .eq('user_id', userId)
+          .maybeSingle();
+
+        if (!ownedScan) {
+          return NextResponse.json({ error: 'Scan not found' }, { status: 404 });
+        }
+
         await adminClient
           .from('scans')
           .update({
@@ -430,9 +415,9 @@ export async function POST(req: NextRequest) {
             ui_cliche_count: body.uiClicheCount,
             scan_duration_ms: body.scanDurationMs
           })
-          .eq('id', scanId);
+          .eq('id', ownedScan.id);
 
-        if (body.projectId) {
+        if (ownedScan.project_id) {
           await adminClient
             .from('projects')
             .update({
@@ -445,7 +430,8 @@ export async function POST(req: NextRequest) {
               ui_cliche_count: body.uiClicheCount,
               last_scan_at: new Date().toISOString()
             })
-            .eq('id', body.projectId);
+            .eq('id', ownedScan.project_id)
+            .eq('user_id', userId);
         }
 
         await adminClient.from('audit_logs').insert({

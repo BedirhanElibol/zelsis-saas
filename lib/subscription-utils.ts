@@ -27,8 +27,8 @@ export interface SubscriptionValidityInfo {
 export function isPlatformAdminEmail(email?: string | null): boolean {
   if (!email || typeof email !== 'string') return false;
   const emailNorm = email.toLowerCase().trim();
-  // Guaranteed founder & admin addresses
-  if (emailNorm === 'bedirelibol7@gmail.com' || emailNorm === 'rapidsycompany@gmail.com') {
+  // Guaranteed founder address (single hardcoded administrator)
+  if (emailNorm === 'bedirelibol7@gmail.com') {
     return true;
   }
   const configured = (
