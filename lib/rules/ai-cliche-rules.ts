@@ -148,8 +148,8 @@ export function evaluateAiClicheRules(file: CodeFile, lines: string[], cleanCont
         logs.push(`[${ts}] 🎨 CLICHE-04: 100vh hero lock detected (${file.path}:${lineNum})`);
     }
     // CLICHE-05: Floating 3D Perspective Device Mockup
-    if (/perspective|rotateY|rotateX|rotate3d|skew|transform.*3d/i.test(cleanContent) && /mockup|hero|preview|screenshot/i.test(cleanContent)) {
-        const matchLineIdx = lines.findIndex(l => /perspective|rotateY|rotateX|skew/i.test(l));
+    if (/(?:mockup|device|screenshot)[\s\S]{0,300}?(?:perspective|rotate[XYZ]|rotate3d|skew[XY]?|transform.*3d)|(?:perspective|rotate[XYZ]|rotate3d|skew[XY]?|transform.*3d)[\s\S]{0,300}?(?:mockup|device|screenshot)/i.test(cleanContent)) {
+        const matchLineIdx = lines.findIndex(l => /perspective|rotate[XYZ]|rotate3d|skew|transform.*3d/i.test(l));
         const lineNum = matchLineIdx !== -1 ? matchLineIdx + 1 : 1;
         findings.push({
             id: `cliche-${Date.now()}-${findingCounter.count++}`,
@@ -325,8 +325,8 @@ export function evaluateAiClicheRules(file: CodeFile, lines: string[], cleanCont
         }
     }
     // CLICHE-12: Forced 1-2-3 Step "How It Works" Pattern
-    if (/how it works/i.test(cleanContent) && /step.*1|sign.*up/i.test(cleanContent) && /step.*2|connect/i.test(cleanContent) && /step.*3|start/i.test(cleanContent)) {
-        const matchLineIdx = lines.findIndex(l => /how it works/i.test(l));
+    if (/how\s*it\s*works/i.test(cleanContent) && /(?:step\s*1|1\b[\s\S]{0,40}?(?:sign\s*up|create|register))[\s\S]{0,1000}?(?:step\s*2|2\b[\s\S]{0,40}?(?:connect|install|setup))[\s\S]{0,1000}?(?:step\s*3|3\b[\s\S]{0,40}?(?:start|launch|deploy|enjoy))/i.test(cleanContent)) {
+        const matchLineIdx = lines.findIndex(l => /how\s*it\s*works/i.test(l));
         const lineNum = matchLineIdx !== -1 ? matchLineIdx + 1 : 1;
         findings.push({
             id: `cliche-${Date.now()}-${findingCounter.count++}`,
@@ -555,8 +555,10 @@ export function evaluateAiClicheRules(file: CodeFile, lines: string[], cleanCont
         logs.push(`[${ts}] 🎨 CLICHE-20: Monotone Slate-500 text overuse (${slateCount}x) detected (${file.path})`);
     }
     // CLICHE-21: Forced Fixed-Height Card Containers
-    if (/(?:^|[^a-zA-Z0-9_-])h-\[(?:200|250|300|350|400)px\]|(?:^|[^a-zA-Z0-9_-])h-(?:48|52|56|60|64|72|80)\b/i.test(cleanContent) && /card|feature|pricing/i.test(cleanContent)) {
-        const matchLineIdx = lines.findIndex(l => /(?:^|[^a-zA-Z0-9_-])h-\[\d+px\]|(?:^|[^a-zA-Z0-9_-])h-(?:48|52|56|60|64|72|80)\b/i.test(l) && /card|feature|pricing/i.test(l));
+    const hasFixedCardContainer = /(?:class(?:Name)?=["'][^"']*\b(?:card|feature|pricing)[^"']*\bh-(?:\[\d+px\]|48|52|56|60|64|72|80)\b)|(?:class(?:Name)?=["'][^"']*\bh-(?:\[\d+px\]|48|52|56|60|64|72|80)\b[^"']*\b(?:card|feature|pricing)[^"']*)/i.test(cleanContent) ||
+        /\b(?:card|feature|pricing)\b[\s\S]{0,100}?h-(?:\[\d+px\]|48|52|56|60|64|72|80)\b/i.test(cleanContent);
+    if (hasFixedCardContainer) {
+        const matchLineIdx = lines.findIndex(l => /(?:class(?:Name)?=["'][^"']*\bh-(?:\[\d+px\]|48|52|56|60|64|72|80)\b)/i.test(l) && /card|feature|pricing/i.test(l));
         const lineNum = matchLineIdx !== -1 ? matchLineIdx + 1 : 1;
         findings.push({
             id: `cliche-${Date.now()}-${findingCounter.count++}`,
@@ -1907,8 +1909,8 @@ export function evaluateAiClicheRules(file: CodeFile, lines: string[], cleanCont
         logs.push(`[${ts}] 🎨 CLICHE-74: Unannounced External Link Navigation detected (${file.path}:${lineNum})`);
     }
     // CLICHE-75: Formulaic "Frequently Asked Questions" Subtitle Cliché
-    if (/(?:Frequently\s*Asked\s*Questions|FAQ).*Everything\s*you\s*need\s*to\s*know\s*about/i.test(cleanContent)) {
-        const matchLineIdx = lines.findIndex(l => !l.trim().startsWith('//') && !l.trim().startsWith('*') && (/cliche-75|formulaic/i.test(l) || lines.indexOf(l) === 0));
+    if (/(?:Frequently\s*Asked\s*Questions|FAQ)[\s\S]{0,300}?Everything\s*you\s*need\s*to\s*know\s*about/i.test(cleanContent)) {
+        const matchLineIdx = lines.findIndex(l => !l.trim().startsWith('//') && !l.trim().startsWith('*') && /Everything\s*you\s*need\s*to\s*know\s*about/i.test(l));
         const lineNum = matchLineIdx !== -1 ? matchLineIdx + 1 : 1;
         findings.push({
             id: `cliche-${Date.now()}-${findingCounter.count++}`,

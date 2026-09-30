@@ -1,61 +1,52 @@
-# Zelsis SaaS - Landing Page Plan Farkları & Veritabanı Mimarisi Düzenleme Planı
+# Zelsis SaaS - Yüksek Değerli & Ödemeye Değer SaaS/App Kuralları Araştırma ve Entegrasyon Planı
 
-## 1. Görev Özeti & Kapsam
-Landing page üzerinde sunulan planlar (Free, Pro, Enterprise) arasındaki operasyonel limitler, özellik setleri, veritabanı şeması ve arka uç kota denetimleri arasındaki tutarsızlıkların ve potansiyel açıkların (bug) sıfıra indirilmesi.
+## 1. Giriş ve Amaç
+Zelsis'in GitHub repo tarayıcısı, canlı sitelerin aksine projenin tüm kaynak koduna (backend API rotaları, veritabanı şemaları ve migration'lar, ödeme entegrasyonları, LLM/AI çağrıları, arka plan kuyrukları ve auth mekanizmaları) tam erişime sahiptir.
 
----
-
-## 2. Tespit Edilen Tutarsızlıklar ve İnceleme
-
-### A. Landing Page & Arayüz Tutarsızlıkları
-1. **Fiyat Kartları ile Karşılaştırma Tablosu Uyumu:**
-   - `data/pricing-plans.ts` ve `components/ui/pricing.tsx` sadece **Zelsis Pro** ($19/ay) ve **Zelsis Enterprise** ($99/ay) kartlarını gösterirken; `components/saas/ComparisonTable.tsx` ve `components/pricing/TierDetailsModal.tsx` **Free ($0)**, **Pro ($19)** ve **Enterprise ($99)** olarak 3 sütunlu yapı sergilemektedir.
-   - Kullanıcı ilk girişte Free planın sınırlarını net olarak görmeli, "Start Free" çağrısı fiyat kartlarında da şeffaf bir Free kartı ile desteklenmelidir.
-
-2. **Özellik Sınırlarının Kodla Eşleşmesi (Enforcement):**
-   - **Free ($0):**
-     - Aylık 3 tarama hakkı (Strict cap, IP + Kullanıcı hesabı).
-     - 1 adet aktif açık kaynak (Public) proje sınırı (Private repo kilitli).
-     - 1 adet örnek AI düzeltme istemi (Prompt).
-     - PDF Rapor dışa aktarma: Kilitli (Ödeme duvarı modalı açılır).
-     - CI/CD Gate anahtarları: Kilitli.
-   - **Pro ($19/ay | Yıllık $15/ay):**
-     - Sınırsız tarama ve analiz.
-     - Sınırsız Public ve Private repo bağlama.
-     - Sınırsız Claude / Cursor AI düzeltme istemi.
-     - İmzalı Kriptografik PDF Uyumluluk Sertifikası.
-     - GitHub Actions & CI/CD Gate erişimi.
-     - 90 gün denetim geçmişi.
-   - **Enterprise ($99/ay | Yıllık $79/ay):**
-     - Pro'daki her şey + Özel Kurumsal Kural Setleri (Custom Policy Catalog).
-     - Beyaz Etiket (White-Label) Kurumsal PDF & SOC 2 Rapor Paketi.
-     - Çoklu Organizasyon (Multi-Org) Takım ve Rol Yönetimi.
-     - Sınırsız denetim geçmişi ve özel SLA desteği.
-
-### B. Veritabanı (Supabase PostgreSQL) Tutarsızlıkları & Sağlamlaştırma
-1. **Subscriptions & Profiles Tablosu:**
-   - `public.profiles.tier` ve `public.subscriptions.plan_tier` ('Free', 'Pro', 'Enterprise') enum tiplerinin birebir örtüşmesi.
-   - `monthly_scan_quota`: Free için `3`, Pro ve Enterprise için `-1` (veya `999999` - sınırsız).
-   - `scans_used_this_month`: Her fatura dönemi yenilenmesinde otomatik sıfırlanma trigger veya fonksiyonu.
-2. **Kritik RLS Güvenliği:**
-   - `sql/05_rls_tier_protection.sql` ile istemciden gelen doğrudan yetki yükseltme saldırılarının (CWE-285) bloklanması; yalnızca `service_role` anahtarının (Polar Webhook & Auth API) tier güncelleyebilmesi.
+Kullanıcıların Zelsis'e severek ödeme yapması ve "İyi ki Zelsis kullanıyorum, beni felaketten kurtardı" demesi için; teorik/akademik kurallar yerine **SaaS kurucularının ve yazılım ekiplerinin canını yakan, para kaybettiren, veritabanlarını kilitleyen veya müşteri verilerini sızdıran gerçek dünya risklerine** odaklanacağız.
 
 ---
 
-## 3. Ajan Görev Dağılımı (Orchestration Matrix)
+## 2. Araştırma ve Odak Alanları (High-Value Rule Domains)
 
-| Ajan | Odak Alanı | Sorumluluk |
-|------|------------|------------|
-| `database-architect` | PostgreSQL & RLS | Tablo varsayılanları, kota alanları, tier enum doğrulaması ve SQL betiklerinin konsolidasyonu. |
-| `backend-specialist` | API & Quota Gates | `/api/v1/quota`, `/api/v1/subscription/sync` ve `/api/v1/gate-check` rotalarında Free vs Pro vs Enterprise kurallarının eksiksiz çalıştırılması. |
-| `frontend-specialist` | UI & Comparison | `ComparisonTable.tsx`, `pricing.tsx`, `TierDetailsModal.tsx` ve `pricing-plans.ts` arasındaki metin, buton ve limit tutarsızlıklarının giderilmesi. |
-| `test-engineer` | Doğrulama & Derleme | Uçtan uca 108 testin çalıştırılması, test senaryolarına plan sınırlarının eklenmesi ve `npm run build` doğrulaması. |
+### Alan 1: Gelir ve Fatura Kaçakları (Revenue & Payment Protection)
+- **Stripe / Polar / LemonSqueezy Webhook Race Conditions:** Ödeme henüz onaylanmadan veya iptal edildikten sonra lisansın açık kalması, idempotency eksikliği nedeniyle çift iade/çift kredi yükleme.
+- **İstemci Taraflı Fiyat/Plan Manipülasyonu:** Checkout oturumu oluştururken fiyat veya ürün ID'sinin client-side parametreden doğrudan backend'e güvenilerek gönderilmesi.
+- **Eksik Yetki İptali (Revocation Lag):** Aboneliğini iptal eden kullanıcının JWT süresi dolana kadar (7-30 gün) korumalı kaynaklara erişmeye devam etmesi.
+
+### Alan 2: "Denial-of-Wallet" & AI Maliyet Patlamaları (Cloud Cost Defense)
+- **Bağlantı Koptuğunda Devam Eden LLM Çağrıları:** İstemci sekmesini kapattığında Next.js / Node.js sunucusunun OpenAI/Anthropic/Claude API streaming çağrısını `AbortController` (`req.signal`) ile iptal etmemesi ve fatura yazmaya devam etmesi.
+- **Sınırsız Token Tüketim Döngüleri:** Kullanıcı girdilerine `max_tokens` veya karakter/token sınırlandırılması konulmaması, prompt injection ile 128k context'lik maliyet saldırılarına açık bırakılması.
+- **Harcama Öncesi Bakiye/Kota Kontrolü Eksikliği:** AI çağrısı yapılmadan önce kullanıcının veritabanındaki kredi bakiyesinin atomik olarak rezerve edilmemesi (race condition ile eksiye düşme).
+
+### Alan 3: Çok Kiracılı (Multi-Tenant) Veri Sızıntıları (Tenant Isolation & Trust)
+- **Cross-Tenant IDOR Açıkları:** Prisma, Drizzle veya SQL sorgularında yalnızca `WHERE id = $1` kullanılıp `tenant_id` veya `org_id` koşulunun unutulması.
+- **Log ve Telemetriye Sızan Hassas Veriler:** Sentry, PostHog, Axiom veya Datadog loglarına `Authorization` token'ları, API key'leri, Stripe müşteri bilgileri veya kullanıcı PII verilerinin maskelenmeden gitmesi.
+
+### Alan 4: Dağıtım Anında Veritabanı ve Servis Kilitlenmeleri (Zero-Downtime Reliability)
+- **Tehlikeli PostgreSQL Migration'ları:** Canlı tablolara `DEFAULT` değeri olmadan `NOT NULL` kolon ekleme, unindexed foreign key'ler, eşzamanlı indeks oluşturma (`CONCURRENTLY`) yerine tabloyu kitleyen indeksler.
+- **Serverless Soğuk Başlangıç & DB Bağlantı Patlaması (Connection Pool Exhaustion):** Serverless fonksiyonlarda global pooling yapılmaması nedeniyle Supabase / RDS bağlantı limitinin 10 saniyede tükenmesi.
 
 ---
 
-## 4. Uygulama Adımları
+## 3. /orchestrate Faz Planı
 
-1. **Adım 1 (Database):** `sql/` ve `supabase/migrations/` dosyalarını tarayıp plan ve kota yapılarını mükemmel senkronize eden SQL yamasını hazırlamak.
-2. **Adım 2 (Frontend Matrix):** Landing page üzerindeki Fiyatlandırma (`pricing.tsx`) ve Karşılaştırma Tablosunu (`ComparisonTable.tsx`) 3 planlı (Free, Pro, Enterprise) tam uyumlu hale getirmek.
-3. **Adım 3 (Backend Enforcement):** Özel kuralların ve PDF ihracının Free kullanıcılar için kapalı olduğunu ve Pro/Enterprise için açık olduğunu kesinleştirmek.
-4. **Adım 4 (Test & Build):** Tüm testleri (`tests/test_suite.ts`) ve Next.js derlemesini çalıştırmak.
+### Faz 1: Planlama ve Kullanıcı Onayı (Mevcut Aşama)
+- Kullanıcı ile odak noktaları ve hedef kuralların etki alanları üzerinde mutabakat sağlanması (Socratic Gate).
+
+### Faz 2: Çoklu Ajan ile Canlı Piyasa & Topluluk Taraması (`/browser` & Özel Ajanlar)
+- **`browser` Ajanı:** Hacker News, Reddit (r/SaaS, r/webdev), GitHub Security Lab, PostHog/Stripe blogları ve modern SaaS post-mortem raporlarını tarayarak en sık yaşanan felaketleri ve maliyet açıklarını listeler.
+- **`security-auditor` Ajanı:** Taranan bulguları analiz ederek Zelsis için uygulanabilir kural spesifikasyonlarına (CVE, CWE, OWASP 2025, regex/AST deseni, pozitif/negatif kod örnekleri) dönüştürür.
+- **`backend-specialist` Ajanı:** Next.js 15, Node.js, Supabase, Prisma, Drizzle, Stripe ve AI SDK entegrasyonlarına özel somut otomatik düzeltme (auto-fix / Cursor prompt) şablonlarını tasarlar.
+
+### Faz 3: Zelsis Motoruna Entegrasyon ve Doğrulama
+- Seçilen kuralların `lib/rules/` dizinine eklenmesi.
+- Her yeni kural için gerçek dünya test senaryolarının (`tests/`) yazılması.
+- `npm run build` ve lint doğrulamalarının yapılması.
+
+---
+
+## 4. Başarı Kriterleri
+1. Taranan her yeni kuralın arkasında **somut bir maddi kayıp veya güvenlik felaketi senaryosu** olması.
+2. Sıfır false-positive (yanlış alarm) garantisi; derlenmiş kod ile kaynak kodun net ayrılması.
+3. Kullanıcıya bulunan açığın tam olarak **neden para/veri kaybettireceğini** açıklayan ve **1 tıkla düzeltme sağlayan** açıklayıcı geri bildirim sunması.

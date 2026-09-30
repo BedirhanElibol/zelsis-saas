@@ -59,7 +59,7 @@ export const FaqSection: React.FC = () => {
             Frequently Asked Questions
           </h2>
           <p className="text-base sm:text-lg text-[#A1A1AA] leading-relaxed font-sans">
-            Everything you need to know about our zero-retention privacy, CI/CD integration, and release gate standards.
+            Direct technical specifications and answers regarding zero-retention architecture, CI/CD gates, and deterministic verification.
           </p>
         </div>
 
