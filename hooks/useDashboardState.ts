@@ -3,7 +3,7 @@ import { Project, Finding, PlanUsageQuota, UserTier } from '@/data/schema';
 import { MOCK_PROJECTS } from '@/data/mockData';
 import { calculateReadinessScore, calculateGateStatus } from '@/lib/scanner-engine';
 import { UserProfile } from '@/components/auth/AuthModal';
-import { supabaseSignIn, supabaseSignUp, supabaseResetPassword, supabaseSignOut, supabaseGetSession, getSupabase, mapSupabaseUserToProfile, syncUserProfileToSupabase, isPlatformAdminEmail } from '@/lib/supabase';
+import { supabaseSignIn, supabaseSignUp, supabaseResetPassword, supabaseSignOut, resolveVerifiedSession, fetchCloudProjects, getSupabase, mapSupabaseUserToProfile, syncUserProfileToSupabase, isPlatformAdminEmail } from '@/lib/supabase';
 import { purgeZelsisStorage, safeSetStorageItem } from '@/lib/storage';
 import { getActiveUserAuth } from '@/lib/supabase-client';
 import { canAccessLocalAudit } from '@/lib/env-config';
@@ -686,21 +686,8 @@ export function useDashboardState() {
 
     const handleStorageChange = (e: StorageEvent) => {
       if (e.key === 'zelsis_user' || e.key === 'shipguard_user') {
-        try {
-          if (e.newValue) {
-            const parsed = JSON.parse(e.newValue);
-            if (parsed && parsed.isLoggedIn) {
-              setUser(parsed);
-            } else {
-              setUser(null);
-            }
-          } else {
-            setUser(null);
-          }
-        } catch (err) {
-          void err;
-          setUser(null);
-        }
+        // Never trust another tab's cached profile: re-verify against Supabase
+        syncSupabaseSession();
       }
       if (
         !e.key ||
@@ -716,9 +703,44 @@ export function useDashboardState() {
     window.addEventListener('storage', handleStorageChange);
 
     // 2. Sync active Supabase OAuth session with automatic Subscription Sync
+    // Restores the account's saved repositories / live sites from the cloud database
+    const mergeCloudProjects = async (accountEmail: string) => {
+      const cloudProjects = await fetchCloudProjects();
+      if (cloudProjects.length === 0) return;
+      const normalize = (url?: string) => (url || '').toLowerCase().replace(/\/+$/, '').replace(/\.git$/, '').trim();
+
+      setProjects((prev) => {
+        const known = new Set(prev.map((p) => normalize(p.repoUrl)));
+        const additions = cloudProjects.filter((cp) => cp.repoUrl && !known.has(normalize(cp.repoUrl)));
+        if (additions.length === 0) return prev;
+        const next = [...prev.filter((p) => p.id !== MOCK_PROJECTS[0].id), ...additions];
+        const serialized = JSON.stringify(next);
+        safeSetStorageItem('zelsis_projects', serialized);
+        safeSetStorageItem(`zelsis_user_projects_${accountEmail}`, serialized);
+        return next;
+      });
+    };
+
+    const clearUnverifiedSession = () => {
+      setUser(null);
+      setAuthStatus('unauthenticated');
+      localStorage.removeItem('zelsis_user');
+      localStorage.removeItem('shipguard_user');
+      localStorage.removeItem('zelsis_license_key');
+      localStorage.removeItem('shipguard_license_key');
+      localStorage.removeItem('zelsis_projects');
+      localStorage.removeItem('shipguard_projects');
+      setProjects([MOCK_PROJECTS[0]]);
+      setSelectedProject(MOCK_PROJECTS[0]);
+    };
+
     const syncSupabaseSession = async () => {
       try {
-        const { user: supabaseUser, session } = await supabaseGetSession();
+        const { status: verifiedStatus, user: supabaseUser, session } = await resolveVerifiedSession();
+        if (verifiedStatus !== 'authenticated' || !supabaseUser) {
+          clearUnverifiedSession();
+          return;
+        }
         if (supabaseUser) {
           const email = (supabaseUser.email || '').toLowerCase().trim();
           // Platform Administrator Detection (Configured via ADMIN_EMAILS)
@@ -825,15 +847,19 @@ export function useDashboardState() {
           };
 
           setUser(mergedUser);
+          setAuthStatus('authenticated');
           localStorage.setItem('zelsis_user', JSON.stringify(mergedUser));
           localStorage.removeItem('shipguard_user');
 
           if (resolvedTier !== 'Free' && supabaseUser.tier === 'Free' && isPlatformAdmin) {
             syncUserProfileToSupabase(mergedUser).catch(() => {});
           }
+
+          mergeCloudProjects(email).catch(() => {});
         }
       } catch (err) {
         console.warn('[Zelsis Auth] Session sync notice:', err);
+        clearUnverifiedSession();
       }
     };
     syncSupabaseSession();
@@ -985,16 +1011,19 @@ export function useDashboardState() {
             };
 
             setUser(mergedProfile);
+            setAuthStatus('authenticated');
             localStorage.setItem('zelsis_user', JSON.stringify(mergedProfile));
             localStorage.removeItem('shipguard_user');
 
             if (resolvedTier !== 'Free' && profile.tier === 'Free' && isPlatformAdmin) {
               syncUserProfileToSupabase(mergedProfile).catch(() => {});
             }
+
+            if (event === 'SIGNED_IN') {
+              mergeCloudProjects(email).catch(() => {});
+            }
           } else if (event === 'SIGNED_OUT') {
-            setUser(null);
-            localStorage.removeItem('zelsis_user');
-            localStorage.removeItem('shipguard_user');
+            clearUnverifiedSession();
           }
         } catch (listenerErr) {
           console.warn('[Zelsis Auth] State change listener notice:', listenerErr);
@@ -1477,6 +1506,7 @@ export function useDashboardState() {
 
     await supabaseSignOut().catch(() => {});
     setUser(null);
+    setAuthStatus('unauthenticated');
 
     // 2. Reset in-memory projects and selected project to clean demo showcase
     const cleanDemoProjects = [MOCK_PROJECTS[0]];
@@ -1513,6 +1543,7 @@ export function useDashboardState() {
     setInspectingFinding,
     user,
     setUser,
+    authStatus,
     isAuthModalOpen,
     setIsAuthModalOpen,
     authInitialMode,

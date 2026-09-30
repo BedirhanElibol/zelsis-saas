@@ -29,7 +29,7 @@ const ScanHistoryView = dynamic(() => import('@/components/ScanHistoryView').the
 const ProjectSettingsView = dynamic(() => import('@/components/ProjectSettingsView').then(m => m.ProjectSettingsView), { ssr: false });
 const CheckoutView = dynamic(() => import('@/components/checkout/CheckoutView').then(m => m.CheckoutView), { ssr: false });
 import { safeSetStorageItem } from '@/lib/storage';
-import { ShieldCheck, Plus } from 'lucide-react';
+import { ShieldCheck, Plus, Loader2, LogIn } from 'lucide-react';
 import { LifecycleBanner } from '@/components/dashboard/LifecycleBanner';
 import { normalizeRepoUrl, extractRepoDisplayName } from '@/lib/github-api';
 import { ComponentErrorBoundary } from '@/components/common/ComponentErrorBoundary';
@@ -58,6 +58,7 @@ function DashboardContent() {
     setInspectingFinding,
     user,
     setUser,
+    authStatus,
     isAuthModalOpen,
     setIsAuthModalOpen,
     authInitialMode,
@@ -238,6 +239,79 @@ function DashboardContent() {
     });
   };
 
+  const safeSelectedProject: Project = React.useMemo(() => {
+    const candidate = (selectedProject && typeof selectedProject === 'object' && !('nativeEvent' in selectedProject) && selectedProject.id)
+      ? selectedProject
+      : (projects.find((p) => p && typeof p === 'object' && !('nativeEvent' in p) && p.id) || MOCK_PROJECTS[0]);
+    return {
+      ...candidate,
+      name: candidate.name || 'Target Repository',
+      framework: candidate.framework || 'Next.js 15',
+      lastScanAt: candidate.lastScanAt || 'Never audited',
+      readinessScore: typeof candidate.readinessScore === 'number' ? candidate.readinessScore : 100,
+      gateStatus: candidate.gateStatus || 'PASSED',
+      findings: Array.isArray(candidate.findings) ? candidate.findings : [],
+      criticalCount: typeof candidate.criticalCount === 'number' ? candidate.criticalCount : 0,
+      highCount: typeof candidate.highCount === 'number' ? candidate.highCount : 0,
+      mediumCount: typeof candidate.mediumCount === 'number' ? candidate.mediumCount : 0,
+      lowCount: typeof candidate.lowCount === 'number' ? candidate.lowCount : 0,
+      uiClicheCount: typeof candidate.uiClicheCount === 'number' ? candidate.uiClicheCount : 0,
+    };
+  }, [selectedProject, projects]);
+
+  // Auth gate: the dashboard is only usable with a verified Supabase session
+  if (authStatus !== 'authenticated') {
+    return (
+      <div className="min-h-screen bg-[#0A0A0A] text-white flex items-center justify-center p-4 sm:p-6">
+        {authStatus === 'loading' ? (
+          <Loader2 size={28} className="animate-spin text-[#A1A1AA]" aria-label="Verifying session" />
+        ) : (
+          <div className="max-w-md w-full bg-[#141414] border border-white/10 rounded-2xl p-6 sm:p-8 flex flex-col items-center text-center shadow-2xl">
+            <div className="w-14 h-14 rounded-2xl bg-emerald-500/10 border border-emerald-500/30 flex items-center justify-center text-emerald-400 mb-5">
+              <LogIn size={28} />
+            </div>
+            <h2 className="text-xl font-extrabold tracking-tight mb-2">Sign in to continue</h2>
+            <p className="text-xs sm:text-sm text-[#A1A1AA] leading-relaxed mb-6">
+              Your saved repositories, live sites and scan history are tied to your account. Sign in or create a free account to use Zelsis.
+            </p>
+            <div className="flex flex-col sm:flex-row gap-3 w-full">
+              <button
+                onClick={() => {
+                  setAuthInitialMode('signin');
+                  setIsAuthModalOpen(true);
+                }}
+                className="flex-1 py-2.5 px-4 rounded-xl text-xs font-bold font-mono bg-white text-black hover:bg-neutral-200 transition-all"
+              >
+                Sign In
+              </button>
+              <button
+                onClick={() => {
+                  setAuthInitialMode('signup');
+                  setIsAuthModalOpen(true);
+                }}
+                className="flex-1 py-2.5 px-4 rounded-xl text-xs font-bold font-mono border border-white/10 text-white hover:bg-white/5 transition-all"
+              >
+                Create Free Account
+              </button>
+            </div>
+            <button
+              onClick={() => router.push('/')}
+              className="mt-4 text-xs text-[#A1A1AA] hover:text-white transition-colors"
+            >
+              Back to homepage
+            </button>
+          </div>
+        )}
+        <AuthModal
+          isOpen={isAuthModalOpen}
+          onClose={() => setIsAuthModalOpen(false)}
+          onLoginSuccess={() => setIsAuthModalOpen(false)}
+          initialMode={authInitialMode}
+        />
+      </div>
+    );
+  }
+
   if (projects.length === 0) {
     const handleRestoreDemoShowcase = () => {
       const demoProject = MOCK_PROJECTS[0];
@@ -300,26 +374,6 @@ function DashboardContent() {
       </div>
     );
   }
-
-  const safeSelectedProject: Project = React.useMemo(() => {
-    const candidate = (selectedProject && typeof selectedProject === 'object' && !('nativeEvent' in selectedProject) && selectedProject.id)
-      ? selectedProject
-      : (projects.find((p) => p && typeof p === 'object' && !('nativeEvent' in p) && p.id) || MOCK_PROJECTS[0]);
-    return {
-      ...candidate,
-      name: candidate.name || 'Target Repository',
-      framework: candidate.framework || 'Next.js 15',
-      lastScanAt: candidate.lastScanAt || 'Never audited',
-      readinessScore: typeof candidate.readinessScore === 'number' ? candidate.readinessScore : 100,
-      gateStatus: candidate.gateStatus || 'PASSED',
-      findings: Array.isArray(candidate.findings) ? candidate.findings : [],
-      criticalCount: typeof candidate.criticalCount === 'number' ? candidate.criticalCount : 0,
-      highCount: typeof candidate.highCount === 'number' ? candidate.highCount : 0,
-      mediumCount: typeof candidate.mediumCount === 'number' ? candidate.mediumCount : 0,
-      lowCount: typeof candidate.lowCount === 'number' ? candidate.lowCount : 0,
-      uiClicheCount: typeof candidate.uiClicheCount === 'number' ? candidate.uiClicheCount : 0,
-    };
-  }, [selectedProject, projects]);
 
   return (
     <AppShell
