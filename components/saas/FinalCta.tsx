@@ -10,7 +10,7 @@ export const FinalCta: React.FC = () => {
   return (
     <section className="py-24 sm:py-32 px-4 sm:px-6 lg:px-12 bg-[#0A0A0A] relative overflow-hidden">
       {/* Ambient background glow */}
-      <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-full max-w-[600px] min-h-[300px] aspect-[2/1] bg-white/[0.03] blur-[140px] rounded-full pointer-events-none" />
+      <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-full max-w-[600px] min-h-[20rem] aspect-[2/1] bg-white/[0.03] blur-[140px] rounded-full pointer-events-none" />
 
       <div className="max-w-5xl mx-auto rounded-3xl border border-white/20 bg-gradient-to-b from-[#141414] to-[#0E0E10] p-8 sm:p-16 shadow-2xl relative z-10 flex flex-col items-center text-center">
         {/* Release Status Badge */}
@@ -49,7 +49,7 @@ export const FinalCta: React.FC = () => {
         </div>
 
         {/* Footnote */}
-        <div className="flex flex-wrap items-center justify-center gap-6 sm:gap-8 mt-8 text-xs font-mono text-zinc-500">
+        <div className="flex flex-wrap items-center justify-center gap-6 sm:gap-8 mt-8 text-xs font-mono text-zinc-400">
           <span>Instant Self-Serve Setup</span>
           <span>100% In-Memory Privacy</span>
           <span>Comprehensive Rule Taxonomies</span>

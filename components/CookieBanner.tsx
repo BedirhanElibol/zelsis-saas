@@ -5,6 +5,17 @@ import Link from 'next/link';
 import { Cookie, X } from 'lucide-react';
 import { updateConsentMode } from '@/components/analytics/AnalyticsScripts';
 
+export function reopenConsent() {
+  if (typeof window !== 'undefined') {
+    window.dispatchEvent(new CustomEvent('zelsis:reopenConsent'));
+  }
+}
+
+export function cookiePreferences(): string {
+  if (typeof window === 'undefined') return 'default';
+  return localStorage.getItem('zelsis_cookie_consent') || 'default';
+}
+
 export const CookieBanner: React.FC = () => {
   const [showBanner, setShowBanner] = useState(false);
 
@@ -15,6 +26,13 @@ export const CookieBanner: React.FC = () => {
     } else if (consent === 'accepted') {
       updateConsentMode(true);
     }
+
+    const handleReopen = () => {
+      setShowBanner(true);
+    };
+
+    window.addEventListener('zelsis:reopenConsent', handleReopen);
+    return () => window.removeEventListener('zelsis:reopenConsent', handleReopen);
   }, []);
 
   const handleAccept = () => {

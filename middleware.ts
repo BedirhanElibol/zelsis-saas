@@ -116,6 +116,13 @@ export function middleware(req: NextRequest) {
       response.headers.set('Access-Control-Allow-Credentials', 'true');
     }
 
+    // GW-05: Attach standard API Deprecation and Sunset announcements for v1 endpoints
+    if (pathname.startsWith('/api/v1/')) {
+      response.headers.set('Deprecation', '@1798761600');
+      response.headers.set('Sunset', 'Fri, 01 Jan 2027 00:00:00 GMT');
+      response.headers.set('Link', '<https://zelsis.com/docs/api/v1>; rel="deprecation"');
+    }
+
     return applyCanonicalSecurityHeaders(response);
   }
 

@@ -4,6 +4,7 @@ import React, { useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { X, ShieldAlert, Zap, ArrowRight } from 'lucide-react';
 import { useRouter } from 'next/navigation';
+import { RULES_CATALOG } from '@/data/mockData';
 
 interface QuotaLimitModalProps {
   isOpen: boolean;
@@ -85,7 +86,7 @@ export const QuotaLimitModal: React.FC<QuotaLimitModalProps> = ({
             </div>
             <ul className="space-y-1.5 text-zinc-400 text-[11px] pl-5 list-disc">
               <li><strong className="text-zinc-200">Unlimited</strong> manual &amp; automated repository audits</li>
-              <li><strong className="text-zinc-200">All 1,450+</strong> deep production release rules (OWASP, Docker, Cloud)</li>
+              <li><strong className="text-zinc-200">{RULES_CATALOG.length}+ verified production rules (OWASP, Docker, Cloud)</strong></li>
               <li><strong className="text-zinc-200">Automated GitHub Actions PR Bot</strong> &amp; CI/CD release gate</li>
               <li><strong className="text-zinc-200">Private repository</strong> inspection with your GitHub PAT</li>
             </ul>

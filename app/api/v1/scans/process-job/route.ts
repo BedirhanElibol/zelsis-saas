@@ -159,7 +159,17 @@ export async function POST(req: NextRequest) {
           progress_percent: 0,
           error_message: 'GitHub API rate limit reached. Add a Personal Access Token (PAT) in Settings.'
         });
-        return NextResponse.json({ error: 'GitHub rate limit exceeded' }, { status: 429 });
+        return NextResponse.json(
+          { error: 'GitHub rate limit exceeded' },
+          { 
+            status: 429,
+            headers: {
+              'Retry-After': '60',
+              'Deprecation': 'true',
+              'Sunset': 'Fri, 01 Jan 2027 00:00:00 GMT'
+            }
+          }
+        );
       }
 
       if (liveData?.error === 'REPO_NOT_FOUND' || liveData?.error === 'EMPTY_REPOSITORY') {

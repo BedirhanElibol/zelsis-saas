@@ -64,7 +64,7 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
     return {
       ...p,
       name: p.name || 'Target Repository',
-      framework: p.framework || 'Next.js 15',
+      framework: p.framework || 'Polyglot Web App',
       lastScanAt: p.lastScanAt || 'Never audited',
       readinessScore: typeof p.readinessScore === 'number' ? p.readinessScore : 100,
       gateStatus: p.gateStatus || 'PASSED',
@@ -151,8 +151,8 @@ Enforce strict OWASP Top 10 compliance, eliminate AI design clichés, and provid
       </ComponentErrorBoundary>
 
       {/* Swiss Navigation Tabs Bar */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-white/10 pb-3">
-        <div className="flex items-center gap-1.5 p-1 bg-[#141414] border border-white/10 rounded-xl w-fit">
+      <div className="flex flex-col xl:flex-row xl:items-center justify-between gap-4 border-b border-white/10 pb-3">
+        <div className="flex flex-wrap items-center gap-1.5 p-1 bg-[#141414] border border-white/10 rounded-xl w-fit">
           <button
             onClick={() => setActiveTab('findings')}
             className={`swiss-tab ${activeTab === 'findings' ? 'swiss-tab-active' : ''}`}
@@ -184,8 +184,21 @@ Enforce strict OWASP Top 10 compliance, eliminate AI design clichés, and provid
           </button>
         </div>
 
-        <div className="flex items-center gap-4 text-xs text-[#A1A1AA] font-mono">
-          <span>Framework: <strong className="text-white font-medium">{safeProject.framework}</strong></span>
+        <div className="flex flex-wrap items-center gap-4 text-xs text-[#A1A1AA] font-mono">
+          <div className="flex items-center gap-2 bg-white/5 border border-white/10 px-3 py-1.5 rounded-lg">
+            <span>Environment:</span>
+            <select aria-label="Environment" className="bg-transparent border-none text-white font-medium focus:outline-none cursor-pointer">
+              <option value="auto">Auto-detect ({safeProject.framework})</option>
+              <option value="nextjs">Next.js / React</option>
+              <option value="python">Python (FastAPI/Django)</option>
+              <option value="go">Go (Gin/Fiber)</option>
+              <option value="ruby">Ruby on Rails</option>
+              <option value="php">PHP (Laravel)</option>
+              <option value="java">Java (Spring Boot)</option>
+              <option value="dotnet">.NET / C#</option>
+              <option value="mobile">React Native / Flutter</option>
+            </select>
+          </div>
           <span>Last Scan: <strong className="text-white font-medium">{safeProject.lastScanAt}</strong></span>
         </div>
       </div>

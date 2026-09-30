@@ -16,7 +16,7 @@ export const ComplianceAuditView: React.FC<ComplianceAuditViewProps> = ({
 }) => {
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedCategory, setSelectedCategory] = useState<string>('ALL');
-  const [copiedId, setCopiedId] = useState<number | null>(null);
+  const [copiedId, setCopiedId] = useState<string | number | null>(null);
 
   const categories = [
     'ALL',
@@ -88,7 +88,7 @@ export const ComplianceAuditView: React.FC<ComplianceAuditViewProps> = ({
             placeholder="Search rules, legal frameworks (GDPR, CCPA), or penalties..."
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
-            className="bg-transparent border-none outline-none focus-visible:ring-1 focus-visible:ring-white/20 text-[#EDEDED] w-full text-xs font-mono placeholder:text-zinc-500 rounded"
+            className="bg-transparent border-none outline-none focus-visible:ring-1 focus-visible:ring-white/20 text-[#EDEDED] w-full text-xs font-mono placeholder:text-zinc-400 rounded"
           />
         </div>
 

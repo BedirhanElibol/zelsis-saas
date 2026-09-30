@@ -197,11 +197,11 @@ export const FindingDetailModal: React.FC<FindingDetailModalProps> = ({
               </h2>
               <div className="text-xs font-mono text-emerald-400/90 flex items-center gap-2 flex-wrap">
                 <span className="text-zinc-300 font-bold">{finding.filePath}</span>
-                <span className="text-zinc-500">·</span>
+                <span className="text-zinc-400">·</span>
                 <span className="bg-white/5 px-2 py-0.5 rounded text-zinc-300 font-bold border border-white/10">
                   Line {finding.lineRange}
                 </span>
-                <span className="text-zinc-500">·</span>
+                <span className="text-zinc-400">·</span>
                 <span className="text-zinc-400 capitalize">{(finding.status || 'OPEN').toLowerCase()}</span>
               </div>
             </div>
@@ -266,7 +266,7 @@ export const FindingDetailModal: React.FC<FindingDetailModalProps> = ({
                       type="button"
                       onClick={() => setDiffViewMode('split')}
                       className={`px-2 py-0.5 rounded text-[0.68rem] font-mono flex items-center gap-1 transition-all cursor-pointer ${
-                        diffViewMode === 'split' ? 'bg-white/15 text-white font-bold' : 'text-zinc-500 hover:text-zinc-300'
+                        diffViewMode === 'split' ? 'bg-white/15 text-white font-bold' : 'text-zinc-400 hover:text-zinc-300'
                       }`}
                     >
                       <Split size={11} />
@@ -276,7 +276,7 @@ export const FindingDetailModal: React.FC<FindingDetailModalProps> = ({
                       type="button"
                       onClick={() => setDiffViewMode('unified')}
                       className={`px-2 py-0.5 rounded text-[0.68rem] font-mono flex items-center gap-1 transition-all cursor-pointer ${
-                        diffViewMode === 'unified' ? 'bg-white/15 text-white font-bold' : 'text-zinc-500 hover:text-zinc-300'
+                        diffViewMode === 'unified' ? 'bg-white/15 text-white font-bold' : 'text-zinc-400 hover:text-zinc-300'
                       }`}
                     >
                       <AlignJustify size={11} />
@@ -318,7 +318,7 @@ export const FindingDetailModal: React.FC<FindingDetailModalProps> = ({
                     <div className="bg-[#0A0A0C] border border-red-500/20 rounded-xl p-3 flex flex-col gap-2">
                       <div className="flex items-center justify-between text-[0.68rem] font-bold text-red-400 uppercase tracking-wider border-b border-red-500/10 pb-1.5">
                         <span>Current Vulnerable Code</span>
-                        <span className="text-zinc-500">Line {finding.lineRange}</span>
+                        <span className="text-zinc-400">Line {finding.lineRange}</span>
                       </div>
                       <pre className="m-0 text-[0.72rem] text-red-200/90 whitespace-pre-wrap leading-relaxed overflow-x-auto">
                         {cleanSnippet}
@@ -354,7 +354,7 @@ export const FindingDetailModal: React.FC<FindingDetailModalProps> = ({
                                   : isDel
                                   ? 'bg-red-500/15 text-red-300 border-l-2 border-red-500'
                                   : isHdr
-                                  ? 'text-zinc-500 font-bold select-none'
+                                  ? 'text-zinc-400 font-bold select-none'
                                   : 'text-zinc-300'
                               }`}
                             >
@@ -364,8 +364,8 @@ export const FindingDetailModal: React.FC<FindingDetailModalProps> = ({
                         })
                       ) : (
                         <>
-                          <div className="text-zinc-500 select-none">--- a/{finding.filePath}</div>
-                          <div className="text-zinc-500 select-none">+++ b/{finding.filePath}</div>
+                          <div className="text-zinc-400 select-none">--- a/{finding.filePath}</div>
+                          <div className="text-zinc-400 select-none">+++ b/{finding.filePath}</div>
                           <div className="text-zinc-600 select-none">@@ -{finding.lineRange} +{finding.lineRange} @@</div>
                           {cleanSnippet.split('\n').map((line: string, idx: number) => (
                             <div
@@ -475,7 +475,7 @@ export const FindingDetailModal: React.FC<FindingDetailModalProps> = ({
                 <span>Verification &amp; Reproduction Evidence:</span>
               </div>
               {cleanSteps.length === 0 ? (
-                <p className="text-xs text-zinc-500 bg-[#141416] border border-white/5 rounded-xl p-3.5">
+                <p className="text-xs text-zinc-400 bg-[#141416] border border-white/5 rounded-xl p-3.5">
                   Automated AST rule trigger. No manual reproduction steps required.
                 </p>
               ) : (

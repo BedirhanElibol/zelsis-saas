@@ -15,6 +15,7 @@ import { safeString, safeLower, safeReplace, safeTrim } from '@/lib/safe-utils';
 import { checkScanQuota, isPrivateRepoAllowed } from '@/lib/quota-manager';
 import { getSupabase } from '@/lib/supabase';
 import { getActiveUserAuth } from '@/lib/supabase-client';
+import { logger } from '@/lib/logger';
 
 interface ScanRunnerViewProps {
   project: Project;
@@ -64,7 +65,7 @@ export const ScanRunnerView: React.FC<ScanRunnerViewProps> = ({
   const [countdownSeconds, setCountdownSeconds] = useState<number>(3);
   const [scanFailureReason, setScanFailureReason] = useState<string | null>(null);
   const [isPrivateTokenModalOpen, setIsPrivateTokenModalOpen] = useState<boolean>(false);
-  const [activeGithubToken, setActiveGithubToken] = useState<string | undefined>((project as any).githubToken);
+  const [activeGithubToken, setActiveGithubToken] = useState<string | undefined>(project.githubToken);
   const [scanRunCount, setScanRunCount] = useState<number>(0);
   const terminalLogsRef = useRef<HTMLDivElement>(null);
   const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
@@ -74,7 +75,7 @@ export const ScanRunnerView: React.FC<ScanRunnerViewProps> = ({
   const hasConsumedQuotaRef = useRef(false);
   const scanIdRef = useRef<string | null>(null);
   const activeJobIdRef = useRef<string | null>(null);
-  const activeChannelRef = useRef<any>(null);
+  const activeChannelRef = useRef<{ unsubscribe: () => void } | null>(null);
 
   useEffect(() => {
     onCompleteScanRef.current = onCompleteScan;
@@ -125,7 +126,9 @@ export const ScanRunnerView: React.FC<ScanRunnerViewProps> = ({
           lowCount: scanResult.lowCount,
           uiClicheCount: scanResult.uiClicheCount,
           scanDurationMs: elapsedSeconds * 1000
-        }).catch(() => {});
+        }).catch((telemetryErr) => {
+          logger.debug('[ScanRunnerView] Telemetry error notice:', telemetryErr);
+        });
       }
       onCompleteScanRef.current(scanResult);
     }
@@ -185,7 +188,7 @@ export const ScanRunnerView: React.FC<ScanRunnerViewProps> = ({
         }
       }
 
-      const targetRepoUrl = (project?.repoUrl || (project as any)?.targetUrl || '').trim();
+      const targetRepoUrl = (project?.repoUrl || '').trim();
       if (!targetRepoUrl || targetRepoUrl === 'undefined') {
         if (!isCancelled) {
           setScanFailureReason('Target repository URL is missing or invalid.');
@@ -203,7 +206,7 @@ export const ScanRunnerView: React.FC<ScanRunnerViewProps> = ({
         canAccessLocalAudit();
       const isWebTarget = isValidWebUrl(targetRepoUrl);
 
-      let effectiveToken = activeGithubToken || (project as any).githubToken;
+      let effectiveToken = activeGithubToken || project.githubToken;
       if (!effectiveToken && typeof window !== 'undefined') {
         try {
           effectiveToken =
@@ -212,9 +215,11 @@ export const ScanRunnerView: React.FC<ScanRunnerViewProps> = ({
           try {
             localStorage.removeItem('zelsis_github_token');
             localStorage.removeItem('github_token');
-          } catch {}
-        } catch {
-          // Sandboxed storage fallback
+          } catch (storageErr) {
+            logger.debug('[ScanRunnerView] LocalStorage cleanup notice:', storageErr);
+          }
+        } catch (sessionErr) {
+          logger.debug('[ScanRunnerView] SessionStorage access notice:', sessionErr);
         }
       }
 
@@ -224,7 +229,9 @@ export const ScanRunnerView: React.FC<ScanRunnerViewProps> = ({
         const stepIntervalMs = 25;
 
         if (typeof window !== 'undefined' && 'Notification' in window && Notification.permission === 'default') {
-          Notification.requestPermission().catch(() => {});
+          Notification.requestPermission().catch((notifErr) => {
+            logger.debug('[ScanRunnerView] Notification permission notice:', notifErr);
+          });
         }
 
         intervalRef.current = setInterval(() => {
@@ -350,10 +357,11 @@ export const ScanRunnerView: React.FC<ScanRunnerViewProps> = ({
           const queueData = await queueRes.json();
           dispatchedJobId = queueData.jobId || null;
         }
-      } catch (queueDispatchErr: any) {
+      } catch (queueDispatchErr: unknown) {
+        const queueErrMsg = queueDispatchErr instanceof Error ? queueDispatchErr.message : 'Proceeding directly';
         setLogs((prev) => [
           ...prev,
-          `[${new Date().toLocaleTimeString()}] [NOTICE] Async queue worker dispatch notice: ${queueDispatchErr?.message || 'Proceeding directly'}.`
+          `[${new Date().toLocaleTimeString()}] [NOTICE] Async queue worker dispatch notice: ${queueErrMsg}.`
         ]);
       }
 
@@ -369,11 +377,24 @@ export const ScanRunnerView: React.FC<ScanRunnerViewProps> = ({
 
         let hasFinishedProcessing = false;
 
-        const handleJobStateUpdate = (job: any) => {
+        interface ScanJobUpdate {
+          progress_percent?: number;
+          total_files?: number;
+          current_phase?: string;
+          current_file?: string;
+          status?: string;
+          result?: ScanResult;
+          result_data?: ScanResult;
+          readiness_score?: number;
+          gate_status?: 'PASSED' | 'FAILED' | 'WARNING';
+          error_message?: string;
+        }
+
+        const handleJobStateUpdate = (job: ScanJobUpdate) => {
           if (isCancelled || hasFinishedProcessing || !job) return;
 
           if (typeof job.progress_percent === 'number' && job.progress_percent > 0) {
-            setProgress((prev) => Math.max(prev, job.progress_percent));
+            setProgress((prev) => Math.max(prev, job.progress_percent!));
           }
 
           if (typeof job.total_files === 'number' && job.total_files > 0) {
@@ -412,15 +433,6 @@ export const ScanRunnerView: React.FC<ScanRunnerViewProps> = ({
               lowCount: 0,
               uiClicheCount: 0,
               findings: [],
-              metrics: {
-                testCoverage: 90,
-                typeErrors: 0,
-                lintWarnings: 0,
-                owaspViolations: 0,
-                dependencyVulnerabilities: 0,
-                bundleSizeKb: 145,
-                buildDurationSec: 2.2
-              },
               logs: [`[${new Date().toLocaleTimeString()}] [COMPLETE] Enterprise Async Scan Engine completed successfully.`]
             };
 
@@ -508,8 +520,8 @@ export const ScanRunnerView: React.FC<ScanRunnerViewProps> = ({
                 handleJobStateUpdate(pollData.job);
               }
             }
-          } catch {
-            // Non-blocking network jitter
+          } catch (pollErr) {
+            logger.debug('[ScanRunnerView] Polling jitter notice:', pollErr);
           }
         }, 1500);
 
@@ -528,7 +540,7 @@ export const ScanRunnerView: React.FC<ScanRunnerViewProps> = ({
         const webData = await fetchWebsiteAuditData(project.repoUrl, controller.signal);
 
         // Check for Cloudflare bot challenge on web deployment target
-        if (webData?.error === 'CLOUDFLARE_BOT_PROTECTION' || (webData as any)?.error === 'CLOUDFLARE_BOT_PROTECTION') {
+        if (webData?.error === 'CLOUDFLARE_BOT_PROTECTION') {
           if (!isCancelled) {
             setScanFailureReason(`Automated audit blocked by Cloudflare Bot Protection on "${project.repoUrl}". Disable bot challenge for scanner user-agents or run audit against a staging endpoint.`);
             setLogs((prev) => [
@@ -800,7 +812,7 @@ export const ScanRunnerView: React.FC<ScanRunnerViewProps> = ({
 
   const handleSaveTokenAndScan = (newToken: string) => {
     setActiveGithubToken(newToken);
-    (project as any).githubToken = newToken;
+    project.githubToken = newToken;
     setIsPrivateTokenModalOpen(false);
     setIsFinished(false);
     setProgress(0);
@@ -856,7 +868,9 @@ export const ScanRunnerView: React.FC<ScanRunnerViewProps> = ({
               .from('scan_jobs')
               .update({ status: 'CANCELLED', current_phase: 'Scan cancelled by user' })
               .eq('id', activeJobIdRef.current)
-          ).catch(() => {});
+          ).catch((cancelErr) => {
+            logger.debug('[ScanRunnerView] Abort job update notice:', cancelErr);
+          });
         }
       }
       setIsFinished(true);

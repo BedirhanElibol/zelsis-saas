@@ -220,7 +220,7 @@ export function evaluateZeroTrustRules(file: CodeFile, lines: string[], cleanCon
         logs.push(`[${ts}] 🛡️ HIGH: ZERO-AUTH-08 finding in ${file.path}:${lineNum}`);
     }
     // ZERO-AUTH-09: Session Fixation Vulnerability on Login State Transition
-    if (/handleLoginSuccess/i.test(cleanContent) && !/regenerateSession|destroyOldSession/i.test(cleanContent)) {
+    if (!lowerPath.endsWith('.tsx') && !lowerPath.endsWith('.jsx') && /handleLoginSuccess/i.test(cleanContent) && !/regenerateSession|destroyOldSession/i.test(cleanContent)) {
         const matchLineIdx = lines.findIndex(l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('*') && (/zero-auth-09|session/i.test(l) || lines.indexOf(l) === 0));
         const lineNum = matchLineIdx !== -1 ? matchLineIdx + 1 : 1;
         findings.push({

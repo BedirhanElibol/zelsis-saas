@@ -48,3 +48,14 @@ scratch/
 patch-hostname.js
 supabase/.temp/
 
+
+# AI and Internal Files
+.agent/
+scratch/
+*.pdf
+ai-release-gate-saas-master-prompt.md
+frontend-slop-refactor-and-rules.md
+ZELSIS_MASTER_SECURITY_AUDIT_REPORT.md
+implementation_plan.md
+task.md
+walkthrough.md

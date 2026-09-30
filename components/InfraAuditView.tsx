@@ -16,7 +16,7 @@ export const InfraAuditView: React.FC<InfraAuditViewProps> = ({
 }) => {
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedCategory, setSelectedCategory] = useState<string>('ALL');
-  const [copiedId, setCopiedId] = useState<number | null>(null);
+  const [copiedId, setCopiedId] = useState<string | number | null>(null);
 
   const categories = [
     'ALL',
@@ -96,7 +96,7 @@ export const InfraAuditView: React.FC<InfraAuditViewProps> = ({
             placeholder="Search rules, stacks (PostgreSQL, MySQL, MongoDB, Redis, SQLite, Docker), or categories..."
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
-            className="bg-transparent border-none outline-none focus-visible:ring-1 focus-visible:ring-white/20 text-[#EDEDED] w-full text-xs font-mono placeholder:text-zinc-500 rounded"
+            className="bg-transparent border-none outline-none focus-visible:ring-1 focus-visible:ring-white/20 text-[#EDEDED] w-full text-xs font-mono placeholder:text-zinc-400 rounded"
           />
         </div>
 
@@ -128,7 +128,7 @@ export const InfraAuditView: React.FC<InfraAuditViewProps> = ({
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           {filteredRules.map((rule) => {
           const matchingFindings = findings.filter(
-            (f) => (f.ruleId === rule.id || f.ruleId === rule.id - 3000) && f.status === 'OPEN'
+            (f) => (f.ruleId === rule.id || (typeof rule.id === 'number' && f.ruleId === rule.id - 3000)) && f.status === 'OPEN'
           );
           const hasOpenViolation = matchingFindings.length > 0;
 
@@ -178,7 +178,7 @@ export const InfraAuditView: React.FC<InfraAuditViewProps> = ({
 
                 {rule.sampleDiff && (
                   <div className="bg-black/50 border border-white/5 rounded-lg p-2.5 mb-4 overflow-x-auto font-mono text-[11px]">
-                    <span className="text-[10px] text-zinc-500 block mb-1">Standard Patch Preview:</span>
+                    <span className="text-[10px] text-zinc-400 block mb-1">Standard Patch Preview:</span>
                     <pre className="text-emerald-400 m-0 leading-tight">{rule.sampleDiff}</pre>
                   </div>
                 )}

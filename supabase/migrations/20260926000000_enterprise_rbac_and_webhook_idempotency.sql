@@ -18,19 +18,27 @@ ALTER TABLE public.webhook_events ENABLE ROW LEVEL SECURITY;
 DROP POLICY IF EXISTS "Service role manages webhook events" ON public.webhook_events;
 CREATE POLICY "Service role manages webhook events" ON public.webhook_events
     FOR ALL TO service_role
-    USING (true)
-    WITH CHECK (true);
+    USING (current_user = 'service_role')
+    WITH CHECK (current_user = 'service_role');
 
 -- 2. Enterprise RBAC Roles on Profiles
 DO $$
 BEGIN
-    IF NOT EXISTS (SELECT 1 FROM pg_type WHERE typname = 'app_role') THEN
-        CREATE TYPE app_role AS ENUM ('member', 'auditor', 'security_lead', 'admin', 'super_admin');
+    -- Add missing values to existing user_role enum
+    IF NOT EXISTS (SELECT 1 FROM pg_enum WHERE enumtypid = (SELECT oid FROM pg_type WHERE typname = 'user_role') AND enumlabel = 'super_admin') THEN
+        ALTER TYPE public.user_role ADD VALUE 'super_admin';
+    END IF;
+    IF NOT EXISTS (SELECT 1 FROM pg_enum WHERE enumtypid = (SELECT oid FROM pg_type WHERE typname = 'user_role') AND enumlabel = 'security_lead') THEN
+        ALTER TYPE public.user_role ADD VALUE 'security_lead';
+    END IF;
+    IF NOT EXISTS (SELECT 1 FROM pg_enum WHERE enumtypid = (SELECT oid FROM pg_type WHERE typname = 'user_role') AND enumlabel = 'member') THEN
+        ALTER TYPE public.user_role ADD VALUE 'member';
     END IF;
 END $$;
 
+-- If for some reason the column isn't there (though it should be from init migration)
 ALTER TABLE public.profiles
-ADD COLUMN IF NOT EXISTS role app_role NOT NULL DEFAULT 'member';
+ADD COLUMN IF NOT EXISTS role public.user_role NOT NULL DEFAULT 'member';
 
 CREATE INDEX IF NOT EXISTS idx_profiles_role ON public.profiles(role);
 
@@ -44,7 +52,7 @@ AS $$
     SELECT EXISTS (
         SELECT 1 FROM public.profiles
         WHERE id = auth.uid()
-        AND role IN ('admin', 'super_admin')
+        AND role::TEXT IN ('admin', 'super_admin')
     );
 $$;
 
@@ -63,6 +71,7 @@ BEGIN
     INTO v_tier, v_quota, v_used
     FROM public.subscriptions
     WHERE user_id = p_user_id
+    ORDER BY user_id
     FOR UPDATE; -- Row-level lock prevents race conditions
 
     IF NOT FOUND THEN

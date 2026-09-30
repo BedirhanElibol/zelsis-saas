@@ -104,7 +104,7 @@ export const ConnectTargetModal: React.FC<ConnectTargetModalProps> = ({
       name: `${displayName} (${targetType === 'GITHUB' ? branch : 'Live Site'})`,
       repoUrl: fullUrl,
       githubToken: githubToken.trim() || undefined,
-      framework: framework === 'Auto-Detect' ? (targetType === 'GITHUB' ? 'Next.js 15' : 'Production Web App') : framework,
+      framework: framework === 'Auto-Detect' ? (targetType === 'GITHUB' ? 'Polyglot App' : 'Production Web App') : framework,
       providers: targetType === 'GITHUB' ? ['GitHub Action', 'Vercel', 'PostgreSQL'] : ['Vercel', 'CDN', 'Security Headers'],
       lastScanAt: 'Ready to Run Audit',
       readinessScore: 100,

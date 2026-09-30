@@ -14,7 +14,7 @@ interface NewProjectModalProps {
 export const NewProjectModal: React.FC<NewProjectModalProps> = ({ isOpen, onClose, onAddNewProject }) => {
   const [name, setName] = useState('');
   const [repoUrl, setRepoUrl] = useState('');
-  const [framework, setFramework] = useState<'Next.js 15' | 'Vite + React' | 'FastAPI + React' | 'SvelteKit'>('Next.js 15');
+  const [framework, setFramework] = useState<'Next.js/React' | 'Python (Django/FastAPI)' | 'Go Microservices' | 'Mobile (React Native/Flutter)'>('Python (Django/FastAPI)');
   const [urlError, setUrlError] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
 

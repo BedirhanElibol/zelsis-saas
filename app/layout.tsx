@@ -56,7 +56,7 @@ export const metadata: Metadata = {
     template: '%s | Zelsis',
   },
   description:
-    'Automated pre-flight security clearance, WCAG 2.1 AA accessibility, and cloud infrastructure release gatekeeper for modern web and cloud applications.',
+    'Automated pre-flight security clearance, WCAG 2.2 AA accessibility, and cloud infrastructure release gatekeeper for modern web and cloud applications.',
   keywords: [
     'Zelsis',
     'Release Gate',
@@ -73,7 +73,7 @@ export const metadata: Metadata = {
   openGraph: {
     title: 'Zelsis | Production Release Gate for Modern Web & Cloud Apps',
     description:
-      'Automated pre-flight security clearance, WCAG 2.1 AA accessibility, and cloud infrastructure release gatekeeper for modern web and cloud applications.',
+      'Automated pre-flight security clearance, WCAG 2.2 AA accessibility, and cloud infrastructure release gatekeeper for modern web and cloud applications.',
     url: './',
     siteName: 'Zelsis',
     images: [
@@ -92,7 +92,7 @@ export const metadata: Metadata = {
     card: 'summary_large_image',
     title: 'Zelsis | Production Release Gate for Modern Web & Cloud Apps',
     description:
-      'Automated pre-flight security clearance, WCAG 2.1 AA accessibility, and cloud infrastructure release gatekeeper for modern web and cloud applications.',
+      'Automated pre-flight security clearance, WCAG 2.2 AA accessibility, and cloud infrastructure release gatekeeper for modern web and cloud applications.',
     images: ['/og-image.png'],
   },
   icons: {

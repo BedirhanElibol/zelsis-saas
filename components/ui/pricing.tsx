@@ -1,7 +1,7 @@
 'use client';
 
 import { motion } from 'framer-motion';
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Check, Star as LucideStar, ShieldCheck } from 'lucide-react';
 import NumberFlow from '@number-flow/react';
 import { ZELSIS_PRICING_PLANS } from '@/data/pricing-plans';
@@ -12,6 +12,38 @@ interface PricingProps {
 
 export function PricingSection({ onSelectPlan }: PricingProps) {
   const [isAnnual, setIsAnnual] = useState(false);
+  const [plans, setPlans] = useState(ZELSIS_PRICING_PLANS);
+
+  useEffect(() => {
+    // Fetch live pricing from Polar
+    const fetchPricing = async () => {
+      try {
+        const res = await fetch('/api/v1/products');
+        if (res.ok) {
+          const products = await res.json();
+          // Map products to existing plans based on name or metadata
+          const updatedPlans = ZELSIS_PRICING_PLANS.map(plan => {
+            const matchedProduct = products.find((p: any) => p.name.toLowerCase().includes(plan.name.toLowerCase().replace('zelsis ', '')));
+            if (matchedProduct && matchedProduct.prices) {
+              const monthlyPriceObj = matchedProduct.prices.find((p: any) => p.recurring_interval === 'month');
+              const annualPriceObj = matchedProduct.prices.find((p: any) => p.recurring_interval === 'year');
+              
+              return {
+                ...plan,
+                priceMonthly: monthlyPriceObj ? monthlyPriceObj.price_amount / 100 : plan.priceMonthly,
+                priceAnnual: annualPriceObj ? Math.floor((annualPriceObj.price_amount / 100) / 12) : plan.priceAnnual,
+              };
+            }
+            return plan;
+          });
+          setPlans(updatedPlans);
+        }
+      } catch (err) {
+        console.error('Failed to fetch live pricing from Polar', err);
+      }
+    };
+    fetchPricing();
+  }, []);
 
   return (
     <div className="flex flex-col items-center gap-10 py-8 max-w-6xl mx-auto w-full px-4">
@@ -66,12 +98,12 @@ export function PricingSection({ onSelectPlan }: PricingProps) {
 
       {/* 3 Pricing Cards Grid */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6 w-full max-w-6xl mx-auto">
-        {ZELSIS_PRICING_PLANS.length === 0 ? (
+        {plans.length === 0 ? (
           <div className="col-span-3 p-8 text-center bg-[#141414] border border-white/10 rounded-xl text-xs text-[#A1A1AA]">
             No pricing tiers available. Contact sales@zelsis.com for enterprise quotes.
           </div>
         ) : (
-          ZELSIS_PRICING_PLANS.map((plan) => {
+          plans.map((plan) => {
             const displayPrice = isAnnual ? plan.priceAnnual : plan.priceMonthly;
 
             return (

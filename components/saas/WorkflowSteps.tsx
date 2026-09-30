@@ -46,7 +46,7 @@ $ zelsis evaluate --repo github.com/enterprise/payment-gateway
 [SCORE] 94/100 PRODUCTION READINESS ACHIEVED`,
       features: [
         'OWASP Top 10, CWE-22, SSRF, and RLS vulnerability detection',
-        'WCAG 2.1 AA keyboard accessibility & Core Web Vitals profiling',
+        'WCAG 2.2 AA keyboard accessibility & Core Web Vitals profiling',
         'Docker root user, Kubernetes QoS, and connection pool defense'
       ]
     },
@@ -55,14 +55,14 @@ $ zelsis evaluate --repo github.com/enterprise/payment-gateway
       badge: 'RELEASE CLEARANCE',
       title: 'Signed Manifest Clearance & 1-Click Fixes',
       description:
-        'Generate an exportable cryptographic release manifest for SOC 2 compliance, and retrieve surgical 1-click AI prompt patches formatted directly for GitHub Copilot & Cursor.',
+        'Generate an exportable cryptographic release manifest for SOC 2 readiness/evidence support, and retrieve surgical 1-click AI prompt patches formatted directly for GitHub Copilot & Cursor.',
       codeSnippet: `// Cryptographically Signed Deployment Manifest
 {
   "manifestId": "MANIFEST-PROD-2026-X99",
   "readinessScore": 94,
   "gateStatus": "PASSED",
   "auditChecksum": "sha256-e3b0c44298fc1c149afbf4c8996fb924",
-  "compliance": ["SOC2_TYPE_II", "ISO27001_A12"],
+  "compliance": ["SOC2_READINESS", "ISO27001_A12"],
   "signature": "SIGNED_BY_ZELSIS_RELEASE_AUTHORITY"
 }`,
       features: [
@@ -143,7 +143,7 @@ $ zelsis evaluate --repo github.com/enterprise/payment-gateway
             <ul className="flex flex-col gap-3 pt-4 border-t border-white/10">
               {steps[activeStep].features.map((feat, i) => (
                 <li key={i} className="flex items-start gap-3 text-xs sm:text-sm text-zinc-300">
-                  <span className="text-zinc-500 font-mono text-xs select-none shrink-0 mt-0.5">—</span>
+                  <span className="text-zinc-400 font-mono text-xs select-none shrink-0 mt-0.5">—</span>
                   <span>{feat}</span>
                 </li>
               ))}
@@ -159,7 +159,7 @@ $ zelsis evaluate --repo github.com/enterprise/payment-gateway
                 <span className="w-2.5 h-2.5 rounded-full bg-emerald-500/80" />
                 <span className="ml-2 text-zinc-300 font-semibold">terminal://runtime-eval</span>
               </div>
-              <span className="text-[10px] text-zinc-500">BASH / JSON</span>
+              <span className="text-[10px] text-zinc-400">BASH / JSON</span>
             </div>
             <pre className="p-4 sm:p-6 text-[11px] sm:text-xs font-mono text-zinc-300 overflow-x-auto leading-relaxed whitespace-pre font-normal selection:bg-white/20">
               {steps[activeStep].codeSnippet}

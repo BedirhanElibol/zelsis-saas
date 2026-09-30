@@ -54,7 +54,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout Repository
-        uses: actions/checkout@v4
+        uses: actions/checkout@b4ffde65f46336ab88eb53be808477a3936bae11 # v4.1.1
 
       - name: Run Zelsis Deterministic Gate Check
         id: gate_check
@@ -258,7 +258,7 @@ spec:
           {!isAllowed ? (
             <div className="flex flex-col items-center justify-center gap-6 py-12 px-6 bg-[#0A0A0A] border border-white/10 rounded-2xl text-center m-6">
               <div className="w-14 h-14 rounded-2xl bg-white/5 border border-white/10 flex items-center justify-center">
-                <Lock size={26} className="text-zinc-500" />
+                <Lock size={26} className="text-zinc-400" />
               </div>
               <div className="max-w-md">
                 <h3 className="text-base font-extrabold text-[#EDEDED] mb-2">
@@ -304,7 +304,7 @@ spec:
                           : 'border-transparent text-zinc-400 hover:text-zinc-200 hover:bg-white/[0.02]'
                       }`}
                     >
-                      <Icon size={14} className={isActive ? 'text-white' : 'text-zinc-500'} />
+                      <Icon size={14} className={isActive ? 'text-white' : 'text-zinc-400'} />
                       <span>{tab.label}</span>
                     </button>
                   );

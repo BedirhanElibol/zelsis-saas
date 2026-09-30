@@ -55,7 +55,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout Code
-        uses: actions/checkout@v4
+        uses: actions/checkout@b4ffde65f46336ab88eb53be808477a3936bae11 # v4.1.1
 
       - name: Trigger Zelsis Audit Gate
         id: zelsis
@@ -70,7 +70,7 @@ jobs:
 
       - name: Post PR Gate Status Comment
         if: github.event_name == 'pull_request'
-        uses: actions/github-script@v7
+        uses: actions/github-script@60a0d83039c74a4aee543508d2ffcb1c3799cdea # v7.0.1
         with:
           script: |
             const status = process.env.GATE_STATUS;
@@ -170,7 +170,7 @@ jobs:
           {!isAllowed ? (
             <div className="flex flex-col items-center justify-center gap-6 py-12 px-6 bg-[#0A0A0A] border border-white/10 rounded-2xl text-center my-2">
               <div className="w-14 h-14 rounded-2xl bg-white/5 border border-white/10 flex items-center justify-center">
-                <Lock size={26} className="text-zinc-500" />
+                <Lock size={26} className="text-zinc-400" />
               </div>
               <div className="max-w-md">
                 <h3 className="text-base font-extrabold text-[#EDEDED] mb-2">
@@ -255,7 +255,7 @@ jobs:
                     </div>
                     <strong className="text-zinc-200">zelsis-bot</strong>
                     <span className="text-[10px] px-1 rounded bg-white/10 text-zinc-400 font-mono">bot</span>
-                    <span className="text-zinc-500 text-[10px] ml-auto">Just now</span>
+                    <span className="text-zinc-400 text-[10px] ml-auto">Just now</span>
                   </div>
 
                   <div className="space-y-1.5 pt-1">
@@ -297,7 +297,7 @@ jobs:
 
               {/* Footer */}
               <div className="flex items-center justify-between pt-4 border-t border-white/10">
-                <div className="text-[11px] font-mono text-zinc-500">
+                <div className="text-[11px] font-mono text-zinc-400">
                   Endpoint: <span className="text-zinc-400">POST /api/v1/gate-check</span>
                 </div>
                 <button

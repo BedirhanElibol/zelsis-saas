@@ -25,11 +25,11 @@ export const SaasHero: React.FC<SaasHeroProps> = ({ onOpenDashboard }) => {
   const [isScanning, setIsScanning] = useState(false);
 
   const sampleRepos = [
-    { label: 'Express.js', value: 'expressjs/express' },
-    { label: 'Supabase', value: 'supabase/supabase' },
-    { label: 'Flask API', value: 'pallets/flask' },
-    { label: 'Cal.com', value: 'calcom/cal.com' },
-    { label: 'React Core', value: 'facebook/react' }
+    { label: 'Express.js (Node)', value: 'expressjs/express' },
+    { label: 'FastAPI (Python)', value: 'tiangolo/fastapi' },
+    { label: 'Spring Boot (Java)', value: 'spring-projects/spring-boot' },
+    { label: 'Gin (Go)', value: 'gin-gonic/gin' },
+    { label: 'React Native', value: 'facebook/react-native' }
   ];
 
   const handleSelectAndScan = (val: string) => {
@@ -94,7 +94,7 @@ export const SaasHero: React.FC<SaasHeroProps> = ({ onOpenDashboard }) => {
           >
             <div className="flex items-center gap-2.5 px-3 py-2 flex-1 min-w-0">
               <Terminal size={16} className="text-zinc-400 shrink-0" />
-              <span className="text-xs font-mono text-zinc-500 hidden sm:inline">github.com/</span>
+              <span className="text-xs font-mono text-zinc-400 hidden sm:inline">github.com/</span>
               <input
                 id="hero-repo-input"
                 name="repository"
@@ -118,7 +118,7 @@ export const SaasHero: React.FC<SaasHeroProps> = ({ onOpenDashboard }) => {
 
           {/* Minimal 1-Click Preset Chips */}
           <div className="flex flex-wrap items-center justify-center gap-2 mt-3.5 text-xs">
-            <span className="text-zinc-500 text-[11px] font-mono uppercase tracking-wider">Presets:</span>
+            <span className="text-zinc-400 text-[11px] font-mono uppercase tracking-wider">Presets:</span>
             {sampleRepos.map((r) => (
               <button
                 key={r.value}
@@ -172,7 +172,7 @@ export const SaasHero: React.FC<SaasHeroProps> = ({ onOpenDashboard }) => {
               <span className="w-2.5 h-2.5 rounded-full bg-white/20" />
               <span className="w-2.5 h-2.5 rounded-full bg-white/20" />
               <div className="ml-3 px-3 py-1 rounded bg-white/[0.04] border border-white/5 text-[11px] font-mono text-zinc-400 flex items-center gap-1.5">
-                <Lock size={10} className="text-zinc-500" />
+                <Lock size={10} className="text-zinc-400" />
                 <span>zelsis.com/dashboard/eval/production-gate</span>
               </div>
             </div>
@@ -214,7 +214,7 @@ export const SaasHero: React.FC<SaasHeroProps> = ({ onOpenDashboard }) => {
               <span>Memory: <strong className="text-zinc-200 font-mono">Ephemeral Buffer</strong></span>
               <span>Compliance: <strong className="text-zinc-200 font-mono">OWASP &amp; WCAG 2.2</strong></span>
             </div>
-            <div className="flex items-center gap-2 text-zinc-500 text-[11px]">
+            <div className="flex items-center gap-2 text-zinc-400 text-[11px]">
               <span>Industrial Deployment Readiness Gate</span>
             </div>
           </div>
@@ -222,7 +222,7 @@ export const SaasHero: React.FC<SaasHeroProps> = ({ onOpenDashboard }) => {
 
         {/* Supported Stacks Band */}
         <div className="w-full mt-16 pt-8 border-t border-white/10 flex flex-col items-center gap-4">
-          <span className="text-xs font-mono uppercase tracking-widest text-zinc-500">
+          <span className="text-xs font-mono uppercase tracking-widest text-zinc-400">
             Calibrated for Enterprise Production Stacks
           </span>
           <div className="flex flex-wrap items-center justify-center gap-6 sm:gap-8 text-xs font-mono text-zinc-400">

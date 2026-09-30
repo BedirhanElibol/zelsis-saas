@@ -141,7 +141,8 @@ export async function fetchWebsiteAuditData(siteUrl: string, signal?: AbortSigna
   // Check Missing Security Headers
   const securityHeadersMissing: string[] = [];
   if (!headers['content-security-policy']) securityHeadersMissing.push('Content-Security-Policy');
-  if (!headers['strict-transport-security']) securityHeadersMissing.push('Strict-Transport-Security (HSTS)');
+  const hsts = headers['strict-transport-security'];
+  if (!hsts || !hsts.toLowerCase().includes('preload')) securityHeadersMissing.push('Strict-Transport-Security (HSTS)');
   if (!headers['x-frame-options']) securityHeadersMissing.push('X-Frame-Options');
   if (!headers['x-content-type-options']) securityHeadersMissing.push('X-Content-Type-Options');
 

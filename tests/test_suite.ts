@@ -55,6 +55,39 @@ function assert(condition: boolean, testName: string, detail?: string) {
   }
 }
 
+import { verifyPolarWebhookSignature } from '../lib/polar';
+import crypto from 'crypto';
+
+function testPolarWebhook() {
+  console.log('--- Testing Polar Webhook Signature Verification ---');
+  const secret = 'whsec_test_secret_123';
+  const payload = JSON.stringify({ type: 'subscription.created', data: { id: 'sub_123' } });
+  
+  // Test raw HMAC-SHA256 hex
+  const hmacHex = crypto.createHmac('sha256', secret).update(payload).digest('hex');
+  const headersHex = new Headers();
+  headersHex.set('webhook-signature', hmacHex);
+  assert(verifyPolarWebhookSignature(payload, headersHex, secret), 'Polar webhook verifies raw hex signature');
+
+  // Test standard webhooks format
+  const timestamp = Math.floor(Date.now() / 1000).toString();
+  const msgId = 'msg_123';
+  const toSign = msgId + '.' + timestamp + '.' + payload;
+  const hmacBase64 = crypto.createHmac('sha256', secret).update(toSign).digest('base64');
+  const signature = 'v1,' + hmacBase64;
+  
+  const headersStandard = new Headers();
+  headersStandard.set('webhook-signature', signature);
+  headersStandard.set('webhook-id', msgId);
+  headersStandard.set('webhook-timestamp', timestamp);
+  
+  assert(verifyPolarWebhookSignature(payload, headersStandard, secret), 'Polar webhook verifies standard webhooks signature format');
+  
+  // Test invalid signature
+  headersStandard.set('webhook-signature', 'v1,invalid_base64');
+  assert(!verifyPolarWebhookSignature(payload, headersStandard, secret), 'Polar webhook rejects invalid signature');
+}
+
 async function runAllTests() {
   console.log('===========================================================');
   console.log('🧪 ZELSIS PRODUCTION TEST SUITE (Cross-Platform TypeScript)');
@@ -938,6 +971,8 @@ async function runAllTests() {
   assert(clientConfig.url.length > 0 && clientConfig.anonKey.length > 0, 'getSupabaseConfig provides populated config object');
   assert(CANONICAL_SUPABASE_URL === 'https://afzpaydfkmycrwuxmzkk.supabase.co', 'CANONICAL_SUPABASE_URL points to live production ref');
 
+  testPolarWebhook();
+
   console.log('\n===========================================================');
   console.log(`🏁 TEST RESULTS: ${passedTests}/${totalTests} TESTS PASSED (100%)`);
   console.log('===========================================================');
@@ -951,3 +986,5 @@ runAllTests().catch((err) => {
   console.error('Fatal test error:', err);
   process.exit(1);
 });
+
+

@@ -186,7 +186,14 @@ export async function POST(req: NextRequest) {
         trackingUrl: `/api/v1/scans/jobs/${jobId}`,
         message: 'Scan task successfully queued for asynchronous execution.'
       },
-      { status: 202 }
+      {
+        status: 202,
+        headers: {
+          'Deprecation': '@1798761600',
+          'Sunset': 'Fri, 01 Jan 2027 00:00:00 GMT',
+          'Link': '<https://zelsis.com/docs/api/v1>; rel="deprecation"'
+        }
+      }
     );
   } catch (err: any) {
     logger.error('[Scans Queue] Unexpected error:', err);

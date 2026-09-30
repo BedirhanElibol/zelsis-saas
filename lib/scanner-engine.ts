@@ -109,6 +109,12 @@ import { evaluateStrixPentestRules } from './rules/strix-pentest-rules';
 import { evaluateNoAiSlopRules } from './rules/no-ai-slop-rules';
 import { evaluateLlmCostGovernanceRules } from './rules/llm-cost-governance-rules';
 
+import { evaluateRubyRailsRules } from './rules/ruby-rails-rules';
+import { evaluatePhpLaravelRules } from './rules/php-laravel-rules';
+import { evaluateJavaSpringRules } from './rules/java-spring-rules';
+import { evaluateDotnetCsharpRules } from './rules/dotnet-csharp-rules';
+
+
 export interface CodeFile {
   path: string;
   content: string;
@@ -2516,7 +2522,7 @@ export async function runStaticCodeScan(files: CodeFile[], repoName: string = 'T
     }
     logs.push(...clicheResult.logs);
 
-    // Option B: Frontend Performance, WCAG 2.1 AA & SEO Rules (UI-A11Y-01, UI-PERF-01, UI-SEO-01)
+    // Option B: Frontend Performance, WCAG 2.2 AA & SEO Rules (UI-A11Y-01, UI-PERF-01, UI-SEO-01)
     const frontendCounter = { count: findingCounter };
     const frontendResult = evaluateFrontendRules(file, lines, cleanContent, frontendCounter);
     findingCounter = frontendCounter.count;
@@ -3708,6 +3714,39 @@ export async function runStaticCodeScan(files: CodeFile[], repoName: string = 'T
       }
     }
     logs.push(...llmCostResult.logs);
+
+    
+    const rubyCounter = { count: findingCounter };
+    const rubyResult = evaluateRubyRailsRules(file, lines, cleanContent, rubyCounter);
+    findingCounter = rubyCounter.count;
+    for (const item of rubyResult.findings) {
+      if (!ignoredRuleIds.has(item.ruleId)) addFinding(item);
+    }
+    logs.push(...rubyResult.logs);
+
+    const phpCounter = { count: findingCounter };
+    const phpResult = evaluatePhpLaravelRules(file, lines, cleanContent, phpCounter);
+    findingCounter = phpCounter.count;
+    for (const item of phpResult.findings) {
+      if (!ignoredRuleIds.has(item.ruleId)) addFinding(item);
+    }
+    logs.push(...phpResult.logs);
+
+    const javaCounter = { count: findingCounter };
+    const javaResult = evaluateJavaSpringRules(file, lines, cleanContent, javaCounter);
+    findingCounter = javaCounter.count;
+    for (const item of javaResult.findings) {
+      if (!ignoredRuleIds.has(item.ruleId)) addFinding(item);
+    }
+    logs.push(...javaResult.logs);
+
+    const dotnetCounter = { count: findingCounter };
+    const dotnetResult = evaluateDotnetCsharpRules(file, lines, cleanContent, dotnetCounter);
+    findingCounter = dotnetCounter.count;
+    for (const item of dotnetResult.findings) {
+      if (!ignoredRuleIds.has(item.ruleId)) addFinding(item);
+    }
+    logs.push(...dotnetResult.logs);
 
     const fileFindingsCount = findings.length - startFindingsCount;
     if (fileFindingsCount === 0) {

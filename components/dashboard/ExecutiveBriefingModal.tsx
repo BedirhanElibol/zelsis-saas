@@ -159,7 +159,7 @@ export const ExecutiveBriefingModal: React.FC<ExecutiveBriefingModalProps> = ({
                 }`}
               >
                 {project.readinessScore}
-                <span className="text-xs text-zinc-500 font-sans font-normal">/100</span>
+                <span className="text-xs text-zinc-400 font-sans font-normal">/100</span>
               </div>
               <div className="text-[10px] font-mono text-[#A1A1AA] mt-1 uppercase tracking-wider font-semibold">
                 Readiness Index
@@ -208,7 +208,7 @@ export const ExecutiveBriefingModal: React.FC<ExecutiveBriefingModalProps> = ({
                   >
                     <div className="flex items-center justify-between gap-2">
                       <div className="flex items-center gap-2 min-w-0">
-                        <span className="font-mono text-[10px] text-zinc-500 font-bold">0{idx + 1}.</span>
+                        <span className="font-mono text-[10px] text-zinc-400 font-bold">0{idx + 1}.</span>
                         <span
                           className={`px-1.5 py-0.5 rounded text-[10px] font-mono font-bold uppercase border ${
                             blocker.severity === 'CRITICAL'
@@ -220,7 +220,7 @@ export const ExecutiveBriefingModal: React.FC<ExecutiveBriefingModalProps> = ({
                         </span>
                         <span className="font-bold text-zinc-200 truncate">{blocker.title}</span>
                       </div>
-                      <span className="font-mono text-[10px] text-zinc-500 shrink-0">#{blocker.ruleId}</span>
+                      <span className="font-mono text-[10px] text-zinc-400 shrink-0">#{blocker.ruleId}</span>
                     </div>
                     <div className="font-mono text-[10px] text-zinc-400 truncate">
                       {blocker.filePath}:{blocker.lineRange}
@@ -233,7 +233,7 @@ export const ExecutiveBriefingModal: React.FC<ExecutiveBriefingModalProps> = ({
 
           {/* Footer Actions: Print/Export PDF + Copy Markdown + Close */}
           <div className="flex flex-col sm:flex-row items-center justify-between gap-3 pt-4 border-t border-white/10">
-            <div className="text-[11px] font-mono text-zinc-500 text-center sm:text-left">
+            <div className="text-[11px] font-mono text-zinc-400 text-center sm:text-left">
               Official ISO-27001 / SOC 2 Ready Attestation
             </div>
 

@@ -176,7 +176,7 @@ export const FindingsTable: React.FC<FindingsTableProps> = ({
               <ShieldCheck size={14} className="text-zinc-400" />
               <span>Security &amp; OWASP</span>
             </span>
-            <span className="text-[10px] font-mono text-zinc-500 uppercase">Pillar</span>
+            <span className="text-[10px] font-mono text-zinc-400 uppercase">Pillar</span>
           </div>
           <div className="flex items-baseline justify-between">
             <span className="text-xl sm:text-2xl font-extrabold font-mono text-white">
@@ -206,7 +206,7 @@ export const FindingsTable: React.FC<FindingsTableProps> = ({
               <Database size={14} className="text-zinc-400" />
               <span>Database &amp; Storage</span>
             </span>
-            <span className="text-[10px] font-mono text-zinc-500 uppercase">Pillar</span>
+            <span className="text-[10px] font-mono text-zinc-400 uppercase">Pillar</span>
           </div>
           <div className="flex items-baseline justify-between">
             <span className="text-xl sm:text-2xl font-extrabold font-mono text-white">
@@ -236,7 +236,7 @@ export const FindingsTable: React.FC<FindingsTableProps> = ({
               <Server size={14} className="text-zinc-400" />
               <span>Legal &amp; Privacy</span>
             </span>
-            <span className="text-[10px] font-mono text-zinc-500 uppercase">Pillar</span>
+            <span className="text-[10px] font-mono text-zinc-400 uppercase">Pillar</span>
           </div>
           <div className="flex items-baseline justify-between">
             <span className="text-xl sm:text-2xl font-extrabold font-mono text-white">
@@ -266,7 +266,7 @@ export const FindingsTable: React.FC<FindingsTableProps> = ({
               <Sliders size={14} className="text-zinc-400" />
               <span>UX &amp; VibePolish</span>
             </span>
-            <span className="text-[10px] font-mono text-zinc-500 uppercase">Pillar</span>
+            <span className="text-[10px] font-mono text-zinc-400 uppercase">Pillar</span>
           </div>
           <div className="flex items-baseline justify-between">
             <span className="text-xl sm:text-2xl font-extrabold font-mono text-white">
@@ -284,7 +284,7 @@ export const FindingsTable: React.FC<FindingsTableProps> = ({
 
       {/* Quick Triage Bar */}
       <div className="flex items-center gap-2 overflow-x-auto pb-1 text-xs font-mono">
-        <span className="text-zinc-500 text-[11px] uppercase tracking-wider shrink-0">Quick Triage:</span>
+        <span className="text-zinc-400 text-[11px] uppercase tracking-wider shrink-0">Quick Triage:</span>
         <button
           type="button"
           onClick={() => { resetFilters(); }}
@@ -486,7 +486,7 @@ export const FindingsTable: React.FC<FindingsTableProps> = ({
             </div>
           ) : (
             <div className="p-6 rounded-xl bg-[#0A0A0A] border border-white/10 text-center flex flex-col items-center gap-3">
-              <SearchX size={22} className="text-zinc-500" />
+              <SearchX size={22} className="text-zinc-400" />
               <p className="text-xs text-[#A1A1AA]">
                 No findings match the active search or filter rules.{' '}
                 <button type="button" onClick={resetFilters} className="text-blue-400 hover:underline font-semibold">Try clearing your filters.</button>
@@ -560,11 +560,11 @@ export const FindingsTable: React.FC<FindingsTableProps> = ({
 
                 {/* Relative File Path & Line Range */}
                 <div className="flex items-center gap-1.5 text-[11px] font-mono text-zinc-400 min-w-0">
-                  <span className="text-zinc-500 shrink-0">Path:</span>
+                  <span className="text-zinc-400 shrink-0">Path:</span>
                   <span className="text-zinc-300 truncate" title={item.filePath}>
                     {item.filePath}
                   </span>
-                  <span className="text-zinc-500 shrink-0">({item.lineRange})</span>
+                  <span className="text-zinc-400 shrink-0">({item.lineRange})</span>
                 </div>
 
                 {/* Compact Expand/Collapse Details Toggle */}
@@ -580,7 +580,7 @@ export const FindingsTable: React.FC<FindingsTableProps> = ({
                     </span>
                     <ChevronDown
                       size={14}
-                      className={`text-zinc-500 transition-transform duration-200 ${isExpanded ? 'rotate-180' : ''}`}
+                      className={`text-zinc-400 transition-transform duration-200 ${isExpanded ? 'rotate-180' : ''}`}
                     />
                   </button>
 
@@ -621,7 +621,7 @@ export const FindingsTable: React.FC<FindingsTableProps> = ({
                         </div>
                       )}
 
-                      <div className="flex items-center justify-between text-[10px] font-mono text-zinc-500 pt-1 flex-wrap gap-1">
+                      <div className="flex items-center justify-between text-[10px] font-mono text-zinc-400 pt-1 flex-wrap gap-1">
                         <span className="flex items-center gap-1.5 flex-wrap">
                           {extractCveIds(item).length > 0 ? (
                             extractCveIds(item).map((cve) => (
@@ -735,7 +735,7 @@ export const FindingsTable: React.FC<FindingsTableProps> = ({
                     </div>
                   ) : (
                     <div className="flex flex-col items-center justify-center gap-2 py-4">
-                      <SearchX size={22} className="text-zinc-500" />
+                      <SearchX size={22} className="text-zinc-400" />
                       <p className="text-xs text-[#A1A1AA]">
                         No findings match the selected search or filter rules.{' '}
                         <button type="button" onClick={resetFilters} className="text-blue-400 hover:underline font-semibold">Try clearing your filters.</button>

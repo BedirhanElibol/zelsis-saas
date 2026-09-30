@@ -15,19 +15,25 @@ export const DemoShowcaseBanner: React.FC<DemoShowcaseBannerProps> = ({
   onOpenAuth,
   onDismiss,
 }) => {
+  const [repoInput, setRepoInput] = useState('');
   const [isDismissed, setIsDismissed] = useState(false);
 
   if (isDismissed) return null;
 
-  const handleAuditClick = () => {
-    if (onFocusQuickAudit) {
+  const handleAuditClick = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (repoInput.trim() && onFocusQuickAudit) {
+      // Pass the repoInput logic outwards if needed, or simply focus the target input and set its value.
+      const targetInput = document.querySelector('input[aria-label="Target repository or deployment URL"]') as HTMLInputElement | null;
+      if (targetInput) {
+        targetInput.value = repoInput;
+        // trigger a change event to update the react state
+        const event = new Event('input', { bubbles: true });
+        targetInput.dispatchEvent(event);
+      }
       onFocusQuickAudit();
     } else {
-      const input = document.querySelector('input[aria-label="Target repository or deployment URL"]') as HTMLInputElement | null;
-      if (input) {
-        input.focus();
-        input.scrollIntoView({ behavior: 'smooth', block: 'center' });
-      }
+      if (onFocusQuickAudit) onFocusQuickAudit();
     }
   };
 
@@ -37,49 +43,62 @@ export const DemoShowcaseBanner: React.FC<DemoShowcaseBannerProps> = ({
   };
 
   return (
-    <div className="relative overflow-hidden rounded-xl border border-white/10 bg-[#141414] p-4 sm:p-5 shadow-lg flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
-      <div className="flex items-start sm:items-center gap-3.5 min-w-0">
-        <div className="w-10 h-10 rounded-xl bg-white/[0.04] border border-white/10 flex items-center justify-center shrink-0 text-zinc-300">
-          <Layers size={20} />
-        </div>
-        <div>
-          <div className="flex items-center gap-2 mb-1.5 flex-wrap">
-            <span className="px-2.5 py-0.5 rounded text-[10px] font-mono font-semibold bg-white/10 border border-white/15 text-zinc-200 tracking-wider uppercase">
-              INTERACTIVE DEMO PREVIEW
-            </span>
+    <div className="relative overflow-hidden rounded-xl border border-white/10 bg-[#141414] shadow-lg flex flex-col p-0">
+      <div className="p-4 sm:p-5 flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
+        <div className="flex items-start sm:items-center gap-3.5 min-w-0">
+          <div className="w-10 h-10 rounded-xl bg-white/[0.04] border border-white/10 flex items-center justify-center shrink-0 text-zinc-300">
+            <Layers size={20} />
           </div>
-          <p className="text-xs sm:text-sm text-zinc-300 max-w-2xl leading-relaxed m-0">
-            You are exploring a sample pre-flight audit for <strong className="text-white font-semibold">Next.js 15 SaaS Starter</strong>. Enter any GitHub repository URL above or connect your GitHub account to run automated clearance gates on your own code.
-          </p>
+          <div>
+            <div className="flex items-center gap-2 mb-1.5 flex-wrap">
+              <span className="px-2.5 py-0.5 rounded text-[10px] font-mono font-semibold bg-white/10 border border-white/15 text-zinc-200 tracking-wider uppercase">
+                Kayıtsız Hızlı Deneme / INTERACTIVE DEMO PREVIEW
+              </span>
+            </div>
+            <p className="text-xs sm:text-sm text-zinc-300 max-w-2xl leading-relaxed m-0">
+              You are exploring a sample pre-flight audit for <strong className="text-white font-semibold">Production Web App</strong>. Run a fast, unregistered audit on any public repository to see Zelsis in action.
+            </p>
+          </div>
+        </div>
+
+        <div className="flex items-center gap-2.5 shrink-0 self-end md:self-center">
+          <button
+            type="button"
+            onClick={() => onOpenAuth?.('signup')}
+            className="btn btn-primary text-xs font-mono font-bold px-3.5 py-1.5 rounded-lg bg-white text-black hover:bg-neutral-200 transition-colors shadow-sm"
+          >
+            Sign Up Free
+          </button>
+          <button
+            type="button"
+            onClick={handleClose}
+            className="p-1.5 rounded-lg text-[#A1A1AA] hover:text-white hover:bg-white/5 transition-colors shrink-0"
+            aria-label="Dismiss Demo Preview Banner"
+          >
+            <X size={16} />
+          </button>
         </div>
       </div>
-
-      <div className="flex items-center gap-2.5 shrink-0 self-end md:self-center">
-        <button
-          type="button"
-          onClick={handleAuditClick}
-          className="btn btn-secondary text-xs font-mono font-bold px-3 py-1.5 rounded-lg border-white/10 hover:bg-white/5 text-white flex items-center gap-1.5 transition-colors"
-        >
-          <span>Audit Your Repository</span>
-          <ArrowRight size={13} />
-        </button>
-
-        <button
-          type="button"
-          onClick={() => onOpenAuth?.('signup')}
-          className="btn btn-primary text-xs font-mono font-bold px-3.5 py-1.5 rounded-lg bg-white text-black hover:bg-neutral-200 transition-colors shadow-sm"
-        >
-          Sign Up Free
-        </button>
-
-        <button
-          type="button"
-          onClick={handleClose}
-          className="p-1.5 rounded-lg text-[#A1A1AA] hover:text-white hover:bg-white/5 transition-colors shrink-0"
-          aria-label="Dismiss Demo Preview Banner"
-        >
-          <X size={16} />
-        </button>
+      
+      {/* Quick Scan Input Form */}
+      <div className="bg-black/40 border-t border-white/5 p-4 flex items-center gap-3">
+        <form onSubmit={handleAuditClick} className="flex items-center gap-2 w-full max-w-xl">
+          <input
+            type="text"
+            placeholder="https://github.com/your-org/your-repo"
+            value={repoInput}
+            onChange={(e) => setRepoInput(e.target.value)}
+            className="flex-1 bg-[#0A0A0A] border border-white/10 rounded-lg px-4 py-2 text-sm font-mono text-white focus:outline-none focus:border-white/30"
+          />
+          <button
+            type="submit"
+            className="btn btn-secondary text-xs font-mono font-bold px-4 py-2 rounded-lg border-white/10 hover:bg-white/5 text-white flex items-center gap-1.5 transition-colors shrink-0"
+          >
+            <Play size={13} fill="currentColor" />
+            <span>Hızlı Analiz (Quick Scan)</span>
+          </button>
+        </form>
+        <span className="text-[10px] text-zinc-400 font-mono ml-auto hidden sm:block">No account required</span>
       </div>
     </div>
   );

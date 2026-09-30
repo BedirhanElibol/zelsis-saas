@@ -4,6 +4,7 @@ import React, { useState, useEffect } from 'react';
 import { Check, X, Shield, ArrowRight, Lock, ExternalLink, Zap } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import { AuthModal, UserProfile } from '@/components/auth/AuthModal';
+import { RULES_CATALOG } from '@/data/mockData';
 
 interface ComparisonItem {
   name: string;
@@ -81,7 +82,7 @@ export const ComparisonTable: React.FC = () => {
     }
   };
 
-  const handleLoginSuccess = (authedUser: UserProfile) => {
+  const handleModalAuthSuccess = (authedUser: UserProfile) => {
     setCurrentUser(authedUser);
     setIsAuthModalOpen(false);
     if (pendingPlan === 'Enterprise') {
@@ -123,17 +124,17 @@ export const ComparisonTable: React.FC = () => {
       title: 'Security & Inspection Depth',
       items: [
         {
-          name: 'Static & AST Rule Inventory',
+          name: 'Static & Pattern-Based Rule Inventory',
           description: 'Coverage of security vulnerabilities, misconfigurations, and anti-patterns',
           free: '20 Baseline Static Rules',
-          pro: '1,450+ Deep Production Rules',
-          enterprise: '1,450+ Rules + Custom Org Rulesets'
+          pro: `${RULES_CATALOG.length}+ Verified Production Rules`,
+          enterprise: 'Verified Rules + Custom Org Rulesets'
         },
         {
           name: 'Secret & API Key Leak Detection',
           description: 'Scanning engine for hardcoded tokens, AWS keys, and private credentials',
           free: 'Surface Regex Pattern Check',
-          pro: 'Deep AST & Vault Tracing',
+          pro: 'Deep Pattern & Lexical Tracing',
           enterprise: 'Deep Static + Custom Secret Entropy Patterns'
         },
         {
@@ -251,7 +252,7 @@ export const ComparisonTable: React.FC = () => {
           <Check size={12} className="stroke-[2.5]" />
         </span>
       ) : (
-        <span className="inline-flex items-center justify-center w-5 h-5 rounded-full bg-white/5 text-zinc-500">
+        <span className="inline-flex items-center justify-center w-5 h-5 rounded-full bg-white/5 text-zinc-400">
           <X size={12} className="stroke-[2]" />
         </span>
       );
@@ -295,7 +296,7 @@ export const ComparisonTable: React.FC = () => {
                 <tr className="border-b border-white/15 bg-[#0E0E12]">
                   <th className="p-5 sm:p-6 text-xs font-mono uppercase tracking-wider text-zinc-400 w-[34%] align-bottom">
                     <span className="text-white font-bold block text-sm">Feature / Requirement</span>
-                    <span className="text-zinc-500 text-[11px] font-normal lowercase tracking-normal">feature breakdown &amp; boundaries</span>
+                    <span className="text-zinc-400 text-[11px] font-normal lowercase tracking-normal">feature breakdown &amp; boundaries</span>
                   </th>
 
                   {/* Free Plan Header */}
@@ -304,13 +305,13 @@ export const ComparisonTable: React.FC = () => {
                       <div className="flex items-center justify-between">
                         <span className="text-xs font-bold text-zinc-400 uppercase tracking-widest">Free</span>
                         {isLoggedIn && currentTier === 'Free' && (
-                          <span className="text-[9px] font-bold uppercase tracking-wider bg-zinc-500/10 text-zinc-300 px-2 py-0.5 rounded border border-zinc-500/20">
+                          <span className="text-[11px] font-bold uppercase tracking-wider bg-zinc-500/10 text-zinc-300 px-2 py-0.5 rounded border border-zinc-500/20">
                             Active
                           </span>
                         )}
                       </div>
                       <div className="text-2xl font-extrabold text-white font-mono">$0</div>
-                      <span className="text-[11px] text-zinc-500 font-sans">For hobbyists and testing public repositories</span>
+                      <span className="text-[11px] text-zinc-400 font-sans">For hobbyists and testing public repositories</span>
 
                       {isLoggedIn && currentTier === 'Free' ? (
                         <button
@@ -321,7 +322,7 @@ export const ComparisonTable: React.FC = () => {
                           <span>Current Plan</span>
                         </button>
                       ) : isLoggedIn && (currentTier === 'Pro' || currentTier === 'Enterprise') ? (
-                        <div className="mt-2 w-full py-2 px-3 rounded-lg bg-white/5 border border-white/10 text-zinc-500 text-xs font-bold font-mono">
+                        <div className="mt-2 w-full py-2 px-3 rounded-lg bg-white/5 border border-white/10 text-zinc-400 text-xs font-bold font-mono">
                           Included Baseline
                         </div>
                       ) : (
@@ -342,15 +343,15 @@ export const ComparisonTable: React.FC = () => {
                       <div className="flex items-center justify-between">
                         <span className="text-xs font-extrabold text-white uppercase tracking-widest">Pro</span>
                         {isLoggedIn && currentTier === 'Pro' ? (
-                          <span className="text-[9px] font-bold uppercase tracking-wider bg-white/10 text-white px-2 py-0.5 rounded border border-white/20 flex items-center gap-1">
+                          <span className="text-[11px] font-bold uppercase tracking-wider bg-white/10 text-white px-2 py-0.5 rounded border border-white/20 flex items-center gap-1">
                             <span>Active Plan</span>
                           </span>
                         ) : isLoggedIn && currentTier === 'Enterprise' ? (
-                          <span className="text-[9px] font-bold uppercase tracking-wider bg-white/10 text-zinc-300 px-2 py-0.5 rounded border border-white/15">
+                          <span className="text-[11px] font-bold uppercase tracking-wider bg-white/10 text-zinc-300 px-2 py-0.5 rounded border border-white/15">
                             Included
                           </span>
                         ) : (
-                          <span className="text-[9px] font-bold uppercase tracking-wider bg-white/10 text-zinc-300 px-2 py-0.5 rounded border border-white/20">
+                          <span className="text-[11px] font-bold uppercase tracking-wider bg-white/10 text-zinc-300 px-2 py-0.5 rounded border border-white/20">
                             Recommended
                           </span>
                         )}
@@ -378,7 +379,7 @@ export const ComparisonTable: React.FC = () => {
                           <div className="w-full py-2 px-3 rounded-lg bg-white/5 border border-white/10 text-zinc-400 text-xs font-bold font-mono">
                             Included in Enterprise
                           </div>
-                          <span className="text-[10px] text-zinc-500">All Pro features active</span>
+                          <span className="text-[10px] text-zinc-400">All Pro features active</span>
                         </div>
                       ) : (
                         <button
@@ -399,11 +400,11 @@ export const ComparisonTable: React.FC = () => {
                       <div className="flex items-center justify-between">
                         <span className="text-xs font-bold text-zinc-400 uppercase tracking-widest">Enterprise</span>
                         {isLoggedIn && currentTier === 'Enterprise' ? (
-                          <span className="text-[9px] font-bold uppercase tracking-wider bg-white/10 text-white px-2 py-0.5 rounded border border-white/20 flex items-center gap-1">
+                          <span className="text-[11px] font-bold uppercase tracking-wider bg-white/10 text-white px-2 py-0.5 rounded border border-white/20 flex items-center gap-1">
                             <span>Active Plan</span>
                           </span>
                         ) : isLoggedIn && currentTier === 'Pro' ? (
-                          <span className="text-[9px] font-bold uppercase tracking-wider bg-white/10 text-zinc-300 px-2 py-0.5 rounded border border-white/20">
+                          <span className="text-[11px] font-bold uppercase tracking-wider bg-white/10 text-zinc-300 px-2 py-0.5 rounded border border-white/20">
                             Upgrade
                           </span>
                         ) : null}
@@ -411,7 +412,7 @@ export const ComparisonTable: React.FC = () => {
                       <div className="text-2xl font-extrabold text-white font-mono">
                         $99 <span className="text-xs text-zinc-400 font-normal">/ month</span>
                       </div>
-                      <span className="text-[11px] text-zinc-500 font-sans">For organizations requiring CI/CD gates &amp; SLAs</span>
+                      <span className="text-[11px] text-zinc-400 font-sans">For organizations requiring CI/CD gates &amp; SLAs</span>
 
                       {isLoggedIn && currentTier === 'Enterprise' ? (
                         <div className="flex flex-col gap-1 mt-2">
@@ -470,7 +471,7 @@ export const ComparisonTable: React.FC = () => {
                       {/* Category Items */}
                       {category.items.length === 0 ? (
                         <tr>
-                          <td colSpan={4} className="p-4 text-xs font-mono text-zinc-500">
+                          <td colSpan={4} className="p-4 text-xs font-mono text-zinc-400">
                             No criteria defined for this category.
                           </td>
                         </tr>
@@ -576,7 +577,7 @@ export const ComparisonTable: React.FC = () => {
           setPendingPlan(null);
         }}
         initialMode={authInitialMode}
-        onLoginSuccess={handleLoginSuccess}
+        onLoginSuccess={handleModalAuthSuccess}
       />
     </section>
   );

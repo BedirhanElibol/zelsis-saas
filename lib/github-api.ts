@@ -256,9 +256,11 @@ export async function fetchGithubRepositoryData(
           try {
             localStorage.removeItem('zelsis_github_token');
             localStorage.removeItem('github_token');
-          } catch {}
-        } catch {
-          // storage disabled or sandboxed
+          } catch (storageErr) {
+            console.debug('[GitHub API] LocalStorage removal notice:', storageErr);
+          }
+        } catch (sessionErr) {
+          console.debug('[GitHub API] SessionStorage access notice:', sessionErr);
         }
       }
       if (effectiveToken) {
@@ -704,3 +706,4 @@ export async function fetchGithubRepositoryData(
     return null;
   }
 }
+

@@ -57,35 +57,47 @@ export const ProjectSchema = z.object({
   organizationId: z.string().optional(),
 });
 
-export const SecurityRuleSchema = z.object({
-  id: z.number(),
+
+export const SourceTypeEnum = z.enum(['official-standard', 'open-source-tool', 'industry-research', 'community-consensus']);
+export const DetectionMethodEnum = z.enum(['AST', 'regex', 'dataflow']);
+export const FalsePositiveRiskEnum = z.enum(['low', 'medium', 'high']);
+export const RuleStatusEnum = z.enum(['draft', 'published']);
+
+export const BaseRuleSchema = z.object({
+  id: z.union([z.string(), z.number()]),
   code: z.string(),
   title: z.string(),
   category: z.string(),
-  owaspTag: z.string(),
+  sourceUrl: z.string().optional(),
+  sourceType: SourceTypeEnum.optional(),
+  positiveExample: z.string().optional(),
+  negativeExample: z.string().optional(),
+  owasp2025Category: z.string().optional(),
+  cweId: z.string().optional(),
+  applicableLanguages: z.array(z.string()).optional(),
+  applicableFrameworks: z.array(z.string()).optional(),
+  detectionMethod: DetectionMethodEnum.optional(),
+  falsePositiveRisk: FalsePositiveRiskEnum.optional(),
+  status: RuleStatusEnum.optional(),
+});
+
+export const SecurityRuleSchema = BaseRuleSchema.extend({
+    owaspTag: z.string(),
   riskLevel: SeverityEnum,
   description: z.string(),
   verificationControl: z.string(),
   claudePrompt: z.string(),
 });
 
-export const UiRuleSchema = z.object({
-  id: z.number(),
-  code: z.string(),
-  title: z.string(),
-  category: z.string(),
-  clichePattern: z.string(),
+export const UiRuleSchema = BaseRuleSchema.extend({
+    clichePattern: z.string(),
   whyAiDoesIt: z.string(),
   zelsisSolution: z.string().optional(),
   shipguardSolution: z.string().optional(),
 });
 
-export const ComplianceRuleSchema = z.object({
-  id: z.number(),
-  code: z.string(),
-  title: z.string(),
-  category: z.string(),
-  legalFramework: z.string(),
+export const ComplianceRuleSchema = BaseRuleSchema.extend({
+    legalFramework: z.string(),
   riskLevel: SeverityEnum,
   penaltyExposure: z.string(),
   description: z.string(),
@@ -93,12 +105,8 @@ export const ComplianceRuleSchema = z.object({
   remediationPrompt: z.string(),
 });
 
-export const InfraRuleSchema = z.object({
-  id: z.number(),
-  code: z.string(),
-  title: z.string(),
-  category: z.string(),
-  targetStack: z.string(),
+export const InfraRuleSchema = BaseRuleSchema.extend({
+    targetStack: z.string(),
   riskLevel: SeverityEnum,
   description: z.string(),
   verificationControl: z.string(),

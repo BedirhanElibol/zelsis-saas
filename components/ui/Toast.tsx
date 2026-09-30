@@ -132,7 +132,7 @@ export const ClipboardToastBadge: React.FC<ClipboardToastBadgeProps> = ({
           type="button"
           aria-label="Dismiss toast"
           onClick={onDismiss}
-          className="text-zinc-500 hover:text-white ml-1 p-0.5 rounded transition-colors cursor-pointer"
+          className="text-zinc-400 hover:text-white ml-1 p-0.5 rounded transition-colors cursor-pointer"
         >
           <X size={12} />
         </button>

@@ -50,10 +50,11 @@ export function escapeSvgText(value: unknown, maxLength = 64): string {
 export function sanitizeInput(value: unknown, maxLength = 256): string {
   if (typeof value !== 'string') {
     if (value === null || value === undefined) return '';
-    return String(value).slice(0, maxLength);
+    return String(value).normalize('NFKC').slice(0, maxLength);
   }
 
   return value
+    .normalize('NFKC')
     .replace(/\0/g, '') // Strip null bytes
     .trim()
     .slice(0, maxLength);

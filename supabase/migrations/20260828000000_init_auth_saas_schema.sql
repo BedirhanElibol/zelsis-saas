@@ -324,8 +324,8 @@ WITH CHECK (
     AND (
         (auth.jwt() ->> 'role') = 'service_role' 
         OR (
-            tier IS NOT DISTINCT FROM (SELECT p.tier FROM public.profiles p WHERE p.id = auth.uid()) 
-            AND role IS NOT DISTINCT FROM (SELECT p.role FROM public.profiles p WHERE p.id = auth.uid())
+            tier IS NOT DISTINCT FROM (SELECT p.tier FROM public.profiles p WHERE p.id = auth.uid() ORDER BY p.id) 
+            AND role IS NOT DISTINCT FROM (SELECT p.role FROM public.profiles p WHERE p.id = auth.uid() ORDER BY p.id)
         )
     )
 );

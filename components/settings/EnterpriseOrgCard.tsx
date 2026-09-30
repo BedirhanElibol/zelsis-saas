@@ -144,7 +144,7 @@ export const EnterpriseOrgCard: React.FC<EnterpriseOrgCardProps> = ({ user }) =>
             />
             <span>Enforce Organization Security Policies across all repositories</span>
           </label>
-          <p className="text-[11px] text-zinc-500 font-mono">
+          <p className="text-[11px] text-zinc-400 font-mono">
             Blocks deployment if any sub-project fails SCA license hygiene or critical CVE gates.
           </p>
         </div>

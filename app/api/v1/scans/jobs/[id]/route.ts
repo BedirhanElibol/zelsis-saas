@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
+import crypto from 'crypto';
 import { createClient } from '@supabase/supabase-js';
 import { logger } from '@/lib/logger';
 
@@ -92,7 +93,7 @@ export async function GET(req: NextRequest, { params }: RouteParams) {
     }
 
     // Optional: Fetch scan summary if job has finished successfully
-    let scanSummary: any = null;
+    let scanSummary: Record<string, unknown> | null = null;
     if (job.status === 'COMPLETED' && job.scan_id) {
       const { data: scanRow } = await adminClient
         .from('scans')
@@ -101,41 +102,68 @@ export async function GET(req: NextRequest, { params }: RouteParams) {
         .maybeSingle();
 
       if (scanRow) {
-        scanSummary = scanRow;
+        scanSummary = scanRow as Record<string, unknown>;
       }
     }
 
-    return NextResponse.json(
-      {
-        status: 'SUCCESS',
-        job: {
-          id: job.id,
-          projectId: job.project_id,
-          repoUrl: job.repo_url,
-          commitSha: job.commit_sha,
-          status: job.status,
-          progress: job.progress_percent,
-          currentPhase: job.current_phase,
-          currentFile: job.current_file,
-          totalFiles: job.total_files,
-          processedFiles: job.processed_files,
-          findingsCount: job.findings_count,
-          readinessScore: job.readiness_score,
-          gateStatus: job.gate_status,
-          scanId: job.scan_id,
-          errorMessage: job.error_message,
-          result: job.result_data,
-          createdAt: job.created_at,
-          updatedAt: job.updated_at
-        },
-        scanSummary
+    const responsePayload = {
+      status: 'SUCCESS',
+      job: {
+        id: job.id,
+        projectId: job.project_id,
+        repoUrl: job.repo_url,
+        commitSha: job.commit_sha,
+        status: job.status,
+        progress: job.progress_percent,
+        currentPhase: job.current_phase,
+        currentFile: job.current_file,
+        totalFiles: job.total_files,
+        processedFiles: job.processed_files,
+        findingsCount: job.findings_count,
+        readinessScore: job.readiness_score,
+        gateStatus: job.gate_status,
+        scanId: job.scan_id,
+        errorMessage: job.error_message,
+        result: job.result_data,
+        createdAt: job.created_at,
+        updatedAt: job.updated_at
       },
-      { status: 200 }
-    );
-  } catch (err: any) {
+      scanSummary
+    };
+
+    const bodyStr = JSON.stringify(responsePayload);
+    const etag = `"${crypto.createHash('sha256').update(bodyStr).digest('hex')}"`;
+
+    const headers: Record<string, string> = {
+      'ETag': etag,
+      'Cache-Control': job.status === 'COMPLETED' || job.status === 'FAILED'
+        ? 'private, s-maxage=10, stale-while-revalidate=60'
+        : 'private, no-cache, no-store, must-revalidate',
+      'Deprecation': 'true',
+      'Sunset': 'Fri, 01 Jan 2027 00:00:00 GMT',
+      'Link': '</api/v2/scans/jobs>; rel="successor-version"'
+    };
+
+    const ifNoneMatch = req.headers.get('if-none-match');
+    if (ifNoneMatch === etag) {
+      return new NextResponse(null, {
+        status: 304,
+        headers
+      });
+    }
+
+    return new NextResponse(bodyStr, {
+      status: 200,
+      headers: {
+        'Content-Type': 'application/json',
+        ...headers
+      }
+    });
+  } catch (err: unknown) {
     logger.error('[Scan Jobs API] Unexpected error:', err);
+    const message = err instanceof Error ? err.message : 'Internal job query error';
     return NextResponse.json(
-      { status: 'ERROR', error: err?.message || 'Internal job query error' },
+      { status: 'ERROR', error: message },
       { status: 500 }
     );
   }

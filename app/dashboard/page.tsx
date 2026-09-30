@@ -97,15 +97,16 @@ function DashboardContent() {
     }
 
     // Defensive check: Guard against SyntheticEvents, MouseEvents, or objects lacking repoUrl
+    const candidateRecord = projectOverride as Record<string, unknown> | null;
     const isGenuineProject = Boolean(
-      projectOverride &&
-      typeof projectOverride === 'object' &&
-      !('nativeEvent' in projectOverride) &&
-      !('preventDefault' in projectOverride) &&
-      !('_reactName' in (projectOverride as any)) &&
-      typeof (projectOverride as any).repoUrl === 'string' &&
-      (projectOverride as any).repoUrl.trim().length > 0 &&
-      (projectOverride as any).repoUrl !== 'undefined'
+      candidateRecord &&
+      typeof candidateRecord === 'object' &&
+      !('nativeEvent' in candidateRecord) &&
+      !('preventDefault' in candidateRecord) &&
+      !('_reactName' in candidateRecord) &&
+      typeof candidateRecord.repoUrl === 'string' &&
+      candidateRecord.repoUrl.trim().length > 0 &&
+      candidateRecord.repoUrl !== 'undefined'
     );
 
     const validProject = isGenuineProject ? (projectOverride as Project) : null;
@@ -301,9 +302,9 @@ function DashboardContent() {
   }
 
   const safeSelectedProject: Project = React.useMemo(() => {
-    const candidate = (selectedProject && typeof selectedProject === 'object' && !('nativeEvent' in selectedProject) && (selectedProject as any).id)
+    const candidate = (selectedProject && typeof selectedProject === 'object' && !('nativeEvent' in selectedProject) && selectedProject.id)
       ? selectedProject
-      : (projects.find((p) => p && typeof p === 'object' && !('nativeEvent' in p) && (p as any).id) || MOCK_PROJECTS[0]);
+      : (projects.find((p) => p && typeof p === 'object' && !('nativeEvent' in p) && p.id) || MOCK_PROJECTS[0]);
     return {
       ...candidate,
       name: candidate.name || 'Target Repository',
@@ -399,7 +400,7 @@ function DashboardContent() {
                     uiClicheCount: result.uiClicheCount,
                     findings: result.findings,
                     lastScanAt: new Date().toLocaleString(),
-                    scanHistory: [newScanHistoryItem, ...((currentTarget as any).scanHistory || [])].slice(0, 20)
+                    scanHistory: [newScanHistoryItem, ...(currentTarget.scanHistory || [])].slice(0, 20)
                   };
                   setSelectedProject(updatedProject);
                   setProjects((prev) => {

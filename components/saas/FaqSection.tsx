@@ -31,7 +31,7 @@ export const FaqSection: React.FC = () => {
     {
       question: 'How are the release gate and security rules maintained and updated?',
       answer:
-        'Our rule inventory is continuously synchronized with the latest industry benchmarks, including OWASP Top 10 (2025/2026), OWASP API Security, Next.js 15 App Router best practices, WCAG 2.2 AA accessibility guidelines, and Kubernetes/Docker CIS benchmarks.'
+        'Our rule inventory is continuously synchronized with the latest industry benchmarks, including OWASP Top 10 (2025/2026), OWASP API Security, Django, FastAPI, Go, and React best practices, WCAG 2.2 AA accessibility guidelines, and Kubernetes/Docker CIS benchmarks.'
     },
     {
       question: 'Can we configure custom severity levels or disable irrelevant rules?',

@@ -510,7 +510,14 @@ export async function POST(req: NextRequest) {
         })),
         timestamp: new Date().toISOString()
       },
-      { status: statusCode }
+      {
+        status: statusCode,
+        headers: {
+          'Deprecation': '@1798761600',
+          'Sunset': 'Fri, 01 Jan 2027 00:00:00 GMT',
+          'Link': '<https://zelsis.com/docs/api/v1>; rel="deprecation"'
+        }
+      }
     );
   } catch (error: any) {
     logger.error('[Gate Check] Internal execution error:', error);

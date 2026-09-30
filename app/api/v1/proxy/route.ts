@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
+import crypto from 'crypto';
 import { checkRateLimit, createRateLimitResponse } from '@/lib/rate-limiter';
 import { ProxyQuerySchema, validateQueryParams } from '@/lib/validations/api-schemas';
 import { validateSafeTargetUrl } from '@/lib/ssrf-guard';
@@ -211,12 +212,35 @@ export async function GET(req: NextRequest) {
       }
     });
 
-    return NextResponse.json({
+    const responseData = {
       url: currentUrl,
       status: finalRes.status,
       statusText: finalRes.statusText,
       headers: headersObj,
       content: bodyText.slice(0, 1000000) // Cap payload to 1MB
+    };
+
+    const payloadJson = JSON.stringify(responseData);
+    const contentHash = crypto.createHash('sha256').update(payloadJson).digest('hex');
+    const etag = `"${contentHash.slice(0, 16)}"`;
+
+    if (req.headers.get('if-none-match') === etag) {
+      return new NextResponse(null, {
+        status: 304,
+        headers: {
+          'ETag': etag,
+          'Cache-Control': 'private, s-maxage=60, stale-while-revalidate=300'
+        }
+      });
+    }
+
+    return new NextResponse(payloadJson, {
+      status: 200,
+      headers: {
+        'Content-Type': 'application/json',
+        'ETag': etag,
+        'Cache-Control': 'private, s-maxage=60, stale-while-revalidate=300'
+      }
     });
   } catch (err: any) {
     logger.error(`[Proxy Fetch Error] Failed to fetch: ${targetUrl}`, err?.message);

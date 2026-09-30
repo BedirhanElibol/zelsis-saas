@@ -93,7 +93,7 @@ export const RuleConfiguratorModal: React.FC<RuleConfiguratorModalProps> = ({
           {!isAllowed ? (
             <div className="flex flex-col items-center justify-center gap-6 py-12 px-6 bg-[#0A0A0A] border border-white/10 rounded-2xl text-center my-2">
               <div className="w-14 h-14 rounded-2xl bg-white/5 border border-white/10 flex items-center justify-center">
-                <Lock size={26} className="text-zinc-500" />
+                <Lock size={26} className="text-zinc-400" />
               </div>
               <div className="max-w-md">
                 <h3 className="text-base font-extrabold text-[#EDEDED] mb-2">

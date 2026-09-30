@@ -83,10 +83,19 @@ export const Sidebar: React.FC<SidebarProps> = ({
     { id: 'cicd', label: 'CI/CD & CLI Automation', icon: Terminal },
     { id: 'remediation', label: 'Remediation Queue', icon: CheckSquare },
     { id: 'checkout', label: 'Billing & Tiers', icon: CreditCard },
+    { id: 'portal', label: 'Customer Portal', icon: FileText },
     { id: 'settings', label: 'Security Policies', icon: Settings },
   ];
 
   const handleNavClick = (id: string) => {
+    if (id === 'portal') {
+      if (user?.email) {
+        window.open(`/api/v1/customer-portal?email=${encodeURIComponent(user.email)}`, '_blank');
+      } else if (onOpenAuth) {
+        onOpenAuth('signin');
+      }
+      return;
+    }
     onNavigate(id);
     if (onCloseMobile) {
       onCloseMobile();
@@ -204,7 +213,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
                   {user.name || 'User'}
                 </div>
                 <div className="mt-0.5 flex items-center gap-1.5 flex-wrap">
-                  <span className={`inline-block px-1.5 py-0.5 rounded text-[9px] font-mono font-bold ${
+                  <span className={`inline-block px-1.5 py-0.5 rounded text-[11px] font-mono font-bold ${
                     user.tier === 'Free'
                       ? 'bg-white/10 border border-white/20 text-zinc-300'
                       : user.tier === 'Pro'
@@ -215,7 +224,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
                   </span>
                   {user.tier !== 'Free' && (
                     <span
-                      className={`px-1.5 py-0.5 rounded text-[9px] font-mono font-bold ${validity.badgeColors.bg} ${validity.badgeColors.text} ${validity.badgeColors.border} border`}
+                      className={`px-1.5 py-0.5 rounded text-[11px] font-mono font-bold ${validity.badgeColors.bg} ${validity.badgeColors.text} ${validity.badgeColors.border} border`}
                       title={validity.countdownLabel}
                     >
                       {validity.compactLabel}

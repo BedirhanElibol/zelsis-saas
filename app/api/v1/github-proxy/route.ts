@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
+import crypto from 'crypto';
 import { parseGithubUrl, prioritizeFilesForScan } from '@/lib/github-api';
 import { checkRateLimit, createRateLimitResponse } from '@/lib/rate-limiter';
 import { GithubProxyQuerySchema, validateQueryParams } from '@/lib/validations/api-schemas';
@@ -623,7 +624,7 @@ export async function GET(req: NextRequest) {
       });
     }
 
-    return NextResponse.json({
+    const responsePayload = {
       name: repoData.name,
       fullName: repoData.full_name,
       description: repoData.description || `Public GitHub Repository (${repoData.stargazers_count} stars)`,
@@ -632,6 +633,29 @@ export async function GET(req: NextRequest) {
       language: repoData.language || 'TypeScript',
       files: fetchedFiles,
       isPrivate: repoData.private || false
+    };
+
+    const payloadJson = JSON.stringify(responsePayload);
+    const contentHash = crypto.createHash('sha256').update(payloadJson).digest('hex');
+    const etag = `"${contentHash.slice(0, 16)}"`;
+
+    if (req.headers.get('if-none-match') === etag) {
+      return new NextResponse(null, {
+        status: 304,
+        headers: {
+          'ETag': etag,
+          'Cache-Control': 'public, s-maxage=60, stale-while-revalidate=300'
+        }
+      });
+    }
+
+    return new NextResponse(payloadJson, {
+      status: 200,
+      headers: {
+        'Content-Type': 'application/json',
+        'ETag': etag,
+        'Cache-Control': 'public, s-maxage=60, stale-while-revalidate=300'
+      }
     });
   } catch (err: any) {
     logger.error(`[GitHub Proxy] Failed to proxy repository: ${owner}/${repo}`, err);

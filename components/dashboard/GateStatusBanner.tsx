@@ -224,7 +224,7 @@ export const GateStatusBanner: React.FC<GateStatusBannerProps> = ({
         >
           <GitBranch size={13} className="text-zinc-300" />
           <span className="font-bold">Setup CI/CD Gate</span>
-          <span className="text-[9px] uppercase font-extrabold tracking-wider px-1.5 py-0.5 rounded bg-white/10 text-zinc-300 border border-white/15 ml-0.5">
+          <span className="text-[11px] uppercase font-extrabold tracking-wider px-1.5 py-0.5 rounded bg-white/10 text-zinc-300 border border-white/15 ml-0.5">
             PR Bot
           </span>
         </button>
@@ -263,7 +263,7 @@ export const GateStatusBanner: React.FC<GateStatusBannerProps> = ({
                   <div className="flex items-center gap-1.5">
                     <span className="font-bold">Executive PDF Report</span>
                     {user?.tier === 'Free' && (
-                      <span className="text-[9px] font-mono font-extrabold uppercase px-1 py-0.5 rounded bg-white/10 text-white border border-white/20">
+                      <span className="text-[11px] font-mono font-extrabold uppercase px-1 py-0.5 rounded bg-white/10 text-white border border-white/20">
                         PRO
                       </span>
                     )}

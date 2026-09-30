@@ -555,8 +555,8 @@ export function evaluateAiClicheRules(file: CodeFile, lines: string[], cleanCont
         logs.push(`[${ts}] 🎨 CLICHE-20: Monotone Slate-500 text overuse (${slateCount}x) detected (${file.path})`);
     }
     // CLICHE-21: Forced Fixed-Height Card Containers
-    if (/h-\[(?:200|250|300|350|400)px\]|h-(?:48|52|56|60|64|72|80)/i.test(cleanContent) && /card|feature|pricing/i.test(cleanContent)) {
-        const matchLineIdx = lines.findIndex(l => /h-\[\d+px\]|h-(?:48|52|56|60|64|72|80)\b/i.test(l) && /card|feature|pricing/i.test(l));
+    if (/(?:^|[^a-zA-Z0-9_-])h-\[(?:200|250|300|350|400)px\]|(?:^|[^a-zA-Z0-9_-])h-(?:48|52|56|60|64|72|80)\b/i.test(cleanContent) && /card|feature|pricing/i.test(cleanContent)) {
+        const matchLineIdx = lines.findIndex(l => /(?:^|[^a-zA-Z0-9_-])h-\[\d+px\]|(?:^|[^a-zA-Z0-9_-])h-(?:48|52|56|60|64|72|80)\b/i.test(l) && /card|feature|pricing/i.test(l));
         const lineNum = matchLineIdx !== -1 ? matchLineIdx + 1 : 1;
         findings.push({
             id: `cliche-${Date.now()}-${findingCounter.count++}`,

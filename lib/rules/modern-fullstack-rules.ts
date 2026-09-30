@@ -96,7 +96,7 @@ export function evaluateModernFullstackRules(file: CodeFile, lines: string[], cl
         logs.push(`[${ts}] ⚡ FULLSTACK NEXT15-03: Missing React 19 taintObjectReference on Sensitive Entities in ${file.path}:${lineNum}`);
     }
     // NEXT15-04: Uncached Dynamic Route Render Explosion (force-dynamic)
-    if (/export\s+const\s+dynamic\s*=\s*['"]force-dynamic['"]/i.test(cleanContent) && !cleanContent.includes('api/')) {
+    if (/export\s+const\s+dynamic\s*=\s*['"]force-dynamic['"]/i.test(cleanContent) && !lowerPath.includes('app/api') && !cleanContent.includes('api/')) {
         const matchLineIdx = lines.findIndex(l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('*'));
         const lineNum = matchLineIdx !== -1 ? matchLineIdx + 1 : 1;
         findings.push({

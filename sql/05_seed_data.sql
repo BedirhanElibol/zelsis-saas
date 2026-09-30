@@ -22,7 +22,7 @@ ALTER TABLE public.security_rules_catalog ENABLE ROW LEVEL SECURITY;
 
 DROP POLICY IF EXISTS "Public read-only for rules catalog" ON public.security_rules_catalog;
 CREATE POLICY "Public read-only for rules catalog" ON public.security_rules_catalog
-    FOR SELECT USING (true);
+    FOR SELECT USING (auth.role() = 'anon' OR auth.role() = 'authenticated');
 
 
 -- Seed OWASP Rules Catalog

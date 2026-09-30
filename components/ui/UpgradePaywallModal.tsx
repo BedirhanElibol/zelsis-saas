@@ -104,7 +104,7 @@ export const UpgradePaywallModal: React.FC<UpgradePaywallModalProps> = ({
                   <div className="flex items-center gap-1.5">
                     <span className="text-xs font-mono font-extrabold uppercase text-[#EDEDED]">Pro Plan</span>
                     {activeTier === 'Pro' && (
-                      <span className="text-[9px] font-bold bg-emerald-500 text-black uppercase tracking-wider px-1.5 py-0.5 rounded flex items-center gap-1">
+                      <span className="text-[11px] font-bold bg-emerald-500 text-black uppercase tracking-wider px-1.5 py-0.5 rounded flex items-center gap-1">
                         <span className="w-1.5 h-1.5 rounded-full bg-black" />
                         Active
                       </span>
@@ -177,7 +177,7 @@ export const UpgradePaywallModal: React.FC<UpgradePaywallModalProps> = ({
                   <div className="flex items-center gap-1.5">
                     <span className="text-xs font-mono font-extrabold uppercase text-[#EDEDED]">Enterprise</span>
                     {activeTier === 'Enterprise' && (
-                      <span className="text-[9px] font-bold bg-emerald-500 text-black uppercase tracking-wider px-1.5 py-0.5 rounded flex items-center gap-1">
+                      <span className="text-[11px] font-bold bg-emerald-500 text-black uppercase tracking-wider px-1.5 py-0.5 rounded flex items-center gap-1">
                         <span className="w-1.5 h-1.5 rounded-full bg-black" />
                         Active
                       </span>

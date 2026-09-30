@@ -46,11 +46,11 @@ export const ProductCapabilities: React.FC = () => {
       architecturePills: [
         'OWASP Top 10 (2025/2026)',
         'PostgreSQL Row Level Security',
-        'Next.js 15 Server Components',
+        'Next.js, Django, FastAPI & Go',
         'Docker & K8s Security Context'
       ],
       bulletPoints: [
-        'Deterministic static code inspection with zero hallucinated findings',
+        'Deterministic, non-LLM static detection engine for high-fidelity alerts',
         'Granular severity controls: Configure CRITICAL, HIGH, MEDIUM per repository',
         'Clear explanations mapped to CWE standards and security best practices'
       ]
@@ -105,14 +105,14 @@ export const ProductCapabilities: React.FC = () => {
       title: 'Deep Bundle & Core Web Vitals Profiler',
       subtitle: 'Identify layout shifts, unoptimized asset weights, and container resource limits.',
       description:
-        'Catch client-side performance regressions and cloud resource misconfigurations. Analyze Cumulative Layout Shift (CLS), unoptimized assets, WCAG 2.1 AA keyboard accessibility, and verify Docker CPU/Memory limits before deployment.',
+        'Catch client-side performance regressions and cloud resource misconfigurations. Analyze Cumulative Layout Shift (CLS), unoptimized assets, WCAG 2.2 AA keyboard accessibility, and verify Docker CPU/Memory limits before deployment.',
       image: '/images/bundle_profiler.png',
       alt: 'Zelsis Performance Bundle Profiler and Cloud Resource Analyzer',
       tag: 'PERFORMANCE GAUGE',
       architecturePills: [
         'Cumulative Layout Shift (CLS)',
         'Largest Contentful Paint (LCP)',
-        'WCAG 2.1 AA Accessibility',
+        'WCAG 2.2 AA Accessibility',
         'Container Resource Quotas'
       ],
       bulletPoints: [
@@ -181,7 +181,7 @@ export const ProductCapabilities: React.FC = () => {
                   <ul className="flex flex-col gap-2.5">
                     {capability.bulletPoints.map((bp, bpIdx) => (
                       <li key={bpIdx} className="flex items-start gap-2.5 text-xs text-zinc-300">
-                        <span className="text-zinc-500 font-mono text-xs select-none shrink-0">—</span>
+                        <span className="text-zinc-400 font-mono text-xs select-none shrink-0">—</span>
                         <span>{bp}</span>
                       </li>
                     ))}

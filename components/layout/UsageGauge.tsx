@@ -44,7 +44,7 @@ export const UsageGauge: React.FC<UsageGaugeProps> = ({
             </span>
           </div>
           <span
-            className={`px-2 py-0.5 rounded text-[9px] font-bold tracking-widest uppercase border ${
+            className={`px-2 py-0.5 rounded text-[11px] font-bold tracking-widest uppercase border ${
               isFree
                 ? 'bg-white/5 text-zinc-400 border-white/10'
                 : 'bg-white/10 text-white border-white/20'
@@ -76,7 +76,7 @@ export const UsageGauge: React.FC<UsageGaugeProps> = ({
                   style={{ width: `${scanPercentage}%` }}
                 />
               </div>
-              <div className="flex items-center justify-between text-[10px] text-zinc-500 pt-0.5">
+              <div className="flex items-center justify-between text-[10px] text-zinc-400 pt-0.5">
                 <span>{scansRemaining} audits left this cycle</span>
                 {scansUsed >= 3 && (
                   <span className="text-rose-400 font-bold">Quota Full</span>
@@ -102,20 +102,20 @@ export const UsageGauge: React.FC<UsageGaugeProps> = ({
 
               <div className="flex items-center justify-between py-1 border-b border-white/5">
                 <span className="flex items-center gap-1.5">
-                  <Lock size={11} className="text-zinc-500" />
+                  <Lock size={11} className="text-zinc-400" />
                   <span>Private Repos</span>
                 </span>
-                <span className="text-[9px] text-amber-400/90 font-bold bg-amber-500/10 px-1.5 py-0.5 rounded border border-amber-500/20">
+                <span className="text-[11px] text-amber-400/90 font-bold bg-amber-500/10 px-1.5 py-0.5 rounded border border-amber-500/20">
                   Pro Feature
                 </span>
               </div>
 
               <div className="flex items-center justify-between py-1">
                 <span className="flex items-center gap-1.5">
-                  <Lock size={11} className="text-zinc-500" />
+                  <Lock size={11} className="text-zinc-400" />
                   <span>PDF Certificates</span>
                 </span>
-                <span className="text-[9px] text-amber-400/90 font-bold bg-amber-500/10 px-1.5 py-0.5 rounded border border-amber-500/20">
+                <span className="text-[11px] text-amber-400/90 font-bold bg-amber-500/10 px-1.5 py-0.5 rounded border border-amber-500/20">
                   Pro Feature
                 </span>
               </div>

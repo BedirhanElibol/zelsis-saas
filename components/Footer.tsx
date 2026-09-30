@@ -13,7 +13,7 @@ export const Footer: React.FC = () => {
           <ZelsisLogo size="md" />
 
           <p className="text-sm leading-relaxed max-w-sm text-[#A1A1AA]">
-            Universal pre-flight release gate for modern web and cloud applications. Automated OWASP security clearance, WCAG 2.1 AA accessibility, and cloud infrastructure verification.
+            Universal pre-flight release gate for modern web and cloud applications. Automated OWASP security clearance, WCAG 2.2 AA accessibility, and cloud infrastructure verification.
           </p>
 
           <div className="flex flex-col gap-1.5 mt-2 text-xs font-mono text-zinc-400">
@@ -23,7 +23,7 @@ export const Footer: React.FC = () => {
               <ArrowUpRight size={12} />
             </span>
             <span>Support: Mon-Sun / Typical response within 24h</span>
-            <span className="text-[11px] text-zinc-500">Istanbul &amp; Global Edge Infrastructure</span>
+            <span className="text-[11px] text-zinc-400">Istanbul &amp; Global Edge Infrastructure</span>
           </div>
         </div>
 
@@ -52,7 +52,7 @@ export const Footer: React.FC = () => {
             Launch Audit Engine →
           </a>
           <span className="text-xs text-[#A1A1AA]">Deterministic Pre-Flight Vulnerability Clearance</span>
-          <span className="text-xs text-[#A1A1AA]">Automated WCAG 2.1 AA &amp; UX Audit Gates</span>
+          <span className="text-xs text-[#A1A1AA]">Automated WCAG 2.2 AA &amp; UX Audit Gates</span>
           <span className="text-xs text-[#A1A1AA]">Cloud Infrastructure &amp; Container Hardening</span>
         </div>
 
@@ -68,6 +68,17 @@ export const Footer: React.FC = () => {
           <a href="/privacy" className="hover:text-white transition-colors">Privacy &amp; Cookies</a>
           <a href="/terms" className="hover:text-white transition-colors">Terms of Service</a>
           <a href="/refund" className="hover:text-white transition-colors">Refund Policy</a>
+          <button
+            type="button"
+            onClick={() => {
+              if (typeof window !== 'undefined') {
+                window.dispatchEvent(new CustomEvent('zelsis:reopenConsent'));
+              }
+            }}
+            className="hover:text-white transition-colors cursor-pointer text-left"
+          >
+            Cookie Settings
+          </button>
         </div>
       </div>
     </footer>

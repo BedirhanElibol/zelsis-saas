@@ -3,6 +3,7 @@
 import React from 'react';
 import { X, Check, Lock, Shield, ArrowRight, Zap, ExternalLink } from 'lucide-react';
 import { UserTier } from '@/data/schema';
+import { RULES_CATALOG } from '@/data/mockData';
 
 interface TierDetailsModalProps {
   isOpen: boolean;
@@ -40,7 +41,7 @@ export const TierDetailsModal: React.FC<TierDetailsModalProps> = ({
     {
       category: 'Rule Engine & Analysis Depth',
       items: [
-        { label: 'Security & Bug Inventory', free: '20 Core OWASP Rules', pro: 'All 1,450+ Production Rules', enterprise: 'All Rules + Custom Company Rules' },
+        { label: 'Security & Bug Inventory', free: '20 Core OWASP Rules', pro: `${RULES_CATALOG.length}+ Verified Production Rules`, enterprise: 'All Rules + Custom Company Rules' },
         { label: 'Secret Detection & RLS', free: 'Basic Surface Check', pro: 'Deep Static & Vault Analysis', enterprise: 'Deep Static + Custom Token Patterns' },
         { label: '1,000+ File Repositories', free: 'Standard Buffer', pro: 'Cooperative Event Loop Yielding', enterprise: 'Monorepo & Multi-Package Analysis' }
       ]
@@ -117,12 +118,12 @@ export const TierDetailsModal: React.FC<TierDetailsModalProps> = ({
             }`}>
               <div className="absolute -top-2.5 right-4 flex items-center gap-1">
                 {currentTier === 'Pro' ? (
-                  <span className="px-2 py-0.5 rounded text-[9px] font-bold bg-white text-black uppercase tracking-wider flex items-center gap-1 shadow-sm">
+                  <span className="px-2 py-0.5 rounded text-[11px] font-bold bg-white text-black uppercase tracking-wider flex items-center gap-1 shadow-sm">
                     <span className="w-1.5 h-1.5 rounded-full bg-black" />
                     Active Plan
                   </span>
                 ) : currentTier === 'Free' ? (
-                  <span className="px-2 py-0.5 rounded text-[9px] font-bold bg-white/20 text-white border border-white/30 uppercase tracking-wider">
+                  <span className="px-2 py-0.5 rounded text-[11px] font-bold bg-white/20 text-white border border-white/30 uppercase tracking-wider">
                     Recommended
                   </span>
                 ) : null}
@@ -162,7 +163,7 @@ export const TierDetailsModal: React.FC<TierDetailsModalProps> = ({
               currentTier === 'Enterprise' ? 'border-2 border-white/40 bg-white/[0.04]' : 'border border-white/10 bg-white/[0.02]'
             }`}>
               {currentTier === 'Enterprise' && (
-                <span className="absolute -top-2.5 right-4 px-2 py-0.5 rounded text-[9px] font-bold bg-white text-black uppercase tracking-wider flex items-center gap-1 shadow-sm">
+                <span className="absolute -top-2.5 right-4 px-2 py-0.5 rounded text-[11px] font-bold bg-white text-black uppercase tracking-wider flex items-center gap-1 shadow-sm">
                   <span className="w-1.5 h-1.5 rounded-full bg-black" />
                   Active Plan
                 </span>
@@ -208,7 +209,7 @@ export const TierDetailsModal: React.FC<TierDetailsModalProps> = ({
                 </h3>
                 <div className="divide-y divide-white/5 text-xs">
                   {cat.items.length === 0 ? (
-                    <div className="py-2 text-zinc-500 text-[11px] font-mono">No items in this category.</div>
+                    <div className="py-2 text-zinc-400 text-[11px] font-mono">No items in this category.</div>
                   ) : (
                     cat.items.map((item, itemIdx) => (
                       <div key={itemIdx} className="grid grid-cols-1 md:grid-cols-4 py-2 gap-1 items-center">

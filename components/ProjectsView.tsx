@@ -93,7 +93,7 @@ export const ProjectsView: React.FC<ProjectsViewProps> = ({
             onClick={() => {
               const p: Project = {
                 id: 'proj-preset-nextjs',
-                name: 'Next.js 15 + Prisma SaaS',
+                name: 'Enterprise Backend (Django/Go)',
                 repoUrl: 'https://github.com/vercel/next.js',
                 previewUrl: 'https://demo.zelsis.com',
                 framework: 'Next.js 15 + Tailwind',

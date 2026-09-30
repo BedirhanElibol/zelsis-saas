@@ -16,7 +16,7 @@ export const SecurityAuditView: React.FC<SecurityAuditViewProps> = ({
 }) => {
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedCategory, setSelectedCategory] = useState<string>('ALL');
-  const [copiedId, setCopiedId] = useState<number | null>(null);
+  const [copiedId, setCopiedId] = useState<string | number | null>(null);
 
   const categories = ['ALL', 'Secret Isolation', 'Authentication', 'Database', 'Network & CORS', 'Input & Files', 'Error & Logging', 'Supply Chain', 'Compliance & Cost'];
 

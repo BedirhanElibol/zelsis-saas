@@ -189,7 +189,7 @@ export const Header: React.FC<HeaderProps> = ({
                 {user?.tier === 'Enterprise' ? `${user.name?.split(' ')[0] || 'Enterprise'} Workspace` : 'Personal Workspace'}
               </span>
               {user?.tier === 'Enterprise' && (
-                <span className="text-[9px] font-mono font-extrabold uppercase px-1.5 py-0.5 rounded bg-emerald-500/10 text-emerald-400 border border-emerald-500/30 ml-0.5">
+                <span className="text-[11px] font-mono font-extrabold uppercase px-1.5 py-0.5 rounded bg-emerald-500/10 text-emerald-400 border border-emerald-500/30 ml-0.5">
                   ADMIN
                 </span>
               )}
@@ -370,7 +370,7 @@ export const Header: React.FC<HeaderProps> = ({
                             </span>
                           </div>
                           <a
-                            href="https://polar.sh/purchases"
+                            href={user.email ? `/api/v1/customer-portal?email=${encodeURIComponent(user.email)}` : 'https://polar.sh/purchases'}
                             target="_blank"
                             rel="noopener noreferrer"
                             className="text-[10px] text-zinc-300 hover:text-white font-medium underline underline-offset-2 flex items-center gap-0.5 shrink-0 ml-1.5"

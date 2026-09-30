@@ -58,10 +58,10 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout Code
-        uses: actions/checkout@v4
+        uses: actions/checkout@b4ffde65f46336ab88eb53be808477a3936bae11 # v4.1.1
 
       - name: Setup Node.js
-        uses: actions/setup-node@v4
+        uses: actions/setup-node@60edb5dd545a775178f52524783378180af0d1f8 # v4.0.2
         with:
           node-version: 20
           cache: 'npm'
@@ -135,7 +135,7 @@ jobs:
       {!isCicdViewAllowed(userTier) && (
         <div className="flex flex-col items-center justify-center gap-6 py-16 px-6 bg-[#141414] border border-white/10 rounded-2xl text-center">
           <div className="w-16 h-16 rounded-2xl bg-white/5 border border-white/10 flex items-center justify-center">
-            <Lock size={30} className="text-zinc-500" />
+            <Lock size={30} className="text-zinc-400" />
           </div>
           <div className="max-w-md">
             <h2 className="text-lg font-extrabold text-[#EDEDED] mb-2">CI/CD Integration is a Pro Feature</h2>
@@ -321,6 +321,79 @@ jobs:
         </div>
       </div>
 
+      {/* GitHub App & PR Bot Integration (New for Step 5) */}
+      <div className="bg-[#141414] border border-white/10 rounded-xl p-6 flex flex-col md:flex-row items-center justify-between gap-6">
+        <div className="flex-1">
+          <div className="flex items-center gap-3 mb-2">
+            <h2 className="text-base font-bold text-[#EDEDED] m-0">
+              Zelsis GitHub App & Automated PR Bot
+            </h2>
+            <span className="text-[10px] font-mono bg-blue-500/20 text-blue-300 px-2 py-0.5 rounded">Native App</span>
+          </div>
+          <p className="text-xs text-[#A1A1AA] leading-relaxed max-w-xl">
+            Skip the YAML. Install the official Zelsis GitHub App to automatically comment on pull requests, block merges on critical vulnerabilities, and provide inline code suggestions without touching your repository's workflow files.
+          </p>
+        </div>
+        <div className="shrink-0 flex flex-col gap-2 w-full md:w-auto">
+          <button className="btn bg-white text-black hover:bg-neutral-200 text-sm font-bold flex items-center justify-center gap-2 px-6 py-2.5 rounded-xl transition-colors">
+            <GitPullRequest size={16} />
+            Install GitHub App
+          </button>
+          <p className="text-[10px] text-zinc-400 text-center font-mono">Requires Repo Admin rights</p>
+        </div>
+      </div>
+
+      {/* Shareable Reports & README Badges */}
+      <div className="bg-[#141414] border border-white/10 rounded-xl p-6">
+        <h2 className="text-sm font-bold text-[#EDEDED] tracking-tight mb-4">
+          Shareable Report Links & README Badges
+        </h2>
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+          <div className="bg-black/40 border border-white/5 rounded-xl p-4">
+            <span className="text-[10px] font-mono text-zinc-400 uppercase tracking-wider block mb-2">
+              Public Dashboard Link
+            </span>
+            <p className="text-xs text-zinc-400 mb-3">Share a read-only view of your project's security and quality posture with clients, auditors, or the public.</p>
+            <div className="flex items-center gap-2">
+              <input 
+                type="text" 
+                readOnly 
+                value={`https://zelsis.com/report/${project?.id || 'demo'}`} 
+                className="flex-1 bg-[#0A0A0A] border border-white/10 rounded-lg px-3 py-2 text-xs font-mono text-zinc-300 focus:outline-none"
+              />
+              <button 
+                onClick={() => copyToClipboard(`https://zelsis.com/report/${project?.id || 'demo'}`, () => {})}
+                className="btn btn-secondary p-2 rounded-lg"
+              >
+                <Copy size={14} />
+              </button>
+            </div>
+          </div>
+          <div className="bg-black/40 border border-white/5 rounded-xl p-4">
+            <span className="text-[10px] font-mono text-zinc-400 uppercase tracking-wider block mb-2">
+              Markdown Badge (README.md)
+            </span>
+            <div className="mb-3">
+              <img src={`https://img.shields.io/badge/Zelsis_Score-${minScore}%25-emerald?style=flat-square`} alt="Zelsis Score" className="h-5" />
+            </div>
+            <div className="flex items-center gap-2">
+              <input 
+                type="text" 
+                readOnly 
+                value={`[![Zelsis Score](https://img.shields.io/badge/Zelsis_Score-${minScore}%25-emerald?style=flat-square)](https://zelsis.com/report/${project?.id || 'demo'})`} 
+                className="flex-1 bg-[#0A0A0A] border border-white/10 rounded-lg px-3 py-2 text-xs font-mono text-zinc-300 focus:outline-none"
+              />
+              <button 
+                onClick={() => copyToClipboard(`[![Zelsis Score](https://img.shields.io/badge/Zelsis_Score-${minScore}%25-emerald?style=flat-square)](https://zelsis.com/report/${project?.id || 'demo'})`, () => {})}
+                className="btn btn-secondary p-2 rounded-lg"
+              >
+                <Copy size={14} />
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+
       {/* Two Column Section: Policy as Code & Local CLI */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         {/* Policy as Code .zelsisrc.json */}
@@ -348,7 +421,7 @@ jobs:
 
           <div className="flex flex-wrap gap-3 pt-3 border-t border-white/5">
             {Object.keys(enabledGates).length === 0 ? (
-              <p className="text-xs text-zinc-500">No gates configured.</p>
+              <p className="text-xs text-zinc-400">No gates configured.</p>
             ) : (
               Object.keys(enabledGates).map((gateKey) => {
                 const k = gateKey as keyof typeof enabledGates;
@@ -375,20 +448,20 @@ jobs:
         <div className="bg-[#141414] border border-white/10 rounded-xl p-6 flex flex-col justify-between">
           <div>
             <h2 className="text-sm font-bold text-[#EDEDED] tracking-tight mb-3">
-              Local CLI &amp; Pre-Commit Hook
+              Advanced CLI Tools &amp; Local Hooks
             </h2>
             <p className="text-xs text-[#A1A1AA] mb-4 leading-relaxed">
-              Catch vulnerabilities in terminal before code is even committed to Git.
+              Scan locally in any language environment (Node, Python, Go, Ruby).
             </p>
 
             <div className="bg-black/60 border border-white/5 rounded-xl p-4 mb-4">
-              <span className="text-[10px] font-mono text-zinc-500 uppercase tracking-wider block mb-2">
-                1. Run Pre-Flight Audit in Terminal
+              <span className="text-[10px] font-mono text-zinc-400 uppercase tracking-wider block mb-2">
+                1. Multi-Language Local Audit
               </span>
               <div className="flex items-center justify-between gap-2 font-mono text-xs text-zinc-300">
-                <code className="text-white">npx zelsis audit --fail-on=critical</code>
+                <code className="text-white">zelsis audit --lang=auto --strict</code>
                 <button
-                  onClick={() => copyToClipboard('npx zelsis audit --fail-on=critical', setCopiedCli)}
+                  onClick={() => copyToClipboard('zelsis audit --lang=auto --strict', setCopiedCli)}
                   className="p-1 hover:text-white transition-colors"
                   title="Copy CLI command"
                 >
@@ -398,18 +471,18 @@ jobs:
             </div>
 
             <div className="bg-black/60 border border-white/5 rounded-xl p-4">
-              <span className="text-[10px] font-mono text-zinc-500 uppercase tracking-wider block mb-2">
-                2. Install Git Pre-Commit Hook (Husky)
+              <span className="text-[10px] font-mono text-zinc-400 uppercase tracking-wider block mb-2">
+                2. Install Git Pre-Commit Hook
               </span>
               <pre className="font-mono text-xs text-zinc-300 leading-relaxed m-0 overflow-x-auto">
-{`npx husky add .husky/pre-commit "npx zelsis audit --fail-on=critical"`}
+{`zelsis install-hook pre-commit`}
               </pre>
             </div>
           </div>
 
-          <div className="text-xs font-mono text-zinc-500 pt-4 mt-4 border-t border-white/5 flex items-center gap-2">
+          <div className="text-xs font-mono text-zinc-400 pt-4 mt-4 border-t border-white/5 flex items-center gap-2">
             <ShieldCheck size={14} className="text-emerald-400 shrink-0" />
-            <span>Blocks unvetted API secrets and database leaks before git push.</span>
+            <span>Works with Python (pip), Node (npm), Go, and Ruby (gem).</span>
           </div>
         </div>
       </div>

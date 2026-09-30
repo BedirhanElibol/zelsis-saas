@@ -18,8 +18,8 @@ ALTER TABLE public.webhook_events ENABLE ROW LEVEL SECURITY;
 DROP POLICY IF EXISTS "Service role manages webhook events" ON public.webhook_events;
 CREATE POLICY "Service role manages webhook events" ON public.webhook_events
     FOR ALL TO service_role
-    USING (true)
-    WITH CHECK (true);
+    USING (current_user = 'service_role')
+    WITH CHECK (current_user = 'service_role');
 
 -- 2. Enterprise RBAC Roles on Profiles
 DO $$
@@ -63,6 +63,7 @@ BEGIN
     INTO v_tier, v_quota, v_used
     FROM public.subscriptions
     WHERE user_id = p_user_id
+    ORDER BY user_id
     FOR UPDATE; -- Row-level lock prevents race conditions
 
     IF NOT FOUND THEN

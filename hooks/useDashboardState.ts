@@ -326,7 +326,7 @@ export function useDashboardState() {
             try {
               const parsed = JSON.parse(savedProjectsStr);
               if (Array.isArray(parsed) && parsed.length > 0) {
-                currentProjects = parsed.map((p: any) => {
+                currentProjects = (parsed as Project[]).map((p) => {
                   if (p.repoUrl === 'https://github.com/example/shipguard' || p.id === 'proj-zelsis-self' || p.id === 'proj-shipguard-self') {
                     return { ...p, repoUrl: 'local' };
                   }
@@ -816,7 +816,7 @@ export function useDashboardState() {
                   localStorage.removeItem('shipguard_license_key');
 
                   // Auto-heal Supabase cloud metadata if it was tainted
-                  if (supabaseUser.tier !== 'Free' || (supabaseUser as any).expiresAt?.includes('2099')) {
+                  if (supabaseUser.tier !== 'Free' || supabaseUser.expiresAt?.includes('2099')) {
                     syncUserProfileToSupabase({
                       tier: 'Free',
                       expiresAt: undefined,
@@ -899,7 +899,7 @@ export function useDashboardState() {
 
             let resolvedTier: 'Free' | 'Pro' | 'Enterprise' = isPlatformAdmin ? 'Enterprise' : (profile.tier || 'Free');
             let savedExpiresAt: string | undefined = isPlatformAdmin ? '2099-12-31T23:59:59.999Z' : profile.expiresAt;
-            let savedStatus: 'active' | 'past_due' | 'canceled' = (profile.status as any) || 'active';
+            let savedStatus: 'active' | 'past_due' | 'canceled' = (profile.status as 'active' | 'past_due' | 'canceled') || 'active';
 
             if (!isPlatformAdmin) {
               if (savedExpiresAt?.includes('2099') || resolvedTier === 'Enterprise') {
@@ -1040,7 +1040,7 @@ export function useDashboardState() {
         ? updated
         : updated.filter((p) => p.repoUrl !== 'local' && p.id !== 'proj-zelsis-self' && p.id !== 'proj-shipguard-self');
       const lightweight = sanitized.map((p) => {
-        const { githubToken, ...safeProject } = p as any;
+        const { githubToken, ...safeProject } = p;
         return {
           ...safeProject,
           findings: (p.findings ?? []).slice(0, 60).map((f) => ({
@@ -1063,7 +1063,7 @@ export function useDashboardState() {
           ? updated
           : updated.filter((p) => p.repoUrl !== 'local' && p.id !== 'proj-zelsis-self' && p.id !== 'proj-shipguard-self');
         const ultraCompact = sanitized.map((p) => {
-          const { githubToken, ...safeProject } = p as any;
+          const { githubToken, ...safeProject } = p;
           return {
             ...safeProject,
             findings: (p.findings ?? []).slice(0, 20).map((f) => ({
@@ -1090,7 +1090,7 @@ export function useDashboardState() {
   };
 
   const handleSelectProject = (p?: Project | null) => {
-    if (!p || typeof p !== 'object' || ('nativeEvent' in p) || !('id' in p) || !(p as any).id) {
+    if (!p || typeof p !== 'object' || ('nativeEvent' in p) || !('id' in p) || !p.id) {
       setSelectedProject(MOCK_PROJECTS[0]);
       safeSetStorageItem('zelsis_selected_project_id', MOCK_PROJECTS[0].id);
       return;
@@ -1436,10 +1436,11 @@ export function useDashboardState() {
           const parsed = JSON.parse(savedUserProjectsStr);
           if (Array.isArray(parsed) && parsed.length > 0) {
             const allowedLocal = canAccessLocalAudit();
+            const projectList = parsed as Project[];
             const filtered = (allowedLocal
-              ? parsed
-              : parsed.filter((p: any) => p.repoUrl !== 'local' && p.id !== 'proj-zelsis-self' && p.id !== 'proj-shipguard-self')
-            ).map((p: any) => {
+              ? projectList
+              : projectList.filter((p) => p.repoUrl !== 'local' && p.id !== 'proj-zelsis-self' && p.id !== 'proj-shipguard-self')
+            ).map((p) => {
               const { githubToken, ...safeP } = p;
               return safeP;
             });
