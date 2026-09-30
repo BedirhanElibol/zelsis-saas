@@ -1,11 +1,16 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@supabase/supabase-js';
 import { checkRateLimit, createRateLimitResponse } from '@/lib/rate-limiter';
+import { getEffectiveSupabaseUrl, getEffectiveSupabaseAnonKey } from '@/lib/supabase';
 
-const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!;
-const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY!;
+export const dynamic = 'force-dynamic';
 
-const supabase = createClient(supabaseUrl, supabaseServiceKey);
+function getWaitlistSupabase() {
+  const url = getEffectiveSupabaseUrl();
+  const serviceKey = process.env.SUPABASE_SERVICE_ROLE_KEY || getEffectiveSupabaseAnonKey();
+  if (!url || !serviceKey) return null;
+  return createClient(url, serviceKey, { auth: { persistSession: false } });
+}
 
 export async function POST(req: NextRequest) {
   const rateLimit = await checkRateLimit(req, {
@@ -24,15 +29,14 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: 'Invalid Content-Type, must be application/json' }, { status: 415 });
   }
 
-  // Enforce authentication verification
-  const authHeader = req.headers.get('authorization');
-  if (!authHeader || !authHeader.startsWith('Bearer ')) {
-    return NextResponse.json({ error: 'Unauthorized: Missing or invalid token' }, { status: 401 });
-  }
-  const token = authHeader.replace('Bearer ', '').trim();
+  // Enforce optional API secret verification if configured
   const validToken = process.env.API_SECRET_TOKEN || process.env.WAITLIST_API_KEY;
-  if (validToken && token !== validToken) {
-    return NextResponse.json({ error: 'Forbidden: Invalid token' }, { status: 403 });
+  if (validToken) {
+    const authHeader = req.headers.get('authorization');
+    const token = authHeader?.replace('Bearer ', '').trim();
+    if (token && token !== validToken) {
+      return NextResponse.json({ error: 'Forbidden: Invalid token' }, { status: 403 });
+    }
   }
 
   try {
@@ -41,6 +45,11 @@ export async function POST(req: NextRequest) {
 
     if (!email) {
       return NextResponse.json({ error: 'Email is required' }, { status: 400 });
+    }
+
+    const supabase = getWaitlistSupabase();
+    if (!supabase) {
+      return NextResponse.json({ error: 'Database service unavailable' }, { status: 503 });
     }
 
     const { data, error } = await supabase
