@@ -90,7 +90,7 @@ export async function POST(req: NextRequest) {
       return validation.response;
     }
 
-    const body = validation.data;
+    const body = validation.data as any;
     const rawRepoUrl = (body.repoUrl || body.targetUrl || '').trim();
 
     // Early validation of webhook URLs to prevent SSRF and avoid wasting compute

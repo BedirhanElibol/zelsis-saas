@@ -17,7 +17,7 @@ const GITHUB_REPO_REGEX = /^(?:https?:\/\/github\.com\/)?([a-zA-Z0-9_\-\.]+)\/([
  */
 export const GithubProxyQuerySchema = z.object({
   repoUrl: z
-    .string({ required_error: 'repoUrl is required' })
+    .string({ message: 'repoUrl is required' })
     .min(1, 'repoUrl cannot be empty')
     .max(300, 'repoUrl exceeds 300 characters')
     .refine((val) => !PATH_TRAVERSAL_REGEX.test(val), {
@@ -39,7 +39,7 @@ export const GithubProxyQuerySchema = z.object({
  */
 export const ProxyQuerySchema = z.object({
   url: z
-    .string({ required_error: 'url parameter is required' })
+    .string({ message: 'url parameter is required' })
     .min(3, 'url is too short')
     .max(2048, 'url exceeds maximum length')
     .refine(
@@ -135,7 +135,7 @@ export const GateCheckRequestSchema = z
  */
 export const StripeWebhookHeadersSchema = z.object({
   'stripe-signature': z.string({
-    required_error: 'Missing stripe-signature header'
+    message: 'Missing stripe-signature header'
   }).min(1, 'stripe-signature header cannot be empty')
 });
 
@@ -153,7 +153,7 @@ export function validateQueryParams<T extends z.ZodTypeAny>(
 
   const result = schema.safeParse(paramsObj);
   if (!result.success) {
-    const errorDetails = result.error.errors.map((e) => ({
+    const errorDetails = result.error.issues.map((e) => ({
       field: e.path.join('.') || 'parameter',
       message: e.message
     }));
@@ -183,7 +183,7 @@ export function validateRequestBody<T>(
 ): { success: true; data: T } | { success: false; response: NextResponse } {
   const result = schema.safeParse(body);
   if (!result.success) {
-    const errorDetails = result.error.errors.map((e) => ({
+    const errorDetails = result.error.issues.map((e) => ({
       field: e.path.join('.') || 'body',
       message: e.message
     }));

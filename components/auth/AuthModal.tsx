@@ -2,7 +2,7 @@
 
 import React, { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { X, Mail, Lock, User, Github, ArrowRight, CheckCircle2, KeyRound, AlertCircle, Eye, EyeOff } from 'lucide-react';
+import { X, Mail, Lock, User, Code, ArrowRight, CheckCircle2, KeyRound, AlertCircle, Eye, EyeOff } from 'lucide-react';
 import { supabaseSignIn, supabaseSignUp, supabaseResetPassword, supabaseSignInWithOAuth, isSupabaseConfigured } from '@/lib/supabase';
 import { ZelsisLogo } from '@/components/ui/ZelsisLogo';
 
@@ -277,7 +277,7 @@ export const AuthModal: React.FC<AuthModalProps> = ({
                   disabled={loadingTarget !== null}
                   className="flex items-center justify-center gap-3 w-full py-3 px-4 rounded-xl bg-[#24292F] hover:bg-[#1f2328] border border-white/15 text-xs font-bold text-white transition-all shadow-md disabled:opacity-50 cursor-pointer min-h-[48px]"
                 >
-                  <Github size={18} className="shrink-0" />
+                  <Code size={18} className="shrink-0" />
                   <span>{loadingTarget === 'github' ? 'Connecting to GitHub...' : 'Continue with GitHub'}</span>
                 </button>
 

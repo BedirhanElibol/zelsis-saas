@@ -2,7 +2,7 @@
 
 import React, { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { X, Bell, Send, CheckCircle2, AlertCircle, Slack, Mail } from 'lucide-react';
+import { X, Bell, Send, CheckCircle2, AlertCircle, MessageSquare, Mail } from 'lucide-react';
 
 interface NotificationSettingsModalProps {
   isOpen: boolean;
@@ -25,7 +25,7 @@ export const NotificationSettingsModal: React.FC<NotificationSettingsModalProps>
 }) => {
   const storageKey = getNotificationStorageKey(projectName);
   const legacyStorageKey = `shipguard_webhooks_${projectName}`;
-  const [slackUrl, setSlackUrl] = useState('');
+  const [slackUrl, setMessageSquareUrl] = useState('');
   const [discordUrl, setDiscordUrl] = useState('');
   const [testStatus, setTestStatus] = useState<string | null>(null);
   const [isSending, setIsSending] = useState(false);
@@ -37,7 +37,7 @@ export const NotificationSettingsModal: React.FC<NotificationSettingsModalProps>
         const saved = localStorage.getItem(storageKey) || localStorage.getItem(legacyStorageKey);
         if (saved) {
           const parsed = JSON.parse(saved);
-          setSlackUrl(parsed.slackUrl || '');
+          setMessageSquareUrl(parsed.slackUrl || '');
           setDiscordUrl(parsed.discordUrl || '');
         }
       } catch (err) {
@@ -108,7 +108,7 @@ export const NotificationSettingsModal: React.FC<NotificationSettingsModalProps>
                   Automated Gate Alerts Configuration
                 </h2>
                 <p className="text-xs text-[#94A3B8]">
-                  Configure Slack &amp; Discord Webhook endpoints for {projectName}
+                  Configure MessageSquare &amp; Discord Webhook endpoints for {projectName}
                 </p>
               </div>
             </div>
@@ -125,17 +125,17 @@ export const NotificationSettingsModal: React.FC<NotificationSettingsModalProps>
           <div className="space-y-4">
             <div>
               <label htmlFor="slack-webhook-url-input" className="block text-xs font-mono font-bold text-[#94A3B8] mb-1.5 flex items-center gap-2">
-                <Slack size={14} className="text-[#E01E5A]" />
-                <span>Slack Webhook URL:</span>
+                <MessageSquare size={14} className="text-[#E01E5A]" />
+                <span>MessageSquare Webhook URL:</span>
               </label>
               <input
                 id="slack-webhook-url-input"
                 name="slackWebhookUrl"
-                aria-label="Slack Webhook URL"
+                aria-label="MessageSquare Webhook URL"
                 type="text"
                 placeholder="https://hooks.slack.com/services/T00/B00/XXXX"
                 value={slackUrl}
-                onChange={(e) => setSlackUrl(e.target.value)}
+                onChange={(e) => setMessageSquareUrl(e.target.value)}
                 className="w-full bg-[#0A0A0A] border border-white/10 rounded-xl px-3.5 py-2.5 text-xs text-[#EDEDED] placeholder-gray-600 focus:outline-none focus-visible:ring-1 focus-visible:ring-white/20 focus:border-white/30 font-mono"
               />
             </div>
