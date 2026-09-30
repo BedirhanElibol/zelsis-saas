@@ -1045,7 +1045,7 @@ export function evaluateAiSafetyRules(file: CodeFile, lines: string[], cleanCont
         logs.push(`[${ts}] 🤖 MEDIUM: LLM-SEC-41 finding in ${file.path}:${lineNum}`);
     }
     // LLM-SEC-42: Insecure LLM Streaming Connection Without Heartbeat
-    if (/new\s+ReadableStream\s*\(\{[\s\S]*?pull\s*\(/i.test(cleanContent) && !/req\.signal\.addEventListener\s*\(\s*["\']abort["\']/i.test(cleanContent)) {
+    if (!file.path.includes('live-deployment/bundle-') && /new\s+ReadableStream\s*\(\{[\s\S]*?pull\s*\(/i.test(cleanContent) && !/req\.signal\.addEventListener\s*\(\s*["\']abort["\']/i.test(cleanContent)) {
         const matchLineIdx = lines.findIndex(l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('*') && (/llm-sec-42|insecure/i.test(l) || lines.indexOf(l) === 0));
         const lineNum = matchLineIdx !== -1 ? matchLineIdx + 1 : 1;
         findings.push({

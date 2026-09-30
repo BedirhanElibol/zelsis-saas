@@ -153,11 +153,13 @@ export function evaluateComplianceRules(file: CodeFile, lines: string[], cleanCo
         lowerPath.startsWith('tests/') ||
         lowerPath.startsWith('spec/') ||
         /\.(test|spec)\.[a-zA-Z0-9]+$/i.test(lowerPath);
+    const isHtmlFile = file.path.endsWith('.html');
     const isCookieBannerComponent = !isTestFile &&
         (lowerPath.includes('cookie-banner') ||
             lowerPath.includes('consent-modal') ||
             lowerPath.includes('cookieconsent') ||
-            /CookieBanner|ConsentModal|CookieConsent/i.test(cleanContent));
+            (!isHtmlFile && /CookieBanner|ConsentModal|CookieConsent/i.test(cleanContent)) ||
+            (isHtmlFile && /(?:id|class|aria-label)=["'][^"']*(?:cookie-banner|cookie-consent|consent-modal)[^"']*["']/i.test(cleanContent)));
     if (isCookieBannerComponent) {
         const hasAccept = /(?:accept|allow|agree)/i.test(cleanContent);
         const hasDecline = /(?:reject|decline|opt[_-]?out|refuse|deny)/i.test(cleanContent);

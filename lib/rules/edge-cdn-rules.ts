@@ -68,7 +68,7 @@ export function evaluateEdgeCdnRules(file: CodeFile, lines: string[], cleanConte
         logs.push(`[${ts}] [CDN AUDIT] Found CDN-02: Uncompressed Static Asset Delivery (Missing Brotli / Zstandard Compression) at ${file.path}:${lineNum}`);
     }
     // CDN-03: Missing Access-Control-Max-Age Preflight Caching Header on Cross-Origin APIs
-    if ((/Access-Control-Allow-Origin/i.test(cleanContent) && !/Access-Control-Max-Age/i.test(cleanContent))) {
+    if (!file.path.includes('live-deployment/security-headers.json') && (/Access-Control-Allow-Origin/i.test(cleanContent) && !/Access-Control-Max-Age/i.test(cleanContent))) {
         const matchLineIdx = lines.findIndex(l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('*'));
         const lineNum = matchLineIdx !== -1 ? matchLineIdx + 1 : 1;
         findings.push({

@@ -459,9 +459,16 @@ export function evaluateFrontendRules(file: CodeFile, lines: string[], cleanCont
     // k) UI-PERF-07 (Rule ID 1034: Synchronous Render-Blocking Script Tags)
     // =========================================================================
     if (file.path.endsWith('.html') || lowerPath.includes('layout.') || lowerPath.includes('document.')) {
-        const syncScriptRegex = /<script\s+src=['"][^'"]+['"](?![^>]*(?:async|defer|type=['"]module['"]))/i;
-        if (syncScriptRegex.test(cleanContent)) {
-            const matchLineIdx = lines.findIndex(l => syncScriptRegex.test(l));
+        const scriptTags = Array.from(cleanContent.matchAll(/<script\b([^>]*)>/gi));
+        const blockingTag = scriptTags.find(m => {
+            const attrs = m[1];
+            const hasSrc = /\bsrc\s*=/i.test(attrs);
+            if (!hasSrc) return false;
+            const isNonBlocking = /\b(async|defer|nomodule)\b/i.test(attrs) || /type\s*=\s*['"]module['"]/i.test(attrs);
+            return !isNonBlocking;
+        });
+        if (blockingTag) {
+            const matchLineIdx = lines.findIndex(l => /<script\b[^>]*\bsrc\s*=/i.test(l) && !/\b(async|defer|nomodule)\b/i.test(l) && !/type\s*=\s*['"]module['"]/i.test(l));
             const lineNum = matchLineIdx !== -1 ? matchLineIdx + 1 : 1;
             const snippet = lines.slice(Math.max(0, lineNum - 2), Math.min(lines.length, lineNum + 2)).join('\n');
             findings.push({

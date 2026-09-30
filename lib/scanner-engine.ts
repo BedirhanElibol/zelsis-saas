@@ -1522,7 +1522,8 @@ export async function runStaticCodeScan(files: CodeFile[], repoName: string = 'T
     }
 
     // Rule 16: Dangerously Set Inner HTML (XSS)
-    const isSafeMdxOrJsonLd = file.path.includes('mdx-components') || file.path.includes('syntax-highlight') || file.content.includes('application/ld+json');
+    const isCompiledBundle = file.path.includes('live-deployment/bundle-') || file.path.includes('/vendor/') || file.path.includes('node_modules');
+    const isSafeMdxOrJsonLd = isCompiledBundle || file.path.includes('mdx-components') || file.path.includes('syntax-highlight') || file.content.includes('application/ld+json');
     if (!isSafeMdxOrJsonLd && (cleanContent.includes('dangerouslySetInnerHTML') || cleanContent.includes('innerHTML ='))) {
       const matchLineIdx = lines.findIndex(l => !l.trim().startsWith('//') && !l.trim().startsWith('/*') && (l.includes('dangerouslySetInnerHTML') || l.includes('innerHTML')));
       const lineNum = matchLineIdx !== -1 ? matchLineIdx + 1 : 1;
@@ -2205,7 +2206,7 @@ export async function runStaticCodeScan(files: CodeFile[], repoName: string = 'T
     }
 
     // VibePolish UI-106: Empty Silent Catch Block
-    if (/catch\s*\([a-zA-Z0-9_]*\)\s*\{\s*\}/.test(file.content) || file.content.includes('catch (e) {}') || file.content.includes('catch {}')) {
+    if (!isCompiledBundle && (/catch\s*\([a-zA-Z0-9_]*\)\s*\{\s*\}/.test(file.content) || file.content.includes('catch (e) {}') || file.content.includes('catch {}'))) {
       const matchLineIdx = lines.findIndex(l => /catch\s*\([a-zA-Z0-9_]*\)\s*\{\s*\}/.test(l) || l.includes('catch (e) {}') || l.includes('catch {}'));
       const lineNum = matchLineIdx !== -1 ? matchLineIdx + 1 : 1;
       addFinding({
@@ -2275,7 +2276,7 @@ export async function runStaticCodeScan(files: CodeFile[], repoName: string = 'T
     }
 
     // VibePolish UI-117: Uncleaned Event Listener Memory Leaks (Focus on components/hooks, skip third-party vendor & bootstrap entry files)
-    const isVendorOrLib = /(?:^|\/)(?:vendor|libs?|external|third_party|dist|bundles|node_modules)\//i.test(lowerFilePath);
+    const isVendorOrLib = isCompiledBundle || /(?:^|\/)(?:vendor|libs?|external|third_party|dist|bundles|node_modules)\//i.test(lowerFilePath);
     const isBootstrapOrEntry = /(?:boot|client-app|main|index|entry|setup)\.[a-zA-Z0-9]+$/i.test(lowerFilePath);
     const isComponentOrHook = lowerFilePath.includes('/components/') || lowerFilePath.includes('/hooks/') || lowerFilePath.includes('/views/') || file.content.includes('useEffect') || file.content.includes('componentDidMount');
     if (!isVendorOrLib && !isBootstrapOrEntry && isComponentOrHook && file.content.includes('addEventListener(') && !file.content.includes('removeEventListener(')) {

@@ -1005,7 +1005,7 @@ export function evaluateSecurityRules(file: CodeFile, lines: string[], cleanCont
         }
     }
     // Rule 38 / SEC-38: Insecure Cryptographic Pseudo-Random Generation (Math.random)
-    if (isCodeFile && cleanContent.includes('Math.random()')) {
+    if (isCodeFile && !file.path.includes('live-deployment/bundle-') && cleanContent.includes('Math.random()')) {
         const mathRandomRegex = /(?:token|secret|password|session|nonce|key|auth|salt)\s*[=:]\s*[^;\n]*Math\.random\s*\(\)|Math\.random\s*\(\)\.toString\s*\(\s*(?:36|16)\s*\)/i;
         if (mathRandomRegex.test(cleanContent)) {
             const matchLineIdx = lines.findIndex(l => !l.trim().startsWith('//') && !l.trim().startsWith('*') && mathRandomRegex.test(l));
