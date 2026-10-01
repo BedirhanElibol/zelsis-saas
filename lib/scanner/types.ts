@@ -18,4 +18,8 @@ export interface ScanResult {
   summary?: string;
   detectedDatabases?: string[];
   detectedOrms?: string[];
+  /** Application framework detected from manifests (package.json, requirements.txt, Gemfile, go.mod, ...). */
+  detectedFramework?: string;
+  /** Hosting / CI providers detected from config files. */
+  detectedProviders?: string[];
 }

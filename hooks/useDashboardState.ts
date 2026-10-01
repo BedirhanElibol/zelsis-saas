@@ -10,6 +10,7 @@ import { canAccessLocalAudit } from '@/lib/env-config';
 import { isFounderGrantExpiry } from '@/lib/subscription-utils';
 import { verifyLicenseKey, generateLicenseKey } from '@/lib/stripe-checkout';
 import { useSearchParams } from 'next/navigation';
+import { UNDETECTED_FRAMEWORK } from '@/lib/scanner/stack-detect';
 
 const VALID_NAVS = [
   'dashboard', 'projects', 'scans', 'security', 'compliance',
@@ -209,8 +210,8 @@ export function useDashboardState() {
             id: p.id || `proj-${Date.now()}`,
             name: cleanName,
             repoUrl: cleanRepoUrl,
-            framework: p.framework || 'Next.js 15',
-            providers: Array.isArray(p.providers) ? p.providers : ['GitHub Action', 'Vercel'],
+            framework: p.framework || UNDETECTED_FRAMEWORK,
+            providers: Array.isArray(p.providers) ? p.providers : [],
             lastScanAt: p.lastScanAt || 'Never audited',
             readinessScore: typeof p.readinessScore === 'number' ? p.readinessScore : 100,
             gateStatus: p.gateStatus || 'PASSED',
@@ -258,8 +259,8 @@ export function useDashboardState() {
             id: chosenProject.id || `proj-${Date.now()}`,
             name: cleanName,
             repoUrl: cleanRepoUrl,
-            framework: chosenProject.framework || 'Next.js 15',
-            providers: Array.isArray(chosenProject.providers) ? chosenProject.providers : ['GitHub Action', 'Vercel'],
+            framework: chosenProject.framework || UNDETECTED_FRAMEWORK,
+            providers: Array.isArray(chosenProject.providers) ? chosenProject.providers : [],
             lastScanAt: chosenProject.lastScanAt || 'Never audited',
             readinessScore: typeof chosenProject.readinessScore === 'number' ? chosenProject.readinessScore : 100,
             gateStatus: chosenProject.gateStatus || 'PASSED',

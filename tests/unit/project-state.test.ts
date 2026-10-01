@@ -66,7 +66,8 @@ describe('normalizeProject', () => {
     assert.equal(p.readinessScore, 100);
     assert.equal(p.gateStatus, 'PASSED');
     assert.deepEqual(p.findings, []);
-    assert.deepEqual(p.providers, ['GitHub Action', 'Vercel']);
+    assert.deepEqual(p.providers, []);
+    assert.equal(p.framework, 'Auto-detect');
   });
 
   it('falls back to the default repo when none is given', () => {

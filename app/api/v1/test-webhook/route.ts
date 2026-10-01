@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { createClient } from '@supabase/supabase-js';
 import { checkRateLimit, createRateLimitResponse } from '@/lib/rate-limiter';
 import { dispatchWebhookAlerts } from '@/lib/notifications';
 import { ScanResult } from '@/lib/scanner-engine';
@@ -67,22 +68,22 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    // 2. Caller Authorization Defense (F-19: Prevent anonymous webhook flooding)
-    const authHeader = req.headers.get('authorization')?.replace(/^Bearer\s+/i, '').trim();
-    const apiKeyHeader = req.headers.get('x-api-key')?.trim();
-    const secFetchSite = req.headers.get('sec-fetch-site');
-    const origin = req.headers.get('origin');
-    const host = req.headers.get('host');
+    // 2. Caller authentication: a verified Supabase user (headers like Origin or sec-fetch-site are client-controlled)
+    const accessToken = req.headers.get('authorization')?.replace(/^Bearer\s+/i, '').trim();
+    const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
+    const anonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
+    let isAuthenticated = false;
+    if (accessToken && supabaseUrl && anonKey) {
+      const { data } = await createClient(supabaseUrl, anonKey, { auth: { persistSession: false } }).auth.getUser(accessToken);
+      isAuthenticated = Boolean(data?.user);
+    }
 
-    const isSameOrigin = secFetchSite === 'same-origin' || (origin && host && origin.includes(host));
-    const hasValidAuth = Boolean(authHeader || apiKeyHeader || isSameOrigin);
-
-    if (!hasValidAuth && process.env.NODE_ENV === 'production') {
+    if (!isAuthenticated && (process.env.NODE_ENV === 'production' || (supabaseUrl && anonKey))) {
       return NextResponse.json(
         {
           success: false,
           error: 'Unauthorized',
-          message: 'Authentication required to test webhook dispatch endpoints.'
+          message: 'Sign in to test webhook notifications.'
         },
         { status: 401 }
       );

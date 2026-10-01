@@ -33,6 +33,7 @@ import { ShieldCheck, Plus, Loader2, LogIn } from 'lucide-react';
 import { LifecycleBanner } from '@/components/dashboard/LifecycleBanner';
 import { normalizeRepoUrl, extractRepoDisplayName } from '@/lib/github-api';
 import { ComponentErrorBoundary } from '@/components/common/ComponentErrorBoundary';
+import { UNDETECTED_FRAMEWORK } from '@/lib/scanner/stack-detect';
 
 export default function DashboardPage() {
   return (
@@ -181,8 +182,8 @@ function DashboardContent() {
         id: `proj-import-${Date.now()}`,
         name: displayName,
         repoUrl: normalized,
-        framework: 'Next.js 15',
-        providers: ['GitHub Action', 'Vercel'],
+        framework: UNDETECTED_FRAMEWORK,
+        providers: [],
         lastScanAt: 'Ready to Run Audit',
         readinessScore: 100,
         gateStatus: 'PASSED',
@@ -255,7 +256,7 @@ function DashboardContent() {
     return {
       ...candidate,
       name: candidate.name || 'Target Repository',
-      framework: candidate.framework || 'Next.js 15',
+      framework: candidate.framework || UNDETECTED_FRAMEWORK,
       lastScanAt: candidate.lastScanAt || 'Never audited',
       readinessScore: typeof candidate.readinessScore === 'number' ? candidate.readinessScore : 100,
       gateStatus: candidate.gateStatus || 'PASSED',
@@ -359,8 +360,8 @@ function DashboardContent() {
                   id: `proj-${Date.now()}`,
                   name: 'My New Application',
                   repoUrl: 'https://github.com/example/repo',
-                  framework: 'Next.js 15',
-                  providers: ['Vercel', 'PostgreSQL'],
+                  framework: UNDETECTED_FRAMEWORK,
+                  providers: [],
                   lastScanAt: 'Never audited',
                   readinessScore: 100,
                   gateStatus: 'PASSED',
@@ -462,6 +463,8 @@ function DashboardContent() {
                     lowCount: result.lowCount,
                     uiClicheCount: result.uiClicheCount,
                     findings: result.findings,
+                    framework: result.detectedFramework || currentTarget.framework,
+                    providers: result.detectedProviders?.length ? result.detectedProviders : currentTarget.providers,
                     lastScanAt: new Date().toLocaleString(),
                     scanHistory: [newScanHistoryItem, ...(currentTarget.scanHistory || [])].slice(0, 20)
                   };

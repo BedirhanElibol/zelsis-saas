@@ -79,7 +79,7 @@ export function generateAuditPdfReport(project: Project) {
     <h2>Project Metadata</h2>
     <div style="display: flex; gap: 40px; font-size: 14px;">
       <div><strong>Project:</strong> ${escapeHtml(project?.name ?? 'Untitled Project')}</div>
-      <div><strong>Framework:</strong> ${escapeHtml(project?.framework ?? 'Next.js 15')}</div>
+      <div><strong>Framework:</strong> ${escapeHtml(project?.framework ?? 'Not detected')}</div>
       <div><strong>Repository:</strong> ${escapeHtml(project?.repoUrl ?? 'Local Repository')}</div>
       <div><strong>Audit Date:</strong> ${escapeHtml(dateStr)}</div>
     </div>

@@ -3,6 +3,7 @@
 import React, { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { X, Bell, Send, CheckCircle2, AlertCircle, MessageSquare, Mail } from 'lucide-react';
+import { getActiveUserAuth } from '@/lib/supabase-client';
 
 interface NotificationSettingsModalProps {
   isOpen: boolean;
@@ -62,9 +63,13 @@ export const NotificationSettingsModal: React.FC<NotificationSettingsModalProps>
     setTestStatus(null);
 
     try {
+      const { accessToken } = await getActiveUserAuth();
       const res = await fetch('/api/v1/test-webhook', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: {
+          'Content-Type': 'application/json',
+          ...(accessToken ? { Authorization: `Bearer ${accessToken}` } : {})
+        },
         body: JSON.stringify({
           slackWebhookUrl: slackUrl,
           discordWebhookUrl: discordUrl,

@@ -29,6 +29,7 @@ import {
 import { exportFindingsToCsv, exportScorecardToJson } from '@/lib/export-utils';
 import { ActiveModalType } from './DashboardModals';
 import { safeReplace, safeTrim, safeString, safeLower } from '@/lib/safe-utils';
+import { UNDETECTED_FRAMEWORK } from '@/lib/scanner/stack-detect';
 
 interface GateStatusBannerProps {
   project: Project;
@@ -91,8 +92,8 @@ export const GateStatusBanner: React.FC<GateStatusBannerProps> = ({
         id: 'proj-fallback',
         name: 'Target Repository',
         repoUrl: 'https://github.com/example/repo',
-        framework: 'Next.js 15',
-        providers: ['GitHub Action', 'Vercel'],
+        framework: UNDETECTED_FRAMEWORK,
+        providers: [],
         lastScanAt: 'Never audited',
         readinessScore: 100,
         gateStatus: 'PASSED',

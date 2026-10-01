@@ -1,5 +1,6 @@
 import type { Finding, Project } from '@/data/schema';
 import { calculateGateStatus, calculateReadinessScore } from '@/lib/scanner/scoring';
+import { UNDETECTED_FRAMEWORK } from '@/lib/scanner/stack-detect';
 
 const LOCAL_AUDIT_PROJECT_IDS = new Set(['proj-zelsis-self', 'proj-shipguard-self']);
 
@@ -61,8 +62,8 @@ export function normalizeProject(p: Project, fallback: Project): Project {
     id: p.id || `proj-${Date.now()}`,
     name: cleanName,
     repoUrl: cleanRepoUrl,
-    framework: p.framework || 'Next.js 15',
-    providers: Array.isArray(p.providers) ? p.providers : ['GitHub Action', 'Vercel'],
+    framework: p.framework || UNDETECTED_FRAMEWORK,
+    providers: Array.isArray(p.providers) ? p.providers : [],
     lastScanAt: p.lastScanAt || 'Never audited',
     readinessScore: typeof p.readinessScore === 'number' ? p.readinessScore : 100,
     gateStatus: p.gateStatus || 'PASSED',

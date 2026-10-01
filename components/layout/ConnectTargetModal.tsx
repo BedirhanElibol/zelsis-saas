@@ -5,6 +5,7 @@ import { Project } from '@/data/schema';
 import { FolderGit2, X, Globe, Eye, EyeOff, Play } from 'lucide-react';
 import { isValidGithubUrl, sanitizeTargetUrl } from '@/lib/github-api';
 import { isValidWebUrl } from '@/lib/website-scanner';
+import { FRAMEWORK_CHOICES, UNDETECTED_FRAMEWORK } from '@/lib/scanner/stack-detect';
 
 interface ConnectTargetModalProps {
   isOpen: boolean;
@@ -26,7 +27,7 @@ export const ConnectTargetModal: React.FC<ConnectTargetModalProps> = ({
   const [githubUrl, setGithubUrl] = useState('https://github.com/user/example-app');
   const [webSiteUrl, setWebSiteUrl] = useState('https://my-app.vercel.app');
   const [branch, setBranch] = useState<string>('main');
-  const [framework, setFramework] = useState<string>('Auto-Detect');
+  const [framework, setFramework] = useState<string>(UNDETECTED_FRAMEWORK);
   const [githubToken, setGithubToken] = useState<string>('');
   const [urlError, setUrlError] = useState<string>('');
   const [showToken, setShowToken] = useState<boolean>(false);
@@ -104,8 +105,8 @@ export const ConnectTargetModal: React.FC<ConnectTargetModalProps> = ({
       name: `${displayName} (${targetType === 'GITHUB' ? branch : 'Live Site'})`,
       repoUrl: fullUrl,
       githubToken: githubToken.trim() || undefined,
-      framework: framework === 'Auto-Detect' ? (targetType === 'GITHUB' ? 'Polyglot App' : 'Production Web App') : framework,
-      providers: targetType === 'GITHUB' ? ['GitHub Action', 'Vercel', 'PostgreSQL'] : ['Vercel', 'CDN', 'Security Headers'],
+      framework,
+      providers: [],
       lastScanAt: 'Ready to Run Audit',
       readinessScore: 100,
       gateStatus: 'PASSED',
@@ -247,11 +248,9 @@ export const ConnectTargetModal: React.FC<ConnectTargetModalProps> = ({
                     onChange={(e) => setFramework(e.target.value)}
                     className="px-3 py-2 rounded-xl bg-[#0A0A0A] border border-white/10 text-xs text-[#EDEDED] focus-visible:ring-1 focus-visible:ring-white/30 focus-visible:outline-none focus:border-white/30 font-mono"
                   >
-                    <option value="Auto-Detect">Auto-Detect</option>
-                    <option value="Next.js 15">Next.js 15</option>
-                    <option value="Vite + React">Vite + React</option>
-                    <option value="SvelteKit">SvelteKit</option>
-                    <option value="FastAPI">FastAPI</option>
+                    {FRAMEWORK_CHOICES.map((choice) => (
+                      <option key={choice} value={choice}>{choice}</option>
+                    ))}
                   </select>
                 </div>
               </div>
