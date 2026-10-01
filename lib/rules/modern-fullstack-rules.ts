@@ -21,31 +21,6 @@ export function evaluateModernFullstackRules(file: CodeFile, lines: string[], cl
     }
     const ts = new Date().toLocaleTimeString();
     const isNextApp = lowerPath.includes("app/") || lowerPath.includes("components/") || lowerPath.includes("next.config");
-    // NEXT15-01: Server Actions Missing Origin & Host Header Verification
-    if (isNextApp && cleanContent.includes('"use server"')) {
-        const matchLineIdx = lines.findIndex(l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('*'));
-        const lineNum = matchLineIdx !== -1 ? matchLineIdx + 1 : 1;
-        findings.push({
-            id: `next15_8601-${Date.now()}-${findingCounter.count++}`,
-            ruleId: 8601,
-            type: 'INFRA_DATABASE',
-            title: "NEXT15-01: Server Actions Missing Origin & Host Header Verification",
-            severity: 'CRITICAL',
-            category: "CSRF Security",
-            filePath: file.path,
-            lineRange: `L${lineNum}`,
-            snippet: lines[matchLineIdx] || 'Next.js 15 component declaration',
-            reproductionSteps: [
-                `Scanned Next.js App Router code in ${file.path}:${lineNum}.`,
-                'Detected fullstack architecture defect matching NEXT15-01.'
-            ],
-            remediationPrompt: "Validate request origin against host header or configure allowedOrigins in next.config.js.",
-            status: 'OPEN',
-            owner: 'Fullstack Architect',
-            falsePositive: false
-        });
-        logs.push(`[${ts}] ⚡ FULLSTACK NEXT15-01: Server Actions Missing Origin & Host Header Verification in ${file.path}:${lineNum}`);
-    }
     // NEXT15-02: Client Component Props Exposing Server Secrets
     if (cleanContent.includes('use client') && /(?:rawDbUser|dbCredentials|serviceRoleKey|adminSecret)/i.test(cleanContent) && !lowerPath.includes('test') && !lowerPath.includes('mock')) {
         const matchLineIdx = locateMatchLine(lines, [/(?:rawDbUser|dbCredentials|serviceRoleKey|adminSecret)/i], l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('*'));

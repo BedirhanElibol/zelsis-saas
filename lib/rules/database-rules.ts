@@ -125,7 +125,9 @@ export function evaluateDatabaseRules(file: CodeFile, lines: string[], cleanCont
         logs.push(`[${ts}] 🗄️ DB-PERF-04: Unbounded SELECT * Full Table Scan detected (${file.path}:${lineNum})`);
     }
     // DB-PERF-05: Direct Unpooled Database Connection in Edge / Serverless
-    if (/(?:app\/api|pages\/api)/i.test(lowerPath) && /new\s+(?:Pool|Client)\s*\(/i.test(cleanContent) && !/globalThis|singleton/i.test(cleanContent)) {
+    // A pg Pool/Client created inside the request handler opens new connections on every request; module scope is reused across warm invocations
+    const handlerBody = cleanContent.slice(Math.max(0, cleanContent.search(/export\s+(?:default\s+)?(?:async\s+)?function\s*(?:GET|POST|PUT|PATCH|DELETE|handler)?\s*\(/)));
+    if (/(?:app\/api|pages\/api)/i.test(lowerPath) && /from\s+['"]pg['"]|require\(\s*['"]pg['"]\s*\)/.test(cleanContent) && /export\s+(?:default\s+)?(?:async\s+)?function/.test(cleanContent) && /new\s+(?:Pool|Client)\s*\(/.test(handlerBody) && !/\.end\(\)/.test(handlerBody) && !/globalThis|singleton/i.test(cleanContent)) {
         const matchLineIdx = locateMatchLine(lines, [/new\s+(?:Pool|Client)\s*\(/i], l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('*'));
         const lineNum = matchLineIdx !== -1 ? matchLineIdx + 1 : 1;
         findings.push({
@@ -133,7 +135,7 @@ export function evaluateDatabaseRules(file: CodeFile, lines: string[], cleanCont
             ruleId: 6005,
             type: 'INFRA_DATABASE',
             title: 'DB-PERF-05: Direct Unpooled Database Connection in Edge / Serverless',
-            severity: 'CRITICAL',
+            severity: 'HIGH',
             category: "Connection Pooling",
             filePath: file.path,
             lineRange: `L${lineNum}`,
@@ -225,15 +227,31 @@ export function evaluateDatabaseRules(file: CodeFile, lines: string[], cleanCont
         logs.push(`[${ts}] 🗄️ DB-PERF-08: Missing ON DELETE Strategy on Foreign Key Constraints detected (${file.path}:${lineNum})`);
     }
     // DB-PERF-09: Long-Running External API Call Inside DB Transaction
-    if (/\$transaction\s*\(\s*async\s*\([^)]*\)\s*=>[\s\S]*?(?:fetch\(|axios\.|openai\.|anthropic\.)/i.test(cleanContent)) {
-        const matchLineIdx = locateMatchLine(lines, [/\$transaction\s*\(\s*async\s*\([^)]*\)\s*=>[\s\S]*?(?:fetch\(|axios\.|openai\.|anthropic\.)/i], l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('*'));
+    // Only calls inside the transaction callback body count, so brace-match the body instead of scanning to EOF
+    const txExternalCallLine = (() => {
+        for (const m of cleanContent.matchAll(/\$transaction\s*\(\s*async\s*\([^)]*\)\s*=>\s*\{/g)) {
+            let depth = 1;
+            let i = m.index! + m[0].length;
+            while (i < cleanContent.length && depth > 0) {
+                if (cleanContent[i] === '{') depth++;
+                else if (cleanContent[i] === '}') depth--;
+                i++;
+            }
+            const body = cleanContent.slice(m.index! + m[0].length, i);
+            const call = body.search(/\bfetch\(|axios\.|openai\.|anthropic\./);
+            if (call !== -1) return cleanContent.slice(0, m.index! + m[0].length + call).split('\n').length - 1;
+        }
+        return -1;
+    })();
+    if (txExternalCallLine !== -1) {
+        const matchLineIdx = txExternalCallLine;
         const lineNum = matchLineIdx !== -1 ? matchLineIdx + 1 : 1;
         findings.push({
             id: `dbperf-${Date.now()}-${findingCounter.count++}`,
             ruleId: 6009,
             type: 'INFRA_DATABASE',
             title: 'DB-PERF-09: Long-Running External API Call Inside DB Transaction',
-            severity: 'CRITICAL',
+            severity: 'HIGH',
             category: "Concurrency & Locks",
             filePath: file.path,
             lineRange: `L${lineNum}`,
@@ -378,15 +396,15 @@ export function evaluateDatabaseRules(file: CodeFile, lines: string[], cleanCont
         logs.push(`[${ts}] 🗄️ DB-PERF-14: Unindexed UUID Primary Key Fragmenting B-Tree detected (${file.path}:${lineNum})`);
     }
     // DB-PERF-15: Uncommitted Database Transaction Connection Leak
-    if (/const\s+client\s*=\s*await\s+pool\.connect\(\)/i.test(cleanContent) && !/client\.release\(\)/i.test(cleanContent)) {
-        const matchLineIdx = locateMatchLine(lines, [/const\s+client\s*=\s*await\s+pool\.connect\(\)/i], l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('*'));
+    if (/(?:const|let)\s+\w+\s*=\s*await\s+pool\.connect\(\)/i.test(cleanContent) && !/\.release\(\)/i.test(cleanContent)) {
+        const matchLineIdx = locateMatchLine(lines, [/(?:const|let)\s+\w+\s*=\s*await\s+pool\.connect\(\)/i], l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('*'));
         const lineNum = matchLineIdx !== -1 ? matchLineIdx + 1 : 1;
         findings.push({
             id: `dbperf-${Date.now()}-${findingCounter.count++}`,
             ruleId: 6015,
             type: 'INFRA_DATABASE',
             title: 'DB-PERF-15: Uncommitted Database Transaction Connection Leak',
-            severity: 'CRITICAL',
+            severity: 'HIGH',
             category: "Connection Pooling",
             filePath: file.path,
             lineRange: `L${lineNum}`,
@@ -886,7 +904,7 @@ export function evaluateDatabaseRules(file: CodeFile, lines: string[], cleanCont
             ruleId: 6035,
             type: 'INFRA_DATABASE',
             title: 'DB-PERF-35: Missing Database Backup Automated Verification',
-            severity: 'CRITICAL',
+            severity: 'LOW',
             category: "Disaster Recovery",
             filePath: file.path,
             lineRange: `L${lineNum}`,
@@ -1211,7 +1229,7 @@ export function evaluateDatabaseRules(file: CodeFile, lines: string[], cleanCont
             ruleId: 6048,
             type: 'INFRA_DATABASE',
             title: 'DB-PERF-48: Missing SSL/TLS Enforcement on Production DB Connections',
-            severity: 'CRITICAL',
+            severity: 'MEDIUM',
             category: "Database Security",
             filePath: file.path,
             lineRange: `L${lineNum}`,

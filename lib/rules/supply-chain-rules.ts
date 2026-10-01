@@ -96,8 +96,8 @@ export function evaluateSupplyChainRules(file: CodeFile, lines: string[], cleanC
         logs.push(`[${ts}] 📦 SUPPLY-03: Missing Lockfile Integrity Guarantee detected (${file.path}:${lineNum})`);
     }
     // SUPPLY-04: Known Malicious / Deprecated Package (event-stream)
-    if (/package\.json$/i.test(file.path) && /"(?:event-stream|flatmap-stream)":/i.test(cleanContent)) {
-        const matchLineIdx = locateMatchLine(lines, [/"(?:event-stream|flatmap-stream)":/i], l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('*'));
+    if (/package\.json$/i.test(file.path) && /"flatmap-stream":|"event-stream":\s*"[~^=]?3\.3\.6"/i.test(cleanContent)) {
+        const matchLineIdx = locateMatchLine(lines, [/"flatmap-stream":|"event-stream":\s*"[~^=]?3\.3\.6"/i], l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('*'));
         const lineNum = matchLineIdx !== -1 ? matchLineIdx + 1 : 1;
         findings.push({
             id: `supply04-${Date.now()}-${findingCounter.count++}`,
@@ -171,8 +171,9 @@ export function evaluateSupplyChainRules(file: CodeFile, lines: string[], cleanC
         logs.push(`[${ts}] 📦 SUPPLY-06: External CDN Script Missing Subresource Integrity (SRI) detected (${file.path}:${lineNum})`);
     }
     // SUPPLY-07: Public Leaked Internal npm Registry Token in .npmrc
-    if (/\.npmrc$/i.test(file.path) && /:_authToken=[a-zA-Z0-9_-]{20,}/i.test(cleanContent) && !/\$\{NPM_TOKEN\}/i.test(cleanContent)) {
-        const matchLineIdx = locateMatchLine(lines, [/:_authToken=[a-zA-Z0-9_-]{20,}/i], l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('*'));
+    // .npmrc registry lines start with "//", which comment stripping removes: read the raw file
+    if (/\.npmrc$/i.test(file.path) && /:_authToken=[a-zA-Z0-9_-]{20,}/i.test(file.content)) {
+        const matchLineIdx = lines.findIndex(l => /:_authToken=[a-zA-Z0-9_-]{20,}/i.test(l));
         const lineNum = matchLineIdx !== -1 ? matchLineIdx + 1 : 1;
         findings.push({
             id: `supply07-${Date.now()}-${findingCounter.count++}`,
@@ -429,7 +430,7 @@ export function evaluateSupplyChainRules(file: CodeFile, lines: string[], cleanC
             ruleId: 7317,
             type: 'SECURITY',
             title: "SUPPLY-17: Insecure Package Registry URL (HTTP instead of HTTPS)",
-            severity: 'CRITICAL',
+            severity: 'HIGH',
             category: "Transport Security",
             filePath: file.path,
             lineRange: `L${lineNum}`,

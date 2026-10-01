@@ -1,13 +1,16 @@
 {
  "summary": {
-  "implementedRules": 1492,
-  "testedRules": 203,
-  "preciseLocationRules": 1371,
+  "implementedRules": 1488,
+  "testedRules": 228,
+  "preciseLocationRules": 1368,
   "catalogEntries": 1922,
-  "catalogOnlyNotImplemented": 770,
+  "catalogOnlyNotImplemented": 773,
   "catalogPlaceholderMetadata": 1810
  },
  "catalogOnly": [
+  7232,
+  8011,
+  8601,
   8611,
   8612,
   8613,
@@ -847,7 +850,7 @@
    "severity": "CRITICAL",
    "source": "lib/rules/security-rules.ts",
    "preciseLocation": true,
-   "tested": false,
+   "tested": true,
    "inCatalog": false
   },
   {
@@ -867,7 +870,7 @@
    "severity": "CRITICAL",
    "source": "lib/rules/security-rules.ts",
    "preciseLocation": true,
-   "tested": false,
+   "tested": true,
    "inCatalog": false
   },
   {
@@ -897,7 +900,7 @@
    "severity": "CRITICAL",
    "source": "lib/rules/security-rules.ts",
    "preciseLocation": true,
-   "tested": false,
+   "tested": true,
    "inCatalog": false
   },
   {
@@ -917,7 +920,7 @@
    "severity": "CRITICAL",
    "source": "lib/rules/security-rules.ts",
    "preciseLocation": true,
-   "tested": false,
+   "tested": true,
    "inCatalog": false
   },
   {
@@ -977,7 +980,7 @@
    "severity": "CRITICAL",
    "source": "lib/rules/security-rules.ts",
    "preciseLocation": true,
-   "tested": false,
+   "tested": true,
    "inCatalog": false
   },
   {
@@ -1151,30 +1154,10 @@
    "inCatalog": false
   },
   {
-   "ruleId": 75,
-   "code": "UI-75",
-   "title": "Unfiltered Multi-Tenant Vector Query",
-   "severity": "CRITICAL",
-   "source": "lib/scanner/builtin-rules.ts",
-   "preciseLocation": true,
-   "tested": false,
-   "inCatalog": false
-  },
-  {
    "ruleId": 76,
    "code": "UI-76",
    "title": "Missing RAG Hallucination Guardrail",
    "severity": "HIGH",
-   "source": "lib/scanner/builtin-rules.ts",
-   "preciseLocation": true,
-   "tested": false,
-   "inCatalog": false
-  },
-  {
-   "ruleId": 85,
-   "code": "UI-85",
-   "title": "Destructive Agent Action Missing Human-in-the-Loop Approval",
-   "severity": "CRITICAL",
    "source": "lib/scanner/builtin-rules.ts",
    "preciseLocation": true,
    "tested": false,
@@ -1194,20 +1177,20 @@
    "ruleId": 100,
    "code": "SEC-WEB-00",
    "title": "Target Link Unhealthy / Broken Endpoint (HTTP ${statusCode})",
-   "severity": "CRITICAL",
+   "severity": "HIGH",
    "source": "lib/scanner/builtin-rules.ts",
    "preciseLocation": true,
-   "tested": false,
+   "tested": true,
    "inCatalog": false
   },
   {
    "ruleId": 101,
    "code": "SEC-WEB-01",
    "title": "Absence of Content-Security-Policy (CSP) Header",
-   "severity": "CRITICAL",
+   "severity": "MEDIUM",
    "source": "lib/scanner/builtin-rules.ts",
    "preciseLocation": true,
-   "tested": false,
+   "tested": true,
    "inCatalog": false
   },
   {
@@ -1334,7 +1317,7 @@
    "ruleId": 160,
    "code": "UI-160",
    "title": "Missing Automated Budget Circuit Breaker",
-   "severity": "CRITICAL",
+   "severity": "LOW",
    "source": "lib/scanner/builtin-rules.ts",
    "preciseLocation": true,
    "tested": false,
@@ -3207,7 +3190,7 @@
    "severity": "CRITICAL",
    "source": "lib/rules/security-rules.ts",
    "preciseLocation": true,
-   "tested": false,
+   "tested": true,
    "inCatalog": false
   },
   {
@@ -3217,7 +3200,7 @@
    "severity": "CRITICAL",
    "source": "lib/rules/security-rules.ts",
    "preciseLocation": true,
-   "tested": false,
+   "tested": true,
    "inCatalog": false
   },
   {
@@ -4264,10 +4247,10 @@
    "ruleId": 6005,
    "code": "DB-PERF-05",
    "title": "Direct Unpooled Database Connection in Edge / Serverless",
-   "severity": "CRITICAL",
+   "severity": "HIGH",
    "source": "lib/rules/database-rules.ts",
    "preciseLocation": true,
-   "tested": false,
+   "tested": true,
    "inCatalog": true
   },
   {
@@ -4304,10 +4287,10 @@
    "ruleId": 6009,
    "code": "DB-PERF-09",
    "title": "Long-Running External API Call Inside DB Transaction",
-   "severity": "CRITICAL",
+   "severity": "HIGH",
    "source": "lib/rules/database-rules.ts",
    "preciseLocation": true,
-   "tested": false,
+   "tested": true,
    "inCatalog": true
   },
   {
@@ -4364,10 +4347,10 @@
    "ruleId": 6015,
    "code": "DB-PERF-15",
    "title": "Uncommitted Database Transaction Connection Leak",
-   "severity": "CRITICAL",
+   "severity": "HIGH",
    "source": "lib/rules/database-rules.ts",
    "preciseLocation": true,
-   "tested": false,
+   "tested": true,
    "inCatalog": true
   },
   {
@@ -4564,7 +4547,7 @@
    "ruleId": 6035,
    "code": "DB-PERF-35",
    "title": "Missing Database Backup Automated Verification",
-   "severity": "CRITICAL",
+   "severity": "LOW",
    "source": "lib/rules/database-rules.ts",
    "preciseLocation": true,
    "tested": false,
@@ -4597,7 +4580,7 @@
    "severity": "CRITICAL",
    "source": "lib/rules/database-rules.ts",
    "preciseLocation": true,
-   "tested": false,
+   "tested": true,
    "inCatalog": true
   },
   {
@@ -4694,7 +4677,7 @@
    "ruleId": 6048,
    "code": "DB-PERF-48",
    "title": "Missing SSL/TLS Enforcement on Production DB Connections",
-   "severity": "CRITICAL",
+   "severity": "MEDIUM",
    "source": "lib/rules/database-rules.ts",
    "preciseLocation": true,
    "tested": false,
@@ -5734,7 +5717,7 @@
    "ruleId": 7201,
    "code": "API-01",
    "title": "Mutating Payment/Order Endpoint Missing Idempotency Key",
-   "severity": "CRITICAL",
+   "severity": "MEDIUM",
    "source": "lib/rules/api-rules.ts",
    "preciseLocation": true,
    "tested": false,
@@ -5874,10 +5857,10 @@
    "ruleId": 7215,
    "code": "API-15",
    "title": "GET Endpoint Performing State-Mutating Actions",
-   "severity": "CRITICAL",
+   "severity": "HIGH",
    "source": "lib/rules/api-rules.ts",
    "preciseLocation": true,
-   "tested": false,
+   "tested": true,
    "inCatalog": true
   },
   {
@@ -5904,10 +5887,10 @@
    "ruleId": 7218,
    "code": "API-18",
    "title": "Unauthenticated Debug or Metric Endpoint in Production",
-   "severity": "CRITICAL",
+   "severity": "HIGH",
    "source": "lib/rules/api-rules.ts",
    "preciseLocation": false,
-   "tested": false,
+   "tested": true,
    "inCatalog": true
   },
   {
@@ -6041,16 +6024,6 @@
    "inCatalog": true
   },
   {
-   "ruleId": 7232,
-   "code": "API-32",
-   "title": "Insecure Direct File Download via Relative Path Parameter",
-   "severity": "CRITICAL",
-   "source": "lib/rules/api-rules.ts",
-   "preciseLocation": true,
-   "tested": false,
-   "inCatalog": true
-  },
-  {
    "ruleId": 7233,
    "code": "API-33",
    "title": "API Bulk Creation Endpoint Lacking Batch Item Limit",
@@ -6144,10 +6117,10 @@
    "ruleId": 7242,
    "code": "API-42",
    "title": "Missing Strict Origin Validation in WebSocket Handshake",
-   "severity": "CRITICAL",
+   "severity": "HIGH",
    "source": "lib/rules/api-rules.ts",
    "preciseLocation": true,
-   "tested": false,
+   "tested": true,
    "inCatalog": true
   },
   {
@@ -6174,10 +6147,10 @@
    "ruleId": 7245,
    "code": "API-45",
    "title": "API Token Generation Using Math.random Instead of Crypto",
-   "severity": "CRITICAL",
+   "severity": "HIGH",
    "source": "lib/rules/api-rules.ts",
    "preciseLocation": true,
-   "tested": false,
+   "tested": true,
    "inCatalog": true
   },
   {
@@ -6247,7 +6220,7 @@
    "severity": "CRITICAL",
    "source": "lib/rules/supply-chain-rules.ts",
    "preciseLocation": true,
-   "tested": false,
+   "tested": true,
    "inCatalog": true
   },
   {
@@ -6267,7 +6240,7 @@
    "severity": "CRITICAL",
    "source": "lib/rules/supply-chain-rules.ts",
    "preciseLocation": true,
-   "tested": false,
+   "tested": true,
    "inCatalog": true
   },
   {
@@ -6297,7 +6270,7 @@
    "severity": "CRITICAL",
    "source": "lib/rules/supply-chain-rules.ts",
    "preciseLocation": true,
-   "tested": false,
+   "tested": true,
    "inCatalog": true
   },
   {
@@ -6394,10 +6367,10 @@
    "ruleId": 7317,
    "code": "SUPPLY-17",
    "title": "Insecure Package Registry URL (HTTP instead of HTTPS)",
-   "severity": "CRITICAL",
+   "severity": "HIGH",
    "source": "lib/rules/supply-chain-rules.ts",
    "preciseLocation": true,
-   "tested": false,
+   "tested": true,
    "inCatalog": true
   },
   {
@@ -6825,16 +6798,6 @@
    "code": "LLM-SEC-10",
    "title": "Unrestricted Model Fine-Tuning Hyperparameter Override",
    "severity": "MEDIUM",
-   "source": "lib/rules/ai-safety-rules.ts",
-   "preciseLocation": true,
-   "tested": false,
-   "inCatalog": true
-  },
-  {
-   "ruleId": 8011,
-   "code": "LLM-SEC-11",
-   "title": "Cross-Tenant Vector Retrieval Leakage in Multi-Tenant RAG",
-   "severity": "CRITICAL",
    "source": "lib/rules/ai-safety-rules.ts",
    "preciseLocation": true,
    "tested": false,
@@ -9921,23 +9884,13 @@
    "inCatalog": true
   },
   {
-   "ruleId": 8601,
-   "code": "NEXT15-01",
-   "title": "Server Actions Missing Origin & Host Header Verification",
-   "severity": "CRITICAL",
-   "source": "lib/rules/modern-fullstack-rules.ts",
-   "preciseLocation": false,
-   "tested": false,
-   "inCatalog": true
-  },
-  {
    "ruleId": 8602,
    "code": "NEXT15-02",
    "title": "Client Component Props Exposing Server Secrets",
    "severity": "CRITICAL",
    "source": "lib/rules/modern-fullstack-rules.ts",
    "preciseLocation": true,
-   "tested": false,
+   "tested": true,
    "inCatalog": true
   },
   {
@@ -11234,10 +11187,10 @@
    "ruleId": 9102,
    "code": "TENANT-02",
    "title": "Tenant Context Leaked Across Async Execution Store",
-   "severity": "CRITICAL",
+   "severity": "HIGH",
    "source": "lib/rules/tenant-isolation-rules.ts",
    "preciseLocation": true,
-   "tested": false,
+   "tested": true,
    "inCatalog": true
   },
   {
@@ -11254,10 +11207,10 @@
    "ruleId": 9104,
    "code": "TENANT-04",
    "title": "Tenant S3 Storage Prefix Path Traversal Leakage",
-   "severity": "CRITICAL",
+   "severity": "HIGH",
    "source": "lib/rules/tenant-isolation-rules.ts",
    "preciseLocation": true,
-   "tested": false,
+   "tested": true,
    "inCatalog": true
   },
   {
@@ -15696,6 +15649,16 @@
    "title": "Session cookie set without ${[...new Set(probe.insecureCookies.flatMap((c) => c.missing))].join(",
    "severity": "MEDIUM",
    "source": "lib/scanner/live-checks.ts",
+   "preciseLocation": true,
+   "tested": true,
+   "inCatalog": false
+  },
+  {
+   "ruleId": 27101,
+   "code": "SEC-SSRF-01",
+   "title": "Server-Side Request Forgery (SSRF) in Outbound Fetch / Webhook Dispatch",
+   "severity": "CRITICAL",
+   "source": "lib/rules/security-rules.ts",
    "preciseLocation": true,
    "tested": true,
    "inCatalog": false

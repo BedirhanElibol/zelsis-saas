@@ -46,15 +46,15 @@ export function evaluateTenantIsolationRules(file: CodeFile, lines: string[], cl
         logs.push(`[${ts}] [TENANT AUDIT] Found TENANT-01: Cross-Tenant Query Missing Tenant ID Filter Clause at ${file.path}:${lineNum}`);
     }
     // TENANT-02: Tenant Context Leaked Across Async Execution Store
-    if ((/let\s+currentTenant\s*:\s*any/i.test(cleanContent))) {
-        const matchLineIdx = locateMatchLine(lines, [/let\s+currentTenant\s*:\s*any/i], l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('*'));
+    if (/^(?:export\s+)?let\s+(?:current(?:Tenant|TenantId|Org|OrgId|User|UserId)|tenantId|orgId)\b/m.test(cleanContent)) {
+        const matchLineIdx = locateMatchLine(lines, [/^(?:export\s+)?let\s+(?:current(?:Tenant|TenantId|Org|OrgId|User|UserId)|tenantId|orgId)\b/], l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('*'));
         const lineNum = matchLineIdx !== -1 ? matchLineIdx + 1 : 1;
         findings.push({
             id: `tenant9102-${Date.now()}-${findingCounter.count++}`,
             ruleId: 9102,
             type: 'SECURITY',
             title: "TENANT-02: Tenant Context Leaked Across Async Execution Store",
-            severity: "CRITICAL",
+            severity: "HIGH",
             category: "Context Isolation",
             filePath: file.path,
             lineRange: `L${lineNum}`,
@@ -94,15 +94,15 @@ export function evaluateTenantIsolationRules(file: CodeFile, lines: string[], cl
         logs.push(`[${ts}] [TENANT AUDIT] Found TENANT-03: Missing Tenant Schema Isolation Check on Database Migration at ${file.path}:${lineNum}`);
     }
     // TENANT-04: Tenant S3 Storage Prefix Path Traversal Leakage
-    if ((/s3\.upload\s*\([\s\S]*?Key\s*:\s*req\.body\.filename/i.test(cleanContent))) {
-        const matchLineIdx = locateMatchLine(lines, [/s3\.upload\s*\([\s\S]*?Key\s*:\s*req\.body\.filename/i], l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('*'));
+    if (/(?:\.upload|PutObjectCommand|GetObjectCommand|DeleteObjectCommand)\s*\(\s*\{[^}]{0,400}?\bKey\s*:\s*(?:req\.(?:body|query|params)\.\w+|(?:body|params|query)\.(?:filename|key|path|name)\b|formData\.get\()/i.test(cleanContent)) {
+        const matchLineIdx = locateMatchLine(lines, [/\bKey\s*:\s*(?:req\.(?:body|query|params)\.\w+|(?:body|params|query)\.(?:filename|key|path|name)\b|formData\.get\()/i], l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('*'));
         const lineNum = matchLineIdx !== -1 ? matchLineIdx + 1 : 1;
         findings.push({
             id: `tenant9104-${Date.now()}-${findingCounter.count++}`,
             ruleId: 9104,
             type: 'SECURITY',
             title: "TENANT-04: Tenant S3 Storage Prefix Path Traversal Leakage",
-            severity: "CRITICAL",
+            severity: "HIGH",
             category: "Storage Isolation",
             filePath: file.path,
             lineRange: `L${lineNum}`,

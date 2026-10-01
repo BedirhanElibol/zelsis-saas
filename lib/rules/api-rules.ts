@@ -30,7 +30,7 @@ export function evaluateApiRules(file: CodeFile, lines: string[], cleanContent: 
             ruleId: 7201,
             type: 'SECURITY',
             title: "API-01: Mutating Payment/Order Endpoint Missing Idempotency Key",
-            severity: 'CRITICAL',
+            severity: 'MEDIUM',
             category: "API Idempotency",
             filePath: file.path,
             lineRange: `L${lineNum}`,
@@ -375,15 +375,15 @@ export function evaluateApiRules(file: CodeFile, lines: string[], cleanContent: 
     const getFuncMatch = cleanContent.match(/export\s+async\s+function\s+GET[\s\S]*?(?=export\s+(?:async\s+)?function|$)/i);
     const getBody = getFuncMatch ? getFuncMatch[0] : '';
     const sanitizedGetBody = getBody.replace(/createHmac\s*\([^)]*\)\s*\.update\s*\([^)]*\)/gi, '').replace(/createHash\s*\([^)]*\)\s*\.update\s*\([^)]*\)/gi, '');
-    if (/(?:app\/api|pages\/api)/i.test(lowerPath) && sanitizedGetBody && /(?:\.(?:from|table|collection)\s*\([^)]*\)\s*\.(?:delete|update|insert)\b|\.delete\s*\([^)]*\)|\.update\s*\([^)]*\)|\.insert\s*\([^)]*\)|DELETE\s+FROM|UPDATE\s+\w+\s+SET|INSERT\s+INTO)/i.test(sanitizedGetBody)) {
-        const matchLineIdx = lines.findIndex(l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('*') && (/(?:\.delete\(|\.update\(|\.insert\(|DELETE\s+FROM)/i.test(l) || /export\s+async\s+function\s+GET/i.test(l)));
+    if (/(?:app\/api|pages\/api)/i.test(lowerPath) && sanitizedGetBody && /(?:\.(?:from|table|collection)\s*\([^)]*\)\s*\.(?:delete|update|insert|upsert)\b|\bprisma\.\w+\.(?:delete|update|create|upsert)(?:Many)?\s*\(|\bdb\.(?:delete|update|insert)\s*\(|DELETE\s+FROM|UPDATE\s+\w+\s+SET|INSERT\s+INTO)/i.test(sanitizedGetBody)) {
+        const matchLineIdx = lines.findIndex(l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('*') && (/(?:\.(?:delete|update|insert|upsert|create)(?:Many)?\(|DELETE\s+FROM|UPDATE\s+\w+\s+SET|INSERT\s+INTO)/i.test(l) || /export\s+async\s+function\s+GET/i.test(l)));
         const lineNum = matchLineIdx !== -1 ? matchLineIdx + 1 : 1;
         findings.push({
             id: `api15-${Date.now()}-${findingCounter.count++}`,
             ruleId: 7215,
             type: 'SECURITY',
             title: "API-15: GET Endpoint Performing State-Mutating Actions",
-            severity: 'CRITICAL',
+            severity: 'HIGH',
             category: "REST Semantics",
             filePath: file.path,
             lineRange: `L${lineNum}`,
@@ -458,7 +458,7 @@ export function evaluateApiRules(file: CodeFile, lines: string[], cleanContent: 
             ruleId: 7218,
             type: 'SECURITY',
             title: "API-18: Unauthenticated Debug or Metric Endpoint in Production",
-            severity: 'CRITICAL',
+            severity: 'HIGH',
             category: "Information Disclosure",
             filePath: file.path,
             lineRange: `L${lineNum}`,
@@ -799,31 +799,6 @@ export function evaluateApiRules(file: CodeFile, lines: string[], cleanContent: 
         });
         logs.push(`[${ts}] 🌐 API-31: Accept-Encoding Missing Support for Brotli (br) detected (${file.path}:${lineNum})`);
     }
-    // API-32: Insecure Direct File Download via Relative Path Parameter
-    if (/(?:app\/api|pages\/api)/i.test(lowerPath) && /createReadStream\s*\(\s*(?:req\.query\.file|searchParams\.get\([\'"]file[\'"]\))\s*\)/i.test(cleanContent) && !/basename/i.test(cleanContent)) {
-        const matchLineIdx = locateMatchLine(lines, [/createReadStream\s*\(\s*(?:req\.query\.file|searchParams\.get\([\'"]file[\'"]\))\s*\)/i], l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('*'));
-        const lineNum = matchLineIdx !== -1 ? matchLineIdx + 1 : 1;
-        findings.push({
-            id: `api32-${Date.now()}-${findingCounter.count++}`,
-            ruleId: 7232,
-            type: 'SECURITY',
-            title: "API-32: Insecure Direct File Download via Relative Path Parameter",
-            severity: 'CRITICAL',
-            category: "Path Traversal",
-            filePath: file.path,
-            lineRange: `L${lineNum}`,
-            snippet: lines[matchLineIdx] || "<detected API-32 pattern>",
-            reproductionSteps: [
-                `Scanned source code in ${file.path}:${lineNum}.`,
-                "Detected Insecure Direct File Download via Relative Path Parameter: API route accepting /api/v1/download?file=../../etc/passwd without canonical path sandboxing."
-            ],
-            remediationPrompt: "Sanitize filename with path.basename() and verify resolved path starts with safe storage directory.",
-            status: 'OPEN',
-            owner: "File Endpoints",
-            falsePositive: false
-        });
-        logs.push(`[${ts}] 🌐 API-32: Insecure Direct File Download via Relative Path Parameter detected (${file.path}:${lineNum})`);
-    }
     // API-33: API Bulk Creation Endpoint Lacking Batch Item Limit
     if (/(?:bulk|batch)/i.test(lowerPath) && /export\s+async\s+function\s+POST/i.test(cleanContent) && !/max\(|length\s*>\s*\d+|limit/i.test(cleanContent)) {
         const matchLineIdx = locateMatchLine(lines, [/export\s+async\s+function\s+POST/i], l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('*'));
@@ -1050,7 +1025,7 @@ export function evaluateApiRules(file: CodeFile, lines: string[], cleanContent: 
         logs.push(`[${ts}] 🌐 API-41: Missing 201 Created Status on Successful Resource Creation detected (${file.path}:${lineNum})`);
     }
     // API-42: Missing Strict Origin Validation in WebSocket Handshake
-    if (/new\s+WebSocketServer\s*\(\s*\{(?![^}]*verifyClient)/i.test(cleanContent) && !/localhost/i.test(cleanContent)) {
+    if (/new\s+WebSocketServer\s*\(\s*\{(?![^}]*verifyClient)/i.test(cleanContent) && !/localhost/i.test(cleanContent) && !/headers\.origin|headers\[['"]origin['"]\]|allowedOrigins/i.test(cleanContent)) {
         const matchLineIdx = locateMatchLine(lines, [/new\s+WebSocketServer\s*\(\s*\{(?![^}]*verifyClient)/i], l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('*'));
         const lineNum = matchLineIdx !== -1 ? matchLineIdx + 1 : 1;
         findings.push({
@@ -1058,7 +1033,7 @@ export function evaluateApiRules(file: CodeFile, lines: string[], cleanContent: 
             ruleId: 7242,
             type: 'SECURITY',
             title: "API-42: Missing Strict Origin Validation in WebSocket Handshake",
-            severity: 'CRITICAL',
+            severity: 'HIGH',
             category: "WebSocket Security",
             filePath: file.path,
             lineRange: `L${lineNum}`,
@@ -1133,7 +1108,7 @@ export function evaluateApiRules(file: CodeFile, lines: string[], cleanContent: 
             ruleId: 7245,
             type: 'SECURITY',
             title: "API-45: API Token Generation Using Math.random Instead of Crypto",
-            severity: 'CRITICAL',
+            severity: 'HIGH',
             category: "Cryptographic Security",
             filePath: file.path,
             lineRange: `L${lineNum}`,

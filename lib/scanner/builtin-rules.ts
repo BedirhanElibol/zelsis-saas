@@ -169,7 +169,7 @@ export function evaluateBuiltinRules(ctx: BuiltinRuleContext): void {
           ruleId: 100,
           type: 'SECURITY',
           title: `SEC-WEB-00: Target Link Unhealthy / Broken Endpoint (HTTP ${statusCode})`,
-          severity: 'CRITICAL',
+          severity: 'HIGH',
           category: 'Link Health & Availability',
           filePath: 'Live Web Target (Endpoint Check)',
           lineRange: `HTTP ${statusCode}`,
@@ -183,7 +183,7 @@ export function evaluateBuiltinRules(ctx: BuiltinRuleContext): void {
           owner: 'DevOps & Infrastructure Lead',
           falsePositive: false
         });
-        logs.push(`[${new Date().toLocaleTimeString()}] [CRITICAL] SEC-WEB-00 Broken Link / Unhealthy Target Endpoint (HTTP ${statusCode})`);
+        logs.push(`[${new Date().toLocaleTimeString()}] [HIGH] SEC-WEB-00 Broken Link / Unhealthy Target Endpoint (HTTP ${statusCode})`);
       }
 
       // Rule 101: Missing Content-Security-Policy
@@ -193,7 +193,7 @@ export function evaluateBuiltinRules(ctx: BuiltinRuleContext): void {
           ruleId: 101,
           type: 'SECURITY',
           title: 'SEC-WEB-01: Absence of Content-Security-Policy (CSP) Header',
-          severity: 'CRITICAL',
+          severity: 'MEDIUM',
           category: 'Network & Security Headers',
           filePath: 'Live Web Target (HTTP Headers)',
           lineRange: 'Header Deficit',
@@ -207,7 +207,7 @@ export function evaluateBuiltinRules(ctx: BuiltinRuleContext): void {
           owner: 'Security Architect',
           falsePositive: false
         });
-        logs.push(`[${new Date().toLocaleTimeString()}] [CRITICAL] SEC-WEB-01 Missing Content-Security-Policy Header on Live Web Deployment`);
+        logs.push(`[${new Date().toLocaleTimeString()}] [MEDIUM] SEC-WEB-01 Missing Content-Security-Policy Header on Live Web Deployment`);
       }
 
       // Rule 102: Missing HSTS Header
@@ -685,28 +685,6 @@ export function evaluateBuiltinRules(ctx: BuiltinRuleContext): void {
     logs.push(`[${new Date().toLocaleTimeString()}] [RULE] VIBEPOLISH UI-61: Naive text chunking detected (${file.path}:${lineNum})`);
   }
 
-  // VibePolish UI-75: Multi-Tenant RAG Data Leakage
-  if ((file.content.includes('similaritySearch') || file.content.includes('match_documents') || file.content.includes('pinecone.query')) && !file.content.includes('tenant_id') && !file.content.includes('user_id')) {
-    const matchLineIdx = lines.findIndex(l => l.includes('similaritySearch') || l.includes('match_documents') || l.includes('pinecone.query'));
-    const lineNum = matchLineIdx !== -1 ? matchLineIdx + 1 : 1;
-    addFinding({
-      id: `real-find-${Date.now()}-${findingCounter++}`,
-      ruleId: 75,
-      type: 'VIBEPOLISH',
-      title: 'UI-75: Unfiltered Multi-Tenant Vector Query',
-      severity: 'CRITICAL',
-      category: 'Metadata & Security',
-      filePath: file.path,
-      lineRange: `L${lineNum}`,
-      snippet: lines[matchLineIdx] || 'await vectorStore.similaritySearch(query, 5);',
-      reproductionSteps: [`Scanned vector DB query in ${file.path}:${lineNum}.`, 'Detected vector similarity query executing without mandatory tenant_id / user_id metadata filter.'],
-      remediationPrompt: `Enforce mandatory tenant_id and user_id metadata filtering in ${file.path} for vector database queries: vectorStore.similaritySearch(query, 5, { tenant_id: user.tenantId }).`,
-      status: 'OPEN',
-      owner: 'Security Lead',
-      falsePositive: false
-    });
-    logs.push(`[${new Date().toLocaleTimeString()}] [CRITICAL] UI-75 Unfiltered multi-tenant vector query detected (${file.path}:${lineNum})`);
-  }
 
   // VibePolish UI-76: Context Hallucination Vulnerability
   if (file.content.includes('context') && file.content.includes('prompt') && !file.content.includes('not found') && !file.content.includes('information not found')) {
@@ -730,31 +708,6 @@ export function evaluateBuiltinRules(ctx: BuiltinRuleContext): void {
         falsePositive: false
       });
       logs.push(`[${new Date().toLocaleTimeString()}] [RULE] VIBEPOLISH UI-76: Missing RAG guardrail detected (${file.path}:${lineNum})`);
-    }
-  }
-
-  // VibePolish UI-85: Destructive Action Missing Human Approval
-  if ((file.content.includes('deleteUser') || file.content.includes('dropTable') || file.content.includes('executePayment') || file.content.includes('sendEmail')) && !file.content.includes('confirm') && !file.content.includes('requireApproval')) {
-    if (file.content.includes('agent') || file.content.includes('tool') || file.content.includes('functionCall')) {
-      const matchLineIdx = lines.findIndex(l => /deleteUser|dropTable|executePayment|sendEmail/.test(l));
-      const lineNum = matchLineIdx !== -1 ? matchLineIdx + 1 : 1;
-      addFinding({
-        id: `real-find-${Date.now()}-${findingCounter++}`,
-        ruleId: 85,
-        type: 'VIBEPOLISH',
-        title: 'UI-85: Destructive Agent Action Missing Human-in-the-Loop Approval',
-        severity: 'CRITICAL',
-        category: 'Security & Approvals',
-        filePath: file.path,
-        lineRange: `L${lineNum}`,
-        snippet: lines[matchLineIdx] || 'async function deleteUserTool(args) { await db.deleteUser(args.id); }',
-        reproductionSteps: [`Scanned agent tool execution in ${file.path}:${lineNum}.`, 'Detected destructive action tool (delete/payment/email) executing without Human-in-the-Loop approval gate.'],
-        remediationPrompt: `Enforce Human-in-the-Loop (HITL) confirmation step in ${file.path} before executing destructive tools (e.g. require explicit user token / approval UI trigger).`,
-        status: 'OPEN',
-        owner: 'Security Lead',
-        falsePositive: false
-      });
-      logs.push(`[${new Date().toLocaleTimeString()}] [CRITICAL] UI-85 Human-in-the-loop approval step missing (${file.path}:${lineNum})`);
     }
   }
 
@@ -1024,7 +977,7 @@ export function evaluateBuiltinRules(ctx: BuiltinRuleContext): void {
       ruleId: 160,
       type: 'VIBEPOLISH',
       title: 'UI-160: Missing Automated Budget Circuit Breaker',
-      severity: 'CRITICAL',
+      severity: 'LOW',
       category: 'FinOps & Circuit Breakers',
       filePath: file.path,
       lineRange: `L${lineNum}`,
@@ -1035,7 +988,7 @@ export function evaluateBuiltinRules(ctx: BuiltinRuleContext): void {
       owner: 'DevOps / FinOps Team',
       falsePositive: false
     });
-    logs.push(`[${new Date().toLocaleTimeString()}] [CRITICAL] UI-160 Missing budget circuit breaker detected (${file.path}:${lineNum})`);
+    logs.push(`[${new Date().toLocaleTimeString()}] [LOW] UI-160 Missing budget circuit breaker detected (${file.path}:${lineNum})`);
   }
 
   // VibePolish UI-185: Missing User Feedback Component

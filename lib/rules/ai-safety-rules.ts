@@ -270,31 +270,6 @@ export function evaluateAiSafetyRules(file: CodeFile, lines: string[], cleanCont
         });
         logs.push(`[${ts}] 🤖 MEDIUM: LLM-SEC-10 finding in ${file.path}:${lineNum}`);
     }
-    // LLM-SEC-11: Cross-Tenant Vector Retrieval Leakage in Multi-Tenant RAG
-    if (/(?:pgvector|pineconeIndex|weaviateClient)\.[a-zA-Z0-9_]+\.query\s*\(/i.test(cleanContent) && !/tenant_id|tenantId|organization_id|orgId/i.test(cleanContent) && !/test|spec|mock/i.test(lowerPath)) {
-        const matchLineIdx = locateMatchLine(lines, [/(?:pgvector|pineconeIndex|weaviateClient)\.[a-zA-Z0-9_]+\.query\s*\(/i], l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('*'));
-        const lineNum = matchLineIdx !== -1 ? matchLineIdx + 1 : 1;
-        findings.push({
-            id: `llmsec11-${Date.now()}-${findingCounter.count++}`,
-            ruleId: 8011,
-            type: 'SECURITY',
-            title: "LLM-SEC-11: Cross-Tenant Vector Retrieval Leakage in Multi-Tenant RAG",
-            severity: 'CRITICAL',
-            category: "Authorization",
-            filePath: file.path,
-            lineRange: `L${lineNum}`,
-            snippet: lines[matchLineIdx] || "<detected LLM-SEC-11 pattern>",
-            reproductionSteps: [
-                `Scanned source code in ${file.path}:${lineNum}.`,
-                "Detected Cross-Tenant Vector Retrieval Leakage in Multi-Tenant RAG: Querying shared vector indexes without mandatory tenant_id isolation filters in the search query."
-            ],
-            remediationPrompt: "Enforce tenant_id metadata filtering on all Pinecone, Weaviate, and pgvector query calls.",
-            status: 'OPEN',
-            owner: 'Security & Release Engineering',
-            falsePositive: false
-        });
-        logs.push(`[${ts}] 🤖 CRITICAL: LLM-SEC-11 finding in ${file.path}:${lineNum}`);
-    }
     // LLM-SEC-12: Jailbreak Prefix Detection Bypass (DAN / Roleplay Modes)
     if (/app\/api\/.*(?:chat|generate|completion)/i.test(file.path) && !/checkJailbreak|moderatePrompt|isAdversarial/i.test(cleanContent)) {
         const matchLineIdx = lines.findIndex(l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('*') && (/llm-sec-12|jailbreak/i.test(l) || lines.indexOf(l) === 0));

