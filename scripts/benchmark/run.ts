@@ -1,7 +1,8 @@
 /**
  * Measures Zelsis rules against pinned real-world repositories (scripts/benchmark/corpus.json).
  *
- *   npx tsx scripts/benchmark/run.ts
+ *   npx tsx scripts/benchmark/run.ts           # measure and regenerate the committed results
+ *   npx tsx scripts/benchmark/run.ts --check   # CI: fail on regressions vs the committed summary, write nothing
  *
  * Clones each repo at its pinned SHA into .cache/benchmark, scans it like a customer repo and
  * writes docs/benchmark/results.json: per-rule firing on clean repos (false-positive signal)
@@ -104,6 +105,25 @@ interface RuleStats { ruleId: number; title: string; severity: string; cleanRepo
     recall,
     rules: ruleList
   };
+  if (process.argv.includes('--check')) {
+    const baseline = JSON.parse(readFileSync(join(root, 'data/benchmark-summary.generated.json'), 'utf8')).summary;
+    const now = out.summary as Record<string, number>;
+    const regressions = [
+      now.documentedFlawsDetected < baseline.documentedFlawsDetected && `documented flaws detected ${baseline.documentedFlawsDetected} -> ${now.documentedFlawsDetected}`,
+      now.documentedFlawsBlockingGate < baseline.documentedFlawsBlockingGate && `flaws blocking the gate ${baseline.documentedFlawsBlockingGate} -> ${now.documentedFlawsBlockingGate}`,
+      now.cleanReposGateFailed > baseline.cleanReposGateFailed && `clean repos failing the gate ${baseline.cleanReposGateFailed} -> ${now.cleanReposGateFailed}`,
+      now.cleanGatingHighCriticalFindings > baseline.cleanGatingHighCriticalFindings && `gating HIGH/CRITICAL on clean repos ${baseline.cleanGatingHighCriticalFindings} -> ${now.cleanGatingHighCriticalFindings}`
+    ].filter(Boolean);
+    const missed = recall.filter((r) => !r.found).map((r) => `missed: ${r.repo} ${r.file} (${r.flaw})`);
+    console.log(missed.join('\n'));
+    if (regressions.length) {
+      console.error('Benchmark regressions:\n  ' + regressions.join('\n  '));
+      process.exit(1);
+    }
+    console.log('Benchmark: no regressions against data/benchmark-summary.generated.json');
+    return;
+  }
+
   // Rules firing HIGH/CRITICAL on clean repos that were not reviewed as true positives become experimental
   const experimental = ruleList
     .filter((r) => r.cleanRepos.length > 0 && (r.severity === 'CRITICAL' || r.severity === 'HIGH') && !(r.ruleId in REVIEWED_TRUE_POSITIVES))
