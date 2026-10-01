@@ -1,5 +1,6 @@
 import type { Finding } from '@/data/schema';
 import type { CodeFile } from './types';
+import type { RepoContext } from './repo-context';
 import { evaluateAiClicheRules } from '../rules/ai-cliche-rules';
 import { evaluateFrontendRules } from '../rules/frontend-rules';
 import { evaluateComplianceRules } from '../rules/compliance-rules';
@@ -116,7 +117,8 @@ export type RuleEngine = (
   file: CodeFile,
   lines: string[],
   content: string,
-  findingCounter: { count: number }
+  findingCounter: { count: number },
+  context?: RepoContext
 ) => { findings: Finding[]; logs: string[] };
 
 /**

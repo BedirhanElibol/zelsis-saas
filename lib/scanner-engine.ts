@@ -9,6 +9,7 @@ import { RULE_ENGINES } from './scanner/rule-engines';
 import { evaluateBuiltinRules } from './scanner/builtin-rules';
 import { detectProjectDatabases } from './rules/multi-database-rules';
 import { detectAppStack } from './scanner/stack-detect';
+import { buildRepoContext } from './scanner/repo-context';
 
 export type { CodeFile, ScanResult } from './scanner/types';
 export type { ZelsisRcConfig } from './scanner/rc-config';
@@ -40,6 +41,7 @@ export async function runStaticCodeScan(files: CodeFile[], repoName: string = 'T
   // Pre-detect project database and ORM architecture before streaming loop cleans file memory
   const detectedStack = detectProjectDatabases(files);
   const detectedApp = detectAppStack(files);
+  const repoContext = buildRepoContext(files);
 
   logs.push(`[${new Date().toLocaleTimeString()}] [INFO] Initializing Zelsis High-Performance Static Pattern & AST Heuristics Engine v3.5...`);
   logs.push(`[${new Date().toLocaleTimeString()}] [TARGET] Repository: ${repoName}`);
@@ -209,7 +211,7 @@ export async function runStaticCodeScan(files: CodeFile[], repoName: string = 'T
     // Modular rule engines (see lib/scanner/rule-engines.ts for the ordered registry)
     for (const engine of RULE_ENGINES) {
       const engineCounter = { count: findingCounter };
-      const engineResult = engine.evaluate(file, lines, engine.scanRawContent ? rawContent : cleanContent, engineCounter);
+      const engineResult = engine.evaluate(file, lines, engine.scanRawContent ? rawContent : cleanContent, engineCounter, repoContext);
       findingCounter = engineCounter.count;
       for (const item of engineResult.findings) {
         addFinding(item);

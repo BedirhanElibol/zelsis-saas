@@ -6,6 +6,7 @@
 import { Finding } from '@/data/schema';
 import { CodeFile } from '../scanner-engine';
 import { PAYMENT_SDK } from './shared/stack-signals';
+import { emptyRepoContext, normalizeSqlName, RepoContext } from '../scanner/repo-context';
 
 export interface SaasCoreRuleResult {
   findings: Finding[];
@@ -70,7 +71,7 @@ function isVulnerableNext(version: string): boolean {
 
 export function evaluateSaasCoreRules(file: CodeFile, lines: string[], cleanContent: string, findingCounter: {
   count: number;
-}): SaasCoreRuleResult {
+}, context: RepoContext = emptyRepoContext()): SaasCoreRuleResult {
   const findings: Finding[] = [];
   const logs: string[] = [];
   const path = file.path.replace(/\\/g, '/');
@@ -96,8 +97,10 @@ export function evaluateSaasCoreRules(file: CodeFile, lines: string[], cleanCont
     // SAAS-03: SECURITY DEFINER without a pinned search_path
     for (const m of cleanContent.matchAll(/CREATE\s+(?:OR\s+REPLACE\s+)?FUNCTION[\s\S]*?(?:\$\$|\$\w+\$)[\s\S]*?(?:\$\$|\$\w+\$)[^;]*;?/gi)) {
       const fn = m[0];
-      if (/SECURITY\s+DEFINER/i.test(fn) && !/SET\s+search_path/i.test(fn)) {
-        const name = fn.match(/FUNCTION\s+([\w."]+)/i)?.[1] ?? 'function';
+      const name = fn.match(/FUNCTION\s+([\w."]+)/i)?.[1] ?? 'function';
+      const hardenedElsewhere = context.hardenedSqlFunctions.has(normalizeSqlName(name)) ||
+        new RegExp(String.raw`ALTER\s+FUNCTION\s+[\w."]*\b` + normalizeSqlName(name) + String.raw`\b[^;]*SET\s+search_path`, 'i').test(cleanContent);
+      if (/SECURITY\s+DEFINER/i.test(fn) && !/SET\s+search_path/i.test(fn) && !hardenedElsewhere) {
         hits.push({
           ruleId: 23003, code: 'SAAS-03', severity: 'HIGH', type: 'INFRA_DATABASE', category: 'Database Privilege',
           title: 'SECURITY DEFINER Function Without a Fixed search_path',

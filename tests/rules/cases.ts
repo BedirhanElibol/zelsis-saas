@@ -223,6 +223,15 @@ export const RULE_CASES: RuleCase[] = [
     ignores: f('supabase/migrations/011.sql', "CREATE OR REPLACE FUNCTION public.is_admin()\nRETURNS boolean\nLANGUAGE sql\nSECURITY DEFINER\nSET search_path = ''\nAS $$\n  SELECT EXISTS (SELECT 1 FROM public.profiles WHERE id = auth.uid() AND role = 'admin');\n$$;\n")
   },
   {
+    ruleIds: [23003],
+    name: 'SECURITY DEFINER fixed by a later migration (cross-file)',
+    detects: f('supabase/migrations/20260101_quota.sql', "CREATE OR REPLACE FUNCTION public.reserve_quota(p_user uuid)\nRETURNS void\nLANGUAGE plpgsql\nSECURITY DEFINER\nAS $$\nBEGIN\n  UPDATE public.subscriptions SET used = used + 1 WHERE user_id = p_user;\nEND;\n$$;\n"),
+    ignores: [
+      { path: 'supabase/migrations/20260101_quota.sql', content: "CREATE OR REPLACE FUNCTION public.reserve_quota(p_user uuid)\nRETURNS void\nLANGUAGE plpgsql\nSECURITY DEFINER\nAS $$\nBEGIN\n  UPDATE public.subscriptions SET used = used + 1 WHERE user_id = p_user;\nEND;\n$$;\n" },
+      { path: 'supabase/migrations/20260301_harden.sql', content: "ALTER FUNCTION public.reserve_quota(uuid) SET search_path = '';\n" }
+    ]
+  },
+  {
     ruleIds: [23004],
     name: 'Checkout price chosen by the client',
     detects: f('app/api/checkout/route.ts', "export async function POST(req: Request) {\n  const { priceId } = await req.json();\n  const session = await stripe.checkout.sessions.create({ mode: 'subscription', line_items: [{ price: priceId, quantity: 1 }] });\n  return Response.json({ url: session.url });\n}\n"),
