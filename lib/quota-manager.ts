@@ -1,4 +1,5 @@
 import { PlanUsageQuota, UserTier } from '@/data/schema';
+import { priceLabel, SUPPORT_TERMS } from '@/data/pricing-plans';
 
 export const FREE_SCAN_LIMIT = 3;
 export const FREE_PROJECT_LIMIT = 1;
@@ -25,7 +26,7 @@ export const TIER_CONFIGS: Record<UserTier, TierFeatureConfig> = {
   Free: {
     tier: 'Free',
     displayName: 'Free Starter',
-    priceMonthly: '$0',
+    priceMonthly: priceLabel('Free'),
     scanLimit: FREE_SCAN_LIMIT,
     projectLimit: FREE_PROJECT_LIMIT,
     aiPromptLimit: FREE_AI_PROMPT_LIMIT,
@@ -34,14 +35,14 @@ export const TIER_CONFIGS: Record<UserTier, TierFeatureConfig> = {
     cicdIntegration: false,
     customRules: false,
     ruleInventory: 'All active rules',
-    supportSla: 'Community Support',
+    supportSla: SUPPORT_TERMS.Free,
     concurrentWorkers: 1,
     historyRetentionDays: 7
   },
   Pro: {
     tier: 'Pro',
     displayName: 'Pro Developer',
-    priceMonthly: '$19/mo',
+    priceMonthly: priceLabel('Pro'),
     scanLimit: 'Unlimited',
     projectLimit: 'Unlimited',
     aiPromptLimit: 'Unlimited',
@@ -50,14 +51,14 @@ export const TIER_CONFIGS: Record<UserTier, TierFeatureConfig> = {
     cicdIntegration: true,
     customRules: false,
     ruleInventory: 'All active rules',
-    supportSla: '24-Hour Email Support',
+    supportSla: SUPPORT_TERMS.Pro,
     concurrentWorkers: 5,
     historyRetentionDays: 90
   },
   Enterprise: {
     tier: 'Enterprise',
     displayName: 'Enterprise Team',
-    priceMonthly: '$99/mo',
+    priceMonthly: priceLabel('Enterprise'),
     scanLimit: 'Unlimited',
     projectLimit: 'Unlimited',
     aiPromptLimit: 'Unlimited',
@@ -66,7 +67,7 @@ export const TIER_CONFIGS: Record<UserTier, TierFeatureConfig> = {
     cicdIntegration: true,
     customRules: true,
     ruleInventory: 'All active rules',
-    supportSla: 'Priority Email & Slack Support',
+    supportSla: SUPPORT_TERMS.Enterprise,
     concurrentWorkers: 'Unlimited',
     historyRetentionDays: 'Unlimited'
   }

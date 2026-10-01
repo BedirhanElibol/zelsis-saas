@@ -187,11 +187,12 @@ export async function POST(req: NextRequest) {
           .maybeSingle();
 
         if (sub) {
-          userTier = (sub.plan_tier as any) || 'Free';
-          canSeeFixes = hasFixPromptAccess(resolveServerPlanTier({
+          // An expired paid period counts as Free, so it cannot skip the quota or the private-repo check
+          userTier = resolveServerPlanTier({
             storedTier: sub.plan_tier,
             currentPeriodEnd: sub.current_period_end
-          }));
+          });
+          canSeeFixes = hasFixPromptAccess(userTier);
           const monthlyQuota = sub.monthly_scan_quota ?? 3;
           const scansUsed = sub.scans_used_this_month ?? 0;
 
@@ -372,6 +373,19 @@ export async function POST(req: NextRequest) {
             timestamp: new Date().toISOString()
           },
           { status: 401 }
+        );
+      }
+
+      if (liveData?.isPrivate && userTier === 'Free') {
+        return NextResponse.json(
+          {
+            status: 'ERROR',
+            gateStatus: 'FAILED',
+            readinessScore: 0,
+            error: 'Private repository scans are part of Zelsis Pro. Use an API key from a Pro or Enterprise account to gate private repositories.',
+            timestamp: new Date().toISOString()
+          },
+          { status: 402 }
         );
       }
 

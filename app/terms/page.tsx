@@ -2,6 +2,7 @@ import React from 'react';
 import type { Metadata } from 'next';
 import Link from 'next/link';
 import { ShieldCheck, ArrowLeft } from 'lucide-react';
+import { CONTACT_EMAIL } from '@/lib/contact';
 
 export const metadata: Metadata = {
   title: 'Terms of Service & Conditions',
@@ -58,7 +59,7 @@ export default function TermsPage() {
             <div className="bg-[#141414] border border-[#262626] rounded-xl p-3 text-xs font-mono text-[#AAAAAA] mt-1 space-y-1">
               <div><strong className="text-white">Operating Entity:</strong> Zelsis Technologies (Bedirhan Elibol)</div>
               <div><strong className="text-white">Commercial Presence:</strong> Istanbul, Turkey &amp; Global SaaS Operations</div>
-              <div><strong className="text-white">Official Correspondence:</strong> legal@zelsis.com // contact@zelsis.com</div>
+              <div><strong className="text-white">Official Correspondence:</strong> {CONTACT_EMAIL}</div>
             </div>
           </section>
 
@@ -72,7 +73,7 @@ export default function TermsPage() {
           <section className="flex flex-col gap-2">
             <h2 className="text-base font-bold text-[#FFFFFF]">3. Merchant of Record, Subscriptions &amp; Global Tax</h2>
             <p>
-              Access to premium rulesets, enterprise exports, and automated CI/CD gates requires an active subscription (Pro or Enterprise). <strong>Polar Software Inc. serves as the official Merchant of Record (MoR) for all Zelsis software subscriptions, orders, and financial transactions.</strong>
+              Unlimited scans, private repository scans, PDF reports and unlimited AI fix prompts require an active subscription (Pro or Enterprise). Every plan scans with the same rules. <strong>Polar Software Inc. serves as the official Merchant of Record (MoR) for all Zelsis software subscriptions, orders, and financial transactions.</strong>
             </p>
             <p>
               As the Merchant of Record, Polar is responsible for digital order processing, customer billing inquiries, automated EU VAT / international sales tax calculation and remittance, and compliance with PCI-DSS Level 1 payment security standards. Subscriptions renew automatically until cancelled via the customer billing portal.
@@ -113,7 +114,7 @@ export default function TermsPage() {
           <section className="flex flex-col gap-2">
             <h2 className="text-base font-bold text-[#FFFFFF]">8. Contact &amp; Notices</h2>
             <p className="font-mono text-xs text-emerald-400">
-              Legal Inquiries: legal@zelsis.com // Support: contact@zelsis.com
+              Legal &amp; Support: {CONTACT_EMAIL}
             </p>
           </section>
         </div>

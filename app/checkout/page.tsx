@@ -23,7 +23,6 @@ function CheckoutPageContent() {
   const router = useRouter();
 
   const planId = normalizePlanId(searchParams.get('plan'));
-  const billing = (searchParams.get('billing') || 'monthly') as 'annual' | 'monthly';
   const isSuccess = searchParams.get('success') === 'true';
   const checkoutId = searchParams.get('checkout_id') || searchParams.get('checkoutId') || null;
   const reason = searchParams.get('reason');
@@ -119,7 +118,6 @@ function CheckoutPageContent() {
     >
       <CheckoutView
         initialPlanId={planId}
-        initialBilling={billing}
         initialSuccess={isSuccess}
         checkoutId={checkoutId}
         reason={reason}

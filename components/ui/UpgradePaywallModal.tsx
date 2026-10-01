@@ -5,6 +5,13 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { X, Lock, ArrowRight, ShieldCheck, ExternalLink } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import { UserTier } from '@/data/schema';
+import { ZELSIS_PRICING_PLANS, priceLabel } from '@/data/pricing-plans';
+
+const planById = (id: string) => ZELSIS_PRICING_PLANS.find((p) => p.id === id)!;
+const PAID_PLANS = [
+  { tier: 'Pro' as const, plan: planById('zelsis-core') },
+  { tier: 'Enterprise' as const, plan: planById('vibecare') },
+];
 
 interface UpgradePaywallModalProps {
   isOpen: boolean;
@@ -95,151 +102,85 @@ export const UpgradePaywallModal: React.FC<UpgradePaywallModalProps> = ({
 
           {/* Plan Comparison Box */}
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-            {/* Pro Plan Card */}
-            <div className={`p-4 rounded-xl bg-[#0A0A0A] flex flex-col justify-between gap-4 ${
-              activeTier === 'Pro' ? 'border-2 border-emerald-500/50' : 'border border-white/20'
-            }`}>
-              <div>
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-1.5">
-                    <span className="text-xs font-mono font-extrabold uppercase text-[#EDEDED]">Pro Plan</span>
-                    {activeTier === 'Pro' && (
-                      <span className="text-[11px] font-bold bg-emerald-500 text-black uppercase tracking-wider px-1.5 py-0.5 rounded flex items-center gap-1">
-                        <span className="w-1.5 h-1.5 rounded-full bg-black" />
-                        Active
-                      </span>
-                    )}
+            {PAID_PLANS.map(({ tier, plan }) => {
+              const isActive = activeTier === tier;
+              const isIncluded = tier === 'Pro' && activeTier === 'Enterprise';
+              return (
+                <div
+                  key={plan.id}
+                  className={`p-4 rounded-xl bg-[#0A0A0A] flex flex-col justify-between gap-4 ${
+                    isActive ? 'border-2 border-emerald-500/50' : tier === 'Pro' ? 'border border-white/20' : 'border border-white/10'
+                  }`}
+                >
+                  <div>
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center gap-1.5">
+                        <span className="text-xs font-mono font-extrabold uppercase text-[#EDEDED]">{tier}</span>
+                        {isActive && (
+                          <span className="text-[11px] font-bold bg-emerald-500 text-black uppercase tracking-wider px-1.5 py-0.5 rounded flex items-center gap-1">
+                            <span className="w-1.5 h-1.5 rounded-full bg-black" />
+                            Active
+                          </span>
+                        )}
+                      </div>
+                      <span className="text-xs font-mono font-bold text-white">{priceLabel(tier)}</span>
+                    </div>
+                    <ul className="mt-3 space-y-2 text-[0.75rem] text-[#A1A1AA]">
+                      {plan.features.slice(0, 4).map((feature) => (
+                        <li key={feature} className="flex items-center gap-2">
+                          <span className="text-white/40">·</span>
+                          <span>{feature}</span>
+                        </li>
+                      ))}
+                      {plan.comingSoon?.map((feature) => (
+                        <li key={feature} className="flex items-center gap-2">
+                          <span className="text-white/40">·</span>
+                          <span>{feature}</span>
+                          <span className="text-[0.6rem] font-mono uppercase text-zinc-500">Soon</span>
+                        </li>
+                      ))}
+                    </ul>
                   </div>
-                  <span className="text-xs font-mono font-bold text-white">$19/mo</span>
-                </div>
-                <ul className="mt-3 space-y-2 text-[0.75rem] text-[#A1A1AA]">
-                  <li className="flex items-center gap-2">
-                    <span className="text-white/40">·</span>
-                    <span>5 Active Repositories</span>
-                  </li>
-                  <li className="flex items-center gap-2">
-                    <span className="text-white/40">·</span>
-                    <span>Unlimited Manual Scans</span>
-                  </li>
-                  <li className="flex items-center gap-2">
-                    <span className="text-white/40">·</span>
-                    <span>1-Click AI Fix Prompts</span>
-                  </li>
-                </ul>
-              </div>
 
-              <div className="flex flex-col gap-2">
-                {activeTier === 'Pro' ? (
-                  <a
-                    href="https://polar.sh/purchases"
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="btn btn-primary w-full py-2.5 text-xs uppercase tracking-wider font-extrabold rounded-lg flex items-center justify-center gap-1.5 bg-emerald-500/20 hover:bg-emerald-500/30 border border-emerald-500/40 text-emerald-300 transition-all shadow-sm font-mono cursor-pointer text-center"
-                  >
-                    <span>Manage at Polar</span>
-                    <ExternalLink size={13} />
-                  </a>
-                ) : activeTier === 'Enterprise' ? (
-                  <div className="w-full py-2.5 text-xs font-mono font-medium rounded-lg bg-white/5 border border-white/10 text-zinc-400 text-center">
-                    Included in Enterprise
-                  </div>
-                ) : (
-                  <>
+                  {isActive ? (
                     <a
-                      href="https://buy.polar.sh/polar_cl_rxs3MC7Hq08OwYgoaJQatH93arqZfotoGUS0N15NqbC"
+                      href="https://polar.sh/purchases"
                       target="_blank"
                       rel="noopener noreferrer"
-                      className="btn btn-primary w-full py-2.5 text-xs uppercase tracking-wider font-extrabold rounded-lg flex items-center justify-center gap-1.5 bg-white text-black hover:bg-neutral-200 transition-all shadow-sm font-mono cursor-pointer text-center"
+                      className="btn btn-secondary w-full py-2.5 text-xs uppercase tracking-wider font-extrabold rounded-lg flex items-center justify-center gap-1.5 bg-emerald-500/20 hover:bg-emerald-500/30 border border-emerald-500/40 text-emerald-300 transition-all shadow-sm font-mono cursor-pointer text-center"
                     >
-                      <span>Pay with Polar ($19/mo)</span>
-                      <ArrowRight size={13} />
+                      <span>Manage at Polar</span>
+                      <ExternalLink size={13} />
                     </a>
+                  ) : isIncluded ? (
+                    <div className="w-full py-2.5 text-xs font-mono font-medium rounded-lg bg-white/5 border border-white/10 text-zinc-400 text-center">
+                      Included in Enterprise
+                    </div>
+                  ) : (
+                    // Go through /checkout so the Polar link carries this account's id as metadata
                     <button
+                      type="button"
                       onClick={() => {
                         onClose();
-                        router.push('/checkout?plan=zelsis-core&billing=annual');
+                        router.push(`/checkout?plan=${plan.id}`);
                       }}
-                      className="text-[10px] text-[#A1A1AA] hover:text-white text-center py-1 transition-colors"
+                      className={`btn w-full py-2.5 text-xs uppercase tracking-wider font-extrabold rounded-lg flex items-center justify-center gap-1.5 transition-all shadow-sm font-mono cursor-pointer text-center ${
+                        tier === 'Pro'
+                          ? 'btn-primary bg-white text-black hover:bg-neutral-200'
+                          : 'btn-secondary border border-white/20 text-[#EDEDED] hover:bg-white/5'
+                      }`}
                     >
-                      View Checkout &amp; Invoicing &rarr;
+                      <span>Upgrade to {tier} ({priceLabel(tier)})</span>
+                      {tier === 'Pro' ? <ArrowRight size={13} /> : <ShieldCheck size={13} />}
                     </button>
-                  </>
-                )}
-              </div>
-            </div>
-
-            {/* Enterprise Plan Card */}
-            <div className={`p-4 rounded-xl bg-[#0A0A0A] flex flex-col justify-between gap-4 ${
-              activeTier === 'Enterprise' ? 'border-2 border-emerald-500/50' : 'border border-white/10'
-            }`}>
-              <div>
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-1.5">
-                    <span className="text-xs font-mono font-extrabold uppercase text-[#EDEDED]">Enterprise</span>
-                    {activeTier === 'Enterprise' && (
-                      <span className="text-[11px] font-bold bg-emerald-500 text-black uppercase tracking-wider px-1.5 py-0.5 rounded flex items-center gap-1">
-                        <span className="w-1.5 h-1.5 rounded-full bg-black" />
-                        Active
-                      </span>
-                    )}
-                  </div>
-                  <span className="text-xs font-mono font-bold text-white">$99/mo</span>
+                  )}
                 </div>
-                <ul className="mt-3 space-y-2 text-[0.75rem] text-[#A1A1AA]">
-                  <li className="flex items-center gap-2">
-                    <span className="text-white/40">·</span>
-                    <span>Unlimited Repositories</span>
-                  </li>
-                  <li className="flex items-center gap-2">
-                    <span className="text-white/40">·</span>
-                    <span>CI/CD Webhook Triggers</span>
-                  </li>
-                  <li className="flex items-center gap-2">
-                    <span className="text-white/40">·</span>
-                    <span>Red Team Attack Payload</span>
-                  </li>
-                </ul>
-              </div>
-
-              <div className="flex flex-col gap-2">
-                {activeTier === 'Enterprise' ? (
-                  <a
-                    href="https://polar.sh/purchases"
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="btn btn-secondary w-full py-2.5 text-xs uppercase tracking-wider font-extrabold rounded-lg flex items-center justify-center gap-1.5 bg-emerald-500/20 hover:bg-emerald-500/30 border border-emerald-500/40 text-emerald-300 transition-all shadow-sm font-mono cursor-pointer text-center"
-                  >
-                    <span>Manage at Polar</span>
-                    <ExternalLink size={13} />
-                  </a>
-                ) : (
-                  <>
-                    <a
-                      href="https://buy.polar.sh/polar_cl_M0yZJgYVCucd7U5gDz4oFTND6hdqvYPo65HJQ2334od"
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="btn btn-secondary w-full py-2.5 text-xs uppercase tracking-wider font-extrabold rounded-lg flex items-center justify-center gap-1.5 border border-white/20 text-[#EDEDED] hover:bg-white/5 transition-all shadow-sm font-mono cursor-pointer text-center"
-                    >
-                      <span>Pay with Polar ($99/mo)</span>
-                      <ShieldCheck size={13} />
-                    </a>
-                    <button
-                      onClick={() => {
-                        onClose();
-                        router.push('/checkout?plan=vibecare&billing=annual');
-                      }}
-                      className="text-[10px] text-[#A1A1AA] hover:text-white text-center py-1 transition-colors"
-                    >
-                      View Checkout &amp; Invoicing &rarr;
-                    </button>
-                  </>
-                )}
-              </div>
-            </div>
+              );
+            })}
           </div>
 
           <div className="pt-2 text-center text-[0.7rem] text-[#A1A1AA]">
-            Annual plans include 20% discount &amp; instant license activation key. Cancel anytime.
+            Billed monthly through Polar. Your plan activates on this account after payment. Cancel anytime.
           </div>
         </motion.div>
       </div>

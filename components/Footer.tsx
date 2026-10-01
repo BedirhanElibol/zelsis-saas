@@ -3,6 +3,7 @@
 import React from 'react';
 import { ShieldCheck, ArrowUpRight } from 'lucide-react';
 import { ZelsisLogo } from '@/components/ui/ZelsisLogo';
+import { CONTACT_EMAIL } from '@/lib/contact';
 
 export const Footer: React.FC = () => {
   return (
@@ -19,10 +20,10 @@ export const Footer: React.FC = () => {
           <div className="flex flex-col gap-1.5 mt-2 text-xs font-mono text-zinc-400">
             <span className="text-white font-semibold">Zelsis Software Technologies</span>
             <span className="inline-flex items-center gap-1 text-zinc-300">
-              <span>contact@zelsis.com</span>
+              <span>{CONTACT_EMAIL}</span>
               <ArrowUpRight size={12} />
             </span>
-            <span>Support: Mon-Sun / Typical response within 24h</span>
+            <span>Support: reply within 2 business days</span>
             <span className="text-[11px] text-zinc-400">Istanbul &amp; Global Edge Infrastructure</span>
           </div>
         </div>

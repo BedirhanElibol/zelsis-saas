@@ -628,7 +628,6 @@ function DashboardContent() {
               <ComponentErrorBoundary componentName="CheckoutView">
                 <CheckoutView
                   initialPlanId={user?.tier === 'Pro' ? 'vibecare' : 'zelsis-core'}
-                  initialBilling="monthly"
                   onBackToPricing={() => setActiveNav('dashboard')}
                   user={user}
                   onOpenAuth={(mode) => {

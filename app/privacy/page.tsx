@@ -2,6 +2,7 @@ import React from 'react';
 import type { Metadata } from 'next';
 import Link from 'next/link';
 import { ShieldCheck, ArrowLeft } from 'lucide-react';
+import { CONTACT_EMAIL, contactMailto } from '@/lib/contact';
 
 export const metadata: Metadata = {
   title: 'Privacy Policy & Data Protection',
@@ -58,8 +59,8 @@ export default function PrivacyPolicyPage() {
             <div className="bg-[#141414] border border-[#262626] rounded-xl p-3 text-xs font-mono text-[#AAAAAA] mt-1 space-y-1">
               <div><strong className="text-white">Operating Entity:</strong> Zelsis Technologies (Bedirhan Elibol)</div>
               <div><strong className="text-white">Operations:</strong> Istanbul, Turkey // Global Edge SaaS Operations</div>
-              <div><strong className="text-white">Data Protection Office:</strong> privacy@zelsis.com</div>
-              <div><strong className="text-white">Legal &amp; Business Inquiries:</strong> contact@zelsis.com</div>
+              <div><strong className="text-white">Data Protection Office:</strong> {CONTACT_EMAIL}</div>
+              <div><strong className="text-white">Legal &amp; Business Inquiries:</strong> {CONTACT_EMAIL}</div>
             </div>
           </section>
 
@@ -138,8 +139,8 @@ export default function PrivacyPolicyPage() {
             <h2 className="text-base font-bold text-[#FFFFFF]">6. Data Subject Rights &amp; Erasure (GDPR Art. 17 / CCPA)</h2>
             <p>
               You maintain full rights to access, rectify, port, or permanently delete your account and all associated telemetry. You can execute permanent account destruction in your Project Settings dashboard (&quot;GDPR / CCPA Data Erasure&quot;) or submit a formal deletion request to{' '}
-              <a href="mailto:privacy@zelsis.com" className="text-[#FFFFFF] underline underline-offset-4 font-mono">
-                privacy@zelsis.com
+              <a href={contactMailto()} className="text-[#FFFFFF] underline underline-offset-4 font-mono">
+                {CONTACT_EMAIL}
               </a>.
             </p>
           </section>
@@ -147,14 +148,14 @@ export default function PrivacyPolicyPage() {
           <section className="flex flex-col gap-2">
             <h2 className="text-base font-bold text-[#FFFFFF]">7. Turkish Personal Data Protection Law (KVKK No. 6698)</h2>
             <p>
-              For users located in Turkey or subject to the Republic of Turkey Law on the Protection of Personal Data No. 6698 (KVKK), Zelsis processes data strictly under Article 5 (establishment and performance of the contract, fulfillment of legal obligations, and legitimate interests of the data controller). In accordance with KVKK Article 11, data subjects are entitled to inquire about their personal data, request correction, request erasure upon cessation of processing reasons, and learn of third-party transfers. Requests may be directed to <a href="mailto:privacy@zelsis.com" className="text-emerald-400 underline">privacy@zelsis.com</a>.
+              For users located in Turkey or subject to the Republic of Turkey Law on the Protection of Personal Data No. 6698 (KVKK), Zelsis processes data strictly under Article 5 (establishment and performance of the contract, fulfillment of legal obligations, and legitimate interests of the data controller). In accordance with KVKK Article 11, data subjects are entitled to inquire about their personal data, request correction, request erasure upon cessation of processing reasons, and learn of third-party transfers. Requests may be directed to <a href={contactMailto()} className="text-emerald-400 underline">{CONTACT_EMAIL}</a>.
             </p>
           </section>
 
           <section className="flex flex-col gap-2">
             <h2 className="text-base font-bold text-[#FFFFFF]">8. Contact &amp; Inquiries</h2>
             <p className="font-mono text-xs text-emerald-400">
-              privacy@zelsis.com // Attn: Data Protection Desk
+              {CONTACT_EMAIL} // Attn: Data Protection Desk
             </p>
           </section>
         </div>

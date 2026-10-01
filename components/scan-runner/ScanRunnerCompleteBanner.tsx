@@ -4,6 +4,7 @@ import { ScanResult } from '@/lib/scanner-engine';
 import { Project } from '@/data/schema';
 import { canAccessLocalAudit } from '@/lib/env-config';
 import { safeLower } from '@/lib/safe-utils';
+import { priceLabel } from '@/data/pricing-plans';
 
 interface ScanRunnerCompleteBannerProps {
   isFinished: boolean;
@@ -99,7 +100,7 @@ export const ScanRunnerCompleteBanner: React.FC<ScanRunnerCompleteBannerProps> =
                 className="btn btn-primary px-5 py-3 text-xs font-bold uppercase tracking-wider rounded-xl shadow-lg shrink-0 flex items-center gap-2 bg-emerald-500 hover:bg-emerald-400 text-black transition-all font-mono cursor-pointer"
               >
                 <Lock size={14} />
-                <span>Upgrade to Pro ($19/mo)</span>
+                <span>Upgrade to Pro ({priceLabel('Pro')})</span>
               </button>
             )}
 

@@ -20,6 +20,7 @@ import { checkScanQuota, isPrivateRepoAllowed } from '@/lib/quota-manager';
 import { getSupabase } from '@/lib/supabase';
 import { getActiveUserAuth } from '@/lib/supabase-client';
 import { logger } from '@/lib/logger';
+import { priceLabel } from '@/data/pricing-plans';
 
 // The rule engine is ~3 MB of JS: load it only when a scan actually runs, not with the dashboard
 const runStaticCodeScan: typeof import('@/lib/scanner-engine').runStaticCodeScan = async (...args) =>
@@ -167,10 +168,10 @@ export const ScanRunnerView: React.FC<ScanRunnerViewProps> = ({
         const scanCheck = checkScanQuota(quota, userTier);
         if (!scanCheck.allowed) {
           if (!isCancelled) {
-            setScanFailureReason(`Monthly Free Scan Limit Reached (${quota.scansUsed}/${quota.scansLimit} scans used). Upgrade to Zelsis Pro ($19/mo) for unlimited automated audits.`);
+            setScanFailureReason(`Monthly Free Scan Limit Reached (${quota.scansUsed}/${quota.scansLimit} scans used). Upgrade to Zelsis Pro (${priceLabel('Pro')}) for unlimited automated audits.`);
             setLogs([
               `[${new Date().toLocaleTimeString()}] [LIMIT] Monthly Free Tier Scan Limit Reached (${quota.scansUsed}/${quota.scansLimit} scans used).`,
-              `[${new Date().toLocaleTimeString()}] [UPGRADE] Upgrade to Zelsis Pro ($19/mo) or Enterprise ($99/mo) to unlock unlimited audits and automated CI/CD scans.`,
+              `[${new Date().toLocaleTimeString()}] [UPGRADE] Upgrade to Zelsis Pro (${priceLabel('Pro')}) or Enterprise (${priceLabel('Enterprise')}) to unlock unlimited audits and automated CI/CD scans.`,
               `[${new Date().toLocaleTimeString()}] [ACTION] Select 'Upgrade to Pro' or 'Reset Demo Quota' below to proceed.`
             ]);
             setIsFinished(true);
@@ -191,10 +192,10 @@ export const ScanRunnerView: React.FC<ScanRunnerViewProps> = ({
 
         if (!serverAuth.allowed) {
           if (!isCancelled) {
-            setScanFailureReason(serverAuth.reason || `Monthly Free Scan Limit Reached. Upgrade to Zelsis Pro ($19/mo) for unlimited automated audits.`);
+            setScanFailureReason(serverAuth.reason || `Monthly Free Scan Limit Reached. Upgrade to Zelsis Pro (${priceLabel('Pro')}) for unlimited automated audits.`);
             setLogs([
               `[${new Date().toLocaleTimeString()}] [LIMIT] ${serverAuth.reason || 'Monthly Free Scan Limit Reached.'}`,
-              `[${new Date().toLocaleTimeString()}] [UPGRADE] Upgrade to Zelsis Pro ($19/mo) or Enterprise ($99/mo) to unlock unlimited audits and automated CI/CD scans.`,
+              `[${new Date().toLocaleTimeString()}] [UPGRADE] Upgrade to Zelsis Pro (${priceLabel('Pro')}) or Enterprise (${priceLabel('Enterprise')}) to unlock unlimited audits and automated CI/CD scans.`,
               `[${new Date().toLocaleTimeString()}] [ACTION] Select 'Upgrade to Pro' or 'Reset Demo Quota' below to proceed.`
             ]);
             setIsFinished(true);
@@ -364,7 +365,7 @@ export const ScanRunnerView: React.FC<ScanRunnerViewProps> = ({
             setLogs((prev) => [
               ...prev,
               `[${new Date().toLocaleTimeString()}] [LIMIT] ⚠️ ${quotaErrData.error || 'Monthly scan limit reached.'}`,
-              `[${new Date().toLocaleTimeString()}] [UPGRADE] Upgrade to Zelsis Pro ($19/mo) to unlock unlimited audits.`
+              `[${new Date().toLocaleTimeString()}] [UPGRADE] Upgrade to Zelsis Pro (${priceLabel('Pro')}) to unlock unlimited audits.`
             ]);
             setIsFinished(true);
           }
@@ -737,14 +738,18 @@ export const ScanRunnerView: React.FC<ScanRunnerViewProps> = ({
           return;
         }
 
-        if (liveData?.error === 'PRIVATE_OR_UNAUTHENTICATED' || liveData?.requiresAuth || (liveData?.isPrivate && !effectiveToken)) {
+        if (
+          liveData?.error === 'PRIVATE_OR_UNAUTHENTICATED' ||
+          liveData?.requiresAuth ||
+          (liveData?.isPrivate && (!effectiveToken || !isPrivateRepoAllowed(userTier)))
+        ) {
           if (!isCancelled) {
             if (!isPrivateRepoAllowed(userTier)) {
-              setScanFailureReason(`Private repository audit is a Pro feature. Upgrade to Zelsis Pro ($19/mo) to inspect private codebases with your GitHub token.`);
+              setScanFailureReason(`Private repository audit is a Pro feature. Upgrade to Zelsis Pro (${priceLabel('Pro')}) to inspect private codebases with your GitHub token.`);
               setLogs((prev) => [
                 ...prev,
                 `[${new Date().toLocaleTimeString()}] [ERROR] 🔒 PRIVATE REPOSITORY DETECTED: "${project.repoUrl}".`,
-                `[${new Date().toLocaleTimeString()}] [PAYWALL] Private codebase audits require an active Zelsis Pro subscription ($19/mo).`,
+                `[${new Date().toLocaleTimeString()}] [PAYWALL] Private codebase audits require an active Zelsis Pro subscription (${priceLabel('Pro')}).`,
                 `[${new Date().toLocaleTimeString()}] [ACTION] Upgrade to Pro below to audit private repositories and proprietary code.`
               ]);
               setIsFinished(true);
@@ -800,11 +805,11 @@ export const ScanRunnerView: React.FC<ScanRunnerViewProps> = ({
 
               if (isExplicitPrivate) {
                 if (!isPrivateRepoAllowed(userTier)) {
-                  setScanFailureReason(`Private repository audit is a Pro feature. Upgrade to Zelsis Pro ($19/mo) to inspect private codebases.`);
+                  setScanFailureReason(`Private repository audit is a Pro feature. Upgrade to Zelsis Pro (${priceLabel('Pro')}) to inspect private codebases.`);
                   setLogs((prev) => [
                     ...prev,
                     `[${new Date().toLocaleTimeString()}] [ERROR] 🔒 Unable to fetch files from private GitHub repository "${targetRepoUrl}".`,
-                    `[${new Date().toLocaleTimeString()}] [PAYWALL] If this is a private repository, private audits require a Zelsis Pro subscription ($19/mo).`
+                    `[${new Date().toLocaleTimeString()}] [PAYWALL] If this is a private repository, private audits require a Zelsis Pro subscription (${priceLabel('Pro')}).`
                   ]);
                   setIsFinished(true);
                   onOpenCheckout?.('Pro');

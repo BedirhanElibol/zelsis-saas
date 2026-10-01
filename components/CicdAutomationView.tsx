@@ -4,7 +4,7 @@ import React, { useState } from 'react';
 import Image from 'next/image';
 import { Terminal, GitPullRequest, ShieldCheck, Copy, CheckCircle2, Download, Settings2, Sliders, CheckSquare, AlertTriangle, Lock, ArrowRight, FileCode } from 'lucide-react';
 import { Project, UserTier } from '@/data/schema';
-import { getPublicAppUrl } from '@/lib/app-url';
+import { getConfiguredAppUrl, getPublicAppUrl } from '@/lib/app-url';
 import { isCicdViewAllowed } from '@/lib/quota-manager';
 import { exportProjectSarifReport } from '@/lib/report-exporter';
 
@@ -85,7 +85,6 @@ jobs:
   const generateZelsisConfig = () => {
     return JSON.stringify(
       {
-        $schema: 'https://zelsis.com/schemas/v1/zelsisrc.json',
         projectName,
         minScoreThreshold: minScore,
         failStrategy: failThreshold,
@@ -102,6 +101,10 @@ jobs:
       2
     );
   };
+
+  const badgeAppUrl = getConfiguredAppUrl();
+  const badgeUrl = `${badgeAppUrl}/api/v1/badge?projectId=${encodeURIComponent(project?.id || 'demo')}`;
+  const badgeMarkdown = `[![Zelsis Gate](${badgeUrl})](${badgeAppUrl})`;
 
   const copyToClipboard = (text: string, setter: (val: boolean) => void) => {
     navigator.clipboard.writeText(text);
@@ -333,29 +336,32 @@ jobs:
         </div>
       </div>
 
-      {/* Shareable Reports & README Badges */}
+      {/* README Badge */}
       <div className="bg-[#141414] border border-white/10 rounded-xl p-6">
         <h2 className="text-sm font-bold text-[#EDEDED] tracking-tight mb-4">
-          Shareable Report Links & README Badges
+          Live README Badge
         </h2>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
           <div className="bg-black/40 border border-white/5 rounded-xl p-4">
             <span className="text-[10px] font-mono text-zinc-400 uppercase tracking-wider block mb-2">
-              Public Dashboard Link
+              Badge Image URL
             </span>
-            <p className="text-xs text-zinc-400 mb-3">Share a read-only view of your project's security and quality posture with clients, auditors, or the public.</p>
+            <p className="text-xs text-zinc-400 mb-3">Shows this project&apos;s latest gate status and score, read from your saved scans.</p>
+            <div className="mb-3">
+              <Image src={badgeUrl} alt="Zelsis gate badge" width={120} height={20} className="h-5 w-auto" unoptimized />
+            </div>
             <div className="flex items-center gap-2">
-              <input 
-                type="text" 
-                readOnly 
-                aria-label="Public Dashboard Link"
-                value={`https://zelsis.com/report/${project?.id || 'demo'}`} 
+              <input
+                type="text"
+                readOnly
+                aria-label="Badge image URL"
+                value={badgeUrl}
                 className="flex-1 bg-[#0A0A0A] border border-white/10 rounded-lg px-3 py-2 text-xs font-mono text-zinc-300 focus-visible:ring-2 focus-visible:ring-emerald-500 focus-visible:outline-none"
               />
-              <button 
-                onClick={() => copyToClipboard(`https://zelsis.com/report/${project?.id || 'demo'}`, () => {})}
+              <button
+                onClick={() => copyToClipboard(badgeUrl, () => {})}
                 className="btn btn-secondary p-2 rounded-lg"
-                aria-label="Copy public dashboard link"
+                aria-label="Copy badge image URL"
               >
                 <Copy size={14} />
               </button>
@@ -365,19 +371,17 @@ jobs:
             <span className="text-[10px] font-mono text-zinc-400 uppercase tracking-wider block mb-2">
               Markdown Badge (README.md)
             </span>
-            <div className="mb-3">
-              <Image src={`https://img.shields.io/badge/Zelsis_Score-${minScore}%25-emerald?style=flat-square`} alt="Zelsis Score" width={100} height={20} className="h-5 w-auto" unoptimized />
-            </div>
+            <p className="text-xs text-zinc-400 mb-3">Paste into your README; the badge links back to Zelsis.</p>
             <div className="flex items-center gap-2">
-              <input 
-                type="text" 
-                readOnly 
+              <input
+                type="text"
+                readOnly
                 aria-label="Markdown Badge"
-                value={`[![Zelsis Score](https://img.shields.io/badge/Zelsis_Score-${minScore}%25-emerald?style=flat-square)](https://zelsis.com/report/${project?.id || 'demo'})`} 
+                value={badgeMarkdown}
                 className="flex-1 bg-[#0A0A0A] border border-white/10 rounded-lg px-3 py-2 text-xs font-mono text-zinc-300 focus-visible:ring-2 focus-visible:ring-emerald-500 focus-visible:outline-none"
               />
-              <button 
-                onClick={() => copyToClipboard(`[![Zelsis Score](https://img.shields.io/badge/Zelsis_Score-${minScore}%25-emerald?style=flat-square)](https://zelsis.com/report/${project?.id || 'demo'})`, () => {})}
+              <button
+                onClick={() => copyToClipboard(badgeMarkdown, () => {})}
                 className="btn btn-secondary p-2 rounded-lg"
                 aria-label="Copy markdown badge"
               >

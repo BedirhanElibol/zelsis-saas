@@ -46,7 +46,7 @@ export const FaqSection: React.FC = () => {
     {
       question: 'What is your refund policy and subscription cancellation model?',
       answer:
-        'All plans are 100% self-serve and transparent. You can cancel or modify your subscription at any time with a single click in your billing portal. You will retain full access until the end of your paid billing cycle with zero surprise charges.'
+        'All plans are 100% self-serve and transparent. You can cancel or modify your subscription at any time with a single click in your billing portal. You will retain full access until the end of your paid billing cycle with zero surprise charges. First-time purchases are covered by a 14-day money-back guarantee; see the Refund Policy.'
     }
   ];
 

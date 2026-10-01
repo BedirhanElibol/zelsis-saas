@@ -30,6 +30,7 @@ import { exportFindingsToCsv, exportScorecardToJson } from '@/lib/export-utils';
 import { ActiveModalType } from './DashboardModals';
 import { safeReplace, safeTrim, safeString, safeLower } from '@/lib/safe-utils';
 import { UNDETECTED_FRAMEWORK } from '@/lib/scanner/stack-detect';
+import { priceLabel } from '@/data/pricing-plans';
 
 interface GateStatusBannerProps {
   project: Project;
@@ -270,7 +271,7 @@ export const GateStatusBanner: React.FC<GateStatusBannerProps> = ({
                     )}
                   </div>
                   <span className="text-[10px] text-[#A1A1AA]">
-                    {user?.tier === 'Free' ? 'Requires Pro subscription ($19/mo)' : 'Formal stakeholder sign-off'}
+                    {user?.tier === 'Free' ? `Requires Pro subscription (${priceLabel('Pro')})` : 'Formal stakeholder sign-off'}
                   </span>
                 </div>
               </button>

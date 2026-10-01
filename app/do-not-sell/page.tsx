@@ -2,6 +2,7 @@ import React from 'react';
 import type { Metadata } from 'next';
 import Link from 'next/link';
 import { ArrowLeft, ShieldCheck, CheckCircle2 } from 'lucide-react';
+import { CONTACT_EMAIL, contactMailto } from '@/lib/contact';
 
 export const metadata: Metadata = {
   title: 'Do Not Sell or Share My Personal Information',
@@ -87,8 +88,8 @@ export default function DoNotSellPage() {
             <ul className="list-disc list-inside space-y-1.5 text-[#AAAAAA]">
               <li>
                 <strong>Email Request:</strong> Send an email to{' '}
-                <a href="mailto:privacy@zelsis.com" className="text-emerald-400 font-mono underline focus-visible:ring-1 focus-visible:ring-emerald-500 rounded">
-                  privacy@zelsis.com
+                <a href={contactMailto()} className="text-emerald-400 font-mono underline focus-visible:ring-1 focus-visible:ring-emerald-500 rounded">
+                  {CONTACT_EMAIL}
                 </a>{' '}
                 with the subject line <span className="font-mono text-zinc-300">&quot;CCPA Opt-Out / Data Erasure&quot;</span>.
               </li>
@@ -107,7 +108,7 @@ export default function DoNotSellPage() {
 
           <section className="flex flex-col gap-2 border-t border-[#262626] pt-4">
             <div className="text-xs text-[#888888] font-mono">
-              Contact: privacy@zelsis.com // Compliance Officer: Bedirhan Elibol
+              Contact: {CONTACT_EMAIL} // Compliance Officer: Bedirhan Elibol
             </div>
           </section>
         </div>

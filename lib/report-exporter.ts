@@ -1,4 +1,5 @@
 import { Project } from '@/data/schema';
+import { getConfiguredAppUrl } from '@/lib/app-url';
 import { escapeHtml } from '@/lib/sanitize';
 import { computeSha256 } from './crypto-digest';
 
@@ -628,7 +629,7 @@ export function generateSarifReport(project: Project): string {
           driver: {
             name: 'Zelsis',
             version: '3.5.0',
-            informationUri: 'https://zelsis.com',
+            informationUri: getConfiguredAppUrl(),
             rules: Array.from(rulesMap.values())
           }
         },

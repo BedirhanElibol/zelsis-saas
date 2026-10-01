@@ -988,7 +988,7 @@ async function runAllTests() {
   assert(ZELSIS_PRICING_PLANS.length === 3, 'ZELSIS_PRICING_PLANS contains all 3 canonical tiers (Free, Pro, Enterprise)');
   assert(ZELSIS_PRICING_PLANS.some(p => p.id === 'free' && p.priceMonthly === 0), 'Free Starter plan defined at $0/mo');
   assert(ZELSIS_PRICING_PLANS.some(p => p.id === 'zelsis-core' && p.priceMonthly === 19), 'Zelsis Pro plan defined at $19/mo');
-  assert(ZELSIS_PRICING_PLANS.some(p => p.id === 'vibecare' && p.priceMonthly === 99), 'Zelsis Enterprise plan defined at $99/mo');
+  assert(ZELSIS_PRICING_PLANS.some(p => p.id === 'vibecare' && p.priceMonthly === 49), 'Zelsis Enterprise plan defined at $49/mo (matches Polar)');
 
   // 19. Resilient Supabase Configuration & Canonical Production Fallbacks
   console.log('\n--- 19. Testing Resilient Supabase Configuration & Canonical Production Fallbacks ---');

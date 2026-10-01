@@ -6,6 +6,8 @@ import { GithubProxyQuerySchema, validateQueryParams } from '@/lib/validations/a
 import { logger } from '@/lib/logger';
 import { createClient } from '@supabase/supabase-js';
 import { isDependencyFile } from '@/lib/scanner/dependencies';
+import { isPlatformAdminEmail, resolveServerPlanTier } from '@/lib/subscription-utils';
+import { priceLabel } from '@/data/pricing-plans';
 
 // CLOUD-01 Remediation: Enforce <= 15s synchronous serverless execution ceiling.
 // Long-running batch background tasks (>15s) must be queued to async workers (SQS/Inngest/QStash)
@@ -207,6 +209,27 @@ function getAuthHeader(token: string): string {
  * 404/403 network error logs in client browser DevTools for private repositories.
  * Strictly verifies GitHub repository syntax and prevents Path Traversal and SSRF.
  */
+/** True when the signed-in caller has an active Pro or Enterprise subscription (read server-side). */
+async function hasPaidPlan(userId: string | null, email: string | null): Promise<boolean> {
+  if (!userId) return false;
+  if (isPlatformAdminEmail(email)) return true;
+  const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
+  const serviceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
+  if (!supabaseUrl || !serviceRoleKey) return false;
+  try {
+    const adminClient = createClient(supabaseUrl, serviceRoleKey, { auth: { persistSession: false } });
+    const { data: sub } = await adminClient
+      .from('subscriptions')
+      .select('plan_tier, current_period_end')
+      .eq('user_id', userId)
+      .maybeSingle();
+    return resolveServerPlanTier({ storedTier: sub?.plan_tier, currentPeriodEnd: sub?.current_period_end }) !== 'Free';
+  } catch (err) {
+    logger.warn('[GitHub Proxy] Plan lookup failed, treating caller as Free:', err);
+    return false;
+  }
+}
+
 export async function GET(req: NextRequest) {
   // 1. Rate Limiting Check (Max 40 requests per minute per IP)
   const rateLimit = await checkRateLimit(req, {
@@ -225,8 +248,9 @@ export async function GET(req: NextRequest) {
   const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
 
   let authenticatedUserId: string | null = null;
+  let authenticatedEmail: string | null = null;
 
-  // If a Bearer token is provided, verify it's a valid Supabase JWT
+  // Authorization carries only the Supabase session JWT; the GitHub token travels in x-github-token.
   if (authHeaderRaw && supabaseUrl && supabaseAnonKey) {
     try {
       const authClient = createClient(supabaseUrl, supabaseAnonKey);
@@ -239,6 +263,7 @@ export async function GET(req: NextRequest) {
         );
       }
       authenticatedUserId = authData.user.id;
+      authenticatedEmail = authData.user.email ?? null;
     } catch {
       return NextResponse.json(
         { error: 'Unauthorized', message: 'Authentication verification failed.' },
@@ -287,10 +312,8 @@ export async function GET(req: NextRequest) {
     );
   }
 
-  // 4. Secure Token Extraction: User-provided token (Authorization header, custom header, or OAuth cookie) takes precedence
-  const authHeader = req.headers.get('authorization');
+  // 4. Secure Token Extraction: user-provided GitHub token (custom header or OAuth cookie) takes precedence
   const userToken =
-    authHeader?.replace(/^Bearer\s+/i, '').trim() ||
     req.headers.get('x-github-token')?.trim() ||
     req.cookies.get('sb-provider-token')?.value?.trim() ||
     req.cookies.get('github_token')?.value?.trim() ||
@@ -399,6 +422,18 @@ export async function GET(req: NextRequest) {
         isPrivate: true,
         files: []
       }, { status: 401 });
+    }
+
+    // Private repositories are a paid feature: check the caller's plan on the server.
+    if (repoData.private && !(await hasPaidPlan(authenticatedUserId, authenticatedEmail))) {
+      return NextResponse.json({
+        name: repoData.name || repo,
+        fullName: repoData.full_name || `${owner}/${repo}`,
+        message: `Private repository scans are part of Zelsis Pro (${priceLabel('Pro')}). Sign in with a Pro or Enterprise account to scan this repository.`,
+        error: 'PLAN_REQUIRED',
+        isPrivate: true,
+        files: []
+      }, { status: 403 });
     }
 
     const detectedBranch = typeof repoData.default_branch === 'string' && repoData.default_branch

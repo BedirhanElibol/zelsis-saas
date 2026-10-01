@@ -180,6 +180,15 @@ export async function executeScanJob(options: ExecuteScanJobOptions): Promise<Sc
         throw new ScanJobError(liveData.error, 404);
       }
 
+      if (liveData?.isPrivate && userTier === 'Free') {
+        await updateJobState({
+          status: 'FAILED',
+          progress_percent: 0,
+          error_message: 'Private repository scans are part of Zelsis Pro.'
+        });
+        throw new ScanJobError('PLAN_REQUIRED', 402);
+      }
+
       filesToScan = liveData?.files || [];
       resolvedTargetName = liveData?.name || rawRepoUrl;
     }

@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { CONTACT_EMAIL } from '@/lib/contact';
 import { logger } from '@/lib/logger';
 import { checkRateLimit, createRateLimitResponse } from '@/lib/rate-limiter';
 import { createClient } from '@supabase/supabase-js';
@@ -73,6 +74,6 @@ export async function DELETE(req: NextRequest) {
     });
   } catch (err: any) {
     logger.error('[GDPR Erasure] Error during deletion:', err?.message);
-    return NextResponse.json({ error: 'Deletion failed. Contact privacy@zelsis.com' }, { status: 500 });
+    return NextResponse.json({ error: `Deletion failed. Contact ${CONTACT_EMAIL}` }, { status: 500 });
   }
 }

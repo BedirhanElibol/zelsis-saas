@@ -4,6 +4,7 @@ import React from 'react';
 import { X, Check, Lock, Shield, ArrowRight, Zap, ExternalLink } from 'lucide-react';
 import { UserTier } from '@/data/schema';
 import { formatCount, RULE_COUNTS } from '@/lib/rule-status';
+import { PLAN_PRICES, SUPPORT_TERMS } from '@/data/pricing-plans';
 
 interface TierDetailsModalProps {
   isOpen: boolean;
@@ -34,8 +35,8 @@ export const TierDetailsModal: React.FC<TierDetailsModalProps> = ({
       category: 'Scan Volume & Code Access',
       items: [
         { label: 'Monthly Live Audits', free: '3 Scans / mo', pro: 'Unlimited', enterprise: 'Unlimited' },
-        { label: 'Private Repositories', free: 'Locked (Public only)', pro: 'Full Access (1-Click OAuth)', enterprise: 'Unlimited Private & Team Repos' },
-        { label: 'Connected Projects', free: '1 Active Repo', pro: 'Unlimited Repos', enterprise: 'Unlimited Repos & Teams' }
+        { label: 'Private Repositories', free: 'Public repos only', pro: 'Included (GitHub token)', enterprise: 'Included (GitHub token)' },
+        { label: 'Connected Projects', free: '1 Active Repo', pro: 'Unlimited Repos', enterprise: 'Unlimited Repos' }
       ]
     },
     {
@@ -58,13 +59,15 @@ export const TierDetailsModal: React.FC<TierDetailsModalProps> = ({
       items: [
         { label: 'PDF Readiness Report', free: 'Locked', pro: 'Included (Instant Download)', enterprise: 'Included (Instant Download)' },
         { label: 'Jira Markdown & HTML Export', free: 'Locked', pro: 'Included', enterprise: 'Included' },
-        { label: 'SOC2 & ISO27001 Readiness', free: 'Not Included', pro: 'Standard Checkpoints', enterprise: 'Comprehensive Audit Checkpoints' }
+        { label: 'SOC 2 / ISO 27001 Report', free: 'Not Included', pro: 'Not Included', enterprise: 'Coming soon' }
       ]
     },
     {
       category: 'Support & Operations',
       items: [
-        { label: 'Support Channel', free: 'Community', pro: '24-Hour Email Support', enterprise: 'Priority Email & Slack Support' },
+        { label: 'Support', free: SUPPORT_TERMS.Free, pro: SUPPORT_TERMS.Pro, enterprise: SUPPORT_TERMS.Enterprise },
+        { label: 'Team Workspace & Roles', free: 'Not Included', pro: 'Not Included', enterprise: 'Coming soon' },
+        { label: 'Custom Organization Ruleset', free: 'Not Included', pro: 'Not Included', enterprise: 'Coming soon' },
         { label: 'GitHub Actions / CI/CD Gate', free: 'Locked', pro: 'Gate API + generated CI workflows', enterprise: 'Gate API + generated CI workflows' }
       ]
     }
@@ -130,8 +133,8 @@ export const TierDetailsModal: React.FC<TierDetailsModalProps> = ({
               </div>
               <div>
                 <span className="text-[10px] font-bold uppercase tracking-wider text-white">Pro Developer</span>
-                <div className="text-2xl font-extrabold text-white mt-1 tabular-nums">$19 <span className="text-xs text-zinc-400 font-normal">/ month</span></div>
-                <p className="text-[11px] text-zinc-300 mt-1">Unlimited scans, private repos, 1-click AI fixes &amp; PDF certificates.</p>
+                <div className="text-2xl font-extrabold text-white mt-1 tabular-nums">${PLAN_PRICES.Pro} <span className="text-xs text-zinc-400 font-normal">/ month</span></div>
+                <p className="text-[11px] text-zinc-300 mt-1">Unlimited scans, private repos, 1-click AI fixes &amp; PDF reports.</p>
               </div>
               {currentTier === 'Pro' ? (
                 <a
@@ -152,7 +155,7 @@ export const TierDetailsModal: React.FC<TierDetailsModalProps> = ({
                   onClick={() => { onClose(); onSelectPlan('Pro'); }}
                   className="w-full py-2 px-3 rounded-lg bg-white text-black hover:bg-neutral-200 font-bold text-xs flex items-center justify-center gap-1.5 transition-all cursor-pointer"
                 >
-                  <span>Upgrade to Pro ($19)</span>
+                  <span>Upgrade to Pro (${PLAN_PRICES.Pro})</span>
                   <ArrowRight size={13} />
                 </button>
               )}
@@ -170,8 +173,8 @@ export const TierDetailsModal: React.FC<TierDetailsModalProps> = ({
               )}
               <div>
                 <span className="text-[10px] font-bold text-white uppercase tracking-wider">Enterprise Team</span>
-                <div className="text-2xl font-extrabold text-white mt-1 tabular-nums">$99 <span className="text-xs text-zinc-400 font-normal">/ month</span></div>
-                <p className="text-[11px] text-zinc-400 mt-1">Custom company rules, multi-seat RBAC, and dedicated priority support.</p>
+                <div className="text-2xl font-extrabold text-white mt-1 tabular-nums">${PLAN_PRICES.Enterprise} <span className="text-xs text-zinc-400 font-normal">/ month</span></div>
+                <p className="text-[11px] text-zinc-400 mt-1">Everything in Pro with priority support. Team workspace and custom rules coming soon.</p>
               </div>
               {currentTier === 'Enterprise' ? (
                 <a
@@ -188,7 +191,7 @@ export const TierDetailsModal: React.FC<TierDetailsModalProps> = ({
                   onClick={() => { onClose(); onSelectPlan('Enterprise'); }}
                   className="w-full py-2 px-3 rounded-lg bg-white text-black hover:bg-neutral-200 font-bold text-xs flex items-center justify-center gap-1.5 transition-all cursor-pointer"
                 >
-                  <span>Upgrade to Enterprise ($99)</span>
+                  <span>Upgrade to Enterprise (${PLAN_PRICES.Enterprise})</span>
                   <ArrowRight size={13} />
                 </button>
               )}

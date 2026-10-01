@@ -2,6 +2,7 @@ import React from 'react';
 import type { Metadata } from 'next';
 import Link from 'next/link';
 import { ArrowLeft, Cookie, Shield, Lock } from 'lucide-react';
+import { CONTACT_EMAIL, contactMailto } from '@/lib/contact';
 
 export const metadata: Metadata = {
   title: 'Cookie Policy',
@@ -104,8 +105,8 @@ export default function CookiePolicyPage() {
             <h2 className="text-base font-bold text-[#FFFFFF]">4. Contact</h2>
             <p>
               For inquiries regarding our technical cookies or data handling practices, please contact our privacy desk at{' '}
-              <a href="mailto:privacy@zelsis.com" className="text-emerald-400 underline font-mono">
-                privacy@zelsis.com
+              <a href={contactMailto()} className="text-emerald-400 underline font-mono">
+                {CONTACT_EMAIL}
               </a>.
             </p>
           </section>

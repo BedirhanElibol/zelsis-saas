@@ -2,6 +2,7 @@ import React from 'react';
 import type { Metadata } from 'next';
 import Link from 'next/link';
 import { ShieldCheck, ArrowLeft, RefreshCw } from 'lucide-react';
+import { CONTACT_EMAIL } from '@/lib/contact';
 
 export const metadata: Metadata = {
   title: 'Refund & Cancellation Policy',
@@ -113,7 +114,7 @@ export default function RefundPage() {
               To initiate a refund request under the 14-day guarantee or inquire about a billing charge, contact our developer support team directly:
             </p>
             <div className="p-4 rounded-lg bg-[#141414] border border-white/10 flex flex-col gap-1 font-mono text-xs text-zinc-300">
-              <div><strong>Email:</strong> contact@zelsis.com</div>
+              <div><strong>Email:</strong> {CONTACT_EMAIL}</div>
               <div><strong>Subject:</strong> Refund Request - [Your Account Email]</div>
               <div><strong>Response Window:</strong> Dedicated response within 24 business hours</div>
             </div>
@@ -125,7 +126,7 @@ export default function RefundPage() {
           <section className="flex flex-col gap-2">
             <h2 className="text-base font-bold text-[#FFFFFF]">7. Chargebacks and Dispute Policy</h2>
             <p>
-              We encourage customers to contact us directly prior to filing a dispute or chargeback with their bank. Our support team responds within 24 hours and can issue immediate refunds faster than the standard 60-day bank resolution process.
+              We encourage customers to contact us directly prior to filing a dispute or chargeback with their bank. We reply to billing requests within 2 business days and can issue refunds faster than the standard 60-day bank resolution process.
             </p>
           </section>
         </div>

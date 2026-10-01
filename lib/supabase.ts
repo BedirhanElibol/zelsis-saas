@@ -1,4 +1,5 @@
 import { createClient, SupabaseClient, Session } from '@supabase/supabase-js';
+import { getConfiguredAppUrl } from './app-url';
 import { UserProfile } from '@/components/auth/AuthModal';
 import type { Project } from '@/data/schema';
 import { isPlatformAdminEmail, isFounderGrantExpiry } from '@/lib/subscription-utils';
@@ -255,7 +256,7 @@ export async function supabaseSignInWithOAuth(
   }
 
   try {
-    const defaultOrigin = typeof window !== 'undefined' ? window.location.origin : 'https://zelsis.com';
+    const defaultOrigin = typeof window !== 'undefined' ? window.location.origin : getConfiguredAppUrl();
     const finalRedirect = redirectTo || `${defaultOrigin}/auth/callback`;
 
     const { data, error } = await supabase.auth.signInWithOAuth({

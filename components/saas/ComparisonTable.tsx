@@ -5,6 +5,8 @@ import { Check, X, Shield, ArrowRight, Lock, ExternalLink, Zap } from 'lucide-re
 import { useRouter } from 'next/navigation';
 import { AuthModal, UserProfile } from '@/components/auth/AuthModal';
 import { formatCount, RULE_COUNTS } from '@/lib/rule-status';
+import { PLAN_PRICES, priceLabel, SUPPORT_TERMS } from '@/data/pricing-plans';
+import { contactMailto } from '@/lib/contact';
 
 interface ComparisonItem {
   name: string;
@@ -109,7 +111,7 @@ export const ComparisonTable: React.FC = () => {
           description: 'Supported repository types and permission boundary',
           free: '1 Public Repository only',
           pro: 'Unlimited Public & Private Repos',
-          enterprise: 'Unlimited Org-Wide & Team Repos'
+          enterprise: 'Unlimited Public & Private Repos'
         },
       ]
     },
@@ -223,16 +225,30 @@ export const ComparisonTable: React.FC = () => {
         {
           name: 'Technical Support Channel',
           description: 'Direct engineering support and issue escalation channel',
-          free: 'Email Support',
-          pro: '24-Hour Priority Email Support',
-          enterprise: 'Priority Email & Dedicated Slack Support'
+          free: SUPPORT_TERMS.Free,
+          pro: SUPPORT_TERMS.Pro,
+          enterprise: SUPPORT_TERMS.Enterprise
         },
         {
-          name: 'Custom Ruleset Onboarding',
-          description: 'Technical guidance for configuring organization-specific security gates',
+          name: 'Team Workspace & Roles',
+          description: 'Shared organization workspace with member invites and admin / member roles',
           free: false,
           pro: false,
-          enterprise: 'Custom Ruleset Onboarding Guidance'
+          enterprise: 'Coming soon'
+        },
+        {
+          name: 'Custom Organization Ruleset',
+          description: 'Organization-specific rules and gate policy applied to every repository',
+          free: false,
+          pro: false,
+          enterprise: 'Coming soon'
+        },
+        {
+          name: 'White-label SOC 2 Report',
+          description: 'Branded PDF report with findings mapped to SOC 2 controls',
+          free: false,
+          pro: false,
+          enterprise: 'Coming soon'
         }
       ]
     }
@@ -350,7 +366,7 @@ export const ComparisonTable: React.FC = () => {
                         )}
                       </div>
                       <div className="text-2xl font-extrabold text-white font-mono">
-                        $19 <span className="text-xs text-zinc-400 font-normal">/ month</span>
+                        ${PLAN_PRICES.Pro} <span className="text-xs text-zinc-400 font-normal">/ month</span>
                       </div>
                       <span className="text-[11px] text-zinc-400 font-sans">For professional developers and shipping teams</span>
 
@@ -380,7 +396,7 @@ export const ComparisonTable: React.FC = () => {
                           onClick={() => handleSelectPlan('Pro')}
                           className="mt-2 w-full py-2 px-3 rounded-lg bg-white hover:bg-zinc-200 text-black text-xs font-extrabold font-mono transition-colors flex items-center justify-center gap-1.5 shadow cursor-pointer"
                         >
-                          <span>Upgrade to Pro ($19)</span>
+                          <span>Upgrade to Pro (${PLAN_PRICES.Pro})</span>
                           <ArrowRight size={13} />
                         </button>
                       )}
@@ -403,9 +419,9 @@ export const ComparisonTable: React.FC = () => {
                         ) : null}
                       </div>
                       <div className="text-2xl font-extrabold text-white font-mono">
-                        $99 <span className="text-xs text-zinc-400 font-normal">/ month</span>
+                        ${PLAN_PRICES.Enterprise} <span className="text-xs text-zinc-400 font-normal">/ month</span>
                       </div>
-                      <span className="text-[11px] text-zinc-400 font-sans">For organizations requiring CI/CD gates &amp; SLAs</span>
+                      <span className="text-[11px] text-zinc-400 font-sans">For teams that want Pro with priority support</span>
 
                       {isLoggedIn && currentTier === 'Enterprise' ? (
                         <div className="flex flex-col gap-1 mt-2">
@@ -418,7 +434,7 @@ export const ComparisonTable: React.FC = () => {
                             <span>Manage at Polar</span>
                             <ExternalLink size={12} />
                           </a>
-                          <span className="text-[10px] text-zinc-400">Active enterprise cluster</span>
+                          <span className="text-[10px] text-zinc-400">Enterprise plan active</span>
                         </div>
                       ) : isLoggedIn && currentTier === 'Pro' ? (
                         <button
@@ -426,7 +442,7 @@ export const ComparisonTable: React.FC = () => {
                           onClick={() => handleSelectPlan('Enterprise')}
                           className="mt-2 w-full py-2 px-3 rounded-lg bg-white/10 hover:bg-white/15 border border-white/20 text-white text-xs font-extrabold font-mono transition-colors flex items-center justify-center gap-1.5 shadow cursor-pointer"
                         >
-                          <span>Upgrade to Enterprise ($99)</span>
+                          <span>Upgrade to Enterprise (${PLAN_PRICES.Enterprise})</span>
                           <ArrowRight size={13} />
                         </button>
                       ) : (
@@ -435,7 +451,7 @@ export const ComparisonTable: React.FC = () => {
                           onClick={() => handleSelectPlan('Enterprise')}
                           className="mt-2 w-full py-2 px-3 rounded-lg bg-white/10 hover:bg-white/15 border border-white/20 text-white text-xs font-bold font-mono transition-colors flex items-center justify-center gap-1.5 cursor-pointer"
                         >
-                          <span>Deploy Enterprise ($99)</span>
+                          <span>Get Enterprise (${PLAN_PRICES.Enterprise})</span>
                           <ArrowRight size={13} />
                         </button>
                       )}
@@ -530,7 +546,7 @@ export const ComparisonTable: React.FC = () => {
                   onClick={() => handleSelectPlan('Enterprise')}
                   className="px-5 py-2 rounded-lg text-xs font-mono font-bold uppercase tracking-wider bg-white text-black hover:bg-neutral-200 transition-all flex items-center gap-2 shadow cursor-pointer"
                 >
-                  <span>Upgrade to Enterprise ($99/mo)</span>
+                  <span>Upgrade to Enterprise ({priceLabel('Enterprise')})</span>
                   <ArrowRight size={14} />
                 </button>
               ) : (
@@ -539,7 +555,7 @@ export const ComparisonTable: React.FC = () => {
                   onClick={() => handleSelectPlan('Pro')}
                   className="px-5 py-2 rounded-lg text-xs font-mono font-bold uppercase tracking-wider bg-white text-black hover:bg-neutral-200 transition-all flex items-center gap-2 shadow cursor-pointer"
                 >
-                  <span>Upgrade to Pro ($19/mo)</span>
+                  <span>Upgrade to Pro ({priceLabel('Pro')})</span>
                   <ArrowRight size={14} />
                 </button>
               )}
@@ -554,7 +570,7 @@ export const ComparisonTable: React.FC = () => {
             <p className="text-xs text-zinc-400">We offer custom organization onboarding, volume team pricing, and security questionnaire assistance.</p>
           </div>
           <a
-            href="mailto:contact@zelsis.com?subject=Enterprise%20Custom%20Inquiry"
+            href={contactMailto('Enterprise inquiry')}
             className="px-4 py-2 rounded-lg text-xs font-mono font-bold uppercase tracking-wider bg-white/10 hover:bg-white/15 border border-white/20 text-white transition-all shrink-0 cursor-pointer"
           >
             Contact Enterprise Sales

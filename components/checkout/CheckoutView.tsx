@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
-import { ZELSIS_PRICING_PLANS, PricingPlanItem } from '@/data/pricing-plans';
+import { ZELSIS_PRICING_PLANS, PricingPlanItem, priceLabel } from '@/data/pricing-plans';
 // EmptyState fallback: static pricing plan definitions never yield empty list
 import { generateLicenseKey, activateUserTier, verifyLicenseKey } from '@/lib/stripe-checkout';
 import { ShieldCheck, CreditCard, Lock, CheckCircle2, ArrowLeft, Star, Building2, Mail, User } from 'lucide-react';
@@ -23,7 +23,6 @@ function resolvePlanAlias(planId?: string): string {
 
 interface CheckoutViewProps {
   initialPlanId?: string;
-  initialBilling?: 'annual' | 'monthly';
   initialSuccess?: boolean;
   checkoutId?: string | null;
   reason?: string | null;
@@ -35,7 +34,6 @@ interface CheckoutViewProps {
 
 export const CheckoutView: React.FC<CheckoutViewProps> = ({
   initialPlanId = 'zelsis-core',
-  initialBilling = 'monthly',
   initialSuccess = false,
   checkoutId = null,
   reason = null,
@@ -46,7 +44,6 @@ export const CheckoutView: React.FC<CheckoutViewProps> = ({
 }) => {
   const router = useRouter();
   const [selectedPlanId, setSelectedPlanId] = useState<string>(() => resolvePlanAlias(initialPlanId));
-  const [isAnnual, setIsAnnual] = useState<boolean>(initialBilling === 'annual');
   const [isVerifying, setIsVerifying] = useState<boolean>(Boolean(checkoutId));
   const [verificationError, setVerificationError] = useState<string | null>(null);
   const [verificationRetryCount, setVerificationRetryCount] = useState<number>(0);
@@ -221,9 +218,9 @@ export const CheckoutView: React.FC<CheckoutViewProps> = ({
     ZELSIS_PRICING_PLANS.find((p) => p.id === selectedPlanId) ||
     ZELSIS_PRICING_PLANS[0];
 
-  const pricePerMonth = isAnnual ? selectedPlan.priceAnnual : selectedPlan.priceMonthly;
-  const annualTotal = Number((pricePerMonth * 12).toFixed(2));
-  const subtotal = Number((isAnnual ? annualTotal : pricePerMonth).toFixed(2));
+  // Polar bills monthly only, so the order summary is always one month.
+  const pricePerMonth = selectedPlan.priceMonthly;
+  const subtotal = pricePerMonth;
   const total = subtotal;
 
   const isProSubscriber = currentUser?.tier === 'Pro';
@@ -607,7 +604,7 @@ export const CheckoutView: React.FC<CheckoutViewProps> = ({
                               className="w-full sm:w-auto min-h-[40px] px-4 py-2 rounded-xl bg-gradient-to-r from-amber-400 to-amber-500 hover:from-amber-300 text-black font-extrabold text-xs flex items-center justify-center gap-1.5 transition-all cursor-pointer"
                             >
                               <ArrowRight size={14} className="text-black" />
-                              <span>Upgrade to Enterprise ($99/mo)</span>
+                              <span>Upgrade to Enterprise ({priceLabel('Enterprise')})</span>
                             </button>
                           )}
                         </div>
@@ -650,11 +647,6 @@ export const CheckoutView: React.FC<CheckoutViewProps> = ({
                         </span>
                       </div>
                     )}
-                    {isAnnual && isAuthenticated && !isAlreadySubscribedToSelectedPlan && (
-                      <p className="text-[10px] text-white/60 font-mono text-center -mt-2">
-                        Polar online checkout bills monthly (${selectedPlan.priceMonthly.toFixed(2)}/mo). Cancel anytime in 1-click.
-                      </p>
-                    )}
 
                     <div className="flex items-center justify-center gap-2.5 text-[11px] text-[#A1A1AA] pt-2 border-t border-white/10 font-mono">
                       <span>Apple Pay</span>
@@ -678,7 +670,7 @@ export const CheckoutView: React.FC<CheckoutViewProps> = ({
                       </div>
                       <div className="flex items-center gap-2 text-[11px] font-mono text-zinc-400">
                         <RefreshCw size={12} className="text-zinc-400 shrink-0" />
-                        <span>Instant License Key Delivery / Cancel Anytime in 1-Click</span>
+                        <span>Plan activates on your account after payment / Cancel anytime</span>
                       </div>
                       <div className="pt-1 border-t border-white/5 text-[10px] font-mono text-zinc-400 flex items-center justify-between">
                         <span>Read our <a href="/refund" target="_blank" rel="noopener noreferrer" className="text-zinc-400 hover:text-white underline">Refund Policy</a></span>
@@ -740,7 +732,7 @@ export const CheckoutView: React.FC<CheckoutViewProps> = ({
                   ORDER SUMMARY
                 </span>
                 <span className="badge badge-passed text-[0.65rem]">
-                  14-DAY FREE TRIAL
+                  BILLED MONTHLY
                 </span>
               </div>
 
@@ -777,33 +769,10 @@ export const CheckoutView: React.FC<CheckoutViewProps> = ({
                 </p>
               </div>
 
-              {/* Billing Frequency Selector */}
-              <div className="bg-[#0A0A0A] p-2 rounded-xl border border-white/10 flex items-center justify-between text-xs">
-                <span className="font-bold text-[#A1A1AA] font-mono">Billing Cycle:</span>
-                <div className="flex items-center gap-2">
-                  <button
-                    onClick={() => setIsAnnual(false)}
-                    className={`px-2.5 py-1 rounded text-[0.7rem] font-bold transition-all ${
-                      !isAnnual ? 'bg-white text-black' : 'text-[#A1A1AA]'
-                    }`}
-                  >
-                    Monthly
-                  </button>
-                  <button
-                    onClick={() => setIsAnnual(true)}
-                    className={`px-2.5 py-1 rounded text-[0.7rem] font-bold transition-all ${
-                      isAnnual ? 'bg-white text-black' : 'text-[#A1A1AA]'
-                    }`}
-                  >
-                    Annual (Save 20%)
-                  </button>
-                </div>
-              </div>
-
               {/* Calculation Breakdown */}
               <div className="space-y-2.5 text-xs text-[#A1A1AA] pt-3 border-t border-white/10">
                 <div className="flex justify-between">
-                  <span>Base Price ({isAnnual ? '12 Months' : '1 Month'}):</span>
+                  <span>Base Price (1 Month):</span>
                   <span className="font-mono text-white">${subtotal.toFixed(2)}</span>
                 </div>
                 <div className="flex justify-between text-[#A1A1AA]">
@@ -825,6 +794,13 @@ export const CheckoutView: React.FC<CheckoutViewProps> = ({
                   <div key={idx} className="flex items-center gap-2 text-xs text-[#EDEDED]">
                     <span className="text-white/40">&middot;</span>
                     <span>{feat}</span>
+                  </div>
+                ))}
+                {selectedPlan.comingSoon?.map((feat) => (
+                  <div key={feat} className="flex items-center gap-2 text-xs text-[#A1A1AA]">
+                    <span className="text-white/40">&middot;</span>
+                    <span>{feat}</span>
+                    <span className="px-1.5 py-0.5 rounded bg-white/5 border border-white/10 text-[0.6rem] font-mono uppercase tracking-wider shrink-0">Coming soon</span>
                   </div>
                 ))}
               </div>

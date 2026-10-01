@@ -6,6 +6,7 @@ import { MOCK_PROJECTS } from '@/data/demo-data';
 import { FolderGit2, Plus, ArrowRight, Play, ExternalLink, ShieldCheck, Trash2, Layers, Lock, X } from 'lucide-react';
 import { NewProjectModal } from '@/components/projects/NewProjectModal';
 import { UserProfile } from '@/components/auth/AuthModal';
+import { priceLabel } from '@/data/pricing-plans';
 
 interface ProjectsViewProps {
   projects: Project[];
@@ -369,7 +370,7 @@ export const ProjectsView: React.FC<ProjectsViewProps> = ({
                 className="w-full sm:flex-1 py-3 px-4 rounded-xl bg-white text-black font-extrabold text-xs uppercase tracking-wider hover:bg-neutral-200 transition-all flex items-center justify-center gap-2 cursor-pointer font-mono"
               >
                 <ArrowRight size={14} />
-                <span>Upgrade to Pro ($19/mo)</span>
+                <span>Upgrade to Pro ({priceLabel('Pro')})</span>
               </button>
               <button
                 type="button"
