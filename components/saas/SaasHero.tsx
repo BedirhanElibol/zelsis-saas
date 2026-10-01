@@ -16,6 +16,7 @@ import Image from 'next/image';
 import { useRouter } from 'next/navigation';
 import { normalizeRepoUrl } from '@/lib/github-api';
 import { ScanPreviewCard, ScanPreviewResult } from '@/components/saas/ScanPreviewCard';
+import benchmark from '@/data/benchmark-summary.generated.json';
 
 interface SaasHeroProps {
   onOpenDashboard?: (repoUrl?: string) => void;
@@ -23,15 +24,14 @@ interface SaasHeroProps {
 
 export const SaasHero: React.FC<SaasHeroProps> = ({ onOpenDashboard }) => {
   const router = useRouter();
-  const [repoInput, setRepoInput] = useState('expressjs/express');
+  const [repoInput, setRepoInput] = useState('vercel/nextjs-subscription-payments');
   const [isScanning, setIsScanning] = useState(false);
 
   const sampleRepos = [
-    { label: 'Express.js (Node)', value: 'expressjs/express' },
-    { label: 'FastAPI (Python)', value: 'tiangolo/fastapi' },
-    { label: 'Spring Boot (Java)', value: 'spring-projects/spring-boot' },
-    { label: 'Gin (Go)', value: 'gin-gonic/gin' },
-    { label: 'React Native', value: 'facebook/react-native' }
+    { label: 'Supabase + Stripe', value: 'vercel/nextjs-subscription-payments' },
+    { label: 'Next.js SaaS Starter', value: 'nextjs/saas-starter' },
+    { label: 'Express (Node)', value: 'expressjs/express' },
+    { label: 'FastAPI (Python)', value: 'fastapi/full-stack-fastapi-template' }
   ];
 
   const [preview, setPreview] = useState<ScanPreviewResult | null>(null);
@@ -93,8 +93,8 @@ export const SaasHero: React.FC<SaasHeroProps> = ({ onOpenDashboard }) => {
           transition={{ duration: 0.5, delay: 0.1 }}
           className="text-4xl sm:text-6xl lg:text-7xl font-extrabold text-[#EDEDED] tracking-tight leading-[1.06] max-w-5xl mb-6"
         >
-          The Pre-Flight Release Gate for <br className="hidden sm:inline" />
-          <span className="text-white">Modern Web &amp; Cloud Applications.</span>
+          Find the security holes in your app <br className="hidden sm:inline" />
+          <span className="text-white">before your users do.</span>
         </motion.h1>
         <motion.p
           initial={{ opacity: 0, y: 12 }}
@@ -102,7 +102,7 @@ export const SaasHero: React.FC<SaasHeroProps> = ({ onOpenDashboard }) => {
           transition={{ duration: 0.5, delay: 0.15 }}
           className="text-base sm:text-lg lg:text-xl text-[#A1A1AA] max-w-3xl mx-auto leading-relaxed mt-6 mb-10 font-sans font-normal"
         >
-          Stop fatal production regressions before they merge. Zelsis automatically evaluates critical OWASP security vulnerabilities, database RLS leaks, UI/UX accessibility, and cloud container configurations in memory before code reaches production.
+          Zelsis scans your repository for leaked secrets, open Supabase RLS policies, injection, broken auth and vulnerable dependencies, then fails the release when something critical slips in. Paste a public repo and see the results in seconds.
         </motion.p>
 
         {/* Direct Repository Scan Command Bar */}
@@ -177,15 +177,15 @@ export const SaasHero: React.FC<SaasHeroProps> = ({ onOpenDashboard }) => {
         >
           <div className="flex items-center gap-2">
             <span className="w-1.5 h-1.5 rounded-full bg-white/40" />
-            <span>Zero-Retention (Ephemeral In-Memory Analysis)</span>
+            <span>Source code never stored</span>
           </div>
           <div className="flex items-center gap-2">
             <span className="w-1.5 h-1.5 rounded-full bg-white/40" />
-            <span>Multi-Database (Postgres · MySQL · Mongo · Redis)</span>
+            <a href="#benchmark" className="hover:text-white transition-colors">Measured on {benchmark.repos.length} real projects</a>
           </div>
           <div className="flex items-center gap-2">
             <span className="w-1.5 h-1.5 rounded-full bg-white/40" />
-            <span>OASIS SARIF v2.1.0 Native</span>
+            <span>Free for public repos</span>
           </div>
         </motion.div>
 

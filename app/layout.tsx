@@ -42,11 +42,11 @@ function getMetadataBase(): URL {
 export const metadata: Metadata = {
   metadataBase: getMetadataBase(),
   title: {
-    default: 'Zelsis | Production Release Gate for Modern Web & Cloud Apps',
+    default: 'Zelsis | Security Scanner & Release Gate for Web Apps',
     template: '%s | Zelsis',
   },
   description:
-    'Automated pre-flight security clearance, WCAG 2.2 AA accessibility, and cloud infrastructure release gatekeeper for modern web and cloud applications.',
+    'Scan your GitHub repository for leaked secrets, open Supabase RLS policies, injection and vulnerable dependencies. Free for public repos, with a CI gate that fails the release on critical issues.',
   keywords: [
     'Zelsis',
     'Release Gate',
@@ -56,14 +56,17 @@ export const metadata: Metadata = {
     'Production Readiness',
     'DevOps CI/CD',
     'Next.js',
+    'Supabase RLS',
+    'Secret Scanning',
+    'SAST',
   ],
   alternates: {
     canonical: './',
   },
   openGraph: {
-    title: 'Zelsis | Production Release Gate for Modern Web & Cloud Apps',
+    title: 'Zelsis | Security Scanner & Release Gate for Web Apps',
     description:
-      'Automated pre-flight security clearance, WCAG 2.2 AA accessibility, and cloud infrastructure release gatekeeper for modern web and cloud applications.',
+      'Scan your GitHub repository for leaked secrets, open Supabase RLS policies, injection and vulnerable dependencies. Free for public repos, with a CI gate that fails the release on critical issues.',
     url: './',
     siteName: 'Zelsis',
     images: [
@@ -72,7 +75,7 @@ export const metadata: Metadata = {
         width: 1200,
         height: 630,
         type: 'image/png',
-        alt: 'Zelsis | Production Release Gate for Modern Web & Cloud Apps',
+        alt: 'Zelsis | Security Scanner & Release Gate for Web Apps',
       },
     ],
     locale: 'en_US',
@@ -80,9 +83,9 @@ export const metadata: Metadata = {
   },
   twitter: {
     card: 'summary_large_image',
-    title: 'Zelsis | Production Release Gate for Modern Web & Cloud Apps',
+    title: 'Zelsis | Security Scanner & Release Gate for Web Apps',
     description:
-      'Automated pre-flight security clearance, WCAG 2.2 AA accessibility, and cloud infrastructure release gatekeeper for modern web and cloud applications.',
+      'Scan your GitHub repository for leaked secrets, open Supabase RLS policies, injection and vulnerable dependencies. Free for public repos, with a CI gate that fails the release on critical issues.',
     images: ['/og-image.png'],
   },
   icons: {
