@@ -340,6 +340,58 @@ export async function resolveVerifiedSession(): Promise<{
   }
 }
 
+/** Organization gate policy (.zelsisrc JSON) for the signed-in member's workspace; RLS limits it to their org. */
+export async function fetchOrgPolicy(): Promise<string | null> {
+  const supabase = getSupabase();
+  if (!supabase || !isSupabaseConfigured()) return null;
+  const { data, error } = await supabase.from('organizations').select('policy').limit(1).maybeSingle();
+  if (error || !data?.policy || typeof data.policy !== 'object') return null;
+  return Object.keys(data.policy).length > 0 ? JSON.stringify(data.policy) : null;
+}
+
+/** White-label report branding of the member's workspace; null when the user is not in one. */
+export async function fetchOrgBranding(): Promise<{ brandName: string | null; brandLogoUrl: string | null } | null> {
+  const supabase = getSupabase();
+  if (!supabase || !isSupabaseConfigured()) return null;
+  const { data, error } = await supabase.from('organizations').select('name, brand_name, brand_logo_url').limit(1).maybeSingle();
+  if (error || !data) return null;
+  return { brandName: data.brand_name || data.name || null, brandLogoUrl: data.brand_logo_url || null };
+}
+
+export interface TeamProjectSummary {
+  id: string;
+  ownerEmail: string;
+  name: string;
+  repoUrl: string;
+  lastScanAt: string | null;
+  readinessScore: number;
+  gateStatus: 'PASSED' | 'WARNING' | 'FAILED';
+  criticalCount: number;
+  highCount: number;
+}
+
+/** Teammates' saved projects (Enterprise workspace). Summary fields only; never tokens. */
+export async function fetchTeamProjects(): Promise<TeamProjectSummary[]> {
+  const supabase = getSupabase();
+  if (!supabase || !isSupabaseConfigured()) return [];
+  const { data, error } = await supabase.rpc('org_team_projects');
+  if (error || !Array.isArray(data)) {
+    if (error) console.warn('[Zelsis Supabase] Could not load team projects:', error.message);
+    return [];
+  }
+  return data.map((row: Record<string, unknown>) => ({
+    id: String(row.id),
+    ownerEmail: String(row.owner_email ?? ''),
+    name: String(row.name ?? ''),
+    repoUrl: String(row.repo_url ?? ''),
+    lastScanAt: (row.last_scan_at as string | null) ?? null,
+    readinessScore: Number(row.readiness_score ?? 0),
+    gateStatus: (row.gate_status as TeamProjectSummary['gateStatus']) || 'PASSED',
+    criticalCount: Number(row.critical_count ?? 0),
+    highCount: Number(row.high_count ?? 0),
+  }));
+}
+
 /**
  * Loads the signed-in user's saved projects (repositories and live sites) from the cloud database.
  * RLS restricts the result to rows owned by the current user.

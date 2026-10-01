@@ -5,7 +5,7 @@ import { Check, X, Shield, ArrowRight, Lock, ExternalLink, Zap } from 'lucide-re
 import { useRouter } from 'next/navigation';
 import { AuthModal, UserProfile } from '@/components/auth/AuthModal';
 import { formatCount, RULE_COUNTS } from '@/lib/rule-status';
-import { PLAN_PRICES, priceLabel, SUPPORT_TERMS } from '@/data/pricing-plans';
+import { ENTERPRISE_SEAT_LIMIT, PLAN_PRICES, priceLabel, SUPPORT_TERMS } from '@/data/pricing-plans';
 import { contactMailto } from '@/lib/contact';
 
 interface ComparisonItem {
@@ -231,24 +231,24 @@ export const ComparisonTable: React.FC = () => {
         },
         {
           name: 'Team Workspace & Roles',
-          description: 'Shared organization workspace with member invites and admin / member roles',
+          description: 'Shared workspace with invite links and owner / admin / member roles; every member gets Pro',
           free: false,
           pro: false,
-          enterprise: 'Coming soon'
+          enterprise: `${ENTERPRISE_SEAT_LIMIT} seats included`
         },
         {
-          name: 'Custom Organization Ruleset',
-          description: 'Organization-specific rules and gate policy applied to every repository',
+          name: 'Organization Gate Policy',
+          description: 'One .zelsisrc policy (strategy, minimum score, ignored rules and paths) enforced on all member scans and the CI gate',
           free: false,
           pro: false,
-          enterprise: 'Coming soon'
+          enterprise: 'Included'
         },
         {
           name: 'White-label SOC 2 Report',
-          description: 'Branded PDF report with findings mapped to SOC 2 controls',
+          description: 'PDF report with your company name and logo, findings mapped to SOC 2 Trust Services Criteria',
           free: false,
           pro: false,
-          enterprise: 'Coming soon'
+          enterprise: 'Included'
         }
       ]
     }
@@ -421,7 +421,7 @@ export const ComparisonTable: React.FC = () => {
                       <div className="text-2xl font-extrabold text-white font-mono">
                         ${PLAN_PRICES.Enterprise} <span className="text-xs text-zinc-400 font-normal">/ month</span>
                       </div>
-                      <span className="text-[11px] text-zinc-400 font-sans">For teams that want Pro with priority support</span>
+                      <span className="text-[11px] text-zinc-400 font-sans">For teams: shared workspace, org policy &amp; SOC 2 reports</span>
 
                       {isLoggedIn && currentTier === 'Enterprise' ? (
                         <div className="flex flex-col gap-1 mt-2">

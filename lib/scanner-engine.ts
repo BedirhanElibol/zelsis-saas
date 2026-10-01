@@ -37,6 +37,11 @@ export { detectAppStack, UNDETECTED_FRAMEWORK } from './scanner/stack-detect';
 export interface ScanOptions {
   /** Look up resolved dependency versions in OSV.dev. Off by default so offline runs stay deterministic. */
   dependencyAudit?: OsvOptions | boolean;
+  /**
+   * Enterprise workspace policy (.zelsisrc.json content). Its strategy and threshold override the
+   * repository's file; its ignored rules, paths and disabled gates are added to the repository's.
+   */
+  orgPolicy?: string | null;
 }
 
 export async function runStaticCodeScan(files: CodeFile[], repoName: string = 'Target Repository', options: ScanOptions = {}): Promise<ScanResult> {
@@ -53,6 +58,12 @@ export async function runStaticCodeScan(files: CodeFile[], repoName: string = 'T
   const { config: rcConfig, ignoredRuleIds: rcRuleIds, ignoredPaths: rcPaths, disabledPillars } = parseZelsisRc(rcFile?.content || '');
   rcRuleIds.forEach(id => ignoredRuleIds.add(id));
   rcPaths.forEach(p => ignoredPaths.push(p));
+
+  const orgRc = parseZelsisRc(options.orgPolicy || '');
+  orgRc.ignoredRuleIds.forEach(id => ignoredRuleIds.add(id));
+  orgRc.ignoredPaths.forEach(p => ignoredPaths.push(p));
+  orgRc.disabledPillars.forEach(p => disabledPillars.add(p));
+  const effectiveRc = orgRc.config ? { ...(rcConfig || {}), ...orgRc.config } : rcConfig;
 
   // Pre-detect project database and ORM architecture before streaming loop cleans file memory
   const detectedStack = detectProjectDatabases(files);
@@ -78,7 +89,9 @@ export async function runStaticCodeScan(files: CodeFile[], repoName: string = 'T
     logs.push(`[${new Date().toLocaleTimeString()}] [STACK] Multi-Database Stack Detected: ${[...detectedStack.databases, ...detectedStack.orms].join(', ')}`);
   }
 
-  if (rcConfig) {
+  if (orgRc.config) {
+    logs.push(`[${new Date().toLocaleTimeString()}] [CONFIG] Organization policy active (Strategy: ${effectiveRc?.failStrategy || 'smart'}, MinScore: ${effectiveRc?.minScoreThreshold ?? 85}).`);
+  } else if (rcConfig) {
     logs.push(`[${new Date().toLocaleTimeString()}] [CONFIG] Policy-as-Code active: Loaded ${rcFile?.path || '.zelsisrc.json'} (Strategy: ${rcConfig.failStrategy || 'smart'}, MinScore: ${rcConfig.minScoreThreshold ?? 85}).`);
   }
   if (ignoredRuleIds.size > 0 || ignoredPaths.length > 0) {
@@ -330,12 +343,12 @@ export async function runStaticCodeScan(files: CodeFile[], repoName: string = 'T
   let gateStatus = calculateGateStatus(findings);
 
   // Policy-as-Code strategy enforcement (F-43)
-  if (rcConfig) {
-    if (rcConfig.failStrategy === 'advisory') {
+  if (effectiveRc) {
+    if (effectiveRc.failStrategy === 'advisory') {
       gateStatus = 'PASSED';
       logs.push(`[${new Date().toLocaleTimeString()}] [CONFIG] Policy-as-Code: Advisory mode active — Release gate set to PASSED.`);
-    } else if (rcConfig.failStrategy === 'strict') {
-      const minThreshold = typeof rcConfig.minScoreThreshold === 'number' ? rcConfig.minScoreThreshold : 85;
+    } else if (effectiveRc.failStrategy === 'strict') {
+      const minThreshold = typeof effectiveRc.minScoreThreshold === 'number' ? effectiveRc.minScoreThreshold : 85;
       if (score < minThreshold) {
         gateStatus = 'FAILED';
         logs.push(`[${new Date().toLocaleTimeString()}] [CONFIG] Policy-as-Code: Strict mode active — Score ${score} is below required ${minThreshold} threshold. Release gate BLOCKED.`);

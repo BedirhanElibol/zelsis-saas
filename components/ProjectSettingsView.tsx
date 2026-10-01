@@ -5,7 +5,7 @@ import { Settings } from 'lucide-react';
 import { Project } from '@/data/schema';
 import { UserProfile } from '@/components/auth/AuthModal';
 import { SubscriptionCard } from '@/components/settings/SubscriptionCard';
-import { EnterpriseOrgCard } from '@/components/settings/EnterpriseOrgCard';
+import { TeamWorkspaceCard } from '@/components/settings/TeamWorkspaceCard';
 import { RepoConfigCard } from '@/components/settings/RepoConfigCard';
 import { DangerZoneCard } from '@/components/settings/DangerZoneCard';
 
@@ -97,8 +97,8 @@ export const ProjectSettingsView: React.FC<ProjectSettingsViewProps> = ({
         onOpenAuth={onOpenAuth}
       />
 
-      {/* Enterprise Organization & Team Seats (F-47 Multi-Org) */}
-      <EnterpriseOrgCard user={user} />
+      {/* Enterprise team workspace: members, invites, org policy, report branding */}
+      <TeamWorkspaceCard user={user} onOpenCheckout={onOpenCheckout} />
 
       {/* Target Repo & GitHub PAT Configuration */}
       <RepoConfigCard

@@ -5,6 +5,7 @@ import { logger } from '@/lib/logger';
 import { checkRateLimit, createRateLimitResponse } from '@/lib/rate-limiter';
 import { FREE_SCAN_LIMIT } from '@/lib/quota-manager';
 import { isPlatformAdminEmail } from '@/lib/subscription-utils';
+import { getEffectivePlanTier } from '@/lib/organization';
 
 const SUPABASE_URL = process.env.NEXT_PUBLIC_SUPABASE_URL || '';
 const ANON_KEY = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || '';
@@ -134,6 +135,8 @@ export async function GET(req: NextRequest) {
         status = 'canceled';
       }
     }
+    // A seat in an Enterprise workspace grants Pro even without an own subscription
+    if (planTier === 'Free') planTier = await getEffectivePlanTier(adminClient, userId, user.email);
     const monthlyQuota = planTier === 'Free' ? FREE_SCAN_LIMIT : (sub?.monthly_scan_quota ?? 1000);
 
     const isUnlimited = planTier !== 'Free';
@@ -242,9 +245,11 @@ export async function POST(req: NextRequest) {
     // Billing period elapsed: Free quota rolls over, unrenewed paid plans fall back to Free
     const periodElapsed = Boolean(sub?.current_period_end && new Date(sub.current_period_end).getTime() < Date.now());
     const storedTier: 'Free' | 'Pro' | 'Enterprise' = (sub?.plan_tier as any) || (profile?.tier as any) || 'Free';
-    const planTier: 'Free' | 'Pro' | 'Enterprise' = isAdmin
+    let planTier: 'Free' | 'Pro' | 'Enterprise' = isAdmin
       ? 'Enterprise'
       : (periodElapsed ? 'Free' : storedTier);
+    // A seat in an Enterprise workspace grants Pro even without an own subscription
+    if (planTier === 'Free') planTier = await getEffectivePlanTier(adminClient, userId, userEmail);
     const isFree = planTier === 'Free';
     const monthlyQuota = isFree ? FREE_SCAN_LIMIT : (sub?.monthly_scan_quota ?? FREE_SCAN_LIMIT);
     const currentScansUsed = periodElapsed ? 0 : (sub?.scans_used_this_month ?? 0);

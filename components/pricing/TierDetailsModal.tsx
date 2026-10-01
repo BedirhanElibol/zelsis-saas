@@ -4,7 +4,7 @@ import React from 'react';
 import { X, Check, Lock, Shield, ArrowRight, Zap, ExternalLink } from 'lucide-react';
 import { UserTier } from '@/data/schema';
 import { formatCount, RULE_COUNTS } from '@/lib/rule-status';
-import { PLAN_PRICES, SUPPORT_TERMS } from '@/data/pricing-plans';
+import { ENTERPRISE_SEAT_LIMIT, PLAN_PRICES, SUPPORT_TERMS } from '@/data/pricing-plans';
 
 interface TierDetailsModalProps {
   isOpen: boolean;
@@ -59,15 +59,15 @@ export const TierDetailsModal: React.FC<TierDetailsModalProps> = ({
       items: [
         { label: 'PDF Readiness Report', free: 'Locked', pro: 'Included (Instant Download)', enterprise: 'Included (Instant Download)' },
         { label: 'Jira Markdown & HTML Export', free: 'Locked', pro: 'Included', enterprise: 'Included' },
-        { label: 'SOC 2 / ISO 27001 Report', free: 'Not Included', pro: 'Not Included', enterprise: 'Coming soon' }
+        { label: 'White-label SOC 2 Report', free: 'Not Included', pro: 'Not Included', enterprise: 'Included' }
       ]
     },
     {
       category: 'Support & Operations',
       items: [
         { label: 'Support', free: SUPPORT_TERMS.Free, pro: SUPPORT_TERMS.Pro, enterprise: SUPPORT_TERMS.Enterprise },
-        { label: 'Team Workspace & Roles', free: 'Not Included', pro: 'Not Included', enterprise: 'Coming soon' },
-        { label: 'Custom Organization Ruleset', free: 'Not Included', pro: 'Not Included', enterprise: 'Coming soon' },
+        { label: 'Team Workspace & Roles', free: 'Not Included', pro: 'Not Included', enterprise: `${ENTERPRISE_SEAT_LIMIT} seats, members get Pro` },
+        { label: 'Organization Gate Policy', free: 'Not Included', pro: 'Not Included', enterprise: 'Included' },
         { label: 'GitHub Actions / CI/CD Gate', free: 'Locked', pro: 'Gate API + generated CI workflows', enterprise: 'Gate API + generated CI workflows' }
       ]
     }
@@ -174,7 +174,7 @@ export const TierDetailsModal: React.FC<TierDetailsModalProps> = ({
               <div>
                 <span className="text-[10px] font-bold text-white uppercase tracking-wider">Enterprise Team</span>
                 <div className="text-2xl font-extrabold text-white mt-1 tabular-nums">${PLAN_PRICES.Enterprise} <span className="text-xs text-zinc-400 font-normal">/ month</span></div>
-                <p className="text-[11px] text-zinc-400 mt-1">Everything in Pro with priority support. Team workspace and custom rules coming soon.</p>
+                <p className="text-[11px] text-zinc-400 mt-1">Pro for the whole team: shared workspace, org gate policy &amp; SOC 2 reports.</p>
               </div>
               {currentTier === 'Enterprise' ? (
                 <a

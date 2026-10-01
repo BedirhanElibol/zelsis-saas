@@ -17,6 +17,9 @@ export const PricingPlanSchema = z.object({
 
 export type PricingPlanItem = z.infer<typeof PricingPlanSchema>;
 
+/** Seats in an Enterprise team workspace, owner included. Members get Pro. */
+export const ENTERPRISE_SEAT_LIMIT = 10;
+
 /** Monthly USD prices. Must match the Polar products; Polar bills monthly only. */
 export const PLAN_PRICES = { Free: 0, Pro: 19, Enterprise: 49 } as const;
 
@@ -70,15 +73,14 @@ export const ZELSIS_PRICING_PLANS: PricingPlanItem[] = [
     name: 'Zelsis Enterprise',
     priceMonthly: PLAN_PRICES.Enterprise,
     isPopular: false,
-    description: 'Everything in Pro with priority support. Team workspace and organization rules are on the way.',
+    description: 'Pro for your whole team: shared workspace, one gate policy for every repo and white-label SOC 2 reports.',
     features: [
       'Everything in Zelsis Pro',
-      SUPPORT_TERMS.Enterprise,
-    ],
-    comingSoon: [
-      'Team workspace with roles and invites',
-      'Custom organization ruleset',
+      `Team workspace: ${ENTERPRISE_SEAT_LIMIT} seats, every member gets Pro`,
+      'Owner / admin / member roles and invite links',
+      'Organization gate policy applied to every repo',
       'White-label PDF report with SOC 2 control mapping',
+      SUPPORT_TERMS.Enterprise,
     ],
     buttonText: 'Upgrade to Enterprise',
     polarCheckoutUrl: 'https://buy.polar.sh/polar_cl_M0yZJgYVCucd7U5gDz4oFTND6hdqvYPo65HJQ2334od',

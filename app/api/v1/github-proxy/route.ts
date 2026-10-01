@@ -6,7 +6,8 @@ import { GithubProxyQuerySchema, validateQueryParams } from '@/lib/validations/a
 import { logger } from '@/lib/logger';
 import { createClient } from '@supabase/supabase-js';
 import { isDependencyFile } from '@/lib/scanner/dependencies';
-import { isPlatformAdminEmail, resolveServerPlanTier } from '@/lib/subscription-utils';
+import { isPlatformAdminEmail } from '@/lib/subscription-utils';
+import { getEffectivePlanTier } from '@/lib/organization';
 import { priceLabel } from '@/data/pricing-plans';
 
 // CLOUD-01 Remediation: Enforce <= 15s synchronous serverless execution ceiling.
@@ -209,21 +210,15 @@ function getAuthHeader(token: string): string {
  * 404/403 network error logs in client browser DevTools for private repositories.
  * Strictly verifies GitHub repository syntax and prevents Path Traversal and SSRF.
  */
-/** True when the signed-in caller has an active Pro or Enterprise subscription (read server-side). */
+/** True when the signed-in caller can use a paid plan (own subscription or Enterprise workspace seat). */
 async function hasPaidPlan(userId: string | null, email: string | null): Promise<boolean> {
   if (!userId) return false;
-  if (isPlatformAdminEmail(email)) return true;
   const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
   const serviceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
-  if (!supabaseUrl || !serviceRoleKey) return false;
+  if (!supabaseUrl || !serviceRoleKey) return isPlatformAdminEmail(email);
   try {
     const adminClient = createClient(supabaseUrl, serviceRoleKey, { auth: { persistSession: false } });
-    const { data: sub } = await adminClient
-      .from('subscriptions')
-      .select('plan_tier, current_period_end')
-      .eq('user_id', userId)
-      .maybeSingle();
-    return resolveServerPlanTier({ storedTier: sub?.plan_tier, currentPeriodEnd: sub?.current_period_end }) !== 'Free';
+    return (await getEffectivePlanTier(adminClient, userId, email)) !== 'Free';
   } catch (err) {
     logger.warn('[GitHub Proxy] Plan lookup failed, treating caller as Free:', err);
     return false;

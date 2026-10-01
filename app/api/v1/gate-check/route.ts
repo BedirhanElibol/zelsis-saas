@@ -9,7 +9,8 @@ import { GateCheckRequestSchema, validateRequestBody } from '@/lib/validations/a
 import { logger } from '@/lib/logger';
 import { canAccessLocalAudit } from '@/lib/env-config';
 import { validateSafeTargetUrl } from '@/lib/ssrf-guard';
-import { hasFixPromptAccess, resolveServerPlanTier } from '@/lib/subscription-utils';
+import { hasFixPromptAccess } from '@/lib/subscription-utils';
+import { getEffectivePlanTier, getOrgPolicy } from '@/lib/organization';
 import { LOCKED_FIX_TEXT } from '@/lib/fix-gate';
 
 // F-31: Bounded execution duration for static code scans (bounded to 30s for serverless SLA)
@@ -119,6 +120,7 @@ export async function POST(req: NextRequest) {
     let authenticatedUserId: string | null = null;
     let userTier: 'Free' | 'Pro' | 'Enterprise' = 'Free';
     let canSeeFixes = false;
+    let orgPolicy: string | null = null;
 
     if (authHeader && supabaseUrl && anonKey) {
       try {
@@ -186,13 +188,12 @@ export async function POST(req: NextRequest) {
           .eq('user_id', authenticatedUserId)
           .maybeSingle();
 
+        // Own plan (an expired period counts as Free) or a seat in an Enterprise workspace
+        userTier = await getEffectivePlanTier(adminClient, authenticatedUserId);
+        canSeeFixes = hasFixPromptAccess(userTier);
+        orgPolicy = await getOrgPolicy(adminClient, authenticatedUserId);
+
         if (sub) {
-          // An expired paid period counts as Free, so it cannot skip the quota or the private-repo check
-          userTier = resolveServerPlanTier({
-            storedTier: sub.plan_tier,
-            currentPeriodEnd: sub.current_period_end
-          });
-          canSeeFixes = hasFixPromptAccess(userTier);
           const monthlyQuota = sub.monthly_scan_quota ?? 3;
           const scansUsed = sub.scans_used_this_month ?? 0;
 
@@ -408,7 +409,7 @@ export async function POST(req: NextRequest) {
       }
     }
 
-    const result = await runStaticCodeScan(filesToScan, targetName, { dependencyAudit: { timeoutMs: 8000 } });
+    const result = await runStaticCodeScan(filesToScan, targetName, { dependencyAudit: { timeoutMs: 8000 }, orgPolicy });
 
     // Auto-dispatch webhook notifications if URLs provided
     if (slackWebhookUrl || discordWebhookUrl) {

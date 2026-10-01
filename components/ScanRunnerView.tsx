@@ -26,6 +26,15 @@ import { priceLabel } from '@/data/pricing-plans';
 const runStaticCodeScan: typeof import('@/lib/scanner-engine').runStaticCodeScan = async (...args) =>
   (await import('@/lib/scanner-engine')).runStaticCodeScan(...args);
 
+/** Enterprise workspace gate policy for the signed-in member, or null. Never blocks a scan. */
+const loadOrgPolicy = async (): Promise<string | null> => {
+  try {
+    return await (await import('@/lib/supabase')).fetchOrgPolicy();
+  } catch {
+    return null;
+  }
+};
+
 interface ScanRunnerViewProps {
   project: Project;
   onCompleteScan: (updatedResult?: ScanResult) => void;
@@ -316,7 +325,7 @@ export const ScanRunnerView: React.FC<ScanRunnerViewProps> = ({
           ]);
         }
 
-        const result = await runStaticCodeScan(filesToScan, project.name);
+        const result = await runStaticCodeScan(filesToScan, project.name, { orgPolicy: await loadOrgPolicy() });
         if (isCancelled || controller.signal.aborted) return;
         setScanResult(result);
         if (result && onConsumeScanQuota && !hasConsumedQuotaRef.current) {
@@ -842,7 +851,7 @@ export const ScanRunnerView: React.FC<ScanRunnerViewProps> = ({
       }
 
       setQueuedFilesCount(filesToScan.length);
-      const result = await runStaticCodeScan(filesToScan, project.name);
+      const result = await runStaticCodeScan(filesToScan, project.name, { orgPolicy: await loadOrgPolicy() });
       if (isCancelled || controller.signal.aborted) return;
 
       setScanResult(result);

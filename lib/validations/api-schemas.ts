@@ -211,3 +211,67 @@ export function validateRequestBody<T>(
 
   return { success: true, data: result.data };
 }
+
+// --- Enterprise team workspace (server actions in app/actions/organization.ts) ---
+
+export const AccessTokenSchema = z.string().min(20).max(4096);
+
+export const OrgNameSchema = z.object({
+  accessToken: AccessTokenSchema,
+  name: z.string().trim().min(2, 'Workspace name needs at least 2 characters').max(80),
+});
+
+export const OrgInviteSchema = z.object({
+  accessToken: AccessTokenSchema,
+  role: z.enum(['admin', 'member']).default('member'),
+});
+
+export const OrgAcceptInviteSchema = z.object({
+  accessToken: AccessTokenSchema,
+  token: z.string().regex(/^[A-Za-z0-9_-]{32,64}$/, 'Invalid invite link'),
+});
+
+export const OrgMemberActionSchema = z.object({
+  accessToken: AccessTokenSchema,
+  userId: z.string().uuid(),
+  role: z.enum(['admin', 'member']).optional(),
+});
+
+export const OrgInviteRevokeSchema = z.object({
+  accessToken: AccessTokenSchema,
+  inviteId: z.string().uuid(),
+});
+
+/** Organization gate policy: the .zelsisrc.json fields an admin may enforce for every member. */
+export const OrgPolicySchema = z.object({
+  minScoreThreshold: z.number().int().min(0).max(100).optional(),
+  failStrategy: z.enum(['smart', 'strict', 'advisory']).optional(),
+  gates: z
+    .object({
+      security: z.boolean().optional(),
+      legalCompliance: z.boolean().optional(),
+      infraDatabase: z.boolean().optional(),
+      designVibePolish: z.boolean().optional(),
+      vibeCareHealth: z.boolean().optional(),
+    })
+    .optional(),
+  ignoreRules: z.array(z.string().trim().regex(/^[A-Za-z0-9_-]{1,40}$/)).max(200).optional(),
+  ignoredPaths: z.array(z.string().trim().min(1).max(200).refine((p) => !PATH_TRAVERSAL_REGEX.test(p), 'Invalid path')).max(100).optional(),
+}).strict();
+
+export const OrgPolicyUpdateSchema = z.object({
+  accessToken: AccessTokenSchema,
+  policy: z.string().max(20000),
+});
+
+export const OrgBrandingSchema = z.object({
+  accessToken: AccessTokenSchema,
+  brandName: z.string().trim().max(80).optional().transform((v) => v || null),
+  brandLogoUrl: z
+    .string()
+    .trim()
+    .max(500)
+    .optional()
+    .transform((v) => v || null)
+    .refine((v) => v === null || /^https:\/\/[^\s"'<>]+$/.test(v), 'Logo URL must start with https://'),
+});

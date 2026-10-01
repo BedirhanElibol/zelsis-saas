@@ -5,7 +5,8 @@ import { dispatchWebhookAlerts } from '@/lib/notifications';
 import { logger } from '@/lib/logger';
 import { canAccessLocalAudit } from '@/lib/env-config';
 import { validateSafeTargetUrl } from '@/lib/ssrf-guard';
-import { hasFixPromptAccess, isPlatformAdminEmail, resolveServerPlanTier } from '@/lib/subscription-utils';
+import { hasFixPromptAccess } from '@/lib/subscription-utils';
+import { getEffectivePlanTier, getOrgPolicy } from '@/lib/organization';
 import { redactScanResultFixes } from '@/lib/fix-gate';
 import { getSupabaseAdmin } from '@/lib/supabase-admin';
 
@@ -57,6 +58,7 @@ export async function executeScanJob(options: ExecuteScanJobOptions): Promise<Sc
   }
 
   const adminClient = getSupabaseAdmin();
+  let orgPolicy: string | null = null;
 
   // SEC-02 Authority Invariant: If database connection is active, derive target parameters
   // strictly from verified scan_jobs record to prevent worker request tampering.
@@ -72,17 +74,10 @@ export async function executeScanJob(options: ExecuteScanJobOptions): Promise<Sc
         if (jobRow.repo_url) rawRepoUrl = jobRow.repo_url;
         if (jobRow.user_id) {
           authenticatedUserId = jobRow.user_id;
-          const { data: subRow } = await adminClient
-            .from('subscriptions')
-            .select('plan_tier, current_period_end')
-            .eq('user_id', authenticatedUserId)
-            .maybeSingle();
           const { data: ownerData } = await adminClient.auth.admin.getUserById(jobRow.user_id);
-          userTier = resolveServerPlanTier({
-            storedTier: subRow?.plan_tier,
-            currentPeriodEnd: subRow?.current_period_end,
-            isAdmin: isPlatformAdminEmail(ownerData?.user?.email)
-          });
+          // Own plan or a seat in an Enterprise workspace
+          userTier = await getEffectivePlanTier(adminClient, jobRow.user_id, ownerData?.user?.email);
+          orgPolicy = await getOrgPolicy(adminClient, jobRow.user_id);
         }
       }
     } catch (dbErr) {
@@ -218,7 +213,7 @@ export async function executeScanJob(options: ExecuteScanJobOptions): Promise<Sc
       current_phase: 'Executing deterministic AST security rules'
     });
 
-    const result = await runStaticCodeScan(filesToScan, resolvedTargetName, { dependencyAudit: { timeoutMs: 8000 } });
+    const result = await runStaticCodeScan(filesToScan, resolvedTargetName, { dependencyAudit: { timeoutMs: 8000 }, orgPolicy });
 
     // ─── Phase 4: AGGREGATING (Persisting Findings & Manifest) ───
     await updateJobState({

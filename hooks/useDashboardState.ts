@@ -11,6 +11,7 @@ import { isFounderGrantExpiry } from '@/lib/subscription-utils';
 import { verifyLicenseKey, generateLicenseKey } from '@/lib/stripe-checkout';
 import { useSearchParams } from 'next/navigation';
 import { UNDETECTED_FRAMEWORK } from '@/lib/scanner/stack-detect';
+import { getActiveUserAuth } from '@/lib/supabase-client';
 
 const VALID_NAVS = [
   'dashboard', 'projects', 'scans', 'security', 'compliance',
@@ -69,6 +70,27 @@ export function useDashboardState() {
       }
     }
   }, [searchParams, user]);
+
+  // A seat in an Enterprise workspace grants Pro without an own subscription; the server
+  // already enforces it, this only makes the dashboard show the plan the member really has.
+  const userEmail = user?.isLoggedIn ? user.email : null;
+  const userTier = user?.tier;
+  useEffect(() => {
+    if (!userEmail || userTier !== 'Free') return;
+    let active = true;
+    (async () => {
+      const { accessToken } = await getActiveUserAuth();
+      if (!accessToken) return;
+      const { getMyWorkspace } = await import('@/app/actions/organization');
+      const snapshot = await getMyWorkspace(accessToken);
+      if (active && snapshot.effectiveTier !== 'Free') {
+        setUser((prev) => (prev && prev.email === userEmail ? { ...prev, tier: snapshot.effectiveTier } : prev));
+      }
+    })().catch(() => {});
+    return () => {
+      active = false;
+    };
+  }, [userEmail, userTier]);
 
   useEffect(() => {
     const loadProjectsFromStorage = () => {
