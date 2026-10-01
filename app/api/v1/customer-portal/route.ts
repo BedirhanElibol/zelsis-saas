@@ -1,50 +1,66 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createPolar } from '@polar-sh/sdk/2026-10';
-import crypto from 'crypto';
+import { createClient } from '@supabase/supabase-js';
+import { logger } from '@/lib/logger';
+import { checkRateLimit, createRateLimitResponse } from '@/lib/rate-limiter';
 
-export async function GET(req: NextRequest) {
+export const dynamic = 'force-dynamic';
+
+/**
+ * Creates a Polar customer portal session for the authenticated caller only.
+ * The portal URL carries a session token, so it is never derived from a
+ * client-supplied email and never cached.
+ */
+export async function POST(req: NextRequest) {
+  const rateLimit = await checkRateLimit(req, {
+    maxRequests: 10,
+    windowSeconds: 60,
+    prefix: 'customer-portal'
+  });
+  if (!rateLimit.allowed) {
+    return createRateLimitResponse(rateLimit);
+  }
+
+  const noStore = { 'Cache-Control': 'no-store' };
+  const token = req.headers.get('authorization')?.replace(/^Bearer\s+/i, '').trim();
+  const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
+  const anonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
+
+  if (!token || !supabaseUrl || !anonKey) {
+    return NextResponse.json({ error: 'Authentication required' }, { status: 401, headers: noStore });
+  }
+
   try {
-    const email = req.nextUrl.searchParams.get('email');
-    if (!email) {
-      return NextResponse.json({ error: 'Email is required' }, { status: 400 });
-    }
-
-    const etag = `"${crypto.createHash('sha256').update(email).digest('hex')}"`;
-    if (req.headers.get('if-none-match') === etag) {
-      return new NextResponse(null, { status: 304 });
+    const authClient = createClient(supabaseUrl, anonKey);
+    const { data: authData, error: authError } = await authClient.auth.getUser(token);
+    const email = authData?.user?.email?.toLowerCase().trim();
+    if (authError || !email) {
+      return NextResponse.json({ error: 'Authentication required' }, { status: 401, headers: noStore });
     }
 
     if (!process.env.POLAR_ACCESS_TOKEN) {
-      return NextResponse.json({ error: 'Missing POLAR_ACCESS_TOKEN' }, { status: 500 });
+      return NextResponse.json({ error: 'Billing portal is not configured' }, { status: 500, headers: noStore });
     }
 
     const polar = createPolar({
       accessToken: process.env.POLAR_ACCESS_TOKEN,
     });
 
-    // 1. Find customer by email
     const customers = await polar.customers.list({
       email,
     });
 
     if (!customers.items || customers.items.length === 0) {
-      return NextResponse.json({ error: 'Customer not found' }, { status: 404 });
+      return NextResponse.json({ error: 'No billing account found for this user' }, { status: 404, headers: noStore });
     }
 
-    const customerId = customers.items[0].id;
-
-    // 2. Create a customer session
     const session = await polar.customerSessions.create({
-      customer_id: customerId,
+      customer_id: customers.items[0].id,
     });
 
-    // Redirect to the customer portal
-    const res = NextResponse.redirect(session.customer_portal_url);
-    res.headers.set('ETag', etag);
-    res.headers.set('Cache-Control', 'public, s-maxage=3600, stale-while-revalidate=86400');
-    return res;
+    return NextResponse.json({ url: session.customer_portal_url }, { headers: noStore });
   } catch (error) {
-    console.error('Error creating customer portal session:', error);
-    return NextResponse.json({ error: 'Internal Server Error' }, { status: 500 });
+    logger.error('[Customer Portal] Error creating customer portal session:', error instanceof Error ? error.message : String(error));
+    return NextResponse.json({ error: 'Internal Server Error' }, { status: 500, headers: noStore });
   }
 }

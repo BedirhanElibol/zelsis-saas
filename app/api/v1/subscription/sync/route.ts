@@ -181,13 +181,15 @@ export async function POST(req: NextRequest) {
             (o: { status?: string; product?: { name?: string }; created_at?: string }) =>
               o.status === 'paid' || o.status === 'succeeded'
           );
-          if (paidOrder) {
+          const orderDate = paidOrder?.created_at ? new Date(paidOrder.created_at).getTime() : NaN;
+          const orderPeriodEnd = isNaN(orderDate) ? NaN : orderDate + 30 * 24 * 60 * 60 * 1000;
+          // An old paid order only counts while the 30-day period it bought is still running.
+          if (paidOrder && orderPeriodEnd > Date.now()) {
             const prodName = (paidOrder.product?.name || '').toLowerCase();
             verifiedTier = prodName.includes('enterprise') || prodName.includes('suite') ? 'Enterprise' : 'Pro';
             isActive = true;
             subStatus = 'active';
-            const orderDate = paidOrder.created_at ? new Date(paidOrder.created_at).getTime() : Date.now();
-            expiresAt = new Date(orderDate + 30 * 24 * 60 * 60 * 1000).toISOString();
+            expiresAt = new Date(orderPeriodEnd).toISOString();
             logger.info(`[Subscription Sync] Confirmed via Polar order: ${verifiedTier} for ${email}`);
           }
         }

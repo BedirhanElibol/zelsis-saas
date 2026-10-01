@@ -56,7 +56,7 @@ function assert(condition: boolean, testName: string, detail?: string) {
   }
 }
 
-import { verifyPolarWebhookSignature } from '../lib/polar';
+import { verifyPolarWebhookSignature, resolvePolarEntitlement } from '../lib/polar';
 import crypto from 'crypto';
 
 function testPolarWebhook() {
@@ -87,6 +87,35 @@ function testPolarWebhook() {
   // Test invalid signature
   headersStandard.set('webhook-signature', 'v1,invalid_base64');
   assert(!verifyPolarWebhookSignature(payload, headersStandard, secret), 'Polar webhook rejects invalid signature');
+}
+
+function testPolarEntitlement() {
+  console.log('--- Testing Polar Webhook Entitlement Resolution ---');
+  const now = Date.parse('2026-10-01T00:00:00Z');
+  const future = '2026-10-31T00:00:00Z';
+  const past = '2026-09-01T00:00:00Z';
+  const pro = { name: 'Zelsis Pro' };
+
+  const active = resolvePolarEntitlement('subscription.updated', { status: 'active', current_period_end: future, product: pro }, now);
+  assert(active?.tier === 'Pro' && active.status === 'active' && active.currentPeriodEnd === new Date(future).toISOString(), 'Active subscription grants Pro until period end');
+
+  const enterprise = resolvePolarEntitlement('subscription.active', { status: 'active', current_period_end: future, product: { name: 'Zelsis Enterprise' } }, now);
+  assert(enterprise?.tier === 'Enterprise', 'Enterprise product grants Enterprise tier');
+
+  const revokedUpdate = resolvePolarEntitlement('subscription.updated', { status: 'canceled', ended_at: past, current_period_end: past, product: pro }, now);
+  assert(revokedUpdate?.tier === 'Free', 'subscription.updated for an ended subscription revokes access');
+
+  const scheduledCancel = resolvePolarEntitlement('subscription.updated', { status: 'active', cancel_at_period_end: true, current_period_end: future, product: pro }, now);
+  assert(scheduledCancel?.tier === 'Pro' && scheduledCancel.status === 'canceled', 'Cancel at period end keeps paid access until period end');
+
+  assert(resolvePolarEntitlement('subscription.created', { status: 'incomplete', product: pro }, now) === null, 'Incomplete subscription does not grant access');
+  assert(resolvePolarEntitlement('order.created', { status: 'pending', product: pro }, now) === null, 'Unpaid order does not grant access');
+  assert(resolvePolarEntitlement('order.paid', { status: 'paid', product: pro }, now)?.tier === 'Pro', 'Paid order grants Pro');
+  assert(resolvePolarEntitlement('subscription.revoked', { status: 'active', current_period_end: future, product: pro }, now)?.tier === 'Free', 'Revocation drops to Free immediately');
+  assert(resolvePolarEntitlement('subscription.past_due', { status: 'past_due', current_period_end: past, product: pro }, now)?.tier === 'Free', 'Past due after period end drops to Free');
+
+  const annual = resolvePolarEntitlement('order.paid', { status: 'paid', product: pro, subscription: { recurring_interval: 'year' } }, now);
+  assert(annual?.billingCycle === 'annual' && Date.parse(annual.currentPeriodEnd) - now === 365 * 24 * 60 * 60 * 1000, 'Annual order without period end defaults to one year');
 }
 
 async function runAllTests() {
@@ -1008,6 +1037,7 @@ async function runAllTests() {
   assert(redacted.result.score === gateScan.score && redacted.result.findings.length === gateScan.findings.length, 'Redaction keeps score and finding count');
 
   testPolarWebhook();
+  testPolarEntitlement();
 
   console.log('\n===========================================================');
   console.log(`🏁 TEST RESULTS: ${passedTests}/${totalTests} TESTS PASSED (100%)`);

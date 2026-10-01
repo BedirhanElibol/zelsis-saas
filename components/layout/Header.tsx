@@ -10,6 +10,7 @@ import { ConnectTargetModal } from './ConnectTargetModal';
 import { ZelsisLogo } from '@/components/ui/ZelsisLogo';
 import { UserAvatar } from '@/components/ui/UserAvatar';
 import { getSubscriptionValidity } from '@/lib/subscription-utils';
+import { openCustomerPortal } from '@/lib/billing-portal';
 import { TierDetailsModal } from '../pricing/TierDetailsModal';
 
 interface HeaderProps {
@@ -369,15 +370,14 @@ export const Header: React.FC<HeaderProps> = ({
                                 : `Renews ${validity.formattedRenewalDate} / Monthly Cycle`}
                             </span>
                           </div>
-                          <a
-                            href={user.email ? `/api/v1/customer-portal?email=${encodeURIComponent(user.email)}` : 'https://polar.sh/purchases'}
-                            target="_blank"
-                            rel="noopener noreferrer"
+                          <button
+                            type="button"
+                            onClick={() => { void openCustomerPortal(); }}
                             className="text-[10px] text-zinc-300 hover:text-white font-medium underline underline-offset-2 flex items-center gap-0.5 shrink-0 ml-1.5"
                           >
                             <span>Manage</span>
                             <ExternalLink size={9} />
-                          </a>
+                          </button>
                         </div>
 
                         {/* Subtle 2px cycle progress bar */}

@@ -15,6 +15,7 @@ const HANDLED_EVENTS = [
   'subscription.revoked',
   'subscription.past_due',
   'order.created',
+  'order.paid',
   'order.refunded',
 ];
 
@@ -24,7 +25,7 @@ const DEDUP_MAX_SIZE = 10_000;
 const DEDUP_EVICT_BATCH = 2_000;
 const processedEventIds = new Set<string>();
 
-import { verifyPolarWebhookSignature } from '@/lib/polar';
+import { verifyPolarWebhookSignature, resolvePolarEntitlement, type PolarEventData } from '@/lib/polar';
 
 /**
  * ZERO-AUTH-43: Unconditional provider HMAC signature verification on webhook receiver endpoints.
@@ -88,20 +89,19 @@ export async function POST(req: NextRequest) {
 
   let body: {
     type?: string;
-    data?: {
+    data?: PolarEventData & {
       id?: string;
       subscription_id?: string;
       metadata?: Record<string, unknown>;
-      customer?: { email?: string };
+      customer?: { email?: string; external_id?: string | null };
       user?: { email?: string };
-      product?: { name?: string };
-      current_period_end?: string | null;
       subscription?: {
         id?: string;
         metadata?: Record<string, unknown>;
         current_period_end?: string | null;
+        recurring_interval?: string | null;
         product?: { name?: string };
-      };
+      } | null;
     };
   } | null = null;
   try {
@@ -111,46 +111,46 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: 'Invalid JSON' }, { status: 400 });
   }
 
-  // SEC-06: Idempotency guard — deduplicate by event_id to prevent replay attacks
-  const eventId = (body as Record<string, unknown>)?.event_id as string | undefined
-    || (body as Record<string, unknown>)?.id as string | undefined;
+  // SEC-06: Idempotency guard — Standard Webhooks carry the event id in the `webhook-id` header.
+  // The event is only recorded as processed after it was applied, so Polar retries of a
+  // failed delivery are not swallowed.
+  const eventId =
+    req.headers.get('webhook-id') ||
+    req.headers.get('polar-webhook-id') ||
+    ((body as Record<string, unknown>)?.event_id as string | undefined) ||
+    undefined;
+  const supabaseUrlForDedup = process.env.NEXT_PUBLIC_SUPABASE_URL;
+  const serviceRoleKeyForDedup = process.env.SUPABASE_SERVICE_ROLE_KEY;
+  const dedupClient = supabaseUrlForDedup && serviceRoleKeyForDedup
+    ? createClient(supabaseUrlForDedup, serviceRoleKeyForDedup, { auth: { persistSession: false } })
+    : null;
+
   if (eventId) {
-    // 1. Fast in-memory check
     if (processedEventIds.has(eventId)) {
       logger.info(`[Polar Webhook] Duplicate event_id detected in memory cache, skipping: ${eventId}`);
       return NextResponse.json({ received: true, deduplicated: true });
     }
-
-    // 2. Durable database check if Supabase is available
-    const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
-    const serviceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
-    if (supabaseUrl && serviceRoleKey) {
+    if (dedupClient) {
       try {
-        const adminClient = createClient(supabaseUrl, serviceRoleKey, { auth: { persistSession: false } });
-        const { data: existingEvent } = await adminClient
+        const { data: existingEvent } = await dedupClient
           .from('webhook_events')
           .select('event_id')
           .eq('event_id', eventId)
           .maybeSingle();
-
         if (existingEvent) {
           logger.info(`[Polar Webhook] Duplicate event_id detected in database, skipping: ${eventId}`);
           processedEventIds.add(eventId);
           return NextResponse.json({ received: true, deduplicated: true });
         }
-
-        // Persist processed event into durable database table
-        await adminClient
-          .from('webhook_events')
-          .insert({ event_id: eventId, source: 'polar', processed_at: new Date().toISOString() });
       } catch (dbErr) {
-        // Fallback safely to memory deduplication if table is not yet provisioned in dev
-        logger.debug('[Polar Webhook] Database idempotency fallback to memory cache:', dbErr);
+        logger.debug('[Polar Webhook] Database idempotency lookup failed, continuing:', dbErr);
       }
     }
+  }
 
+  const markProcessed = async () => {
+    if (!eventId) return;
     processedEventIds.add(eventId);
-    // Evict oldest entries when the set exceeds capacity
     if (processedEventIds.size > DEDUP_MAX_SIZE) {
       const iter = processedEventIds.values();
       for (let i = 0; i < DEDUP_EVICT_BATCH; i++) {
@@ -159,7 +159,16 @@ export async function POST(req: NextRequest) {
         processedEventIds.delete(next.value);
       }
     }
-  }
+    if (dedupClient) {
+      try {
+        await dedupClient
+          .from('webhook_events')
+          .insert({ event_id: eventId, source: 'polar', processed_at: new Date().toISOString() });
+      } catch (dbErr) {
+        logger.debug('[Polar Webhook] Failed to persist processed event id:', dbErr);
+      }
+    }
+  };
 
   const eventType = body?.type;
   if (!eventType || !HANDLED_EVENTS.includes(eventType)) {
@@ -178,46 +187,17 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ received: true, error: 'No customer email' }, { status: 200 });
     }
 
-    // Determine tier and subscription status based on event
-    let tier: 'Free' | 'Pro' | 'Enterprise' = 'Free';
-    let status: 'active' | 'past_due' | 'canceled' = 'canceled';
-    const productName = (data?.product?.name || data?.subscription?.product?.name || '').toLowerCase();
-    const isAnnual = productName.includes('annual') || productName.includes('year');
-    const detectedTier: 'Pro' | 'Enterprise' =
-      productName.includes('enterprise') || productName.includes('suite') ? 'Enterprise' : 'Pro';
-
-    const rawPeriodEnd = data?.current_period_end || data?.subscription?.current_period_end || null;
-    const periodEndTime = rawPeriodEnd ? new Date(rawPeriodEnd).getTime() : 0;
-    const isFuturePeriodEnd = periodEndTime > Date.now();
-
-    if (['subscription.created', 'subscription.updated', 'subscription.active', 'subscription.uncanceled', 'order.created'].includes(eventType)) {
-      tier = detectedTier;
-      status = 'active';
-    } else if (['subscription.past_due'].includes(eventType)) {
-      // Per strict user directive: zero grace period extension on renewal failure.
-      // If the current paid period is still valid, user keeps access until period ends.
-      // If already past period end, access is revoked immediately.
-      status = 'past_due';
-      tier = isFuturePeriodEnd ? detectedTier : 'Free';
-    } else if (['subscription.canceled'].includes(eventType)) {
-      // Cancellation means do not renew next cycle; user keeps remaining paid time
-      status = 'canceled';
-      tier = isFuturePeriodEnd ? detectedTier : 'Free';
-    } else if (['subscription.revoked', 'order.refunded'].includes(eventType)) {
-      // Immediate revocation or refund drops tier instantly
-      tier = 'Free';
-      status = 'canceled';
+    const entitlement = resolvePolarEntitlement(eventType, data || {});
+    if (!entitlement) {
+      logger.info(`[Polar Webhook] ${eventType} (status: ${data?.status ?? 'n/a'}) does not change entitlement`);
+      await markProcessed();
+      return NextResponse.json({ received: true, handled: false });
     }
-
-    let effectiveCurrentPeriodEnd: string;
-    if (rawPeriodEnd) {
-      effectiveCurrentPeriodEnd = new Date(rawPeriodEnd).toISOString();
-    } else if (status === 'active' || (tier !== 'Free' && isFuturePeriodEnd)) {
-      const daysToAdd = isAnnual ? 365 : 30;
-      effectiveCurrentPeriodEnd = new Date(Date.now() + daysToAdd * 24 * 60 * 60 * 1000).toISOString();
-    } else {
-      effectiveCurrentPeriodEnd = new Date().toISOString();
-    }
+    const { tier, status, billingCycle } = entitlement;
+    const effectiveCurrentPeriodEnd = entitlement.currentPeriodEnd;
+    const polarSubscriptionId = eventType.startsWith('subscription.')
+      ? data?.id || null
+      : data?.subscription_id || data?.subscription?.id || null;
 
     // Update Supabase profile and subscription records if service role key is available
     const serviceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
@@ -228,7 +208,7 @@ export async function POST(req: NextRequest) {
       const adminClient = createClient(supabaseUrl, serviceRoleKey);
       
       const normalizedEmail = customerEmail.toLowerCase().trim();
-      const metadataUserId = (data?.metadata?.userId || data?.metadata?.user_id || data?.subscription?.metadata?.userId) as string | undefined;
+      const metadataUserId = (data?.customer?.external_id || data?.metadata?.userId || data?.metadata?.user_id || data?.subscription?.metadata?.userId) as string | undefined;
       let matchedUserId: string | null = metadataUserId || null;
       let existingMetadata: Record<string, unknown> = {};
 
@@ -286,7 +266,7 @@ export async function POST(req: NextRequest) {
               tier: formattedTier,
               subscriptionStatus: status,
               expiresAt: effectiveCurrentPeriodEnd,
-              billingCycle: isAnnual ? 'annual' : 'monthly',
+              billingCycle,
               lastPaymentEvent: eventType,
               lastPaymentDate: new Date().toISOString(),
             }
@@ -310,27 +290,31 @@ export async function POST(req: NextRequest) {
           logger.warn(`[Polar Webhook] Profile upsert notice: ${profileError instanceof Error ? profileError.message : String(profileError)}`);
         }
 
-        // C. Upsert subscriptions record with complete period end
-        try {
-          await adminClient.from('subscriptions').upsert({
-            user_id: matchedUserId,
-            plan_tier: formattedTier,
-            status,
-            current_period_end: effectiveCurrentPeriodEnd,
-            polar_subscription_id: data?.id || data?.subscription_id || null,
-            updated_at: new Date().toISOString(),
-          }, { onConflict: 'user_id' });
-          logger.info(`[Polar Webhook] Upserted subscriptions record for ${normalizedEmail} (tier: ${formattedTier}, status: ${status})`);
-        } catch (subErr: unknown) {
-          logger.warn('[Polar Webhook] Subscriptions table update warning:', subErr instanceof Error ? subErr.message : String(subErr));
+        // C. Upsert subscriptions record with complete period end. This row is what the
+        // server-side tier gates read, so a failed write returns 500 and lets Polar retry.
+        const { error: subErr } = await adminClient.from('subscriptions').upsert({
+          user_id: matchedUserId,
+          plan_tier: formattedTier,
+          status,
+          current_period_end: effectiveCurrentPeriodEnd,
+          ...(polarSubscriptionId ? { polar_subscription_id: polarSubscriptionId } : {}),
+          cancel_at_period_end: status === 'canceled' && tier !== 'Free',
+          updated_at: new Date().toISOString(),
+        }, { onConflict: 'user_id' });
+        if (subErr) {
+          logger.error('[Polar Webhook] Subscriptions table update failed:', subErr.message);
+          return NextResponse.json({ error: 'Persistence error' }, { status: 500 });
         }
+        logger.info(`[Polar Webhook] Upserted subscriptions record for ${normalizedEmail} (tier: ${formattedTier}, status: ${status})`);
       } else {
         logger.warn(`[Polar Webhook] No registered user found for email: ${normalizedEmail}. Pending account registration.`);
       }
     } else {
-      logger.warn('[Polar Webhook] SUPABASE_SERVICE_ROLE_KEY not configured - cannot update tier server-side');
+      logger.error('[Polar Webhook] SUPABASE_SERVICE_ROLE_KEY not configured - cannot update tier server-side');
+      return NextResponse.json({ error: 'Webhook configuration error' }, { status: 500 });
     }
 
+    await markProcessed();
     return NextResponse.json({ received: true, tier, email: customerEmail });
   } catch (err: unknown) {
     logger.error(`[Polar Webhook] Error processing ${eventType}:`, err instanceof Error ? err.message : String(err));

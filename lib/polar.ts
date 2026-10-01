@@ -112,3 +112,109 @@ export function verifyPolarWebhookSignature(
 
   return false;
 }
+
+export type PlanTier = 'Free' | 'Pro' | 'Enterprise';
+export type EntitlementStatus = 'active' | 'past_due' | 'canceled';
+
+/** Maps a Polar product name to the plan tier it grants. */
+export function detectPolarPlanTier(productName?: string | null): 'Pro' | 'Enterprise' {
+  const name = (productName || '').toLowerCase();
+  return name.includes('enterprise') || name.includes('suite') ? 'Enterprise' : 'Pro';
+}
+
+export interface PolarEventData {
+  status?: string;
+  current_period_end?: string | null;
+  ended_at?: string | null;
+  cancel_at_period_end?: boolean | null;
+  recurring_interval?: string | null;
+  product?: { name?: string; recurring_interval?: string | null };
+  subscription?: {
+    current_period_end?: string | null;
+    recurring_interval?: string | null;
+    product?: { name?: string };
+  } | null;
+}
+
+export interface PolarEntitlement {
+  tier: PlanTier;
+  status: EntitlementStatus;
+  currentPeriodEnd: string;
+  billingCycle: 'monthly' | 'annual';
+}
+
+/**
+ * Derives the entitlement a Polar webhook event grants. Subscription events are
+ * resolved from the subscription's own `status` (Polar sends `subscription.updated`
+ * for every change, including cancellations and revocations), and order events
+ * only grant access once the order is paid. Returns null when the event must not
+ * change the stored entitlement (e.g. an unpaid order or an incomplete subscription).
+ */
+export function resolvePolarEntitlement(
+  eventType: string,
+  data: PolarEventData,
+  now: number = Date.now()
+): PolarEntitlement | null {
+  const productName = data.product?.name || data.subscription?.product?.name;
+  const paidTier = detectPolarPlanTier(productName);
+  const interval = (
+    data.recurring_interval ||
+    data.subscription?.recurring_interval ||
+    data.product?.recurring_interval ||
+    ''
+  ).toLowerCase();
+  const isAnnual = interval === 'year' || /annual|year/i.test(productName || '');
+  const billingCycle = isAnnual ? 'annual' : 'monthly';
+
+  const rawPeriodEnd = data.current_period_end || data.subscription?.current_period_end || null;
+  const parsedEnd = rawPeriodEnd ? new Date(rawPeriodEnd).getTime() : NaN;
+  const hasPeriodEnd = !isNaN(parsedEnd);
+  const defaultEnd = now + (isAnnual ? 365 : 30) * 24 * 60 * 60 * 1000;
+  const periodEndIso = new Date(hasPeriodEnd ? parsedEnd : defaultEnd).toISOString();
+  const nowIso = new Date(now).toISOString();
+  const periodStillPaid = hasPeriodEnd && parsedEnd > now;
+
+  const revoked = (): PolarEntitlement => ({ tier: 'Free', status: 'canceled', currentPeriodEnd: nowIso, billingCycle });
+
+  if (eventType === 'subscription.revoked' || eventType === 'order.refunded') {
+    return revoked();
+  }
+
+  if (eventType.startsWith('subscription.')) {
+    const status = (data.status || '').toLowerCase();
+    if (data.ended_at && new Date(data.ended_at).getTime() <= now) return revoked();
+    switch (status) {
+      case 'active':
+      case 'trialing':
+        // A cancellation scheduled for period end still keeps access until then.
+        return {
+          tier: paidTier,
+          status: eventType === 'subscription.canceled' || data.cancel_at_period_end ? 'canceled' : 'active',
+          currentPeriodEnd: periodEndIso,
+          billingCycle,
+        };
+      case 'past_due':
+        return periodStillPaid
+          ? { tier: paidTier, status: 'past_due', currentPeriodEnd: periodEndIso, billingCycle }
+          : { tier: 'Free', status: 'past_due', currentPeriodEnd: nowIso, billingCycle };
+      case 'canceled':
+        return periodStillPaid
+          ? { tier: paidTier, status: 'canceled', currentPeriodEnd: periodEndIso, billingCycle }
+          : revoked();
+      case 'unpaid':
+      case 'incomplete_expired':
+        return revoked();
+      default:
+        // 'incomplete' (payment not captured yet) or unknown: leave entitlement unchanged.
+        return null;
+    }
+  }
+
+  if (eventType === 'order.paid' || eventType === 'order.created') {
+    const status = (data.status || '').toLowerCase();
+    if (status && status !== 'paid') return null;
+    return { tier: paidTier, status: 'active', currentPeriodEnd: periodEndIso, billingCycle };
+  }
+
+  return null;
+}

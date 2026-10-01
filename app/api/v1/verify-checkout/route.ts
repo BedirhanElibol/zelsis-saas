@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { logger } from '@/lib/logger';
 import { checkRateLimit, createRateLimitResponse } from '@/lib/rate-limiter';
 import { createClient } from '@supabase/supabase-js';
+import { detectPolarPlanTier } from '@/lib/polar';
 
 export const maxDuration = 15;
 export const dynamic = 'force-dynamic';
@@ -76,6 +77,7 @@ export async function POST(req: NextRequest) {
   let resolvedTier: 'Pro' | 'Enterprise' = planId === 'vibecare' ? 'Enterprise' : 'Pro';
   let customerEmail = authenticatedEmail || email || null;
   let effectiveExpiry: string = new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString();
+  let billingCycle: 'monthly' | 'annual' = 'monthly';
 
   // 2. Query Polar API for authentic checkout status
   try {
@@ -88,22 +90,37 @@ export async function POST(req: NextRequest) {
 
     if (response.ok) {
       const checkout = await response.json();
-      if (checkout.status === 'succeeded' || checkout.status === 'confirmed') {
+      // 'confirmed' only means the payment is being processed; access is granted on 'succeeded'.
+      if (checkout.status === 'succeeded') {
         isVerified = true;
         customerEmail = checkout.customer_email || customerEmail;
-        const prodName = (checkout.product?.name || '').toLowerCase();
-        resolvedTier = prodName.includes('enterprise') || prodName.includes('suite') ? 'Enterprise' : 'Pro';
+        resolvedTier = detectPolarPlanTier(checkout.product?.name);
+        const isAnnual = checkout.product_price?.recurring_interval === 'year' || checkout.product?.recurring_interval === 'year';
+        billingCycle = isAnnual ? 'annual' : 'monthly';
+        // Anchor the fallback period to when the checkout happened, so replaying an old
+        // checkout id cannot extend access indefinitely.
+        const checkoutTime = new Date(checkout.modified_at || checkout.created_at || Date.now()).getTime();
+        const periodStart = isNaN(checkoutTime) ? Date.now() : Math.min(checkoutTime, Date.now());
+        effectiveExpiry = new Date(periodStart + (isAnnual ? 365 : 30) * 24 * 60 * 60 * 1000).toISOString();
 
-        // F-14: Read authentic subscription expiration period from Polar API if available
-        if (checkout.subscription?.current_period_end) {
-          const polarExpiry = new Date(checkout.subscription.current_period_end);
-          if (!isNaN(polarExpiry.getTime())) {
-            effectiveExpiry = polarExpiry.toISOString();
-          }
-        } else if (checkout.expires_at) {
-          const polarExpiry = new Date(checkout.expires_at);
-          if (!isNaN(polarExpiry.getTime())) {
-            effectiveExpiry = polarExpiry.toISOString();
+        // F-14: Read the authentic period end from the created subscription. The checkout's own
+        // `expires_at` is the checkout session expiry and must not be used as the plan expiry.
+        const subscriptionId: string | undefined = checkout.subscription_id || checkout.subscription?.id;
+        if (subscriptionId) {
+          try {
+            const subRes = await fetch(`https://api.polar.sh/v1/subscriptions/${encodeURIComponent(subscriptionId)}`, {
+              headers: { 'Authorization': `Bearer ${polarAccessToken}`, 'Content-Type': 'application/json' }
+            });
+            if (subRes.ok) {
+              const sub = await subRes.json();
+              const polarExpiry = sub?.current_period_end ? new Date(sub.current_period_end) : null;
+              if (polarExpiry && !isNaN(polarExpiry.getTime())) {
+                effectiveExpiry = polarExpiry.toISOString();
+              }
+              if (sub?.recurring_interval === 'year') billingCycle = 'annual';
+            }
+          } catch (subErr: any) {
+            logger.warn('[Verify Checkout] Polar subscription lookup failed:', subErr?.message);
           }
         }
 
@@ -174,7 +191,7 @@ export async function POST(req: NextRequest) {
             tier: resolvedTier,
             subscriptionStatus: 'active',
             expiresAt: effectiveExpiry,
-            billingCycle: 'monthly',
+            billingCycle,
           }
         });
 
