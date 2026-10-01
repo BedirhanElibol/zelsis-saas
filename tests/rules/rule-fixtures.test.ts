@@ -77,3 +77,15 @@ describe('test fixture files', () => {
     assert.ok((await ruleIdsFor([{ path: 'lib/calc.ts', content: 'export const run = (input: string) => eval(input);\n' }])).has(32));
   });
 });
+
+describe('SAAS rule suppression', () => {
+  it('.zelsisignore accepts SAAS-xx codes', async () => {
+    const { parseZelsisIgnore } = await import('../../lib/scanner-engine');
+    assert.ok(parseZelsisIgnore('SAAS-04').ignoredRuleIds.has(23004));
+    const found = await ruleIdsFor([
+      { path: '.zelsisignore', content: 'SAAS-06\n' },
+      { path: 'app/api/cron/sync/route.ts', content: 'export async function GET() {\n  await syncAll();\n  return Response.json({ ok: true });\n}\n' }
+    ]);
+    assert.ok(!found.has(23006));
+  });
+});

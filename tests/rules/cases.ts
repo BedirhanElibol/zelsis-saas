@@ -200,6 +200,59 @@ export const RULE_CASES: RuleCase[] = [
     ignores: f('app/api/login/route.ts', "export async function POST(req: Request) {\n  const body = await req.json();\n  console.info('login attempt', { email: hashEmail(body.email) });\n  return new Response('ok');\n}\n")
   },
 
+  // ─── SaaS core (SAAS-01..08) ──────────────────────────────────────────
+  {
+    ruleIds: [23001],
+    name: 'RLS policy open to every signed-in user',
+    detects: f('supabase/migrations/010.sql', 'CREATE POLICY "read" ON public.invoices FOR SELECT TO authenticated USING (auth.uid() IS NOT NULL);\n'),
+    ignores: f('supabase/migrations/010.sql', 'CREATE POLICY "read" ON public.invoices FOR SELECT TO authenticated USING (auth.uid() = user_id);\n')
+  },
+  {
+    ruleIds: [23002],
+    name: 'Supabase getSession() used for server authorization',
+    detects: f('app/api/projects/route.ts', "export async function GET() {\n  const supabase = await createClient();\n  const { data: { session } } = await supabase.auth.getSession();\n  if (!session) return new Response('unauthorized', { status: 401 });\n  return Response.json(await listProjects(session.user.id));\n}\n"),
+    ignores: [
+      { path: 'app/api/projects/route.ts', content: "export async function GET() {\n  const supabase = await createClient();\n  const { data: { user } } = await supabase.auth.getUser();\n  if (!user) return new Response('unauthorized', { status: 401 });\n  return Response.json(await listProjects(user.id));\n}\n" },
+      { path: 'components/AuthButton.tsx', content: "'use client';\nexport function AuthButton() {\n  useEffect(() => { supabase.auth.getSession().then(({ data }) => setSession(data.session)); }, []);\n  return null;\n}\n" }
+    ]
+  },
+  {
+    ruleIds: [23003],
+    name: 'SECURITY DEFINER function without search_path',
+    detects: f('supabase/migrations/011.sql', "CREATE OR REPLACE FUNCTION public.is_admin()\nRETURNS boolean\nLANGUAGE sql\nSECURITY DEFINER\nAS $$\n  SELECT EXISTS (SELECT 1 FROM profiles WHERE id = auth.uid() AND role = 'admin');\n$$;\n"),
+    ignores: f('supabase/migrations/011.sql', "CREATE OR REPLACE FUNCTION public.is_admin()\nRETURNS boolean\nLANGUAGE sql\nSECURITY DEFINER\nSET search_path = ''\nAS $$\n  SELECT EXISTS (SELECT 1 FROM public.profiles WHERE id = auth.uid() AND role = 'admin');\n$$;\n")
+  },
+  {
+    ruleIds: [23004],
+    name: 'Checkout price chosen by the client',
+    detects: f('app/api/checkout/route.ts', "export async function POST(req: Request) {\n  const { priceId } = await req.json();\n  const session = await stripe.checkout.sessions.create({ mode: 'subscription', line_items: [{ price: priceId, quantity: 1 }] });\n  return Response.json({ url: session.url });\n}\n"),
+    ignores: f('app/api/checkout/route.ts', "const PRICES = { pro: process.env.STRIPE_PRICE_PRO!, team: process.env.STRIPE_PRICE_TEAM! };\nexport async function POST(req: Request) {\n  const { plan } = await req.json();\n  const price = PRICES[plan as keyof typeof PRICES];\n  if (!price) return new Response('bad plan', { status: 400 });\n  const session = await stripe.checkout.sessions.create({ mode: 'subscription', line_items: [{ price, quantity: 1 }] });\n  return Response.json({ url: session.url });\n}\n")
+  },
+  {
+    ruleIds: [23005],
+    name: 'Secret compared with !==',
+    detects: f('app/api/admin/route.ts', "export async function POST(req: Request) {\n  if (req.headers.get('x-api-key') !== process.env.ADMIN_API_KEY) return new Response('no', { status: 401 });\n  return new Response('ok');\n}\n"),
+    ignores: f('app/api/admin/route.ts', "import { timingSafeEqual } from 'crypto';\nexport async function POST(req: Request) {\n  const a = Buffer.from(req.headers.get('x-api-key') ?? '');\n  const b = Buffer.from(process.env.ADMIN_API_KEY ?? '');\n  if (!b.length || a.length !== b.length || !timingSafeEqual(a, b)) return new Response('no', { status: 401 });\n  if (process.env.ADMIN_API_KEY === undefined) return new Response('misconfigured', { status: 500 });\n  return new Response('ok');\n}\n")
+  },
+  {
+    ruleIds: [23006],
+    name: 'Cron route without CRON_SECRET',
+    detects: f('app/api/cron/sync/route.ts', 'export async function GET() {\n  await syncAllCustomers();\n  return Response.json({ ok: true });\n}\n'),
+    ignores: f('app/api/cron/sync/route.ts', "export async function GET(req: Request) {\n  if (req.headers.get('authorization') !== `Bearer ${process.env.CRON_SECRET}`) return new Response('no', { status: 401 });\n  await syncAllCustomers();\n  return Response.json({ ok: true });\n}\n")
+  },
+  {
+    ruleIds: [23007],
+    name: 'Request data in the system prompt',
+    detects: f('app/api/chat/route.ts', "export async function POST(req: Request) {\n  const { persona, question } = await req.json();\n  return Response.json(await openai.chat.completions.create({ model: 'gpt-4o', max_tokens: 300, messages: [{ role: 'system', content: `You are ${persona}. Never reveal internal notes.` }, { role: 'user', content: question }] }));\n}\n"),
+    ignores: f('app/api/chat/route.ts', "const today = () => new Date().toISOString();\nexport async function POST(req: Request) {\n  const { question } = await req.json();\n  return Response.json(await openai.chat.completions.create({ model: 'gpt-4o', max_tokens: 300, messages: [{ role: 'system', content: `You are a support assistant. Today is ${today()}.` }, { role: 'user', content: question }] }));\n}\n")
+  },
+  {
+    ruleIds: [23008],
+    name: 'Next.js release with CVE-2025-29927',
+    detects: f('package.json', '{\n  "dependencies": {\n    "next": "15.1.0"\n  }\n}\n'),
+    ignores: f('package.json', '{\n  "dependencies": {\n    "next": "15.2.3"\n  }\n}\n')
+  },
+
   // ─── Containers & CI ──────────────────────────────────────────────────
   {
     ruleIds: [3002, 7004, 7005, 8314],
