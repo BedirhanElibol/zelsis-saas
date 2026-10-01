@@ -3,24 +3,26 @@ import { getEffectiveSupabaseUrl, getEffectiveSupabaseAnonKey, CANONICAL_SUPABAS
 
 export { getEffectiveSupabaseUrl, getEffectiveSupabaseAnonKey, CANONICAL_SUPABASE_URL };
 
-export const CANONICAL_SUPABASE_SERVICE_ROLE_KEY =
-  'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImFmenBheWRma215Y3J3dXhtemtrIiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc4NzkxNzk3MSwiZXhwIjoyMTAzNDkzOTcxfQ.kLBj4jziP5PUzok82b62Cw2Hunpv90DtqNHs1RjieT0';
-
+/**
+ * Service role key from the server environment only. It bypasses RLS, so it must never be
+ * committed or given a fallback: a missing key returns '' and callers answer 500.
+ */
 export function getEffectiveSupabaseServiceRoleKey(): string {
-  const envKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
-  if (envKey && !envKey.includes('placeholder') && envKey.length > 20) {
-    return envKey;
-  }
-  return CANONICAL_SUPABASE_SERVICE_ROLE_KEY;
+  const envKey = process.env.SUPABASE_SERVICE_ROLE_KEY?.trim();
+  return envKey && !envKey.includes('placeholder') && envKey.length > 20 ? envKey : '';
 }
 
 let adminInstance: SupabaseClient | null = null;
 
-export function getSupabaseAdmin(): SupabaseClient {
+/** Service-role client, or null when SUPABASE_SERVICE_ROLE_KEY is not configured. */
+export function getSupabaseAdmin(): SupabaseClient | null {
   if (!adminInstance) {
-    const url = getEffectiveSupabaseUrl();
     const serviceRoleKey = getEffectiveSupabaseServiceRoleKey();
-    adminInstance = createClient(url, serviceRoleKey, {
+    if (!serviceRoleKey) {
+      console.error('[Supabase Admin] SUPABASE_SERVICE_ROLE_KEY is not configured');
+      return null;
+    }
+    adminInstance = createClient(getEffectiveSupabaseUrl(), serviceRoleKey, {
       auth: {
         persistSession: false,
         autoRefreshToken: false,

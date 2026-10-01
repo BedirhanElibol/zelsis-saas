@@ -995,7 +995,7 @@ async function runAllTests() {
   assert(isSupabaseConfiguredServer() === true, 'Server-side isSupabaseConfigured() is always true');
   assert(isSupabaseConfiguredClient() === true, 'Client-side isSupabaseConfigured() is always true');
   assert(getEffectiveSupabaseUrl().includes('afzpaydfkmycrwuxmzkk'), 'getEffectiveSupabaseUrl resolves valid project URL');
-  assert(getEffectiveSupabaseAnonKey().startsWith('eyJ'), 'getEffectiveSupabaseAnonKey resolves valid JWT anon key');
+  assert(/^(?:eyJ|sb_publishable_)/.test(getEffectiveSupabaseAnonKey()), 'getEffectiveSupabaseAnonKey resolves a client-safe anon/publishable key');
   assert(getSupabase() !== null, 'getSupabase() returns initialized client instance');
   const clientConfig = getSupabaseConfig();
   assert(clientConfig.url.length > 0 && clientConfig.anonKey.length > 0, 'getSupabaseConfig provides populated config object');

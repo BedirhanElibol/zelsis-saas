@@ -96,7 +96,7 @@ export async function POST(req: NextRequest) {
     // 4. Quota Gate Verification
     if (serviceRoleKey) {
       try {
-        const adminClient = getSupabaseAdmin();
+        const adminClient = getSupabaseAdmin()!; // non-null: guarded by serviceRoleKey above
         const { data: sub } = await adminClient
           .from('subscriptions')
           .select('plan_tier, monthly_scan_quota, scans_used_this_month, current_period_end')
@@ -140,7 +140,7 @@ export async function POST(req: NextRequest) {
     // 6. Create Job Record in Database
     let jobId: string | null = null;
     if (serviceRoleKey && supabaseUrl) {
-      const adminClient = getSupabaseAdmin();
+      const adminClient = getSupabaseAdmin()!; // non-null: guarded by serviceRoleKey above
 
       const { data: insertedJob, error: insertErr } = await adminClient
         .from('scan_jobs')

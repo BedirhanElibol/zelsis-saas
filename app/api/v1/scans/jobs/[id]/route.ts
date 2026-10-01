@@ -32,7 +32,7 @@ export async function GET(req: NextRequest, { params }: RouteParams) {
       );
     }
 
-    const adminClient = getSupabaseAdmin();
+    const adminClient = getSupabaseAdmin()!; // non-null: guarded by serviceRoleKey above
 
     const { data: job, error: jobErr } = await adminClient
       .from('scan_jobs')

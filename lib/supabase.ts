@@ -6,8 +6,8 @@ import { isPlatformAdminEmail, isFounderGrantExpiry } from '@/lib/subscription-u
 export { isPlatformAdminEmail };
 
 export const CANONICAL_SUPABASE_URL = 'https://afzpaydfkmycrwuxmzkk.supabase.co';
-export const CANONICAL_SUPABASE_ANON_KEY =
-  'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImFmenBheWRma215Y3J3dXhtemtrIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODc5MTc5NzEsImV4cCI6MjEwMzQ5Mzk3MX0.MNtKjLI3mNmGIRmcirzwnGknw0VJy58A2noAnEZZKZA';
+// Publishable (client-safe) key: keeps working after the legacy JWT anon/service_role keys are disabled
+export const CANONICAL_SUPABASE_ANON_KEY = 'sb_publishable_SrzF84zmzFl1YaVsA9ADXQ_BMnMdXys';
 
 export const getEffectiveSupabaseUrl = (): string => {
   const envUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || process.env.SUPABASE_URL;
