@@ -16,7 +16,7 @@ const QueueScanRequestSchema = z.object({
   targetName: z.string().optional(),
   githubToken: z.string().optional(),
   commitSha: z.string().optional(),
-  projectId: z.string().uuid().optional(),
+  projectId: z.string().max(128).optional(),
   slackWebhookUrl: z.string().url().optional(),
   discordWebhookUrl: z.string().url().optional()
 });

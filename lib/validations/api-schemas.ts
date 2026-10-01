@@ -73,7 +73,7 @@ export const ProxyQuerySchema = z.object({
  * Schema for /api/v1/badge GET query parameters
  */
 export const BadgeQuerySchema = z.object({
-  projectId: z.string().uuid().optional(),
+  projectId: z.string().max(128).optional(),
   scanId: z.string().uuid().optional(),
   sig: z.string().max(128).optional(),
   status: z
