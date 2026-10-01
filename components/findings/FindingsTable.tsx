@@ -90,7 +90,10 @@ export const FindingsTable: React.FC<FindingsTableProps> = ({
       f && (
         f.category?.includes('Software Composition Analysis') ||
         f.category?.includes('Open Source License') ||
-        (f.ruleId >= 7000 && f.ruleId <= 7050)
+        f.category?.includes('Dependency Vulnerabilities') ||
+        // DEP-01 (OSV.dev) and the offline SCA rules (27211-27214)
+        f.ruleId === 26001 ||
+        (f.ruleId >= 27211 && f.ruleId <= 27214)
       )
     );
 

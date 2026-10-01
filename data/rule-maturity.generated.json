@@ -45,7 +45,7 @@
    "cleanFindings": 1
   },
   {
-   "ruleId": 231,
+   "ruleId": 27221,
    "title": "CLICHE-AI-COMMENT-01: Synthetic LLM Prompt Artifact & Header Injection",
    "severity": "HIGH",
    "cleanRepos": 1,
@@ -157,7 +157,7 @@
    "cleanFindings": 38
   },
   {
-   "ruleId": 7001,
+   "ruleId": 27211,
    "title": "SCA: CVE-2024-34351 - Next.js Server Actions Server-Side Request Forgery (SSRF) (next@13.3.2-canary.13)",
    "severity": "HIGH",
    "cleanRepos": 2,

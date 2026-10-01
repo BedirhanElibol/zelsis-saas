@@ -14,7 +14,7 @@ export function evaluateDotnetCsharpRules(file: CodeFile, lines: string[], clean
         const matchLineIdx = lines.findIndex(l => reg_xml.test(l));
         findings.push({
             id: `dotnet-xml-${findingCounter.count++}`,
-            ruleId: 9004,
+            ruleId: 27204,
             type: 'SECURITY',
             title: 'DOTNET-SEC-01: Insecure XML Deserialization',
             severity: 'CRITICAL',

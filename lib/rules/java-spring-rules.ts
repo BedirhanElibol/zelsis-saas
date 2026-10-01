@@ -14,7 +14,7 @@ export function evaluateJavaSpringRules(file: CodeFile, lines: string[], cleanCo
         const matchLineIdx = lines.findIndex(l => reg_log4j.test(l));
         findings.push({
             id: `java-log4j-${findingCounter.count++}`,
-            ruleId: 9003,
+            ruleId: 27203,
             type: 'SECURITY',
             title: 'JAVA-SEC-01: Potential Log4Shell Vulnerability (Log4j)',
             severity: 'CRITICAL',

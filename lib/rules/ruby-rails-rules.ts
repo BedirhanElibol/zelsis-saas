@@ -14,7 +14,7 @@ export function evaluateRubyRailsRules(file: CodeFile, lines: string[], cleanCon
         const matchLineIdx = lines.findIndex(l => reg_yaml.test(l));
         findings.push({
             id: `ruby-yaml-${findingCounter.count++}`,
-            ruleId: 9001,
+            ruleId: 27201,
             type: 'SECURITY',
             title: 'RUBY-SEC-01: Unsafe YAML Deserialization',
             severity: 'CRITICAL',

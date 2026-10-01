@@ -277,7 +277,7 @@ export async function runStaticCodeScan(files: CodeFile[], repoName: string = 'T
       const auditedDirs = new Set(dependencies.map((d) => d.file.slice(0, d.file.lastIndexOf('/') + 1)));
       for (let k = findings.length - 1; k >= 0; k--) {
         const f = findings[k];
-        if (f.ruleId === 7001 && auditedDirs.has(f.filePath.slice(0, f.filePath.lastIndexOf('/') + 1))) findings.splice(k, 1);
+        if (f.ruleId === 27211 && auditedDirs.has(f.filePath.slice(0, f.filePath.lastIndexOf('/') + 1))) findings.splice(k, 1);
       }
       for (const f of depFindings) findings.push({ ...f, maturity: ruleMaturity(f.ruleId) });
       dependencyAudit = {

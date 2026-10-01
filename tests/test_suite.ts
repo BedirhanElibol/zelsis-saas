@@ -342,13 +342,13 @@ async function runAllTests() {
     }
   ];
   const pythonScaScan = await runStaticCodeScan(pythonScaFiles, 'Python SCA Test Project');
-  const jinjaFinding = pythonScaScan.findings.find(f => f.ruleId === 7004 && f.snippet.includes('jinja2'));
+  const jinjaFinding = pythonScaScan.findings.find(f => f.ruleId === 27214 && f.snippet.includes('jinja2'));
   assert(Boolean(jinjaFinding), 'SCA flags vulnerable Jinja2 (< 3.1.4, CVE-2024-34064)');
 
-  const pyyamlFinding = pythonScaScan.findings.find(f => f.ruleId === 7004 && f.snippet.includes('pyyaml'));
+  const pyyamlFinding = pythonScaScan.findings.find(f => f.ruleId === 27214 && f.snippet.includes('pyyaml'));
   assert(Boolean(pyyamlFinding), 'SCA flags vulnerable PyYAML (< 5.4, CVE-2020-14343)');
 
-  const urllib3Finding = pythonScaScan.findings.find(f => f.ruleId === 7004 && f.snippet.includes('urllib3'));
+  const urllib3Finding = pythonScaScan.findings.find(f => f.ruleId === 27214 && f.snippet.includes('urllib3'));
   assert(Boolean(urllib3Finding), 'SCA flags vulnerable Urllib3 (< 2.0.7, CVE-2023-45803)');
 
   // ─── 10. Multi-Org Schema & Policy Enforcement (F-47) ─────────

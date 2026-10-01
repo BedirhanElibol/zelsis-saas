@@ -299,9 +299,9 @@ export function evaluateBuiltinRules(ctx: BuiltinRuleContext): void {
   if (file.path.includes('live-deployment') && file.content.includes('target="_blank"') && !file.content.includes('rel="noopener')) {
     addFinding({
       id: `real-find-${Date.now()}-${findingCounter++}`,
-      ruleId: 104,
+      ruleId: 27251,
       type: 'SECURITY',
-      title: 'SEC-WEB-04: Insecure External Link Target Blank (Tab-Nabbing Risk)',
+      title: 'SEC-WEB-05: Insecure External Link Target Blank (Tab-Nabbing Risk)',
       severity: 'MEDIUM',
       category: 'HTML Security',
       filePath: file.path,
@@ -740,7 +740,7 @@ export function evaluateBuiltinRules(ctx: BuiltinRuleContext): void {
     const lineNum = matchLineIdx !== -1 ? matchLineIdx + 1 : 1;
     addFinding({
       id: `real-find-${Date.now()}-${findingCounter++}`,
-      ruleId: 100,
+      ruleId: 27252,
       type: 'VIBEPOLISH',
       title: 'UI-100: Missing Request AbortSignal Listener',
       severity: 'MEDIUM',

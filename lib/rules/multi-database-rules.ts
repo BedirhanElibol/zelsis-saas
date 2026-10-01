@@ -308,9 +308,9 @@ export function evaluateMultiDatabaseRules(file: CodeFile, lines: string[], clea
             const snippet = extractSnippet(lines, lineNum);
             findings.push({
                 id: `redis-infra-${Date.now()}-${findingCounter.count++}`,
-                ruleId: 18103,
+                ruleId: 27241,
                 type: 'INFRA_DATABASE',
-                title: 'REDIS-SEC-01: Publicly Exposed Redis Port Without Password Authentication',
+                title: 'REDIS-SEC-02: Publicly Exposed Redis Port Without Password Authentication',
                 severity: 'CRITICAL',
                 category: 'In-Memory Security',
                 filePath: file.path,

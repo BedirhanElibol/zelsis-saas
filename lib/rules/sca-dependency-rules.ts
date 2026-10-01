@@ -363,7 +363,7 @@ export function evaluateScaDependencyRules(file: CodeFile, lines: string[], clea
                     ].join("\n");
                     findings.push({
                         id: `sca-cve-${Date.now()}-${findingCounter.count++}`,
-                        ruleId: 7001,
+                        ruleId: 27211,
                         type: "SECURITY",
                         title: `SCA: ${cveDef.cveId} - ${cveDef.title} (${pkgName}@${versionSpec})`,
                         severity: cveDef.severity,
@@ -392,7 +392,7 @@ export function evaluateScaDependencyRules(file: CodeFile, lines: string[], clea
                     const lineNum = lineIdx !== -1 ? lineIdx + 1 : 1;
                     findings.push({
                         id: `sca-dep-${Date.now()}-${findingCounter.count++}`,
-                        ruleId: 7002,
+                        ruleId: 27212,
                         type: "SECURITY",
                         title: `SCA: Deprecated Supply Chain Dependency '${pkgName}'`,
                         severity: "MEDIUM",
@@ -421,7 +421,7 @@ export function evaluateScaDependencyRules(file: CodeFile, lines: string[], clea
                     const lineNum = lineIdx !== -1 ? lineIdx + 1 : 1;
                     findings.push({
                         id: `sca-lic-${Date.now()}-${findingCounter.count++}`,
-                        ruleId: 7003,
+                        ruleId: 27213,
                         type: "LEGAL_COMPLIANCE",
                         title: `LICENSE-01: Restrictive Strong Copyleft License Detected (${declaredLicense})`,
                         severity: "MEDIUM",
@@ -527,7 +527,7 @@ export function evaluateScaDependencyRules(file: CodeFile, lines: string[], clea
                         if (info.isVulnerable(major, minor, patch)) {
                             findings.push({
                                 id: `sca-py-${Date.now()}-${findingCounter.count++}`,
-                                ruleId: 7004,
+                                ruleId: 27214,
                                 type: "SECURITY",
                                 title: `SCA: ${info.cve} - ${info.title} (${pkg})`,
                                 severity: "HIGH",

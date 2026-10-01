@@ -505,7 +505,7 @@ export function evaluateFrontendRules(file: CodeFile, lines: string[], cleanCont
                 const snippet = lines.slice(Math.max(0, lineNum - 2), Math.min(lines.length, lineNum + 2)).join('\n');
                 findings.push({
                     id: `frontend-${Date.now()}-${findingCounter.count++}`,
-                    ruleId: 1041,
+                    ruleId: 27231,
                     type: 'VIBEPOLISH',
                     title: 'Reverse Tab-Nabbing Security Hazard (target="_blank" Missing rel="noopener noreferrer")',
                     severity: 'MEDIUM',

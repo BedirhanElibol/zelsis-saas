@@ -37,7 +37,7 @@ export function evaluateAiCommentRules(file: CodeFile, lines: string[], rawConte
         if (syntheticPromptRegex.test(line)) {
             findings.push({
                 id: `ai-comment-${Date.now()}-${findingCounter.count++}`,
-                ruleId: 231,
+                ruleId: 27221,
                 type: 'VIBEPOLISH',
                 title: 'CLICHE-AI-COMMENT-01: Synthetic LLM Prompt Artifact & Header Injection',
                 severity: 'HIGH',
@@ -60,7 +60,7 @@ export function evaluateAiCommentRules(file: CodeFile, lines: string[], rawConte
         if (artificialSectionRegex.test(line)) {
             findings.push({
                 id: `ai-comment-${Date.now()}-${findingCounter.count++}`,
-                ruleId: 232,
+                ruleId: 27222,
                 type: 'VIBEPOLISH',
                 title: 'CLICHE-AI-COMMENT-02: Artificial LLM Section Marker Comment in JSX',
                 severity: 'MEDIUM',
@@ -83,7 +83,7 @@ export function evaluateAiCommentRules(file: CodeFile, lines: string[], rawConte
         if (unresolvedPlaceholderRegex.test(line)) {
             findings.push({
                 id: `ai-comment-${Date.now()}-${findingCounter.count++}`,
-                ruleId: 233,
+                ruleId: 27223,
                 type: 'VIBEPOLISH',
                 title: 'CLICHE-AI-COMMENT-03: Unresolved AI Placeholder / Incomplete Code Comment',
                 severity: 'MEDIUM',

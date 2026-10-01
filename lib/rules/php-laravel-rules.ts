@@ -14,7 +14,7 @@ export function evaluatePhpLaravelRules(file: CodeFile, lines: string[], cleanCo
         const matchLineIdx = lines.findIndex(l => reg_unserialize.test(l));
         findings.push({
             id: `php-uns-${findingCounter.count++}`,
-            ruleId: 9002,
+            ruleId: 27202,
             type: 'SECURITY',
             title: 'PHP-SEC-01: PHP Object Injection via unserialize()',
             severity: 'CRITICAL',

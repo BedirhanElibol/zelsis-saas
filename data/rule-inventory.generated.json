@@ -1,8 +1,8 @@
 {
  "summary": {
-  "implementedRules": 1488,
-  "testedRules": 228,
-  "preciseLocationRules": 1368,
+  "implementedRules": 1503,
+  "testedRules": 229,
+  "preciseLocationRules": 1383,
   "catalogEntries": 1922,
   "catalogOnlyNotImplemented": 773,
   "catalogPlaceholderMetadata": 1810
@@ -2315,10 +2315,10 @@
   },
   {
    "ruleId": 1041,
-   "code": "RULE-1041",
-   "title": "Reverse Tab-Nabbing Security Hazard (target=",
+   "code": "UI-41",
+   "title": "Monolithic System Prompt Inflation",
    "severity": "MEDIUM",
-   "source": "lib/rules/frontend-rules.ts",
+   "source": "lib/scanner/builtin-rules.ts",
    "preciseLocation": true,
    "tested": false,
    "inCatalog": false
@@ -10705,10 +10705,10 @@
   },
   {
    "ruleId": 9004,
-   "code": "DOTNET-SEC-01",
-   "title": "Insecure XML Deserialization",
-   "severity": "CRITICAL",
-   "source": "lib/rules/dotnet-csharp-rules.ts",
+   "code": "GO-04",
+   "title": "Default HTTP Client Without Timeout (http.DefaultClient)",
+   "severity": "HIGH",
+   "source": "lib/rules/go-microservices-rules.ts",
    "preciseLocation": true,
    "tested": false,
    "inCatalog": true
@@ -15661,6 +15661,156 @@
    "source": "lib/rules/security-rules.ts",
    "preciseLocation": true,
    "tested": true,
+   "inCatalog": false
+  },
+  {
+   "ruleId": 27201,
+   "code": "RUBY-SEC-01",
+   "title": "Unsafe YAML Deserialization",
+   "severity": "CRITICAL",
+   "source": "lib/rules/ruby-rails-rules.ts",
+   "preciseLocation": true,
+   "tested": false,
+   "inCatalog": false
+  },
+  {
+   "ruleId": 27202,
+   "code": "PHP-SEC-01",
+   "title": "PHP Object Injection via unserialize()",
+   "severity": "CRITICAL",
+   "source": "lib/rules/php-laravel-rules.ts",
+   "preciseLocation": true,
+   "tested": false,
+   "inCatalog": false
+  },
+  {
+   "ruleId": 27203,
+   "code": "JAVA-SEC-01",
+   "title": "Potential Log4Shell Vulnerability (Log4j)",
+   "severity": "CRITICAL",
+   "source": "lib/rules/java-spring-rules.ts",
+   "preciseLocation": true,
+   "tested": false,
+   "inCatalog": false
+  },
+  {
+   "ruleId": 27204,
+   "code": "DOTNET-SEC-01",
+   "title": "Insecure XML Deserialization",
+   "severity": "CRITICAL",
+   "source": "lib/rules/dotnet-csharp-rules.ts",
+   "preciseLocation": true,
+   "tested": false,
+   "inCatalog": false
+  },
+  {
+   "ruleId": 27211,
+   "code": "RULE-27211",
+   "title": "SCA: ${cveDef.cveId} - ${cveDef.title} (${pkgName}@${versionSpec})",
+   "severity": "UNKNOWN",
+   "source": "lib/rules/sca-dependency-rules.ts",
+   "preciseLocation": true,
+   "tested": false,
+   "inCatalog": false
+  },
+  {
+   "ruleId": 27212,
+   "code": "RULE-27212",
+   "title": "SCA: Deprecated Supply Chain Dependency ",
+   "severity": "MEDIUM",
+   "source": "lib/rules/sca-dependency-rules.ts",
+   "preciseLocation": true,
+   "tested": false,
+   "inCatalog": false
+  },
+  {
+   "ruleId": 27213,
+   "code": "LICENSE-01",
+   "title": "Restrictive Strong Copyleft License Detected (${declaredLicense})",
+   "severity": "MEDIUM",
+   "source": "lib/rules/sca-dependency-rules.ts",
+   "preciseLocation": true,
+   "tested": false,
+   "inCatalog": false
+  },
+  {
+   "ruleId": 27214,
+   "code": "RULE-27214",
+   "title": "SCA: ${info.cve} - ${info.title} (${pkg})",
+   "severity": "HIGH",
+   "source": "lib/rules/sca-dependency-rules.ts",
+   "preciseLocation": true,
+   "tested": true,
+   "inCatalog": false
+  },
+  {
+   "ruleId": 27221,
+   "code": "CLICHE-AI-COMMENT-01",
+   "title": "Synthetic LLM Prompt Artifact & Header Injection",
+   "severity": "HIGH",
+   "source": "lib/rules/ai-comment-rules.ts",
+   "preciseLocation": true,
+   "tested": false,
+   "inCatalog": false
+  },
+  {
+   "ruleId": 27222,
+   "code": "CLICHE-AI-COMMENT-02",
+   "title": "Artificial LLM Section Marker Comment in JSX",
+   "severity": "MEDIUM",
+   "source": "lib/rules/ai-comment-rules.ts",
+   "preciseLocation": true,
+   "tested": false,
+   "inCatalog": false
+  },
+  {
+   "ruleId": 27223,
+   "code": "CLICHE-AI-COMMENT-03",
+   "title": "Unresolved AI Placeholder / Incomplete Code Comment",
+   "severity": "MEDIUM",
+   "source": "lib/rules/ai-comment-rules.ts",
+   "preciseLocation": true,
+   "tested": false,
+   "inCatalog": false
+  },
+  {
+   "ruleId": 27231,
+   "code": "RULE-27231",
+   "title": "Reverse Tab-Nabbing Security Hazard (target=",
+   "severity": "MEDIUM",
+   "source": "lib/rules/frontend-rules.ts",
+   "preciseLocation": true,
+   "tested": false,
+   "inCatalog": false
+  },
+  {
+   "ruleId": 27241,
+   "code": "REDIS-SEC-02",
+   "title": "Publicly Exposed Redis Port Without Password Authentication",
+   "severity": "CRITICAL",
+   "source": "lib/rules/multi-database-rules.ts",
+   "preciseLocation": true,
+   "tested": false,
+   "inCatalog": false
+  },
+  {
+   "ruleId": 27251,
+   "code": "SEC-WEB-05",
+   "title": "Insecure External Link Target Blank (Tab-Nabbing Risk)",
+   "severity": "MEDIUM",
+   "source": "lib/scanner/builtin-rules.ts",
+   "preciseLocation": true,
+   "tested": false,
+   "inCatalog": false
+  },
+  {
+   "ruleId": 27252,
+   "code": "UI-100",
+   "title": "Missing Request AbortSignal Listener",
+   "severity": "MEDIUM",
+   "source": "lib/scanner/builtin-rules.ts",
+   "preciseLocation": true,
+   "tested": false,
    "inCatalog": false
   }
  ]
