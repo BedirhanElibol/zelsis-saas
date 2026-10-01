@@ -354,7 +354,12 @@ export function evaluateSecurityRules(file: CodeFile, lines: string[], cleanCont
     if (isApiRoute && !isPublicWebhookOrHealth) {
         const hasMutationExport = /export\s+async\s+function\s+(?:POST|PUT|DELETE|PATCH)\b/.test(cleanContent);
         const hasAuthCheck = AUTH_GUARD.test(cleanContent) || /(?:auth|session|verify|apiKey|checkRateLimit|rateLimiter|req\.headers\.get\(['"]authorization['"]\))/i.test(cleanContent);
-        if (hasMutationExport && !hasAuthCheck) {
+        // A handler that only hands the request to an imported function keeps its auth in that other file
+        const mutationCount = (cleanContent.match(/export\s+async\s+function\s+(?:POST|PUT|DELETE|PATCH)\b/g) || []).length;
+        const delegates = [...cleanContent.matchAll(/export\s+async\s+function\s+(?:POST|PUT|DELETE|PATCH)\s*\(\s*(\w+)[^)]*\)[^{]*\{\s*return\s+(?:await\s+)?(\w+)\(\s*\1\b[^)]*\)\s*;?\s*\}/g)]
+            .filter(m => new RegExp(String.raw`import\s+[^;]*\b${m[2]}\b[^;]*from\s+['"]`).test(cleanContent));
+        const onlyDelegates = mutationCount > 0 && delegates.length === mutationCount;
+        if (hasMutationExport && !hasAuthCheck && !onlyDelegates) {
             const matchLineIdx = lines.findIndex(l => /export\s+async\s+function\s+(?:POST|PUT|DELETE|PATCH)\b/.test(l));
             const lineNum = matchLineIdx !== -1 ? matchLineIdx + 1 : 1;
             const snippet = lines.slice(Math.max(0, lineNum - 2), Math.min(lines.length, lineNum + 2)).join('\n');

@@ -414,6 +414,16 @@ export const RULE_CASES: RuleCase[] = [
     ignores: f('app/api/unsubscribe/route.ts', "export async function GET(req: Request) {\n  const url = new URL(req.url);\n  url.searchParams.delete('utm_source');\n  const sub = await prisma.subscription.findUnique({ where: { token: url.searchParams.get('token') ?? '' } });\n  return Response.json({ confirm: Boolean(sub) });\n}\nexport async function POST(req: Request) {\n  const { token } = await req.json();\n  await prisma.subscription.delete({ where: { token } });\n  return new Response('ok');\n}\n")
   },
   {
+    ruleIds: [15],
+    name: 'API mutation route without an auth check',
+    detects: f('app/api/posts/route.ts', "import { db } from '@/lib/db';\nexport async function POST(req: Request) {\n  const body = await req.json();\n  await db.post.create({ data: body });\n  return new Response('ok');\n}\n"),
+    ignores: [
+      { path: 'app/api/posts/route.ts', content: "import { db } from '@/lib/db';\nimport { auth } from '@/lib/auth';\nexport async function POST(req: Request) {\n  const session = await auth();\n  if (!session) return new Response(null, { status: 401 });\n  await db.post.create({ data: await req.json() });\n  return new Response('ok');\n}\n" },
+      // vercel/commerce: the secret check lives in the imported revalidate()
+      { path: 'app/api/revalidate/route.ts', content: "import { revalidate } from 'lib/shopify';\nimport { NextRequest, NextResponse } from 'next/server';\n\nexport async function POST(req: NextRequest): Promise<NextResponse> {\n  return revalidate(req);\n}\n" }
+    ]
+  },
+  {
     ruleIds: [7218],
     name: 'Debug endpoint without authentication',
     detects: f('app/api/debug/route.ts', 'export async function GET() {\n  return Response.json({ env: process.env.NODE_ENV, memory: process.memoryUsage() });\n}\n'),
