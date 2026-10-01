@@ -40,7 +40,8 @@ export const CSP_DIRECTIVES = {
     'wss://*.supabase.co',
     'https://api.polar.sh',
     'https://api.github.com',
-    'https://raw.githubusercontent.com'
+    'https://raw.githubusercontent.com',
+    'https://api.pwnedpasswords.com'
   ],
   'frame-ancestors': ["'none'"],
   'base-uri': ["'self'"],

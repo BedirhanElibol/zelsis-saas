@@ -4,6 +4,7 @@ import React, { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { X, Mail, Lock, User, Code, ArrowRight, CheckCircle2, KeyRound, AlertCircle, Eye, EyeOff } from 'lucide-react';
 import { supabaseSignIn, supabaseSignUp, supabaseResetPassword, supabaseSignInWithOAuth, isSupabaseConfigured } from '@/lib/supabase';
+import { isPwnedPassword } from '@/lib/pwned-password';
 import { ZelsisLogo } from '@/components/ui/ZelsisLogo';
 
 export interface UserProfile {
@@ -119,7 +120,18 @@ export const AuthModal: React.FC<AuthModalProps> = ({
       return;
     }
 
+    if (mode === 'signup' && password.length < 8) {
+      setError('Password must be at least 8 characters long.');
+      return;
+    }
+
     setLoadingTarget('email');
+
+    if (mode === 'signup' && (await isPwnedPassword(password))) {
+      setLoadingTarget(null);
+      setError('This password has appeared in a known data breach. Please choose a different one.');
+      return;
+    }
 
     if (mode === 'signin') {
       const { user, error: signError } = await supabaseSignIn(email.trim(), password);
