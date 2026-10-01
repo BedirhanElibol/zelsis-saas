@@ -60,6 +60,16 @@ implementation_plan.md
 task.md
 walkthrough.md
 
+# Claude Code local state (agent kit itself is tracked)
+.claude/worktrees/
+.claude/settings.local.json
+.claude/launch.json
+.claude/agent-kit/tasks/
+.claude/agent-kit/docs/ProjeSonra.md
+.claude/agent-kit/docs/Proje_Gelistirme_Rehberi.md
+.claude/agent-kit/docs/extracted_*.txt
+.claude/agent-kit/docs/*.png
+
 # Playwright
 /playwright-report/
 /test-results/

@@ -36,6 +36,10 @@
 - Verify: Run `npx tsc --noEmit` (whole project) before reporting task completion.
 - Tone: Be terse. Output git diff summaries and verification status; omit pleasantries.
 
+# 7. Agent Kit Rules
+- Precedence: KIT_RULES.md overrides sections 1-6 on any conflict (except section 4 Hard Constraints).
+@.claude/agent-kit/rules/KIT_RULES.md
+
 <!-- BEGIN:nextjs-agent-rules -->
 
 # This is NOT the Next.js you know

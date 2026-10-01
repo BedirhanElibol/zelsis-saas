@@ -10,6 +10,7 @@ export default defineConfig([
     'node_modules/**',
     'dist/**',
     '.cache/**',
+    '.claude/**',
     'playwright-report/**',
     'test-results/**',
     'next-env.d.ts',
