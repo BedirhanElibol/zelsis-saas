@@ -10,6 +10,8 @@ import { ruleMaturity } from './scanner/rule-maturity';
 /** [kept, dropped] rule pairs that report the same issue (rule packs overlap). */
 const SAME_ISSUE_RULES: ReadonlyArray<readonly [number, number]> = [
   [7004, 3002], // Dockerfile without USER: CLOUD-04 (reviewed true positive) over the infra-pack duplicate
+  [8404, 10303], // DB pool without max size: CHAOS-04 over PG-03
+  [8404, 6013], // ...and over DB-PERF-13 (pool acquisition timeout), same client config line
 ];
 import { RULE_ENGINES } from './scanner/rule-engines';
 import { evaluateBuiltinRules } from './scanner/builtin-rules';

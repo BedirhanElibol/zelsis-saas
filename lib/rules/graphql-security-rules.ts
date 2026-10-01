@@ -132,7 +132,7 @@ export function evaluateGraphqlSecurityRules(file: CodeFile, lines: string[], cl
             ruleId: 8505,
             type: 'SECURITY',
             title: "GQL-05: Circular Fragment Reference Hazard",
-            severity: 'HIGH',
+            severity: 'LOW',
             category: "Parser Denial of Service",
             filePath: file.path,
             lineRange: `L${lineNum}`,

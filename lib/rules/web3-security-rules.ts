@@ -19,13 +19,15 @@ export function evaluateWeb3SecurityRules(file: CodeFile, lines: string[], clean
     if (lowerPath.includes("node_modules/") || lowerPath.endsWith(".d.ts")) {
         return { findings, logs };
     }
+    // Contract sources only: the word "contract " appears in pricing copy, and ethers/web3 client code is not a contract
     const isWeb3 = lowerPath.endsWith(".sol") || lowerPath.endsWith(".vy") || lowerPath.endsWith(".cairo") ||
-        cleanContent.includes("pragma solidity") || cleanContent.includes("contract ") || cleanContent.includes("ethers.") || cleanContent.includes("web3.");
+        cleanContent.includes("pragma solidity");
     if (!isWeb3)
         return { findings, logs };
     const ts = new Date().toLocaleTimeString();
     // WEB3-01: Reentrancy Vulnerability (Checks-Effects-Interactions Violation)
-    if (/(?:call\.value|call\{value:)[\s\S]*?balances\[/i.test(cleanContent) || (!cleanContent.includes('nonReentrant'))) {
+    // An external call before the balance update, in a contract without a reentrancy guard
+    if (/(?:call\.value|call\{value:)[\s\S]*?balances\[/i.test(cleanContent) && !cleanContent.includes('nonReentrant')) {
         const matchLineIdx = locateMatchLine(lines, [/(?:call\.value|call\{value:)[\s\S]*?balances\[/i], l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('*'));
         const lineNum = matchLineIdx !== -1 ? matchLineIdx + 1 : 1;
         findings.push({

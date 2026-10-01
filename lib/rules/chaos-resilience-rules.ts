@@ -29,7 +29,7 @@ export function evaluateChaosResilienceRules(file: CodeFile, lines: string[], cl
             ruleId: 8401,
             type: 'INFRA_DATABASE',
             title: "CHAOS-01: Downstream HTTP Fetch Missing Timeout Signal (AbortSignal)",
-            severity: 'HIGH',
+            severity: 'MEDIUM',
             category: "Network Resilience",
             filePath: file.path,
             lineRange: `L${lineNum}`,
@@ -43,7 +43,7 @@ export function evaluateChaosResilienceRules(file: CodeFile, lines: string[], cl
             owner: 'Security & Release Engineering',
             falsePositive: false
         });
-        logs.push(`[${ts}] 💥 HIGH: CHAOS-01 finding in ${file.path}:${lineNum}`);
+        logs.push(`[${ts}] 💥 MEDIUM: CHAOS-01 finding in ${file.path}:${lineNum}`);
     }
     // CHAOS-02: Unbounded Retry Loop Without Exponential Backoff and Jitter
     if (/while\s*\(\s*retries\s*<\s*maxRetries\s*\)[\s\S]*?await\s+sleep\s*\(\s*1000\s*\)/i.test(cleanContent) && !/Math\.random|backoff/i.test(cleanContent)) {
@@ -104,7 +104,7 @@ export function evaluateChaosResilienceRules(file: CodeFile, lines: string[], cl
             ruleId: 8404,
             type: 'INFRA_DATABASE',
             title: "CHAOS-04: Database Connection Pool Starvation (Missing Max Limit / Timeout)",
-            severity: 'CRITICAL',
+            severity: 'MEDIUM',
             category: "Database Resilience",
             filePath: file.path,
             lineRange: `L${lineNum}`,
@@ -118,7 +118,7 @@ export function evaluateChaosResilienceRules(file: CodeFile, lines: string[], cl
             owner: 'Security & Release Engineering',
             falsePositive: false
         });
-        logs.push(`[${ts}] 💥 CRITICAL: CHAOS-04 finding in ${file.path}:${lineNum}`);
+        logs.push(`[${ts}] 💥 MEDIUM: CHAOS-04 finding in ${file.path}:${lineNum}`);
     }
     // CHAOS-05: Missing Dead Letter Queue (DLQ) on Async Background Processing
     if (/new\s+Queue\s*\(\s*["\'][^"\']+["\']\s*,\s*\{(?![^}]*defaultJobOptions)/i.test(cleanContent)) {

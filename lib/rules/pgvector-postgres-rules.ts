@@ -77,7 +77,7 @@ export function evaluatePgvectorPostgresRules(file: CodeFile, lines: string[], c
             ruleId: 10303,
             type: 'INFRA_DATABASE',
             title: "PG-03: Exhaustion of Connection Pool via Missing Max Connection Limits",
-            severity: "CRITICAL",
+            severity: "MEDIUM",
             category: "Connection Management",
             filePath: file.path,
             lineRange: `L${lineNum}`,

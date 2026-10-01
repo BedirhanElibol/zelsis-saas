@@ -954,7 +954,7 @@ export function evaluateAiSafetyRules(file: CodeFile, lines: string[], cleanCont
             ruleId: 8039,
             type: 'SECURITY',
             title: "LLM-SEC-39: Unverified Markdown Hyperlink Rendering in AI Chat UI",
-            severity: 'HIGH',
+            severity: 'LOW',
             category: "Phishing & Fraud",
             filePath: file.path,
             lineRange: `L${lineNum}`,
@@ -968,7 +968,7 @@ export function evaluateAiSafetyRules(file: CodeFile, lines: string[], cleanCont
             owner: 'Security & Release Engineering',
             falsePositive: false
         });
-        logs.push(`[${ts}] 🤖 HIGH: LLM-SEC-39 finding in ${file.path}:${lineNum}`);
+        logs.push(`[${ts}] 🤖 LOW: LLM-SEC-39 finding in ${file.path}:${lineNum}`);
     }
     // LLM-SEC-40: Missing Differential Token Budgeting Across Subscription Tiers
     if (/model:\s*["\'](?:o1|o1-preview|claude-3-opus)["\']/i.test(cleanContent) && !/isPro|isEnterprise|tier\s*===/i.test(cleanContent)) {

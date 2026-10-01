@@ -489,6 +489,12 @@ export const RULE_CASES: RuleCase[] = [
     ignores: f('lib/db/setup.ts', "export function setup(secretKey: string) {\n  console.log('Step 3: Getting Stripe Secret Key');\n  return secretKey.length;\n}\n")
   },
   {
+    ruleIds: [8207],
+    name: 'Sentry sends default PII without a beforeSend scrubber',
+    detects: f('src/instrumentation-client.ts', "import * as Sentry from '@sentry/nextjs';\nSentry.init({\n  dsn: process.env.NEXT_PUBLIC_SENTRY_DSN,\n  sendDefaultPii: true,\n});\n"),
+    ignores: f('src/instrumentation-client.ts', "import * as Sentry from '@sentry/nextjs';\nSentry.init({\n  dsn: process.env.NEXT_PUBLIC_SENTRY_DSN,\n  sendDefaultPii: true,\n  beforeSend: (event) => scrubPii(event),\n});\n")
+  },
+  {
     ruleIds: [27101],
     name: 'Server fetches a URL taken from the request body (SSRF)',
     detects: f('app/api/preview/route.ts', "export async function POST(req: Request) {\n  const session = await auth();\n  const { url } = await req.json();\n  const res = await fetch(url);\n  return new Response(await res.text());\n}\n"),
