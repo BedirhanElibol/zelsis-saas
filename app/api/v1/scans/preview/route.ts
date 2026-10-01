@@ -104,7 +104,10 @@ export async function POST(req: NextRequest) {
     const openFindings = gatingFindings(result.findings);
     const seenRules = new Set<number>();
     const topFindings = [...openFindings]
-      .sort((a, b) => SEVERITY_ORDER.indexOf(gateSeverity(a) as never) - SEVERITY_ORDER.indexOf(gateSeverity(b) as never))
+      .sort((a, b) =>
+        SEVERITY_ORDER.indexOf(gateSeverity(a) as never) - SEVERITY_ORDER.indexOf(gateSeverity(b) as never) ||
+        // same severity: findings from verified rules first
+        Number(b.maturity === 'verified') - Number(a.maturity === 'verified'))
       .filter((f) => !seenRules.has(f.ruleId) && seenRules.add(f.ruleId))
       .slice(0, PREVIEW_FINDING_LIMIT)
       .map((f) => ({ title: f.title, severity: gateSeverity(f), category: f.category }));

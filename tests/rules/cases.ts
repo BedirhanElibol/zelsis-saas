@@ -277,7 +277,7 @@ export const RULE_CASES: RuleCase[] = [
 
   // ─── Containers & CI ──────────────────────────────────────────────────
   {
-    ruleIds: [3002, 7004, 7005, 8314],
+    ruleIds: [7004, 7005, 8314], // 3002 reports the same missing USER and is dropped in favour of 7004
     name: 'Dockerfile: root user, latest tag, no healthcheck',
     detects: f('Dockerfile', 'FROM node:latest\nCOPY . .\nRUN npm install\nCMD ["node", "server.js"]\n'),
     ignores: f('Dockerfile', 'FROM node:22.11-alpine\nWORKDIR /app\nCOPY . .\nRUN npm ci --omit=dev\nUSER node\nHEALTHCHECK CMD wget -qO- http://localhost:3000/health || exit 1\nCMD ["node", "server.js"]\n')

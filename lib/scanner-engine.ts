@@ -4,8 +4,13 @@ import type { CodeFile, ScanResult } from './scanner/types';
 import { isMinifiedContent, isSecretRuleId, isTestFixturePath, isVendoredPath, stripComments, yieldToMain } from './scanner/text';
 import { parseZelsisIgnore } from './scanner/ignore-parser';
 import { parseZelsisRc } from './scanner/rc-config';
-import { calculateGateStatus, calculateReadinessScore, gatingFindings } from './scanner/scoring';
+import { calculateGateStatus, calculateReadinessScore, gateSeverity, gatingFindings } from './scanner/scoring';
 import { ruleMaturity } from './scanner/rule-maturity';
+
+/** [kept, dropped] rule pairs that report the same issue (rule packs overlap). */
+const SAME_ISSUE_RULES: ReadonlyArray<readonly [number, number]> = [
+  [7004, 3002], // Dockerfile without USER: CLOUD-04 (reviewed true positive) over the infra-pack duplicate
+];
 import { RULE_ENGINES } from './scanner/rule-engines';
 import { evaluateBuiltinRules } from './scanner/builtin-rules';
 import { detectProjectDatabases } from './rules/multi-database-rules';
@@ -295,19 +300,28 @@ export async function runStaticCodeScan(files: CodeFile[], repoName: string = 'T
     logs.push(`[${new Date().toLocaleTimeString()}] [DEPENDENCIES] No lockfile or pinned manifest found: dependency versions could not be checked. Commit a lockfile to enable the check.`);
   }
 
+  // Rule packs overlap: when two rules report the same issue in one file, keep the first of the pair
+  for (const [keep, drop] of SAME_ISSUE_RULES) {
+    const filesWithKeep = new Set(findings.filter((f) => f.ruleId === keep).map((f) => f.filePath));
+    for (let k = findings.length - 1; k >= 0; k--) {
+      if (findings[k].ruleId === drop && filesWithKeep.has(findings[k].filePath)) findings.splice(k, 1);
+    }
+  }
+
   logs.push(`[${new Date().toLocaleTimeString()}] --------------------------------------------------`);
   logs.push(`[${new Date().toLocaleTimeString()}] [SUMMARY] Scan complete: ${targetFiles.length} files, ${findings.length} findings (${findings.filter((f) => f.maturity === 'experimental').length} from experimental rules, not counted toward the gate).`);
   if (testFixtureSkips > 0) {
     logs.push(`[${new Date().toLocaleTimeString()}] [INFO] ${testFixtureSkips} non-secret finding(s) in test/fixture files were not counted (test code does not ship).`);
   }
 
-  // Counts, score and gate only use findings from rules proven precise; experimental ones are reported separately
+  // Counts, score and gate only use findings from rules proven precise; experimental ones are reported separately.
+  // Counts use the gate severity, so an unproven CRITICAL (which only warns) is counted as HIGH, like the gate does.
   const openFindings = gatingFindings(findings);
   const experimentalCount = findings.filter((f) => f.status === 'OPEN' && f.maturity === 'experimental').length;
-  const criticalCount = openFindings.filter(f => f.severity === 'CRITICAL').length;
-  const highCount = openFindings.filter(f => f.severity === 'HIGH').length;
-  const mediumCount = openFindings.filter(f => f.severity === 'MEDIUM').length;
-  const lowCount = openFindings.filter(f => f.severity === 'LOW').length;
+  const criticalCount = openFindings.filter(f => gateSeverity(f) === 'CRITICAL').length;
+  const highCount = openFindings.filter(f => gateSeverity(f) === 'HIGH').length;
+  const mediumCount = openFindings.filter(f => gateSeverity(f) === 'MEDIUM').length;
+  const lowCount = openFindings.filter(f => gateSeverity(f) === 'LOW').length;
   const uiClicheCount = openFindings.filter(f => f.type === 'VIBEPOLISH').length;
 
   const score = calculateReadinessScore(findings);

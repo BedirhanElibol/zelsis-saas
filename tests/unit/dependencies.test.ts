@@ -40,6 +40,23 @@ test('pnpm lockfile v6 and v9 package keys', () => {
   assert.deepEqual(deps('pnpm-lock.yaml', v9).map((s) => s.split('#')[0]), ['npm:semver@7.5.1']);
 });
 
+test('pnpm marks build-only packages as dev (v6 flag, v9 graph from importers)', () => {
+  const v6 = "lockfileVersion: '6.0'\n\ndependencies:\n  next:\n    version: 14.0.0\n\ndevDependencies:\n  esbuild:\n    version: 0.18.20\n\npackages:\n\n  /next@14.0.0:\n    resolution: {}\n    dev: false\n\n  /esbuild@0.18.20:\n    resolution: {}\n    dev: true\n";
+  assert.deepEqual(deps('pnpm-lock.yaml', v6).map((s) => s.split('#')[0]), ['npm:next@14.0.0', 'npm:esbuild@0.18.20:dev']);
+
+  const v9 = [
+    "lockfileVersion: '9.0'", '', 'importers:', '', '  .:', '    dependencies:', '      next:', '        specifier: ^15.0.0',
+    '        version: 15.0.0(react@19.0.0)', '    devDependencies:', '      drizzle-kit:', '        specifier: ^0.31.0', '        version: 0.31.1', '',
+    'packages:', '', '  next@15.0.0:', '    resolution: {}', '', '  postcss@8.4.31:', '    resolution: {}', '', '  drizzle-kit@0.31.1:', '    resolution: {}', '',
+    '  esbuild@0.18.20:', '    resolution: {}', '', 'snapshots:', '', '  next@15.0.0(react@19.0.0):', '    dependencies:', '      postcss: 8.4.31', '',
+    '  postcss@8.4.31: {}', '', '  drizzle-kit@0.31.1:', '    dependencies:', '      esbuild: 0.18.20', '', '  esbuild@0.18.20: {}', ''
+  ].join('\n');
+  // postcss is reached through next (shipped); esbuild only through drizzle-kit (build tooling)
+  assert.deepEqual(deps('pnpm-lock.yaml', v9).map((s) => s.split('#')[0]), [
+    'npm:next@15.0.0', 'npm:postcss@8.4.31', 'npm:drizzle-kit@0.31.1:dev', 'npm:esbuild@0.18.20:dev'
+  ]);
+});
+
 test('python: requirements pins only, Pipfile.lock, poetry.lock', () => {
   assert.deepEqual(
     deps('requirements.txt', 'django==3.2.0  # web\nrequests>=2.0\nurllib3[socks]==1.26.4 ; python_version > "3"\n-e .\n').map((s) => s.split('#')[0]),

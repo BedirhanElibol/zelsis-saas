@@ -83,16 +83,86 @@ function parseYarnLock(path: string, lines: string[]): Dependency[] {
   return out;
 }
 
+/** `name@1.2.3(peer@4)` / `1.2.3(peer@4)` -> without the peer suffix. */
+const stripPeers = (s: string) => s.replace(/\(.*$/, '').replace(/^['"]|['"]$/g, '');
+
+/**
+ * pnpm-lock.yaml (v5-v9). Dev-only packages are marked so OSV findings in build tooling cap at MEDIUM:
+ * v5/v6 carry `dev: true` per package; v9 dropped it, so the snapshot graph is walked from the
+ * importers' dependencies / optionalDependencies, and anything not reached is dev-only.
+ */
 function parsePnpmLock(path: string, lines: string[]): Dependency[] {
-  const out: Dependency[] = [];
-  let inPackages = false;
+  const out: (Dependency & { devFlag?: boolean })[] = [];
+  const prodRoots: string[] = [];
+  const devRoots: string[] = [];
+  const graph = new Map<string, string[]>();
+  let section = '';
+  let group = '';
+  let rootName = '';
+  let snapshotKey = '';
+  let current: (Dependency & { devFlag?: boolean }) | null = null;
+
   lines.forEach((l, i) => {
-    if (/^\S/.test(l)) { inPackages = /^packages:\s*$/.test(l); return; }
-    if (!inPackages) return;
-    const m = l.match(/^ {2}['"]?\/?((?:@[^/@\s'"]+\/)?[^/@\s'"(]+)[@/](\d[^(:'"\s]*)/);
-    if (m) out.push({ ecosystem: 'npm', name: m[1], version: m[2], file: path, line: i + 1, dev: false });
+    if (/^\S/.test(l)) {
+      section = l.replace(/:.*$/, '').trim();
+      group = section;
+      return;
+    }
+    const indent = l.length - l.trimStart().length;
+    const t = l.trim();
+    if (!t || t.startsWith('#')) return;
+
+    if (section === 'packages') {
+      if (indent === 2) {
+        const m = l.match(/^ {2}['"]?\/?((?:@[^/@\s'"]+\/)?[^/@\s'"(]+)[@/](\d[^(:'"\s]*)/);
+        current = m ? { ecosystem: 'npm', name: m[1], version: m[2], file: path, line: i + 1, dev: false } : null;
+        if (current) out.push(current);
+      } else if (current && indent === 4) {
+        const dev = t.match(/^dev:\s*(true|false)/);
+        if (dev) current.devFlag = dev[1] === 'true';
+      }
+      return;
+    }
+
+    // v9 workspaces (importers) and v5/v6 single projects (top-level dependencies / devDependencies)
+    const inImporters = section === 'importers';
+    const depIndent = inImporters ? 6 : 2;
+    const groupIndent = inImporters ? 4 : 0;
+    if (inImporters || /^(?:dependencies|devDependencies|optionalDependencies)$/.test(section)) {
+      if (inImporters && indent === groupIndent) { group = t.replace(/:.*$/, ''); return; }
+      if (indent === depIndent) { rootName = t.replace(/:.*$/, '').replace(/^['"]|['"]$/g, ''); return; }
+      const version = indent > depIndent && t.match(/^version:\s*(.+)$/);
+      if (version && rootName && !/^(?:link|file|workspace):/.test(version[1])) {
+        (group === 'devDependencies' ? devRoots : prodRoots).push(`${rootName}@${stripPeers(version[1])}`);
+      }
+      return;
+    }
+
+    if (section === 'snapshots') {
+      if (indent === 2) { snapshotKey = stripPeers(t.replace(/:\s*(?:\{\})?$/, '')); graph.set(snapshotKey, graph.get(snapshotKey) ?? []); return; }
+      if (indent === 4) { group = t.replace(/:.*$/, ''); return; }
+      if (indent === 6 && /^(?:dependencies|optionalDependencies)$/.test(group)) {
+        const m = t.match(/^['"]?((?:@[^/'"\s]+\/)?[^'"\s:]+)['"]?:\s*(.+)$/);
+        if (m) graph.get(snapshotKey)?.push(`${m[1]}@${stripPeers(m[2])}`);
+      }
+    }
   });
-  return out;
+
+  // Reachability from production roots, when the lock has a v9 snapshot graph
+  const prodReachable = new Set<string>();
+  if (graph.size > 0 && prodRoots.length + devRoots.length > 0) {
+    const stack = [...prodRoots];
+    while (stack.length) {
+      const key = stack.pop()!;
+      if (prodReachable.has(key)) continue;
+      prodReachable.add(key);
+      stack.push(...(graph.get(key) ?? []));
+    }
+  }
+  return out.map(({ devFlag, ...dep }) => ({
+    ...dep,
+    dev: prodReachable.size > 0 ? !prodReachable.has(`${dep.name}@${dep.version}`) : Boolean(devFlag),
+  }));
 }
 
 function parseRequirements(path: string, lines: string[]): Dependency[] {
