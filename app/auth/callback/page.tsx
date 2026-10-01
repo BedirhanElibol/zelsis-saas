@@ -4,6 +4,7 @@ import React, { useEffect, useState, Suspense } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { getSupabase, mapSupabaseUserToProfile, syncUserProfileToSupabase, isPlatformAdminEmail } from '@/lib/supabase';
 import { verifyLicenseKey } from '@/lib/stripe-checkout';
+import { isFounderGrantExpiry } from '@/lib/subscription-utils';
 import { Shield, Loader2, CheckCircle2, AlertTriangle, ArrowRight } from 'lucide-react';
 import Link from 'next/link';
 
@@ -73,7 +74,7 @@ function CallbackHandler() {
             localStorage.removeItem('shipguard_user');
             localStorage.removeItem('zelsis_license_key');
             localStorage.removeItem('shipguard_license_key');
-          } else if (!isPlatformAdmin && (parsedLocal?.expiresAt?.includes('2099') || parsedLocal?.tier === 'Enterprise')) {
+          } else if (!isPlatformAdmin && isFounderGrantExpiry(parsedLocal?.expiresAt)) {
             // Tainted founder records on non-founder account
             localStorage.removeItem('zelsis_user');
             localStorage.removeItem('shipguard_user');
@@ -108,8 +109,8 @@ function CallbackHandler() {
           }
         }
 
-        // Auto-heal tainted cloud Supabase metadata if previous buggy version saved Enterprise/2099
-        if (rawProfile.tier !== 'Free' || rawProfile.expiresAt?.includes('2099')) {
+        // Auto-heal tainted cloud Supabase metadata if previous buggy version saved a founder 2099 grant
+        if (isFounderGrantExpiry(rawProfile.expiresAt)) {
           console.info('[Zelsis OAuth] Non-founder profile had tainted metadata. Auto-healing to Free Tier in Supabase.');
           syncUserProfileToSupabase({
             tier: 'Free',

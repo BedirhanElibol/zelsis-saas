@@ -9,11 +9,13 @@ import {
   Play, 
   CheckCircle2, 
   ExternalLink,
-  Lock
+  Lock,
+  Loader2
 } from 'lucide-react';
 import Image from 'next/image';
 import { useRouter } from 'next/navigation';
 import { normalizeRepoUrl } from '@/lib/github-api';
+import { ScanPreviewCard, ScanPreviewResult } from '@/components/saas/ScanPreviewCard';
 
 interface SaasHeroProps {
   onOpenDashboard?: (repoUrl?: string) => void;
@@ -32,32 +34,54 @@ export const SaasHero: React.FC<SaasHeroProps> = ({ onOpenDashboard }) => {
     { label: 'React Native', value: 'facebook/react-native' }
   ];
 
-  const handleSelectAndScan = (val: string) => {
-    setRepoInput(val);
+  const [preview, setPreview] = useState<ScanPreviewResult | null>(null);
+  const [previewError, setPreviewError] = useState<string | null>(null);
+
+  // Signup-free teaser: summary only; full report needs an account
+  const runPreview = async (val: string) => {
     const clean = val.trim();
     if (!clean || isScanning) return;
     setIsScanning(true);
-    const normalized = normalizeRepoUrl(clean);
-    if (onOpenDashboard) {
-      onOpenDashboard(normalized);
-    } else {
-      router.push(`/dashboard?repo=${encodeURIComponent(normalized)}&scan=true`);
+    setPreview(null);
+    setPreviewError(null);
+    try {
+      const res = await fetch('/api/v1/scans/preview', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ repoUrl: normalizeRepoUrl(clean) }),
+      });
+      const data = await res.json().catch(() => null);
+      if (!res.ok || !data) {
+        setPreviewError(data?.error || 'Preview scan failed. Please try again.');
+        return;
+      }
+      setPreview(data as ScanPreviewResult);
+    } catch {
+      setPreviewError('Network error. Check your connection and try again.');
+    } finally {
+      setIsScanning(false);
     }
   };
 
-  if (sampleRepos.length === 0) return null;
+  const handleSelectAndScan = (val: string) => {
+    setRepoInput(val);
+    runPreview(val);
+  };
 
   const handleStartScan = (e: React.FormEvent) => {
     e.preventDefault();
-    const clean = repoInput.trim();
-    if (!clean || isScanning) return;
-    setIsScanning(true);
-    const normalized = normalizeRepoUrl(clean);
-    if (onOpenDashboard) {
-      onOpenDashboard(normalized);
-    } else {
-      router.push(`/dashboard?repo=${encodeURIComponent(normalized)}&scan=true`);
+    runPreview(repoInput);
+  };
+
+  const handleUnlockFullReport = () => {
+    const repoUrl = preview?.repoUrl || normalizeRepoUrl(repoInput.trim());
+    try {
+      // Survives the OAuth round-trip, which drops query params
+      sessionStorage.setItem('zelsis_pending_repo', repoUrl);
+    } catch {
+      // sessionStorage unavailable; the query param still carries the repo
     }
+    router.push(`/dashboard?auth=signup&repo=${encodeURIComponent(repoUrl)}&scan=true`);
   };
 
   return (
@@ -111,8 +135,9 @@ export const SaasHero: React.FC<SaasHeroProps> = ({ onOpenDashboard }) => {
               disabled={isScanning}
               className="px-5 py-2.5 rounded-lg text-xs font-bold font-mono uppercase tracking-wider bg-white text-black hover:bg-neutral-200 transition-all flex items-center justify-center gap-2 shrink-0 shadow-sm active:scale-[0.98] disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer"
             >
-              <span>Scan Repository</span>
-              <ArrowRight size={13} />
+              {isScanning ? <Loader2 size={13} className="animate-spin" /> : null}
+              <span>{isScanning ? 'Scanning…' : 'Scan Repository'}</span>
+              {!isScanning && <ArrowRight size={13} />}
             </button>
           </form>
 
@@ -135,7 +160,13 @@ export const SaasHero: React.FC<SaasHeroProps> = ({ onOpenDashboard }) => {
               </button>
             ))}
           </div>
+
+          {previewError && (
+            <p role="alert" className="mt-3 text-xs font-mono text-red-400">{previewError}</p>
+          )}
         </motion.div>
+
+        {preview && <ScanPreviewCard result={preview} onUnlock={handleUnlockFullReport} />}
 
         {/* Minimal Engineering Telemetry Ribbon */}
         <motion.div

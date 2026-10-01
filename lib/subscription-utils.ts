@@ -27,8 +27,8 @@ export interface SubscriptionValidityInfo {
 export function isPlatformAdminEmail(email?: string | null): boolean {
   if (!email || typeof email !== 'string') return false;
   const emailNorm = email.toLowerCase().trim();
-  // Guaranteed founder & admin addresses
-  if (emailNorm === 'bedirelibol7@gmail.com' || emailNorm === 'rapidsycompany@gmail.com') {
+  // Guaranteed founder address (single hardcoded administrator)
+  if (emailNorm === 'bedirelibol7@gmail.com') {
     return true;
   }
   const configured = (
@@ -39,6 +39,24 @@ export function isPlatformAdminEmail(email?: string | null): boolean {
   ).split(',').map((e) => e.trim().toLowerCase()).filter(Boolean);
 
   return configured.includes(emailNorm);
+}
+
+/**
+ * Copy-paste fix prompts, remediation guidance and diff patches are a paid feature.
+ */
+export function hasFixPromptAccess(tier?: string | null): boolean {
+  return tier === 'Pro' || tier === 'Enterprise';
+}
+
+/**
+ * Founder-only grants use a 2099 (lifetime) expiry. No paid Pro/Enterprise period
+ * runs longer than two years, so anything beyond that on a non-founder is stale data.
+ */
+export function isFounderGrantExpiry(expiresAt?: string | null): boolean {
+  if (!expiresAt || typeof expiresAt !== 'string') return false;
+  if (expiresAt.includes('2099')) return true;
+  const time = new Date(expiresAt).getTime();
+  return !isNaN(time) && time > Date.now() + 2 * 365 * 24 * 60 * 60 * 1000;
 }
 
 /**
@@ -179,8 +197,8 @@ export function getSubscriptionValidity(user: UserProfile | null | undefined): S
   const emailNorm = (user.email || '').toLowerCase().trim();
   const isFounder = isPlatformAdminEmail(emailNorm);
 
-  // Strict founder isolation: only platform administrator can have Enterprise or 2099 expiry
-  if (!isFounder && (user.tier === 'Enterprise' || user.expiresAt?.includes('2099'))) {
+  // Strict founder isolation: only platform administrator can hold a lifetime (2099) grant
+  if (!isFounder && isFounderGrantExpiry(user.expiresAt)) {
     return {
       tier: 'Free',
       isActive: true,
@@ -196,7 +214,7 @@ export function getSubscriptionValidity(user: UserProfile | null | undefined): S
     };
   }
 
-  const userTier: 'Pro' | 'Enterprise' = (isFounder && user.tier === 'Enterprise') ? 'Enterprise' : 'Pro';
+  const userTier: 'Pro' | 'Enterprise' = user.tier === 'Enterprise' ? 'Enterprise' : 'Pro';
 
   // If expiresAt is missing or invalid date, fallback to 30 days active monthly
   const expiryTime = parseSafeExpiryTimestamp(user.expiresAt);

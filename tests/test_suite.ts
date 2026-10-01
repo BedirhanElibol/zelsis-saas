@@ -27,7 +27,7 @@ import {
   isCicdIntegrationAllowed,
   isCustomRulesAllowed
 } from '../lib/quota-manager';
-import { isPlatformAdminEmail, hasAdminRole } from '../lib/subscription-utils';
+import { isPlatformAdminEmail, hasAdminRole, isFounderGrantExpiry, getSubscriptionValidity, hasFixPromptAccess } from '../lib/subscription-utils';
 import { ZELSIS_PRICING_PLANS } from '../data/pricing-plans';
 import {
   isSupabaseConfigured as isSupabaseConfiguredServer,
@@ -970,6 +970,21 @@ async function runAllTests() {
   const clientConfig = getSupabaseConfig();
   assert(clientConfig.url.length > 0 && clientConfig.anonKey.length > 0, 'getSupabaseConfig provides populated config object');
   assert(CANONICAL_SUPABASE_URL === 'https://afzpaydfkmycrwuxmzkk.supabase.co', 'CANONICAL_SUPABASE_URL points to live production ref');
+
+  // 20. Paid Enterprise for non-founder accounts
+  console.log('\n--- 20. Testing Non-Founder Enterprise Tier Resolution ---');
+  const inOneYear = new Date(Date.now() + 365 * 24 * 60 * 60 * 1000).toISOString();
+  const customerEnterprise = { name: 'Customer', email: 'customer@example.com', tier: 'Enterprise' as const, isLoggedIn: true, expiresAt: inOneYear };
+  assert(getSubscriptionValidity(customerEnterprise).tier === 'Enterprise', 'Non-founder with active Enterprise resolves to Enterprise');
+  assert(getSubscriptionValidity({ ...customerEnterprise, expiresAt: '2020-01-01T00:00:00.000Z' }).isExpired === true, 'Non-founder expired Enterprise is reported as expired');
+  assert(getSubscriptionValidity({ ...customerEnterprise, expiresAt: '2099-12-31T23:59:59.999Z' }).tier === 'Free', 'Non-founder with founder 2099 grant is downgraded to Free');
+  assert(isFounderGrantExpiry('2099-12-31T23:59:59.999Z') === true, 'isFounderGrantExpiry flags 2099 lifetime grant');
+  assert(isFounderGrantExpiry(inOneYear) === false, 'isFounderGrantExpiry accepts annual paid period');
+  assert(isFounderGrantExpiry(undefined) === false, 'isFounderGrantExpiry ignores missing expiry');
+  assert(hasFixPromptAccess('Free') === false, 'Free tier has no fix prompt access');
+  assert(hasFixPromptAccess('Pro') === true, 'Pro tier has fix prompt access');
+  assert(hasFixPromptAccess('Enterprise') === true, 'Enterprise tier has fix prompt access');
+  assert(hasFixPromptAccess(undefined) === false, 'Missing tier has no fix prompt access');
 
   testPolarWebhook();
 

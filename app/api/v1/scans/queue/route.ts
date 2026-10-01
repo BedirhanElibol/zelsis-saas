@@ -81,22 +81,31 @@ export async function POST(req: NextRequest) {
       }
     }
 
+    if (!authenticatedUserId) {
+      return NextResponse.json(
+        { status: 'ERROR', error: 'Please sign in or create a free account to run audits.' },
+        { status: 401 }
+      );
+    }
+
     // 4. Quota Gate Verification
-    if (authenticatedUserId && serviceRoleKey) {
+    if (serviceRoleKey) {
       try {
         const adminClient = createClient(supabaseUrl, serviceRoleKey, { auth: { persistSession: false } });
         const { data: sub } = await adminClient
           .from('subscriptions')
-          .select('plan_tier, monthly_scan_quota, scans_used_this_month')
+          .select('plan_tier, monthly_scan_quota, scans_used_this_month, current_period_end')
           .eq('user_id', authenticatedUserId)
           .maybeSingle();
 
         if (sub) {
-          userTier = (sub.plan_tier as any) || 'Free';
-          const monthlyQuota = sub.monthly_scan_quota ?? 3;
-          const scansUsed = sub.scans_used_this_month ?? 0;
+          const periodElapsed = Boolean(sub.current_period_end && new Date(sub.current_period_end).getTime() < Date.now());
+          userTier = periodElapsed ? 'Free' : ((sub.plan_tier as any) || 'Free');
+          const monthlyQuota = userTier === 'Free' ? 3 : (sub.monthly_scan_quota ?? 3);
+          const scansUsed = periodElapsed ? 0 : (sub.scans_used_this_month ?? 0);
 
-          if (userTier === 'Free' && scansUsed >= monthlyQuota) {
+          // /api/v1/quota already reserved this scan, so the counter includes it
+          if (userTier === 'Free' && scansUsed > monthlyQuota) {
             return NextResponse.json(
               {
                 status: 'ERROR',
@@ -120,7 +129,7 @@ export async function POST(req: NextRequest) {
       const { data: insertedJob, error: insertErr } = await adminClient
         .from('scan_jobs')
         .insert({
-          project_id: body.projectId || null,
+          project_id: /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(body.projectId || '') ? body.projectId : null,
           user_id: authenticatedUserId,
           repo_url: rawRepoUrl,
           commit_sha: body.commitSha || null,

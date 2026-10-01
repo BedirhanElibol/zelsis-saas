@@ -1,6 +1,7 @@
 import { createClient, SupabaseClient, Session } from '@supabase/supabase-js';
 import { UserProfile } from '@/components/auth/AuthModal';
-import { isPlatformAdminEmail } from '@/lib/subscription-utils';
+import type { Project } from '@/data/schema';
+import { isPlatformAdminEmail, isFounderGrantExpiry } from '@/lib/subscription-utils';
 
 export { isPlatformAdminEmail };
 
@@ -179,8 +180,7 @@ export function mapSupabaseUserToProfile(supabaseUser: {
     const rawTier = metadata.tier as 'Free' | 'Pro' | 'Enterprise' | undefined;
     const rawExpiresAt = metadata.expiresAt as string | undefined;
 
-    const expiryYear = rawExpiresAt ? new Date(rawExpiresAt).getFullYear() : 0;
-    const isTaintedDate = rawExpiresAt && (rawExpiresAt.includes('2099') || expiryYear > 2028);
+    const isTaintedDate = isFounderGrantExpiry(rawExpiresAt);
 
     if (isTaintedDate || !rawTier || rawTier === 'Free') {
       tier = 'Free';
@@ -297,4 +297,82 @@ export async function supabaseGetSession(): Promise<{ user: UserProfile | null; 
   } catch (err: unknown) {
     return { user: null, session: null, error: err instanceof Error ? err.message : 'Failed to fetch session' };
   }
+}
+
+/**
+ * Resolves the signed-in user from a server-verified Supabase session.
+ * Cached localStorage profiles are never trusted on their own: without a
+ * verified session the caller must treat the visitor as signed out.
+ * A network failure keeps the locally stored session so offline reloads work.
+ */
+export async function resolveVerifiedSession(): Promise<{
+  status: 'authenticated' | 'unauthenticated';
+  user: UserProfile | null;
+  session: Session | null;
+}> {
+  const supabase = getSupabase();
+  if (!supabase || !isSupabaseConfigured()) {
+    return { status: 'unauthenticated', user: null, session: null };
+  }
+
+  try {
+    const { data: { session } } = await supabase.auth.getSession();
+    if (!session?.user) {
+      return { status: 'unauthenticated', user: null, session: null };
+    }
+
+    const { data: { user: verifiedUser }, error } = await supabase.auth.getUser();
+    if (verifiedUser) {
+      return { status: 'authenticated', user: mapSupabaseUserToProfile(verifiedUser), session };
+    }
+
+    const isNetworkFailure = Boolean(error && (error.name === 'AuthRetryableFetchError' || error.status === 0));
+    if (isNetworkFailure) {
+      return { status: 'authenticated', user: mapSupabaseUserToProfile(session.user), session };
+    }
+
+    // Revoked / expired / deleted account: drop the stale local session
+    await supabase.auth.signOut({ scope: 'local' }).catch(() => {});
+    return { status: 'unauthenticated', user: null, session: null };
+  } catch {
+    return { status: 'unauthenticated', user: null, session: null };
+  }
+}
+
+/**
+ * Loads the signed-in user's saved projects (repositories and live sites) from the cloud database.
+ * RLS restricts the result to rows owned by the current user.
+ */
+export async function fetchCloudProjects(): Promise<Project[]> {
+  const supabase = getSupabase();
+  if (!supabase || !isSupabaseConfigured()) return [];
+
+  const { data, error } = await supabase
+    .from('projects')
+    .select('id, name, repo_url, preview_url, framework, providers, last_scan_at, readiness_score, gate_status, critical_count, high_count, medium_count, low_count, ui_cliche_count')
+    .order('updated_at', { ascending: false })
+    .limit(100);
+
+  if (error || !Array.isArray(data)) {
+    if (error) console.warn('[Zelsis Supabase] Could not load cloud projects:', error.message);
+    return [];
+  }
+
+  return data.map((row) => ({
+    id: row.id,
+    name: row.name,
+    repoUrl: row.repo_url,
+    previewUrl: row.preview_url || undefined,
+    framework: row.framework || 'Auto-Detect',
+    providers: Array.isArray(row.providers) ? row.providers : [],
+    lastScanAt: row.last_scan_at ? new Date(row.last_scan_at).toLocaleString() : 'Never audited',
+    readinessScore: row.readiness_score ?? 100,
+    gateStatus: row.gate_status || 'PASSED',
+    criticalCount: row.critical_count ?? 0,
+    highCount: row.high_count ?? 0,
+    mediumCount: row.medium_count ?? 0,
+    lowCount: row.low_count ?? 0,
+    uiClicheCount: row.ui_cliche_count ?? 0,
+    findings: [],
+  }));
 }

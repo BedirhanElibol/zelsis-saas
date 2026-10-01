@@ -238,7 +238,7 @@ export async function POST(req: NextRequest) {
           const { data: profile } = await adminClient
             .from('profiles')
             .select('id, email')
-            .ilike('email', normalizedEmail)
+            .ilike('email', normalizedEmail.replace(/[\\%_]/g, (c) => `\\${c}`))
             .maybeSingle();
           if (profile?.id) {
             matchedUserId = profile.id;

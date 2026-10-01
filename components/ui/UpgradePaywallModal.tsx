@@ -18,8 +18,8 @@ interface UpgradePaywallModalProps {
 export const UpgradePaywallModal: React.FC<UpgradePaywallModalProps> = ({
   isOpen,
   onClose,
-  featureTitle = 'Automated Claude PR & Webhook Integration',
-  featureDescription = 'Upgrade your plan to unlock automated Claude AI code fixes, unlimited security scans, and CI/CD webhook triggers.',
+  featureTitle = 'Automated AI PR & Webhook Integration',
+  featureDescription = 'Upgrade your plan to unlock automated AI code fixes, unlimited security scans, and CI/CD webhook triggers.',
   requiredTier = 'Pro',
   currentTier
 }) => {

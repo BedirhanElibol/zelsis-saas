@@ -49,7 +49,7 @@ export const TierDetailsModal: React.FC<TierDetailsModalProps> = ({
     {
       category: 'AI Remediation & Patching',
       items: [
-        { label: '1-Click Claude / Cursor Prompts', free: '1 Trial Prompt', pro: 'Unlimited 1-Click Fix Prompts', enterprise: 'Unlimited Fix Prompts + PR Diffs' },
+        { label: '1-Click AI Fix Prompts', free: '1 Trial Prompt', pro: 'Unlimited 1-Click Fix Prompts', enterprise: 'Unlimited Fix Prompts + PR Diffs' },
         { label: 'Unified Git Diff Patches', free: 'Locked', pro: 'Instant Unified Diffs', enterprise: 'Multi-File Unified Git Diffs' }
       ]
     },

@@ -3,10 +3,11 @@ import { Project, Finding, PlanUsageQuota, UserTier } from '@/data/schema';
 import { MOCK_PROJECTS } from '@/data/mockData';
 import { calculateReadinessScore, calculateGateStatus } from '@/lib/scanner-engine';
 import { UserProfile } from '@/components/auth/AuthModal';
-import { supabaseSignIn, supabaseSignUp, supabaseResetPassword, supabaseSignOut, supabaseGetSession, getSupabase, mapSupabaseUserToProfile, syncUserProfileToSupabase, isPlatformAdminEmail } from '@/lib/supabase';
+import { supabaseSignIn, supabaseSignUp, supabaseResetPassword, supabaseSignOut, resolveVerifiedSession, fetchCloudProjects, getSupabase, mapSupabaseUserToProfile, syncUserProfileToSupabase, isPlatformAdminEmail } from '@/lib/supabase';
 import { purgeZelsisStorage, safeSetStorageItem } from '@/lib/storage';
 import { getActiveUserAuth } from '@/lib/supabase-client';
 import { canAccessLocalAudit } from '@/lib/env-config';
+import { isFounderGrantExpiry } from '@/lib/subscription-utils';
 import { verifyLicenseKey, generateLicenseKey } from '@/lib/stripe-checkout';
 import { useSearchParams } from 'next/navigation';
 import {
@@ -38,6 +39,8 @@ export function useDashboardState() {
   const [isScanning, setIsScanning] = useState<boolean>(false);
   const [inspectingFinding, setInspectingFinding] = useState<Finding | null>(null);
   const [user, setUser] = useState<UserProfile | null>(null);
+  // Only a server-verified Supabase session unlocks the dashboard
+  const [authStatus, setAuthStatus] = useState<'loading' | 'authenticated' | 'unauthenticated'>('loading');
   const authParam = searchParams.get('auth');
   const [isAuthModalOpen, setIsAuthModalOpen] = useState<boolean>(() => {
     if (!authParam) return false;
@@ -121,15 +124,6 @@ export function useDashboardState() {
     repoUrl: string;
     framework?: string;
   }): Promise<{ allowed: boolean; reason?: string; scanId?: string; projectId?: string }> => {
-    const isPlatformAdmin = isPlatformAdminEmail(user?.email);
-    if (isPlatformAdmin) {
-      return {
-        allowed: true,
-        scanId: `admin-scan-${Date.now()}`,
-        projectId: scanDetails.projectId
-      };
-    }
-
     try {
       const { accessToken } = await getActiveUserAuth();
       const headers: Record<string, string> = {
@@ -152,6 +146,10 @@ export function useDashboardState() {
       });
 
       const data = await res.json();
+      if (res.status === 401) {
+        setAuthStatus('unauthenticated');
+        return { allowed: false, reason: data.error || 'Please sign in to run audits.' };
+      }
       if (!res.ok || !data.allowed) {
         return {
           allowed: false,
@@ -300,14 +298,6 @@ export function useDashboardState() {
           localStorage.removeItem('shipguard_selected_project_id');
           localStorage.removeItem('zelsis_projects');
           localStorage.removeItem('zelsis_selected_project_id');
-          if (typeof window !== 'undefined') {
-            for (let i = localStorage.length - 1; i >= 0; i--) {
-              const key = localStorage.key(i);
-              if (key && (key.startsWith('zelsis_user_projects_') || key.startsWith('shipguard_user_projects_'))) {
-                localStorage.removeItem(key);
-              }
-            }
-          }
           const cleanProjects = getBaseProjects();
           setProjects(cleanProjects);
           setSelectedProject(MOCK_PROJECTS[0]);
@@ -372,18 +362,6 @@ export function useDashboardState() {
           currentProjects = currentProjects.filter(
             (p) => p.repoUrl !== 'local' && p.id !== 'proj-zelsis-self' && p.id !== 'proj-shipguard-self'
           );
-        }
-
-        // For Free tier or signed-out users, cap custom projects to at most 1 active repo + starter demo
-        const isFreeTier = !user || user.tier === 'Free';
-        if (isFreeTier) {
-          const customList = currentProjects.filter(
-            (p) => !p.id.startsWith('proj-preset') && p.id !== 'proj-shipguard-self' && p.id !== 'proj-saas-starter'
-          );
-          if (customList.length > 1) {
-            const starter = currentProjects.find((p) => p.id === 'proj-saas-starter') || MOCK_PROJECTS[0];
-            currentProjects = [starter, customList[0]];
-          }
         }
 
         if (currentProjects.length === 0) {
@@ -487,12 +465,10 @@ export function useDashboardState() {
                 resolvedTier = 'Enterprise';
                 expiresAt = '2099-12-31T23:59:59.999Z';
               } else {
-                // Non-founder: strictly reject tainted 2099 founder dates or unauthorized Enterprise tier
-                const rawExpiry = parsedUser.expiresAt;
-                const expiryYear = rawExpiry ? new Date(rawExpiry).getFullYear() : 0;
-                const isTainted = rawExpiry && (rawExpiry.includes('2099') || expiryYear > 2028);
+                // Non-founder: strictly reject tainted 2099 founder dates
+                const isTainted = isFounderGrantExpiry(parsedUser.expiresAt);
 
-                if (isTainted || !parsedUser.tier || parsedUser.tier === 'Free' || parsedUser.tier === 'Enterprise') {
+                if (isTainted || !parsedUser.tier || parsedUser.tier === 'Free') {
                   resolvedTier = 'Free';
                   expiresAt = undefined;
                   localStorage.removeItem('zelsis_license_key');
@@ -505,7 +481,7 @@ export function useDashboardState() {
                     console.warn('[DashboardState] LocalStorage write notice:', writeErr);
                   }
                 } else {
-                  // Legitimate Pro tier candidate: verify license key bound to email
+                  // Legitimate paid tier candidate: verify license key bound to email
                   const savedLicenseKey = localStorage.getItem('zelsis_license_key');
                   if (savedLicenseKey && email) {
                     const licResult = verifyLicenseKey(savedLicenseKey, email);
@@ -585,7 +561,7 @@ export function useDashboardState() {
                         const shouldDowngrade = data.status === 'canceled' && isGenuinelyExpired && !hasValidLic;
 
                         let syncTier = prev.tier;
-                        if (data.active && (data.tier === 'Pro' || (isPlatformAdmin && data.tier === 'Enterprise'))) {
+                        if (data.active && (data.tier === 'Pro' || data.tier === 'Enterprise')) {
                           syncTier = data.tier;
                         } else if (shouldDowngrade) {
                           syncTier = 'Free';
@@ -593,12 +569,8 @@ export function useDashboardState() {
                           syncTier = prev.tier;
                         }
 
-                        if (!isPlatformAdmin) {
-                          if (syncTier === 'Enterprise') syncTier = 'Free';
-                        }
-
                         let updatedExpiresAt = data.expiresAt || prev.expiresAt || (syncTier !== 'Free' ? new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString() : undefined);
-                        if (!isPlatformAdmin && updatedExpiresAt?.includes('2099')) {
+                        if (!isPlatformAdmin && isFounderGrantExpiry(updatedExpiresAt)) {
                           updatedExpiresAt = undefined;
                           syncTier = 'Free';
                         }
@@ -709,21 +681,8 @@ export function useDashboardState() {
 
     const handleStorageChange = (e: StorageEvent) => {
       if (e.key === 'zelsis_user' || e.key === 'shipguard_user') {
-        try {
-          if (e.newValue) {
-            const parsed = JSON.parse(e.newValue);
-            if (parsed && parsed.isLoggedIn) {
-              setUser(parsed);
-            } else {
-              setUser(null);
-            }
-          } else {
-            setUser(null);
-          }
-        } catch (err) {
-          void err;
-          setUser(null);
-        }
+        // Never trust another tab's cached profile: re-verify against Supabase
+        syncSupabaseSession();
       }
       if (
         !e.key ||
@@ -739,9 +698,44 @@ export function useDashboardState() {
     window.addEventListener('storage', handleStorageChange);
 
     // 2. Sync active Supabase OAuth session with automatic Subscription Sync
+    // Restores the account's saved repositories / live sites from the cloud database
+    const mergeCloudProjects = async (accountEmail: string) => {
+      const cloudProjects = await fetchCloudProjects();
+      if (cloudProjects.length === 0) return;
+      const normalize = (url?: string) => (url || '').toLowerCase().replace(/\/+$/, '').replace(/\.git$/, '').trim();
+
+      setProjects((prev) => {
+        const known = new Set(prev.map((p) => normalize(p.repoUrl)));
+        const additions = cloudProjects.filter((cp) => cp.repoUrl && !known.has(normalize(cp.repoUrl)));
+        if (additions.length === 0) return prev;
+        const next = [...prev.filter((p) => p.id !== MOCK_PROJECTS[0].id), ...additions];
+        const serialized = JSON.stringify(next);
+        safeSetStorageItem('zelsis_projects', serialized);
+        safeSetStorageItem(`zelsis_user_projects_${accountEmail}`, serialized);
+        return next;
+      });
+    };
+
+    const clearUnverifiedSession = () => {
+      setUser(null);
+      setAuthStatus('unauthenticated');
+      localStorage.removeItem('zelsis_user');
+      localStorage.removeItem('shipguard_user');
+      localStorage.removeItem('zelsis_license_key');
+      localStorage.removeItem('shipguard_license_key');
+      localStorage.removeItem('zelsis_projects');
+      localStorage.removeItem('shipguard_projects');
+      setProjects([MOCK_PROJECTS[0]]);
+      setSelectedProject(MOCK_PROJECTS[0]);
+    };
+
     const syncSupabaseSession = async () => {
       try {
-        const { user: supabaseUser, session } = await supabaseGetSession();
+        const { status: verifiedStatus, user: supabaseUser, session } = await resolveVerifiedSession();
+        if (verifiedStatus !== 'authenticated' || !supabaseUser) {
+          clearUnverifiedSession();
+          return;
+        }
         if (supabaseUser) {
           const email = (supabaseUser.email || '').toLowerCase().trim();
           // Platform Administrator Detection (Configured via ADMIN_EMAILS)
@@ -759,7 +753,7 @@ export function useDashboardState() {
                 localStorage.removeItem('shipguard_user');
                 localStorage.removeItem('zelsis_license_key');
                 localStorage.removeItem('shipguard_license_key');
-              } else if (!isPlatformAdmin && (localParsed?.expiresAt?.includes('2099') || localParsed?.tier === 'Enterprise')) {
+              } else if (!isPlatformAdmin && isFounderGrantExpiry(localParsed?.expiresAt)) {
                 // Tainted founder records on non-founder account
                 localStorage.removeItem('zelsis_user');
                 localStorage.removeItem('shipguard_user');
@@ -848,15 +842,19 @@ export function useDashboardState() {
           };
 
           setUser(mergedUser);
+          setAuthStatus('authenticated');
           localStorage.setItem('zelsis_user', JSON.stringify(mergedUser));
           localStorage.removeItem('shipguard_user');
 
           if (resolvedTier !== 'Free' && supabaseUser.tier === 'Free' && isPlatformAdmin) {
             syncUserProfileToSupabase(mergedUser).catch(() => {});
           }
+
+          mergeCloudProjects(email).catch(() => {});
         }
       } catch (err) {
         console.warn('[Zelsis Auth] Session sync notice:', err);
+        clearUnverifiedSession();
       }
     };
     syncSupabaseSession();
@@ -885,7 +883,7 @@ export function useDashboardState() {
                   localStorage.removeItem('shipguard_user');
                   localStorage.removeItem('zelsis_license_key');
                   localStorage.removeItem('shipguard_license_key');
-                } else if (!isPlatformAdmin && (localParsed?.expiresAt?.includes('2099') || localParsed?.tier === 'Enterprise')) {
+                } else if (!isPlatformAdmin && isFounderGrantExpiry(localParsed?.expiresAt)) {
                   // Tainted metadata detected in local storage for non-founder: purge immediately
                   localStorage.removeItem('zelsis_user');
                   localStorage.removeItem('shipguard_user');
@@ -902,7 +900,7 @@ export function useDashboardState() {
             let savedStatus: 'active' | 'past_due' | 'canceled' = (profile.status as 'active' | 'past_due' | 'canceled') || 'active';
 
             if (!isPlatformAdmin) {
-              if (savedExpiresAt?.includes('2099') || resolvedTier === 'Enterprise') {
+              if (isFounderGrantExpiry(savedExpiresAt)) {
                 resolvedTier = 'Free';
                 savedExpiresAt = undefined;
                 savedStatus = 'canceled';
@@ -916,8 +914,8 @@ export function useDashboardState() {
                 const localEmail = (localParsed?.email || '').toLowerCase().trim();
                 // Strict account isolation: only adopt local session if email matches exactly
                 if (localParsed && localEmail && localEmail === email) {
-                  const isTainted = !isPlatformAdmin && (localParsed.expiresAt?.includes('2099') || localParsed.tier === 'Enterprise');
-                  if (!isTainted && (localParsed?.tier === 'Pro' || (isPlatformAdmin && localParsed?.tier === 'Enterprise'))) {
+                  const isTainted = !isPlatformAdmin && isFounderGrantExpiry(localParsed.expiresAt);
+                  if (!isTainted && (localParsed?.tier === 'Pro' || localParsed?.tier === 'Enterprise')) {
                     const localExpiry = localParsed?.expiresAt ? new Date(localParsed.expiresAt).getTime() : 0;
                     if (localExpiry > Date.now() || !localParsed.expiresAt) {
                       resolvedTier = localParsed.tier;
@@ -934,7 +932,7 @@ export function useDashboardState() {
             const savedLic = localStorage.getItem('zelsis_license_key');
             if (savedLic) {
               const licCheck = verifyLicenseKey(savedLic, email);
-              if (licCheck.valid && (isPlatformAdmin || licCheck.tier === 'Pro') && (isPlatformAdmin || !licCheck.expiresAt?.includes('2099'))) {
+              if (licCheck.valid && licCheck.tier !== 'Free' && (isPlatformAdmin || !licCheck.expiresAt?.includes('2099'))) {
                 resolvedTier = licCheck.tier;
                 if (!savedExpiresAt) savedExpiresAt = licCheck.expiresAt;
                 savedStatus = 'active';
@@ -957,7 +955,7 @@ export function useDashboardState() {
                 });
                 if (syncRes.ok) {
                   const syncData = await syncRes.json();
-                  if (syncData.active && (syncData.tier === 'Pro' || (isPlatformAdmin && syncData.tier === 'Enterprise')) && (isPlatformAdmin || !syncData.expiresAt?.includes('2099'))) {
+                  if (syncData.active && (syncData.tier === 'Pro' || syncData.tier === 'Enterprise') && (isPlatformAdmin || !syncData.expiresAt?.includes('2099'))) {
                     resolvedTier = syncData.tier;
                     savedExpiresAt = syncData.expiresAt;
                     savedStatus = syncData.status || 'active';
@@ -993,7 +991,7 @@ export function useDashboardState() {
               savedStatus = 'canceled';
               localStorage.removeItem('zelsis_license_key');
               localStorage.removeItem('shipguard_license_key');
-            } else if (resolvedTier === 'Pro' && !savedExpiresAt) {
+            } else if (!savedExpiresAt) {
               savedExpiresAt = new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString();
             }
 
@@ -1008,16 +1006,19 @@ export function useDashboardState() {
             };
 
             setUser(mergedProfile);
+            setAuthStatus('authenticated');
             localStorage.setItem('zelsis_user', JSON.stringify(mergedProfile));
             localStorage.removeItem('shipguard_user');
 
             if (resolvedTier !== 'Free' && profile.tier === 'Free' && isPlatformAdmin) {
               syncUserProfileToSupabase(mergedProfile).catch(() => {});
             }
+
+            if (event === 'SIGNED_IN') {
+              mergeCloudProjects(email).catch(() => {});
+            }
           } else if (event === 'SIGNED_OUT') {
-            setUser(null);
-            localStorage.removeItem('zelsis_user');
-            localStorage.removeItem('shipguard_user');
+            clearUnverifiedSession();
           }
         } catch (listenerErr) {
           console.warn('[Zelsis Auth] State change listener notice:', listenerErr);
@@ -1500,6 +1501,7 @@ export function useDashboardState() {
 
     await supabaseSignOut().catch(() => {});
     setUser(null);
+    setAuthStatus('unauthenticated');
 
     // 2. Reset in-memory projects and selected project to clean demo showcase
     const cleanDemoProjects = [MOCK_PROJECTS[0]];
@@ -1536,6 +1538,7 @@ export function useDashboardState() {
     setInspectingFinding,
     user,
     setUser,
+    authStatus,
     isAuthModalOpen,
     setIsAuthModalOpen,
     authInitialMode,

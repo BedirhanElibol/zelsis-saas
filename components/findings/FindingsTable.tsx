@@ -4,9 +4,10 @@ import React, { useState } from 'react';
 import { Finding, UserTier } from '@/data/schema';
 import { DEMO_AUDIT_FINDINGS } from '@/data/mockData';
 import { BulkFixModal } from './BulkFixModal';
-import { Search, Filter, ArrowRight, Layers, Check, RotateCcw, Play, Copy, ShieldCheck, Database, Server, Sliders, AlertOctagon, GitCommit, ChevronDown, SearchX, ExternalLink } from 'lucide-react';
+import { Search, Filter, ArrowRight, Layers, Check, RotateCcw, Play, Copy, Lock, ShieldCheck, Database, Server, Sliders, AlertOctagon, GitCommit, ChevronDown, SearchX, ExternalLink } from 'lucide-react';
 import { ClipboardToastBadge, useClipboardToast } from '../ui/Toast';
 import { safeLower, safeString, safeTrim, safeReplace } from '@/lib/safe-utils';
+import { hasFixPromptAccess } from '@/lib/subscription-utils';
 
 interface FindingsTableProps {
   findings: Finding[];
@@ -58,8 +59,14 @@ export const FindingsTable: React.FC<FindingsTableProps> = ({
     });
   };
 
+  const canUseFixPrompts = hasFixPromptAccess(userTier);
+
   const handleCopyFindingPrompt = (e: React.MouseEvent, item: Finding) => {
     e.stopPropagation();
+    if (!canUseFixPrompts) {
+      onOpenCheckout?.('Pro');
+      return;
+    }
     const promptText =
       item.remediationPrompt ||
       `Fix vulnerability in ${safeString(item.filePath)} (${safeString(item.lineRange)}): ${safeString(item.title)}`;
@@ -335,18 +342,24 @@ export const FindingsTable: React.FC<FindingsTableProps> = ({
                   <button
                     type="button"
                     onClick={() => {
+                      if (!canUseFixPrompts) {
+                        onOpenCheckout?.('Pro');
+                        return;
+                      }
                       onCopyPrompt();
                       showToast('AI prompt copied to clipboard', '[COPIED]');
                     }}
                     className="btn btn-secondary text-xs px-3 py-1 flex items-center gap-1.5 border-white/10 text-white hover:bg-white/5 transition-colors cursor-pointer"
-                    title="Copy AI Master Fix Prompt for Claude / Cursor / ChatGPT"
+                    title={canUseFixPrompts ? 'Copy AI master fix prompt' : 'Fix prompts are a Pro feature'}
                   >
-                    {copiedPrompt ? (
+                    {!canUseFixPrompts ? (
+                      <Lock size={13} className="shrink-0 text-amber-400" />
+                    ) : copiedPrompt ? (
                       <Check size={13} className="text-emerald-400" />
                     ) : (
                       <Copy size={13} className="shrink-0" />
                     )}
-                    <span>Copy Fix Prompt</span>
+                    <span>{canUseFixPrompts ? 'Copy Fix Prompt' : 'Copy Fix Prompt (Pro)'}</span>
                   </button>
                 )}
 
@@ -591,9 +604,23 @@ export const FindingsTable: React.FC<FindingsTableProps> = ({
                           <span className="text-[10px] font-mono uppercase tracking-wider text-zinc-300 font-bold">
                             Remediation Guidance
                           </span>
-                          <p className="text-[11px] text-zinc-300 leading-relaxed bg-white/[0.02] p-2 rounded-lg border border-white/5">
-                            {item.remediationPrompt}
-                          </p>
+                          {canUseFixPrompts ? (
+                            <p className="text-[11px] text-zinc-300 leading-relaxed bg-white/[0.02] p-2 rounded-lg border border-white/5">
+                              {item.remediationPrompt}
+                            </p>
+                          ) : (
+                            <button
+                              type="button"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                onOpenCheckout?.('Pro');
+                              }}
+                              className="text-[11px] text-left text-zinc-400 leading-relaxed bg-white/[0.02] p-2 rounded-lg border border-white/5 flex items-center gap-1.5 hover:text-white transition-colors cursor-pointer"
+                            >
+                              <Lock size={11} className="shrink-0 text-amber-400" />
+                              <span>Fix guidance and copy-paste prompts are included in Zelsis Pro.</span>
+                            </button>
+                          )}
                         </div>
                       )}
 
@@ -652,10 +679,10 @@ export const FindingsTable: React.FC<FindingsTableProps> = ({
                     type="button"
                     onClick={(e) => handleCopyFindingPrompt(e, item)}
                     className="btn btn-secondary text-xs px-3 py-2 flex-1 flex items-center justify-center gap-1.5 border-white/10 text-white hover:bg-white/10 transition-colors cursor-pointer font-mono"
-                    title="Copy remediation prompt for this finding"
+                    title={canUseFixPrompts ? 'Copy remediation prompt for this finding' : 'Fix prompts are a Pro feature'}
                   >
-                    <Copy size={12} className="shrink-0" />
-                    <span>Copy Prompt</span>
+                    {canUseFixPrompts ? <Copy size={12} className="shrink-0" /> : <Lock size={12} className="shrink-0 text-amber-400" />}
+                    <span>{canUseFixPrompts ? 'Copy Prompt' : 'Copy Prompt (Pro)'}</span>
                   </button>
 
                   <button

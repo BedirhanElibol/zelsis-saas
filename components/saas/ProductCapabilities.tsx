@@ -61,7 +61,7 @@ export const ProductCapabilities: React.FC = () => {
       title: 'Line-by-Line Vulnerability Triage & Context',
       subtitle: 'Pinpoint vulnerabilities down to the exact line number with 1-click AI remediation prompts.',
       description:
-        'Every detected flaw is isolated with its syntax context, risk severity, and remediation guidance. Review exact line-by-line diffs and copy automated AI prompts to remediate issues instantly inside Cursor, Copilot, or Claude Code.',
+        'Every detected flaw is isolated with its syntax context, risk severity, and remediation guidance. Review exact line-by-line diffs and copy automated AI prompts to remediate issues instantly in your AI coding assistant.',
       image: '/images/audit_findings.png',
       alt: 'Zelsis Vulnerability Triage and Line-by-Line Code Findings',
       tag: 'SURGICAL DIFFS',
@@ -73,7 +73,7 @@ export const ProductCapabilities: React.FC = () => {
       ],
       bulletPoints: [
         'Exact line numbers with syntax-highlighted code context',
-        'Pre-engineered AI prompts formatted for Cursor, Copilot, and Claude Code',
+        'Pre-engineered AI prompts ready for any AI coding assistant',
         'Direct links to GitHub commit refs and pull request file trees'
       ]
     },

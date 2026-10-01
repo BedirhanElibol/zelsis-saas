@@ -28,7 +28,7 @@ jobs:
 
       - name: Trigger Zelsis Release Gate API Audit
         env:
-          ZELSIS_API_URL: ${{ secrets.ZELSIS_API_URL || 'https://zelsis-saas.vercel.app/api/v1/gate-check' }}
+          ZELSIS_API_URL: ${{ secrets.ZELSIS_API_URL || 'https://shipguard-saas.vercel.app/api/v1/gate-check' }}
           SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
           DISCORD_WEBHOOK_URL: ${{ secrets.DISCORD_WEBHOOK_URL }}
         run: |
