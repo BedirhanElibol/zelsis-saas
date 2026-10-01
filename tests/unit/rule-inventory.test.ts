@@ -10,6 +10,7 @@ it('data/rule-inventory.generated.json matches the rule sources (run `npm run au
 });
 
 it('data/rule-summary.generated.json matches the inventory and maturity list', () => {
-  const committed = readFileSync(join(__dirname, '../../data/rule-summary.generated.json'), 'utf8');
+  // Normalize CRLF so Windows checkouts with core.autocrlf compare equal.
+  const committed = readFileSync(join(__dirname, '../../data/rule-summary.generated.json'), 'utf8').replace(/\r\n/g, '\n');
   assert.equal(committed, summaryJson(auditRules()));
 });
