@@ -220,6 +220,30 @@ export const RULE_CASES: RuleCase[] = [
     ignores: f('.github/workflows/ci.yml', 'on: pull_request\njobs:\n  build:\n    runs-on: ubuntu-latest\n    steps:\n      - run: echo "$TITLE"\n        env:\n          TITLE: ${{ github.event.pull_request.title }}\n')
   },
   {
+    ruleIds: [12605],
+    name: 'Unpinned third-party GitHub Action',
+    detects: f('.github/workflows/ci.yml', 'on: push\njobs:\n  b:\n    runs-on: ubuntu-latest\n    steps:\n      - uses: tj-actions/changed-files@v45\n'),
+    ignores: f('.github/workflows/ci.yml', 'on: push\njobs:\n  b:\n    runs-on: ubuntu-latest\n    steps:\n      - uses: tj-actions/changed-files@c3a1bb2c992d77180ae65be6ae6c166cf40f857c\n      - uses: actions/checkout@v4\n')
+  },
+  {
+    ruleIds: [14104, 12603],
+    name: 'Release pipeline with mutable action tags and no provenance',
+    detects: f('.github/workflows/release.yml', 'on:\n  push:\n    tags: ["v*"]\njobs:\n  r:\n    runs-on: ubuntu-latest\n    steps:\n      - uses: actions/checkout@v4\n      - run: npm publish\n'),
+    ignores: [
+      { path: '.github/workflows/release.yml', content: 'on:\n  push:\n    tags: ["v*"]\njobs:\n  r:\n    runs-on: ubuntu-latest\n    steps:\n      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683\n      - run: npm publish --provenance\n' },
+      { path: '.github/dependabot.yml', content: 'version: 2\nupdates:\n  - package-ecosystem: github-actions\n    directory: /\n    schedule:\n      interval: weekly\n' }
+    ]
+  },
+  {
+    ruleIds: [10705],
+    name: 'Large uncompressed JSON blob written to cache',
+    detects: f('lib/cache.ts', 'export const save = (k: string, v: object) => redis.set(k, JSON.stringify(v));\n'),
+    ignores: [
+      { path: 'lib/cache.ts', content: "import { gzipSync } from 'zlib';\nexport const save = (k: string, v: object) => redis.set(k, gzipSync(JSON.stringify(v)));\n" },
+      { path: 'app/api/x/route.ts', content: 'export const GET = () => new Response(JSON.stringify({ ok: true }));\n' }
+    ]
+  },
+  {
     ruleIds: [7323, 9501, 9502],
     name: 'pull_request_target with untrusted checkout',
     detects: f('.github/workflows/ci.yml', 'on: pull_request_target\njobs:\n  build:\n    runs-on: ubuntu-latest\n    steps:\n      - uses: actions/checkout@v4\n        with:\n          ref: ${{ github.event.pull_request.head.sha }}\n      - run: npm ci && npm test\n'),

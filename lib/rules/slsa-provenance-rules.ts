@@ -92,8 +92,9 @@ export function evaluateSlsaProvenanceRules(file: CodeFile, lines: string[], cle
         logs.push(`[${ts}] [SLSA AUDIT] Found SLSA-03: Non-Hermetic Build Process Fetching Unpinned Remote Dependencies at ${file.path}:${lineNum}`);
     }
     // SLSA-04: Mutable Git Tags Used in Release Pipeline Rather Than Commit SHAs
-    if ((/uses:\s*[A-Za-z0-9_.-]+\/[A-Za-z0-9_.-]+@v\d+/i.test(cleanContent))) {
-        const matchLineIdx = lines.findIndex(l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('#') && !l.trim().startsWith('*'));
+    const mutableTagActionRegex = /^\s*-?\s*uses\s*:\s*['\"]?[\w.-]+\/[\w./-]+@(?![0-9a-f]{40}\b)[\w.-]+/i;
+    if (/\.github\/workflows\/[^/]+\.ya?ml$/i.test(file.path) && /^\s*release\s*:|^\s*tags\s*:|npm\s+publish|docker\s+push|docker\/build-push-action|goreleaser|gh\s+release|action-gh-release|twine\s+upload|cargo\s+publish/im.test(cleanContent) && lines.some(l => mutableTagActionRegex.test(l))) {
+        const matchLineIdx = lines.findIndex(l => mutableTagActionRegex.test(l));
         const lineNum = matchLineIdx !== -1 ? matchLineIdx + 1 : 1;
         findings.push({
             id: `slsa14104-${Date.now()}-${findingCounter.count++}`,

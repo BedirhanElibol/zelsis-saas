@@ -68,7 +68,7 @@ export function evaluateSbomAttestationRules(file: CodeFile, lines: string[], cl
         logs.push(`[${ts}] [SBOM AUDIT] Found SBOM-02: Unsigned Container Images and Missing Cosign Cryptographic Signatures at ${file.path}:${lineNum}`);
     }
     // SBOM-03: SLSA Level 3 Provenance Attestation Missing in CI/CD Build Pipeline
-    if ((/github-actions/i.test(cleanContent) && !/slsa-framework/i.test(cleanContent))) {
+    if (/\.github\/workflows\/[^/]+\.ya?ml$/i.test(file.path) && /^\s*release\s*:|^\s*tags\s*:|npm\s+publish|docker\s+push|docker\/build-push-action|goreleaser|gh\s+release|action-gh-release|twine\s+upload|cargo\s+publish/im.test(cleanContent) && !/slsa-framework|attest-build-provenance|provenance\s*:\s*true|--provenance/i.test(cleanContent)) {
         const matchLineIdx = lines.findIndex(l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('#') && !l.trim().startsWith('*'));
         const lineNum = matchLineIdx !== -1 ? matchLineIdx + 1 : 1;
         findings.push({
@@ -116,8 +116,9 @@ export function evaluateSbomAttestationRules(file: CodeFile, lines: string[], cl
         logs.push(`[${ts}] [SBOM AUDIT] Found SBOM-04: Dependency Confusion Risk with Unscoped Internal Package Names at ${file.path}:${lineNum}`);
     }
     // SBOM-05: Unvetted Third-Party GitHub Actions in Production CI/CD Workflows
-    if ((/uses:\s*[a-zA-Z0-9-]+\/[a-zA-Z0-9-]+@v[0-9]+/i.test(cleanContent))) {
-        const matchLineIdx = lines.findIndex(l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('#') && !l.trim().startsWith('*'));
+    const thirdPartyActionRegex = /^\s*-?\s*uses\s*:\s*['\"]?(?!(?:actions|github)\/)[\w.-]+\/[\w./-]+@(?![0-9a-f]{40}\b)[\w.-]+/i;
+    if (/\.github\/workflows\/[^/]+\.ya?ml$/i.test(file.path) && lines.some(l => thirdPartyActionRegex.test(l))) {
+        const matchLineIdx = lines.findIndex(l => thirdPartyActionRegex.test(l));
         const lineNum = matchLineIdx !== -1 ? matchLineIdx + 1 : 1;
         findings.push({
             id: `sbom12605-${Date.now()}-${findingCounter.count++}`,

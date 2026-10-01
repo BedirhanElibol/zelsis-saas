@@ -1,7 +1,7 @@
 import { evaluateAiCommentRules } from './rules/ai-comment-rules';
 import { Finding } from '@/data/schema';
 import type { CodeFile, ScanResult } from './scanner/types';
-import { stripComments, yieldToMain } from './scanner/text';
+import { isSecretRuleId, isTestFixturePath, stripComments, yieldToMain } from './scanner/text';
 import { parseZelsisIgnore } from './scanner/ignore-parser';
 import { parseZelsisRc } from './scanner/rc-config';
 import { calculateGateStatus, calculateReadinessScore } from './scanner/scoring';
@@ -11,7 +11,7 @@ import { detectProjectDatabases } from './rules/multi-database-rules';
 
 export type { CodeFile, ScanResult } from './scanner/types';
 export type { ZelsisRcConfig } from './scanner/rc-config';
-export { stripComments, yieldToMain } from './scanner/text';
+export { isSecretRuleId, isTestFixturePath, stripComments, yieldToMain } from './scanner/text';
 export { parseZelsisIgnore, parseShipguardIgnore } from './scanner/ignore-parser';
 export { parseZelsisRc } from './scanner/rc-config';
 export { calculateGateStatus, calculateReadinessScore } from './scanner/scoring';
@@ -97,6 +97,7 @@ export async function runStaticCodeScan(files: CodeFile[], repoName: string = 'T
   logs.push(`[${new Date().toLocaleTimeString()}] --------------------------------------------------`);
 
   let findingCounter = 1;
+  let testFixtureSkips = 0;
   let fileIndex = 1;
 
   for (let i = 0; i < targetFiles.length; i++) {
@@ -155,6 +156,7 @@ export async function runStaticCodeScan(files: CodeFile[], repoName: string = 'T
       lowerFilePath.includes('ruleknowledgebasemodal.tsx') ||
       lowerFilePath.includes('interactiveanalyzer.tsx') ||
       lowerFilePath.includes('05_seed_data.sql');
+    const isTestFixture = isTestFixturePath(file?.path || '');
 
     // Helper to add finding unless suppressed or false-positive inside rule definition files
     const addFinding = (f: Finding) => {
@@ -171,6 +173,11 @@ export async function runStaticCodeScan(files: CodeFile[], repoName: string = 'T
       }
       // Filter out self-referential alerts inside scanner engine definition catalogs and demo playgrounds
       if (isScannerRuleCatalog) {
+        return;
+      }
+      // Test code does not ship: only leaked secrets count there
+      if (isTestFixture && !isSecretRuleId(f.ruleId)) {
+        testFixtureSkips++;
         return;
       }
       // Deduplicate findings by fingerprint (same file, line, and rule title/family)
@@ -247,6 +254,9 @@ export async function runStaticCodeScan(files: CodeFile[], repoName: string = 'T
 
   logs.push(`[${new Date().toLocaleTimeString()}] --------------------------------------------------`);
   logs.push(`[${new Date().toLocaleTimeString()}] [SUMMARY] Deep audit complete: Processed ${targetFiles.length} files. Total findings detected: ${findings.length}.`);
+  if (testFixtureSkips > 0) {
+    logs.push(`[${new Date().toLocaleTimeString()}] [INFO] ${testFixtureSkips} non-secret finding(s) in test/fixture files were not counted (test code does not ship).`);
+  }
 
   const openFindings = findings.filter(f => f.status === 'OPEN');
   const criticalCount = openFindings.filter(f => f.severity === 'CRITICAL').length;

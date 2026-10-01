@@ -120,8 +120,9 @@ export function evaluateCacheRedisRules(file: CodeFile, lines: string[], cleanCo
         logs.push(`[${ts}] [CACHE AUDIT] Found CACHE-04: Unsafe Lua Script Execution Susceptible to Injection or Infinite Loops at ${file.path}:${lineNum}`);
     }
     // CACHE-05: Unpartitioned Large Cache Key Degradation (>1MB Payload Blob)
-    if ((/JSON\.stringify\s*\([\s\S]*?\)/.test(cleanContent) && !/compress|gzip|snappy/i.test(cleanContent))) {
-        const matchLineIdx = lines.findIndex(l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('*'));
+    const cacheWriteRegex = /\b(?:redis|cache|kv|upstash|memcached?|client)\.(?:set|setex|setEx|hset|hSet|mset|put)\s*\([^;]*JSON\.stringify/i;
+    if (cacheWriteRegex.test(cleanContent) && !/compress|gzip|brotli|snappy|lz4|zstd/i.test(cleanContent)) {
+        const matchLineIdx = lines.findIndex(l => /JSON\.stringify/.test(l) && /\.(?:set|setex|setEx|hset|hSet|mset|put)\s*\(/i.test(l));
         const lineNum = matchLineIdx !== -1 ? matchLineIdx + 1 : 1;
         findings.push({
             id: `cache10705-${Date.now()}-${findingCounter.count++}`,

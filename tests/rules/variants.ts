@@ -37,6 +37,10 @@ export const VULNERABLE_VARIANTS: [ruleId: number, name: string, files: CodeFile
   [15701, 'k8s add block list', f('k8s/deploy.yaml', "spec:\n  containers:\n    - name: app\n      securityContext:\n        capabilities:\n          add:\n            - NET_ADMIN\n            - SYS_ADMIN\n")],
   [15701, 'k8s privileged', f('k8s/pod.yaml', "spec:\n  containers:\n    - name: app\n      securityContext:\n        privileged: true\n")],
   [15701, 'compose privileged', f('docker-compose.yml', "services:\n  app:\n    image: x\n    privileged: true\n")],
+  // CICD-SEC-02: unpinned actions in any form
+  [9502, 'action on @main branch', wf("      - uses: some-org/deploy-action@main\n")],
+  [9502, 'quoted uses with tag', wf("      - uses: 'actions/checkout@v4'\n")],
+  [9502, 'semver tag', wf("      - uses: docker/login-action@v3.1.0\n")],
   // ZERO-AUTH-43
   [8143, 'webhook no verification', f('app/api/webhooks/github/route.ts', "export async function POST(req: Request) {\n  const event = await req.json();\n  await deploy(event);\n  return new Response('ok');\n}\n")],
   [8143, 'webhook defines fake validateEvent', f('app/api/webhooks/github/route.ts', "const validateEvent = (e: unknown) => e;\nexport async function POST(req: Request) {\n  const event = validateEvent(await req.json());\n  return new Response(String(event));\n}\n")],

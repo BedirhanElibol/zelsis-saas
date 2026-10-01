@@ -61,3 +61,19 @@ describe('scanner self-reference', () => {
     assert.deepEqual(findings.map((f) => `${f.ruleId} ${f.filePath}`), []);
   });
 });
+
+describe('test fixture files', () => {
+  it('skips non-secret findings in test files but still reports leaked secrets', async () => {
+    const key = ['sk', 'proj', 'abcdefghijklmnopqrstuvwxyz123456'].join('-');
+    const found = await ruleIdsFor([
+      { path: 'tests/unit/calc.test.ts', content: 'export const run = (input: string) => eval(input);\n' },
+      { path: 'src/__tests__/client.spec.ts', content: `const key = "${key}";\n` }
+    ]);
+    assert.ok(!found.has(32), 'eval in a test file must not count');
+    assert.ok(found.has(1), 'secret committed in a test file must still be reported');
+  });
+
+  it('still scans production code with the same content', async () => {
+    assert.ok((await ruleIdsFor([{ path: 'lib/calc.ts', content: 'export const run = (input: string) => eval(input);\n' }])).has(32));
+  });
+});

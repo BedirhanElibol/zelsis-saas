@@ -28,3 +28,14 @@ export async function yieldToMain(): Promise<void> {
   }
   return new Promise((resolve) => setTimeout(resolve, 0));
 }
+
+/** Test, spec and fixture files: their code never ships, but secrets committed in them still leak. */
+export function isTestFixturePath(path: string): boolean {
+  const p = path.toLowerCase().replace(/\\/g, '/');
+  return /(?:^|\/)(?:tests?|__tests__|__mocks__|__fixtures__|fixtures?|e2e|cypress|spec)\//.test(p) ||
+    /\.(?:test|spec|e2e)\.[cm]?[jt]sx?$/.test(p) ||
+    /(?:^|\/)test_[^/]+\.py$|_test\.(?:py|go)$/.test(p);
+}
+
+/** Hardcoded-secret rules stay active in test files. */
+export const isSecretRuleId = (ruleId: number): boolean => ruleId === 1 || ruleId === 43 || (ruleId >= 5001 && ruleId <= 5100);
