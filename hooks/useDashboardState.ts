@@ -31,20 +31,8 @@ export function useDashboardState() {
   // Only a server-verified Supabase session unlocks the dashboard
   const [authStatus, setAuthStatus] = useState<'loading' | 'authenticated' | 'unauthenticated'>('loading');
   const authParam = searchParams.get('auth');
-  const [isAuthModalOpen, setIsAuthModalOpen] = useState<boolean>(() => {
-    if (!authParam) return false;
-    if (typeof window === 'undefined') return false;
-    try {
-      const saved = localStorage.getItem('zelsis_user') || localStorage.getItem('shipguard_user');
-      if (saved) {
-        const p = JSON.parse(saved);
-        if (p && p.isLoggedIn) return false;
-      }
-    } catch (err) {
-      void err;
-    }
-    return true;
-  });
+  // Starts closed on server and client alike; the ?auth effect below opens it after mount (reading localStorage here broke hydration)
+  const [isAuthModalOpen, setIsAuthModalOpen] = useState<boolean>(false);
   const [authInitialMode, setAuthInitialMode] = useState<'signin' | 'signup'>(
     authParam === 'signup' ? 'signup' : 'signin'
   );
