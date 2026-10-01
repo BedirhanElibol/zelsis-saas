@@ -44,7 +44,7 @@ export function evaluateWafEdgeRules(file: CodeFile, lines: string[], cleanConte
         logs.push(`[${ts}] [WAF AUDIT] Found WAF-01: WAF Origin Bypass via Unvalidated X-Forwarded-Host Header at ${file.path}:${lineNum}`);
     }
     // WAF-02: Missing Edge Rate Limiting on High-Cost AI Inference Endpoints
-    const callsAiInference = /chat\.completions|messages\.create|responses\.create|generateText|streamText|generateObject|from\s+['"](?:openai|@anthropic-ai\/sdk|@ai-sdk\/[\w-]+|ai|@google\/generative-ai|cohere-ai|replicate)['"]/i.test(cleanContent);
+    const callsAiInference = /chat\.completions|chat\/completions|messages\.create|responses\.create|generateText|streamText|generateObject|streamObject|from\s+['"](?:openai|@anthropic-ai\/sdk|@ai-sdk\/[\w-]+|ai|@google\/generative-ai|@google\/genai|@mistralai\/mistralai|groq-sdk|cohere-ai|replicate|together-ai|ollama)['"]|api\.openai\.com|api\.anthropic\.com|generativelanguage\.googleapis\.com|api\.mistral\.ai|api\.groq\.com|openrouter\.ai\/api|api\.together\.xyz|api\.cohere\.(?:ai|com)|api\.deepseek\.com|api\.x\.ai/i.test(cleanContent);
     if (callsAiInference && /export\s+async\s+function\s+POST/i.test(cleanContent) && !/rateLimit|ratelimit|limiter/i.test(cleanContent)) {
         const matchLineIdx = lines.findIndex(l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('*'));
         const lineNum = matchLineIdx !== -1 ? matchLineIdx + 1 : 1;

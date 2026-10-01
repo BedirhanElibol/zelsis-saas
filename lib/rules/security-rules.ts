@@ -1094,9 +1094,14 @@ export function evaluateSecurityRules(file: CodeFile, lines: string[], cleanCont
     }
     // Rule 41 / SEC-41: Open Redirection Vulnerability via Untrusted URL Target
     if (isCodeFile && cleanContent.includes('redirect(')) {
-        const openRedirectRegex = /(?:res\.redirect|redirect|NextResponse\.redirect)\s*\(\s*(?:req\.(?:query|body|params)|searchParams\.get|\b(?:next|url|redirectUrl|target|targetUrl|returnTo)\b\s*[),])/i;
-        // Same-origin guards: relative-path check that rejects protocol-relative URLs, or an explicit helper
-        const redirectGuardRegex = /startsWith\(\s*['"]\/\/['"]\s*\)|isSafeRedirect|isRelativeUrl|allowedRedirect/i;
+        const redirectTarget = String.raw`\b(?:next|url|redirectUrl|redirectTo|target|targetUrl|returnTo|returnUrl|callbackUrl)\b`;
+        const openRedirectRegex = new RegExp(
+            String.raw`(?:res\.redirect|redirect|NextResponse\.redirect)\s*\(\s*(?:req\.(?:query|body|params)|searchParams\.get|` +
+            redirectTarget + String.raw`(?:\s+as\s+\w+)?\s*(?:[),]|\|\||\?\?)|` + '`' + String.raw`\$\{\s*` + redirectTarget + String.raw`\s*\}|new\s+URL\(\s*` + redirectTarget + ')',
+            'i'
+        );
+        // Explicit same-origin helpers mark the redirect as validated
+        const redirectGuardRegex = /isSafeRedirect|isRelativeUrl|allowedRedirect|isSameOrigin/i;
         if (openRedirectRegex.test(cleanContent) && !redirectGuardRegex.test(cleanContent)) {
             const matchLineIdx = lines.findIndex(l => !l.trim().startsWith('//') && !l.trim().startsWith('*') && openRedirectRegex.test(l));
             const lineNum = matchLineIdx !== -1 ? matchLineIdx + 1 : 1;

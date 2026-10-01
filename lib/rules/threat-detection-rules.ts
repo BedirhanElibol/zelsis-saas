@@ -44,8 +44,8 @@ export function evaluateThreatDetectionRules(file: CodeFile, lines: string[], cl
         logs.push(`[${ts}] [THREAT AUDIT] Found THREAT-01: MITRE T1078 Valid Accounts: Missing Detection on Impossible Travel Anomalies at ${file.path}:${lineNum}`);
     }
     // THREAT-02: MITRE T1059 Command Execution: Unmonitored Interactive Shell Spawning in Web Pods
-    const importsChildProcess = /require\(["']child_process["']\)|from\s+["']child_process["']/i.test(cleanContent);
-    const spawnsShell = /\bexec(?:Sync)?\s*\(|spawn(?:Sync)?\s*\(\s*["'](?:sh|bash|zsh|cmd(?:\.exe)?|powershell)["']|shell\s*:\s*true/i.test(cleanContent);
+    const importsChildProcess = /require\(["'](?:node:)?child_process["']\)|from\s+["'](?:node:)?child_process["']/i.test(cleanContent);
+    const spawnsShell = /\bexec(?:Sync)?\s*\(|spawn(?:Sync)?\s*\(\s*["'](?:(?:\/usr)?\/bin\/)?(?:sh|bash|zsh|dash|cmd(?:\.exe)?|powershell(?:\.exe)?|pwsh)["']|shell\s*:\s*true/i.test(cleanContent);
     if (importsChildProcess && spawnsShell && !/auditShellProcess/i.test(cleanContent)) {
         const matchLineIdx = lines.findIndex(l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('#') && !l.trim().startsWith('*'));
         const lineNum = matchLineIdx !== -1 ? matchLineIdx + 1 : 1;

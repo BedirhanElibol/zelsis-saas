@@ -1,7 +1,10 @@
 import { describe, it } from 'node:test';
 import assert from 'node:assert/strict';
 import { runStaticCodeScan, type CodeFile } from '../../lib/scanner-engine';
+import { readdirSync, readFileSync } from 'node:fs';
+import { join } from 'node:path';
 import { KNOWN_GAPS, RULE_CASES } from './cases';
+import { VULNERABLE_VARIANTS } from './variants';
 
 const ruleIdsFor = async (files: CodeFile[]) =>
   new Set((await runStaticCodeScan(files, 'fixture')).findings.map((f) => f.ruleId));
@@ -36,4 +39,25 @@ describe('known scanner gaps', () => {
       }
     });
   }
+});
+
+describe('vulnerable variants (breadth guard)', () => {
+  for (const [ruleId, name, files] of VULNERABLE_VARIANTS) {
+    it(`#${ruleId} catches: ${name}`, async () => {
+      assert.ok((await ruleIdsFor(files)).has(ruleId), `rule ${ruleId} missed this variant`);
+    });
+  }
+});
+
+describe('scanner self-reference', () => {
+  it('rule definitions and scanner modules produce no findings when Zelsis scans itself', async () => {
+    const root = join(__dirname, '../..');
+    const dirs = ['lib/scanner', 'lib/rules'];
+    const files: CodeFile[] = dirs.flatMap((dir) =>
+      readdirSync(join(root, dir)).filter((n) => n.endsWith('.ts')).map((n) => ({ path: `${dir}/${n}`, content: readFileSync(join(root, dir, n), 'utf8') }))
+    );
+    files.push({ path: 'lib/scanner-engine.ts', content: readFileSync(join(root, 'lib/scanner-engine.ts'), 'utf8') });
+    const { findings } = await runStaticCodeScan(files, 'self');
+    assert.deepEqual(findings.map((f) => `${f.ruleId} ${f.filePath}`), []);
+  });
 });

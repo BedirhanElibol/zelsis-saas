@@ -35,6 +35,7 @@ export function evaluateInfraRules(file: CodeFile, lines: string[], cleanContent
         lowerPath.includes('data/mockdata.ts') ||
         lowerPath.includes('data/workspacefiles.ts') ||
         lowerPath.includes('lib/scanner-engine.ts') ||
+        lowerPath.includes('lib/scanner/') ||
         lowerPath.includes('vulnerabilityplayground.tsx') ||
         lowerPath.includes('ruleknowledgebasemodal.tsx') ||
         lowerPath.includes('scratch/') ||

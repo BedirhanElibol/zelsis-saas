@@ -39,6 +39,7 @@ export function evaluateComplianceRules(file: CodeFile, lines: string[], cleanCo
         lowerPath.includes('data/mockdata.ts') ||
         lowerPath.includes('data/workspacefiles.ts') ||
         lowerPath.includes('lib/scanner-engine.ts') ||
+        lowerPath.includes('lib/scanner/') ||
         lowerPath.includes('vulnerabilityplayground.tsx') ||
         lowerPath.includes('ruleknowledgebasemodal.tsx') ||
         lowerPath.includes('interactiveanalyzer.tsx') ||

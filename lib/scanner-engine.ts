@@ -150,6 +150,7 @@ export async function runStaticCodeScan(files: CodeFile[], repoName: string = 'T
       lowerFilePath.includes('data/mockdata.ts') ||
       lowerFilePath.includes('data/workspacefiles.ts') ||
       lowerFilePath.includes('lib/scanner-engine.ts') ||
+      lowerFilePath.includes('lib/scanner/') ||
       lowerFilePath.includes('vulnerabilityplayground.tsx') ||
       lowerFilePath.includes('ruleknowledgebasemodal.tsx') ||
       lowerFilePath.includes('interactiveanalyzer.tsx') ||

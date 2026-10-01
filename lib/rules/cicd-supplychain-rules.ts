@@ -71,13 +71,13 @@ export function evaluateCicdSupplyChainRules(file: CodeFile, lines: string[], cl
         logs.push(`[${ts}] [CICD SEC] Found CICD-SEC-02: Unpinned Third-Party Action Mutable Reference (@v1) at ${file.path}:${lineNum}`);
     }
     // CICD-SEC-03: Script Injection via Unescaped GitHub Context Expression
-    const untrustedContextRegex = /\$\{\{\s*github\.event\.(?:issue\.title|pull_request\.title|head_ref)/i;
+    const untrustedContextRegex = /\$\{\{\s*github\.(?:head_ref|event\.(?:issue|pull_request|comment|review|review_comment|discussion|discussion_comment|head_commit|commits|pages)\b[\w.\[\]*]*\.(?:title|body|message|ref|label|name|email|page_name))/i;
     const indentOf = (l: string) => l.length - l.trimStart().length;
     const isInsideRunScript = (idx: number) => {
-        if (/^\s*-?\s*run\s*:/.test(lines[idx])) return true;
+        if (/^\s*-?\s*(?:run|script)\s*:/.test(lines[idx])) return true;
         for (let i = idx - 1, indent = indentOf(lines[idx]); i >= 0; i--) {
             if (!lines[i].trim() || lines[i].trim().startsWith('#') || indentOf(lines[i]) >= indent) continue;
-            return /^\s*-?\s*run\s*:/.test(lines[i]);
+            return /^\s*-?\s*(?:run|script)\s*:/.test(lines[i]);
         }
         return false;
     };
