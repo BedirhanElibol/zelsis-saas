@@ -35,7 +35,7 @@ export function evaluateThreatDetectionRules(file: CodeFile, lines: string[], cl
             snippet: lines[matchLineIdx] || 'Threat Detection configuration',
             reproductionSteps: [
                 `Audited Threat Detection configuration in ${file.path}:${lineNum}.`,
-                'Detected violation matching {code}.'
+                'Matched THREAT-01: MITRE T1078 Valid Accounts: Missing Detection on Impossible Travel Anomalies.'
             ],
             remediationPrompt: "Alert security operations on consecutive user authentications from distant geographies within impossible timeframes.",
             status: 'OPEN',
@@ -61,7 +61,7 @@ export function evaluateThreatDetectionRules(file: CodeFile, lines: string[], cl
             snippet: lines[matchLineIdx] || 'Threat Detection configuration',
             reproductionSteps: [
                 `Audited Threat Detection configuration in ${file.path}:${lineNum}.`,
-                'Detected violation matching {code}.'
+                'Matched THREAT-02: MITRE T1059 Command Execution: Unmonitored Interactive Shell Spawning in Web Pods.'
             ],
             remediationPrompt: "Monitor and immediately terminate unauthorized shell processes (/bin/sh, /bin/bash) spawned by web services.",
             status: 'OPEN',
@@ -85,7 +85,7 @@ export function evaluateThreatDetectionRules(file: CodeFile, lines: string[], cl
             snippet: lines[matchLineIdx] || 'Threat Detection configuration',
             reproductionSteps: [
                 `Audited Threat Detection configuration in ${file.path}:${lineNum}.`,
-                'Detected violation matching {code}.'
+                'Matched THREAT-03: MITRE T1562 Impair Defenses: Security Daemon Process Tampering or Disablement.'
             ],
             remediationPrompt: "Generate high-priority alerts if host security sensors (Falco, EDR, Auditd) stop reporting heartbeats.",
             status: 'OPEN',
@@ -109,7 +109,7 @@ export function evaluateThreatDetectionRules(file: CodeFile, lines: string[], cl
             snippet: lines[matchLineIdx] || 'Threat Detection configuration',
             reproductionSteps: [
                 `Audited Threat Detection configuration in ${file.path}:${lineNum}.`,
-                'Detected violation matching {code}.'
+                'Matched THREAT-04: MITRE T1003 OS Credential Dumping: Unauthorized Reading of Host Credential Files.'
             ],
             remediationPrompt: "Detect and block access attempts to sensitive host credential stores (/etc/shadow, SAM, memory dumps).",
             status: 'OPEN',
@@ -133,7 +133,7 @@ export function evaluateThreatDetectionRules(file: CodeFile, lines: string[], cl
             snippet: lines[matchLineIdx] || 'Threat Detection configuration',
             reproductionSteps: [
                 `Audited Threat Detection configuration in ${file.path}:${lineNum}.`,
-                'Detected violation matching {code}.'
+                'Matched THREAT-05: Canary Token Triggering: Unmonitored Honeytoken or Fake Credential Traversal.'
             ],
             remediationPrompt: "Deploy canary tokens across codebases and databases to immediately catch unauthorized perimeter intrusions.",
             status: 'OPEN',

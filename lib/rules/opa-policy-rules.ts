@@ -40,7 +40,7 @@ export function evaluateOpaPolicyRules(file: CodeFile, lines: string[], cleanCon
             snippet: lines[matchLineIdx] || 'Open Policy Agent configuration',
             reproductionSteps: [
                 `Audited Open Policy Agent configuration in ${file.path}:${lineNum}.`,
-                'Detected violation matching {code}.'
+                'Matched OPA-01: Rego Policy Infinite Recursion and Execution Timeout.'
             ],
             remediationPrompt: "Enforce strict evaluation timeouts (e.g. 100ms) on OPA admission webhook decisions.",
             status: 'OPEN',
@@ -64,7 +64,7 @@ export function evaluateOpaPolicyRules(file: CodeFile, lines: string[], cleanCon
             snippet: lines[matchLineIdx] || 'Open Policy Agent configuration',
             reproductionSteps: [
                 `Audited Open Policy Agent configuration in ${file.path}:${lineNum}.`,
-                'Detected violation matching {code}.'
+                'Matched OPA-02: Admission Webhook Fail-Open Misconfiguration in Production.'
             ],
             remediationPrompt: "Configure failurePolicy: Fail on validating admission webhooks to prevent security bypasses on outage.",
             status: 'OPEN',
@@ -88,7 +88,7 @@ export function evaluateOpaPolicyRules(file: CodeFile, lines: string[], cleanCon
             snippet: lines[matchLineIdx] || 'Open Policy Agent configuration',
             reproductionSteps: [
                 `Audited Open Policy Agent configuration in ${file.path}:${lineNum}.`,
-                'Detected violation matching {code}.'
+                'Matched OPA-03: Uncached External HTTP Requests Inside Rego Evaluation Loop.'
             ],
             remediationPrompt: "Forbid uncached http.send calls in real-time webhook rules; use pre-computed cached bundles.",
             status: 'OPEN',
@@ -112,7 +112,7 @@ export function evaluateOpaPolicyRules(file: CodeFile, lines: string[], cleanCon
             snippet: lines[matchLineIdx] || 'Open Policy Agent configuration',
             reproductionSteps: [
                 `Audited Open Policy Agent configuration in ${file.path}:${lineNum}.`,
-                'Detected violation matching {code}.'
+                'Matched OPA-04: Unrestricted Container Linux Capabilities (SYS_ADMIN) Admission.'
             ],
             remediationPrompt: "Reject pod specs requesting dangerous capabilities such as CAP_SYS_ADMIN or CAP_NET_ADMIN.",
             status: 'OPEN',
@@ -136,7 +136,7 @@ export function evaluateOpaPolicyRules(file: CodeFile, lines: string[], cleanCon
             snippet: lines[matchLineIdx] || 'Open Policy Agent configuration',
             reproductionSteps: [
                 `Audited Open Policy Agent configuration in ${file.path}:${lineNum}.`,
-                'Detected violation matching {code}.'
+                'Matched OPA-05: Host Network and Host PID Namespace Sharing Policy Bypass.'
             ],
             remediationPrompt: "Deny admission to workloads setting hostNetwork: true or hostPID: true in non-system namespaces.",
             status: 'OPEN',

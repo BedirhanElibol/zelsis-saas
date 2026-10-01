@@ -35,7 +35,7 @@ export function evaluateVectorIndexOptimizationRules(file: CodeFile, lines: stri
             snippet: lines[matchLineIdx] || 'Vector Index Optimization configuration',
             reproductionSteps: [
                 `Audited Vector Index Optimization configuration in ${file.path}:${lineNum}.`,
-                'Detected violation matching {code}.'
+                'Matched VEC-OPT-01: Unoptimized Full-Precision Floating Point (FP32) Vectors Causing RAM Exhaustion.'
             ],
             remediationPrompt: "Apply Scalar Quantization (SQ8) or Product Quantization (PQ) to compress vector embeddings by 75%+ with <1% recall degradation.",
             status: 'OPEN',
@@ -59,7 +59,7 @@ export function evaluateVectorIndexOptimizationRules(file: CodeFile, lines: stri
             snippet: lines[matchLineIdx] || 'Vector Index Optimization configuration',
             reproductionSteps: [
                 `Audited Vector Index Optimization configuration in ${file.path}:${lineNum}.`,
-                'Detected violation matching {code}.'
+                'Matched VEC-OPT-02: Suboptimal HNSW M and efConstruction Hyperparameters Causing Slow Indexing.'
             ],
             remediationPrompt: "Tune HNSW graph parameters (e.g. M=16..32, efConstruction=128..200) balancing indexing throughput and graph connectivity.",
             status: 'OPEN',
@@ -83,7 +83,7 @@ export function evaluateVectorIndexOptimizationRules(file: CodeFile, lines: stri
             snippet: lines[matchLineIdx] || 'Vector Index Optimization configuration',
             reproductionSteps: [
                 `Audited Vector Index Optimization configuration in ${file.path}:${lineNum}.`,
-                'Detected violation matching {code}.'
+                'Matched VEC-OPT-03: Disabled SIMD Vector Acceleration (AVX-512 / ARM NEON) in Vector Distance Compute.'
             ],
             remediationPrompt: "Ensure vector database binaries are compiled with hardware SIMD instruction set support for parallelized dot product and cosine distance.",
             status: 'OPEN',
@@ -107,7 +107,7 @@ export function evaluateVectorIndexOptimizationRules(file: CodeFile, lines: stri
             snippet: lines[matchLineIdx] || 'Vector Index Optimization configuration',
             reproductionSteps: [
                 `Audited Vector Index Optimization configuration in ${file.path}:${lineNum}.`,
-                'Detected violation matching {code}.'
+                'Matched VEC-OPT-04: Missing Inverted File Index (IVF) Cluster Centroid Recalibration on Data Drift.'
             ],
             remediationPrompt: "Schedule periodic retraining of IVF centroids as new embedding distributions are ingested to prevent search recall degradation.",
             status: 'OPEN',
@@ -131,7 +131,7 @@ export function evaluateVectorIndexOptimizationRules(file: CodeFile, lines: stri
             snippet: lines[matchLineIdx] || 'Vector Index Optimization configuration',
             reproductionSteps: [
                 `Audited Vector Index Optimization configuration in ${file.path}:${lineNum}.`,
-                'Detected violation matching {code}.'
+                'Matched VEC-OPT-05: Unindexed Metadata Filtering Causing Post-Filter Vector Search Latency Explosions.'
             ],
             remediationPrompt: "Construct payload indexes on high-cardinality metadata filter keys to enable pre-filtering before vector distance calculation.",
             status: 'OPEN',

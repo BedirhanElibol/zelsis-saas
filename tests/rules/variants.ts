@@ -56,6 +56,17 @@ export const VULNERABLE_VARIANTS: [ruleId: number, name: string, files: CodeFile
   [23007, 'body field in system content', f('app/api/chat/route.ts', "export async function POST(req: Request) {\n  const body = await req.json();\n  return Response.json(await anthropic.messages.create({ model: 'claude', max_tokens: 200, system: `Company rules: ${body.rules}`, messages: body.messages }));\n}\n")],
   [23008, 'Next 14 pinned', f('package.json', '{ "dependencies": { "next": "14.2.10" } }\n')],
   [23008, 'Next 13 tilde range', f('package.json', '{ "devDependencies": { "next": "~13.4.0" } }\n')],
+  // SQL injection across query APIs (3021)
+  [3021, 'sequelize.query with concatenated variable', f('core/handler.js', "module.exports.search = function (req, res) {\n  var query = \"SELECT name FROM Users WHERE login='\" + req.body.login + \"'\";\n  db.sequelize.query(query, { model: db.User }).then((u) => res.json(u));\n};\n")],
+  [3021, 'sequelize.query template literal', f('routes/login.ts', "export function login(req, res) {\n  models.sequelize.query(`SELECT * FROM Users WHERE email = '${req.body.email}'`).then((u) => res.json(u));\n}\n")],
+  [3021, 'Prisma $queryRawUnsafe', f('app/api/search/route.ts', "export async function GET(req: Request) {\n  const q = new URL(req.url).searchParams.get('q');\n  return Response.json(await prisma.$queryRawUnsafe(`SELECT * FROM posts WHERE title LIKE '%${q}%'`));\n}\n")],
+  [3021, 'knex.raw concatenation', f('server/repo.js', "exports.find = (name) => knex.raw(\"SELECT * FROM users WHERE name = '\" + name + \"'\");\n")],
+  // SSRF across HTTP clients (34)
+  [34, 'needle.get with request-built url', f('app/routes/research.js', "function displayResearch(req, res) {\n  if (req.query.symbol) {\n    const url = req.query.url + req.query.symbol;\n    return needle.get(url, (err, r, body) => res.send(body));\n  }\n}\n")],
+  [34, 'got with template URL', f('server/proxy.ts', "app.get('/proxy', async (req, res) => {\n  const r = await got(`${req.query.target}/status`);\n  res.send(r.body);\n});\n")],
+  // Node core injection (JS-SEC)
+  [24001, 'node-serialize unserialize', f('core/import.js', "var serialize = require('node-serialize');\nmodule.exports.bulk = function (req, res) {\n  var products = serialize.unserialize(req.files.products.data.toString('utf8'));\n  res.json(products);\n};\n")],
+  [24002, 'libxmljs noent', f('core/xml.js', "var libxmljs = require('libxmljs');\nmodule.exports.importXml = function (req, res) {\n  var doc = libxmljs.parseXmlString(req.files.products.data.toString('utf8'), { noent: true, noblanks: true });\n  res.json(doc.root().name());\n};\n")],
   // ZERO-AUTH-43
   [8143, 'webhook no verification', f('app/api/webhooks/github/route.ts', "export async function POST(req: Request) {\n  const event = await req.json();\n  await deploy(event);\n  return new Response('ok');\n}\n")],
   [8143, 'webhook defines fake validateEvent', f('app/api/webhooks/github/route.ts', "const validateEvent = (e: unknown) => e;\nexport async function POST(req: Request) {\n  const event = validateEvent(await req.json());\n  return new Response(String(event));\n}\n")],

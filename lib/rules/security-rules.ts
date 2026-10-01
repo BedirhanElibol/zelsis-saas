@@ -862,7 +862,18 @@ export function evaluateSecurityRules(file: CodeFile, lines: string[], cleanCont
     }
     // Rule 33 / SEC-33: Command Injection via Unsanitized Child Process Execution
     if (isCodeFile && (cleanContent.includes('child_process') || cleanContent.includes('execSync(') || cleanContent.includes('exec('))) {
-        const cmdInjRegex = /(?:child_process\.(?:exec|execSync|spawn|spawnSync)|\bexec\s*\(|\bexecSync\s*\()\s*(?:`[^`]*\$\{[^}]+\}|['"][^'"]*['"]\s*\+|[a-zA-Z0-9_.]+\s*\+|[^,\)]*\b(?:req\.|params\.|query\.|body\.|userInput|cmd|command|host|input))/;
+        // Shell commands built from dynamic values, or passed a value that comes from the request.
+        // A variable merely named `command` / `cmd` holding a constant is not injection.
+        const cmdRequestVars = new Set<string>();
+        for (const m of cleanContent.matchAll(/(?:const|let|var)\s+(\w+)\s*=\s*[^;\n]*(?:\breq(?:uest)?\.(?:query|body|params)\b|searchParams\.get\()/g)) cmdRequestVars.add(m[1]);
+        for (const m of cleanContent.matchAll(/(?:const|let|var)\s*\{([^}]*)\}\s*=\s*(?:await\s+)?(?:req(?:uest)?\.(?:query|body|params|json\(\))|request\.json\(\))/g)) {
+            m[1].split(',').map((x) => x.split(':').pop()!.split('=')[0].trim()).filter((x) => /^\w+$/.test(x)).forEach((x) => cmdRequestVars.add(x));
+        }
+        const cmdRequestRef = String.raw`\b(?:req(?:uest)?\.(?:query|body|params)\.\w+` + (cmdRequestVars.size ? '|' + [...cmdRequestVars].join('|') : '') + String.raw`)\b`;
+        // Developer tooling (scripts/, bin/, tools/) receives no request input: only request-derived values count there
+        const isDevTooling = /(?:^|\/)(?:scripts|bin|tools|\.husky)\//i.test(lowerPath);
+        const dynamicShell = String.raw`\x60[^\x60]*\$\{[^}]+\}|['"][^'"]*['"]\s*\+|[a-zA-Z0-9_.]+\s*\+|`;
+        const cmdInjRegex = new RegExp(String.raw`(?:child_process\.(?:exec|execSync)|\bexec\s*\(|\bexecSync\s*\()\s*(?:` + (isDevTooling ? '' : dynamicShell) + cmdRequestRef + ')');
         if (cmdInjRegex.test(cleanContent)) {
             const matchLineIdx = lines.findIndex(l => !l.trim().startsWith('//') && !l.trim().startsWith('*') && cmdInjRegex.test(l));
             const lineNum = matchLineIdx !== -1 ? matchLineIdx + 1 : 1;
@@ -890,9 +901,17 @@ export function evaluateSecurityRules(file: CodeFile, lines: string[], cleanCont
         }
     }
     // Rule 34 / SEC-34: Server-Side Request Forgery (SSRF) via Unvalidated HTTP Request
-    if (isCodeFile && (cleanContent.includes('fetch(') || cleanContent.includes('axios.') || cleanContent.includes('http.get('))) {
-        const ssrfRegex = /(?:fetch|axios\.(?:get|post|request)|http\.get|https\.get)\s*\(\s*(?:req\.(?:query|body|params)\.[a-zA-Z0-9_]+|userInput|targetUrl|url)\b/;
-        if (ssrfRegex.test(cleanContent) && !cleanContent.includes('validateSafeTargetUrl') && !cleanContent.includes('isAllowedWebhookUrl')) {
+    const httpClient = String.raw`(?:fetch|axios(?:\.(?:get|post|put|request|head))?|https?\.(?:get|request)|needle(?:\.(?:get|post|request))?|got(?:\.(?:get|post))?|request(?:\.(?:get|post))?|superagent\.(?:get|post)|undici\.request|ky(?:\.(?:get|post))?)`;
+    if (isCodeFile && new RegExp(httpClient + String.raw`\s*\(`).test(cleanContent)) {
+        // Only URLs that come from the request: direct req.* access or variables assigned / destructured from it
+        const requestVars = new Set<string>();
+        for (const m of cleanContent.matchAll(/(?:const|let|var)\s+(\w+)\s*=\s*[^;\n]*(?:\breq(?:uest)?\.(?:query|body|params)\b|searchParams\.get\(|\bformData\.get\()/g)) requestVars.add(m[1]);
+        for (const m of cleanContent.matchAll(/(?:const|let|var)\s*\{([^}]*)\}\s*=\s*(?:await\s+)?(?:req(?:uest)?\.(?:query|body|params|json\(\))|request\.json\(\))/g)) {
+            m[1].split(',').map((x) => x.split(':').pop()!.split('=')[0].trim()).filter(Boolean).forEach((x) => requestVars.add(x));
+        }
+        const requestUrl = String.raw`(?:req(?:uest)?\.(?:query|body|params)\.\w+` + (requestVars.size ? String.raw`|\b(?:` + [...requestVars].filter((v) => /^\w+$/.test(v)).join('|') + String.raw`)\b` : '') + ')';
+        const ssrfRegex = new RegExp(httpClient + String.raw`\s*\(\s*(?:\x60[^\x60]*\$\{\s*` + requestUrl + String.raw`|new\s+URL\(\s*` + requestUrl + '|' + requestUrl + ')');
+        if (ssrfRegex.test(cleanContent) && !/validateSafeTargetUrl|isAllowedWebhookUrl|\b(?:ALLOWED|allowed|ALLOW|allow)\w*\.(?:has|includes)\(\s*\w+\.(?:hostname|host|origin)|\.(?:hostname|host|origin)\s*(?:===|!==)|isAllowed\w*\(|validate\w*Url\(|(?:assert|ensure|is)Safe\w*Url\(|ssrfGuard|ssrf-?(?:req-)?filter/i.test(cleanContent)) {
             const matchLineIdx = lines.findIndex(l => !l.trim().startsWith('//') && !l.trim().startsWith('*') && ssrfRegex.test(l));
             const lineNum = matchLineIdx !== -1 ? matchLineIdx + 1 : 1;
             const snippet = lines.slice(Math.max(0, lineNum - 2), Math.min(lines.length, lineNum + 2)).join('\n');
@@ -1034,7 +1053,11 @@ export function evaluateSecurityRules(file: CodeFile, lines: string[], cleanCont
     }
     // Rule 39 / SEC-39: Insecure Unverified JWT Decoding (Missing Signature Verification)
     if (isCodeFile && cleanContent.includes('jwt.decode(')) {
-        const jwtDecodeRegex = /\bjwt\.decode\s*\([^)]+\)/;
+        // PyJWT's jwt.decode(token, key, algorithms=[...]) verifies the signature; only flag disabled verification there.
+        const isPython = /\.py$/i.test(file.path);
+        const jwtDecodeRegex = isPython
+            ? /\bjwt\.decode\s*\((?:\s*\w+\s*\)|[^)]*verify_signature["']?\s*:\s*False|[^)]*verify\s*=\s*False)/
+            : /\bjwt\.decode\s*\([^)]+\)/;
         if (jwtDecodeRegex.test(cleanContent) && !cleanContent.includes('jwt.verify(')) {
             const matchLineIdx = lines.findIndex(l => !l.trim().startsWith('//') && !l.trim().startsWith('*') && jwtDecodeRegex.test(l));
             const lineNum = matchLineIdx !== -1 ? matchLineIdx + 1 : 1;

@@ -38,7 +38,7 @@ export function evaluateGeoDistributedDbRules(file: CodeFile, lines: string[], c
             snippet: lines[matchLineIdx] || 'Geo-Distributed Database configuration',
             reproductionSteps: [
                 `Audited Geo-Distributed Database configuration in ${file.path}:${lineNum}.`,
-                'Detected violation matching {code}.'
+                'Matched GEODIST-01: Unpartitioned Multi-Region Tables Triggering Cross-WAN Latency Spikes.'
             ],
             remediationPrompt: "Apply regional table locality (e.g. REGIONAL BY ROW) to anchor data partitions close to user geographies.",
             status: 'OPEN',
@@ -62,7 +62,7 @@ export function evaluateGeoDistributedDbRules(file: CodeFile, lines: string[], c
             snippet: lines[matchLineIdx] || 'Geo-Distributed Database configuration',
             reproductionSteps: [
                 `Audited Geo-Distributed Database configuration in ${file.path}:${lineNum}.`,
-                'Detected violation matching {code}.'
+                'Matched GEODIST-02: Single Failure Domain: Replicas Concentrated in a Single Region.'
             ],
             remediationPrompt: "Ensure Raft consensus replicas span across at least three distinct cloud availability zones and regions.",
             status: 'OPEN',
@@ -86,7 +86,7 @@ export function evaluateGeoDistributedDbRules(file: CodeFile, lines: string[], c
             snippet: lines[matchLineIdx] || 'Geo-Distributed Database configuration',
             reproductionSteps: [
                 `Audited Geo-Distributed Database configuration in ${file.path}:${lineNum}.`,
-                'Detected violation matching {code}.'
+                'Matched GEODIST-03: Cross-Region Distributed Deadlocks on High-Contention Transactions.'
             ],
             remediationPrompt: "Design schema primary keys and isolation levels to avoid multi-region distributed locking cascades.",
             status: 'OPEN',
@@ -110,7 +110,7 @@ export function evaluateGeoDistributedDbRules(file: CodeFile, lines: string[], c
             snippet: lines[matchLineIdx] || 'Geo-Distributed Database configuration',
             reproductionSteps: [
                 `Audited Geo-Distributed Database configuration in ${file.path}:${lineNum}.`,
-                'Detected violation matching {code}.'
+                'Matched GEODIST-04: Unbounded Multi-Region CDC Streams Causing Network Buffer Bloat.'
             ],
             remediationPrompt: "Configure backpressure and buffer memory caps on cross-region change data capture (CDC) export streams.",
             status: 'OPEN',
@@ -134,7 +134,7 @@ export function evaluateGeoDistributedDbRules(file: CodeFile, lines: string[], c
             snippet: lines[matchLineIdx] || 'Geo-Distributed Database configuration',
             reproductionSteps: [
                 `Audited Geo-Distributed Database configuration in ${file.path}:${lineNum}.`,
-                'Detected violation matching {code}.'
+                'Matched GEODIST-05: Missing Mutual TLS Node-to-Node Inter-Region Cluster Encryption.'
             ],
             remediationPrompt: "Enforce TLS 1.3 with mutual certificate authentication across all internal inter-region database nodes.",
             status: 'OPEN',

@@ -294,9 +294,9 @@ export function evaluatePythonEnterpriseRules(file: CodeFile, lines: string[], c
         logs.push(`[${ts}] [PYTHON AUDIT] Found PY-SEC-10: Unrestricted Jinja2 Server-Side Template Injection (SSTI) at ${file.path}:${lineNum}`);
     }
     // PY-SEC-11: Dynamic Code Execution via eval() or exec()
-    const reg_8811 = /\b(?:eval|exec|compile)\s*\(\s*(?!'[^']*'|"[^"]*")[a-zA-Z0-9_]+/i;
+    const reg_8811 = /(?<![.\w])(?:eval|exec|compile)\s*\(\s*(?!'[^']*'|"[^"]*")[a-zA-Z0-9_]+/;
     if (reg_8811.test(cleanContent)) {
-        const linePattern = /\b(?:eval|exec|compile)\s*\(/i;
+        const linePattern = /(?<![.\w])(?:eval|exec|compile)\s*\(/;
         const matchLineIdx = lines.findIndex(l => !l.trim().startsWith('#') && !l.trim().startsWith('"""') && linePattern.test(l));
         const lineNum = matchLineIdx !== -1 ? matchLineIdx + 1 : 1;
         const rawSnippet = matchLineIdx !== -1 ? lines[matchLineIdx].trim() : lines.find(l => !l.trim().startsWith('#'))?.trim() || "Dynamic Code Execution via eval() or exec()";

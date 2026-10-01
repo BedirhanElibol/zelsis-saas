@@ -35,7 +35,7 @@ export function evaluateCryptoKmsRules(file: CodeFile, lines: string[], cleanCon
             snippet: lines[matchLineIdx] || 'Enterprise KMS configuration',
             reproductionSteps: [
                 `Audited Enterprise KMS configuration in ${file.path}:${lineNum}.`,
-                'Detected violation matching {code}.'
+                'Matched CRYPTO-01: Hardcoded Cryptographic Keys and Static Salts in Source Code.'
             ],
             remediationPrompt: "Disallow static cryptographic keys in source code; retrieve key material from dedicated KMS or HSM.",
             status: 'OPEN',
@@ -59,7 +59,7 @@ export function evaluateCryptoKmsRules(file: CodeFile, lines: string[], cleanCon
             snippet: lines[matchLineIdx] || 'Enterprise KMS configuration',
             reproductionSteps: [
                 `Audited Enterprise KMS configuration in ${file.path}:${lineNum}.`,
-                'Detected violation matching {code}.'
+                'Matched CRYPTO-02: Missing Automated Master Key Rotation Schedule Exceeding 90 Days.'
             ],
             remediationPrompt: "Enforce automated 90-day cryptographic key rotation on all envelope encryption KMS master keys.",
             status: 'OPEN',
@@ -83,7 +83,7 @@ export function evaluateCryptoKmsRules(file: CodeFile, lines: string[], cleanCon
             snippet: lines[matchLineIdx] || 'Enterprise KMS configuration',
             reproductionSteps: [
                 `Audited Enterprise KMS configuration in ${file.path}:${lineNum}.`,
-                'Detected violation matching {code}.'
+                'Matched CRYPTO-03: Insecure Legacy Cipher Modes Permitted (AES-ECB / Unauthenticated CBC).'
             ],
             remediationPrompt: "Enforce authenticated AEAD encryption (AES-256-GCM or ChaCha20-Poly1305); reject ECB and unauthenticated CBC.",
             status: 'OPEN',
@@ -107,7 +107,7 @@ export function evaluateCryptoKmsRules(file: CodeFile, lines: string[], cleanCon
             snippet: lines[matchLineIdx] || 'Enterprise KMS configuration',
             reproductionSteps: [
                 `Audited Enterprise KMS configuration in ${file.path}:${lineNum}.`,
-                'Detected violation matching {code}.'
+                'Matched CRYPTO-04: Cryptographic Nonce Reuse in Galois/Counter Mode (GCM) Encryption.'
             ],
             remediationPrompt: "Ensure unique 96-bit initialization vectors/nonces per encryption operation to prevent plaintext recovery.",
             status: 'OPEN',
@@ -131,7 +131,7 @@ export function evaluateCryptoKmsRules(file: CodeFile, lines: string[], cleanCon
             snippet: lines[matchLineIdx] || 'Enterprise KMS configuration',
             reproductionSteps: [
                 `Audited Enterprise KMS configuration in ${file.path}:${lineNum}.`,
-                'Detected violation matching {code}.'
+                'Matched CRYPTO-05: Weak Asymmetric Key Strengths (RSA < 3072 bits or ECC < 256 bits).'
             ],
             remediationPrompt: "Mandate minimum RSA-3072 or ECC P-256 / Ed25519 for all digital signatures and key exchange.",
             status: 'OPEN',

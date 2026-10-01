@@ -35,7 +35,7 @@ export function evaluateFederatedLearningRules(file: CodeFile, lines: string[], 
             snippet: lines[matchLineIdx] || 'Federated Learning configuration',
             reproductionSteps: [
                 `Audited Federated Learning configuration in ${file.path}:${lineNum}.`,
-                'Detected violation matching {code}.'
+                'Matched FED-LEARN-01: Absence of Differential Privacy Noise Injection on Local Model Gradient Updates.'
             ],
             remediationPrompt: "Inject calibrated Gaussian or Laplacian noise to local gradient tensors satisfying (epsilon, delta)-differential privacy budgets.",
             status: 'OPEN',
@@ -59,7 +59,7 @@ export function evaluateFederatedLearningRules(file: CodeFile, lines: string[], 
             snippet: lines[matchLineIdx] || 'Federated Learning configuration',
             reproductionSteps: [
                 `Audited Federated Learning configuration in ${file.path}:${lineNum}.`,
-                'Detected violation matching {code}.'
+                'Matched FED-LEARN-02: Vulnerability to Model Inversion and Training Data Reconstruction from Gradients.'
             ],
             remediationPrompt: "Apply Secure Multi-Party Computation (SMPC) or Homomorphic Encryption on client updates before central aggregation.",
             status: 'OPEN',
@@ -83,7 +83,7 @@ export function evaluateFederatedLearningRules(file: CodeFile, lines: string[], 
             snippet: lines[matchLineIdx] || 'Federated Learning configuration',
             reproductionSteps: [
                 `Audited Federated Learning configuration in ${file.path}:${lineNum}.`,
-                'Detected violation matching {code}.'
+                'Matched FED-LEARN-03: Lack of Sybil and Poisoning Defense on Malicious Federated Client Nodes.'
             ],
             remediationPrompt: "Deploy Byzantine-robust aggregation algorithms (e.g. Krum, Trimmed Mean, Coordinate-wise Median) to filter malicious model weights.",
             status: 'OPEN',
@@ -107,7 +107,7 @@ export function evaluateFederatedLearningRules(file: CodeFile, lines: string[], 
             snippet: lines[matchLineIdx] || 'Federated Learning configuration',
             reproductionSteps: [
                 `Audited Federated Learning configuration in ${file.path}:${lineNum}.`,
-                'Detected violation matching {code}.'
+                'Matched FED-LEARN-04: Unbounded Client Update Norms Permitting Backdoor Trigger Injection.'
             ],
             remediationPrompt: "Enforce strict L2 gradient norm clipping on all incoming client update tensors prior to aggregation.",
             status: 'OPEN',
@@ -131,7 +131,7 @@ export function evaluateFederatedLearningRules(file: CodeFile, lines: string[], 
             snippet: lines[matchLineIdx] || 'Federated Learning configuration',
             reproductionSteps: [
                 `Audited Federated Learning configuration in ${file.path}:${lineNum}.`,
-                'Detected violation matching {code}.'
+                'Matched FED-LEARN-05: Missing Cryptographic Verification of Client Participation Eligibility.'
             ],
             remediationPrompt: "Authenticate client nodes using mutual TLS and verify decentralized zero-knowledge compliance proofs before dispatching model weights.",
             status: 'OPEN',

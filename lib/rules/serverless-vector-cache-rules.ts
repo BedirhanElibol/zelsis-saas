@@ -35,7 +35,7 @@ export function evaluateServerlessVectorCacheRules(file: CodeFile, lines: string
             snippet: lines[matchLineIdx] || 'Serverless Vector Cache configuration',
             reproductionSteps: [
                 `Audited Serverless Vector Cache configuration in ${file.path}:${lineNum}.`,
-                'Detected violation matching {code}.'
+                'Matched VEC-CACHE-01: Missing Semantic Cache Invalidation on Underlying Document / Corpus Updates.'
             ],
             remediationPrompt: "Publish real-time cache eviction webhooks when underlying knowledge base records or vector embeddings are modified or deleted.",
             status: 'OPEN',
@@ -59,7 +59,7 @@ export function evaluateServerlessVectorCacheRules(file: CodeFile, lines: string
             snippet: lines[matchLineIdx] || 'Serverless Vector Cache configuration',
             reproductionSteps: [
                 `Audited Serverless Vector Cache configuration in ${file.path}:${lineNum}.`,
-                'Detected violation matching {code}.'
+                'Matched VEC-CACHE-02: Suboptimal Cosine Similarity Threshold Causing Irrelevant Semantic Cache Hits.'
             ],
             remediationPrompt: "Calibrate semantic cache similarity match threshold (e.g. cosine similarity >= 0.92) to prevent serving outdated or hallucinated answers.",
             status: 'OPEN',
@@ -83,7 +83,7 @@ export function evaluateServerlessVectorCacheRules(file: CodeFile, lines: string
             snippet: lines[matchLineIdx] || 'Serverless Vector Cache configuration',
             reproductionSteps: [
                 `Audited Serverless Vector Cache configuration in ${file.path}:${lineNum}.`,
-                'Detected violation matching {code}.'
+                'Matched VEC-CACHE-03: Lack of Cross-Encoder Reranking Verification on Marginal Semantic Cache Hits.'
             ],
             remediationPrompt: "Deploy lightweight cross-encoder rerankers on cache matches between 0.85 and 0.92 similarity to verify contextual alignment.",
             status: 'OPEN',
@@ -107,7 +107,7 @@ export function evaluateServerlessVectorCacheRules(file: CodeFile, lines: string
             snippet: lines[matchLineIdx] || 'Serverless Vector Cache configuration',
             reproductionSteps: [
                 `Audited Serverless Vector Cache configuration in ${file.path}:${lineNum}.`,
-                'Detected violation matching {code}.'
+                'Matched VEC-CACHE-04: Unbounded RAM Bloat on Edge Vector Cache Due to Missing Tiered Storage Policies.'
             ],
             remediationPrompt: "Implement Least Frequently Used (LFU) and TTL-based eviction policies offloading cold vector keys from edge RAM to NVMe/object storage.",
             status: 'OPEN',
@@ -131,7 +131,7 @@ export function evaluateServerlessVectorCacheRules(file: CodeFile, lines: string
             snippet: lines[matchLineIdx] || 'Serverless Vector Cache configuration',
             reproductionSteps: [
                 `Audited Serverless Vector Cache configuration in ${file.path}:${lineNum}.`,
-                'Detected violation matching {code}.'
+                'Matched VEC-CACHE-05: Unindexed Query Vector Ingestion Causing O(N) Cache Search Latency.'
             ],
             remediationPrompt: "Index cached query embeddings using lightweight in-memory HNSW graphs to ensure cache lookup completes in <2ms at the edge.",
             status: 'OPEN',

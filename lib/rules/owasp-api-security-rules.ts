@@ -39,7 +39,7 @@ export function evaluateOwaspApiSecurityRules(file: CodeFile, lines: string[], c
             snippet: lines[matchLineIdx] || 'OWASP API Top 10 configuration',
             reproductionSteps: [
                 `Audited OWASP API Top 10 configuration in ${file.path}:${lineNum}.`,
-                'Detected violation matching {code}.'
+                'Matched APIDEF-01: API1:2023 Broken Object Level Authorization (BOLA): Insecure Record Lookup.'
             ],
             remediationPrompt: "Validate user authorization and tenant ownership for every resource identifier supplied in API paths.",
             status: 'OPEN',
@@ -63,7 +63,7 @@ export function evaluateOwaspApiSecurityRules(file: CodeFile, lines: string[], c
             snippet: lines[matchLineIdx] || 'OWASP API Top 10 configuration',
             reproductionSteps: [
                 `Audited OWASP API Top 10 configuration in ${file.path}:${lineNum}.`,
-                'Detected violation matching {code}.'
+                'Matched APIDEF-02: API2:2023 Broken Authentication: Insecure Token Invalidation on Logout.'
             ],
             remediationPrompt: "Revoke and blacklist JWTs in a distributed Redis cache upon user logout or credentials reset.",
             status: 'OPEN',
@@ -87,7 +87,7 @@ export function evaluateOwaspApiSecurityRules(file: CodeFile, lines: string[], c
             snippet: lines[matchLineIdx] || 'OWASP API Top 10 configuration',
             reproductionSteps: [
                 `Audited OWASP API Top 10 configuration in ${file.path}:${lineNum}.`,
-                'Detected violation matching {code}.'
+                'Matched APIDEF-03: API3:2023 Broken Object Property Level Authorization: Mass Assignment.'
             ],
             remediationPrompt: "Disallow bulk assignment on sensitive object properties (isAdmin, role, verified, balance) in API handlers.",
             status: 'OPEN',
@@ -111,7 +111,7 @@ export function evaluateOwaspApiSecurityRules(file: CodeFile, lines: string[], c
             snippet: lines[matchLineIdx] || 'OWASP API Top 10 configuration',
             reproductionSteps: [
                 `Audited OWASP API Top 10 configuration in ${file.path}:${lineNum}.`,
-                'Detected violation matching {code}.'
+                'Matched APIDEF-04: API4:2023 Unrestricted Resource Consumption: Missing Client Rate Limits.'
             ],
             remediationPrompt: "Enforce token-bucket rate limits and query pagination bounds on resource-intensive analytical routes.",
             status: 'OPEN',
@@ -135,7 +135,7 @@ export function evaluateOwaspApiSecurityRules(file: CodeFile, lines: string[], c
             snippet: lines[matchLineIdx] || 'OWASP API Top 10 configuration',
             reproductionSteps: [
                 `Audited OWASP API Top 10 configuration in ${file.path}:${lineNum}.`,
-                'Detected violation matching {code}.'
+                'Matched APIDEF-05: API5:2023 Broken Function Level Authorization: Admin Routes Missing Scope Check.'
             ],
             remediationPrompt: "Enforce role-based permission checks before executing administrative API operations.",
             status: 'OPEN',

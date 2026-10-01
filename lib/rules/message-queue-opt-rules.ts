@@ -35,7 +35,7 @@ export function evaluateMessageQueueOptRules(file: CodeFile, lines: string[], cl
             snippet: lines[matchLineIdx] || 'Message Queue Optimization configuration',
             reproductionSteps: [
                 `Audited Message Queue Optimization configuration in ${file.path}:${lineNum}.`,
-                'Detected violation matching {code}.'
+                'Matched MQOPT-01: Unbounded Message Queue Depth Triggering Broker Disk Paging.'
             ],
             remediationPrompt: "Set max-length and max-length-bytes limits on queues to prevent high-latency disk paging during message surges.",
             status: 'OPEN',
@@ -59,7 +59,7 @@ export function evaluateMessageQueueOptRules(file: CodeFile, lines: string[], cl
             snippet: lines[matchLineIdx] || 'Message Queue Optimization configuration',
             reproductionSteps: [
                 `Audited Message Queue Optimization configuration in ${file.path}:${lineNum}.`,
-                'Detected violation matching {code}.'
+                'Matched MQOPT-02: Missing Consumer Acknowledgment Timeout Guardrail on Worker Queues.'
             ],
             remediationPrompt: "Configure consumer ack timeouts to requeue messages if worker processes terminate mid-processing.",
             status: 'OPEN',
@@ -83,7 +83,7 @@ export function evaluateMessageQueueOptRules(file: CodeFile, lines: string[], cl
             snippet: lines[matchLineIdx] || 'Message Queue Optimization configuration',
             reproductionSteps: [
                 `Audited Message Queue Optimization configuration in ${file.path}:${lineNum}.`,
-                'Detected violation matching {code}.'
+                'Matched MQOPT-03: Default Guest Credentials Enabled on Message Broker Management UI.'
             ],
             remediationPrompt: "Disable default guest credentials and bind management consoles strictly to localhost or private VPCs.",
             status: 'OPEN',
@@ -107,7 +107,7 @@ export function evaluateMessageQueueOptRules(file: CodeFile, lines: string[], cl
             snippet: lines[matchLineIdx] || 'Message Queue Optimization configuration',
             reproductionSteps: [
                 `Audited Message Queue Optimization configuration in ${file.path}:${lineNum}.`,
-                'Detected violation matching {code}.'
+                'Matched MQOPT-04: Unroutable Message Dead-Letter Exchange (DLX) Configuration Missing.'
             ],
             remediationPrompt: "Configure x-dead-letter-exchange and dead-letter-routing-key on all queues to capture poison pill payloads.",
             status: 'OPEN',
@@ -131,7 +131,7 @@ export function evaluateMessageQueueOptRules(file: CodeFile, lines: string[], cl
             snippet: lines[matchLineIdx] || 'Message Queue Optimization configuration',
             reproductionSteps: [
                 `Audited Message Queue Optimization configuration in ${file.path}:${lineNum}.`,
-                'Detected violation matching {code}.'
+                'Matched MQOPT-05: Uncompressed High-Payload Message Publishing Causing Network Saturation.'
             ],
             remediationPrompt: "Compress message payloads exceeding 10KB using Snappy or LZ4 before publishing to the broker exchange.",
             status: 'OPEN',

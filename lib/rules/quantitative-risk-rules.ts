@@ -35,7 +35,7 @@ export function evaluateQuantitativeRiskRules(file: CodeFile, lines: string[], c
             snippet: lines[matchLineIdx] || 'Quantitative Risk configuration',
             reproductionSteps: [
                 `Audited Quantitative Risk configuration in ${file.path}:${lineNum}.`,
-                'Detected violation matching {code}.'
+                'Matched QUANT-RISK-01: Value at Risk (VaR) Historical Simulation Time Horizon Misconfiguration.'
             ],
             remediationPrompt: "Enforce minimum 250-day historical observation horizon and 99% confidence interval under Basel III market risk framework.",
             status: 'OPEN',
@@ -59,7 +59,7 @@ export function evaluateQuantitativeRiskRules(file: CodeFile, lines: string[], c
             snippet: lines[matchLineIdx] || 'Quantitative Risk configuration',
             reproductionSteps: [
                 `Audited Quantitative Risk configuration in ${file.path}:${lineNum}.`,
-                'Detected violation matching {code}.'
+                'Matched QUANT-RISK-02: Missing Stressed Value at Risk (sVaR) Calibration Against Historical Crises.'
             ],
             remediationPrompt: "Calibrate stressed VaR scenarios against a continuous 12-month period of significant financial stress conforming to FRTB requirements.",
             status: 'OPEN',
@@ -83,7 +83,7 @@ export function evaluateQuantitativeRiskRules(file: CodeFile, lines: string[], c
             snippet: lines[matchLineIdx] || 'Quantitative Risk configuration',
             reproductionSteps: [
                 `Audited Quantitative Risk configuration in ${file.path}:${lineNum}.`,
-                'Detected violation matching {code}.'
+                'Matched QUANT-RISK-03: Expected Shortfall (ES) Tail Risk Computation Inadequacy on Trading Books.'
             ],
             remediationPrompt: "Compute Expected Shortfall at a 97.5% confidence level across liquidity horizons ranging from 10 to 120 days under FRTB.",
             status: 'OPEN',
@@ -107,7 +107,7 @@ export function evaluateQuantitativeRiskRules(file: CodeFile, lines: string[], c
             snippet: lines[matchLineIdx] || 'Quantitative Risk configuration',
             reproductionSteps: [
                 `Audited Quantitative Risk configuration in ${file.path}:${lineNum}.`,
-                'Detected violation matching {code}.'
+                'Matched QUANT-RISK-04: Unhedged High-Frequency Algorithmic Trading Greeks Exposure Limits.'
             ],
             remediationPrompt: "Enforce real-time automated hard circuit breakers on portfolio Delta, Gamma, and Vega risk exposures.",
             status: 'OPEN',
@@ -131,7 +131,7 @@ export function evaluateQuantitativeRiskRules(file: CodeFile, lines: string[], c
             snippet: lines[matchLineIdx] || 'Quantitative Risk configuration',
             reproductionSteps: [
                 `Audited Quantitative Risk configuration in ${file.path}:${lineNum}.`,
-                'Detected violation matching {code}.'
+                'Matched QUANT-RISK-05: Failure to Conduct P&L Attribution (PLA) Tests on Trading Desks.'
             ],
             remediationPrompt: "Execute mandatory daily Spearman correlation and Kolmogorov-Smirnov tests between hypothetical and actual P&L.",
             status: 'OPEN',

@@ -35,7 +35,7 @@ export function evaluateOwaspAsvsRules(file: CodeFile, lines: string[], cleanCon
             snippet: lines[matchLineIdx] || 'OWASP ASVS L3 configuration',
             reproductionSteps: [
                 `Audited OWASP ASVS L3 configuration in ${file.path}:${lineNum}.`,
-                'Detected violation matching {code}.'
+                'Matched ASVS-01: ASVS V2.1 Password Security: Permitting Weak Passwords or Failing Breached Checks.'
             ],
             remediationPrompt: "Enforce minimum 12-character passwords and check against breached credential dictionaries.",
             status: 'OPEN',
@@ -59,7 +59,7 @@ export function evaluateOwaspAsvsRules(file: CodeFile, lines: string[], cleanCon
             snippet: lines[matchLineIdx] || 'OWASP ASVS L3 configuration',
             reproductionSteps: [
                 `Audited OWASP ASVS L3 configuration in ${file.path}:${lineNum}.`,
-                'Detected violation matching {code}.'
+                'Matched ASVS-02: ASVS V3.2 Session Management: Permitting Session Fixation or Insecure Cookie Flags.'
             ],
             remediationPrompt: "Enforce HttpOnly, Secure, SameSite=Strict cookies with session regeneration upon login.",
             status: 'OPEN',
@@ -83,7 +83,7 @@ export function evaluateOwaspAsvsRules(file: CodeFile, lines: string[], cleanCon
             snippet: lines[matchLineIdx] || 'OWASP ASVS L3 configuration',
             reproductionSteps: [
                 `Audited OWASP ASVS L3 configuration in ${file.path}:${lineNum}.`,
-                'Detected violation matching {code}.'
+                'Matched ASVS-03: ASVS V4.1 Access Control: Insecure Direct Object References (IDOR) on Tenant APIs.'
             ],
             remediationPrompt: "Enforce object-level authorization checking tenant ownership on every record lookup.",
             status: 'OPEN',
@@ -107,7 +107,7 @@ export function evaluateOwaspAsvsRules(file: CodeFile, lines: string[], cleanCon
             snippet: lines[matchLineIdx] || 'OWASP ASVS L3 configuration',
             reproductionSteps: [
                 `Audited OWASP ASVS L3 configuration in ${file.path}:${lineNum}.`,
-                'Detected violation matching {code}.'
+                'Matched ASVS-04: ASVS V5.1 Input Validation: Missing Canonicalization Before Parsing.'
             ],
             remediationPrompt: "Canonicalize all UTF-8 input strings before executing validation rules to prevent parser bypasses.",
             status: 'OPEN',
@@ -131,7 +131,7 @@ export function evaluateOwaspAsvsRules(file: CodeFile, lines: string[], cleanCon
             snippet: lines[matchLineIdx] || 'OWASP ASVS L3 configuration',
             reproductionSteps: [
                 `Audited OWASP ASVS L3 configuration in ${file.path}:${lineNum}.`,
-                'Detected violation matching {code}.'
+                'Matched ASVS-05: ASVS V6.2 Cryptographic Storage: Using Insecure Random Salt or Low Iteration Counts.'
             ],
             remediationPrompt: "Use Argon2id or PBKDF2 with at least 600,000 iterations and unique 16-byte cryptographic salts.",
             status: 'OPEN',

@@ -35,7 +35,7 @@ export function evaluateEdgeAiModelQuantizationRules(file: CodeFile, lines: stri
             snippet: lines[matchLineIdx] || 'Edge AI Quantization configuration',
             reproductionSteps: [
                 `Audited Edge AI Quantization configuration in ${file.path}:${lineNum}.`,
-                'Detected violation matching {code}.'
+                'Matched EDGE-AI-OPT-01: Unquantized Activation Outliers Inducing Severe INT4 Quantization Precision Drop.'
             ],
             remediationPrompt: "Apply Activation-aware Weight Quantization (AWQ) or SmoothQuant to scale outlier channels before INT4 tensor contraction.",
             status: 'OPEN',
@@ -59,7 +59,7 @@ export function evaluateEdgeAiModelQuantizationRules(file: CodeFile, lines: stri
             snippet: lines[matchLineIdx] || 'Edge AI Quantization configuration',
             reproductionSteps: [
                 `Audited Edge AI Quantization configuration in ${file.path}:${lineNum}.`,
-                'Detected violation matching {code}.'
+                'Matched EDGE-AI-OPT-02: Suboptimal TensorRT Engine Execution Plan Selection on Heterogeneous NPUs.'
             ],
             remediationPrompt: "Run TensorRT model builder with exhaustive profile optimization sweeps matching target edge SoC hardware execution units.",
             status: 'OPEN',
@@ -83,7 +83,7 @@ export function evaluateEdgeAiModelQuantizationRules(file: CodeFile, lines: stri
             snippet: lines[matchLineIdx] || 'Edge AI Quantization configuration',
             reproductionSteps: [
                 `Audited Edge AI Quantization configuration in ${file.path}:${lineNum}.`,
-                'Detected violation matching {code}.'
+                'Matched EDGE-AI-OPT-03: Missing KV Cache 8-Bit Quantization (FP8/INT8) on Long-Context Edge Transformers.'
             ],
             remediationPrompt: "Quantize attention key-value caches to FP8/INT8 with per-head dynamic scaling to reduce edge RAM memory footprint by 50%.",
             status: 'OPEN',
@@ -107,7 +107,7 @@ export function evaluateEdgeAiModelQuantizationRules(file: CodeFile, lines: stri
             snippet: lines[matchLineIdx] || 'Edge AI Quantization configuration',
             reproductionSteps: [
                 `Audited Edge AI Quantization configuration in ${file.path}:${lineNum}.`,
-                'Detected violation matching {code}.'
+                'Matched EDGE-AI-OPT-04: Disabled Graph Fusion on ONNX Runtime Multi-Head Attention Subgraphs.'
             ],
             remediationPrompt: "Enable ONNX Runtime optimizer level ORT_ENABLE_ALL and fuse LayerNorm, MatMul, and Softmax into optimized kernel launches.",
             status: 'OPEN',
@@ -131,7 +131,7 @@ export function evaluateEdgeAiModelQuantizationRules(file: CodeFile, lines: stri
             snippet: lines[matchLineIdx] || 'Edge AI Quantization configuration',
             reproductionSteps: [
                 `Audited Edge AI Quantization configuration in ${file.path}:${lineNum}.`,
-                'Detected violation matching {code}.'
+                'Matched EDGE-AI-OPT-05: Uncalibrated Quantization Scales on Post-Training INT8 Calibration Datasets.'
             ],
             remediationPrompt: "Calibrate dynamic activation quantization scales using representative edge calibration datasets via KL-divergence minimization.",
             status: 'OPEN',

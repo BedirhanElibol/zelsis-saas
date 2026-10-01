@@ -35,7 +35,7 @@ export function evaluateMultiAgentOrchestrationRules(file: CodeFile, lines: stri
             snippet: lines[matchLineIdx] || 'Multi-Agent Orchestration configuration',
             reproductionSteps: [
                 `Audited Multi-Agent Orchestration configuration in ${file.path}:${lineNum}.`,
-                'Detected violation matching {code}.'
+                'Matched LLM-ORCH-01: Unbounded Cyclic Execution Loops in Multi-Agent Graph Workflows.'
             ],
             remediationPrompt: "Enforce strict maximum step limits and cycle recursion guards in LangGraph and AutoGen workflows to avoid infinite LLM ping-pong.",
             status: 'OPEN',
@@ -59,7 +59,7 @@ export function evaluateMultiAgentOrchestrationRules(file: CodeFile, lines: stri
             snippet: lines[matchLineIdx] || 'Multi-Agent Orchestration configuration',
             reproductionSteps: [
                 `Audited Multi-Agent Orchestration configuration in ${file.path}:${lineNum}.`,
-                'Detected violation matching {code}.'
+                'Matched LLM-ORCH-02: Missing Deterministic State Checkpointing in Multi-Agent Workflow Engines.'
             ],
             remediationPrompt: "Persist state machine snapshots to durable backing stores at every node boundary to guarantee crash recovery without workflow restarts.",
             status: 'OPEN',
@@ -83,7 +83,7 @@ export function evaluateMultiAgentOrchestrationRules(file: CodeFile, lines: stri
             snippet: lines[matchLineIdx] || 'Multi-Agent Orchestration configuration',
             reproductionSteps: [
                 `Audited Multi-Agent Orchestration configuration in ${file.path}:${lineNum}.`,
-                'Detected violation matching {code}.'
+                'Matched LLM-ORCH-03: Unprotected Agent Inter-Communication Deadlocks in Asynchronous Swarms.'
             ],
             remediationPrompt: "Configure adaptive communication timeouts and decentralized consensus leases to resolve deadlocks across autonomous agent swarms.",
             status: 'OPEN',
@@ -107,7 +107,7 @@ export function evaluateMultiAgentOrchestrationRules(file: CodeFile, lines: stri
             snippet: lines[matchLineIdx] || 'Multi-Agent Orchestration configuration',
             reproductionSteps: [
                 `Audited Multi-Agent Orchestration configuration in ${file.path}:${lineNum}.`,
-                'Detected violation matching {code}.'
+                'Matched LLM-ORCH-04: Lack of Idempotency Tokens on Tool Execution Dispatches from Autonomous Agents.'
             ],
             remediationPrompt: "Enforce deterministic UUID idempotency keys on all agent side-effect tool dispatches to eliminate duplicate mutations.",
             status: 'OPEN',
@@ -131,7 +131,7 @@ export function evaluateMultiAgentOrchestrationRules(file: CodeFile, lines: stri
             snippet: lines[matchLineIdx] || 'Multi-Agent Orchestration configuration',
             reproductionSteps: [
                 `Audited Multi-Agent Orchestration configuration in ${file.path}:${lineNum}.`,
-                'Detected violation matching {code}.'
+                'Matched LLM-ORCH-05: Missing Backpressure and Throttling on Fan-Out Subagent Dynamic Spawning.'
             ],
             remediationPrompt: "Implement bounded thread pools and rate-limiting semaphores when dynamically spawning child subagents under heavy traffic.",
             status: 'OPEN',

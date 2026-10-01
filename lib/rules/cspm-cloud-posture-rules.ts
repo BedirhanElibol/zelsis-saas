@@ -38,7 +38,7 @@ export function evaluateCspmCloudPostureRules(file: CodeFile, lines: string[], c
             snippet: lines[matchLineIdx] || 'Cloud Security Posture configuration',
             reproductionSteps: [
                 `Audited Cloud Security Posture configuration in ${file.path}:${lineNum}.`,
-                'Detected violation matching {code}.'
+                'Matched CSPM-01: Unrestricted Cloud Storage Bucket Public Read/Write Access.'
             ],
             remediationPrompt: "Enforce S3 and GCS block public access controls across all storage accounts and individual buckets.",
             status: 'OPEN',
@@ -62,7 +62,7 @@ export function evaluateCspmCloudPostureRules(file: CodeFile, lines: string[], c
             snippet: lines[matchLineIdx] || 'Cloud Security Posture configuration',
             reproductionSteps: [
                 `Audited Cloud Security Posture configuration in ${file.path}:${lineNum}.`,
-                'Detected violation matching {code}.'
+                'Matched CSPM-02: Overprivileged Cloud IAM Roles with Wildcard Actions (*:*).'
             ],
             remediationPrompt: "Disallow wildcard action permissions in IAM policies; require explicit least-privilege resource ARNs.",
             status: 'OPEN',
@@ -86,7 +86,7 @@ export function evaluateCspmCloudPostureRules(file: CodeFile, lines: string[], c
             snippet: lines[matchLineIdx] || 'Cloud Security Posture configuration',
             reproductionSteps: [
                 `Audited Cloud Security Posture configuration in ${file.path}:${lineNum}.`,
-                'Detected violation matching {code}.'
+                'Matched CSPM-03: Missing Hardware MFA Enforcement on Cloud Root and Admin Accounts.'
             ],
             remediationPrompt: "Enforce hardware FIDO2 MFA for cloud account root users and mandate temporary role assumption.",
             status: 'OPEN',
@@ -110,7 +110,7 @@ export function evaluateCspmCloudPostureRules(file: CodeFile, lines: string[], c
             snippet: lines[matchLineIdx] || 'Cloud Security Posture configuration',
             reproductionSteps: [
                 `Audited Cloud Security Posture configuration in ${file.path}:${lineNum}.`,
-                'Detected violation matching {code}.'
+                'Matched CSPM-04: Cloud Security Group Permitting Inbound SSH/RDP from 0.0.0.0/0.'
             ],
             remediationPrompt: "Ban ingress rules opening administrative ports (22, 3389) directly to the public internet.",
             status: 'OPEN',
@@ -134,7 +134,7 @@ export function evaluateCspmCloudPostureRules(file: CodeFile, lines: string[], c
             snippet: lines[matchLineIdx] || 'Cloud Security Posture configuration',
             reproductionSteps: [
                 `Audited Cloud Security Posture configuration in ${file.path}:${lineNum}.`,
-                'Detected violation matching {code}.'
+                'Matched CSPM-05: Cloud Audit Trails (CloudTrail / Audit Logs) Disabled in Region.'
             ],
             remediationPrompt: "Enforce multi-region audit logging with log file integrity validation and KMS customer-managed keys.",
             status: 'OPEN',

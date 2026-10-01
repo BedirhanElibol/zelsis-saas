@@ -35,7 +35,7 @@ export function evaluateAiAgentEthicsGovernanceRules(file: CodeFile, lines: stri
             snippet: lines[matchLineIdx] || 'AI Agent Ethics Governance configuration',
             reproductionSteps: [
                 `Audited AI Agent Ethics Governance configuration in ${file.path}:${lineNum}.`,
-                'Detected violation matching {code}.'
+                'Matched AI-ETHICS-01: Absence of Deceptive Intent and Strategic Sycophancy Detection in Agent Output.'
             ],
             remediationPrompt: "Audit agent reasoning traces against deceptive goal alignment and covert preference manipulation heuristics.",
             status: 'OPEN',
@@ -59,7 +59,7 @@ export function evaluateAiAgentEthicsGovernanceRules(file: CodeFile, lines: stri
             snippet: lines[matchLineIdx] || 'AI Agent Ethics Governance configuration',
             reproductionSteps: [
                 `Audited AI Agent Ethics Governance configuration in ${file.path}:${lineNum}.`,
-                'Detected violation matching {code}.'
+                'Matched AI-ETHICS-02: Violation of Human Agency and Autonomous Action Reversibility (IEEE 7000).'
             ],
             remediationPrompt: "Enforce mandatory human override controls and programmatic rollback APIs for all autonomous agent irreversible state mutations.",
             status: 'OPEN',
@@ -83,7 +83,7 @@ export function evaluateAiAgentEthicsGovernanceRules(file: CodeFile, lines: stri
             snippet: lines[matchLineIdx] || 'AI Agent Ethics Governance configuration',
             reproductionSteps: [
                 `Audited AI Agent Ethics Governance configuration in ${file.path}:${lineNum}.`,
-                'Detected violation matching {code}.'
+                'Matched AI-ETHICS-03: Unmonitored Disparate Impact and Demographic Bias in Algorithmic Scoring.'
             ],
             remediationPrompt: "Continuously measure equalized odds and demographic parity metrics across sensitive protected demographic attributes.",
             status: 'OPEN',
@@ -107,7 +107,7 @@ export function evaluateAiAgentEthicsGovernanceRules(file: CodeFile, lines: stri
             snippet: lines[matchLineIdx] || 'AI Agent Ethics Governance configuration',
             reproductionSteps: [
                 `Audited AI Agent Ethics Governance configuration in ${file.path}:${lineNum}.`,
-                'Detected violation matching {code}.'
+                'Matched AI-ETHICS-04: Lack of Explainable Multi-Hop Reasoning Chains on High-Stakes Agent Decisions.'
             ],
             remediationPrompt: "Persist structured, interpretable decision provenance graphs and counterfactual explanations for automated decisions.",
             status: 'OPEN',
@@ -131,7 +131,7 @@ export function evaluateAiAgentEthicsGovernanceRules(file: CodeFile, lines: stri
             snippet: lines[matchLineIdx] || 'AI Agent Ethics Governance configuration',
             reproductionSteps: [
                 `Audited AI Agent Ethics Governance configuration in ${file.path}:${lineNum}.`,
-                'Detected violation matching {code}.'
+                'Matched AI-ETHICS-05: Uncalibrated Overconfidence and Epistemic Uncertainty Masking in Agent Output.'
             ],
             remediationPrompt: "Require calibrated probabilistic confidence intervals on model assertions and enforce explicit expressions of epistemic uncertainty.",
             status: 'OPEN',

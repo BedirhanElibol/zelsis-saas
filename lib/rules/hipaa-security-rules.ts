@@ -35,7 +35,7 @@ export function evaluateHipaaSecurityRules(file: CodeFile, lines: string[], clea
             snippet: lines[matchLineIdx] || 'HIPAA Security Rule configuration',
             reproductionSteps: [
                 `Audited HIPAA Security Rule configuration in ${file.path}:${lineNum}.`,
-                'Detected violation matching {code}.'
+                'Matched HIPAASEC-01: HIPAA \u00a7164.312(a)(1) Access Control: Missing Unique User Identification.'
             ],
             remediationPrompt: "Assign unique user identifiers to every healthcare worker accessing electronic Protected Health Information (ePHI).",
             status: 'OPEN',
@@ -59,7 +59,7 @@ export function evaluateHipaaSecurityRules(file: CodeFile, lines: string[], clea
             snippet: lines[matchLineIdx] || 'HIPAA Security Rule configuration',
             reproductionSteps: [
                 `Audited HIPAA Security Rule configuration in ${file.path}:${lineNum}.`,
-                'Detected violation matching {code}.'
+                'Matched HIPAASEC-02: HIPAA \u00a7164.312(a)(2)(iii) Automatic Logoff on Inactive Clinical Workstations.'
             ],
             remediationPrompt: "Enforce automatic session termination after 15 minutes of inactivity on all clinical terminals accessing ePHI.",
             status: 'OPEN',
@@ -83,7 +83,7 @@ export function evaluateHipaaSecurityRules(file: CodeFile, lines: string[], clea
             snippet: lines[matchLineIdx] || 'HIPAA Security Rule configuration',
             reproductionSteps: [
                 `Audited HIPAA Security Rule configuration in ${file.path}:${lineNum}.`,
-                'Detected violation matching {code}.'
+                'Matched HIPAASEC-03: HIPAA \u00a7164.312(a)(2)(iv) Encryption and Decryption of ePHI Stored at Rest.'
             ],
             remediationPrompt: "Encrypt all databases, storage volumes, and backups storing electronic Protected Health Information with AES-256.",
             status: 'OPEN',
@@ -107,7 +107,7 @@ export function evaluateHipaaSecurityRules(file: CodeFile, lines: string[], clea
             snippet: lines[matchLineIdx] || 'HIPAA Security Rule configuration',
             reproductionSteps: [
                 `Audited HIPAA Security Rule configuration in ${file.path}:${lineNum}.`,
-                'Detected violation matching {code}.'
+                'Matched HIPAASEC-04: HIPAA \u00a7164.312(b) Audit Controls: Missing Immutable Logs for Medical Records.'
             ],
             remediationPrompt: "Record and preserve immutable audit logs of all ePHI read, write, and export operations for a minimum of 6 years.",
             status: 'OPEN',
@@ -131,7 +131,7 @@ export function evaluateHipaaSecurityRules(file: CodeFile, lines: string[], clea
             snippet: lines[matchLineIdx] || 'HIPAA Security Rule configuration',
             reproductionSteps: [
                 `Audited HIPAA Security Rule configuration in ${file.path}:${lineNum}.`,
-                'Detected violation matching {code}.'
+                'Matched HIPAASEC-05: HIPAA \u00a7164.312(c)(1) Data Integrity: Electronic Transmission Tampering Detection.'
             ],
             remediationPrompt: "Use cryptographic HMAC or digital signatures to verify that patient health records have not been altered in transit.",
             status: 'OPEN',

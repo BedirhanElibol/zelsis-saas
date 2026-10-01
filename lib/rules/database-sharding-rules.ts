@@ -35,7 +35,7 @@ export function evaluateDatabaseShardingRules(file: CodeFile, lines: string[], c
             snippet: lines[matchLineIdx] || 'Horizontal Database Sharding configuration',
             reproductionSteps: [
                 `Audited Horizontal Database Sharding configuration in ${file.path}:${lineNum}.`,
-                'Detected violation matching {code}.'
+                'Matched SHARD-01: Missing Shard Routing Key in Schema Definitions Causing Full Cluster Scatter-Gather Broadcasts.'
             ],
             remediationPrompt: "Include the primary sharding key (e.g. tenant_id or user_id) in query predicates to ensure direct single-shard routing.",
             status: 'OPEN',
@@ -59,7 +59,7 @@ export function evaluateDatabaseShardingRules(file: CodeFile, lines: string[], c
             snippet: lines[matchLineIdx] || 'Horizontal Database Sharding configuration',
             reproductionSteps: [
                 `Audited Horizontal Database Sharding configuration in ${file.path}:${lineNum}.`,
-                'Detected violation matching {code}.'
+                'Matched SHARD-02: Unco-located Sharded Table Joins Triggering Massive Cross-Network Data Reshuffling.'
             ],
             remediationPrompt: "Co-locate frequently joined sharded tables using identical shard distribution columns and co-location groups (e.g. Citus table co-location).",
             status: 'OPEN',
@@ -83,7 +83,7 @@ export function evaluateDatabaseShardingRules(file: CodeFile, lines: string[], c
             snippet: lines[matchLineIdx] || 'Horizontal Database Sharding configuration',
             reproductionSteps: [
                 `Audited Horizontal Database Sharding configuration in ${file.path}:${lineNum}.`,
-                'Detected violation matching {code}.'
+                'Matched SHARD-03: Unbalanced Hash Partitioning Keys Creating High-Frequency Shard Hotspots.'
             ],
             remediationPrompt: "Select high-cardinality shard keys combined with consistent hashing to evenly distribute data partitions across cluster nodes.",
             status: 'OPEN',
@@ -107,7 +107,7 @@ export function evaluateDatabaseShardingRules(file: CodeFile, lines: string[], c
             snippet: lines[matchLineIdx] || 'Horizontal Database Sharding configuration',
             reproductionSteps: [
                 `Audited Horizontal Database Sharding configuration in ${file.path}:${lineNum}.`,
-                'Detected violation matching {code}.'
+                'Matched SHARD-04: Unbounded Two-Phase Commit (2PC) Distributed Transactions Across Disparate Shards.'
             ],
             remediationPrompt: "Redesign transaction boundaries to execute single-shard operations or use asynchronous saga patterns for cross-shard consistency.",
             status: 'OPEN',
@@ -131,7 +131,7 @@ export function evaluateDatabaseShardingRules(file: CodeFile, lines: string[], c
             snippet: lines[matchLineIdx] || 'Horizontal Database Sharding configuration',
             reproductionSteps: [
                 `Audited Horizontal Database Sharding configuration in ${file.path}:${lineNum}.`,
-                'Detected violation matching {code}.'
+                'Matched SHARD-05: Missing Online Resharding Split/Merge Strategy Permitting Out-of-Disk Worker Node Failures.'
             ],
             remediationPrompt: "Configure automated dynamic range splitting rules (e.g. 64GB max shard size) to trigger online rebalancing before capacity breaches occur.",
             status: 'OPEN',

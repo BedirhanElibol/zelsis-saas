@@ -35,7 +35,7 @@ export function evaluateServiceFabricResilienceRules(file: CodeFile, lines: stri
             snippet: lines[matchLineIdx] || 'Edge Service Fabric Resilience configuration',
             reproductionSteps: [
                 `Audited Edge Service Fabric Resilience configuration in ${file.path}:${lineNum}.`,
-                'Detected violation matching {code}.'
+                'Matched FABRIC-01: Multipath TCP (MPTCP) Connection Migration Failures Across Redundant Edge Uplinks.'
             ],
             remediationPrompt: "Configure MPTCP path manager parameters and kernel subflow limits to guarantee zero-packet-drop connection migration.",
             status: 'OPEN',
@@ -59,7 +59,7 @@ export function evaluateServiceFabricResilienceRules(file: CodeFile, lines: stri
             snippet: lines[matchLineIdx] || 'Edge Service Fabric Resilience configuration',
             reproductionSteps: [
                 `Audited Edge Service Fabric Resilience configuration in ${file.path}:${lineNum}.`,
-                'Detected violation matching {code}.'
+                'Matched FABRIC-02: Anycast BGP Route Flapping Inducing Rapid Cross-Region TCP Session Resets.'
             ],
             remediationPrompt: "Implement BGP flap damping and BGP communities to stabilize anycast edge route announcements across global Tier-1 transit providers.",
             status: 'OPEN',
@@ -83,7 +83,7 @@ export function evaluateServiceFabricResilienceRules(file: CodeFile, lines: stri
             snippet: lines[matchLineIdx] || 'Edge Service Fabric Resilience configuration',
             reproductionSteps: [
                 `Audited Edge Service Fabric Resilience configuration in ${file.path}:${lineNum}.`,
-                'Detected violation matching {code}.'
+                'Matched FABRIC-03: Inadequate Edge Service Fabric L7 Health Probing Triggering Blackhole Traffic Sinks.'
             ],
             remediationPrompt: "Configure active synthetic L7 health checks with aggressive failure thresholds (3 consecutive failures in 2s) for instant traffic rerouting.",
             status: 'OPEN',
@@ -107,7 +107,7 @@ export function evaluateServiceFabricResilienceRules(file: CodeFile, lines: stri
             snippet: lines[matchLineIdx] || 'Edge Service Fabric Resilience configuration',
             reproductionSteps: [
                 `Audited Edge Service Fabric Resilience configuration in ${file.path}:${lineNum}.`,
-                'Detected violation matching {code}.'
+                'Matched FABRIC-04: QUIC / HTTP/3 Connection Migration Token Reuse and Replay Attack Vulnerability.'
             ],
             remediationPrompt: "Enforce cryptographically randomized, single-use QUIC connection migration tokens with tight 5-second validation windows.",
             status: 'OPEN',
@@ -131,7 +131,7 @@ export function evaluateServiceFabricResilienceRules(file: CodeFile, lines: stri
             snippet: lines[matchLineIdx] || 'Edge Service Fabric Resilience configuration',
             reproductionSteps: [
                 `Audited Edge Service Fabric Resilience configuration in ${file.path}:${lineNum}.`,
-                'Detected violation matching {code}.'
+                'Matched FABRIC-05: Unbounded Gossip Protocol Convergence Latency in Multi-Cluster Service Meshes.'
             ],
             remediationPrompt: "Tune gossip protocol broadcast intervals and fanout parameters (e.g. Serf / Memberlist) to achieve sub-second cluster membership convergence.",
             status: 'OPEN',

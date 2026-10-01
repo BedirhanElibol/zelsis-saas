@@ -35,7 +35,7 @@ export function evaluateWasmEdgeRuntimeRules(file: CodeFile, lines: string[], cl
             snippet: lines[matchLineIdx] || 'WebAssembly Edge Runtime configuration',
             reproductionSteps: [
                 `Audited WebAssembly Edge Runtime configuration in ${file.path}:${lineNum}.`,
-                'Detected violation matching {code}.'
+                'Matched WASM-EDGE-01: Unbounded WebAssembly Linear Memory Allocation Permitting Edge Worker OOM.'
             ],
             remediationPrompt: "Define strict memory limits in Wasm runtime flags (e.g. maximum linear memory pages 128MB) to prevent edge node exhaustion.",
             status: 'OPEN',
@@ -59,7 +59,7 @@ export function evaluateWasmEdgeRuntimeRules(file: CodeFile, lines: string[], cl
             snippet: lines[matchLineIdx] || 'WebAssembly Edge Runtime configuration',
             reproductionSteps: [
                 `Audited WebAssembly Edge Runtime configuration in ${file.path}:${lineNum}.`,
-                'Detected violation matching {code}.'
+                'Matched WASM-EDGE-02: Missing Host Function Sandboxing and Capability-Based Security Barriers in Wasm Runtime.'
             ],
             remediationPrompt: "Enforce capability-based security barriers restricting WASI system calls to pre-approved directory mappings and domain scopes.",
             status: 'OPEN',
@@ -83,7 +83,7 @@ export function evaluateWasmEdgeRuntimeRules(file: CodeFile, lines: string[], cl
             snippet: lines[matchLineIdx] || 'WebAssembly Edge Runtime configuration',
             reproductionSteps: [
                 `Audited WebAssembly Edge Runtime configuration in ${file.path}:${lineNum}.`,
-                'Detected violation matching {code}.'
+                'Matched WASM-EDGE-03: Unrestricted WebAssembly Network Socket Binding on Edge Compute Gateways.'
             ],
             remediationPrompt: "Block raw socket bindings in edge Wasm instances; enforce controlled HTTPS subrequests through host reverse proxy APIs.",
             status: 'OPEN',
@@ -107,7 +107,7 @@ export function evaluateWasmEdgeRuntimeRules(file: CodeFile, lines: string[], cl
             snippet: lines[matchLineIdx] || 'WebAssembly Edge Runtime configuration',
             reproductionSteps: [
                 `Audited WebAssembly Edge Runtime configuration in ${file.path}:${lineNum}.`,
-                'Detected violation matching {code}.'
+                'Matched WASM-EDGE-04: Unsanitized Wasm SIMD Instructions Executing on Untrusted Multi-Tenant Edge Nodes.'
             ],
             remediationPrompt: "Sanitize or disable experimental Wasm vector extensions on shared multi-tenant edge compute infrastructure.",
             status: 'OPEN',
@@ -131,7 +131,7 @@ export function evaluateWasmEdgeRuntimeRules(file: CodeFile, lines: string[], cl
             snippet: lines[matchLineIdx] || 'WebAssembly Edge Runtime configuration',
             reproductionSteps: [
                 `Audited WebAssembly Edge Runtime configuration in ${file.path}:${lineNum}.`,
-                'Detected violation matching {code}.'
+                'Matched WASM-EDGE-05: Unchecked SharedArrayBuffer Usage in Edge Wasm Modules Vulnerable to Spectre Side-Channels.'
             ],
             remediationPrompt: "Require Cross-Origin-Opener-Policy (COOP) and Cross-Origin-Embedder-Policy (COEP) headers whenever SharedArrayBuffer is utilized in Wasm.",
             status: 'OPEN',

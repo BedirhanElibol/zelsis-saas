@@ -39,7 +39,7 @@ export function evaluateLinuxKernelSecurityRules(file: CodeFile, lines: string[]
             snippet: lines[matchLineIdx] || 'Linux Kernel Security configuration',
             reproductionSteps: [
                 `Audited Linux Kernel Security configuration in ${file.path}:${lineNum}.`,
-                'Detected violation matching {code}.'
+                'Matched KERN-SEC-01: Unrestricted Linux Root Capabilities (CAP_SYS_ADMIN) Retained in Container Workloads.'
             ],
             remediationPrompt: "Drop all default Linux capabilities and retain strictly the minimal required set (e.g. drop CAP_SYS_ADMIN, CAP_NET_ADMIN).",
             status: 'OPEN',
@@ -63,7 +63,7 @@ export function evaluateLinuxKernelSecurityRules(file: CodeFile, lines: string[]
             snippet: lines[matchLineIdx] || 'Linux Kernel Security configuration',
             reproductionSteps: [
                 `Audited Linux Kernel Security configuration in ${file.path}:${lineNum}.`,
-                'Detected violation matching {code}.'
+                'Matched KERN-SEC-02: Missing Seccomp BPF Syscall Filtering on High-Privilege Worker Daemons.'
             ],
             remediationPrompt: "Enforce restrictive Seccomp BPF profiles blocking dangerous system calls (e.g. ptrace, bpf, reboot) across host worker daemons.",
             status: 'OPEN',
@@ -87,7 +87,7 @@ export function evaluateLinuxKernelSecurityRules(file: CodeFile, lines: string[]
             snippet: lines[matchLineIdx] || 'Linux Kernel Security configuration',
             reproductionSteps: [
                 `Audited Linux Kernel Security configuration in ${file.path}:${lineNum}.`,
-                'Detected violation matching {code}.'
+                'Matched KERN-SEC-03: Unrestricted Unprivileged User Namespaces Permitting Local Privilege Escalation.'
             ],
             remediationPrompt: "Disable unprivileged user namespace creation via kernel sysctl (user.max_user_namespaces = 0) on production hosts.",
             status: 'OPEN',
@@ -111,7 +111,7 @@ export function evaluateLinuxKernelSecurityRules(file: CodeFile, lines: string[]
             snippet: lines[matchLineIdx] || 'Linux Kernel Security configuration',
             reproductionSteps: [
                 `Audited Linux Kernel Security configuration in ${file.path}:${lineNum}.`,
-                'Detected violation matching {code}.'
+                'Matched KERN-SEC-04: Kernel eBPF JIT Hardening Disabled Allowing Speculative Execution Leakage.'
             ],
             remediationPrompt: "Enable BPF JIT compiler hardening (net.core.bpf_jit_harden = 2) to mitigate Spectre branch target injection attacks.",
             status: 'OPEN',
@@ -135,7 +135,7 @@ export function evaluateLinuxKernelSecurityRules(file: CodeFile, lines: string[]
             snippet: lines[matchLineIdx] || 'Linux Kernel Security configuration',
             reproductionSteps: [
                 `Audited Linux Kernel Security configuration in ${file.path}:${lineNum}.`,
-                'Detected violation matching {code}.'
+                'Matched KERN-SEC-05: Kernel Page Table Isolation (KPTI) Disabled in Boot Parameters.'
             ],
             remediationPrompt: "Ensure Kernel Page Table Isolation (KPTI) is enforced in kernel boot configuration to prevent Meltdown CPU vulnerabilities.",
             status: 'OPEN',

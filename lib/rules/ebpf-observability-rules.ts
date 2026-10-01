@@ -35,7 +35,7 @@ export function evaluateEbpfObservabilityRules(file: CodeFile, lines: string[], 
             snippet: lines[matchLineIdx] || 'eBPF & Cilium configuration',
             reproductionSteps: [
                 `Audited eBPF & Cilium configuration in ${file.path}:${lineNum}.`,
-                'Detected violation matching {code}.'
+                'Matched EBPF-01: Unbounded eBPF Ring Buffer Allocation Causing Kernel OOM.'
             ],
             remediationPrompt: "Enforce memory limits on perf and ring buffers to prevent kernel memory exhaustion under burst traffic.",
             status: 'OPEN',
@@ -59,7 +59,7 @@ export function evaluateEbpfObservabilityRules(file: CodeFile, lines: string[], 
             snippet: lines[matchLineIdx] || 'eBPF & Cilium configuration',
             reproductionSteps: [
                 `Audited eBPF & Cilium configuration in ${file.path}:${lineNum}.`,
-                'Detected violation matching {code}.'
+                'Matched EBPF-02: Insecure BPF Syscall Permissions Permitting Unprivileged Loading.'
             ],
             remediationPrompt: "Set kernel.unprivileged_bpf_disabled = 2 to restrict BPF program loading strictly to privileged admin processes.",
             status: 'OPEN',
@@ -83,7 +83,7 @@ export function evaluateEbpfObservabilityRules(file: CodeFile, lines: string[], 
             snippet: lines[matchLineIdx] || 'eBPF & Cilium configuration',
             reproductionSteps: [
                 `Audited eBPF & Cilium configuration in ${file.path}:${lineNum}.`,
-                'Detected violation matching {code}.'
+                'Matched EBPF-03: Missing Tetragon Process Execution Tracing in Workloads.'
             ],
             remediationPrompt: "Deploy eBPF kprobe hooks monitoring unauthorized execve calls and shell spawns in container namespaces.",
             status: 'OPEN',
@@ -107,7 +107,7 @@ export function evaluateEbpfObservabilityRules(file: CodeFile, lines: string[], 
             snippet: lines[matchLineIdx] || 'eBPF & Cilium configuration',
             reproductionSteps: [
                 `Audited eBPF & Cilium configuration in ${file.path}:${lineNum}.`,
-                'Detected violation matching {code}.'
+                'Matched EBPF-04: Unfiltered eBPF XDP Packet Ingestion Triggering CPU Saturation.'
             ],
             remediationPrompt: "Implement rate-limiting XDP drop filters before packet payloads reach the Linux network stack.",
             status: 'OPEN',
@@ -131,7 +131,7 @@ export function evaluateEbpfObservabilityRules(file: CodeFile, lines: string[], 
             snippet: lines[matchLineIdx] || 'eBPF & Cilium configuration',
             reproductionSteps: [
                 `Audited eBPF & Cilium configuration in ${file.path}:${lineNum}.`,
-                'Detected violation matching {code}.'
+                'Matched EBPF-05: Missing Cilium NetworkPolicy L7 Protocol Path Enforcement.'
             ],
             remediationPrompt: "Enforce L7 HTTP and gRPC API path filtering rules rather than permissive L3/L4 IP and port allowances.",
             status: 'OPEN',

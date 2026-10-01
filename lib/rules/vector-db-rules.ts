@@ -39,7 +39,7 @@ export function evaluateVectorDbRules(file: CodeFile, lines: string[], cleanCont
             snippet: lines[matchLineIdx] || 'Vector Database configuration',
             reproductionSteps: [
                 `Audited Vector Database configuration in ${file.path}:${lineNum}.`,
-                'Detected violation matching {code}.'
+                'Matched VECTOR-01: Unindexed Vector Column Triggering Exhaustive Flat KNN Scans.'
             ],
             remediationPrompt: "Enforce HNSW or IVF index creation on high-dimensional vector columns before executing queries.",
             status: 'OPEN',
@@ -63,7 +63,7 @@ export function evaluateVectorDbRules(file: CodeFile, lines: string[], cleanCont
             snippet: lines[matchLineIdx] || 'Vector Database configuration',
             reproductionSteps: [
                 `Audited Vector Database configuration in ${file.path}:${lineNum}.`,
-                'Detected violation matching {code}.'
+                'Matched VECTOR-02: Embedding Vector Dimension Mismatch at Query Time.'
             ],
             remediationPrompt: "Validate vector dimensions against collection schema (e.g. 1536 / 3072) prior to executing similarity search.",
             status: 'OPEN',
@@ -87,7 +87,7 @@ export function evaluateVectorDbRules(file: CodeFile, lines: string[], cleanCont
             snippet: lines[matchLineIdx] || 'Vector Database configuration',
             reproductionSteps: [
                 `Audited Vector Database configuration in ${file.path}:${lineNum}.`,
-                'Detected violation matching {code}.'
+                'Matched VECTOR-03: Unbounded Similarity Query Limit (top_k > 1000) Causing Memory Exhaustion.'
             ],
             remediationPrompt: "Cap top_k retrieval parameters to prevent JVM / worker process out-of-memory crashes under load.",
             status: 'OPEN',
@@ -111,7 +111,7 @@ export function evaluateVectorDbRules(file: CodeFile, lines: string[], cleanCont
             snippet: lines[matchLineIdx] || 'Vector Database configuration',
             reproductionSteps: [
                 `Audited Vector Database configuration in ${file.path}:${lineNum}.`,
-                'Detected violation matching {code}.'
+                'Matched VECTOR-04: HNSW Index Parameters M and efConstruction Suboptimally Tuned.'
             ],
             remediationPrompt: "Tune M (16-64) and efConstruction (100-512) to achieve balanced recall rate without excessive memory consumption.",
             status: 'OPEN',
@@ -135,7 +135,7 @@ export function evaluateVectorDbRules(file: CodeFile, lines: string[], cleanCont
             snippet: lines[matchLineIdx] || 'Vector Database configuration',
             reproductionSteps: [
                 `Audited Vector Database configuration in ${file.path}:${lineNum}.`,
-                'Detected violation matching {code}.'
+                'Matched VECTOR-05: Missing Inverted Index on Vector Metadata Filter Fields.'
             ],
             remediationPrompt: "Create payload/metadata secondary indices on frequently filtered attributes to avoid post-filtering table scans.",
             status: 'OPEN',

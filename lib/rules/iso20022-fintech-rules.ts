@@ -35,7 +35,7 @@ export function evaluateIso20022FintechRules(file: CodeFile, lines: string[], cl
             snippet: lines[matchLineIdx] || 'ISO 20022 Financial Messaging configuration',
             reproductionSteps: [
                 `Audited ISO 20022 Financial Messaging configuration in ${file.path}:${lineNum}.`,
-                'Detected violation matching {code}.'
+                'Matched ISO20022-01: ISO 20022 pacs.008 XML Syntax Validation Failure on Customer Credit Transfers.'
             ],
             remediationPrompt: "Validate all outgoing and incoming pacs.008 financial messages against official ISO 20022 XSD schemas prior to clearing.",
             status: 'OPEN',
@@ -59,7 +59,7 @@ export function evaluateIso20022FintechRules(file: CodeFile, lines: string[], cl
             snippet: lines[matchLineIdx] || 'ISO 20022 Financial Messaging configuration',
             reproductionSteps: [
                 `Audited ISO 20022 Financial Messaging configuration in ${file.path}:${lineNum}.`,
-                'Detected violation matching {code}.'
+                'Matched ISO20022-02: Missing ISO 20022 End-to-End Identification (EndToEndId) Truncation Protection.'
             ],
             remediationPrompt: "Ensure the 35-character EndToEndId element is preserved across all intermediary ledger hops without truncation or alteration.",
             status: 'OPEN',
@@ -83,7 +83,7 @@ export function evaluateIso20022FintechRules(file: CodeFile, lines: string[], cl
             snippet: lines[matchLineIdx] || 'ISO 20022 Financial Messaging configuration',
             reproductionSteps: [
                 `Audited ISO 20022 Financial Messaging configuration in ${file.path}:${lineNum}.`,
-                'Detected violation matching {code}.'
+                'Matched ISO20022-03: FedNow / SEPA Instant Payment Settlement SLA Timeout Governance Failure.'
             ],
             remediationPrompt: "Enforce strict 10-second roundtrip transaction timeouts for instant credit transfers conforming to FedNow and SEPA rules.",
             status: 'OPEN',
@@ -107,7 +107,7 @@ export function evaluateIso20022FintechRules(file: CodeFile, lines: string[], cl
             snippet: lines[matchLineIdx] || 'ISO 20022 Financial Messaging configuration',
             reproductionSteps: [
                 `Audited ISO 20022 Financial Messaging configuration in ${file.path}:${lineNum}.`,
-                'Detected violation matching {code}.'
+                'Matched ISO20022-04: Unvalidated Structured Creditor Reference (ISO 11649 RF Creditor Reference).'
             ],
             remediationPrompt: "Validate creditor reference formats using ISO 11649 mod 97-10 check digits to eliminate reconciliation billing mismatch.",
             status: 'OPEN',
@@ -131,7 +131,7 @@ export function evaluateIso20022FintechRules(file: CodeFile, lines: string[], cl
             snippet: lines[matchLineIdx] || 'ISO 20022 Financial Messaging configuration',
             reproductionSteps: [
                 `Audited ISO 20022 Financial Messaging configuration in ${file.path}:${lineNum}.`,
-                'Detected violation matching {code}.'
+                'Matched ISO20022-05: Truncation of Ultimate Debtor and Creditor Regulatory Compliance Fields.'
             ],
             remediationPrompt: "Retain complete regulatory identity fields (UltimateDebtor, UltimateCreditor) to prevent AML / FATF Travel Rule sanctions violations.",
             status: 'OPEN',

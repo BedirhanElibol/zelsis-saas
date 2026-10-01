@@ -85,3 +85,24 @@ cases.push({ id: 'session-id-lookup:supabase-admin', expect: 'clean', rules: [91
 // Outbound notification senders are not webhook receivers, but still need caller auth
 cases.push({ id: 'outbound-webhook-sender:not-a-receiver', expect: 'clean', rules: [8143], ...R('app/api/test-webhook/route.ts', "export async function POST(req: Request) {\n  const { slackWebhookUrl } = await req.json();\n  await fetch(slackWebhookUrl, { method: 'POST', body: JSON.stringify({ text: 'test' }) });\n  return Response.json({ ok: true });\n}\n") });
 cases.push({ id: 'outbound-webhook-sender:unauthenticated', expect: 'detect', rules: [15], ...R('app/api/test-webhook/route.ts', "export async function POST(req: Request) {\n  const { slackWebhookUrl } = await req.json();\n  await fetch(slackWebhookUrl, { method: 'POST', body: JSON.stringify({ text: 'test' }) });\n  return Response.json({ ok: true });\n}\n") });
+// RLS only matters when clients can reach the database directly (Supabase / PostgREST)
+cases.push({ id: 'rls:prisma-server-only', expect: 'clean', rules: [3001, 6010], ...R('prisma/migrations/20240101_init/migration.sql', 'CREATE TABLE "Article" ("id" SERIAL PRIMARY KEY, "title" TEXT NOT NULL);\n') });
+// Python: ORM .exec() / .execute() are not the eval/exec builtins
+cases.push({ id: 'python-exec:sqlmodel-session', expect: 'clean', rules: [8811], ...R('backend/app/api/routes/items.py', 'def read_items(session: SessionDep):\n    count_statement = select(func.count()).select_from(Item)\n    count = session.exec(count_statement).one()\n    return count\n') });
+cases.push({ id: 'python-exec:builtin', expect: 'detect', rules: [8811], ...R('app/tools.py', 'def run(code):\n    exec(code)\n') });
+// SSRF: SDKs fetching their own configured endpoints are not SSRF
+cases.push({ id: 'ssrf:sdk-own-endpoint', expect: 'clean', rules: [34], ...R('src/FunctionsClient.ts', "export class FunctionsClient {\n  constructor(private url: string) {}\n  async invoke(name: string) {\n    const url = `${this.url}/${name}`;\n    return fetch(url, { method: 'POST' });\n  }\n}\n") });
+
+// A variable merely named after SSRF is not a guard
+cases.push({ id: 'ssrf:guard-word-in-variable-name', expect: 'detect', rules: [34], ...R('routes/profileImageUrlUpload.ts', "export const upload = () => async (req, res) => {\n  const url = req.body.imageUrl;\n  if (url.match(/server-side/)) req.app.locals.abused_ssrf_bug = true;\n  const response = await fetch(url);\n  res.send(await response.text());\n};\n") });
+// Command injection needs dynamic or request-derived input, not a constant named `command`
+cases.push({ id: 'cmd-injection:constant-command', expect: 'clean', rules: [33], ...R('scripts/format.js', "const { execSync } = require('child_process')\nconst command = process.env.CI ? 'npx prettier --check .' : 'npx prettier --write .'\nexecSync(command, { stdio: 'inherit' })\n") });
+cases.push({ id: 'cmd-injection:request-var', expect: 'detect', rules: [33], ...R('app/api/ping/route.ts', "import { exec } from 'child_process';\nexport async function POST(req: Request) {\n  const { host } = await req.json();\n  exec('ping -c 1 ' + host);\n  return new Response('ok');\n}\n") });
+// PyJWT decode with key + algorithms verifies; disabling verification does not
+cases.push({ id: 'jwt-decode:pyjwt-verified', expect: 'clean', rules: [39], ...R('app/api/deps.py', 'def get_current_user(token: str):\n    payload = jwt.decode(token, settings.SECRET_KEY, algorithms=[security.ALGORITHM])\n    return payload\n') });
+cases.push({ id: 'jwt-decode:pyjwt-unverified', expect: 'detect', rules: [39], ...R('app/api/deps.py', 'def get_current_user(token: str):\n    return jwt.decode(token, options={"verify_signature": False})\n') });
+// A React settings page about webhooks is not a webhook receiver
+cases.push({ id: 'webhook:ui-settings-page', expect: 'clean', rules: [8143], ...R('apps/remix/app/routes/settings.webhooks.$id._index.tsx', "export default function WebhookPage() {\n  const { data } = useWebhook();\n  return <WebhookForm webhook={data} />;\n}\n") });
+// Developer scripts: interpolated git/tooling commands are not request-driven injection
+cases.push({ id: 'cmd-injection:dev-script-template', expect: 'clean', rules: [33], ...R('scripts/release-canary.ts', "import { execSync } from 'child_process'\nconst tag = execSync('git describe --tags --abbrev=0').toString().trim()\nconst log = execSync(`git log ${tag}..HEAD --oneline`).toString()\nconsole.log(log)\n") });
+cases.push({ id: 'cmd-injection:server-template', expect: 'detect', rules: [33], ...R('server/convert.ts', "import { exec } from 'child_process'\nexport function convert(file: string) {\n  exec(`convert ${file} out.png`)\n}\n") });

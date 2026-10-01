@@ -35,7 +35,7 @@ export function evaluateTimeSeriesDbRules(file: CodeFile, lines: string[], clean
             snippet: lines[matchLineIdx] || 'Time-Series Database configuration',
             reproductionSteps: [
                 `Audited Time-Series Database configuration in ${file.path}:${lineNum}.`,
-                'Detected violation matching {code}.'
+                'Matched TSDB-01: Unindexed Timestamp Column Triggering Full Table Scans in Metric Queries.'
             ],
             remediationPrompt: "Enforce clustering or primary sorting keys on timestamp and metric dimensions.",
             status: 'OPEN',
@@ -59,7 +59,7 @@ export function evaluateTimeSeriesDbRules(file: CodeFile, lines: string[], clean
             snippet: lines[matchLineIdx] || 'Time-Series Database configuration',
             reproductionSteps: [
                 `Audited Time-Series Database configuration in ${file.path}:${lineNum}.`,
-                'Detected violation matching {code}.'
+                'Matched TSDB-02: Missing Automated Retention Policy and Data Tiering for Historical Telemetry.'
             ],
             remediationPrompt: "Configure automatic compression and tiered storage offloading for historical metrics.",
             status: 'OPEN',
@@ -83,7 +83,7 @@ export function evaluateTimeSeriesDbRules(file: CodeFile, lines: string[], clean
             snippet: lines[matchLineIdx] || 'Time-Series Database configuration',
             reproductionSteps: [
                 `Audited Time-Series Database configuration in ${file.path}:${lineNum}.`,
-                'Detected violation matching {code}.'
+                'Matched TSDB-03: High-Cardinality Tag Explosion Exhausting TSDB Inverted Index Memory.'
             ],
             remediationPrompt: "Enforce limits on unique tag/label values (e.g. banning user IDs or trace IDs in metric tag sets).",
             status: 'OPEN',
@@ -107,7 +107,7 @@ export function evaluateTimeSeriesDbRules(file: CodeFile, lines: string[], clean
             snippet: lines[matchLineIdx] || 'Time-Series Database configuration',
             reproductionSteps: [
                 `Audited Time-Series Database configuration in ${file.path}:${lineNum}.`,
-                'Detected violation matching {code}.'
+                'Matched TSDB-04: Small-Batch Micro-Insertions Causing Excessive Columnar File Fragmentation.'
             ],
             remediationPrompt: "Batch metric writes (minimum 5,000-10,000 points per HTTP/TCP write request).",
             status: 'OPEN',
@@ -131,7 +131,7 @@ export function evaluateTimeSeriesDbRules(file: CodeFile, lines: string[], clean
             snippet: lines[matchLineIdx] || 'Time-Series Database configuration',
             reproductionSteps: [
                 `Audited Time-Series Database configuration in ${file.path}:${lineNum}.`,
-                'Detected violation matching {code}.'
+                'Matched TSDB-05: Uncompressed Historical Columnar Storage Consuming Excessive Disk Space.'
             ],
             remediationPrompt: "Enable ZSTD or Gorilla columnar compression codecs on time-series chunks.",
             status: 'OPEN',

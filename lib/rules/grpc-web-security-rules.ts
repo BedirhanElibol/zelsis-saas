@@ -35,7 +35,7 @@ export function evaluateGrpcWebSecurityRules(file: CodeFile, lines: string[], cl
             snippet: lines[matchLineIdx] || 'gRPC-Web Security configuration',
             reproductionSteps: [
                 `Audited gRPC-Web Security configuration in ${file.path}:${lineNum}.`,
-                'Detected violation matching {code}.'
+                'Matched GRPCSEC-01: Insecure Plaintext gRPC Channel Instantiation in Production.'
             ],
             remediationPrompt: "Require TLS or mutual TLS credentials when instantiating gRPC communication channels in production.",
             status: 'OPEN',
@@ -59,7 +59,7 @@ export function evaluateGrpcWebSecurityRules(file: CodeFile, lines: string[], cl
             snippet: lines[matchLineIdx] || 'gRPC-Web Security configuration',
             reproductionSteps: [
                 `Audited gRPC-Web Security configuration in ${file.path}:${lineNum}.`,
-                'Detected violation matching {code}.'
+                'Matched GRPCSEC-02: Missing HTTP/2 Flow Control and Stream Window Limits.'
             ],
             remediationPrompt: "Configure HTTP/2 initial connection and stream window limits to mitigate stream flood Denial of Service attacks.",
             status: 'OPEN',
@@ -83,7 +83,7 @@ export function evaluateGrpcWebSecurityRules(file: CodeFile, lines: string[], cl
             snippet: lines[matchLineIdx] || 'gRPC-Web Security configuration',
             reproductionSteps: [
                 `Audited gRPC-Web Security configuration in ${file.path}:${lineNum}.`,
-                'Detected violation matching {code}.'
+                'Matched GRPCSEC-03: Unbounded gRPC Inbound Message Size Permitting Memory Exhaustion.'
             ],
             remediationPrompt: "Restrict max_receive_message_length (e.g. max 4MB) to prevent JVM and worker heap exhaustion.",
             status: 'OPEN',
@@ -107,7 +107,7 @@ export function evaluateGrpcWebSecurityRules(file: CodeFile, lines: string[], cl
             snippet: lines[matchLineIdx] || 'gRPC-Web Security configuration',
             reproductionSteps: [
                 `Audited gRPC-Web Security configuration in ${file.path}:${lineNum}.`,
-                'Detected violation matching {code}.'
+                'Matched GRPCSEC-04: Unprotected gRPC Server Reflection Enabled in Production.'
             ],
             remediationPrompt: "Disable Server Reflection services in production environments to prevent unauthorized API schema enumeration.",
             status: 'OPEN',
@@ -131,7 +131,7 @@ export function evaluateGrpcWebSecurityRules(file: CodeFile, lines: string[], cl
             snippet: lines[matchLineIdx] || 'gRPC-Web Security configuration',
             reproductionSteps: [
                 `Audited gRPC-Web Security configuration in ${file.path}:${lineNum}.`,
-                'Detected violation matching {code}.'
+                'Matched GRPCSEC-05: Missing Protobuf Payload Schema Validation Rules.'
             ],
             remediationPrompt: "Enforce protoc-gen-validate (PGV) rules and message constraints on all incoming gRPC RPC requests.",
             status: 'OPEN',

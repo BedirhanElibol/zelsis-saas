@@ -83,6 +83,19 @@ export const RULE_CASES: RuleCase[] = [
     ignores: f('supabase/migrations/002.sql', 'CREATE TABLE public.payments (id uuid primary key, user_id uuid, amount int);\nALTER TABLE public.payments ENABLE ROW LEVEL SECURITY;\nCREATE POLICY "own" ON public.payments FOR SELECT USING (auth.uid() = user_id);\n')
   },
   {
+    ruleIds: [3001],
+    name: 'Supabase table without RLS (RLS enabled in a later migration counts)',
+    detects: [
+      { path: 'supabase/migrations/20240101_init.sql', content: 'CREATE TABLE public.invoices (id uuid primary key, user_id uuid);\n' },
+      { path: 'supabase/config.toml', content: 'project_id = "demo"\n' }
+    ],
+    ignores: [
+      { path: 'supabase/migrations/20240101_init.sql', content: 'CREATE TABLE public.invoices (id uuid primary key, user_id uuid);\n' },
+      { path: 'supabase/migrations/20240201_rls.sql', content: 'ALTER TABLE public.invoices ENABLE ROW LEVEL SECURITY;\n' },
+      { path: 'supabase/config.toml', content: 'project_id = "demo"\n' }
+    ]
+  },
+  {
     ruleIds: [3021, 6043],
     name: 'SQL injection via template literal',
     detects: f('app/api/users/route.ts', "import { db } from '@/lib/db';\nexport async function GET(req: Request) {\n  const id = new URL(req.url).searchParams.get('id');\n  const rows = await db.query(`SELECT * FROM users WHERE id = ${id}`);\n  return Response.json(rows);\n}\n"),

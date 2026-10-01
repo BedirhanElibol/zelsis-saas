@@ -35,7 +35,7 @@ export function evaluateGlbaComplianceRules(file: CodeFile, lines: string[], cle
             snippet: lines[matchLineIdx] || 'GLBA Safeguards configuration',
             reproductionSteps: [
                 `Audited GLBA Safeguards configuration in ${file.path}:${lineNum}.`,
-                'Detected violation matching {code}.'
+                'Matched GLBA-01: GLBA \u00a7314.4(a) Designation of Qualified Information Security Officer.'
             ],
             remediationPrompt: "Designate a qualified individual responsible for overseeing and enforcing the enterprise information security program.",
             status: 'OPEN',
@@ -59,7 +59,7 @@ export function evaluateGlbaComplianceRules(file: CodeFile, lines: string[], cle
             snippet: lines[matchLineIdx] || 'GLBA Safeguards configuration',
             reproductionSteps: [
                 `Audited GLBA Safeguards configuration in ${file.path}:${lineNum}.`,
-                'Detected violation matching {code}.'
+                'Matched GLBA-02: GLBA \u00a7314.4(b) Risk Assessment: Missing Documented Security Evaluation.'
             ],
             remediationPrompt: "Conduct and document annual written risk assessments evaluating threats to customer non-public financial information.",
             status: 'OPEN',
@@ -83,7 +83,7 @@ export function evaluateGlbaComplianceRules(file: CodeFile, lines: string[], cle
             snippet: lines[matchLineIdx] || 'GLBA Safeguards configuration',
             reproductionSteps: [
                 `Audited GLBA Safeguards configuration in ${file.path}:${lineNum}.`,
-                'Detected violation matching {code}.'
+                'Matched GLBA-03: GLBA \u00a7314.4(c)(1) Access Controls: Overprivileged Access to Customer NPI.'
             ],
             remediationPrompt: "Limit employee access to customer non-public personal financial information strictly to legitimate business needs.",
             status: 'OPEN',
@@ -107,7 +107,7 @@ export function evaluateGlbaComplianceRules(file: CodeFile, lines: string[], cle
             snippet: lines[matchLineIdx] || 'GLBA Safeguards configuration',
             reproductionSteps: [
                 `Audited GLBA Safeguards configuration in ${file.path}:${lineNum}.`,
-                'Detected violation matching {code}.'
+                'Matched GLBA-04: GLBA \u00a7314.4(c)(2) Data Inventory: Missing Systems and NPI Data Flow Inventory.'
             ],
             remediationPrompt: "Maintain an up-to-date inventory of all systems, cloud stores, and APIs processing customer financial data.",
             status: 'OPEN',
@@ -131,7 +131,7 @@ export function evaluateGlbaComplianceRules(file: CodeFile, lines: string[], cle
             snippet: lines[matchLineIdx] || 'GLBA Safeguards configuration',
             reproductionSteps: [
                 `Audited GLBA Safeguards configuration in ${file.path}:${lineNum}.`,
-                'Detected violation matching {code}.'
+                'Matched GLBA-05: GLBA \u00a7314.4(c)(3) Encryption: Unencrypted Customer Financial Data at Rest and Transit.'
             ],
             remediationPrompt: "Encrypt all customer non-public financial information using AES-256 at rest and TLS 1.3 in transit.",
             status: 'OPEN',

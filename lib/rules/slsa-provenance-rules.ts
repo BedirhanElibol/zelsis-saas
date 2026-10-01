@@ -35,7 +35,7 @@ export function evaluateSlsaProvenanceRules(file: CodeFile, lines: string[], cle
             snippet: lines[matchLineIdx] || 'SLSA Provenance configuration',
             reproductionSteps: [
                 `Audited SLSA Provenance configuration in ${file.path}:${lineNum}.`,
-                'Detected violation matching {code}.'
+                'Matched SLSA-01: Unverified Build Platform Permitting Ephemeral Runner Tampering.'
             ],
             remediationPrompt: "Execute CI/CD builds on hardened, isolated, ephemeral runners with zero persistent state.",
             status: 'OPEN',
@@ -59,7 +59,7 @@ export function evaluateSlsaProvenanceRules(file: CodeFile, lines: string[], cle
             snippet: lines[matchLineIdx] || 'SLSA Provenance configuration',
             reproductionSteps: [
                 `Audited SLSA Provenance configuration in ${file.path}:${lineNum}.`,
-                'Detected violation matching {code}.'
+                'Matched SLSA-02: Missing In-Toto Cryptographic Provenance Attestation on Release Artifacts.'
             ],
             remediationPrompt: "Generate signed in-toto SLSA provenance JSON documents linking artifacts to source commits.",
             status: 'OPEN',
@@ -83,7 +83,7 @@ export function evaluateSlsaProvenanceRules(file: CodeFile, lines: string[], cle
             snippet: lines[matchLineIdx] || 'SLSA Provenance configuration',
             reproductionSteps: [
                 `Audited SLSA Provenance configuration in ${file.path}:${lineNum}.`,
-                'Detected violation matching {code}.'
+                'Matched SLSA-03: Non-Hermetic Build Process Fetching Unpinned Remote Dependencies.'
             ],
             remediationPrompt: "Require hermetic builds where all dependencies are pre-fetched and verified against sha256 checksums.",
             status: 'OPEN',
@@ -108,7 +108,7 @@ export function evaluateSlsaProvenanceRules(file: CodeFile, lines: string[], cle
             snippet: lines[matchLineIdx] || 'SLSA Provenance configuration',
             reproductionSteps: [
                 `Audited SLSA Provenance configuration in ${file.path}:${lineNum}.`,
-                'Detected violation matching {code}.'
+                'Matched SLSA-04: Mutable Git Tags Used in Release Pipeline Rather Than Commit SHAs.'
             ],
             remediationPrompt: "Pin all GitHub Actions and pipeline triggers to immutable 40-character Git commit SHAs.",
             status: 'OPEN',
@@ -132,7 +132,7 @@ export function evaluateSlsaProvenanceRules(file: CodeFile, lines: string[], cle
             snippet: lines[matchLineIdx] || 'SLSA Provenance configuration',
             reproductionSteps: [
                 `Audited SLSA Provenance configuration in ${file.path}:${lineNum}.`,
-                'Detected violation matching {code}.'
+                'Matched SLSA-05: Unsigned Container Images and Helm Charts Deployed to Production.'
             ],
             remediationPrompt: "Sign all container images using Sigstore Cosign and verify signatures before cluster admission.",
             status: 'OPEN',

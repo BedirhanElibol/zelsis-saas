@@ -35,7 +35,7 @@ export function evaluateEuNis2ComplianceRules(file: CodeFile, lines: string[], c
             snippet: lines[matchLineIdx] || 'EU NIS2 Critical Infrastructure configuration',
             reproductionSteps: [
                 `Audited EU NIS2 Critical Infrastructure configuration in ${file.path}:${lineNum}.`,
-                'Detected violation matching {code}.'
+                'Matched NIS2-01: EU NIS2 Directive Article 21: Missing Documented All-Hazards Cybersecurity Risk Management Policy.'
             ],
             remediationPrompt: "Adopt and maintain a formal NIS2 Article 21 cybersecurity policy covering risk analysis, incident handling, and system security.",
             status: 'OPEN',
@@ -59,7 +59,7 @@ export function evaluateEuNis2ComplianceRules(file: CodeFile, lines: string[], c
             snippet: lines[matchLineIdx] || 'EU NIS2 Critical Infrastructure configuration',
             reproductionSteps: [
                 `Audited EU NIS2 Critical Infrastructure configuration in ${file.path}:${lineNum}.`,
-                'Detected violation matching {code}.'
+                'Matched NIS2-02: EU NIS2 Directive Article 23: Inadequate 24-Hour Early Warning and Incident Notification SLA.'
             ],
             remediationPrompt: "Implement automated incident notification pipelines ensuring NIS2-compliant 24h early warning and 72h detailed incident reporting to national authorities.",
             status: 'OPEN',
@@ -83,7 +83,7 @@ export function evaluateEuNis2ComplianceRules(file: CodeFile, lines: string[], c
             snippet: lines[matchLineIdx] || 'EU NIS2 Critical Infrastructure configuration',
             reproductionSteps: [
                 `Audited EU NIS2 Critical Infrastructure configuration in ${file.path}:${lineNum}.`,
-                'Detected violation matching {code}.'
+                'Matched NIS2-03: EU NIS2 Directive Article 21(2)(d): Inadequate Supply Chain Risk Management and Vendor Cybersecurity Audits.'
             ],
             remediationPrompt: "Enforce supply chain security assessments and contractual security requirements across all tier-1 IT service providers and component vendors.",
             status: 'OPEN',
@@ -107,7 +107,7 @@ export function evaluateEuNis2ComplianceRules(file: CodeFile, lines: string[], c
             snippet: lines[matchLineIdx] || 'EU NIS2 Critical Infrastructure configuration',
             reproductionSteps: [
                 `Audited EU NIS2 Critical Infrastructure configuration in ${file.path}:${lineNum}.`,
-                'Detected violation matching {code}.'
+                'Matched NIS2-04: EU NIS2 Directive Article 21(2)(e): Missing Vulnerability Handling, Disclosure and Coordinated CSIRT Reporting.'
             ],
             remediationPrompt: "Publish a coordinated vulnerability disclosure policy and integrate automated CVE scanning across all release deployment stages.",
             status: 'OPEN',
@@ -131,7 +131,7 @@ export function evaluateEuNis2ComplianceRules(file: CodeFile, lines: string[], c
             snippet: lines[matchLineIdx] || 'EU NIS2 Critical Infrastructure configuration',
             reproductionSteps: [
                 `Audited EU NIS2 Critical Infrastructure configuration in ${file.path}:${lineNum}.`,
-                'Detected violation matching {code}.'
+                'Matched NIS2-05: EU NIS2 Directive Article 20: Lack of Management Body Cybersecurity Governance Training and Approval Records.'
             ],
             remediationPrompt: "Conduct mandatory annual cybersecurity training for executive management and maintain board approval records for cybersecurity measures.",
             status: 'OPEN',

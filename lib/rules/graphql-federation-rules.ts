@@ -40,7 +40,7 @@ export function evaluateGraphqlFederationRules(file: CodeFile, lines: string[], 
             snippet: lines[matchLineIdx] || 'GraphQL Federation configuration',
             reproductionSteps: [
                 `Audited GraphQL Federation configuration in ${file.path}:${lineNum}.`,
-                'Detected violation matching {code}.'
+                'Matched FED-01: Unbounded Subgraph Query Depth in Federated Gateway.'
             ],
             remediationPrompt: "Enforce maximum query depth limits at the federated router to prevent deeply nested entity resolution loops.",
             status: 'OPEN',
@@ -64,7 +64,7 @@ export function evaluateGraphqlFederationRules(file: CodeFile, lines: string[], 
             snippet: lines[matchLineIdx] || 'GraphQL Federation configuration',
             reproductionSteps: [
                 `Audited GraphQL Federation configuration in ${file.path}:${lineNum}.`,
-                'Detected violation matching {code}.'
+                'Matched FED-02: Missing Entity Resolver Batching Causing N+1 Subgraph Storms.'
             ],
             remediationPrompt: "Implement DataLoader pattern on @key entity representations to batch subgraph network fetches.",
             status: 'OPEN',
@@ -88,7 +88,7 @@ export function evaluateGraphqlFederationRules(file: CodeFile, lines: string[], 
             snippet: lines[matchLineIdx] || 'GraphQL Federation configuration',
             reproductionSteps: [
                 `Audited GraphQL Federation configuration in ${file.path}:${lineNum}.`,
-                'Detected violation matching {code}.'
+                'Matched FED-03: Unprotected Subgraph Introspection in Production.'
             ],
             remediationPrompt: "Disable introspection schemas across all internal federated microservices and public router endpoints.",
             status: 'OPEN',
@@ -112,7 +112,7 @@ export function evaluateGraphqlFederationRules(file: CodeFile, lines: string[], 
             snippet: lines[matchLineIdx] || 'GraphQL Federation configuration',
             reproductionSteps: [
                 `Audited GraphQL Federation configuration in ${file.path}:${lineNum}.`,
-                'Detected violation matching {code}.'
+                'Matched FED-04: Breaking Schema Changes Lacking CI/CD Composition Check.'
             ],
             remediationPrompt: "Run schema composition linting (rover subgraph check) before merging PRs to prevent router composition failure.",
             status: 'OPEN',
@@ -136,7 +136,7 @@ export function evaluateGraphqlFederationRules(file: CodeFile, lines: string[], 
             snippet: lines[matchLineIdx] || 'GraphQL Federation configuration',
             reproductionSteps: [
                 `Audited GraphQL Federation configuration in ${file.path}:${lineNum}.`,
-                'Detected violation matching {code}.'
+                'Matched FED-05: Missing Subgraph Authentication Header Propagation.'
             ],
             remediationPrompt: "Validate mTLS or cryptographic JWT signatures on requests between Apollo Router and internal subgraphs.",
             status: 'OPEN',

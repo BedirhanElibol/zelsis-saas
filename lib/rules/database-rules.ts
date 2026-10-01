@@ -7,13 +7,14 @@
  */
 import { Finding } from '@/data/schema';
 import { CodeFile } from '../scanner-engine';
+import { emptyRepoContext, normalizeSqlName, RepoContext } from '../scanner/repo-context';
 export interface DatabaseRuleResult {
     findings: Finding[];
     logs: string[];
 }
 export function evaluateDatabaseRules(file: CodeFile, lines: string[], cleanContent: string, findingCounter: {
     count: number;
-}): DatabaseRuleResult {
+}, context: RepoContext = emptyRepoContext()): DatabaseRuleResult {
     const findings: Finding[] = [];
     const logs: string[] = [];
     const lowerPath = file.path.toLowerCase().replace(/\\/g, '/');
@@ -248,7 +249,10 @@ export function evaluateDatabaseRules(file: CodeFile, lines: string[], cleanCont
         logs.push(`[${ts}] 🗄️ DB-PERF-09: Long-Running External API Call Inside DB Transaction detected (${file.path}:${lineNum})`);
     }
     // DB-PERF-10: PostgreSQL Public Table Missing Row Level Security (RLS)
-    if (/CREATE\s+TABLE\s+(?:public\.)?[a-zA-Z0-9_]+/i.test(cleanContent) && !/ENABLE\s+ROW\s+LEVEL\s+SECURITY/i.test(cleanContent) && file.path.endsWith(".sql")) {
+    const tablesWithoutRls = [...cleanContent.matchAll(/CREATE\s+TABLE\s+(?:IF\s+NOT\s+EXISTS\s+)?([\w."]+)/gi)]
+        .map((m) => normalizeSqlName(m[1]))
+        .filter((t) => !context.rlsEnabledTables.has(t) && !new RegExp(String.raw`ALTER\s+TABLE\s+[^;]*\b` + t + String.raw`\b[^;]*ENABLE\s+ROW\s+LEVEL\s+SECURITY`, 'i').test(cleanContent));
+    if (context.exposesDatabaseToClients && tablesWithoutRls.length > 0 && file.path.endsWith(".sql")) {
         const matchLineIdx = lines.findIndex(l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('*') && (/db-perf-10|create\s+table/i.test(l) || lines.indexOf(l) === 0));
         const lineNum = matchLineIdx !== -1 ? matchLineIdx + 1 : 1;
         findings.push({

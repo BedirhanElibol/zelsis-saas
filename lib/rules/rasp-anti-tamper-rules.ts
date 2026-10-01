@@ -35,7 +35,7 @@ export function evaluateRaspAntiTamperRules(file: CodeFile, lines: string[], cle
             snippet: lines[matchLineIdx] || 'Runtime Application Self-Protection configuration',
             reproductionSteps: [
                 `Audited Runtime Application Self-Protection configuration in ${file.path}:${lineNum}.`,
-                'Detected violation matching {code}.'
+                'Matched RASP-01: Missing Runtime Application Self-Protection (RASP) Execution Hooks.'
             ],
             remediationPrompt: "Intercept and block dynamic code evaluation (eval, Function constructor, exec) at the JavaScript/runtime level.",
             status: 'OPEN',
@@ -59,7 +59,7 @@ export function evaluateRaspAntiTamperRules(file: CodeFile, lines: string[], cle
             snippet: lines[matchLineIdx] || 'Runtime Application Self-Protection configuration',
             reproductionSteps: [
                 `Audited Runtime Application Self-Protection configuration in ${file.path}:${lineNum}.`,
-                'Detected violation matching {code}.'
+                'Matched RASP-02: Unauthorized Debugger Attachment Permitted in Production Runtime.'
             ],
             remediationPrompt: "Detect and terminate application processes if unauthorized ptrace or remote debugger attach attempts occur.",
             status: 'OPEN',
@@ -83,7 +83,7 @@ export function evaluateRaspAntiTamperRules(file: CodeFile, lines: string[], cle
             snippet: lines[matchLineIdx] || 'Runtime Application Self-Protection configuration',
             reproductionSteps: [
                 `Audited Runtime Application Self-Protection configuration in ${file.path}:${lineNum}.`,
-                'Detected violation matching {code}.'
+                'Matched RASP-03: Prototype Pollution Exploitation: Unfrozen Core Object Prototypes.'
             ],
             remediationPrompt: "Freeze Object.prototype, Array.prototype, and Function.prototype at process startup to prevent pollution.",
             status: 'OPEN',
@@ -107,7 +107,7 @@ export function evaluateRaspAntiTamperRules(file: CodeFile, lines: string[], cle
             snippet: lines[matchLineIdx] || 'Runtime Application Self-Protection configuration',
             reproductionSteps: [
                 `Audited Runtime Application Self-Protection configuration in ${file.path}:${lineNum}.`,
-                'Detected violation matching {code}.'
+                'Matched RASP-04: Dynamic Memory Tampering: Insecure Memory Allocations in Native Addons.'
             ],
             remediationPrompt: "Enable Address Space Layout Randomization (ASLR) and stack canary compiler flags on all native modules.",
             status: 'OPEN',
@@ -131,7 +131,7 @@ export function evaluateRaspAntiTamperRules(file: CodeFile, lines: string[], cle
             snippet: lines[matchLineIdx] || 'Runtime Application Self-Protection configuration',
             reproductionSteps: [
                 `Audited Runtime Application Self-Protection configuration in ${file.path}:${lineNum}.`,
-                'Detected violation matching {code}.'
+                'Matched RASP-05: Unchecked Buffer Offsets Across Foreign Function Interface (FFI).'
             ],
             remediationPrompt: "Validate memory bounds and argument pointer offsets before crossing native C/C++ addon boundaries.",
             status: 'OPEN',

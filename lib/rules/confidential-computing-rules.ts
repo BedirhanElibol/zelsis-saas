@@ -35,7 +35,7 @@ export function evaluateConfidentialComputingRules(file: CodeFile, lines: string
             snippet: lines[matchLineIdx] || 'Confidential Computing configuration',
             reproductionSteps: [
                 `Audited Confidential Computing configuration in ${file.path}:${lineNum}.`,
-                'Detected violation matching {code}.'
+                'Matched CONF-COMPUTE-01: Missing Cryptographic Remote Attestation Verification Before Enclave Provisioning.'
             ],
             remediationPrompt: "Verify hardware root of trust and quote measurements via AMD SEV-SNP or Intel SGX attestation services before releasing secrets.",
             status: 'OPEN',
@@ -59,7 +59,7 @@ export function evaluateConfidentialComputingRules(file: CodeFile, lines: string
             snippet: lines[matchLineIdx] || 'Confidential Computing configuration',
             reproductionSteps: [
                 `Audited Confidential Computing configuration in ${file.path}:${lineNum}.`,
-                'Detected violation matching {code}.'
+                'Matched CONF-COMPUTE-02: Unencrypted Shared Memory Data Transfer Between Host and Confidential Enclave.'
             ],
             remediationPrompt: "Encrypt all host-enclave memory communications over authenticated channels using ephemeral TLS or AES-GCM session keys.",
             status: 'OPEN',
@@ -83,7 +83,7 @@ export function evaluateConfidentialComputingRules(file: CodeFile, lines: string
             snippet: lines[matchLineIdx] || 'Confidential Computing configuration',
             reproductionSteps: [
                 `Audited Confidential Computing configuration in ${file.path}:${lineNum}.`,
-                'Detected violation matching {code}.'
+                'Matched CONF-COMPUTE-03: Vulnerability to Controlled Channel and Page Fault Side-Channel Attacks in Enclaves.'
             ],
             remediationPrompt: "Implement data-independent execution paths and address masking to prevent host-level memory access pattern side-channel leaks.",
             status: 'OPEN',
@@ -107,7 +107,7 @@ export function evaluateConfidentialComputingRules(file: CodeFile, lines: string
             snippet: lines[matchLineIdx] || 'Confidential Computing configuration',
             reproductionSteps: [
                 `Audited Confidential Computing configuration in ${file.path}:${lineNum}.`,
-                'Detected violation matching {code}.'
+                'Matched CONF-COMPUTE-04: Use of Outdated CPU Microcode or Deprecated Security Version Numbers (SVN).'
             ],
             remediationPrompt: "Enforce minimum hardware TCB (Trusted Computing Base) SVN levels and verify microcode patches are up-to-date during attestation.",
             status: 'OPEN',
@@ -131,7 +131,7 @@ export function evaluateConfidentialComputingRules(file: CodeFile, lines: string
             snippet: lines[matchLineIdx] || 'Confidential Computing configuration',
             reproductionSteps: [
                 `Audited Confidential Computing configuration in ${file.path}:${lineNum}.`,
-                'Detected violation matching {code}.'
+                'Matched CONF-COMPUTE-05: Unsigned or Tampered Enclave Application Binary Images in Enclave Launch Policy.'
             ],
             remediationPrompt: "Validate measurement hashes (MRENCLAVE or launch digest) against signed cryptographic manifests prior to enclave execution.",
             status: 'OPEN',

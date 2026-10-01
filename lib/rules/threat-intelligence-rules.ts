@@ -35,7 +35,7 @@ export function evaluateThreatIntelligenceRules(file: CodeFile, lines: string[],
             snippet: lines[matchLineIdx] || 'Cyber Threat Intelligence configuration',
             reproductionSteps: [
                 `Audited Cyber Threat Intelligence configuration in ${file.path}:${lineNum}.`,
-                'Detected violation matching {code}.'
+                'Matched CTI-01: Unvalidated Cyber Threat Intelligence (CTI) Feed Ingestion Permitting Malicious Rule Poisoning.'
             ],
             remediationPrompt: "Authenticate threat intelligence feeds using TLS client certificates and cryptographically sign STIX/TAXII indicator payloads.",
             status: 'OPEN',
@@ -59,7 +59,7 @@ export function evaluateThreatIntelligenceRules(file: CodeFile, lines: string[],
             snippet: lines[matchLineIdx] || 'Cyber Threat Intelligence configuration',
             reproductionSteps: [
                 `Audited Cyber Threat Intelligence configuration in ${file.path}:${lineNum}.`,
-                'Detected violation matching {code}.'
+                'Matched CTI-02: Missing STIX 2.1 & TAXII 2.1 Automated Threat Indicator Expiration and TTL Governance.'
             ],
             remediationPrompt: "Implement automated Time-to-Live (TTL) policies retiring ephemeral threat indicators (e.g. dynamic IP addresses) after 7 to 14 days.",
             status: 'OPEN',
@@ -83,7 +83,7 @@ export function evaluateThreatIntelligenceRules(file: CodeFile, lines: string[],
             snippet: lines[matchLineIdx] || 'Cyber Threat Intelligence configuration',
             reproductionSteps: [
                 `Audited Cyber Threat Intelligence configuration in ${file.path}:${lineNum}.`,
-                'Detected violation matching {code}.'
+                'Matched CTI-03: Lack of Automated Threat Feed Confidence Scoring Leading to Critical Benign Asset Blacklisting.'
             ],
             remediationPrompt: "Enforce minimum confidence score thresholds (e.g. score >= 85) and cross-reference major CDN/DNS provider whitelists prior to blocking.",
             status: 'OPEN',
@@ -107,7 +107,7 @@ export function evaluateThreatIntelligenceRules(file: CodeFile, lines: string[],
             snippet: lines[matchLineIdx] || 'Cyber Threat Intelligence configuration',
             reproductionSteps: [
                 `Audited Cyber Threat Intelligence configuration in ${file.path}:${lineNum}.`,
-                'Detected violation matching {code}.'
+                'Matched CTI-04: Missing MISP Security Incident Event Synchronization on Perimeter Edge Firewalls.'
             ],
             remediationPrompt: "Automate bi-directional synchronization between security incident management and edge firewall IoC enforcement systems.",
             status: 'OPEN',
@@ -131,7 +131,7 @@ export function evaluateThreatIntelligenceRules(file: CodeFile, lines: string[],
             snippet: lines[matchLineIdx] || 'Cyber Threat Intelligence configuration',
             reproductionSteps: [
                 `Audited Cyber Threat Intelligence configuration in ${file.path}:${lineNum}.`,
-                'Detected violation matching {code}.'
+                'Matched CTI-05: Unverified IoC (Indicator of Compromise) Matching Running Without IP/Domain Reputation Scoring.'
             ],
             remediationPrompt: "Enrich all IoC detection alerts with multi-source reputation scoring before escalating to automated account lockouts or IP bans.",
             status: 'OPEN',

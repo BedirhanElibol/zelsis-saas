@@ -35,7 +35,7 @@ export function evaluateAiRedTeamSecurityRules(file: CodeFile, lines: string[], 
             snippet: lines[matchLineIdx] || 'AI Red Teaming & Jailbreak Defense configuration',
             reproductionSteps: [
                 `Audited AI Red Teaming & Jailbreak Defense configuration in ${file.path}:${lineNum}.`,
-                'Detected violation matching {code}.'
+                'Matched AI-RED-01: Vulnerability to Adversarial Few-Shot Jailbreak Prompts Bypassing Safety Alignment.'
             ],
             remediationPrompt: "Deploy semantic guardrail classifiers and input intent filters to detect multi-turn jailbreak attempts prior to model ingestion.",
             status: 'OPEN',
@@ -59,7 +59,7 @@ export function evaluateAiRedTeamSecurityRules(file: CodeFile, lines: string[], 
             snippet: lines[matchLineIdx] || 'AI Red Teaming & Jailbreak Defense configuration',
             reproductionSteps: [
                 `Audited AI Red Teaming & Jailbreak Defense configuration in ${file.path}:${lineNum}.`,
-                'Detected violation matching {code}.'
+                'Matched AI-RED-02: System Prompt Extraction and Intellectual Property Leakage via Roleplay Attacks.'
             ],
             remediationPrompt: "Inject adversarial canary tokens and enforce system instruction confidentiality guardrails blocking role reversal instructions.",
             status: 'OPEN',
@@ -83,7 +83,7 @@ export function evaluateAiRedTeamSecurityRules(file: CodeFile, lines: string[], 
             snippet: lines[matchLineIdx] || 'AI Red Teaming & Jailbreak Defense configuration',
             reproductionSteps: [
                 `Audited AI Red Teaming & Jailbreak Defense configuration in ${file.path}:${lineNum}.`,
-                'Detected violation matching {code}.'
+                'Matched AI-RED-03: Indirect Prompt Injection via Unsanitized Third-Party Web Search / RAG Document Chunks.'
             ],
             remediationPrompt: "Isolate untrusted external retrieval content within strict XML/JSON data boundaries and validate model instructions against policy.",
             status: 'OPEN',
@@ -107,7 +107,7 @@ export function evaluateAiRedTeamSecurityRules(file: CodeFile, lines: string[], 
             snippet: lines[matchLineIdx] || 'AI Red Teaming & Jailbreak Defense configuration',
             reproductionSteps: [
                 `Audited AI Red Teaming & Jailbreak Defense configuration in ${file.path}:${lineNum}.`,
-                'Detected violation matching {code}.'
+                'Matched AI-RED-04: Output Delimiter Hijacking Permitting Arbitrary Markdown / Code Block Escape.'
             ],
             remediationPrompt: "Sanitize model output stream boundaries to prevent malicious instruction payloads hijacking application execution wrappers.",
             status: 'OPEN',
@@ -131,7 +131,7 @@ export function evaluateAiRedTeamSecurityRules(file: CodeFile, lines: string[], 
             snippet: lines[matchLineIdx] || 'AI Red Teaming & Jailbreak Defense configuration',
             reproductionSteps: [
                 `Audited AI Red Teaming & Jailbreak Defense configuration in ${file.path}:${lineNum}.`,
-                'Detected violation matching {code}.'
+                'Matched AI-RED-05: Multi-Lingual and Base64 Obfuscated Token Smuggling Bypassing Moderation Filters.'
             ],
             remediationPrompt: "Normalize and decode multi-lingual, leetspeak, and base64 encoded user inputs before passing to safety moderation classifiers.",
             status: 'OPEN',

@@ -35,7 +35,7 @@ export function evaluateTimeSeriesDbOptRules(file: CodeFile, lines: string[], cl
             snippet: lines[matchLineIdx] || 'Time-Series Database Optimization configuration',
             reproductionSteps: [
                 `Audited Time-Series Database Optimization configuration in ${file.path}:${lineNum}.`,
-                'Detected violation matching {code}.'
+                'Matched TSDB-OPT-01: TimescaleDB Hypertable Chunk Interval Sizing Exceeding In-Memory RAM Working Set.'
             ],
             remediationPrompt: "Configure hypertable chunk intervals (e.g. 1 day or 12 hours) so that recent chunk indexes fit fully into shared memory buffers.",
             status: 'OPEN',
@@ -59,7 +59,7 @@ export function evaluateTimeSeriesDbOptRules(file: CodeFile, lines: string[], cl
             snippet: lines[matchLineIdx] || 'Time-Series Database Optimization configuration',
             reproductionSteps: [
                 `Audited Time-Series Database Optimization configuration in ${file.path}:${lineNum}.`,
-                'Detected violation matching {code}.'
+                'Matched TSDB-OPT-02: ClickHouse MergeTree Missing Partition Granularity Causing Shard Thread Starvation.'
             ],
             remediationPrompt: "Partition MergeTree tables by reasonable time intervals (e.g. toYYYYMM) to avoid excessive part mutation overhead.",
             status: 'OPEN',
@@ -83,7 +83,7 @@ export function evaluateTimeSeriesDbOptRules(file: CodeFile, lines: string[], cl
             snippet: lines[matchLineIdx] || 'Time-Series Database Optimization configuration',
             reproductionSteps: [
                 `Audited Time-Series Database Optimization configuration in ${file.path}:${lineNum}.`,
-                'Detected violation matching {code}.'
+                'Matched TSDB-OPT-03: Missing Columnar DoubleDelta or Gorilla Compression Codecs on Numeric Metric Series.'
             ],
             remediationPrompt: "Apply Gorilla or DoubleDelta compression encodings to floating point and integer telemetry streams to reduce storage by 80%+.",
             status: 'OPEN',
@@ -107,7 +107,7 @@ export function evaluateTimeSeriesDbOptRules(file: CodeFile, lines: string[], cl
             snippet: lines[matchLineIdx] || 'Time-Series Database Optimization configuration',
             reproductionSteps: [
                 `Audited Time-Series Database Optimization configuration in ${file.path}:${lineNum}.`,
-                'Detected violation matching {code}.'
+                'Matched TSDB-OPT-04: Unscheduled Continuous Aggregates Causing Real-Time Metric Query CPU Spikes.'
             ],
             remediationPrompt: "Materialize downsampled time-series rollups using continuous aggregate views with automated refresh policies.",
             status: 'OPEN',
@@ -131,7 +131,7 @@ export function evaluateTimeSeriesDbOptRules(file: CodeFile, lines: string[], cl
             snippet: lines[matchLineIdx] || 'Time-Series Database Optimization configuration',
             reproductionSteps: [
                 `Audited Time-Series Database Optimization configuration in ${file.path}:${lineNum}.`,
-                'Detected violation matching {code}.'
+                'Matched TSDB-OPT-05: Missing Automated Data Retention Policy on Raw High-Frequency Metric Partitions.'
             ],
             remediationPrompt: "Implement automated drop_chunks retention policies discarding raw granular metric data after 30 to 90 days.",
             status: 'OPEN',

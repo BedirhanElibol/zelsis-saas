@@ -35,7 +35,7 @@ export function evaluateFedrampComplianceRules(file: CodeFile, lines: string[], 
             snippet: lines[matchLineIdx] || 'FedRAMP High configuration',
             reproductionSteps: [
                 `Audited FedRAMP High configuration in ${file.path}:${lineNum}.`,
-                'Detected violation matching {code}.'
+                'Matched FEDRAMP-01: FedRAMP AC-2 Account Management: Deprovisioning Delay Exceeding 24 Hours.'
             ],
             remediationPrompt: "Automate employee access deprovisioning within 24 hours of separation or role transfer.",
             status: 'OPEN',
@@ -59,7 +59,7 @@ export function evaluateFedrampComplianceRules(file: CodeFile, lines: string[], 
             snippet: lines[matchLineIdx] || 'FedRAMP High configuration',
             reproductionSteps: [
                 `Audited FedRAMP High configuration in ${file.path}:${lineNum}.`,
-                'Detected violation matching {code}.'
+                'Matched FEDRAMP-02: FedRAMP AC-17 Remote Access: Missing FIPS 140-3 Validated Cryptography.'
             ],
             remediationPrompt: "Mandate FIPS 140-3 Level 2+ cryptographic modules for all administrative VPN and bastion access.",
             status: 'OPEN',
@@ -83,7 +83,7 @@ export function evaluateFedrampComplianceRules(file: CodeFile, lines: string[], 
             snippet: lines[matchLineIdx] || 'FedRAMP High configuration',
             reproductionSteps: [
                 `Audited FedRAMP High configuration in ${file.path}:${lineNum}.`,
-                'Detected violation matching {code}.'
+                'Matched FEDRAMP-03: FedRAMP AU-6 Audit Review: Centralized Immutable SIEM Streaming Delay.'
             ],
             remediationPrompt: "Stream all operating system and application security logs to a FedRAMP-authorized SIEM within 5 minutes.",
             status: 'OPEN',
@@ -107,7 +107,7 @@ export function evaluateFedrampComplianceRules(file: CodeFile, lines: string[], 
             snippet: lines[matchLineIdx] || 'FedRAMP High configuration',
             reproductionSteps: [
                 `Audited FedRAMP High configuration in ${file.path}:${lineNum}.`,
-                'Detected violation matching {code}.'
+                'Matched FEDRAMP-04: FedRAMP CM-8 Inventory: Missing Continuous Automated Asset Discovery.'
             ],
             remediationPrompt: "Maintain an automated real-time inventory of all virtual machines, containers, and serverless assets.",
             status: 'OPEN',
@@ -131,7 +131,7 @@ export function evaluateFedrampComplianceRules(file: CodeFile, lines: string[], 
             snippet: lines[matchLineIdx] || 'FedRAMP High configuration',
             reproductionSteps: [
                 `Audited FedRAMP High configuration in ${file.path}:${lineNum}.`,
-                'Detected violation matching {code}.'
+                'Matched FEDRAMP-05: FedRAMP IA-2 Identification: Missing PIV/CAC Hardware-Bound MFA for Federal Data.'
             ],
             remediationPrompt: "Enforce phishing-resistant hardware token MFA (FIDO2/WebAuthn or PIV/CAC) for system access.",
             status: 'OPEN',
