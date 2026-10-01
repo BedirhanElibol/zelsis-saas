@@ -24,7 +24,8 @@ export async function POST(req: NextRequest) {
   const burstLimit = await checkRateLimit(req, {
     maxRequests: 3,
     windowSeconds: 60,
-    prefix: 'scan-preview-burst'
+    prefix: 'scan-preview-burst',
+    failClosed: true
   });
   if (!burstLimit.allowed) {
     return createRateLimitResponse(burstLimit);
@@ -33,7 +34,8 @@ export async function POST(req: NextRequest) {
   const dailyLimit = await checkRateLimit(req, {
     maxRequests: 3,
     windowSeconds: 86400,
-    prefix: 'scan-preview-daily'
+    prefix: 'scan-preview-daily',
+    failClosed: true
   });
   if (!dailyLimit.allowed) {
     return NextResponse.json(

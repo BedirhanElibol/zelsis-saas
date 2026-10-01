@@ -1,12 +1,15 @@
-import { NextRequest, NextResponse } from 'next/server';
+import { NextRequest, NextResponse, after } from 'next/server';
 import { createClient } from '@supabase/supabase-js';
 import { checkRateLimit, createRateLimitResponse } from '@/lib/rate-limiter';
 import { logger } from '@/lib/logger';
 import { isValidGithubUrl, parseGithubUrl } from '@/lib/github-api';
 import { isValidWebUrl } from '@/lib/website-scanner';
+import { getInternalBaseUrl, getInternalSecret } from '@/lib/internal-auth';
 import { z } from 'zod';
 
 export const dynamic = 'force-dynamic';
+// Covers the after() worker hand-off, which waits for process-job (maxDuration 30)
+export const maxDuration = 60;
 
 const QueueScanRequestSchema = z.object({
   repoUrl: z.string().min(1, 'Target repository or web URL is required'),
@@ -121,7 +124,18 @@ export async function POST(req: NextRequest) {
       }
     }
 
-    // 5. Create Job Record in Database
+    // 5. Resolve trusted worker endpoint before creating any job record
+    const internalBaseUrl = getInternalBaseUrl();
+    const internalSecret = getInternalSecret();
+    if (!internalBaseUrl || !internalSecret) {
+      logger.error('[Scans Queue] Worker not configured: set NEXT_PUBLIC_APP_URL and INTERNAL_API_SECRET');
+      return NextResponse.json(
+        { status: 'ERROR', error: 'Scan worker is temporarily unavailable. Please try again later.' },
+        { status: 503 }
+      );
+    }
+
+    // 6. Create Job Record in Database
     let jobId: string | null = null;
     if (serviceRoleKey && supabaseUrl) {
       const adminClient = createClient(supabaseUrl, serviceRoleKey, { auth: { persistSession: false } });
@@ -159,31 +173,35 @@ export async function POST(req: NextRequest) {
       jobId = crypto.randomUUID();
     }
 
-    // 6. Asynchronous Worker Trigger (Fire-and-Forget)
-    const host = req.headers.get('host') || 'localhost:3000';
-    const protocol = req.headers.get('x-forwarded-proto') || (host.startsWith('localhost') ? 'http' : 'https');
-    const workerUrl = `${protocol}://${host}/api/v1/scans/process-job`;
-    const internalSecret = process.env.INTERNAL_API_SECRET || process.env.SUPABASE_SERVICE_ROLE_KEY || 'zelsis-internal-worker-secret';
+    // 7. Asynchronous Worker Trigger (runs after the response is sent; kept alive by the platform)
+    const workerUrl = `${internalBaseUrl}/api/v1/scans/process-job`;
+    const workerPayload = JSON.stringify({
+      jobId,
+      repoUrl: rawRepoUrl,
+      targetName: body.targetName,
+      githubToken: body.githubToken,
+      authenticatedUserId,
+      userTier,
+      slackWebhookUrl: body.slackWebhookUrl,
+      discordWebhookUrl: body.discordWebhookUrl
+    });
 
-    // Trigger background execution without awaiting completion
-    fetch(workerUrl, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'x-zelsis-internal-secret': internalSecret
-      },
-      body: JSON.stringify({
-        jobId,
-        repoUrl: rawRepoUrl,
-        targetName: body.targetName,
-        githubToken: body.githubToken,
-        authenticatedUserId,
-        userTier,
-        slackWebhookUrl: body.slackWebhookUrl,
-        discordWebhookUrl: body.discordWebhookUrl
-      })
-    }).catch((triggerErr) => {
-      logger.warn('[Scans Queue] Background worker trigger notice:', triggerErr?.message);
+    after(async () => {
+      try {
+        const workerRes = await fetch(workerUrl, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'x-zelsis-internal-secret': internalSecret
+          },
+          body: workerPayload
+        });
+        if (!workerRes.ok) {
+          logger.warn(`[Scans Queue] Worker responded ${workerRes.status} for job ${jobId}`);
+        }
+      } catch (triggerErr: any) {
+        logger.warn('[Scans Queue] Background worker trigger notice:', triggerErr?.message);
+      }
     });
 
     return NextResponse.json(

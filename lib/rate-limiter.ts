@@ -5,6 +5,8 @@ export interface RateLimitOptions {
   maxRequests?: number;
   windowSeconds?: number;
   prefix?: string;
+  /** Deny instead of falling back to in-memory when configured Redis is unreachable. */
+  failClosed?: boolean;
 }
 
 export interface RateLimitResult {
@@ -18,6 +20,7 @@ export interface RateLimitResult {
 // In-Memory Sliding-Window Store: Map<key, timestamp_array>
 const inMemoryStore = new Map<string, number[]>();
 const MAX_MAP_SIZE = 10000;
+let warnedMissingRedis = false;
 
 // Periodic cleanup of expired entries every 5 minutes
 let lastCleanup = Date.now();
@@ -94,7 +97,8 @@ export function getClientIp(req: NextRequest): string {
 
 /**
  * IP-based Sliding-Window Rate Limiter
- * Supports Upstash Redis REST API when configured, with seamless in-memory sliding-window fallback.
+ * Uses Upstash Redis REST API when configured (shared across instances); otherwise an
+ * in-memory sliding window that only limits per serverless instance.
  */
 export async function checkRateLimit(
   req: NextRequest,
@@ -103,7 +107,8 @@ export async function checkRateLimit(
   const {
     maxRequests = 60,
     windowSeconds = 60,
-    prefix = 'general'
+    prefix = 'general',
+    failClosed = false
   } = options;
 
   const clientIp = getClientIp(req);
@@ -117,37 +122,42 @@ export async function checkRateLimit(
 
   if (redisUrl && redisToken) {
     try {
-      // Sliding window using Redis Sorted Set (ZADD, ZREMRANGEBYSCORE, ZCARD) or simple INCR with EXPIRE
-      const incrRes = await fetch(`${redisUrl}/incr/${encodeURIComponent(storeKey)}`, {
-        headers: { Authorization: `Bearer ${redisToken}` },
+      // Fixed window: INCR + EXPIRE NX in one pipeline so the key can never be left without a TTL
+      const pipelineRes = await fetch(`${redisUrl}/pipeline`, {
+        method: 'POST',
+        headers: { Authorization: `Bearer ${redisToken}`, 'Content-Type': 'application/json' },
+        body: JSON.stringify([
+          ['INCR', storeKey],
+          ['EXPIRE', storeKey, String(windowSeconds), 'NX'],
+          ['TTL', storeKey]
+        ]),
         signal: AbortSignal.timeout(1500)
       });
 
-      if (incrRes.ok) {
-        const data = await incrRes.json();
-        const count = typeof data.result === 'number' ? data.result : 1;
-
-        if (count === 1) {
-          await fetch(`${redisUrl}/expire/${encodeURIComponent(storeKey)}/${windowSeconds}`, {
-            headers: { Authorization: `Bearer ${redisToken}` },
-            signal: AbortSignal.timeout(1000)
-          }).catch(() => {});
-        }
-
-        const allowed = count <= maxRequests;
-        const remaining = Math.max(0, maxRequests - count);
+      if (pipelineRes.ok) {
+        const data = await pipelineRes.json() as Array<{ result?: unknown }>;
+        const count = typeof data?.[0]?.result === 'number' ? data[0].result : 1;
+        const ttl = typeof data?.[2]?.result === 'number' && data[2].result > 0 ? data[2].result : windowSeconds;
 
         return {
-          allowed,
+          allowed: count <= maxRequests,
           limit: maxRequests,
-          remaining,
-          resetSeconds: windowSeconds,
+          remaining: Math.max(0, maxRequests - count),
+          resetSeconds: ttl,
           clientIp
         };
       }
+      logger.warn(`[RateLimiter] Upstash Redis returned ${pipelineRes.status}: ${storeKey}`);
     } catch (redisErr) {
-      logger.warn(`[RateLimiter] Upstash Redis check failed, falling back to in-memory: ${storeKey}`, redisErr);
+      logger.warn(`[RateLimiter] Upstash Redis check failed: ${storeKey}`, redisErr);
     }
+
+    if (failClosed) {
+      return { allowed: false, limit: maxRequests, remaining: 0, resetSeconds: 30, clientIp };
+    }
+  } else if (process.env.NODE_ENV === 'production' && !warnedMissingRedis) {
+    warnedMissingRedis = true;
+    logger.warn('[RateLimiter] UPSTASH_REDIS_REST_URL/TOKEN not set: limits are per-instance only in production');
   }
 
   // 2. High-precision In-Memory Sliding-Window Implementation
