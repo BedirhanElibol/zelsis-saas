@@ -80,9 +80,9 @@ export const BenchmarkSection: React.FC = () => {
             detail={`${formatCount(RULE_COUNTS.experimental)} more are experimental: reported, but never decide the gate.`}
           />
           <Stat
-            label="Fixture-tested rules"
-            value={formatCount(RULE_COUNTS.fixtureTested)}
-            detail="Rules with vulnerable and safe test cases in CI. We add more every release."
+            label="Rules that can fail a release"
+            value={formatCount(RULE_COUNTS.canBlockRelease)}
+            detail={`Backed by test fixtures (${formatCount(RULE_COUNTS.fixtureTested)} rules), a caught benchmark flaw or a reviewed finding. Other rules can warn, not fail.`}
           />
         </div>
 
@@ -187,7 +187,8 @@ export const BenchmarkSection: React.FC = () => {
               <ul className="text-xs text-zinc-400 leading-relaxed list-disc pl-4 flex flex-col gap-1.5">
                 <li>{benchmark.repos.length} open-source repositories, each pinned to a commit so results are reproducible.</li>
                 <li>Recall: flaws documented by the vulnerable apps themselves, located in their source before scanning.</li>
-                <li>Noise: every HIGH/CRITICAL finding on clean projects is reviewed; unproven rules become experimental.</li>
+                <li>Noise: every HIGH/CRITICAL finding on clean projects is reviewed; rules that misfire become experimental.</li>
+                <li>Evidence: a CRITICAL finding fails the gate only if its rule has a test fixture, caught a documented flaw, or was reviewed as a true positive. Otherwise it warns.</li>
                 <li>Engine time is the scan itself on one machine; downloading the repository is not included.</li>
               </ul>
             </div>
@@ -195,7 +196,7 @@ export const BenchmarkSection: React.FC = () => {
               <h4 className="text-sm font-bold text-white">Current limits</h4>
               <ul className="text-xs text-zinc-400 leading-relaxed list-disc pl-4 flex flex-col gap-1.5">
                 <li>Rules are pattern-based static analysis, not full data-flow analysis: unusual code shapes can be missed.</li>
-                <li>The corpus covers JavaScript/TypeScript, Python, Go and PHP projects; other languages are not yet benchmarked.</li>
+                <li>The corpus covers JavaScript/TypeScript, Python, Go, PHP, Java, Ruby and C# projects; other languages are not yet benchmarked.</li>
                 <li>Dependency vulnerabilities are checked for selected advisories, not a full CVE database yet.</li>
                 <li>A small benchmark cannot prove the absence of false positives on every codebase. Report one and we add it.</li>
               </ul>

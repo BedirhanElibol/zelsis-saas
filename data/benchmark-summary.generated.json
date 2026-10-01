@@ -19,7 +19,7 @@
    "kind": "clean",
    "stack": "Next.js + Supabase + Stripe",
    "files": 67,
-   "scanMs": 412,
+   "scanMs": 426,
    "gate": "WARNING",
    "critical": 0,
    "high": 3
@@ -30,7 +30,7 @@
    "kind": "clean",
    "stack": "Next.js + Prisma + Stripe + NextAuth",
    "files": 140,
-   "scanMs": 410,
+   "scanMs": 407,
    "gate": "WARNING",
    "critical": 0,
    "high": 1
@@ -41,7 +41,7 @@
    "kind": "clean",
    "stack": "FastAPI + React",
    "files": 204,
-   "scanMs": 632,
+   "scanMs": 742,
    "gate": "WARNING",
    "critical": 0,
    "high": 2
@@ -52,7 +52,7 @@
    "kind": "clean",
    "stack": "Express + Prisma",
    "files": 58,
-   "scanMs": 106,
+   "scanMs": 101,
    "gate": "FAILED",
    "critical": 2,
    "high": 2
@@ -63,7 +63,7 @@
    "kind": "clean",
    "stack": "Go + Gin",
    "files": 27,
-   "scanMs": 160,
+   "scanMs": 156,
    "gate": "WARNING",
    "critical": 0,
    "high": 2
@@ -74,7 +74,7 @@
    "kind": "clean",
    "stack": "Laravel",
    "files": 40,
-   "scanMs": 100,
+   "scanMs": 118,
    "gate": "PASSED",
    "critical": 0,
    "high": 0
@@ -85,7 +85,7 @@
    "kind": "clean",
    "stack": "Remix/React Router + Prisma + tRPC (production SaaS)",
    "files": 2481,
-   "scanMs": 12131,
+   "scanMs": 11230,
    "gate": "WARNING",
    "critical": 0,
    "high": 57
@@ -96,7 +96,7 @@
    "kind": "clean",
    "stack": "TypeScript SDK",
    "files": 471,
-   "scanMs": 3022,
+   "scanMs": 2850,
    "gate": "FAILED",
    "critical": 10,
    "high": 1
@@ -107,7 +107,7 @@
    "kind": "vulnerable",
    "stack": "Express + MongoDB",
    "files": 87,
-   "scanMs": 346,
+   "scanMs": 311,
    "gate": "FAILED",
    "critical": 5,
    "high": 5
@@ -118,7 +118,7 @@
    "kind": "vulnerable",
    "stack": "Express + Sequelize",
    "files": 21,
-   "scanMs": 38,
+   "scanMs": 50,
    "gate": "FAILED",
    "critical": 4,
    "high": 4
@@ -129,7 +129,7 @@
    "kind": "vulnerable",
    "stack": "Express + Angular + Sequelize",
    "files": 965,
-   "scanMs": 8288,
+   "scanMs": 8785,
    "gate": "FAILED",
    "critical": 176,
    "high": 22
@@ -140,7 +140,7 @@
    "kind": "clean",
    "stack": "Java + Spring Boot",
    "files": 84,
-   "scanMs": 222,
+   "scanMs": 248,
    "gate": "WARNING",
    "critical": 0,
    "high": 8
@@ -151,7 +151,7 @@
    "kind": "clean",
    "stack": "C# + ASP.NET Core",
    "files": 350,
-   "scanMs": 796,
+   "scanMs": 761,
    "gate": "WARNING",
    "critical": 0,
    "high": 7
@@ -162,7 +162,7 @@
    "kind": "clean",
    "stack": "Ruby on Rails (production service)",
    "files": 1698,
-   "scanMs": 4655,
+   "scanMs": 4726,
    "gate": "WARNING",
    "critical": 0,
    "high": 7
@@ -173,7 +173,7 @@
    "kind": "clean",
    "stack": "Python + Django (production site)",
    "files": 434,
-   "scanMs": 1671,
+   "scanMs": 1729,
    "gate": "WARNING",
    "critical": 0,
    "high": 13
@@ -184,7 +184,7 @@
    "kind": "vulnerable",
    "stack": "Java + Spring",
    "files": 635,
-   "scanMs": 1949,
+   "scanMs": 2063,
    "gate": "FAILED",
    "critical": 16,
    "high": 13
@@ -195,7 +195,7 @@
    "kind": "vulnerable",
    "stack": "Ruby on Rails",
    "files": 187,
-   "scanMs": 597,
+   "scanMs": 613,
    "gate": "FAILED",
    "critical": 4,
    "high": 14
@@ -206,7 +206,7 @@
    "kind": "vulnerable",
    "stack": "PHP",
    "files": 195,
-   "scanMs": 505,
+   "scanMs": 509,
    "gate": "FAILED",
    "critical": 52,
    "high": 33
@@ -217,7 +217,7 @@
    "kind": "vulnerable",
    "stack": "Python + Django",
    "files": 217,
-   "scanMs": 711,
+   "scanMs": 676,
    "gate": "FAILED",
    "critical": 18,
    "high": 42
@@ -228,7 +228,7 @@
    "kind": "vulnerable",
    "stack": "Python + aiohttp",
    "files": 30,
-   "scanMs": 254,
+   "scanMs": 274,
    "gate": "FAILED",
    "critical": 2,
    "high": 4

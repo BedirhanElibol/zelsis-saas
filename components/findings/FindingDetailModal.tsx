@@ -10,7 +10,7 @@ import { checkAiPromptQuota } from '@/lib/quota-manager';
 import { hasFixPromptAccess } from '@/lib/subscription-utils';
 import { getActiveUserAuth } from '@/lib/supabase-client';
 import type { StoredFix } from '@/lib/fix-gate';
-import { ExperimentalBadge } from '@/components/findings/ExperimentalBadge';
+import { ExperimentalBadge, UnprovenBadge } from '@/components/findings/ExperimentalBadge';
 
 export interface FindingDetailModalProps {
   isOpen: boolean;
@@ -268,6 +268,7 @@ export const FindingDetailModal: React.FC<FindingDetailModalProps> = ({
               <h2 className="text-lg sm:text-xl font-extrabold text-[#EDEDED] leading-snug">
                 {cleanTitle}
                 {finding.maturity === 'experimental' && <ExperimentalBadge className="ml-2" />}
+                {finding.maturity === 'unproven' && finding.severity === 'CRITICAL' && <UnprovenBadge className="ml-2" />}
               </h2>
               <div className="text-xs font-mono text-emerald-400/90 flex items-center gap-2 flex-wrap">
                 <span className="text-zinc-300 font-bold">{finding.filePath}</span>

@@ -13,7 +13,7 @@ const experimentalIds = new Set<number>((maturity.experimental as { ruleId: numb
 
 export type RuleStatus = 'active' | 'experimental' | 'planned';
 
-/** active = scanned and gate-enforcing; experimental = scanned, advisory only; planned = catalog entry not yet implemented. */
+/** active = scanned and counted in score and gate (only evidence-backed rules can fail it); experimental = scanned, advisory only; planned = catalog entry not yet implemented. */
 export function getRuleStatus(rule: { id: number | string; code?: string }): RuleStatus {
   const id = Number(rule.id);
   const implemented = implementedIds.has(id) || (rule.code !== undefined && implementedCodes.has(rule.code));

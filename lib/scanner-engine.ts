@@ -5,7 +5,7 @@ import { isMinifiedContent, isSecretRuleId, isTestFixturePath, isVendoredPath, s
 import { parseZelsisIgnore } from './scanner/ignore-parser';
 import { parseZelsisRc } from './scanner/rc-config';
 import { calculateGateStatus, calculateReadinessScore, gatingFindings } from './scanner/scoring';
-import { isExperimentalRule } from './scanner/rule-maturity';
+import { ruleMaturity } from './scanner/rule-maturity';
 import { RULE_ENGINES } from './scanner/rule-engines';
 import { evaluateBuiltinRules } from './scanner/builtin-rules';
 import { detectProjectDatabases } from './rules/multi-database-rules';
@@ -190,7 +190,7 @@ export async function runStaticCodeScan(files: CodeFile[], repoName: string = 'T
       if (isDuplicate) {
         return;
       }
-      findings.push(isExperimentalRule(f.ruleId) ? { ...f, maturity: 'experimental' } : f);
+      findings.push({ ...f, maturity: ruleMaturity(f.ruleId) });
     };
 
     // 0. AI Comment, Prompt Artifact & Boilerplate Inspector (Runs on raw unstripped content)

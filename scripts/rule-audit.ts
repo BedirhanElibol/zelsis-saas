@@ -7,11 +7,14 @@
  */
 import { readdirSync, readFileSync, writeFileSync, existsSync } from 'fs';
 import { join } from 'path';
+import { REVIEWED_TRUE_POSITIVES } from './benchmark/reviewed';
 
 const root = join(__dirname, '..');
 const OUT = join(root, 'data/rule-inventory.generated.json');
 /** Compact form for the UI bundle: counts plus the implemented rule IDs / codes. */
 const SUMMARY_OUT = join(root, 'data/rule-summary.generated.json');
+/** Rules with evidence (fixture-tested, caught a documented flaw, or reviewed true positive): only these can block a release. */
+const EVIDENCE_OUT = join(root, 'data/rule-evidence.generated.json');
 
 export interface RuleRecord {
   ruleId: number;
@@ -111,6 +114,17 @@ export function auditRules() {
   };
 }
 
+export function evidenceJson(audit: ReturnType<typeof auditRules>): string {
+  const maturity = JSON.parse(readFileSync(join(root, 'data/rule-maturity.generated.json'), 'utf8')) as { benchmarkProven?: number[] };
+  const implemented = new Set(audit.rules.map((r) => r.ruleId));
+  const ids = new Set<number>([
+    ...audit.rules.filter((r) => r.tested).map((r) => r.ruleId),
+    ...(maturity.benchmarkProven ?? []),
+    ...Object.keys(REVIEWED_TRUE_POSITIVES).map(Number)
+  ]);
+  return JSON.stringify({ canBlockRelease: [...ids].filter((id) => implemented.has(id)).sort((a, b) => a - b) }) + '\n';
+}
+
 export function summaryJson(audit: ReturnType<typeof auditRules>): string {
   const maturity = JSON.parse(readFileSync(join(root, 'data/rule-maturity.generated.json'), 'utf8')) as { experimental: { ruleId: number }[] };
   const experimental = new Set(maturity.experimental.map((r) => r.ruleId));
@@ -122,6 +136,7 @@ export function summaryJson(audit: ReturnType<typeof auditRules>): string {
       gating: implemented - experimentalCount,
       experimental: experimentalCount,
       fixtureTested: audit.summary.testedRules,
+      canBlockRelease: (JSON.parse(evidenceJson(audit)).canBlockRelease as number[]).filter((id) => !experimental.has(id)).length,
       catalogPlanned: audit.summary.catalogOnlyNotImplemented
     },
     ids: audit.rules.map((r) => r.ruleId),
@@ -134,13 +149,15 @@ if (require.main === module) {
   if (process.argv.includes('--check')) {
     const current = existsSync(OUT) ? readFileSync(OUT, 'utf8') : '';
     const currentSummary = existsSync(SUMMARY_OUT) ? readFileSync(SUMMARY_OUT, 'utf8') : '';
-    if (current !== json || currentSummary !== summaryJson(JSON.parse(json))) {
+    const currentEvidence = existsSync(EVIDENCE_OUT) ? readFileSync(EVIDENCE_OUT, 'utf8') : '';
+    if (current !== json || currentSummary !== summaryJson(JSON.parse(json)) || currentEvidence !== evidenceJson(JSON.parse(json))) {
       console.error('data/rule-inventory.generated.json is stale: run `npx tsx scripts/rule-audit.ts`');
       process.exit(1);
     }
     console.log('rule inventory up to date');
   } else {
     writeFileSync(OUT, json);
+    writeFileSync(EVIDENCE_OUT, evidenceJson(JSON.parse(json)));
     writeFileSync(SUMMARY_OUT, summaryJson(JSON.parse(json)));
     console.log(JSON.parse(json).summary);
   }

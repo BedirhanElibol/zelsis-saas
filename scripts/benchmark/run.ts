@@ -47,6 +47,7 @@ interface RuleStats { ruleId: number; title: string; severity: string; cleanRepo
   mkdirSync(cacheDir, { recursive: true });
   const rules = new Map<number, RuleStats>();
   const repoResults: Record<string, unknown>[] = [];
+  const provenByBenchmark = new Set<number>();
   const recall: { repo: string; flaw: string; file: string; found: boolean; blocksGate: boolean; matchedBy: string[] }[] = [];
 
   for (const repo of corpus.repos) {
@@ -70,6 +71,7 @@ interface RuleStats { ruleId: number; title: string; severity: string; cleanRepo
     for (const flaw of EXPECTED_FLAWS.filter((e) => e.repo === repo.name)) {
       const hits = result.findings.filter((f) => f.filePath === flaw.file && flaw.match.test(f.title));
       const gatingHits = hits.filter((h) => h.maturity !== 'experimental' && (h.severity === 'CRITICAL' || h.severity === 'HIGH'));
+      hits.forEach((h) => provenByBenchmark.add(h.ruleId));
       recall.push({ repo: repo.name, flaw: flaw.flaw, file: flaw.file, found: hits.length > 0, blocksGate: gatingHits.length > 0, matchedBy: [...new Set(hits.map((h) => `${h.title}${h.maturity === 'experimental' ? ' [experimental]' : ''}`))] });
     }
 
@@ -129,7 +131,13 @@ interface RuleStats { ruleId: number; title: string; severity: string; cleanRepo
     .filter((r) => r.cleanRepos.length > 0 && (r.severity === 'CRITICAL' || r.severity === 'HIGH') && !(r.ruleId in REVIEWED_TRUE_POSITIVES))
     .map((r) => ({ ruleId: r.ruleId, title: r.title, severity: r.severity, cleanRepos: r.cleanRepos.length, cleanFindings: r.cleanFindings }))
     .sort((a, b) => a.ruleId - b.ruleId);
-  writeFileSync(join(root, 'data/rule-maturity.generated.json'), JSON.stringify({ generatedAt: out.generatedAt, cleanRepos: cleanCount, experimental }, null, 1) + '\n');
+  writeFileSync(join(root, 'data/rule-maturity.generated.json'), JSON.stringify({
+    generatedAt: out.generatedAt,
+    cleanRepos: cleanCount,
+    experimental,
+    /** Rules that caught a documented flaw in the vulnerable corpus (evidence for blocking releases). */
+    benchmarkProven: [...provenByBenchmark].sort((a, b) => a - b)
+  }, null, 1) + '\n');
   (out.summary as Record<string, unknown>).experimentalRules = experimental.length;
 
   mkdirSync(join(root, 'docs/benchmark'), { recursive: true });

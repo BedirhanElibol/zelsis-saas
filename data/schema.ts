@@ -22,7 +22,7 @@ export const FindingSchema = z.object({
   owner: z.string().optional(),
   falsePositive: z.boolean().default(false),
   /** experimental = rule not yet proven precise on the benchmark corpus: shown, but excluded from gate and score. */
-  maturity: z.enum(['verified', 'experimental']).optional(),
+  maturity: z.enum(['verified', 'unproven', 'experimental']).optional(),
   // Set by the server when fix text was withheld (Free tier); fetch it via /api/v1/scans/fix
   lockedFix: z.object({ jobId: z.string(), ref: z.string() }).optional(),
 });
