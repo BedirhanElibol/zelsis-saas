@@ -7,7 +7,7 @@
 # 2. Exact Verification Commands
 - Typecheck: `npx tsc --noEmit`
 - Linter: none configured (`npm run lint` is an alias of the typecheck)
-- Tests: `npm test` (runs `tests/test_suite.ts` via tsx)
+- Tests: `npm test` (legacy `tests/test_suite.ts` + `node:test` files in `tests/unit/`, `tests/rules/`). Add rule fixtures to `tests/rules/cases.ts`.
 - Sync Types: `npx supabase gen types typescript --project-id ... > types/supabase.ts`
 
 # 3. Non-Obvious Conventions

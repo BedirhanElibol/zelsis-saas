@@ -58,32 +58,6 @@ function assert(condition: boolean, testName: string, detail?: string) {
 
 import { verifyPolarWebhookSignature, resolvePolarEntitlement } from '../lib/polar';
 import crypto from 'crypto';
-import { getInternalSecret, isValidInternalSecret, getInternalBaseUrl } from '../lib/internal-auth';
-
-function testInternalAuth() {
-  const env = process.env as Record<string, string | undefined>;
-  const saved = { NODE_ENV: env.NODE_ENV, INTERNAL_API_SECRET: env.INTERNAL_API_SECRET, NEXT_PUBLIC_APP_URL: env.NEXT_PUBLIC_APP_URL, VERCEL_URL: env.VERCEL_URL, SUPABASE_SERVICE_ROLE_KEY: env.SUPABASE_SERVICE_ROLE_KEY };
-
-  env.NODE_ENV = 'production';
-  delete env.INTERNAL_API_SECRET;
-  env.SUPABASE_SERVICE_ROLE_KEY = 'service-role-key';
-  assert(getInternalSecret() === null, 'Production worker secret never falls back to service role key');
-  assert(!isValidInternalSecret('service-role-key'), 'Service role key is not accepted as worker secret');
-
-  env.INTERNAL_API_SECRET = 'worker-secret-123';
-  assert(isValidInternalSecret('worker-secret-123'), 'Worker secret accepts exact match');
-  assert(!isValidInternalSecret('worker-secret-12') && !isValidInternalSecret(null), 'Worker secret rejects mismatch and missing header');
-
-  delete env.NEXT_PUBLIC_APP_URL;
-  delete env.VERCEL_URL;
-  assert(getInternalBaseUrl() === null, 'Production worker URL requires configuration');
-  env.NEXT_PUBLIC_APP_URL = 'https://zelsis.com/some/path';
-  assert(getInternalBaseUrl() === 'https://zelsis.com', 'Worker URL uses configured app origin');
-
-  for (const [k, v] of Object.entries(saved)) {
-    if (v === undefined) delete env[k]; else env[k] = v;
-  }
-}
 
 function testPolarWebhook() {
   console.log('--- Testing Polar Webhook Signature Verification ---');
@@ -1064,7 +1038,6 @@ async function runAllTests() {
 
   testPolarWebhook();
   testPolarEntitlement();
-  testInternalAuth();
 
   console.log('\n===========================================================');
   console.log(`🏁 TEST RESULTS: ${passedTests}/${totalTests} TESTS PASSED (100%)`);
