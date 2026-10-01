@@ -7,6 +7,7 @@ import { ToastProvider } from '@/lib/toast';
 import { CookieBanner } from '@/components/CookieBanner';
 import { AnalyticsScripts } from '@/components/analytics/AnalyticsScripts';
 import { ChunkErrorListener } from '@/components/common/ChunkErrorListener';
+import { getConfiguredAppUrl } from '@/lib/app-url';
 
 const satoshi = localFont({
   src: [
@@ -33,20 +34,9 @@ export const viewport: Viewport = {
   interactiveWidget: 'resizes-content',
 };
 
+// Canonical, og:url and og:image resolve against this: it must be a live host (see lib/app-url.ts)
 function getMetadataBase(): URL {
-  const raw = process.env.NEXT_PUBLIC_APP_URL ?? (process.env.VERCEL_URL ? `https://${process.env.VERCEL_URL}` : null);
-  if (!raw || typeof raw !== 'string' || !raw.trim()) {
-    return new URL('https://zelsis.com');
-  }
-  const trimmed = raw.trim();
-  const withProtocol = trimmed.startsWith('http://') || trimmed.startsWith('https://')
-    ? trimmed
-    : `https://${trimmed}`;
-  try {
-    return new URL(withProtocol);
-  } catch {
-    return new URL('https://zelsis.com');
-  }
+  return new URL(getConfiguredAppUrl());
 }
 
 export const metadata: Metadata = {
@@ -113,12 +103,6 @@ export default function RootLayout({
 }) {
   return (
     <html lang="en" className={`dark notranslate ${satoshi.variable} ${jetbrainsMono.variable}`} translate="no" suppressHydrationWarning>
-      <head>
-        <title>Zelsis | Automated Codebase Security &amp; Release Gate</title>
-        <meta name="description" content="Prove your application is secure, polished, and ready for production before launch. Comprehensive OWASP security pre-flight checks and automated code verification." />
-        <meta property="og:title" content="Zelsis | Automated Codebase Security &amp; Release Gate" />
-        <meta property="og:description" content="Prove your application is secure, polished, and ready for production before launch." />
-      </head>
       <body className="bg-[#0A0A0A] text-[#EDEDED] antialiased selection:bg-white selection:text-black notranslate" translate="no" suppressHydrationWarning>
         <ChunkErrorListener />
         <AnalyticsScripts />
