@@ -1272,5 +1272,42 @@ export function evaluateDatabaseRules(file: CodeFile, lines: string[], cleanCont
         });
         logs.push(`[${ts}] 🗄️ DB-PERF-50: Missing Transaction Isolation Level Specification detected (${file.path}:${lineNum})`);
     }
+    // DB-PERF-51: Migration Takes a Blocking Table Lock (NOT NULL without DEFAULT / non-concurrent index)
+    if (/\.sql$/i.test(lowerPath) && /migrations?\//i.test(lowerPath)) {
+        const createdTables = new Set(
+            Array.from(cleanContent.matchAll(/CREATE\s+TABLE\s+(?:IF\s+NOT\s+EXISTS\s+)?([\w."]+)/gi), (m) => m[1].replace(/"/g, '').split('.').pop()!.toLowerCase())
+        );
+        const lockingStatements = cleanContent.split(';').map((stmt) => stmt.replace(/--[^\n]*/g, '')).filter((stmt) => {
+            if (/ADD\s+COLUMN[^,]*\bNOT\s+NULL\b/i.test(stmt) && !/\bDEFAULT\b/i.test(stmt)) return true;
+            const index = stmt.match(/CREATE\s+(?:UNIQUE\s+)?INDEX\s+(?!CONCURRENTLY)(?:IF\s+NOT\s+EXISTS\s+)?[\w."]+\s+ON\s+(?:ONLY\s+)?([\w."]+)/i);
+            return !!index && !createdTables.has(index[1].replace(/"/g, '').split('.').pop()!.toLowerCase());
+        });
+        if (lockingStatements.length > 0) {
+            const statementLines = lockingStatements[0].split('\n').map((l) => l.trim()).filter(Boolean);
+            const firstStatement = statementLines.find((l) => /ADD\s+COLUMN|CREATE\s+(?:UNIQUE\s+)?INDEX/i.test(l)) || statementLines[0] || '';
+            const matchLineIdx = lines.findIndex(l => l.includes(firstStatement));
+            const lineNum = matchLineIdx !== -1 ? matchLineIdx + 1 : 1;
+            findings.push({
+                id: `dbperf-${Date.now()}-${findingCounter.count++}`,
+                ruleId: 6051,
+                type: 'INFRA_DATABASE',
+                title: 'DB-PERF-51: Migration Takes a Blocking Table Lock on an Existing Table',
+                severity: 'HIGH',
+                category: "Concurrency & Locks",
+                filePath: file.path,
+                lineRange: `L${lineNum}`,
+                snippet: lines[matchLineIdx] || firstStatement,
+                reproductionSteps: [
+                    `Scanned migration ${file.path}:${lineNum}.`,
+                    'Adding a NOT NULL column without DEFAULT fails on non-empty tables, and CREATE INDEX without CONCURRENTLY blocks writes for the whole build.'
+                ],
+                remediationPrompt: "Add the column as nullable (or with a DEFAULT), backfill, then SET NOT NULL; build indexes on existing tables with CREATE INDEX CONCURRENTLY in a migration that does not run inside a transaction.",
+                status: 'OPEN',
+                owner: 'Database Architect',
+                falsePositive: false
+            });
+            logs.push(`[${ts}] 🗄️ DB-PERF-51: Blocking migration lock detected (${file.path}:${lineNum})`);
+        }
+    }
     return { findings, logs };
 }

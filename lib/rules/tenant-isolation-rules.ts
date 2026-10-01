@@ -139,5 +139,32 @@ export function evaluateTenantIsolationRules(file: CodeFile, lines: string[], cl
         });
         logs.push(`[${ts}] [TENANT AUDIT] Found TENANT-05: Tenant Quota Bypass on Asynchronous Background Worker at ${file.path}:${lineNum}`);
     }
+    // TENANT-06: IDOR via Service-Role Lookup by Request ID Without Ownership Check
+    const usesServiceRole = /SUPABASE_SERVICE_ROLE_KEY|service_role|supabaseAdmin|adminClient/i.test(cleanContent);
+    const idLookupRegex = /\.eq\(\s*['"]id['"]\s*,\s*(?:params\.|\(await\s+params\)\.|searchParams\.get\(|req\.(?:query|params)\.)/i;
+    const hasOwnershipCheck = /auth\.getUser|getSession|getServerSession|currentUser|\.eq\(\s*['"](?:user_id|owner_id|org_id|organization_id|tenant_id)['"]/i.test(cleanContent);
+    if (usesServiceRole && idLookupRegex.test(cleanContent) && !hasOwnershipCheck) {
+        const matchLineIdx = lines.findIndex(l => idLookupRegex.test(l));
+        const lineNum = matchLineIdx !== -1 ? matchLineIdx + 1 : 1;
+        findings.push({
+            id: `tenant9106-${Date.now()}-${findingCounter.count++}`,
+            ruleId: 9106,
+            type: 'SECURITY',
+            title: "TENANT-06: IDOR via Service-Role Lookup by Request ID Without Ownership Check",
+            severity: "CRITICAL",
+            category: "Multi-Tenant Isolation",
+            filePath: file.path,
+            lineRange: `L${lineNum}`,
+            snippet: lines[matchLineIdx] || 'Service-role lookup by id',
+            reproductionSteps: [
+                `Audited data access in ${file.path}:${lineNum}.`,
+                'A service-role client (bypasses RLS) loads a row by an id taken from the request, and the handler never checks the session user, so any caller can read other users\' records by changing the id.'
+            ],
+            remediationPrompt: `In ${file.path}, resolve the caller with supabase.auth.getUser() and add .eq('user_id', user.id) to the query, or use the user-scoped client so RLS applies.`,
+            status: 'OPEN',
+            falsePositive: false
+        });
+        logs.push(`[${ts}] [TENANT AUDIT] Found TENANT-06: IDOR via service-role lookup at ${file.path}:${lineNum}`);
+    }
     return { findings, logs };
 }

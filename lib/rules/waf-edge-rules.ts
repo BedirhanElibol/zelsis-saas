@@ -44,7 +44,8 @@ export function evaluateWafEdgeRules(file: CodeFile, lines: string[], cleanConte
         logs.push(`[${ts}] [WAF AUDIT] Found WAF-01: WAF Origin Bypass via Unvalidated X-Forwarded-Host Header at ${file.path}:${lineNum}`);
     }
     // WAF-02: Missing Edge Rate Limiting on High-Cost AI Inference Endpoints
-    if ((/export\s+async\s+function\s+POST/i.test(cleanContent) && !/rateLimit|ratelimit|limiter/i.test(cleanContent))) {
+    const callsAiInference = /chat\.completions|messages\.create|responses\.create|generateText|streamText|generateObject|from\s+['"](?:openai|@anthropic-ai\/sdk|@ai-sdk\/[\w-]+|ai|@google\/generative-ai|cohere-ai|replicate)['"]/i.test(cleanContent);
+    if (callsAiInference && /export\s+async\s+function\s+POST/i.test(cleanContent) && !/rateLimit|ratelimit|limiter/i.test(cleanContent)) {
         const matchLineIdx = lines.findIndex(l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('*'));
         const lineNum = matchLineIdx !== -1 ? matchLineIdx + 1 : 1;
         findings.push({

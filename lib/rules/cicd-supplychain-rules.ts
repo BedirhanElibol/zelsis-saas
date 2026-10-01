@@ -71,8 +71,19 @@ export function evaluateCicdSupplyChainRules(file: CodeFile, lines: string[], cl
         logs.push(`[${ts}] [CICD SEC] Found CICD-SEC-02: Unpinned Third-Party Action Mutable Reference (@v1) at ${file.path}:${lineNum}`);
     }
     // CICD-SEC-03: Script Injection via Unescaped GitHub Context Expression
-    if (/run\s*:[\s\S]*?\$\{\{\s*github\.event\.(?:issue\.title|pull_request\.title|head_ref)/i.test(cleanContent)) {
-        const matchLineIdx = lines.findIndex(l => !l.trim().startsWith('#'));
+    const untrustedContextRegex = /\$\{\{\s*github\.event\.(?:issue\.title|pull_request\.title|head_ref)/i;
+    const indentOf = (l: string) => l.length - l.trimStart().length;
+    const isInsideRunScript = (idx: number) => {
+        if (/^\s*-?\s*run\s*:/.test(lines[idx])) return true;
+        for (let i = idx - 1, indent = indentOf(lines[idx]); i >= 0; i--) {
+            if (!lines[i].trim() || lines[i].trim().startsWith('#') || indentOf(lines[i]) >= indent) continue;
+            return /^\s*-?\s*run\s*:/.test(lines[i]);
+        }
+        return false;
+    };
+    const injectionLineIdx = lines.findIndex((l, i) => untrustedContextRegex.test(l) && isInsideRunScript(i));
+    if (injectionLineIdx !== -1) {
+        const matchLineIdx = injectionLineIdx;
         const lineNum = matchLineIdx !== -1 ? matchLineIdx + 1 : 1;
         findings.push({
             id: `cicdsec9503-${Date.now()}-${findingCounter.count++}`,

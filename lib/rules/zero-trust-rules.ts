@@ -1070,7 +1070,7 @@ export function evaluateZeroTrustRules(file: CodeFile, lines: string[], cleanCon
         logs.push(`[${ts}] 🛡️ LOW: ZERO-AUTH-42 finding in ${file.path}:${lineNum}`);
     }
     // ZERO-AUTH-43: Missing Identity Verification on Webhook Receiver Endpoints
-    if (/app\/api\/(?:v\d+\/)?.*webhook.*\/route\.(?:ts|js)$/i.test(file.path) && !file.path.includes('test-webhook') && !/verifySignature|timingSafeEqual|crypto\.createHmac/i.test(cleanContent)) {
+    if (/app\/api\/(?:v\d+\/)?.*webhook.*\/route\.(?:ts|js)$/i.test(file.path) && !file.path.includes('test-webhook') && !/verify\w*Signature|timingSafeEqual|crypto\.createHmac|constructEvent|validateEvent|webhooks?\.verify|new\s+Webhook\s*\(/i.test(cleanContent)) {
         const matchLineIdx = lines.findIndex(l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('*') && (/zero-auth-43|missing/i.test(l) || lines.indexOf(l) === 0));
         const lineNum = matchLineIdx !== -1 ? matchLineIdx + 1 : 1;
         findings.push({

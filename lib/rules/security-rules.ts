@@ -655,8 +655,9 @@ export function evaluateSecurityRules(file: CodeFile, lines: string[], cleanCont
     // Rule 28 / SEC-28: JWT Algorithm Confusion & None Algorithm Acceptance
     if (isCodeFile && cleanContent.includes('jwt.verify')) {
         const jwtVerifyWithoutAlgRegex = /jwt\.verify\s*\([^,]+,\s*[^,)]+\s*\)/;
-        if (jwtVerifyWithoutAlgRegex.test(cleanContent)) {
-            const matchLineIdx = lines.findIndex(l => !l.trim().startsWith('//') && jwtVerifyWithoutAlgRegex.test(l));
+        const noneAlgorithmRegex = /algorithms\s*:\s*\[[^\]]*['"]none['"]/i;
+        if (jwtVerifyWithoutAlgRegex.test(cleanContent) || noneAlgorithmRegex.test(cleanContent)) {
+            const matchLineIdx = lines.findIndex(l => !l.trim().startsWith('//') && (jwtVerifyWithoutAlgRegex.test(l) || noneAlgorithmRegex.test(l)));
             const lineNum = matchLineIdx !== -1 ? matchLineIdx + 1 : 1;
             const snippet = lines.slice(Math.max(0, lineNum - 2), Math.min(lines.length, lineNum + 2)).join('\n');
             findings.push({
@@ -1093,8 +1094,10 @@ export function evaluateSecurityRules(file: CodeFile, lines: string[], cleanCont
     }
     // Rule 41 / SEC-41: Open Redirection Vulnerability via Untrusted URL Target
     if (isCodeFile && cleanContent.includes('redirect(')) {
-        const openRedirectRegex = /(?:res\.redirect|redirect|NextResponse\.redirect)\s*\(\s*(?:req\.(?:query|body|params)|searchParams\.get|\b(?:next|url|redirectUrl|target|targetUrl|returnTo)\b)/i;
-        if (openRedirectRegex.test(cleanContent)) {
+        const openRedirectRegex = /(?:res\.redirect|redirect|NextResponse\.redirect)\s*\(\s*(?:req\.(?:query|body|params)|searchParams\.get|\b(?:next|url|redirectUrl|target|targetUrl|returnTo)\b\s*[),])/i;
+        // Same-origin guards: relative-path check that rejects protocol-relative URLs, or an explicit helper
+        const redirectGuardRegex = /startsWith\(\s*['"]\/\/['"]\s*\)|isSafeRedirect|isRelativeUrl|allowedRedirect/i;
+        if (openRedirectRegex.test(cleanContent) && !redirectGuardRegex.test(cleanContent)) {
             const matchLineIdx = lines.findIndex(l => !l.trim().startsWith('//') && !l.trim().startsWith('*') && openRedirectRegex.test(l));
             const lineNum = matchLineIdx !== -1 ? matchLineIdx + 1 : 1;
             const snippet = lines.slice(Math.max(0, lineNum - 2), Math.min(lines.length, lineNum + 2)).join('\n');

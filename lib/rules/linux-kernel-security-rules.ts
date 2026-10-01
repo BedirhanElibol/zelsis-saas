@@ -23,7 +23,8 @@ export function evaluateLinuxKernelSecurityRules(file: CodeFile, lines: string[]
     }
     const ts = new Date().toLocaleTimeString();
     // KERN-SEC-01: Unrestricted Linux Root Capabilities (CAP_SYS_ADMIN) Retained in Container Workloads
-    if (((/container_security|docker|pod_spec/i.test(lowerPath) || /capabilities/i.test(cleanContent)) && !/drop:\s*\[.*CAP_SYS_ADMIN.*\]/i.test(cleanContent))) {
+    const grantsPrivilege = /privileged\s*:\s*true|--privileged|--cap-add[=\s]+(?:CAP_)?(?:SYS_ADMIN|ALL)|(?:cap_add|add)\s*:[^\n]*(?:SYS_ADMIN|ALL)|(?:cap_add|add)\s*:\s*\n(?:\s*-\s*\S+\s*\n)*?\s*-\s*["']?(?:CAP_)?(?:SYS_ADMIN|ALL)\b/i.test(cleanContent);
+    if (grantsPrivilege && !/drop:\s*\[.*CAP_SYS_ADMIN.*\]/i.test(cleanContent)) {
         const matchLineIdx = lines.findIndex(l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('#') && !l.trim().startsWith('*'));
         const lineNum = matchLineIdx !== -1 ? matchLineIdx + 1 : 1;
         findings.push({
