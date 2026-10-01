@@ -22,6 +22,14 @@ components/dashboard/RuleKnowledgeBaseModal.tsx
 components/InteractiveAnalyzer.tsx
 sql/05_seed_data.sql
 
+# Rule inventory, maturity and benchmark data quote rule titles and the documented
+# flaws of vulnerable corpus repos as strings; the scripts that build them are dev-only.
+.generated.json
+docs/benchmark/
+scripts/benchmark/
+scripts/gen-secret-fixtures.ts
+scripts/rule-audit.ts
+
 # Package Lockfiles (evaluated by SCA dependency analyzer, not SAST code engine)
 package-lock.json
 yarn.lock
