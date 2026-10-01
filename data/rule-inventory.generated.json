@@ -1,8 +1,8 @@
 {
  "summary": {
-  "implementedRules": 1484,
-  "testedRules": 99,
-  "preciseLocationRules": 1363,
+  "implementedRules": 1485,
+  "testedRules": 100,
+  "preciseLocationRules": 1364,
   "catalogEntries": 1922,
   "catalogOnlyNotImplemented": 770,
   "catalogPlaceholderMetadata": 1810
@@ -15618,6 +15618,16 @@
    "source": "lib/rules/no-ai-slop-rules.ts",
    "preciseLocation": true,
    "tested": false,
+   "inCatalog": false
+  },
+  {
+   "ruleId": 26001,
+   "code": "DEP-01",
+   "title": "${dep.name}@${dep.version} has ${list.length} known vulnerabilit${list.length === 1 ? ",
+   "severity": "UNKNOWN",
+   "source": "lib/scanner/osv.ts",
+   "preciseLocation": true,
+   "tested": true,
    "inCatalog": false
   }
  ]

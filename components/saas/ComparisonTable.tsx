@@ -124,6 +124,13 @@ export const ComparisonTable: React.FC = () => {
           enterprise: `All ${formatCount(RULE_COUNTS.gating)} active rules`
         },
         {
+          name: 'Known Vulnerable Dependencies',
+          description: 'Exact lockfile versions checked against OSV.dev (npm, PyPI, Go, RubyGems, Packagist, crates.io, Maven)',
+          free: 'Included on every plan',
+          pro: 'Included on every plan',
+          enterprise: 'Included on every plan'
+        },
+        {
           name: 'Secret & API Key Leak Detection',
           description: 'Scanning engine for hardcoded tokens, AWS keys, and private credentials',
           free: 'Same secret rules on every plan',

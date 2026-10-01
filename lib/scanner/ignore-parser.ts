@@ -21,6 +21,7 @@ const PREFIX_OFFSETS: ReadonlyArray<readonly [RegExp, readonly number[]]> = [
   [/^SAAS-?(\d+)$/i, [23000]],
   [/^JS-SEC-?(\d+)$/i, [24000]],
   [/^CORE-?(\d+)$/i, [24100]],
+  [/^DEP-?(\d+)$/i, [26000]],
   [/^LLM-?(\d+)$/i, [4000, 0]],
   [/^CLICHE-?(\d+)$/i, [200]],
   [/^UI-INTERACT-?(\d+)$/i, [1200]],

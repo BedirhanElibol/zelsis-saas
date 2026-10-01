@@ -226,7 +226,7 @@ export async function POST(req: NextRequest) {
       current_phase: 'Executing deterministic AST security rules'
     });
 
-    const result = await runStaticCodeScan(filesToScan, resolvedTargetName);
+    const result = await runStaticCodeScan(filesToScan, resolvedTargetName, { dependencyAudit: { timeoutMs: 8000 } });
 
     // ─── Phase 4: AGGREGATING (Persisting Findings & Manifest) ───
     await updateJobState({

@@ -197,7 +197,7 @@ export const BenchmarkSection: React.FC = () => {
               <ul className="text-xs text-zinc-400 leading-relaxed list-disc pl-4 flex flex-col gap-1.5">
                 <li>Rules are pattern-based static analysis, not full data-flow analysis: unusual code shapes can be missed.</li>
                 <li>The corpus covers JavaScript/TypeScript, Python, Go, PHP, Java, Ruby and C# projects; other languages are not yet benchmarked.</li>
-                <li>Dependency vulnerabilities are checked for selected advisories, not a full CVE database yet.</li>
+                <li>Dependency versions are checked against OSV.dev only when the repository has a lockfile or pinned manifest; the benchmark above measures pattern rules, not this lookup.</li>
                 <li>A small benchmark cannot prove the absence of false positives on every codebase. Report one and we add it.</li>
               </ul>
             </div>

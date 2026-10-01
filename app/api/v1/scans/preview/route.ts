@@ -96,7 +96,7 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    const result = await runStaticCodeScan(repoData.files, repoData.name || repoUrl);
+    const result = await runStaticCodeScan(repoData.files, repoData.name || repoUrl, { dependencyAudit: { timeoutMs: 8000 } });
 
     const openFindings = result.findings.filter((f) => f.status === 'OPEN');
     const topFindings = [...openFindings]

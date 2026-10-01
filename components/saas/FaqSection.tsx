@@ -34,6 +34,11 @@ export const FaqSection: React.FC = () => {
         'Every rule change is measured against a pinned benchmark of intentionally vulnerable apps and maintained production projects in several languages. Rules that misfire on clean code become experimental and stop affecting the gate, and a CRITICAL finding can fail a release only when its rule has test fixtures, caught a documented flaw, or was reviewed as a true positive. Results are published in the benchmark section.'
     },
     {
+      question: 'Do you check our dependencies for known vulnerabilities?',
+      answer:
+        'Yes. The exact versions in your lockfiles (package-lock, yarn, pnpm, poetry, Pipfile, uv, Gemfile, composer, Cargo, go.mod / go.sum) and pinned requirements.txt or pom.xml entries are looked up in OSV.dev, which aggregates the GitHub Advisory Database, PyPA, RustSec, Go and other sources. Each finding links the advisory and the fixed version. Without a lockfile, versions cannot be checked and the scan log says so; if OSV.dev cannot be reached, the scan reports the check as unavailable instead of clean.'
+    },
+    {
       question: 'Can we configure custom severity levels or disable irrelevant rules?',
       answer:
         'Yes, on every plan. Add a .zelsisrc.json (or .zelsisignore) to your repository to ignore rules or paths, turn off whole pillars, and choose smart, strict or advisory gating with a minimum score. The dashboard rule configurator can generate the file for you.'

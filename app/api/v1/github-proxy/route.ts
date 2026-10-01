@@ -5,6 +5,7 @@ import { checkRateLimit, createRateLimitResponse } from '@/lib/rate-limiter';
 import { GithubProxyQuerySchema, validateQueryParams } from '@/lib/validations/api-schemas';
 import { logger } from '@/lib/logger';
 import { createClient } from '@supabase/supabase-js';
+import { isDependencyFile } from '@/lib/scanner/dependencies';
 
 // CLOUD-01 Remediation: Enforce <= 15s synchronous serverless execution ceiling.
 // Long-running batch background tasks (>15s) must be queued to async workers (SQS/Inngest/QStash)
@@ -539,8 +540,8 @@ export async function GET(req: NextRequest) {
         (item: any) =>
           item.type === 'blob' &&
           typeof item.path === 'string' &&
-          (!item.size || item.size <= 2000000) &&
-          (/(\.(ts|tsx|js|jsx|json|css|sql|html|py|yml|yaml|toml|sh|ps1|c|cpp|cc|cxx|h|hpp|java|kt|kts|go|rs|php|cs|rb|swift|xml|plist|gradle|md|mdx|zelsisignore|shipguardignore)$)|(\.env(\.[a-zA-Z0-9_\-]+)?$)|((?:^|\/)(?:dockerfile|makefile|podfile)$)/i.test(item.path)) &&
+          (!item.size || item.size <= (isDependencyFile(item.path) ? 8000000 : 2000000)) &&
+          (isDependencyFile(item.path) || /(\.(ts|tsx|js|jsx|json|css|sql|html|py|yml|yaml|toml|sh|ps1|c|cpp|cc|cxx|h|hpp|java|kt|kts|go|rs|php|cs|rb|swift|xml|plist|gradle|md|mdx|zelsisignore|shipguardignore)$)|(\.env(\.[a-zA-Z0-9_\-]+)?$)|((?:^|\/)(?:dockerfile|makefile|podfile)$)/i.test(item.path)) &&
           !item.path.includes('node_modules') &&
           !item.path.includes('.next') &&
           !item.path.includes('.git') &&
@@ -599,7 +600,7 @@ export async function GET(req: NextRequest) {
             if (rawRes.ok) {
               let content = await rawRes.text();
               // File size guard: cap at 200KB per-file limit to avoid ReDoS or memory exhaustion across rules
-              if (content.length > 200000) {
+              if (content.length > 200000 && !isDependencyFile(file.path)) {
                 content = content.slice(0, 200000);
               }
               return { path: file.path, content };

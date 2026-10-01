@@ -11,6 +11,8 @@ import { evaluateBuiltinRules } from './scanner/builtin-rules';
 import { detectProjectDatabases } from './rules/multi-database-rules';
 import { detectAppStack } from './scanner/stack-detect';
 import { buildRepoContext } from './scanner/repo-context';
+import { extractDependencies, isDependencyLockfile } from './scanner/dependencies';
+import { buildDependencyFindings, OSV_RULE_ID, queryOsv, type DependencyAuditSummary, type OsvOptions } from './scanner/osv';
 
 export type { CodeFile, ScanResult } from './scanner/types';
 export type { ZelsisRcConfig } from './scanner/rc-config';
@@ -25,7 +27,12 @@ export { detectAppStack, UNDETECTED_FRAMEWORK } from './scanner/stack-detect';
  * Scans provided source files against Security Rules and VibePolish & AI Anti-Pattern rules.
  * Implements cooperative streaming via yieldToMain() to prevent UI freeze on 1,000+ files.
  */
-export async function runStaticCodeScan(files: CodeFile[], repoName: string = 'Target Repository'): Promise<ScanResult> {
+export interface ScanOptions {
+  /** Look up resolved dependency versions in OSV.dev. Off by default so offline runs stay deterministic. */
+  dependencyAudit?: OsvOptions | boolean;
+}
+
+export async function runStaticCodeScan(files: CodeFile[], repoName: string = 'Target Repository', options: ScanOptions = {}): Promise<ScanResult> {
   const scanStartedAt = Date.now();
   const findings: Finding[] = [];
   const logs: string[] = [];
@@ -44,6 +51,18 @@ export async function runStaticCodeScan(files: CodeFile[], repoName: string = 'T
   const detectedStack = detectProjectDatabases(files);
   const detectedApp = detectAppStack(files);
   const repoContext = buildRepoContext(files);
+
+  // Dependency audit: extract exact versions now (file buffers are released during the scan) and
+  // query OSV.dev in parallel with the pattern rules.
+  const dependencies = extractDependencies(files).filter((d) => !ignoredPaths.some((ip) => d.file.toLowerCase().includes(ip)));
+  const dependencyFileLines = new Map<string, string[]>();
+  for (const d of dependencies) {
+    if (!dependencyFileLines.has(d.file)) dependencyFileLines.set(d.file, (files.find((f) => f.path === d.file)?.content || '').split('\n'));
+  }
+  const auditEnabled = Boolean(options.dependencyAudit) && !ignoredRuleIds.has(OSV_RULE_ID) && !disabledPillars.has('SECURITY');
+  const osvPromise = auditEnabled && dependencies.length > 0
+    ? queryOsv(dependencies, typeof options.dependencyAudit === 'object' ? options.dependencyAudit : {})
+    : null;
 
   logs.push(`[${new Date().toLocaleTimeString()}] [INFO] Zelsis static pattern scan started (${RULE_ENGINES.length} rule modules plus built-in rules).`);
   logs.push(`[${new Date().toLocaleTimeString()}] [TARGET] Repository: ${repoName}`);
@@ -78,7 +97,7 @@ export async function runStaticCodeScan(files: CodeFile[], repoName: string = 'T
       lowerPath.includes('third_party/') ||
       lowerPath.includes('public/vendor/') ||
       lowerPath.includes('assets/vendor/') ||
-      lowerPath.endsWith('package-lock.json') || lowerPath.endsWith('yarn.lock') || lowerPath.endsWith('pnpm-lock.yaml') ||
+      isDependencyLockfile(lowerPath) ||
       lowerPath.endsWith('.png') ||
       lowerPath.endsWith('.jpg') ||
       lowerPath.endsWith('.jpeg') ||
@@ -244,6 +263,38 @@ export async function runStaticCodeScan(files: CodeFile[], repoName: string = 'T
     fileIndex++;
   }
 
+  let dependencyAudit: DependencyAuditSummary = {
+    status: !auditEnabled ? 'disabled' : dependencies.length === 0 ? 'no-dependencies' : 'unavailable',
+    packages: dependencies.length,
+    vulnerablePackages: 0,
+    advisories: 0
+  };
+  if (osvPromise) {
+    const osv = await osvPromise;
+    if (osv.ok) {
+      const depFindings = buildDependencyFindings(dependencies, osv.advisories, dependencyFileLines);
+      // Exact lockfile versions supersede the offline advisory list matched against manifest ranges
+      const auditedDirs = new Set(dependencies.map((d) => d.file.slice(0, d.file.lastIndexOf('/') + 1)));
+      for (let k = findings.length - 1; k >= 0; k--) {
+        const f = findings[k];
+        if (f.ruleId === 7001 && auditedDirs.has(f.filePath.slice(0, f.filePath.lastIndexOf('/') + 1))) findings.splice(k, 1);
+      }
+      for (const f of depFindings) findings.push({ ...f, maturity: ruleMaturity(f.ruleId) });
+      dependencyAudit = {
+        status: 'ok',
+        packages: dependencies.length,
+        vulnerablePackages: depFindings.length,
+        advisories: osv.advisories.reduce((n, a) => n + a.length, 0)
+      };
+      logs.push(`[${new Date().toLocaleTimeString()}] [DEPENDENCIES] OSV.dev: ${dependencies.length} resolved package versions checked, ${depFindings.length} with known vulnerabilities.`);
+    } else {
+      dependencyAudit = { ...dependencyAudit, error: osv.error };
+      logs.push(`[${new Date().toLocaleTimeString()}] [WARN] Dependency audit unavailable (${osv.error}). ${dependencies.length} package versions were NOT checked for known vulnerabilities.`);
+    }
+  } else if (auditEnabled) {
+    logs.push(`[${new Date().toLocaleTimeString()}] [DEPENDENCIES] No lockfile or pinned manifest found: dependency versions could not be checked. Commit a lockfile to enable the check.`);
+  }
+
   logs.push(`[${new Date().toLocaleTimeString()}] --------------------------------------------------`);
   logs.push(`[${new Date().toLocaleTimeString()}] [SUMMARY] Scan complete: ${targetFiles.length} files, ${findings.length} findings (${findings.filter((f) => f.maturity === 'experimental').length} from experimental rules, not counted toward the gate).`);
   if (testFixtureSkips > 0) {
@@ -302,6 +353,7 @@ export async function runStaticCodeScan(files: CodeFile[], repoName: string = 'T
     detectedDatabases: detectedStack.databases,
     detectedOrms: detectedStack.orms,
     detectedFramework: detectedApp.framework ?? undefined,
-    detectedProviders: detectedApp.providers
+    detectedProviders: detectedApp.providers,
+    dependencyAudit
   };
 }

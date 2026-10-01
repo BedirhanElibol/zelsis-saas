@@ -1,4 +1,5 @@
 import type { Finding } from '@/data/schema';
+import type { DependencyAuditSummary } from './osv';
 
 export interface CodeFile {
   path: string;
@@ -26,4 +27,6 @@ export interface ScanResult {
   detectedFramework?: string;
   /** Hosting / CI providers detected from config files. */
   detectedProviders?: string[];
+  /** Known-vulnerability check of resolved dependency versions (OSV.dev). */
+  dependencyAudit?: DependencyAuditSummary;
 }
