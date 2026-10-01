@@ -339,7 +339,7 @@ export const FindingsTable: React.FC<FindingsTableProps> = ({
                       showToast('AI prompt copied to clipboard', '[COPIED]');
                     }}
                     className="btn btn-secondary text-xs px-3 py-1 flex items-center gap-1.5 border-white/10 text-white hover:bg-white/5 transition-colors cursor-pointer"
-                    title="Copy AI Master Fix Prompt for Claude / Cursor / ChatGPT"
+                    title="Copy AI master fix prompt"
                   >
                     {copiedPrompt ? (
                       <Check size={13} className="text-emerald-400" />

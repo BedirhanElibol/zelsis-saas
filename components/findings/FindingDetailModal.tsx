@@ -392,7 +392,7 @@ export const FindingDetailModal: React.FC<FindingDetailModalProps> = ({
                 <div className="flex flex-col gap-2">
                   <div className="flex items-center justify-between">
                     <span className="text-[0.68rem] font-mono text-zinc-400 uppercase">
-                      Paste into Claude / Cursor / GitHub Copilot:
+                      Paste into your AI coding assistant:
                     </span>
                     {aiPromptCheck.allowed ? (
                       <button
@@ -425,7 +425,7 @@ export const FindingDetailModal: React.FC<FindingDetailModalProps> = ({
                           Trial AI Remediation Limit Reached (1/1)
                         </div>
                         <p className="text-xs text-zinc-400 max-w-md mx-auto leading-relaxed">
-                          You have used your 1 free AI fix prompt. Upgrade to Zelsis Pro ($19/mo) to unlock unlimited 1-click Claude, Cursor, and Copilot remediation prompts and automated diff patches.
+                          You have used your 1 free AI fix prompt. Upgrade to Zelsis Pro ($19/mo) to unlock unlimited 1-click AI remediation prompts and automated diff patches.
                         </p>
                       </div>
                       <button

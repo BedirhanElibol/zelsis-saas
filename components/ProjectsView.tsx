@@ -66,7 +66,7 @@ export const ProjectsView: React.FC<ProjectsViewProps> = ({
               </h1>
             </div>
             <p className="text-sm text-[#A1A1AA] max-w-2xl leading-relaxed">
-              Connect AI-generated repositories (Cursor, Lovable, Bolt, v0, Replit) or Vercel preview URLs for automated production release gate audits.
+              Connect AI-generated repositories or Vercel preview URLs for automated production release gate audits.
             </p>
           </div>
 
@@ -353,7 +353,7 @@ export const ProjectsView: React.FC<ProjectsViewProps> = ({
                 Free Tier Project Limit Reached
               </h2>
               <p className="text-xs text-[#A1A1AA] leading-relaxed mt-1">
-                The Free plan supports up to <strong>1 active custom repository</strong>. Upgrade to <strong>Zelsis Pro</strong> for unlimited connected AI repositories, automated GitHub PR release gates, and Claude auto-remediations.
+                The Free plan supports up to <strong>1 active custom repository</strong>. Upgrade to <strong>Zelsis Pro</strong> for unlimited connected AI repositories, automated GitHub PR release gates, and AI auto-remediations.
               </p>
             </div>
 

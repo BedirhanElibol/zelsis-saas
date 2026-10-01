@@ -165,7 +165,7 @@ export const ComparisonTable: React.FC = () => {
         },
         {
           name: 'Context-Engineered AI Prompts',
-          description: 'Tailored prompts with CVE context for Cursor, Claude, and GitHub Copilot',
+          description: 'Tailored prompts with CVE context for any AI coding assistant',
           free: '1 Lifetime Trial Prompt',
           pro: 'Unlimited 1-Click Fix Prompts',
           enterprise: 'Unlimited Fix Prompts + PR Diffs'

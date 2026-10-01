@@ -290,7 +290,7 @@ export function processUserData(payload: any) {
             Live Custom Codebase AST Inspector
           </h2>
           <div className="text-xs text-[#94A3B8] mt-0.5">
-            Paste your AI-generated code (Cursor, Bolt, Lovable, v0) to run real-time AST security checks &amp; linter rules
+            Paste your AI-generated code to run real-time AST security checks &amp; linter rules
           </div>
         </div>
 
@@ -378,7 +378,7 @@ export function processUserData(payload: any) {
 
                   <div className="flex items-center justify-between pt-2 border-t border-white/10">
                     <span className="text-[0.72rem] text-[#94A3B8] font-mono">
-                      Generated Prompt for Claude / Cursor:
+                      Generated Fix Prompt:
                     </span>
                     <button onClick={() => copyPrompt(f)} className="btn btn-secondary btn-sm text-[0.7rem] px-3 py-1 font-mono">
                       {copiedPromptId === f.id ? <CheckCircle2 size={12} className="text-emerald-400" /> : <Copy size={12} />}

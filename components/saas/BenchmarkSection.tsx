@@ -349,7 +349,7 @@ export const BenchmarkSection: React.FC = () => {
                 <span className="text-[11px] font-mono uppercase text-zinc-400 font-semibold tracking-wider">Surgical Remediation</span>
                 <h4 className="text-2xl font-extrabold text-white mt-1">Unified Git Diffs</h4>
                 <p className="text-xs text-zinc-400 mt-2 font-sans leading-relaxed">
-                  Every detected vulnerability generates an exact before/after line patch and tailored prompts ready to paste directly into Cursor or Claude Code.
+                  Every detected vulnerability generates an exact before/after line patch and tailored prompts ready to paste into your AI coding assistant.
                 </p>
               </div>
               <div className="text-[11px] font-mono text-zinc-400 border-t border-white/5 pt-3">

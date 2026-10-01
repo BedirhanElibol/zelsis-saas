@@ -55,7 +55,7 @@ $ zelsis evaluate --repo github.com/enterprise/payment-gateway
       badge: 'RELEASE CLEARANCE',
       title: 'Signed Manifest Clearance & 1-Click Fixes',
       description:
-        'Generate an exportable cryptographic release manifest for SOC 2 readiness/evidence support, and retrieve surgical 1-click AI prompt patches formatted directly for GitHub Copilot & Cursor.',
+        'Generate an exportable cryptographic release manifest for SOC 2 readiness/evidence support, and retrieve surgical 1-click AI prompt patches ready for any AI coding assistant.',
       codeSnippet: `// Cryptographically Signed Deployment Manifest
 {
   "manifestId": "MANIFEST-PROD-2026-X99",

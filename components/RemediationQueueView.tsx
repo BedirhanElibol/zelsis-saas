@@ -49,7 +49,7 @@ Remediation: ${f.remediationPrompt}`).join('\n\n')}`;
             </h1>
           </div>
           <p style={{ fontSize: '0.875rem', color: '#A1A1AA', marginTop: '6px', maxWidth: '700px' }}>
-            Prioritized remediation queue linking findings directly to copyable Claude fix prompts and acceptance criteria.
+            Prioritized remediation queue linking findings directly to copyable AI fix prompts and acceptance criteria.
           </p>
         </div>
 
