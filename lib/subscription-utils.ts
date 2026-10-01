@@ -42,6 +42,13 @@ export function isPlatformAdminEmail(email?: string | null): boolean {
 }
 
 /**
+ * Copy-paste fix prompts, remediation guidance and diff patches are a paid feature.
+ */
+export function hasFixPromptAccess(tier?: string | null): boolean {
+  return tier === 'Pro' || tier === 'Enterprise';
+}
+
+/**
  * Founder-only grants use a 2099 (lifetime) expiry. No paid Pro/Enterprise period
  * runs longer than two years, so anything beyond that on a non-founder is stale data.
  */

@@ -27,7 +27,7 @@ import {
   isCicdIntegrationAllowed,
   isCustomRulesAllowed
 } from '../lib/quota-manager';
-import { isPlatformAdminEmail, hasAdminRole, isFounderGrantExpiry, getSubscriptionValidity } from '../lib/subscription-utils';
+import { isPlatformAdminEmail, hasAdminRole, isFounderGrantExpiry, getSubscriptionValidity, hasFixPromptAccess } from '../lib/subscription-utils';
 import { ZELSIS_PRICING_PLANS } from '../data/pricing-plans';
 import {
   isSupabaseConfigured as isSupabaseConfiguredServer,
@@ -981,6 +981,10 @@ async function runAllTests() {
   assert(isFounderGrantExpiry('2099-12-31T23:59:59.999Z') === true, 'isFounderGrantExpiry flags 2099 lifetime grant');
   assert(isFounderGrantExpiry(inOneYear) === false, 'isFounderGrantExpiry accepts annual paid period');
   assert(isFounderGrantExpiry(undefined) === false, 'isFounderGrantExpiry ignores missing expiry');
+  assert(hasFixPromptAccess('Free') === false, 'Free tier has no fix prompt access');
+  assert(hasFixPromptAccess('Pro') === true, 'Pro tier has fix prompt access');
+  assert(hasFixPromptAccess('Enterprise') === true, 'Enterprise tier has fix prompt access');
+  assert(hasFixPromptAccess(undefined) === false, 'Missing tier has no fix prompt access');
 
   testPolarWebhook();
 

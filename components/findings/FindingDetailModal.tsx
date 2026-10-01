@@ -69,6 +69,11 @@ export const FindingDetailModal: React.FC<FindingDetailModalProps> = ({
 
   const cleanSnippet = sanitizeContent(finding.snippet);
   const cleanPrompt = sanitizeContent(finding.remediationPrompt);
+  // Fix guidance, patches and ticket remediation are Pro (Free keeps a trial via aiPromptCheck)
+  const fixLocked = !aiPromptCheck.allowed;
+  const visiblePrompt = fixLocked ? '// Fix guidance is included in Zelsis Pro.' : cleanPrompt;
+  const visiblePatch = fixLocked ? undefined : finding.diffPatch;
+  const jiraFinding = fixLocked ? { ...finding, remediationPrompt: 'Included in Zelsis Pro.', diffPatch: undefined } : finding;
   const cleanTitle = sanitizeContent(finding.title);
   const cleanSteps = (finding.reproductionSteps || []).map(sanitizeContent);
 
@@ -99,7 +104,7 @@ export const FindingDetailModal: React.FC<FindingDetailModalProps> = ({
   };
 
   const copyJira = () => {
-    const jiraMarkdown = formatFindingForJira(finding);
+    const jiraMarkdown = formatFindingForJira(jiraFinding);
     navigator.clipboard.writeText(jiraMarkdown);
     setCopiedJira(true);
     setTimeout(() => setCopiedJira(false), 2000);
@@ -332,7 +337,7 @@ export const FindingDetailModal: React.FC<FindingDetailModalProps> = ({
                         <span className="text-emerald-500">Patched</span>
                       </div>
                       <pre className="m-0 text-[0.72rem] text-emerald-300 whitespace-pre-wrap leading-relaxed overflow-x-auto">
-                        {cleanPrompt}
+                        {visiblePrompt}
                       </pre>
                     </div>
                   </div>
@@ -340,8 +345,8 @@ export const FindingDetailModal: React.FC<FindingDetailModalProps> = ({
                   /* Unified Diff View */
                   <div className="bg-[#0A0A0C] border border-white/10 rounded-xl overflow-hidden font-mono text-xs">
                     <div className="p-3 space-y-1 overflow-x-auto text-[0.72rem] leading-relaxed">
-                      {finding.diffPatch ? (
-                        finding.diffPatch.split('\n').map((dLine: string, idx: number) => {
+                      {visiblePatch ? (
+                        visiblePatch.split('\n').map((dLine: string, idx: number) => {
                           const isAdd = dLine.startsWith('+') && !dLine.startsWith('+++');
                           const isDel = dLine.startsWith('-') && !dLine.startsWith('---');
                           const isHdr = dLine.startsWith('@@') || dLine.startsWith('---') || dLine.startsWith('+++');
@@ -378,7 +383,7 @@ export const FindingDetailModal: React.FC<FindingDetailModalProps> = ({
                           ))}
                           <div className="bg-emerald-500/15 text-emerald-300 px-2 py-0.5 rounded border-l-2 border-emerald-500 flex items-start gap-2 font-mono">
                             <span className="text-emerald-400 select-none">+</span>
-                            <span className="whitespace-pre">{cleanPrompt}</span>
+                            <span className="whitespace-pre">{visiblePrompt}</span>
                           </div>
                         </>
                       )}
@@ -462,7 +467,7 @@ export const FindingDetailModal: React.FC<FindingDetailModalProps> = ({
                     </button>
                   </div>
                   <div className="bg-[#0A0A0C] p-4 rounded-xl border border-white/10 font-mono text-xs text-zinc-200 leading-relaxed select-text whitespace-pre-wrap max-h-[300px] overflow-y-auto">
-                    {formatFindingForJira(finding)}
+                    {formatFindingForJira(jiraFinding)}
                   </div>
                 </div>
               )}

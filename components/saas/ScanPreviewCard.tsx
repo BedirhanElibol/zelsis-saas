@@ -83,7 +83,7 @@ export const ScanPreviewCard: React.FC<ScanPreviewCardProps> = ({ result, onUnlo
           {hiddenCount > 0 && (
             <li className="flex items-center gap-2 text-xs text-zinc-400 font-mono">
               <Lock size={12} className="shrink-0" />
-              <span>+{hiddenCount} more findings, with file locations and fix prompts</span>
+              <span>+{hiddenCount} more findings, with exact file locations</span>
             </li>
           )}
         </ul>
@@ -95,7 +95,7 @@ export const ScanPreviewCard: React.FC<ScanPreviewCardProps> = ({ result, onUnlo
 
       <div className="px-4 py-3 border-t border-white/10 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
         <span className="text-[11px] font-mono text-zinc-400">
-          Free account: full report, exact lines and copy-paste fix prompts.
+          Free account: full report with exact file locations. Fix prompts with Pro.
         </span>
         <button
           type="button"

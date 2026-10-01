@@ -4,6 +4,7 @@ import React, { useState } from 'react';
 import { Project, Finding } from '@/data/schema';
 import { UserTier } from '@/data/schema';
 import { CheckSquare, Copy, CheckCircle2, AlertTriangle, ArrowRight, ShieldCheck, Lock } from 'lucide-react';
+import { hasFixPromptAccess } from '@/lib/subscription-utils';
 
 interface RemediationQueueViewProps {
   projects: Project[];
@@ -32,6 +33,10 @@ ${openFindings.map((f, idx) => `Task ${idx + 1}: [${f.severity}] ${f.title} (${f
 Remediation: ${f.remediationPrompt}`).join('\n\n')}`;
 
   const copyBatchPrompt = () => {
+    if (!hasFixPromptAccess(userTier)) {
+      onOpenCheckout?.('Pro');
+      return;
+    }
     navigator.clipboard.writeText(batchPromptText);
     setCopiedBatch(true);
     setTimeout(() => setCopiedBatch(false), 2000);
