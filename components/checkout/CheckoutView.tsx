@@ -240,6 +240,17 @@ export const CheckoutView: React.FC<CheckoutViewProps> = ({
     return formatRenewalDate(isoString);
   };
 
+  // Supabase user id, sent as checkout metadata so the Polar webhook upgrades this account
+  // even if the buyer types a different email on the Polar page.
+  const [accountId, setAccountId] = useState<string | null>(null);
+  useEffect(() => {
+    let active = true;
+    getSupabase()?.auth.getSession()
+      .then(({ data }) => { if (active) setAccountId(data.session?.user?.id ?? null); })
+      .catch(() => {});
+    return () => { active = false; };
+  }, [currentUser?.email]);
+
   const getPolarCheckoutUrl = () => {
     const base =
       selectedPlan.polarCheckoutUrl ||
@@ -251,6 +262,9 @@ export const CheckoutView: React.FC<CheckoutViewProps> = ({
       const targetEmail = (currentUser?.email || email || '').trim();
       if (targetEmail) {
         url.searchParams.set('customer_email', targetEmail);
+      }
+      if (accountId) {
+        url.searchParams.set('metadata[userId]', accountId);
       }
       const targetName = (currentUser?.name || fullName || '').trim();
       if (targetName) {
