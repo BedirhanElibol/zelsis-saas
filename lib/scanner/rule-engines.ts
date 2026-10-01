@@ -113,6 +113,7 @@ import { evaluateJavaSpringRules } from '../rules/java-spring-rules';
 import { evaluateDotnetCsharpRules } from '../rules/dotnet-csharp-rules';
 import { evaluateSaasCoreRules } from '../rules/saas-core-rules';
 import { evaluateJsCoreSecurityRules } from '../rules/js-core-security-rules';
+import { evaluatePolyglotCoreRules } from '../rules/polyglot-core-rules';
 
 export type RuleEngine = (
   file: CodeFile,
@@ -379,4 +380,6 @@ export const RULE_ENGINES: ReadonlyArray<{ evaluate: RuleEngine; scanRawContent?
   { evaluate: evaluateSaasCoreRules },
   // Node.js core injection: unsafe deserialization, XXE (JS-SEC-01 to 02, Rule IDs 24001-24002)
   { evaluate: evaluateJsCoreSecurityRules },
+  // Core injection classes for Java, Kotlin, Ruby, PHP, Python, C#, Go and templates (CORE-01 to 08, Rule IDs 24101-24108)
+  { evaluate: evaluatePolyglotCoreRules },
 ];

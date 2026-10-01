@@ -1,7 +1,7 @@
 import { evaluateAiCommentRules } from './rules/ai-comment-rules';
 import { Finding } from '@/data/schema';
 import type { CodeFile, ScanResult } from './scanner/types';
-import { isSecretRuleId, isTestFixturePath, stripComments, yieldToMain } from './scanner/text';
+import { isMinifiedContent, isSecretRuleId, isTestFixturePath, isVendoredPath, stripComments, yieldToMain } from './scanner/text';
 import { parseZelsisIgnore } from './scanner/ignore-parser';
 import { parseZelsisRc } from './scanner/rc-config';
 import { calculateGateStatus, calculateReadinessScore, gatingFindings } from './scanner/scoring';
@@ -59,6 +59,7 @@ export async function runStaticCodeScan(files: CodeFile[], repoName: string = 'T
     logs.push(`[${new Date().toLocaleTimeString()}] [CONFIG] Exclusion filter active: Suppressing ${ignoredRuleIds.size} rules & ${ignoredPaths.length} path patterns.`);
   }
 
+  let skippedThirdParty = 0;
   const validFiles = files.filter((f) => {
     if (!f || typeof f.path !== 'string') return false;
     const lowerPath = (f.path || '').toLowerCase();
@@ -88,6 +89,10 @@ export async function runStaticCodeScan(files: CodeFile[], repoName: string = 'T
     ) {
       return false;
     }
+    if (isVendoredPath(f.path) || isMinifiedContent(f.content || '')) {
+      skippedThirdParty++;
+      return false;
+    }
     if (ignoredPaths.some(ip => lowerPath.includes(ip))) {
       return false;
     }
@@ -98,6 +103,9 @@ export async function runStaticCodeScan(files: CodeFile[], repoName: string = 'T
   let fileLimitWarning: string | undefined = undefined;
 
   logs.push(`[${new Date().toLocaleTimeString()}] [INFO] Repository tree loaded: ${targetFiles.length} total source files queued for file-by-file audit.`);
+  if (skippedThirdParty > 0) {
+    logs.push(`[${new Date().toLocaleTimeString()}] [INFO] Skipped ${skippedThirdParty} vendored or minified third-party file(s); dependencies are checked through their manifests instead.`);
+  }
   logs.push(`[${new Date().toLocaleTimeString()}] --------------------------------------------------`);
 
   let findingCounter = 1;

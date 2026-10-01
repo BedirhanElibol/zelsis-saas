@@ -1,6 +1,6 @@
 {
  "generatedAt": "2026-10-01",
- "cleanRepos": 8,
+ "cleanRepos": 12,
  "experimental": [
   {
    "ruleId": 20,
@@ -27,15 +27,22 @@
    "ruleId": 48,
    "title": "UI-48: Dynamic Variable Injection Missing Fallback",
    "severity": "HIGH",
-   "cleanRepos": 4,
-   "cleanFindings": 102
+   "cleanRepos": 7,
+   "cleanFindings": 113
   },
   {
    "ruleId": 106,
    "title": "UI-106: Empty Silent Catch Block",
    "severity": "HIGH",
+   "cleanRepos": 2,
+   "cleanFindings": 5
+  },
+  {
+   "ruleId": 117,
+   "title": "UI-117: Uncleaned Event Listener Memory Leak",
+   "severity": "HIGH",
    "cleanRepos": 1,
-   "cleanFindings": 4
+   "cleanFindings": 1
   },
   {
    "ruleId": 231,
@@ -48,8 +55,8 @@
    "ruleId": 1007,
    "title": "UI-07: Conversational Chat-Wrapper Lock-In Trap",
    "severity": "HIGH",
-   "cleanRepos": 2,
-   "cleanFindings": 2
+   "cleanRepos": 3,
+   "cleanFindings": 3
   },
   {
    "ruleId": 1029,
@@ -62,8 +69,8 @@
    "ruleId": 2008,
    "title": "Missing Session Revocation / tokenVersion Invalidation on Password Reset",
    "severity": "HIGH",
-   "cleanRepos": 3,
-   "cleanFindings": 19
+   "cleanRepos": 4,
+   "cleanFindings": 20
   },
   {
    "ruleId": 3004,
@@ -71,6 +78,13 @@
    "severity": "HIGH",
    "cleanRepos": 1,
    "cleanFindings": 1
+  },
+  {
+   "ruleId": 3007,
+   "title": "Kubernetes Workload Manifest Missing CPU/Memory Resource Limits (DoS Risk)",
+   "severity": "HIGH",
+   "cleanRepos": 1,
+   "cleanFindings": 2
   },
   {
    "ruleId": 3009,
@@ -83,6 +97,13 @@
    "ruleId": 3013,
    "title": "Container Compose Definition Missing Read-Only Root Filesystem Guard",
    "severity": "HIGH",
+   "cleanRepos": 5,
+   "cleanFindings": 7
+  },
+  {
+   "ruleId": 5100,
+   "title": "SEC-SECRET-100: Generic High-Entropy Hex/Base64 API Key",
+   "severity": "CRITICAL",
    "cleanRepos": 1,
    "cleanFindings": 1
   },
@@ -97,6 +118,13 @@
    "ruleId": 6002,
    "title": "DB-PERF-02: Missing Index on Foreign Key Columns",
    "severity": "HIGH",
+   "cleanRepos": 2,
+   "cleanFindings": 2
+  },
+  {
+   "ruleId": 6004,
+   "title": "DB-PERF-04: Unbounded SELECT * Full Table Scan",
+   "severity": "HIGH",
    "cleanRepos": 1,
    "cleanFindings": 1
   },
@@ -104,8 +132,8 @@
    "ruleId": 6008,
    "title": "DB-PERF-08: Missing ON DELETE Strategy on Foreign Key Constraints",
    "severity": "HIGH",
-   "cleanRepos": 3,
-   "cleanFindings": 58
+   "cleanRepos": 4,
+   "cleanFindings": 59
   },
   {
    "ruleId": 6010,
@@ -143,11 +171,18 @@
    "cleanFindings": 1
   },
   {
+   "ruleId": 7011,
+   "title": "CLOUD-11: Kubernetes Pod Missing CPU & Memory Requests/Limits",
+   "severity": "HIGH",
+   "cleanRepos": 1,
+   "cleanFindings": 2
+  },
+  {
    "ruleId": 7102,
    "title": "WEB-PERF-02: Unsized Image or Video Element Causing Layout Shift",
    "severity": "HIGH",
-   "cleanRepos": 2,
-   "cleanFindings": 4
+   "cleanRepos": 5,
+   "cleanFindings": 14
   },
   {
    "ruleId": 7130,
@@ -234,11 +269,18 @@
    "cleanFindings": 1
   },
   {
-   "ruleId": 8123,
-   "title": "ZERO-AUTH-23: Missing Secure Context Requirement on WebAuthn Credentials",
+   "ruleId": 8121,
+   "title": "ZERO-AUTH-21: Unrestricted API Key Scope (Full Account Access by Default)",
    "severity": "HIGH",
    "cleanRepos": 1,
    "cleanFindings": 1
+  },
+  {
+   "ruleId": 8123,
+   "title": "ZERO-AUTH-23: Missing Secure Context Requirement on WebAuthn Credentials",
+   "severity": "HIGH",
+   "cleanRepos": 2,
+   "cleanFindings": 2
   },
   {
    "ruleId": 8133,
@@ -276,6 +318,76 @@
    "cleanFindings": 5
   },
   {
+   "ruleId": 8803,
+   "title": "PY-SEC-03: Subprocess Execution with shell=True",
+   "severity": "CRITICAL",
+   "cleanRepos": 1,
+   "cleanFindings": 1
+  },
+  {
+   "ruleId": 8804,
+   "title": "PY-SEC-04: Python SQL Injection via String Interpolation (f-string / format / %)",
+   "severity": "CRITICAL",
+   "cleanRepos": 1,
+   "cleanFindings": 1
+  },
+  {
+   "ruleId": 8805,
+   "title": "PY-SEC-05: Django / Flask DEBUG Mode Enabled in Production Settings",
+   "severity": "HIGH",
+   "cleanRepos": 1,
+   "cleanFindings": 1
+  },
+  {
+   "ruleId": 8809,
+   "title": "PY-SEC-09: Hardcoded Secret Key in Flask / Django Settings",
+   "severity": "CRITICAL",
+   "cleanRepos": 1,
+   "cleanFindings": 1
+  },
+  {
+   "ruleId": 8812,
+   "title": "PY-SEC-12: Weak Cryptographic Hash Algorithm (MD5 / SHA-1)",
+   "severity": "HIGH",
+   "cleanRepos": 1,
+   "cleanFindings": 1
+  },
+  {
+   "ruleId": 8817,
+   "title": "PY-SEC-17: CSRF Protection Disabled (@csrf_exempt / WTF_CSRF_ENABLED = False)",
+   "severity": "HIGH",
+   "cleanRepos": 1,
+   "cleanFindings": 1
+  },
+  {
+   "ruleId": 8824,
+   "title": "PY-SEC-24: Use of Assert Statement for Security or Authorization Checks",
+   "severity": "HIGH",
+   "cleanRepos": 1,
+   "cleanFindings": 1
+  },
+  {
+   "ruleId": 8902,
+   "title": "K8S-02: Container Allowed to Run as Root User",
+   "severity": "HIGH",
+   "cleanRepos": 1,
+   "cleanFindings": 2
+  },
+  {
+   "ruleId": 8903,
+   "title": "K8S-03: Missing CPU and Memory Resource Limits",
+   "severity": "HIGH",
+   "cleanRepos": 1,
+   "cleanFindings": 2
+  },
+  {
+   "ruleId": 8907,
+   "title": "K8S-07: Missing Liveness and Readiness Health Probes",
+   "severity": "HIGH",
+   "cleanRepos": 1,
+   "cleanFindings": 2
+  },
+  {
    "ruleId": 9101,
    "title": "TENANT-01: Cross-Tenant Query Missing Tenant ID Filter Clause",
    "severity": "CRITICAL",
@@ -300,8 +412,8 @@
    "ruleId": 10201,
    "title": "GRPC-01: Missing Per-RPC Client Deadline / Timeout Propagation",
    "severity": "HIGH",
-   "cleanRepos": 3,
-   "cleanFindings": 15
+   "cleanRepos": 6,
+   "cleanFindings": 21
   },
   {
    "ruleId": 10204,
@@ -309,6 +421,13 @@
    "severity": "HIGH",
    "cleanRepos": 1,
    "cleanFindings": 1
+  },
+  {
+   "ruleId": 10302,
+   "title": "PG-02: Missing Index on High-Cardinality Foreign Key Columns",
+   "severity": "HIGH",
+   "cleanRepos": 1,
+   "cleanFindings": 3
   },
   {
    "ruleId": 10304,
@@ -335,22 +454,29 @@
    "ruleId": 10603,
    "title": "SOC2-03: Missing Automated Dependency Vulnerability Scanning in CI/CD (CC7.1)",
    "severity": "HIGH",
-   "cleanRepos": 2,
-   "cleanFindings": 3
+   "cleanRepos": 4,
+   "cleanFindings": 5
   },
   {
-   "ruleId": 10802,
-   "title": "ISO-02: Privileged Access Rights Granted Without Documented Approval (A.5.18)",
+   "ruleId": 10604,
+   "title": "SOC2-04: Absence of Regular Automated Database Backup Verification (CC5.2)",
    "severity": "HIGH",
    "cleanRepos": 1,
    "cleanFindings": 1
   },
   {
+   "ruleId": 10802,
+   "title": "ISO-02: Privileged Access Rights Granted Without Documented Approval (A.5.18)",
+   "severity": "HIGH",
+   "cleanRepos": 2,
+   "cleanFindings": 2
+  },
+  {
    "ruleId": 10902,
    "title": "OAUTH-02: Permissive Wildcard Redirect URI in OAuth Client Configuration",
    "severity": "CRITICAL",
-   "cleanRepos": 2,
-   "cleanFindings": 4
+   "cleanRepos": 3,
+   "cleanFindings": 11
   },
   {
    "ruleId": 11105,
@@ -370,15 +496,15 @@
    "ruleId": 11402,
    "title": "GW-02: Missing Token Bucket Rate Limiting on Credential Authentication Routes",
    "severity": "CRITICAL",
-   "cleanRepos": 3,
-   "cleanFindings": 34
+   "cleanRepos": 4,
+   "cleanFindings": 35
   },
   {
    "ruleId": 11505,
    "title": "DATA-05: Unencrypted Sensitive Customer PII in Data Warehouse Staging Tables",
    "severity": "CRITICAL",
-   "cleanRepos": 1,
-   "cleanFindings": 1
+   "cleanRepos": 2,
+   "cleanFindings": 3
   },
   {
    "ruleId": 11604,
@@ -416,6 +542,20 @@
    "cleanFindings": 1
   },
   {
+   "ruleId": 11801,
+   "title": "DNS-01: DNSSEC Signature Validation Missing on Authoritative Zone",
+   "severity": "HIGH",
+   "cleanRepos": 1,
+   "cleanFindings": 1
+  },
+  {
+   "ruleId": 11802,
+   "title": "DNS-02: Dangling DNS Record Vulnerable to Subdomain Takeover",
+   "severity": "CRITICAL",
+   "cleanRepos": 2,
+   "cleanFindings": 4
+  },
+  {
    "ruleId": 11803,
    "title": "DNS-03: Missing CAA (Certification Authority Authorization) Record",
    "severity": "HIGH",
@@ -426,8 +566,8 @@
    "ruleId": 12003,
    "title": "GRPH-03: Missing Schema Index on High-Cardinality Graph Properties",
    "severity": "HIGH",
-   "cleanRepos": 3,
-   "cleanFindings": 34
+   "cleanRepos": 5,
+   "cleanFindings": 40
   },
   {
    "ruleId": 12205,
@@ -437,18 +577,32 @@
    "cleanFindings": 1
   },
   {
+   "ruleId": 12303,
+   "title": "TLS-03: Missing HSTS (HTTP Strict Transport Security) Preload Directive",
+   "severity": "HIGH",
+   "cleanRepos": 1,
+   "cleanFindings": 2
+  },
+  {
    "ruleId": 12602,
    "title": "SBOM-02: Unsigned Container Images and Missing Cosign Cryptographic Signatures",
    "severity": "CRITICAL",
-   "cleanRepos": 1,
-   "cleanFindings": 1
+   "cleanRepos": 2,
+   "cleanFindings": 2
   },
   {
    "ruleId": 12603,
    "title": "SBOM-03: SLSA Level 3 Provenance Attestation Missing in CI/CD Build Pipeline",
    "severity": "HIGH",
-   "cleanRepos": 3,
-   "cleanFindings": 5
+   "cleanRepos": 5,
+   "cleanFindings": 8
+  },
+  {
+   "ruleId": 13002,
+   "title": "SEARCH-02: Unindexed Leading Wildcard Search Triggering Full Cluster Scans",
+   "severity": "HIGH",
+   "cleanRepos": 1,
+   "cleanFindings": 1
   },
   {
    "ruleId": 13302,
@@ -468,8 +622,15 @@
    "ruleId": 13403,
    "title": "SOX-03: SOX ITGC Audit Trail: Missing Immutable Logging for Financial Transaction Modifications",
    "severity": "CRITICAL",
+   "cleanRepos": 2,
+   "cleanFindings": 2
+  },
+  {
+   "ruleId": 13502,
+   "title": "VECTOR-02: Embedding Vector Dimension Mismatch at Query Time",
+   "severity": "HIGH",
    "cleanRepos": 1,
-   "cleanFindings": 1
+   "cleanFindings": 4
   },
   {
    "ruleId": 13602,
@@ -486,18 +647,32 @@
    "cleanFindings": 1
   },
   {
+   "ruleId": 13803,
+   "title": "ASVS-03: ASVS V4.1 Access Control: Insecure Direct Object References (IDOR) on Tenant APIs",
+   "severity": "CRITICAL",
+   "cleanRepos": 2,
+   "cleanFindings": 5
+  },
+  {
    "ruleId": 13805,
    "title": "ASVS-05: ASVS V6.2 Cryptographic Storage: Using Insecure Random Salt or Low Iteration Counts",
    "severity": "CRITICAL",
-   "cleanRepos": 6,
-   "cleanFindings": 17
+   "cleanRepos": 7,
+   "cleanFindings": 32
+  },
+  {
+   "ruleId": 13902,
+   "title": "FEDRAMP-02: FedRAMP AC-17 Remote Access: Missing FIPS 140-3 Validated Cryptography",
+   "severity": "CRITICAL",
+   "cleanRepos": 1,
+   "cleanFindings": 1
   },
   {
    "ruleId": 14104,
    "title": "SLSA-04: Mutable Git Tags Used in Release Pipeline Rather Than Commit SHAs",
    "severity": "HIGH",
-   "cleanRepos": 1,
-   "cleanFindings": 3
+   "cleanRepos": 2,
+   "cleanFindings": 5
   },
   {
    "ruleId": 14303,
@@ -514,11 +689,25 @@
    "cleanFindings": 2
   },
   {
-   "ruleId": 15201,
-   "title": "WASM-EDGE-01: Unbounded WebAssembly Linear Memory Allocation Permitting Edge Worker OOM",
+   "ruleId": 14704,
+   "title": "GRPCSEC-04: Unprotected gRPC Server Reflection Enabled in Production",
+   "severity": "HIGH",
+   "cleanRepos": 2,
+   "cleanFindings": 3
+  },
+  {
+   "ruleId": 14901,
+   "title": "GLBA-01: GLBA §314.4(a) Designation of Qualified Information Security Officer",
    "severity": "CRITICAL",
    "cleanRepos": 1,
    "cleanFindings": 1
+  },
+  {
+   "ruleId": 15201,
+   "title": "WASM-EDGE-01: Unbounded WebAssembly Linear Memory Allocation Permitting Edge Worker OOM",
+   "severity": "CRITICAL",
+   "cleanRepos": 3,
+   "cleanFindings": 10
   },
   {
    "ruleId": 15203,

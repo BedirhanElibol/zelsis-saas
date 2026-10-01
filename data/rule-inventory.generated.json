@@ -1,8 +1,8 @@
 {
  "summary": {
-  "implementedRules": 1476,
-  "testedRules": 91,
-  "preciseLocationRules": 402,
+  "implementedRules": 1484,
+  "testedRules": 99,
+  "preciseLocationRules": 410,
   "catalogEntries": 1922,
   "catalogOnlyNotImplemented": 770,
   "catalogPlaceholderMetadata": 1810
@@ -15466,6 +15466,86 @@
    "title": "XML External Entity (XXE) Expansion Enabled",
    "severity": "HIGH",
    "source": "lib/rules/js-core-security-rules.ts",
+   "preciseLocation": true,
+   "tested": true,
+   "inCatalog": false
+  },
+  {
+   "ruleId": 24101,
+   "code": "RULE-24101",
+   "title": "SQL Injection: Query Built From Dynamic Values",
+   "severity": "CRITICAL",
+   "source": "lib/rules/polyglot-core-rules.ts",
+   "preciseLocation": true,
+   "tested": true,
+   "inCatalog": false
+  },
+  {
+   "ruleId": 24102,
+   "code": "RULE-24102",
+   "title": "OS Command Injection: Shell Command Built From Dynamic Values",
+   "severity": "CRITICAL",
+   "source": "lib/rules/polyglot-core-rules.ts",
+   "preciseLocation": true,
+   "tested": true,
+   "inCatalog": false
+  },
+  {
+   "ruleId": 24103,
+   "code": "RULE-24103",
+   "title": "Insecure Deserialization of Untrusted Data",
+   "severity": "CRITICAL",
+   "source": "lib/rules/polyglot-core-rules.ts",
+   "preciseLocation": true,
+   "tested": true,
+   "inCatalog": false
+  },
+  {
+   "ruleId": 24104,
+   "code": "RULE-24104",
+   "title": "XML External Entity (XXE) Processing Enabled",
+   "severity": "HIGH",
+   "source": "lib/rules/polyglot-core-rules.ts",
+   "preciseLocation": true,
+   "tested": true,
+   "inCatalog": false
+  },
+  {
+   "ruleId": 24105,
+   "code": "RULE-24105",
+   "title": "Cross-Site Scripting (XSS): Output Escaping Bypassed",
+   "severity": "HIGH",
+   "source": "lib/rules/polyglot-core-rules.ts",
+   "preciseLocation": true,
+   "tested": true,
+   "inCatalog": false
+  },
+  {
+   "ruleId": 24106,
+   "code": "RULE-24106",
+   "title": "File Inclusion: include/require With a Request-Controlled Path",
+   "severity": "CRITICAL",
+   "source": "lib/rules/polyglot-core-rules.ts",
+   "preciseLocation": true,
+   "tested": true,
+   "inCatalog": false
+  },
+  {
+   "ruleId": 24107,
+   "code": "RULE-24107",
+   "title": "Unrestricted File Upload",
+   "severity": "HIGH",
+   "source": "lib/rules/polyglot-core-rules.ts",
+   "preciseLocation": true,
+   "tested": true,
+   "inCatalog": false
+  },
+  {
+   "ruleId": 24108,
+   "code": "RULE-24108",
+   "title": "Weak Password Hashing (MD5 / SHA-1)",
+   "severity": "HIGH",
+   "source": "lib/rules/polyglot-core-rules.ts",
    "preciseLocation": true,
    "tested": true,
    "inCatalog": false

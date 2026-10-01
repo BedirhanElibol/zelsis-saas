@@ -1,16 +1,125 @@
 {
   "note": "Pinned open-source repositories used to measure Zelsis rules. 'clean' = mature, maintained apps (HIGH/CRITICAL findings there are reviewed as likely false positives). 'vulnerable' = intentionally vulnerable apps with documented flaws (expected findings measure recall).",
   "repos": [
-    { "name": "vercel/nextjs-subscription-payments", "sha": "bdd0813206e47e6b218d42f15a7976c8a0d3c3eb", "kind": "clean", "stack": "Next.js + Supabase + Stripe" },
-    { "name": "shadcn-ui/taxonomy", "sha": "298a8857c7128a0d121e7f699dfd729f23b3966d", "kind": "clean", "stack": "Next.js + Prisma + Stripe + NextAuth" },
-    { "name": "fastapi/full-stack-fastapi-template", "sha": "cb740b656d7a0a6c5e12c7bf8e50343ec94ee9c7", "kind": "clean", "stack": "FastAPI + React" },
-    { "name": "gothinkster/node-express-realworld-example-app", "sha": "30b68e1e881462b2f4164ea09ab4c4f5699c7b0b", "kind": "clean", "stack": "Express + Prisma" },
-    { "name": "gothinkster/golang-gin-realworld-example-app", "sha": "626c372d259472148d93303f74aa9b9a1cdcef24", "kind": "clean", "stack": "Go + Gin" },
-    { "name": "laravel/laravel", "sha": "06d016a364a37430eec9cbc52209adce3d7667ce", "kind": "clean", "stack": "Laravel" },
-    { "name": "documenso/documenso", "sha": "8a41a3bf618d9e46e2e1c0f437aa0488d91b85de", "kind": "clean", "stack": "Remix/React Router + Prisma + tRPC (production SaaS)" },
-    { "name": "supabase/supabase-js", "sha": "a684cf97b67fd71670bab5030fe88b219f2c09fe", "kind": "clean", "stack": "TypeScript SDK" },
-    { "name": "OWASP/NodeGoat", "sha": "c5cb68a7084e4ae7dcc60e6a98768720a81841e8", "kind": "vulnerable", "stack": "Express + MongoDB" },
-    { "name": "appsecco/dvna", "sha": "9ba473add536f66ac9007966acb2a775dd31277a", "kind": "vulnerable", "stack": "Express + Sequelize" },
-    { "name": "juice-shop/juice-shop", "sha": "1618a611b173b4bf114028e6e02549950606e29d", "kind": "vulnerable", "stack": "Express + Angular + Sequelize" }
+    {
+      "name": "vercel/nextjs-subscription-payments",
+      "sha": "bdd0813206e47e6b218d42f15a7976c8a0d3c3eb",
+      "kind": "clean",
+      "stack": "Next.js + Supabase + Stripe"
+    },
+    {
+      "name": "shadcn-ui/taxonomy",
+      "sha": "298a8857c7128a0d121e7f699dfd729f23b3966d",
+      "kind": "clean",
+      "stack": "Next.js + Prisma + Stripe + NextAuth"
+    },
+    {
+      "name": "fastapi/full-stack-fastapi-template",
+      "sha": "cb740b656d7a0a6c5e12c7bf8e50343ec94ee9c7",
+      "kind": "clean",
+      "stack": "FastAPI + React"
+    },
+    {
+      "name": "gothinkster/node-express-realworld-example-app",
+      "sha": "30b68e1e881462b2f4164ea09ab4c4f5699c7b0b",
+      "kind": "clean",
+      "stack": "Express + Prisma"
+    },
+    {
+      "name": "gothinkster/golang-gin-realworld-example-app",
+      "sha": "626c372d259472148d93303f74aa9b9a1cdcef24",
+      "kind": "clean",
+      "stack": "Go + Gin"
+    },
+    {
+      "name": "laravel/laravel",
+      "sha": "06d016a364a37430eec9cbc52209adce3d7667ce",
+      "kind": "clean",
+      "stack": "Laravel"
+    },
+    {
+      "name": "documenso/documenso",
+      "sha": "8a41a3bf618d9e46e2e1c0f437aa0488d91b85de",
+      "kind": "clean",
+      "stack": "Remix/React Router + Prisma + tRPC (production SaaS)"
+    },
+    {
+      "name": "supabase/supabase-js",
+      "sha": "a684cf97b67fd71670bab5030fe88b219f2c09fe",
+      "kind": "clean",
+      "stack": "TypeScript SDK"
+    },
+    {
+      "name": "OWASP/NodeGoat",
+      "sha": "c5cb68a7084e4ae7dcc60e6a98768720a81841e8",
+      "kind": "vulnerable",
+      "stack": "Express + MongoDB"
+    },
+    {
+      "name": "appsecco/dvna",
+      "sha": "9ba473add536f66ac9007966acb2a775dd31277a",
+      "kind": "vulnerable",
+      "stack": "Express + Sequelize"
+    },
+    {
+      "name": "juice-shop/juice-shop",
+      "sha": "1618a611b173b4bf114028e6e02549950606e29d",
+      "kind": "vulnerable",
+      "stack": "Express + Angular + Sequelize"
+    },
+    {
+      "name": "spring-projects/spring-petclinic",
+      "sha": "500158f732419217507c7656904b8e6aa1bcc0d6",
+      "kind": "clean",
+      "stack": "Java + Spring Boot"
+    },
+    {
+      "name": "dotnet-architecture/eShopOnWeb",
+      "sha": "4da8212117e87d808d4bbc7da6286fd2147ce606",
+      "kind": "clean",
+      "stack": "C# + ASP.NET Core"
+    },
+    {
+      "name": "rubygems/rubygems.org",
+      "sha": "36e040d0c8a3282959bff078894a5d458f991472",
+      "kind": "clean",
+      "stack": "Ruby on Rails (production service)"
+    },
+    {
+      "name": "django/djangoproject.com",
+      "sha": "fc7a27e9fa6c7f2561dd761eae87da69b90126e5",
+      "kind": "clean",
+      "stack": "Python + Django (production site)"
+    },
+    {
+      "name": "WebGoat/WebGoat",
+      "sha": "3284a8e466dfde083858f681e89aabb94e8b9c9e",
+      "kind": "vulnerable",
+      "stack": "Java + Spring"
+    },
+    {
+      "name": "OWASP/railsgoat",
+      "sha": "f5951f13089d85c979de09e7da3c8c0fb982f94a",
+      "kind": "vulnerable",
+      "stack": "Ruby on Rails"
+    },
+    {
+      "name": "digininja/DVWA",
+      "sha": "b496a5d3de6b967410155e1b7d3e51e9d035eb22",
+      "kind": "vulnerable",
+      "stack": "PHP"
+    },
+    {
+      "name": "adeyosemanputra/pygoat",
+      "sha": "19d17cc8874861142b330636d068bbde54e86b85",
+      "kind": "vulnerable",
+      "stack": "Python + Django"
+    },
+    {
+      "name": "anxolerd/dvpwa",
+      "sha": "a1d8f89fac2e57093189853c6527c2b01fc1d9c1",
+      "kind": "vulnerable",
+      "stack": "Python + aiohttp"
+    }
   ]
 }

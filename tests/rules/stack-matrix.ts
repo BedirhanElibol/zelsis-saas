@@ -106,3 +106,49 @@ cases.push({ id: 'webhook:ui-settings-page', expect: 'clean', rules: [8143], ...
 // Developer scripts: interpolated git/tooling commands are not request-driven injection
 cases.push({ id: 'cmd-injection:dev-script-template', expect: 'clean', rules: [33], ...R('scripts/release-canary.ts', "import { execSync } from 'child_process'\nconst tag = execSync('git describe --tags --abbrev=0').toString().trim()\nconst log = execSync(`git log ${tag}..HEAD --oneline`).toString()\nconsole.log(log)\n") });
 cases.push({ id: 'cmd-injection:server-template', expect: 'detect', rules: [33], ...R('server/convert.ts', "import { exec } from 'child_process'\nexport function convert(file: string) {\n  exec(`convert ${file} out.png`)\n}\n") });
+// Vendored / minified third-party libraries are not the customer's code
+cases.push({ id: 'vendored:static-js-lib', expect: 'clean', rules: [32], ...R('djangoproject/static/js/lib/require.js', 'define=function(b){return eval(b)};\n') });
+cases.push({ id: 'minified:bundle-without-min-suffix', expect: 'clean', rules: [32], ...R('public/app.js', 'var a=' + JSON.stringify('x'.repeat(6000)) + ';eval(a);') });
+cases.push({ id: 'eval:app-code', expect: 'detect', rules: [32], ...R('routes/contributions.js', 'exports.handle = (req, res) => {\n  const preTax = eval(req.body.preTax);\n  res.json({ preTax });\n};\n') });
+// CORE-01..08 across languages: vulnerable form detected, safe form clean
+const core: [string, number, 'detect' | 'clean', string, string][] = [
+  ['sqli:java-concat', 24101, 'detect', 'src/main/java/app/UserRepo.java', 'class UserRepo {\n  List<User> find(String name) throws Exception {\n    String query = "SELECT * FROM users WHERE name = \'" + name + "\'";\n    return jdbc.createStatement().executeQuery(query);\n  }\n}\n'],
+  ['sqli:java-prepared', 24101, 'clean', 'src/main/java/app/UserRepo.java', 'class UserRepo {\n  List<User> find(String name) throws Exception {\n    PreparedStatement ps = conn.prepareStatement("SELECT * FROM users WHERE name = ?");\n    ps.setString(1, name);\n    return ps.executeQuery();\n  }\n}\n'],
+  ['sqli:ruby-where-interp', 24101, 'detect', 'app/controllers/users_controller.rb', 'class UsersController < ApplicationController\n  def show\n    @user = User.where("id = \'#{params[:id]}\'").first\n  end\nend\n'],
+  ['sqli:ruby-where-hash', 24101, 'clean', 'app/controllers/users_controller.rb', 'class UsersController < ApplicationController\n  def show\n    @user = User.where(id: params[:id]).first\n  end\nend\n'],
+  ['sqli:ruby-quoted-table-name', 24101, 'clean', 'app/models/download.rb', 'class Download < ApplicationRecord\n  def bump\n    connection.execute("UPDATE #{quoted_table_name} SET count = count + 1")\n  end\nend\n'],
+  ['sqli:php-interp', 24101, 'detect', 'src/user.php', '<?php\n$id = $_GET["id"];\n$result = mysqli_query($db, "SELECT * FROM users WHERE id = \'$id\'");\n'],
+  ['sqli:php-prepared', 24101, 'clean', 'src/user.php', '<?php\n$stmt = $pdo->prepare("SELECT * FROM users WHERE id = ?");\n$stmt->execute([$_GET["id"]]);\n'],
+  ['sqli:python-fstring', 24101, 'detect', 'app/db.py', 'def find(cur, name):\n    cur.execute(f"SELECT * FROM users WHERE name = \'{name}\'")\n'],
+  ['sqli:python-params', 24101, 'clean', 'app/db.py', 'def find(cur, name):\n    cur.execute("SELECT * FROM users WHERE name = %s", (name,))\n'],
+  ['sqli:csharp-interp', 24101, 'detect', 'Data/UserRepo.cs', 'public class UserRepo {\n  public User Find(string name) {\n    var cmd = new SqlCommand($"SELECT * FROM Users WHERE Name = \'{name}\'", conn);\n    return Map(cmd.ExecuteReader());\n  }\n}\n'],
+  ['sqli:go-sprintf', 24101, 'detect', 'store/users.go', 'func Find(db *sql.DB, name string) {\n\tdb.Query(fmt.Sprintf("SELECT * FROM users WHERE name = \'%s\'", name))\n}\n'],
+  ['cmd:ruby-system-interp', 24102, 'detect', 'app/models/backup.rb', 'class Backup\n  def run(file)\n    system("cp #{file} /backups/")\n  end\nend\n'],
+  ['cmd:ruby-system-args', 24102, 'clean', 'app/models/backup.rb', 'class Backup\n  def run(file)\n    system("cp", file, "/backups/")\n  end\nend\n'],
+  ['cmd:php-shell-exec', 24102, 'detect', 'ping.php', "<?php\n$target = $_POST['ip'];\n$out = shell_exec('ping -c 4 ' . $target);\n"],
+  ['cmd:python-shell-true', 24102, 'detect', 'app/tools.py', 'import subprocess\ndef convert(name):\n    subprocess.run("convert " + name, shell=True)\n'],
+  ['cmd:python-arg-list', 24102, 'clean', 'app/tools.py', 'import subprocess\ndef convert(name):\n    subprocess.run(["convert", name], check=True)\n'],
+  ['cmd:django-management-command', 24102, 'clean', 'docs/management/commands/update_docs.py', 'import subprocess\ndef handle(path):\n    subprocess.check_call("cd %s && make html" % path, shell=True)\n'],
+  ['deser:ruby-marshal', 24103, 'detect', 'app/controllers/sessions_controller.rb', 'class SessionsController < ApplicationController\n  def restore\n    user = Marshal.load(Base64.decode64(params[:user]))\n  end\nend\n'],
+  ['deser:python-pickle', 24103, 'detect', 'app/views.py', 'import pickle\ndef load(request):\n    return pickle.loads(request.body)\n'],
+  ['deser:python-yaml-safe', 24103, 'clean', 'app/config.py', 'import yaml\ndef load(text):\n    return yaml.load(text, Loader=yaml.SafeLoader)\n'],
+  ['deser:java-objectinputstream', 24103, 'detect', 'src/main/java/app/Importer.java', 'class Importer {\n  Object read(InputStream in) throws Exception {\n    ObjectInputStream ois = new ObjectInputStream(in);\n    return ois.readObject();\n  }\n}\n'],
+  ['xxe:java-default-factory', 24104, 'detect', 'src/main/java/app/XmlParser.java', 'class XmlParser {\n  Document parse(InputStream in) throws Exception {\n    DocumentBuilderFactory f = DocumentBuilderFactory.newInstance();\n    return f.newDocumentBuilder().parse(in);\n  }\n}\n'],
+  ['xxe:java-hardened-factory', 24104, 'clean', 'src/main/java/app/XmlParser.java', 'class XmlParser {\n  Document parse(InputStream in) throws Exception {\n    DocumentBuilderFactory f = DocumentBuilderFactory.newInstance();\n    f.setFeature("http://apache.org/xml/features/disallow-doctype-decl", true);\n    return f.newDocumentBuilder().parse(in);\n  }\n}\n'],
+  ['xss:erb-html-safe-params', 24105, 'detect', 'app/views/users/show.html.erb', '<h1><%= params[:name].html_safe %></h1>\n'],
+  ['xss:erb-html-safe-trusted', 24105, 'clean', 'app/views/layouts/application.html.erb', '<%= render_icon_svg.html_safe %>\n'],
+  ['xss:ruby-interp-params', 24105, 'detect', 'app/controllers/password_resets_controller.rb', 'class PasswordResetsController < ApplicationController\n  def create\n    flash[:error] = "Could not send email to #{params[:email]}".html_safe\n  end\nend\n'],
+  ['xss:php-echo-get', 24105, 'detect', 'hello.php', "<?php\necho 'Hello ' . $_GET['name'];\n"],
+  ['xss:php-escaped', 24105, 'clean', 'hello.php', "<?php\necho 'Hello ' . htmlspecialchars($name, ENT_QUOTES);\n"],
+  ['xss:django-safe-on-admin-content', 24105, 'clean', 'templates/blog/entry.html', '<h1>{{ entry.headline|safe }}</h1>\n'],
+  ['xss:email-autoescape-off', 24105, 'clean', 'templates/registration/password_reset_email.html', '{% autoescape off %}Reset: {{ url }}{% endautoescape %}\n'],
+  ['xss:jinja-autoescape-false', 24105, 'detect', 'app/app.py', "setup_jinja(app, loader=PackageLoader('app', 'templates'), autoescape=False)\n"],
+  ['include:php-request-path', 24106, 'detect', 'index.php', "<?php\n$file = $_GET['page'];\ninclude($file);\n"],
+  ['include:php-constant-path', 24106, 'clean', 'index.php', "<?php\n$file = __DIR__ . '/views/home.php';\ninclude($file);\n"],
+  ['upload:php-unchecked', 24107, 'detect', 'upload.php', "<?php\nmove_uploaded_file($_FILES['f']['tmp_name'], 'uploads/' . $_FILES['f']['name']);\n"],
+  ['upload:php-checked-extension', 24107, 'clean', 'upload.php', "<?php\n$ext = pathinfo($_FILES['f']['name'], PATHINFO_EXTENSION);\nif (!in_array($ext, ['jpg', 'png'])) exit;\nmove_uploaded_file($_FILES['f']['tmp_name'], 'uploads/' . bin2hex(random_bytes(8)) . '.' . $ext);\n"],
+  ['weakhash:python-password-md5', 24108, 'detect', 'app/auth.py', 'from hashlib import md5\ndef store(password):\n    return md5(password.encode()).hexdigest()\n'],
+  ['weakhash:checksum-md5', 24108, 'clean', 'scripts/s3_utils.py', 'import hashlib\ndef checksum(body):\n    return hashlib.md5(body).hexdigest()\n'],
+  ['weakhash:java-md5-password', 24108, 'detect', 'src/main/java/app/Hasher.java', 'class Hasher {\n  byte[] hashPassword(String password) throws Exception {\n    return MessageDigest.getInstance("MD5").digest(password.getBytes());\n  }\n}\n']
+];
+for (const [id, rule, expect, path, content] of core) cases.push({ id: `core-${id}`, expect, rules: [rule], ...R(path, content) });

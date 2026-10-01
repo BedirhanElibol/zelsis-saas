@@ -34,8 +34,19 @@ export function isTestFixturePath(path: string): boolean {
   const p = path.toLowerCase().replace(/\\/g, '/');
   return /(?:^|\/)(?:tests?|testing|__tests__|__mocks__|__fixtures__|fixtures?|e2e|cypress|spec|seeds?)\//.test(p) ||
     /\.(?:test|spec|e2e)\.[cm]?[jt]sx?$/.test(p) ||
-    /(?:^|\/)test_[^/]+\.py$|_test\.(?:py|go)$/.test(p);
+    /(?:^|\/)(?:test_[^/]+|tests|conftest)\.py$|_test\.(?:py|go)$|_spec\.rb$|Tests?\.(?:java|cs|kt)$/.test(p);
 }
 
 /** Hardcoded-secret rules stay active in test files. */
 export const isSecretRuleId = (ruleId: number): boolean => ruleId === 1 || ruleId === 43 || (ruleId >= 5001 && ruleId <= 5100);
+
+/** Third-party code copied into the repo (vendored libraries, bower/static lib folders). */
+export const isVendoredPath = (path: string): boolean =>
+  /(?:^|\/)(?:vendor|third_party|bower_components|jspm_packages|static\/(?:js\/)?libs?|public\/(?:js\/)?libs?|assets\/(?:js\/)?(?:libs?|vendor)|wwwroot\/lib)\//i.test(path.replace(/\\/g, '/'));
+
+/** Minified / generated bundles: very long average line length. */
+export function isMinifiedContent(content: string): boolean {
+  if (!content || content.length < 5000) return false;
+  const lineCount = content.split('\n').length;
+  return content.length / lineCount > 400;
+}

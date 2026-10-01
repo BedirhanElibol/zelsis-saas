@@ -43,6 +43,7 @@ function testedRuleIds(): Set<number> {
     add(t, /ruleIds:\s*\[([^\]]*)\]/g);
     add(t, /rules:\s*\[([^\]]*)\]/g);
     add(t, /^\s*\[(\d+),\s*['"]/gm);
+    add(t, /\[\s*'[^'\n]+',\s*(\d+),\s*'(?:detect|clean)'/g);
   }
   const legacy = read('tests/test_suite.ts');
   add(legacy, /ruleId\s*===\s*(\d+)/g);
