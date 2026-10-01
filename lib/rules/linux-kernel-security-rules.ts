@@ -16,7 +16,7 @@ export function evaluateLinuxKernelSecurityRules(file: CodeFile, lines: string[]
     const lowerPath = file.path.toLowerCase().replace(/\\/g, "/");
     // Skip non-container and non-infrastructure files
     if (
-        lowerPath.includes("data/catalogs/") || lowerPath.includes("data/mockdata") || lowerPath.includes("data/workspacefiles") || lowerPath.includes("data/schema") || lowerPath.includes("scratch/") || lowerPath.includes(".agent/") || lowerPath.includes("node_modules/") || lowerPath.endsWith(".d.ts") ||
+        lowerPath.includes("node_modules/") || lowerPath.endsWith(".d.ts") ||
         (!/\.(ya?ml|dockerfile)$/i.test(file.path) && !/docker|k8s|pod_spec|container_security/i.test(lowerPath))
     ) {
         return { findings, logs };

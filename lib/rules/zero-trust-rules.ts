@@ -4,6 +4,7 @@
  */
 import { Finding } from '@/data/schema';
 import { CodeFile } from '../scanner-engine';
+import { RATE_LIMIT_GUARD, SERVER_HANDLER, WEBHOOK_VERIFY, isOutboundWebhookSender } from './shared/stack-signals';
 export interface ZeroTrustRuleResult {
     findings: Finding[];
     logs: string[];
@@ -15,7 +16,7 @@ export function evaluateZeroTrustRules(file: CodeFile, lines: string[], cleanCon
     const logs: string[] = [];
     const lowerPath = file.path.toLowerCase().replace(/\\/g, '/');
     // Skip self-referential catalogs, mocks, and schema definitions
-    if (lowerPath.includes('data/catalogs/') || lowerPath.includes('data/mockdata') || lowerPath.includes('data/workspacefiles') || lowerPath.includes('data/schema') || lowerPath.includes('scratch/') || lowerPath.includes('.agent/') || lowerPath.includes('node_modules/') || lowerPath.endsWith('.d.ts')) {
+    if (lowerPath.includes('node_modules/') || lowerPath.endsWith('.d.ts')) {
         return { findings, logs };
     }
     const ts = new Date().toLocaleTimeString();
@@ -245,7 +246,7 @@ export function evaluateZeroTrustRules(file: CodeFile, lines: string[], cleanCon
         logs.push(`[${ts}] 🛡️ HIGH: ZERO-AUTH-09 finding in ${file.path}:${lineNum}`);
     }
     // ZERO-AUTH-10: Missing Rate Limiting on Authentication & Token Exchange Routes
-    if (/app\/api\/(?:v\d+\/)?(?:auth\/)?(?:login|signin|sign-in|signup|sign-up|register|forgot-password|reset-password|magic-link|otp|verify-otp|token)(?:\/|$|\b).*route\.(?:ts|js)$/i.test(file.path) && /export\s+async\s+function\s+POST/i.test(cleanContent) && !/rateLimit|limiter|checkRateLimit/i.test(cleanContent)) {
+    if (/app\/api\/(?:v\d+\/)?(?:auth\/)?(?:login|signin|sign-in|signup|sign-up|register|forgot-password|reset-password|magic-link|otp|verify-otp|token)(?:\/|$|\b).*route\.(?:ts|js)$/i.test(file.path) && /export\s+async\s+function\s+POST/i.test(cleanContent) && !RATE_LIMIT_GUARD.test(cleanContent)) {
         const matchLineIdx = lines.findIndex(l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('*') && (/zero-auth-10|missing/i.test(l) || lines.indexOf(l) === 0));
         const lineNum = matchLineIdx !== -1 ? matchLineIdx + 1 : 1;
         findings.push({
@@ -1070,7 +1071,9 @@ export function evaluateZeroTrustRules(file: CodeFile, lines: string[], cleanCon
         logs.push(`[${ts}] 🛡️ LOW: ZERO-AUTH-42 finding in ${file.path}:${lineNum}`);
     }
     // ZERO-AUTH-43: Missing Identity Verification on Webhook Receiver Endpoints
-    if (/app\/api\/(?:v\d+\/)?.*webhook.*\/route\.(?:ts|js)$/i.test(file.path) && !file.path.includes('test-webhook') && !(/(?:verify\w*Signature|timingSafeEqual|createHmac|constructEvent|validateEvent|webhooks?\.verify|new\s+Webhook)\s*\(/i.test(cleanContent) && /secret|signature/i.test(cleanContent))) {
+    const isWebhookHandler = (/webhook/i.test(file.path) && /\.(?:[cm]?[jt]sx?|py|rb|php)$/i.test(file.path) && SERVER_HANDLER.test(cleanContent)) ||
+        /\.(?:post|all)\s*\(\s*['"`][^'"`]*webhook/i.test(cleanContent);
+    if (isWebhookHandler && !isOutboundWebhookSender(cleanContent) && !(WEBHOOK_VERIFY.test(cleanContent) && /secret|signature/i.test(cleanContent))) {
         const matchLineIdx = lines.findIndex(l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('*') && (/zero-auth-43|missing/i.test(l) || lines.indexOf(l) === 0));
         const lineNum = matchLineIdx !== -1 ? matchLineIdx + 1 : 1;
         findings.push({

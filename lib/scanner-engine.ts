@@ -8,6 +8,7 @@ import { calculateGateStatus, calculateReadinessScore } from './scanner/scoring'
 import { RULE_ENGINES } from './scanner/rule-engines';
 import { evaluateBuiltinRules } from './scanner/builtin-rules';
 import { detectProjectDatabases } from './rules/multi-database-rules';
+import { detectAppStack } from './scanner/stack-detect';
 
 export type { CodeFile, ScanResult } from './scanner/types';
 export type { ZelsisRcConfig } from './scanner/rc-config';
@@ -15,6 +16,7 @@ export { isSecretRuleId, isTestFixturePath, stripComments, yieldToMain } from '.
 export { parseZelsisIgnore, parseShipguardIgnore } from './scanner/ignore-parser';
 export { parseZelsisRc } from './scanner/rc-config';
 export { calculateGateStatus, calculateReadinessScore } from './scanner/scoring';
+export { detectAppStack, UNDETECTED_FRAMEWORK } from './scanner/stack-detect';
 
 /**
  * Real Static AST & Pattern Analysis Engine
@@ -37,6 +39,7 @@ export async function runStaticCodeScan(files: CodeFile[], repoName: string = 'T
 
   // Pre-detect project database and ORM architecture before streaming loop cleans file memory
   const detectedStack = detectProjectDatabases(files);
+  const detectedApp = detectAppStack(files);
 
   logs.push(`[${new Date().toLocaleTimeString()}] [INFO] Initializing Zelsis High-Performance Static Pattern & AST Heuristics Engine v3.5...`);
   logs.push(`[${new Date().toLocaleTimeString()}] [TARGET] Repository: ${repoName}`);
@@ -70,9 +73,6 @@ export async function runStaticCodeScan(files: CodeFile[], repoName: string = 'T
       lowerPath.includes('third_party/') ||
       lowerPath.includes('public/vendor/') ||
       lowerPath.includes('assets/vendor/') ||
-      lowerPath.includes('data/catalogs/') ||
-      lowerPath.includes('data/workspacefiles.ts') ||
-      lowerPath.startsWith('scratch/') || lowerPath.includes('/scratch/') ||
       lowerPath.endsWith('package-lock.json') || lowerPath.endsWith('yarn.lock') || lowerPath.endsWith('pnpm-lock.yaml') ||
       lowerPath.endsWith('.png') ||
       lowerPath.endsWith('.jpg') ||
@@ -145,17 +145,6 @@ export async function runStaticCodeScan(files: CodeFile[], repoName: string = 'T
       continue;
     }
 
-    // Detect if current file is a rule catalog, scanner engine definition, or demo playground component
-    const isScannerRuleCatalog =
-      lowerFilePath.includes('lib/rules/') ||
-      lowerFilePath.includes('data/mockdata.ts') ||
-      lowerFilePath.includes('data/workspacefiles.ts') ||
-      lowerFilePath.includes('lib/scanner-engine.ts') ||
-      lowerFilePath.includes('lib/scanner/') ||
-      lowerFilePath.includes('vulnerabilityplayground.tsx') ||
-      lowerFilePath.includes('ruleknowledgebasemodal.tsx') ||
-      lowerFilePath.includes('interactiveanalyzer.tsx') ||
-      lowerFilePath.includes('05_seed_data.sql');
     const isTestFixture = isTestFixturePath(file?.path || '');
 
     // Helper to add finding unless suppressed or false-positive inside rule definition files
@@ -169,10 +158,6 @@ export async function runStaticCodeScan(files: CodeFile[], repoName: string = 'T
         (f.ruleId < 1000 && ignoredRuleIds.has(f.ruleId + 1000)) ||
         (f.ruleId >= 2001 && f.ruleId <= 2006 && ignoredRuleIds.has(f.ruleId - 2000))
       ) {
-        return;
-      }
-      // Filter out self-referential alerts inside scanner engine definition catalogs and demo playgrounds
-      if (isScannerRuleCatalog) {
         return;
       }
       // Test code does not ship: only leaked secrets count there
@@ -304,6 +289,8 @@ export async function runStaticCodeScan(files: CodeFile[], repoName: string = 'T
     logs,
     summary,
     detectedDatabases: detectedStack.databases,
-    detectedOrms: detectedStack.orms
+    detectedOrms: detectedStack.orms,
+    detectedFramework: detectedApp.framework ?? undefined,
+    detectedProviders: detectedApp.providers
   };
 }

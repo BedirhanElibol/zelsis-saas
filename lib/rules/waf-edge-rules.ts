@@ -4,6 +4,7 @@
  */
 import { Finding } from "@/data/schema";
 import { CodeFile } from "../scanner-engine";
+import { LLM_CALL, RATE_LIMIT_GUARD } from './shared/stack-signals';
 export interface WafEdgeRuleResult {
     findings: Finding[];
     logs: string[];
@@ -15,7 +16,7 @@ export function evaluateWafEdgeRules(file: CodeFile, lines: string[], cleanConte
     const logs: string[] = [];
     const lowerPath = file.path.toLowerCase().replace(/\\/g, "/");
     // Skip self-referential catalogs, mocks, and schema definitions
-    if (lowerPath.includes("data/catalogs/") || lowerPath.includes("data/mockdata") || lowerPath.includes("data/workspacefiles") || lowerPath.includes("data/schema") || lowerPath.includes("scratch/") || lowerPath.includes(".agent/") || lowerPath.includes("node_modules/") || lowerPath.endsWith(".d.ts")) {
+    if (lowerPath.includes("node_modules/") || lowerPath.endsWith(".d.ts")) {
         return { findings, logs };
     }
     const ts = new Date().toLocaleTimeString();
@@ -45,7 +46,7 @@ export function evaluateWafEdgeRules(file: CodeFile, lines: string[], cleanConte
     }
     // WAF-02: Missing Edge Rate Limiting on High-Cost AI Inference Endpoints
     const callsAiInference = /chat\.completions|chat\/completions|messages\.create|responses\.create|generateText|streamText|generateObject|streamObject|from\s+['"](?:openai|@anthropic-ai\/sdk|@ai-sdk\/[\w-]+|ai|@google\/generative-ai|@google\/genai|@mistralai\/mistralai|groq-sdk|cohere-ai|replicate|together-ai|ollama)['"]|api\.openai\.com|api\.anthropic\.com|generativelanguage\.googleapis\.com|api\.mistral\.ai|api\.groq\.com|openrouter\.ai\/api|api\.together\.xyz|api\.cohere\.(?:ai|com)|api\.deepseek\.com|api\.x\.ai/i.test(cleanContent);
-    if (callsAiInference && /export\s+async\s+function\s+POST/i.test(cleanContent) && !/rateLimit|ratelimit|limiter/i.test(cleanContent)) {
+    if ((callsAiInference || LLM_CALL.test(cleanContent)) && /export\s+async\s+function\s+POST/i.test(cleanContent) && !RATE_LIMIT_GUARD.test(cleanContent)) {
         const matchLineIdx = lines.findIndex(l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('*'));
         const lineNum = matchLineIdx !== -1 ? matchLineIdx + 1 : 1;
         findings.push({

@@ -16,7 +16,7 @@ export function evaluateAiCommentRules(file: CodeFile, lines: string[], rawConte
     const logs: string[] = [];
     const lowerPath = file.path.toLowerCase().replace(/\\/g, '/');
     // Skip documentation, markdown, catalogs, mocks, and agent instructions
-    if (lowerPath.includes('data/catalogs/') || lowerPath.includes('data/mockdata') || lowerPath.includes('data/workspacefiles') || lowerPath.includes('data/schema') || lowerPath.includes('scratch/') || lowerPath.includes('.agent/') || lowerPath.includes('docs/') || lowerPath.endsWith('.md') || lowerPath.endsWith('.d.ts')) {
+    if (lowerPath.includes('docs/') || lowerPath.endsWith('.md') || lowerPath.endsWith('.d.ts')) {
         return { findings, logs };
     }
     const ts = new Date().toLocaleTimeString();

@@ -23,7 +23,7 @@ export function evaluateFrontendRules(file: CodeFile, lines: string[], cleanCont
         file.path.endsWith('.html') ||
         file.path.endsWith('.css');
     const lowerPath = file.path.toLowerCase().replace(/\\/g, '/');
-    if (!isFrontend || lowerPath.includes('data/catalogs/'))
+    if (!isFrontend)
         return { findings, logs };
     const ts = new Date().toLocaleTimeString();
     // =========================================================================

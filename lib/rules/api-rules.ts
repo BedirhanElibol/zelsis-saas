@@ -4,6 +4,7 @@
  */
 import { Finding } from '@/data/schema';
 import { CodeFile } from '../scanner-engine';
+import { RATE_LIMIT_GUARD } from './shared/stack-signals';
 export interface ApiRuleResult {
     findings: Finding[];
     logs: string[];
@@ -15,7 +16,7 @@ export function evaluateApiRules(file: CodeFile, lines: string[], cleanContent: 
     const logs: string[] = [];
     const lowerPath = file.path.toLowerCase().replace(/\\/g, '/');
     // Skip self-referential catalogs, mocks, and schema definitions
-    if (lowerPath.includes('data/catalogs/') || lowerPath.includes('data/mockdata') || lowerPath.includes('data/workspacefiles') || lowerPath.includes('data/schema') || lowerPath.includes('scratch/') || lowerPath.includes('.agent/') || lowerPath.includes('node_modules/') || lowerPath.endsWith('.d.ts')) {
+    if (lowerPath.includes('node_modules/') || lowerPath.endsWith('.d.ts')) {
         return { findings, logs };
     }
     const ts = new Date().toLocaleTimeString();
@@ -498,7 +499,7 @@ export function evaluateApiRules(file: CodeFile, lines: string[], cleanContent: 
         logs.push(`[${ts}] 🌐 API-19: Wildcard Allowed Methods in CORS (Access-Control-Allow-Methods: '*') detected (${file.path}:${lineNum})`);
     }
     // API-20: Missing Rate Limiting on Authentication / Login Endpoints
-    if (/api\/(?:v\d+\/)?(?:auth\/)?(?:login|signin|sign-in|signup|sign-up|register|forgot-password|reset-password|magic-link|otp|verify-otp|token)(?:\/|$|\b)/i.test(lowerPath) && /export\s+async\s+function\s+POST/i.test(cleanContent) && !/rateLimit|limiter|checkLimit/i.test(cleanContent)) {
+    if (/api\/(?:v\d+\/)?(?:auth\/)?(?:login|signin|sign-in|signup|sign-up|register|forgot-password|reset-password|magic-link|otp|verify-otp|token)(?:\/|$|\b)/i.test(lowerPath) && /export\s+async\s+function\s+POST/i.test(cleanContent) && !RATE_LIMIT_GUARD.test(cleanContent)) {
         const matchLineIdx = lines.findIndex(l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('*') && (/api-20|missing/i.test(l) || lines.indexOf(l) === 0));
         const lineNum = matchLineIdx !== -1 ? matchLineIdx + 1 : 1;
         findings.push({

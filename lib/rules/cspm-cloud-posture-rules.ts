@@ -16,7 +16,7 @@ export function evaluateCspmCloudPostureRules(file: CodeFile, lines: string[], c
     const lowerPath = file.path.toLowerCase().replace(/\\/g, "/");
     // Skip non-cloud IaC and non-infrastructure configuration files
     if (
-        lowerPath.includes("data/catalogs/") || lowerPath.includes("data/mockdata") || lowerPath.includes("data/workspacefiles") || lowerPath.includes("data/schema") || lowerPath.includes("scratch/") || lowerPath.includes(".agent/") || lowerPath.includes("node_modules/") || lowerPath.endsWith(".d.ts") ||
+        lowerPath.includes("node_modules/") || lowerPath.endsWith(".d.ts") ||
         (!/\.(tf|tfvars|ya?ml)$/i.test(file.path) && !/terraform|cloudformation|iac|k8s|cloud/i.test(lowerPath))
     ) {
         return { findings, logs };

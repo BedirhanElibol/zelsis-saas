@@ -1,5 +1,6 @@
 import type { Finding } from '@/data/schema';
 import type { CodeFile } from '../scanner-engine';
+import { AUTH_GUARD, isOutboundWebhookSender } from './shared/stack-signals';
 export function evaluateSecurityRules(file: CodeFile, lines: string[], cleanContentOrCounter: string | {
     count: number;
 }, counterMaybe?: {
@@ -14,9 +15,6 @@ export function evaluateSecurityRules(file: CodeFile, lines: string[], cleanCont
     const findingCounter = typeof cleanContentOrCounter === 'object' ? cleanContentOrCounter : (counterMaybe || { count: 1 });
     const ts = new Date().toLocaleTimeString();
     const lowerPath = file.path.toLowerCase();
-    if (lowerPath.includes('data/catalogs/')) {
-        return { findings, logs };
-    }
     // Rule 1: Exposed Stripe/OpenAI API Keys (SEC-01)
     if (cleanContent.includes('sk_live_') || cleanContent.includes('sk-proj-') || /api[_-]?key\s*=\s*["']sk-[a-zA-Z0-9_-]{20,}/i.test(cleanContent)) {
         const matchLineIdx = lines.findIndex(l => !l.trim().startsWith('//') && !l.trim().startsWith('*') && (l.includes('sk_live_') || l.includes('sk-proj-') || /sk-[a-zA-Z0-9_-]{20,}/i.test(l)));
@@ -350,10 +348,10 @@ export function evaluateSecurityRules(file: CodeFile, lines: string[], cleanCont
     }
     // Rule 15 / SEC-15: Unauthenticated Next.js API Mutation Route Handler
     const isApiRoute = (lowerPath.includes('app/api/') || lowerPath.includes('pages/api/')) && /\.(?:ts|js)$/i.test(file.path);
-    const isPublicWebhookOrHealth = lowerPath.includes('webhook') || lowerPath.includes('health') || lowerPath.includes('ping') || lowerPath.includes('auth/callback');
+    const isPublicWebhookOrHealth = (lowerPath.includes('webhook') && !isOutboundWebhookSender(cleanContent)) || lowerPath.includes('health') || lowerPath.includes('ping') || lowerPath.includes('auth/callback');
     if (isApiRoute && !isPublicWebhookOrHealth) {
         const hasMutationExport = /export\s+async\s+function\s+(?:POST|PUT|DELETE|PATCH)\b/.test(cleanContent);
-        const hasAuthCheck = /(?:auth|session|supabase\.auth|verify|currentUser|getUser|getSession|apiKey|checkRateLimit|rateLimiter|req\.headers\.get\(['"]authorization['"]\))/i.test(cleanContent);
+        const hasAuthCheck = AUTH_GUARD.test(cleanContent) || /(?:auth|session|verify|apiKey|checkRateLimit|rateLimiter|req\.headers\.get\(['"]authorization['"]\))/i.test(cleanContent);
         if (hasMutationExport && !hasAuthCheck) {
             const matchLineIdx = lines.findIndex(l => /export\s+async\s+function\s+(?:POST|PUT|DELETE|PATCH)\b/.test(l));
             const lineNum = matchLineIdx !== -1 ? matchLineIdx + 1 : 1;

@@ -122,12 +122,12 @@ export const TENANT_ISOLATION_CATALOG: SecurityRule[] = [
     falsePositiveRisk: "medium",
     status: "published",
     code: "TENANT-06",
-    title: "IDOR via Service-Role Lookup by Request ID Without Ownership Check",
+    title: "IDOR - Record Loaded by Request ID Without Owner Scoping",
     category: "Multi-Tenant Isolation",
     owaspTag: "Broken Object Level Authorization",
     riskLevel: "CRITICAL",
-    description: "A service-role client bypasses RLS and loads a row by an id taken from the request without checking the session user, exposing other users' records.",
+    description: "A record is loaded by an id from the request without filtering by owner or tenant (ORM queries, or Supabase service-role clients that bypass RLS), exposing other users' records.",
     verificationControl: "Every service-role lookup by request id resolves the caller and filters by user_id / org_id, or uses the user-scoped client so RLS applies.",
-    claudePrompt: "Resolve the caller with supabase.auth.getUser() and add .eq('user_id', user.id), or switch to the user-scoped Supabase client."
+    claudePrompt: "Scope the lookup to the caller (e.g. where: { id, userId: session.user.id } in Prisma, .eq('user_id', user.id) in Supabase, { _id: id, owner: req.user.id } in Mongoose) or verify ownership before returning the record."
   }
 ];

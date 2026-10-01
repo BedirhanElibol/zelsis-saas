@@ -16,7 +16,7 @@ export function evaluateHipaaComplianceRules(file: CodeFile, lines: string[], cl
     const lowerPath = file.path.toLowerCase().replace(/\\/g, "/");
     // Skip files that do not handle healthcare, patient, or PHI data
     if (
-        lowerPath.includes("data/catalogs/") || lowerPath.includes("data/mockdata") || lowerPath.includes("data/workspacefiles") || lowerPath.includes("data/schema") || lowerPath.includes("scratch/") || lowerPath.includes(".agent/") || lowerPath.includes("node_modules/") || lowerPath.endsWith(".d.ts") ||
+        lowerPath.includes("node_modules/") || lowerPath.endsWith(".d.ts") ||
         (!/(?:health|patient|medical|phi|ehr|clinical|doctor)/i.test(cleanContent) && !/(?:health|patient|medical|phi|ehr)/i.test(lowerPath))
     ) {
         return { findings, logs };

@@ -5,6 +5,7 @@
  */
 import { Finding } from '@/data/schema';
 import { CodeFile } from '../scanner-engine';
+import { LLM_CALL, LLM_OUTPUT_LIMIT, RATE_LIMIT_GUARD } from './shared/stack-signals';
 export interface LlmCostGovernanceRuleResult {
     findings: Finding[];
     logs: string[];
@@ -16,13 +17,13 @@ export function evaluateLlmCostGovernanceRules(file: CodeFile, lines: string[], 
     const logs: string[] = [];
     const lowerPath = file.path.toLowerCase().replace(/\\/g, '/');
     // Skip self-referential catalogs, mocks, and schema definitions
-    if (lowerPath.includes('data/catalogs/') || lowerPath.includes('data/mockdata') || lowerPath.includes('data/workspacefiles') || lowerPath.includes('data/schema') || lowerPath.includes('scratch/') || lowerPath.includes('.agent/') || lowerPath.includes('node_modules/') || lowerPath.endsWith('.d.ts')) {
+    if (lowerPath.includes('node_modules/') || lowerPath.endsWith('.d.ts')) {
         return { findings, logs };
     }
     const ts = new Date().toLocaleTimeString();
     // LLM-COST-01: Unbounded Token Generation (max_tokens / max_completion_tokens missing)
-    const hasLlmCall = /(?:openai\.chat\.completions\.create|anthropic\.messages\.create|mistral\.chat|cohere\.chat)\s*\(\{/i.test(cleanContent);
-    if (hasLlmCall && !/(?:max_tokens|max_completion_tokens|maxTokens)\s*:/i.test(cleanContent)) {
+    const hasLlmCall = LLM_CALL.test(cleanContent);
+    if (hasLlmCall && !LLM_OUTPUT_LIMIT.test(cleanContent)) {
         const matchLineIdx = lines.findIndex(l => !l.trim().startsWith('//') &&
             !l.trim().startsWith('*') &&
             /(?:openai\.chat\.completions\.create|anthropic\.messages\.create|mistral\.chat)/i.test(l));
@@ -51,7 +52,7 @@ export function evaluateLlmCostGovernanceRules(file: CodeFile, lines: string[], 
     }
     // LLM-COST-02: Missing Token Budget Rate Limiter on API Routes Invoking LLMs
     const isApiRoute = lowerPath.includes('/api/') || lowerPath.includes('route.ts') || lowerPath.includes('route.js');
-    if (isApiRoute && hasLlmCall && !/(?:checkRateLimit|rateLimit|ratelimit|throttle|slidingWindow|upstash|tokenBucket)/i.test(cleanContent)) {
+    if (isApiRoute && hasLlmCall && !RATE_LIMIT_GUARD.test(cleanContent)) {
         const matchLineIdx = lines.findIndex(l => !l.trim().startsWith('//') &&
             /(?:export async function POST|export async function GET|handler|app\.post)/i.test(l));
         const lineNum = matchLineIdx !== -1 ? matchLineIdx + 1 : 1;

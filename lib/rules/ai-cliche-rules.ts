@@ -20,20 +20,6 @@ export function evaluateAiClicheRules(file: CodeFile, lines: string[], cleanCont
     const isFrontend = file.path.endsWith('.tsx') || file.path.endsWith('.jsx') || file.path.endsWith('.html') || file.path.endsWith('.css');
     if (!isFrontend)
         return { findings, logs };
-    const lowerFilePath = file.path.toLowerCase();
-    const isScannerRuleCatalog = lowerFilePath.includes('lib/rules/') ||
-        lowerFilePath.includes('data/mockdata.ts') ||
-        lowerFilePath.includes('data/workspacefiles.ts') ||
-        lowerFilePath.includes('lib/scanner-engine.ts') ||
-        lowerFilePath.includes('lib/scanner/') ||
-        lowerFilePath.includes('vulnerabilityplayground.tsx') ||
-        lowerFilePath.includes('ruleknowledgebasemodal.tsx') ||
-        lowerFilePath.includes('interactiveanalyzer.tsx') ||
-        lowerFilePath.includes('05_seed_data.sql') ||
-        lowerFilePath.includes('scratch/') ||
-        lowerFilePath.includes('.agent/');
-    if (isScannerRuleCatalog)
-        return { findings, logs };
     const ts = new Date().toLocaleTimeString();
     // CLICHE-01: Decorative Hero Badge Pill & AI Landing Slop
     const isHeroOrLandingScope = /hero|landing/i.test(file.path);

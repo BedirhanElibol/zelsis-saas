@@ -4,6 +4,7 @@
  */
 import { Finding } from "@/data/schema";
 import { CodeFile } from "../scanner-engine";
+import { AUTH_GUARD } from "./shared/stack-signals";
 export interface TenantIsolationRuleResult {
     findings: Finding[];
     logs: string[];
@@ -15,7 +16,7 @@ export function evaluateTenantIsolationRules(file: CodeFile, lines: string[], cl
     const logs: string[] = [];
     const lowerPath = file.path.toLowerCase().replace(/\\/g, "/");
     // Skip self-referential catalogs, mocks, and schema definitions
-    if (lowerPath.includes("data/catalogs/") || lowerPath.includes("data/mockdata") || lowerPath.includes("data/workspacefiles") || lowerPath.includes("data/schema") || lowerPath.includes("scratch/") || lowerPath.includes(".agent/") || lowerPath.includes("node_modules/") || lowerPath.endsWith(".d.ts")) {
+    if (lowerPath.includes("node_modules/") || lowerPath.endsWith(".d.ts")) {
         return { findings, logs };
     }
     const ts = new Date().toLocaleTimeString();
@@ -139,32 +140,51 @@ export function evaluateTenantIsolationRules(file: CodeFile, lines: string[], cl
         });
         logs.push(`[${ts}] [TENANT AUDIT] Found TENANT-05: Tenant Quota Bypass on Asynchronous Background Worker at ${file.path}:${lineNum}`);
     }
-    // TENANT-06: IDOR via Service-Role Lookup by Request ID Without Ownership Check
+    // TENANT-06: IDOR - a record loaded by a request-supplied id without scoping it to the caller.
+    // Supabase service-role clients bypass RLS; ORMs (Prisma, Drizzle, Mongoose, Sequelize, TypeORM) never had it.
+    const reqIdNames = new Set<string>();
+    for (const m of cleanContent.matchAll(/(?:const|let)\s*\{([^}]*)\}\s*=\s*(?:await\s+)?(?:params|(?:req|request|ctx)\.(?:params|query))\b/g)) {
+        m[1].split(',').map((x) => x.split(':').pop()!.split('=')[0].trim()).filter((x) => /^\w*id$/i.test(x)).forEach((x) => reqIdNames.add(x));
+    }
+    for (const m of cleanContent.matchAll(/(?:const|let)\s+(\w*id)\s*=\s*(?:(?:await\s+)?params\.\w+|searchParams\.get\([^)]*\)|(?:req|request|ctx)\.(?:params|query)\.\w+)/gi)) reqIdNames.add(m[1]);
+    const boundIdNames = [...reqIdNames].filter((n) => /^\w+$/.test(n));
+    const reqId = String.raw`(?:(?:\(await\s+params\)|params|(?:req|request|ctx)\.(?:params|query))\.\w*id\b|searchParams\.get\(\s*['"]\w*id['"]\s*\)` + (boundIdNames.length ? String.raw`|\b(?:` + boundIdNames.join('|') + String.raw`)\b` : '') + ')';
+    const supabaseLookup = new RegExp(String.raw`\.eq\(\s*['"]id['"]\s*,\s*` + reqId, 'i');
+    const ormLookup = new RegExp([
+        String.raw`\.(?:findUnique|findUniqueOrThrow|findFirst|update|delete)\s*\(\s*\{\s*where\s*:\s*\{\s*id\s*:\s*` + reqId,
+        String.raw`\beq\(\s*\w+\.id\s*,\s*` + reqId,
+        String.raw`\.(?:findById|findByIdAndUpdate|findByIdAndDelete|findByPk)\s*\(\s*` + reqId,
+        String.raw`\.(?:findOne|findOneBy|findOneAndUpdate|findOneAndDelete)\s*\(\s*\{\s*(?:_id|id)\s*:\s*` + reqId
+    ].join('|'), 'i');
     const usesServiceRole = /SUPABASE_SERVICE_ROLE_KEY|service_role|supabaseAdmin|adminClient/i.test(cleanContent);
-    const idLookupRegex = /\.eq\(\s*['"]id['"]\s*,\s*(?:params\.|\(await\s+params\)\.|searchParams\.get\(|req\.(?:query|params)\.)/i;
-    const hasOwnershipCheck = /auth\.getUser|getSession|getServerSession|currentUser|\.eq\(\s*['"](?:user_id|owner_id|org_id|organization_id|tenant_id)['"]/i.test(cleanContent);
-    if (usesServiceRole && idLookupRegex.test(cleanContent) && !hasOwnershipCheck) {
+    const scopesToOwner = /\b(?:user_?id|owner_?id|org(?:anization)?_?id|tenant_?id|team_?id|workspace_?id|account_?id|created_?by|author_?id)\b/i.test(cleanContent);
+    const idLookupRegex = usesServiceRole && supabaseLookup.test(cleanContent) ? supabaseLookup : ormLookup;
+    const isIdor = !scopesToOwner && (
+        (usesServiceRole && supabaseLookup.test(cleanContent)) ||
+        (ormLookup.test(cleanContent) && AUTH_GUARD.test(cleanContent))
+    );
+    if (isIdor) {
         const matchLineIdx = lines.findIndex(l => idLookupRegex.test(l));
         const lineNum = matchLineIdx !== -1 ? matchLineIdx + 1 : 1;
         findings.push({
             id: `tenant9106-${Date.now()}-${findingCounter.count++}`,
             ruleId: 9106,
             type: 'SECURITY',
-            title: "TENANT-06: IDOR via Service-Role Lookup by Request ID Without Ownership Check",
+            title: "TENANT-06: IDOR - Record Loaded by Request ID Without Owner Scoping",
             severity: "CRITICAL",
             category: "Multi-Tenant Isolation",
             filePath: file.path,
             lineRange: `L${lineNum}`,
-            snippet: lines[matchLineIdx] || 'Service-role lookup by id',
+            snippet: lines[matchLineIdx] || 'Lookup by request id',
             reproductionSteps: [
                 `Audited data access in ${file.path}:${lineNum}.`,
-                'A service-role client (bypasses RLS) loads a row by an id taken from the request, and the handler never checks the session user, so any caller can read other users\' records by changing the id.'
+                usesServiceRole ? 'A service-role client (bypasses row level security) loads a row by an id taken from the request without filtering by the caller, so anyone can read other users\' records by changing the id.' : 'The handler authenticates the caller but loads the record by a request-supplied id without filtering by owner/tenant, so any signed-in user can access other accounts\' records by changing the id.'
             ],
-            remediationPrompt: `In ${file.path}, resolve the caller with supabase.auth.getUser() and add .eq('user_id', user.id) to the query, or use the user-scoped client so RLS applies.`,
+            remediationPrompt: `In ${file.path}, scope the lookup to the caller: add the owner/tenant to the filter (e.g. where: { id, userId: session.user.id }, .eq('user_id', user.id), { _id: id, owner: req.user.id }) or verify record.ownerId === caller before returning it. With Supabase, prefer the user-scoped client so RLS applies.`,
             status: 'OPEN',
             falsePositive: false
         });
-        logs.push(`[${ts}] [TENANT AUDIT] Found TENANT-06: IDOR via service-role lookup at ${file.path}:${lineNum}`);
+        logs.push(`[${ts}] [TENANT AUDIT] Found TENANT-06: IDOR lookup by request id at ${file.path}:${lineNum}`);
     }
     return { findings, logs };
 }

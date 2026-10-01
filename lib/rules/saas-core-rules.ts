@@ -1,10 +1,11 @@
 /**
  * Zelsis SaaS Core Rules (SAAS-01..08, Rule IDs 23001-23008).
- * High-impact mistakes in Next.js + Supabase + Stripe/Polar + LLM SaaS codebases:
+ * High-impact mistakes in SaaS codebases across stacks (any auth, ORM, payment and LLM provider):
  * tenant data exposure, billing manipulation, auth trust errors and prompt injection.
  */
 import { Finding } from '@/data/schema';
 import { CodeFile } from '../scanner-engine';
+import { PAYMENT_SDK } from './shared/stack-signals';
 
 export interface SaasCoreRuleResult {
   findings: Finding[];
@@ -74,7 +75,7 @@ export function evaluateSaasCoreRules(file: CodeFile, lines: string[], cleanCont
   const logs: string[] = [];
   const path = file.path.replace(/\\/g, '/');
   const lowerPath = path.toLowerCase();
-  if (lowerPath.includes('data/catalogs/') || lowerPath.includes('node_modules/') || lowerPath.endsWith('.d.ts')) {
+  if (lowerPath.includes('node_modules/') || lowerPath.endsWith('.d.ts')) {
     return { findings, logs };
   }
   const hits: RuleHit[] = [];
@@ -124,17 +125,17 @@ export function evaluateSaasCoreRules(file: CodeFile, lines: string[], cleanCont
     }
 
     // SAAS-04: price or amount taken from the client
-    if (/stripe|paymentIntents|checkout\.sessions|lemonsqueezy|polar\.checkouts|createCheckout/i.test(cleanContent)) {
+    if (PAYMENT_SDK.test(cleanContent)) {
       const priceAllowlist = /ALLOWED_PRICE|PRICE_IDS|PRICES\s*\[|priceMap|PLANS?\s*\[|PRODUCTS?\s*\[|\.includes\(\s*\w*price|z\.enum\(/i;
       let hitIdx = -1;
       let field = '';
       lines.forEach((l, i) => {
         if (hitIdx !== -1) return;
-        for (const m of l.matchAll(/\b(unit_amount|amount|price|price_id|priceId|productId|product_id)\s*:\s*([\w.[\]'"]+)/g)) {
-          const isPriceRef = !/amount/i.test(m[1]);
+        for (const m of l.matchAll(/\b(unit_amount|amount|value|paidPrice|totalPrice|total|price|price_id|priceId|productId|product_id|variantId|variant_id|planId|plan_id)\s*:\s*([\w.[\]'"]+)/g)) {
+          const isPriceRef = !/amount|value|total|paidPrice/i.test(m[1]);
           if (isRequestDerived(m[2], req) && !(isPriceRef && priceAllowlist.test(cleanContent))) { hitIdx = i; field = m[1]; return; }
         }
-        const shorthand = l.match(/[{,]\s*(amount|unit_amount)\s*(?=[,}])/);
+        const shorthand = l.match(/[{,]\s*(amount|unit_amount|value|total)\s*(?=[,}])/);
         if (shorthand && req.names.has(shorthand[1])) { hitIdx = i; field = shorthand[1]; }
       });
       if (hitIdx !== -1) {
@@ -162,12 +163,14 @@ export function evaluateSaasCoreRules(file: CodeFile, lines: string[], cleanCont
       });
     }
 
-    // SAAS-06: cron endpoint callable by anyone
-    if (/(?:^|\/)(?:app|pages)\/api\/(?:.*\/)?cron\/.*\.[cm]?[jt]s$/i.test(lowerPath) && !/CRON_SECRET|authorization|x-vercel-signature|verifySignature|Receiver\(|upstash-signature|qstash/i.test(cleanContent)) {
+    // SAAS-06: cron endpoint callable by anyone (file-based routes or router.get('/cron/...'))
+    const isCronRoute = /(?:^|\/)(?:app|pages|src\/routes|routes)\/(?:api\/)?(?:.*\/)?cron\/.*\.[cm]?[jt]s$|(?:^|\/)app\/routes\/[^/]*\bcron\b[^/]*\.[jt]sx?$/i.test(lowerPath) ||
+      /\b(?:app|router|server|fastify)\.(?:get|post|all)\s*\(\s*['"`]\/(?:api\/)?cron\b/i.test(cleanContent);
+    if (isCronRoute && !/CRON_SECRET|authorization|x-vercel-signature|verifySignature|Receiver\(|upstash-signature|qstash/i.test(cleanContent)) {
       hits.push({
         ruleId: 23006, code: 'SAAS-06', severity: 'HIGH', type: 'SECURITY', category: 'Access Control',
         title: 'Cron Endpoint Without a Secret Check',
-        lineIdx: lineOf(lines, (l) => /export\s+(?:async\s+)?function\s+(?:GET|POST)|export\s+default/.test(l)),
+        lineIdx: lineOf(lines, (l) => /export\s+(?:async\s+)?function\s+(?:GET|POST|loader|action)|export\s+default|\.(?:get|post|all)\s*\(\s*['"`]\/(?:api\/)?cron/.test(l)),
         why: 'Scheduled jobs are plain public routes; without verifying CRON_SECRET anyone can trigger them repeatedly (data jobs, emails, paid API calls).',
         fix: "Reject requests unless req.headers.get('authorization') === `Bearer ${process.env.CRON_SECRET}` (compared in constant time)."
       });
@@ -177,7 +180,10 @@ export function evaluateSaasCoreRules(file: CodeFile, lines: string[], cleanCont
     const systemTemplates = [
       /role\s*:\s*['"]system['"]\s*,\s*content\s*:\s*`([^`]*)`/g,
       /content\s*:\s*`([^`]*)`\s*,\s*role\s*:\s*['"]system['"]/g,
-      /\bsystem\s*:\s*`([^`]*)`/g
+      /\bsystem\s*:\s*`([^`]*)`/g,
+      /\b(?:systemInstruction|system_instruction|preamble|instructions)\s*:\s*`([^`]*)`/g, // Gemini, Cohere, OpenAI Responses/Assistants
+      /new\s+SystemMessage\s*\(\s*`([^`]*)`/g, // LangChain
+      /SystemMessagePromptTemplate\.fromTemplate\s*\(\s*`([^`]*)`/g
     ];
     let injectedVar = '';
     for (const re of systemTemplates) {
@@ -196,6 +202,22 @@ export function evaluateSaasCoreRules(file: CodeFile, lines: string[], cleanCont
         lineIdx: lineOf(lines, (l) => l.includes('${' + injectedVar)),
         why: `\`${injectedVar}\` from the request is placed inside the system prompt, which the model treats as trusted instructions, so users can override guardrails or extract hidden context.`,
         fix: 'Keep the system prompt static; pass user-provided values in a user message (delimited and length-limited).'
+      });
+    }
+  }
+
+  // SAAS-05 (Python): == / != against a secret from the environment or settings
+  if (/\.py$/i.test(path)) {
+    const pySecret = String.raw`(?:os\.environ\[\s*['"]|os\.(?:environ\.get|getenv)\(\s*['"]|settings\.)\w*(?:SECRET|TOKEN|API_KEY|KEY|PASSWORD)\w*`;
+    const pyCompare = new RegExp(String.raw`(?:==|!=)\s*` + pySecret + '|' + pySecret + String.raw`['"]?\s*[\])]?\s*(?:==|!=)\s*(?!None\b|['"])`);
+    const idx = lines.findIndex((l) => pyCompare.test(l) && !/^\s*#/.test(l));
+    if (idx !== -1) {
+      hits.push({
+        ruleId: 23005, code: 'SAAS-05', severity: 'MEDIUM', type: 'SECURITY', category: 'Cryptographic & Auth Failures',
+        title: 'Secret Compared With == Instead of a Constant-Time Check',
+        lineIdx: idx,
+        why: 'String equality returns as soon as a character differs, leaking how much of the secret matched through response timing.',
+        fix: 'Use hmac.compare_digest(received, expected) and reject when the secret is not configured.'
       });
     }
   }

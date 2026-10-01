@@ -15,7 +15,7 @@ export function evaluateCppMemoryRules(file: CodeFile, lines: string[], cleanCon
     const logs: string[] = [];
     const lowerPath = file.path.toLowerCase().replace(/\\/g, "/");
     // Skip self-referential catalogs, mocks, and non-cpp paths
-    if (lowerPath.includes("data/catalogs/") || lowerPath.includes("data/mockdata") || lowerPath.includes("data/workspacefiles") || lowerPath.includes("data/schema") || lowerPath.includes("scratch/") || lowerPath.includes(".agent/") || lowerPath.includes("node_modules/") || lowerPath.endsWith(".d.ts")) {
+    if (lowerPath.includes("node_modules/") || lowerPath.endsWith(".d.ts")) {
         return { findings, logs };
     }
     const isCpp = lowerPath.endsWith(".c") || lowerPath.endsWith(".cpp") || lowerPath.endsWith(".cc") || lowerPath.endsWith(".h") || lowerPath.endsWith(".hpp");

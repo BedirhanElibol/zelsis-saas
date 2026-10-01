@@ -5,6 +5,7 @@ import { readdirSync, readFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { KNOWN_GAPS, RULE_CASES } from './cases';
 import { VULNERABLE_VARIANTS } from './variants';
+import { STACK_MATRIX } from './stack-matrix';
 
 const ruleIdsFor = async (files: CodeFile[]) =>
   new Set((await runStaticCodeScan(files, 'fixture')).findings.map((f) => f.ruleId));
@@ -50,15 +51,24 @@ describe('vulnerable variants (breadth guard)', () => {
 });
 
 describe('scanner self-reference', () => {
-  it('rule definitions and scanner modules produce no findings when Zelsis scans itself', async () => {
-    const root = join(__dirname, '../..');
-    const dirs = ['lib/scanner', 'lib/rules'];
-    const files: CodeFile[] = dirs.flatMap((dir) =>
-      readdirSync(join(root, dir)).filter((n) => n.endsWith('.ts')).map((n) => ({ path: `${dir}/${n}`, content: readFileSync(join(root, dir, n), 'utf8') }))
-    );
-    files.push({ path: 'lib/scanner-engine.ts', content: readFileSync(join(root, 'lib/scanner-engine.ts'), 'utf8') });
+  const root = join(__dirname, '../..');
+  const readDir = (dir: string): CodeFile[] =>
+    readdirSync(join(root, dir)).filter((n) => n.endsWith('.ts')).map((n) => ({ path: `${dir}/${n}`, content: readFileSync(join(root, dir, n), 'utf8') }));
+  const scannerSources = (): CodeFile[] => [
+    ...readDir('lib/scanner'),
+    ...readDir('lib/rules'),
+    { path: 'lib/scanner-engine.ts', content: readFileSync(join(root, 'lib/scanner-engine.ts'), 'utf8') }
+  ];
+
+  it("Zelsis's own .zelsisignore keeps its rule definitions out of its scan", async () => {
+    const files = [...scannerSources(), { path: '.zelsisignore', content: readFileSync(join(root, '.zelsisignore'), 'utf8') }];
     const { findings } = await runStaticCodeScan(files, 'self');
     assert.deepEqual(findings.map((f) => `${f.ruleId} ${f.filePath}`), []);
+  });
+
+  it('the engine has no hardcoded knowledge of Zelsis paths (same files are scanned like any repo)', async () => {
+    const { findings } = await runStaticCodeScan(scannerSources(), 'any-repo');
+    assert.ok(findings.length > 0, 'rule sources full of vulnerable patterns must be scanned when not ignored');
   });
 });
 
@@ -88,4 +98,15 @@ describe('SAAS rule suppression', () => {
     ]);
     assert.ok(!found.has(23006));
   });
+});
+
+describe('cross-stack matrix (vendor-neutral rules)', () => {
+  for (const c of STACK_MATRIX) {
+    it(`${c.expect === 'detect' ? 'detects' : 'stays clean on'} ${c.id}`, async () => {
+      const found = await ruleIdsFor([{ path: c.path, content: c.content }]);
+      const hit = c.rules.filter((r) => found.has(r));
+      if (c.expect === 'detect') assert.ok(hit.length > 0, `none of ${c.rules.join(', ')} fired`);
+      else assert.deepEqual(hit, [], `fired on safe code: ${hit.join(', ')}`);
+    });
+  }
 });

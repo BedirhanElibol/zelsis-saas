@@ -13,6 +13,7 @@
  */
 import type { Finding } from '@/data/schema';
 import type { CodeFile } from '../scanner-engine';
+import { DB_MUTATION } from './shared/stack-signals';
 export interface InfraRuleResult {
     findings: Finding[];
     logs: string[];
@@ -31,16 +32,7 @@ export function evaluateInfraRules(file: CodeFile, lines: string[], cleanContent
     const ts = new Date().toLocaleTimeString();
     const lowerPath = file.path.toLowerCase().replace(/\\/g, '/');
     // False-positive guard: Skip internal scanner engines, mock data, and rule definitions
-    const isExcluded = lowerPath.includes('lib/rules/') ||
-        lowerPath.includes('data/mockdata.ts') ||
-        lowerPath.includes('data/workspacefiles.ts') ||
-        lowerPath.includes('lib/scanner-engine.ts') ||
-        lowerPath.includes('lib/scanner/') ||
-        lowerPath.includes('vulnerabilityplayground.tsx') ||
-        lowerPath.includes('ruleknowledgebasemodal.tsx') ||
-        lowerPath.includes('scratch/') ||
-        lowerPath.includes('.agent/') ||
-        lowerPath.includes('dist/') ||
+    const isExcluded = lowerPath.includes('dist/') ||
         lowerPath.includes('build/') ||
         lowerPath.includes('node_modules/') ||
         lowerPath.includes('.next/');
@@ -279,7 +271,7 @@ export function evaluateInfraRules(file: CodeFile, lines: string[], cleanContent
     const isActionFile = lowerPath.endsWith('.ts') || lowerPath.endsWith('.tsx') || lowerPath.endsWith('.js');
     if (isActionFile) {
         const hasUseServer = /['"]use server['"]/i.test(cleanContent);
-        const hasDbMutation = /(?:supabase\.from\([^)]+\)\.(?:insert|update|delete|upsert)|db\.(?:insert|update|delete)|prisma\.[a-zA-Z0-9_]+\.(?:create|update|delete|upsert))/i.test(cleanContent);
+        const hasDbMutation = DB_MUTATION.test(cleanContent);
         const hasValidation = /\.parse\(|\.safeParse\(|zod|yup|valibot/i.test(cleanContent);
         if (hasUseServer && hasDbMutation && !hasValidation) {
             let lineNum = 1;

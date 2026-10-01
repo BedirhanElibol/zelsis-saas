@@ -43,7 +43,7 @@ export function evaluateSecretRules(file: CodeFile, lines: string[], rawContentO
     const logs: string[] = [];
     const lowerPath = file.path.toLowerCase().replace(/\\/g, '/');
     // Skip self-referential rule catalogs, mocks, and schema definitions
-    if (lowerPath.includes('data/catalogs/') || lowerPath.includes('data/mockdata') || lowerPath.includes('data/workspacefiles') || lowerPath.includes('data/schema') || lowerPath.includes('scratch/') || lowerPath.includes('.agent/') || lowerPath.endsWith('.d.ts')) {
+    if (lowerPath.endsWith('.d.ts')) {
         return { findings, logs };
     }
     const contentToScan = rawContentOrClean || file.content;

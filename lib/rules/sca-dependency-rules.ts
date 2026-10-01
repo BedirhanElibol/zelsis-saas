@@ -321,7 +321,7 @@ export function evaluateScaDependencyRules(file: CodeFile, lines: string[], clea
     const logs: string[] = [];
     const lowerPath = file.path.toLowerCase().replace(/\\/g, "/");
     // Skip self-referential catalogs, mocks, scratch, and .agent
-    if (lowerPath.includes("data/catalogs/") || lowerPath.includes("data/mockdata") || lowerPath.includes("data/workspacefiles") || lowerPath.includes("scratch/") || lowerPath.includes(".agent/") || lowerPath.includes("node_modules/") || lowerPath.endsWith(".d.ts")) {
+    if (lowerPath.includes("node_modules/") || lowerPath.endsWith(".d.ts")) {
         return { findings, logs };
     }
     const isPackageJson = lowerPath.endsWith("package.json");
