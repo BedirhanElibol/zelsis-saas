@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
 import { runStaticCodeScan } from '@/lib/scanner-engine';
+import { gatingFindings, gateSeverity } from '@/lib/scanner/scoring';
 import { fetchGithubRepositoryData, normalizeRepoUrl, parseGithubUrl } from '@/lib/github-api';
 import { checkRateLimit, createRateLimitResponse } from '@/lib/rate-limiter';
 import { logger } from '@/lib/logger';
@@ -98,11 +99,15 @@ export async function POST(req: NextRequest) {
 
     const result = await runStaticCodeScan(repoData.files, repoData.name || repoUrl, { dependencyAudit: { timeoutMs: 8000 } });
 
-    const openFindings = result.findings.filter((f) => f.status === 'OPEN');
+    // Same findings and severities the counts and gate use: no experimental rules, unproven CRITICAL shown as HIGH,
+    // and one entry per rule so a single noisy rule cannot fill the teaser.
+    const openFindings = gatingFindings(result.findings);
+    const seenRules = new Set<number>();
     const topFindings = [...openFindings]
-      .sort((a, b) => SEVERITY_ORDER.indexOf(a.severity as never) - SEVERITY_ORDER.indexOf(b.severity as never))
+      .sort((a, b) => SEVERITY_ORDER.indexOf(gateSeverity(a) as never) - SEVERITY_ORDER.indexOf(gateSeverity(b) as never))
+      .filter((f) => !seenRules.has(f.ruleId) && seenRules.add(f.ruleId))
       .slice(0, PREVIEW_FINDING_LIMIT)
-      .map((f) => ({ title: f.title, severity: f.severity, category: f.category }));
+      .map((f) => ({ title: f.title, severity: gateSeverity(f), category: f.category }));
 
     return NextResponse.json({
       repoUrl,

@@ -5,13 +5,14 @@
 import { Finding } from "@/data/schema";
 import { CodeFile } from "../scanner-engine";
 import { locateMatchLine } from './shared/locate';
+import { emptyRepoContext, type RepoContext } from '../scanner/repo-context';
 export interface OtelObservabilityRuleResult {
     findings: Finding[];
     logs: string[];
 }
 export function evaluateOtelObservabilityRules(file: CodeFile, lines: string[], cleanContent: string, findingCounter: {
     count: number;
-}): OtelObservabilityRuleResult {
+}, context: RepoContext = emptyRepoContext()): OtelObservabilityRuleResult {
     const findings: Finding[] = [];
     const logs: string[] = [];
     const lowerPath = file.path.toLowerCase().replace(/\\/g, "/");
@@ -69,7 +70,8 @@ export function evaluateOtelObservabilityRules(file: CodeFile, lines: string[], 
         logs.push(`[${ts}] [OTEL AUDIT] Found OTEL-02: High-Cardinality Metric Label Explosion (UUID / Timestamp as Tag) at ${file.path}:${lineNum}`);
     }
     // OTEL-03: Missing Health Check Liveness and Readiness Probe Endpoints
-    if ((/express\(\)|FastAPI\(\)|createApp\(\)/.test(cleanContent) && !/health|liveness|readiness/i.test(cleanContent))) {
+    // Repo-wide: a health route defined in any other file covers this app too
+    if ((/express\(\)|FastAPI\(\)|createApp\(\)/.test(cleanContent) && !/health|liveness|readiness/i.test(cleanContent) && !context.hasHealthEndpoint)) {
         const matchLineIdx = locateMatchLine(lines, [/express\(\)|FastAPI\(\)|createApp\(\)/], l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('#'));
         const lineNum = matchLineIdx !== -1 ? matchLineIdx + 1 : 1;
         findings.push({

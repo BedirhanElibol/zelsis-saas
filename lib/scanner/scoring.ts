@@ -12,11 +12,21 @@ export const gatingFindings = (findings: Finding[]): Finding[] =>
 export const gateSeverity = (f: Finding): Finding['severity'] =>
   f.severity === 'CRITICAL' && f.maturity === 'unproven' ? 'HIGH' : f.severity;
 
+const ADVISORY_WEIGHT: Record<string, number> = { CRITICAL: 3, HIGH: 2, MEDIUM: 1, LOW: 0.25 };
+
 export function calculateReadinessScore(findings: Finding[]): number {
   const openFindings = gatingFindings(findings);
   // Separate core security/infra/legal blockers from cosmetic polish/UI items (F-38)
-  const securityFindings = openFindings.filter(
+  const allSecurityFindings = openFindings.filter(
     (f) => f.type === 'SECURITY' || f.type === 'INFRA_DATABASE' || f.type === 'LEGAL_COMPLIANCE'
+  );
+  // Rules without evidence are advisory: together they cost at most 10 points, like cosmetic findings,
+  // so a well-built project is not scored down by heuristics we have not proven precise.
+  const securityFindings = allSecurityFindings.filter((f) => f.maturity !== 'unproven');
+  const advisoryFindings = allSecurityFindings.filter((f) => f.maturity === 'unproven');
+  const advisoryDeduction = Math.min(
+    10,
+    advisoryFindings.reduce((sum, f) => sum + (ADVISORY_WEIGHT[gateSeverity(f)] ?? 0), 0)
   );
   const cosmeticFindings = openFindings.filter(
     (f) => f.type === 'VIBEPOLISH' || f.type === 'VIBECARE'
@@ -31,7 +41,8 @@ export function calculateReadinessScore(findings: Finding[]): number {
   const highCosmetic = cosmeticFindings.filter((f) => gateSeverity(f) === 'HIGH').length;
   const medCosmetic = cosmeticFindings.filter((f) => gateSeverity(f) === 'MEDIUM').length;
   const lowCosmetic = cosmeticFindings.filter((f) => gateSeverity(f) === 'LOW').length;
-  const cosmeticDeduction = Math.min(10, highCosmetic * 2 + medCosmetic * 1 + lowCosmetic * 0.5);
+  // Cosmetic and advisory findings share one 10-point budget
+  const cosmeticDeduction = Math.min(10, highCosmetic * 2 + medCosmetic * 1 + lowCosmetic * 0.5 + advisoryDeduction);
 
   // Critical blockers directly deplete production readiness
   if (criticalSecCount > 0) {

@@ -14,16 +14,23 @@ export interface RepoContext {
    * so tables without RLS are exposed. Apps that only reach Postgres through their own server do not need RLS.
    */
   exposesDatabaseToClients: boolean;
+  /** Some file serves a health / liveness / readiness route, so per-file "missing health check" rules stay quiet. */
+  hasHealthEndpoint: boolean;
 }
 
 /** Normalises `"public"."fn"` / `public.fn` / `fn` to `fn`. */
 export const normalizeSqlName = (name: string): string => name.replace(/"/g, '').toLowerCase().split('.').pop() ?? '';
 
+/** A route string such as '/health', '/api/healthz', '/livez' or '/readyz'. */
+const HEALTH_ROUTE = /['"`]\/(?:api\/)?(?:health(?:z|check)?|livez?|liveness|readyz?|readiness)\b/i;
+
 export function buildRepoContext(files: CodeFile[]): RepoContext {
   const hardenedSqlFunctions = new Set<string>();
   const rlsEnabledTables = new Set<string>();
   let exposesDatabaseToClients = false;
+  let hasHealthEndpoint = false;
   for (const file of files) {
+    if (!hasHealthEndpoint && HEALTH_ROUTE.test(file.content || '')) hasHealthEndpoint = true;
     const path = (file.path || '').replace(/\\/g, '/');
     if (/(?:^|\/)supabase\/(?:config\.toml|migrations\/)/i.test(path) || /postgrest\.conf$/i.test(path) ||
         (/(?:^|\/)package\.json$/.test(path) && /"@supabase\/(?:supabase-js|ssr|auth-helpers-\w+)"/.test(file.content || ''))) {
@@ -45,8 +52,8 @@ export function buildRepoContext(files: CodeFile[]): RepoContext {
       if (/SET\s+search_path/i.test(m[0])) hardenedSqlFunctions.add(normalizeSqlName(m[1]));
     }
   }
-  return { hardenedSqlFunctions, rlsEnabledTables, exposesDatabaseToClients };
+  return { hardenedSqlFunctions, rlsEnabledTables, exposesDatabaseToClients, hasHealthEndpoint };
 }
 
 /** Without repo-wide knowledge, assume the database may be exposed (single-file scans keep RLS checks on). */
-export const emptyRepoContext = (): RepoContext => ({ hardenedSqlFunctions: new Set(), rlsEnabledTables: new Set(), exposesDatabaseToClients: true });
+export const emptyRepoContext = (): RepoContext => ({ hardenedSqlFunctions: new Set(), rlsEnabledTables: new Set(), exposesDatabaseToClients: true, hasHealthEndpoint: false });
