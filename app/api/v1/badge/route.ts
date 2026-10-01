@@ -92,18 +92,20 @@ export async function GET(req: NextRequest) {
 
   // 4. HMAC Signature Verification (if provided)
   if (!isVerified && sig) {
-    const hmacSecret = process.env.BADGE_SIGNING_SECRET || serviceRoleKey || 'zelsis-badge-verification-secret';
-    try {
-      const hmac = crypto.createHmac('sha256', hmacSecret);
-      hmac.write(`${queryStatus}:${queryScore}:${queryLabel}`);
-      hmac.end();
-      const expectedSig = (hmac.read() as Buffer).toString('hex');
+    const hmacSecret = process.env.BADGE_SIGNING_SECRET || serviceRoleKey;
+    if (hmacSecret) {
+      try {
+        const hmac = crypto.createHmac('sha256', hmacSecret);
+        hmac.write(`${queryStatus}:${queryScore}:${queryLabel}`);
+        hmac.end();
+        const expectedSig = (hmac.read() as Buffer).toString('hex');
 
-      if (crypto.timingSafeEqual(Buffer.from(sig), Buffer.from(expectedSig))) {
-        isVerified = true;
+        if (crypto.timingSafeEqual(Buffer.from(sig), Buffer.from(expectedSig))) {
+          isVerified = true;
+        }
+      } catch {
+        isVerified = false;
       }
-    } catch {
-      isVerified = false;
     }
   }
 
