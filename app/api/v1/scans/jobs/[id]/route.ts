@@ -3,6 +3,7 @@ import crypto from 'crypto';
 import { createClient } from '@supabase/supabase-js';
 import { logger } from '@/lib/logger';
 import { getEffectiveSupabaseUrl, getEffectiveSupabaseAnonKey, getEffectiveSupabaseServiceRoleKey, getSupabaseAdmin } from '@/lib/supabase-admin';
+import { isValidInternalSecret } from '@/lib/internal-auth';
 
 export const dynamic = 'force-dynamic';
 
@@ -57,15 +58,41 @@ export async function GET(req: NextRequest, { params }: RouteParams) {
     // BOLA/IDOR Defense: Validate caller access rights if job is bound to a tenant
     if (job.user_id) {
       const authHeader = req.headers.get('authorization')?.replace(/^Bearer\s+/i, '');
+      const internalSecret = req.headers.get('x-zelsis-internal-secret');
+      const isInternal = isValidInternalSecret(internalSecret);
       const anonKey = getEffectiveSupabaseAnonKey();
 
       let callerUserId: string | null = null;
-      let isCallerAdmin = false;
+      let isCallerAdmin = isInternal;
 
-      if (authHeader && anonKey) {
+      // Extract bearer token from Authorization header or Supabase auth cookies
+      let token = authHeader;
+      if (!token) {
+        for (const cookie of req.cookies.getAll()) {
+          if (cookie.name.includes('-auth-token') || cookie.name === 'sb-access-token') {
+            try {
+              const parsed = JSON.parse(cookie.value);
+              if (Array.isArray(parsed) && parsed[0]) {
+                token = parsed[0];
+                break;
+              } else if (parsed?.access_token) {
+                token = parsed.access_token;
+                break;
+              }
+            } catch {
+              if (cookie.value && cookie.value.length > 50) {
+                token = cookie.value;
+                break;
+              }
+            }
+          }
+        }
+      }
+
+      if (token && anonKey) {
         try {
           const authClient = createClient(supabaseUrl, anonKey, { auth: { persistSession: false } });
-          const { data: { user } } = await authClient.auth.getUser(authHeader);
+          const { data: { user } } = await authClient.auth.getUser(token);
           if (user) {
             callerUserId = user.id;
             const { data: profile } = await adminClient
@@ -82,7 +109,7 @@ export async function GET(req: NextRequest, { params }: RouteParams) {
         }
       }
 
-      if (!callerUserId || (callerUserId !== job.user_id && !isCallerAdmin)) {
+      if (!isCallerAdmin && (!callerUserId || callerUserId !== job.user_id)) {
         // Return 404 to prevent malicious tenant job enumeration
         return NextResponse.json(
           { status: 'ERROR', error: `Scan job "${jobId}" not found` },

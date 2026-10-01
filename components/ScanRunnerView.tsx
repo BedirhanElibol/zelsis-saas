@@ -331,8 +331,10 @@ export const ScanRunnerView: React.FC<ScanRunnerViewProps> = ({
       let dispatchedJobId: string | null = null;
       let queueErrorMessage: string | null = null;
 
+      let callerAccessToken: string | null = null;
       try {
         const { accessToken } = await getActiveUserAuth();
+        callerAccessToken = accessToken;
         const headers: Record<string, string> = { 'Content-Type': 'application/json' };
         if (accessToken) {
           headers['Authorization'] = `Bearer ${accessToken}`;
@@ -540,7 +542,12 @@ export const ScanRunnerView: React.FC<ScanRunnerViewProps> = ({
           }
 
           try {
+            const pollHeaders: Record<string, string> = {};
+            if (callerAccessToken) {
+              pollHeaders['Authorization'] = `Bearer ${callerAccessToken}`;
+            }
             const pollRes = await fetch(`/api/v1/scans/jobs/${dispatchedJobId}`, {
+              headers: pollHeaders,
               cache: 'no-store',
               signal: controller.signal
             });

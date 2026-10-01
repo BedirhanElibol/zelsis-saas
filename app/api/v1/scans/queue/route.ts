@@ -6,6 +6,7 @@ import { isValidGithubUrl, parseGithubUrl } from '@/lib/github-api';
 import { isValidWebUrl } from '@/lib/website-scanner';
 import { getInternalBaseUrl, getInternalSecret } from '@/lib/internal-auth';
 import { getEffectiveSupabaseUrl, getEffectiveSupabaseAnonKey, getEffectiveSupabaseServiceRoleKey, getSupabaseAdmin } from '@/lib/supabase-admin';
+import { executeScanJob } from '@/lib/scan-processor';
 import { z } from 'zod';
 
 export const dynamic = 'force-dynamic';
@@ -174,34 +175,55 @@ export async function POST(req: NextRequest) {
       jobId = crypto.randomUUID();
     }
 
-    // 7. Asynchronous Worker Trigger (runs after the response is sent; kept alive by the platform)
-    const workerUrl = `${internalBaseUrl}/api/v1/scans/process-job`;
-    const workerPayload = JSON.stringify({
-      jobId,
-      repoUrl: rawRepoUrl,
-      targetName: body.targetName,
-      githubToken: body.githubToken,
-      authenticatedUserId,
-      userTier,
-      slackWebhookUrl: body.slackWebhookUrl,
-      discordWebhookUrl: body.discordWebhookUrl
-    });
+    if (!jobId) {
+      throw new Error('Failed to generate or retrieve scan job ID');
+    }
+    const assignedJobId: string = jobId;
 
+    // 7. Asynchronous Worker Trigger (runs after the response is sent; kept alive by the platform)
     after(async () => {
       try {
-        const workerRes = await fetch(workerUrl, {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            'x-zelsis-internal-secret': internalSecret
-          },
-          body: workerPayload
+        await executeScanJob({
+          jobId: assignedJobId,
+          repoUrl: rawRepoUrl,
+          targetName: body.targetName,
+          githubToken: body.githubToken,
+          authenticatedUserId,
+          userTier,
+          slackWebhookUrl: body.slackWebhookUrl,
+          discordWebhookUrl: body.discordWebhookUrl
         });
-        if (!workerRes.ok) {
-          logger.warn(`[Scans Queue] Worker responded ${workerRes.status} for job ${jobId}`);
+      } catch (directExecErr: any) {
+        logger.warn(`[Scans Queue] In-process execution notice for job ${jobId}:`, directExecErr?.message);
+        // Fallback to internal HTTP worker endpoint if direct invocation had an issue
+        if (internalBaseUrl && internalSecret) {
+          try {
+            const workerUrl = `${internalBaseUrl}/api/v1/scans/process-job`;
+            const workerPayload = JSON.stringify({
+              jobId,
+              repoUrl: rawRepoUrl,
+              targetName: body.targetName,
+              githubToken: body.githubToken,
+              authenticatedUserId,
+              userTier,
+              slackWebhookUrl: body.slackWebhookUrl,
+              discordWebhookUrl: body.discordWebhookUrl
+            });
+            const workerRes = await fetch(workerUrl, {
+              method: 'POST',
+              headers: {
+                'Content-Type': 'application/json',
+                'x-zelsis-internal-secret': internalSecret
+              },
+              body: workerPayload
+            });
+            if (!workerRes.ok) {
+              logger.warn(`[Scans Queue] Fallback worker responded ${workerRes.status} for job ${jobId}`);
+            }
+          } catch (triggerErr: any) {
+            logger.warn('[Scans Queue] Fallback worker trigger notice:', triggerErr?.message);
+          }
         }
-      } catch (triggerErr: any) {
-        logger.warn('[Scans Queue] Background worker trigger notice:', triggerErr?.message);
       }
     });
 
