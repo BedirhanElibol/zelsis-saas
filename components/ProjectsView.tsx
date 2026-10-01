@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect } from 'react';
 import { Project } from '@/data/schema';
-import { MOCK_PROJECTS } from '@/data/mockData';
+import { MOCK_PROJECTS } from '@/data/demo-data';
 import { FolderGit2, Plus, ArrowRight, Play, ExternalLink, ShieldCheck, Trash2, Layers, Lock, X } from 'lucide-react';
 import { NewProjectModal } from '@/components/projects/NewProjectModal';
 import { UserProfile } from '@/components/auth/AuthModal';

@@ -2,7 +2,7 @@
 
 import React, { useState, useMemo, useEffect, useRef } from 'react';
 import { Project, Finding, UserTier } from '@/data/schema';
-import { MOCK_PROJECTS } from '@/data/mockData';
+import { MOCK_PROJECTS } from '@/data/demo-data';
 import { KpiCards } from './KpiCards';
 import { SeverityChart } from './SeverityChart';
 import { FindingsTable } from '../findings/FindingsTable';

@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { Project, Finding } from '@/data/schema';
-import { MOCK_PROJECTS } from '@/data/mockData';
+import { MOCK_PROJECTS } from '@/data/demo-data';
 import { findUpdatedProject, isLocalAuditProject, normalizeProject, serializeProjectsForStorage, updateMatchingFindings } from '@/lib/dashboard/project-state';
 import { useScanQuota } from '@/hooks/dashboard/useScanQuota';
 import { UserProfile } from '@/components/auth/AuthModal';

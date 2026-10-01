@@ -2,7 +2,7 @@
 
 import React, { useState } from 'react';
 import { Finding, UserTier } from '@/data/schema';
-import { DEMO_AUDIT_FINDINGS } from '@/data/mockData';
+import { DEMO_AUDIT_FINDINGS } from '@/data/demo-data';
 import { BulkFixModal } from './BulkFixModal';
 import { Search, Filter, ArrowRight, Layers, Check, RotateCcw, Play, Copy, Lock, ShieldCheck, Database, Server, Sliders, AlertOctagon, GitCommit, ChevronDown, SearchX, ExternalLink } from 'lucide-react';
 import { ClipboardToastBadge, useClipboardToast } from '../ui/Toast';

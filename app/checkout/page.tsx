@@ -4,7 +4,7 @@ import React, { Suspense, useState, useEffect } from 'react';
 import { useSearchParams, useRouter } from 'next/navigation';
 import { AppShell } from '@/components/layout/AppShell';
 import { CheckoutView } from '@/components/checkout/CheckoutView';
-import { MOCK_PROJECTS } from '@/data/mockData';
+import { MOCK_PROJECTS } from '@/data/demo-data';
 import { AuthModal, UserProfile } from '@/components/auth/AuthModal';
 import { purgeZelsisStorage, purgeShipguardStorage } from '@/lib/storage';
 import { verifyLicenseKey } from '@/lib/stripe-checkout';

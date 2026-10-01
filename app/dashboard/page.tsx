@@ -3,7 +3,7 @@
 import React, { Suspense, useState, useEffect } from 'react';
 import dynamic from 'next/dynamic';
 import { Project, Finding, ScanHistoryItem, UserTier } from '@/data/schema';
-import { MOCK_PROJECTS, VIBEPOLISH_30_CATALOG, UI_RULES_CATALOG, AI_CLICHE_25_CATALOG } from '@/data/mockData';
+import { MOCK_PROJECTS } from '@/data/demo-data';
 import { AppShell } from '@/components/layout/AppShell';
 import { DashboardView } from '@/components/dashboard/DashboardView';
 import { ScanRunnerView } from '@/components/ScanRunnerView';
@@ -536,7 +536,7 @@ function DashboardContent() {
             {activeNav === 'vibepolish' && (
               <ComponentErrorBoundary componentName="VibePolishView">
                 <VibePolishView
-                  rules={VIBEPOLISH_30_CATALOG}
+                  catalog="polish"
                   title="Design & UX Polish Matrix"
                   description="Automated design system audit evaluating visual hierarchy, responsive layout shifts, micro-interactions, color contrasts, and accessibility standards."
                 />
@@ -546,7 +546,7 @@ function DashboardContent() {
             {activeNav === 'aicliche' && (
               <ComponentErrorBoundary componentName="AiClicheView">
                 <VibePolishView
-                  rules={AI_CLICHE_25_CATALOG}
+                  catalog="cliche"
                   title="AI Anti-Pattern & Cliché Detector"
                   description="Deep pattern analysis scanning for AI-generated design anti-patterns, generic layout locks, non-standard component trees, and trust-eroding visual tropes."
                 />
@@ -556,7 +556,7 @@ function DashboardContent() {
             {activeNav === 'aimaster' && (
               <ComponentErrorBoundary componentName="AiMasterView">
                 <VibePolishView
-                  rules={UI_RULES_CATALOG}
+                  catalog="all"
                   title="Master Quality & Resilience Matrix"
                   description="Full-stack architecture audit covering OWASP top vulnerabilities, RAG retrieval leakage, agent execution boundaries, token cost governance, and production SLA metrics."
                 />

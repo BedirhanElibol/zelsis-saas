@@ -2,7 +2,7 @@
 
 import React, { useState } from 'react';
 import { Project } from '@/data/schema';
-import { MOCK_PROJECTS } from '@/data/mockData';
+import { MOCK_PROJECTS } from '@/data/demo-data';
 import { Sidebar } from './Sidebar';
 import { Header } from './Header';
 import { PageTransition } from '../PageTransition';

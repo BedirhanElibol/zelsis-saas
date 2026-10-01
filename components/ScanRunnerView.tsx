@@ -3,7 +3,8 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { Project, PlanUsageQuota } from '@/data/schema';
 import { UserProfile } from '@/components/auth/AuthModal';
-import { runStaticCodeScan, ScanResult, CodeFile } from '@/lib/scanner-engine';
+import type { ScanResult, CodeFile } from '@/lib/scanner-engine';
+
 import { fetchGithubRepositoryData, isValidGithubUrl, parseGithubUrl, extractRepoDisplayName } from '@/lib/github-api';
 import { isValidWebUrl, fetchWebsiteAuditData } from '@/lib/website-scanner';
 import { Terminal, CheckCircle2, Copy, Check, Search, Clock, Zap, Lock, Key, RotateCcw, Database, Layers } from 'lucide-react';
@@ -19,6 +20,10 @@ import { checkScanQuota, isPrivateRepoAllowed } from '@/lib/quota-manager';
 import { getSupabase } from '@/lib/supabase';
 import { getActiveUserAuth } from '@/lib/supabase-client';
 import { logger } from '@/lib/logger';
+
+// The rule engine is ~3 MB of JS: load it only when a scan actually runs, not with the dashboard
+const runStaticCodeScan: typeof import('@/lib/scanner-engine').runStaticCodeScan = async (...args) =>
+  (await import('@/lib/scanner-engine')).runStaticCodeScan(...args);
 
 interface ScanRunnerViewProps {
   project: Project;

@@ -1,12 +1,15 @@
 'use client';
 
 import React from 'react';
+import dynamic from 'next/dynamic';
 import { Project, UserTier } from '@/data/schema';
 import { AuditCompareModal } from './AuditCompareModal';
 import { NotificationSettingsModal } from './NotificationSettingsModal';
 import { RuleConfiguratorModal } from './RuleConfiguratorModal';
 import { ExecutiveBriefingModal } from './ExecutiveBriefingModal';
-import { RuleKnowledgeBaseModal } from './RuleKnowledgeBaseModal';
+
+// Bundles the full rule catalogs (~3 MB): load only when the knowledge base is opened
+const RuleKnowledgeBaseModal = dynamic(() => import('./RuleKnowledgeBaseModal').then((m) => m.RuleKnowledgeBaseModal), { ssr: false });
 import { DeploymentManifestModal } from './DeploymentManifestModal';
 import { PenTestPayloadGenerator } from './PenTestPayloadGenerator';
 import { BadgeGeneratorModal } from './BadgeGeneratorModal';

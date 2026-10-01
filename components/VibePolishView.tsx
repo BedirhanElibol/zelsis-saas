@@ -2,17 +2,26 @@
 
 import React, { useState } from 'react';
 import { UiRule } from '@/data/schema';
-import { UI_RULES_CATALOG } from '@/data/mockData';
+import { UI_RULES_CATALOG, VIBEPOLISH_30_CATALOG, AI_CLICHE_25_CATALOG } from '@/data/mockData';
 import { Palette, Copy, CheckCircle2, Search, Filter } from 'lucide-react';
+
+/** Named catalogs, resolved here so callers do not import (and bundle) the catalog data themselves. */
+const CATALOGS = {
+  polish: () => VIBEPOLISH_30_CATALOG,
+  cliche: () => AI_CLICHE_25_CATALOG,
+  all: () => UI_RULES_CATALOG,
+} as const;
 
 interface VibePolishViewProps {
   rules?: UiRule[];
+  catalog?: keyof typeof CATALOGS;
   title?: string;
   description?: string;
 }
 
 export const VibePolishView: React.FC<VibePolishViewProps> = ({
-  rules = UI_RULES_CATALOG,
+  catalog = 'all',
+  rules = CATALOGS[catalog](),
   title = "VibePolish 200 AI Master Anti-Patterns & Slop Matrix",
   description = "Automated audit matrix covering AI product failure modes: UI/UX slop, hallucinated imports, prompt bloat, agent reasoning deadlocks, RAG triad failures, and unhandled streaming cancellations."
 }) => {
