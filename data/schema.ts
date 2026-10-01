@@ -21,6 +21,8 @@ export const FindingSchema = z.object({
   status: StatusEnum,
   owner: z.string().optional(),
   falsePositive: z.boolean().default(false),
+  // Set by the server when fix text was withheld (Free tier); fetch it via /api/v1/scans/fix
+  lockedFix: z.object({ jobId: z.string(), ref: z.string() }).optional(),
 });
 
 export interface ScanHistoryItem {

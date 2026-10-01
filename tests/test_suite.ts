@@ -27,7 +27,8 @@ import {
   isCicdIntegrationAllowed,
   isCustomRulesAllowed
 } from '../lib/quota-manager';
-import { isPlatformAdminEmail, hasAdminRole, isFounderGrantExpiry, getSubscriptionValidity, hasFixPromptAccess } from '../lib/subscription-utils';
+import { isPlatformAdminEmail, hasAdminRole, isFounderGrantExpiry, getSubscriptionValidity, hasFixPromptAccess, resolveServerPlanTier } from '../lib/subscription-utils';
+import { redactScanResultFixes, LOCKED_FIX_TEXT } from '../lib/fix-gate';
 import { ZELSIS_PRICING_PLANS } from '../data/pricing-plans';
 import {
   isSupabaseConfigured as isSupabaseConfiguredServer,
@@ -985,6 +986,26 @@ async function runAllTests() {
   assert(hasFixPromptAccess('Pro') === true, 'Pro tier has fix prompt access');
   assert(hasFixPromptAccess('Enterprise') === true, 'Enterprise tier has fix prompt access');
   assert(hasFixPromptAccess(undefined) === false, 'Missing tier has no fix prompt access');
+
+  console.log('\n--- 21. Testing Server-Side Fix Gate ---');
+  const pastEnd = '2020-01-01T00:00:00.000Z';
+  assert(resolveServerPlanTier({ storedTier: 'Pro', currentPeriodEnd: inOneYear }) === 'Pro', 'Active Pro resolves to Pro on the server');
+  assert(resolveServerPlanTier({ storedTier: 'Pro', currentPeriodEnd: pastEnd }) === 'Free', 'Elapsed Pro period resolves to Free on the server');
+  assert(resolveServerPlanTier({ storedTier: 'Free', currentPeriodEnd: pastEnd, isAdmin: true }) === 'Enterprise', 'Admin resolves to Enterprise on the server');
+  assert(resolveServerPlanTier({ storedTier: 'bogus' }) === 'Free', 'Unknown stored tier resolves to Free');
+
+  const gateScan = await runStaticCodeScan([
+    { path: 'src/config.ts', content: 'const api_key = "sk-proj-abcdefghijklmnopqrstuvwxyz123456";' },
+    { path: 'supabase/policy.sql', content: 'CREATE POLICY p ON t FOR ALL USING (true);' }
+  ], 'fix-gate-test');
+  const jobUuid = '00000000-0000-4000-8000-000000000000';
+  const redacted = redactScanResultFixes(gateScan, jobUuid);
+  assert(gateScan.findings.length > 0, 'Fix gate fixture produces findings');
+  assert(redacted.result.findings.every((f) => f.remediationPrompt === LOCKED_FIX_TEXT && f.diffPatch === undefined), 'Redacted findings carry no remediation text or diff patch');
+  assert(!JSON.stringify(redacted.result).includes(gateScan.findings[0].remediationPrompt), 'Original fix text is absent from the redacted result');
+  assert(redacted.result.findings.every((f, i) => f.lockedFix?.jobId === jobUuid && f.lockedFix?.ref === String(i)), 'Redacted findings reference their stored fix');
+  assert(redacted.result.findings.every((f, i) => redacted.fixes[f.lockedFix!.ref].remediationPrompt === gateScan.findings[i].remediationPrompt), 'Stored fixes keep the full remediation text');
+  assert(redacted.result.score === gateScan.score && redacted.result.findings.length === gateScan.findings.length, 'Redaction keeps score and finding count');
 
   testPolarWebhook();
 

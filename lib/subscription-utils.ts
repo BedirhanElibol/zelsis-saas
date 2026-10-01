@@ -49,6 +49,22 @@ export function hasFixPromptAccess(tier?: string | null): boolean {
 }
 
 /**
+ * Server-side plan tier: admins are Enterprise; a paid plan whose period ended
+ * without a webhook renewal counts as Free even before the DB row is updated.
+ */
+export function resolveServerPlanTier(input: {
+  storedTier?: string | null;
+  currentPeriodEnd?: string | null;
+  isAdmin?: boolean;
+}): 'Free' | 'Pro' | 'Enterprise' {
+  if (input.isAdmin) return 'Enterprise';
+  const tier = input.storedTier === 'Pro' || input.storedTier === 'Enterprise' ? input.storedTier : 'Free';
+  const periodEnd = input.currentPeriodEnd ? new Date(input.currentPeriodEnd).getTime() : NaN;
+  if (tier !== 'Free' && !isNaN(periodEnd) && periodEnd < Date.now()) return 'Free';
+  return tier;
+}
+
+/**
  * Founder-only grants use a 2099 (lifetime) expiry. No paid Pro/Enterprise period
  * runs longer than two years, so anything beyond that on a non-founder is stale data.
  */

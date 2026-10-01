@@ -131,6 +131,14 @@ export const GateCheckRequestSchema = z
   );
 
 /**
+ * Schema for /api/v1/scans/fix POST payload
+ */
+export const RevealFixRequestSchema = z.object({
+  jobId: z.string().uuid('jobId must be a valid UUID'),
+  ref: z.string().regex(/^\d{1,5}$/, 'ref must be a finding index')
+});
+
+/**
  * Schema for Stripe Webhook headers and metadata
  */
 export const StripeWebhookHeadersSchema = z.object({

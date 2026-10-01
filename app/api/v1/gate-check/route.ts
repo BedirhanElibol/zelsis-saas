@@ -9,6 +9,8 @@ import { GateCheckRequestSchema, validateRequestBody } from '@/lib/validations/a
 import { logger } from '@/lib/logger';
 import { canAccessLocalAudit } from '@/lib/env-config';
 import { validateSafeTargetUrl } from '@/lib/ssrf-guard';
+import { hasFixPromptAccess, resolveServerPlanTier } from '@/lib/subscription-utils';
+import { LOCKED_FIX_TEXT } from '@/lib/fix-gate';
 
 // F-31: Bounded execution duration for static code scans (bounded to 30s for serverless SLA)
 export const maxDuration = 30;
@@ -116,6 +118,7 @@ export async function POST(req: NextRequest) {
 
     let authenticatedUserId: string | null = null;
     let userTier: 'Free' | 'Pro' | 'Enterprise' = 'Free';
+    let canSeeFixes = false;
 
     if (authHeader && supabaseUrl && anonKey) {
       try {
@@ -179,12 +182,16 @@ export async function POST(req: NextRequest) {
         const adminClient = createClient(supabaseUrl, serviceRoleKey, { auth: { persistSession: false } });
         const { data: sub } = await adminClient
           .from('subscriptions')
-          .select('plan_tier, monthly_scan_quota, scans_used_this_month')
+          .select('plan_tier, monthly_scan_quota, scans_used_this_month, current_period_end')
           .eq('user_id', authenticatedUserId)
           .maybeSingle();
 
         if (sub) {
           userTier = (sub.plan_tier as any) || 'Free';
+          canSeeFixes = hasFixPromptAccess(resolveServerPlanTier({
+            storedTier: sub.plan_tier,
+            currentPeriodEnd: sub.current_period_end
+          }));
           const monthlyQuota = sub.monthly_scan_quota ?? 3;
           const scansUsed = sub.scans_used_this_month ?? 0;
 
@@ -506,7 +513,7 @@ export async function POST(req: NextRequest) {
           category: f.category,
           filePath: f.filePath,
           lineRange: f.lineRange,
-          remediationPrompt: f.remediationPrompt
+          remediationPrompt: canSeeFixes ? f.remediationPrompt : LOCKED_FIX_TEXT
         })),
         timestamp: new Date().toISOString()
       },

@@ -8,6 +8,8 @@ import { logger } from '@/lib/logger';
 import { canAccessLocalAudit } from '@/lib/env-config';
 import { validateSafeTargetUrl } from '@/lib/ssrf-guard';
 import { checkRateLimit, createRateLimitResponse } from '@/lib/rate-limiter';
+import { hasFixPromptAccess, isPlatformAdminEmail, resolveServerPlanTier } from '@/lib/subscription-utils';
+import { redactScanResultFixes } from '@/lib/fix-gate';
 
 export const maxDuration = 30;
 export const revalidate = 3600;
@@ -85,12 +87,15 @@ export async function POST(req: NextRequest) {
           authenticatedUserId = jobRow.user_id;
           const { data: subRow } = await adminClient
             .from('subscriptions')
-            .select('plan_tier')
+            .select('plan_tier, current_period_end')
             .eq('user_id', authenticatedUserId)
             .maybeSingle();
-          if (subRow?.plan_tier) {
-            userTier = subRow.plan_tier;
-          }
+          const { data: ownerData } = await adminClient.auth.admin.getUserById(jobRow.user_id);
+          userTier = resolveServerPlanTier({
+            storedTier: subRow?.plan_tier,
+            currentPeriodEnd: subRow?.current_period_end,
+            isAdmin: isPlatformAdminEmail(ownerData?.user?.email)
+          });
         }
       }
     } catch (dbErr) {
@@ -313,6 +318,21 @@ export async function POST(req: NextRequest) {
       }).catch((whErr) => logger.warn('[Process Job] Webhook dispatch notice:', whErr?.message));
     }
 
+    // Fix text is Pro: Free results are stored without it, full text goes to the service-role-only table
+    let storedResult = result;
+    if (!hasFixPromptAccess(userTier)) {
+      const redacted = redactScanResultFixes(result, jobId);
+      storedResult = redacted.result;
+      if (adminClient && authenticatedUserId) {
+        const { error: fixesErr } = await adminClient
+          .from('scan_job_fixes')
+          .upsert({ job_id: jobId, user_id: authenticatedUserId, fixes: redacted.fixes });
+        if (fixesErr) {
+          logger.warn(`[Process Job] Could not store fixes for ${jobId}:`, fixesErr);
+        }
+      }
+    }
+
     // ─── Phase 5: COMPLETED ───
     await updateJobState({
       status: 'COMPLETED',
@@ -322,7 +342,7 @@ export async function POST(req: NextRequest) {
       gate_status: result.gateStatus,
       scan_id: createdScanId,
       findings_count: result.findings.length,
-      result_data: result
+      result_data: storedResult
     });
 
     return NextResponse.json({

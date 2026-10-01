@@ -329,6 +329,7 @@ export const ScanRunnerView: React.FC<ScanRunnerViewProps> = ({
       ]);
 
       let dispatchedJobId: string | null = null;
+      let queueErrorMessage: string | null = null;
 
       try {
         const { accessToken } = await getActiveUserAuth();
@@ -366,6 +367,9 @@ export const ScanRunnerView: React.FC<ScanRunnerViewProps> = ({
         if (queueRes.ok) {
           const queueData = await queueRes.json();
           dispatchedJobId = queueData.jobId || null;
+        } else {
+          const queueErrData = await queueRes.json().catch(() => ({}));
+          queueErrorMessage = queueErrData.error || null;
         }
       } catch (queueDispatchErr: unknown) {
         const queueErrMsg = queueDispatchErr instanceof Error ? queueDispatchErr.message : 'Proceeding directly';
@@ -556,7 +560,21 @@ export const ScanRunnerView: React.FC<ScanRunnerViewProps> = ({
         return;
       }
 
-      // ─── FALLBACK: CLIENT-SIDE DIRECT SCAN ENGINE (If Queue Unavailable / Local Dev) ───
+      // Outside local dev, scans run only on the server so plan gating (fix text) is enforced there
+      if (!canAccessLocalAudit()) {
+        if (!isCancelled) {
+          const reason = queueErrorMessage || 'The scan service is unavailable right now. Please try again in a moment.';
+          setScanFailureReason(reason);
+          setLogs((prev) => [
+            ...prev,
+            `[${new Date().toLocaleTimeString()}] [ERROR] ❌ ${reason}`
+          ]);
+          setIsFinished(true);
+        }
+        return;
+      }
+
+      // ─── FALLBACK: CLIENT-SIDE DIRECT SCAN ENGINE (Local Dev) ───
       let filesToScan: CodeFile[] = [];
 
       if (isWebTarget) {

@@ -1,12 +1,15 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Finding, PlanUsageQuota } from '@/data/schema';
 import { UserProfile } from '@/components/auth/AuthModal';
 import { X, Copy, CheckCircle2, AlertTriangle, Code, ShieldCheck, User, GitCommit, FileText, Split, AlignJustify, Lock } from 'lucide-react';
 import { formatFindingForJira } from '@/lib/export-utils';
 import { checkAiPromptQuota } from '@/lib/quota-manager';
+import { hasFixPromptAccess } from '@/lib/subscription-utils';
+import { getActiveUserAuth } from '@/lib/supabase-client';
+import type { StoredFix } from '@/lib/fix-gate';
 
 export interface FindingDetailModalProps {
   isOpen: boolean;
@@ -51,8 +54,51 @@ export const FindingDetailModal: React.FC<FindingDetailModalProps> = ({
   const [activeTab, setActiveTab] = useState<'diff' | 'prompt' | 'jira'>('diff');
   const [diffViewMode, setDiffViewMode] = useState<'split' | 'unified'>('split');
 
+  const [revealedFix, setRevealedFix] = useState<StoredFix | null>(null);
+  const [revealStatus, setRevealStatus] = useState<'idle' | 'loading' | 'denied' | 'error'>('idle');
+
   const userTier = user?.tier || 'Free';
   const aiPromptCheck = quota ? checkAiPromptQuota(quota, userTier) : { allowed: true, remaining: Infinity };
+  const canUseFixPrompts = hasFixPromptAccess(userTier);
+  const lockedFix = finding?.lockedFix;
+
+  useEffect(() => {
+    setRevealedFix(null);
+    setRevealStatus('idle');
+  }, [finding?.id, lockedFix?.jobId, lockedFix?.ref]);
+
+  // Fix text withheld by the server: Pro loads it, Free spends the trial (counted server-side)
+  const revealFix = useCallback(async () => {
+    if (!lockedFix) return;
+    setRevealStatus('loading');
+    try {
+      const { accessToken } = await getActiveUserAuth();
+      const res = await fetch('/api/v1/scans/fix', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          ...(accessToken ? { Authorization: `Bearer ${accessToken}` } : {})
+        },
+        body: JSON.stringify({ jobId: lockedFix.jobId, ref: lockedFix.ref })
+      });
+      const data = await res.json().catch(() => ({}));
+      if (res.ok && data?.fix) {
+        setRevealedFix(data.fix as StoredFix);
+        setRevealStatus('idle');
+        if (!canUseFixPrompts && aiPromptCheck.allowed) onRecordAiPrompt?.();
+        return;
+      }
+      setRevealStatus(res.status === 403 ? 'denied' : 'error');
+    } catch {
+      setRevealStatus('error');
+    }
+  }, [lockedFix, canUseFixPrompts, aiPromptCheck.allowed, onRecordAiPrompt]);
+
+  useEffect(() => {
+    if (isOpen && lockedFix && canUseFixPrompts && !revealedFix && revealStatus === 'idle') {
+      revealFix();
+    }
+  }, [isOpen, lockedFix, canUseFixPrompts, revealedFix, revealStatus, revealFix]);
 
   // Keyboard accessibility: Close on Escape
   useEffect(() => {
@@ -68,38 +114,59 @@ export const FindingDetailModal: React.FC<FindingDetailModalProps> = ({
   if (!isOpen || !finding) return null;
 
   const cleanSnippet = sanitizeContent(finding.snippet);
-  const cleanPrompt = sanitizeContent(finding.remediationPrompt);
+  const fixSource: Finding = revealedFix
+    ? { ...finding, remediationPrompt: revealedFix.remediationPrompt, diffPatch: revealedFix.diffPatch }
+    : finding;
+  const withheld = Boolean(lockedFix) && !revealedFix;
+  const cleanPrompt = sanitizeContent(fixSource.remediationPrompt);
   // Fix guidance, patches and ticket remediation are Pro (Free keeps a trial via aiPromptCheck)
-  const fixLocked = !aiPromptCheck.allowed;
-  const visiblePrompt = fixLocked ? '// Fix guidance is included in Zelsis Pro.' : cleanPrompt;
-  const visiblePatch = fixLocked ? undefined : finding.diffPatch;
-  const jiraFinding = fixLocked ? { ...finding, remediationPrompt: 'Included in Zelsis Pro.', diffPatch: undefined } : finding;
+  const fixLocked = withheld
+    ? !canUseFixPrompts && revealStatus === 'denied'
+    : !revealedFix && !aiPromptCheck.allowed;
+  const needsReveal = withheld && !fixLocked;
+  const visiblePrompt = fixLocked
+    ? '// Fix guidance is included in Zelsis Pro.'
+    : needsReveal
+    ? (revealStatus === 'loading' ? '// Loading fix...' : '// Reveal this fix to view it.')
+    : cleanPrompt;
+  const visiblePatch = fixLocked || needsReveal ? undefined : fixSource.diffPatch;
+  const jiraFinding = fixLocked || needsReveal
+    ? { ...finding, remediationPrompt: 'Included in Zelsis Pro.', diffPatch: undefined }
+    : fixSource;
   const cleanTitle = sanitizeContent(finding.title);
   const cleanSteps = (finding.reproductionSteps || []).map(sanitizeContent);
 
   const diffText =
-    finding.diffPatch ||
+    fixSource.diffPatch ||
     `--- a/${finding.filePath}\n+++ b/${finding.filePath}\n@@ -${finding.lineRange} @@\n- ${cleanSnippet}\n+ // REMEDIATION: ${cleanPrompt}`;
 
   const copyDiff = () => {
-    if (!aiPromptCheck.allowed) {
+    if (fixLocked) {
       onOpenCheckout?.('Pro');
+      return;
+    }
+    if (needsReveal) {
+      revealFix();
       return;
     }
     navigator.clipboard.writeText(diffText);
     setCopiedDiff(true);
-    onRecordAiPrompt?.();
+    if (!revealedFix) onRecordAiPrompt?.();
     setTimeout(() => setCopiedDiff(false), 2000);
   };
 
   const copyPrompt = () => {
-    if (!aiPromptCheck.allowed) {
+    if (fixLocked) {
       onOpenCheckout?.('Pro');
+      return;
+    }
+    if (needsReveal) {
+      revealFix();
       return;
     }
     navigator.clipboard.writeText(cleanPrompt);
     setCopiedPrompt(true);
-    onRecordAiPrompt?.();
+    if (!revealedFix) onRecordAiPrompt?.();
     setTimeout(() => setCopiedPrompt(false), 2000);
   };
 
@@ -294,10 +361,15 @@ export const FindingDetailModal: React.FC<FindingDetailModalProps> = ({
                     onClick={copyDiff}
                     className="px-3 py-1.5 rounded-lg bg-white/10 hover:bg-white/15 border border-white/15 text-white text-xs font-bold font-mono flex items-center gap-1.5 transition-all cursor-pointer"
                   >
-                    {!aiPromptCheck.allowed ? (
+                    {fixLocked ? (
                       <>
                         <Lock size={12} className="text-amber-400" />
                         <span>Copy Diff (Pro)</span>
+                      </>
+                    ) : needsReveal ? (
+                      <>
+                        <Code size={13} />
+                        <span>{revealStatus === 'loading' ? 'Loading Fix...' : canUseFixPrompts ? 'Load Fix' : aiPromptCheck.allowed ? 'Reveal Fix (Free Trial)' : 'Reveal Fix'}</span>
                       </>
                     ) : copiedDiff ? (
                       <>
@@ -399,14 +471,19 @@ export const FindingDetailModal: React.FC<FindingDetailModalProps> = ({
                     <span className="text-[0.68rem] font-mono text-zinc-400 uppercase">
                       Paste into your AI coding assistant:
                     </span>
-                    {aiPromptCheck.allowed ? (
+                    {!fixLocked ? (
                       <button
                         type="button"
                         onClick={copyPrompt}
+                        disabled={revealStatus === 'loading'}
                         className="px-3 py-1 rounded bg-emerald-500/10 hover:bg-emerald-500/20 border border-emerald-500/30 text-emerald-400 text-xs font-bold font-mono flex items-center gap-1.5 transition-all cursor-pointer"
                       >
                         {copiedPrompt ? <CheckCircle2 size={13} /> : <Copy size={13} />}
-                        <span>{copiedPrompt ? 'Prompt Copied!' : 'Copy Fix Prompt'}</span>
+                        <span>
+                          {needsReveal
+                            ? (revealStatus === 'loading' ? 'Loading Fix...' : canUseFixPrompts ? 'Load Fix' : aiPromptCheck.allowed ? 'Reveal Fix (Free Trial)' : 'Reveal Fix')
+                            : copiedPrompt ? 'Prompt Copied!' : 'Copy Fix Prompt'}
+                        </span>
                       </button>
                     ) : (
                       <button
@@ -420,7 +497,7 @@ export const FindingDetailModal: React.FC<FindingDetailModalProps> = ({
                     )}
                   </div>
 
-                  {!aiPromptCheck.allowed ? (
+                  {fixLocked ? (
                     <div className="bg-[#0A0A0C] p-6 rounded-xl border border-amber-500/30 flex flex-col items-center text-center gap-3">
                       <div className="w-10 h-10 rounded-xl bg-amber-500/10 border border-amber-500/20 flex items-center justify-center text-amber-400">
                         <Lock size={20} />
@@ -444,7 +521,10 @@ export const FindingDetailModal: React.FC<FindingDetailModalProps> = ({
                     </div>
                   ) : (
                     <div className="bg-[#0A0A0C] p-4 rounded-xl border border-white/10 font-mono text-xs text-zinc-200 leading-relaxed select-text">
-                      {cleanPrompt}
+                      {visiblePrompt}
+                      {revealStatus === 'error' && (
+                        <div className="mt-2 text-amber-400">Could not load this fix. Please try again.</div>
+                      )}
                     </div>
                   )}
                 </div>
