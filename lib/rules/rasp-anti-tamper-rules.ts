@@ -4,6 +4,7 @@
  */
 import { Finding } from "@/data/schema";
 import { CodeFile } from "../scanner-engine";
+import { locateMatchLine } from './shared/locate';
 export interface RaspAntiTamperRuleResult {
     findings: Finding[];
     logs: string[];
@@ -15,13 +16,13 @@ export function evaluateRaspAntiTamperRules(file: CodeFile, lines: string[], cle
     const logs: string[] = [];
     const lowerPath = file.path.toLowerCase().replace(/\\/g, "/");
     // Skip self-referential catalogs, mocks, and schema definitions
-    if (lowerPath.includes("data/catalogs/") || lowerPath.includes("data/mockdata") || lowerPath.includes("data/workspacefiles") || lowerPath.includes("data/schema") || lowerPath.includes("scratch/") || lowerPath.includes(".agent/") || lowerPath.includes("node_modules/") || lowerPath.endsWith(".d.ts")) {
+    if (lowerPath.includes("node_modules/") || lowerPath.endsWith(".d.ts")) {
         return { findings, logs };
     }
     const ts = new Date().toLocaleTimeString();
     // RASP-01: Missing Runtime Application Self-Protection (RASP) Execution Hooks
     if ((/dynamicExecution/i.test(cleanContent) && !/raspGuard/i.test(cleanContent))) {
-        const matchLineIdx = lines.findIndex(l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('#') && !l.trim().startsWith('*'));
+        const matchLineIdx = locateMatchLine(lines, [/dynamicExecution/i], l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('#') && !l.trim().startsWith('*'));
         const lineNum = matchLineIdx !== -1 ? matchLineIdx + 1 : 1;
         findings.push({
             id: `rasp14601-${Date.now()}-${findingCounter.count++}`,
@@ -35,7 +36,7 @@ export function evaluateRaspAntiTamperRules(file: CodeFile, lines: string[], cle
             snippet: lines[matchLineIdx] || 'Runtime Application Self-Protection configuration',
             reproductionSteps: [
                 `Audited Runtime Application Self-Protection configuration in ${file.path}:${lineNum}.`,
-                'Detected violation matching {code}.'
+                'Matched RASP-01: Missing Runtime Application Self-Protection (RASP) Execution Hooks.'
             ],
             remediationPrompt: "Intercept and block dynamic code evaluation (eval, Function constructor, exec) at the JavaScript/runtime level.",
             status: 'OPEN',
@@ -45,7 +46,7 @@ export function evaluateRaspAntiTamperRules(file: CodeFile, lines: string[], cle
     }
     // RASP-02: Unauthorized Debugger Attachment Permitted in Production Runtime
     if ((/debuggerDetection/i.test(cleanContent) && !/terminateOnDebugger/i.test(cleanContent))) {
-        const matchLineIdx = lines.findIndex(l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('#') && !l.trim().startsWith('*'));
+        const matchLineIdx = locateMatchLine(lines, [/debuggerDetection/i], l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('#') && !l.trim().startsWith('*'));
         const lineNum = matchLineIdx !== -1 ? matchLineIdx + 1 : 1;
         findings.push({
             id: `rasp14602-${Date.now()}-${findingCounter.count++}`,
@@ -59,7 +60,7 @@ export function evaluateRaspAntiTamperRules(file: CodeFile, lines: string[], cle
             snippet: lines[matchLineIdx] || 'Runtime Application Self-Protection configuration',
             reproductionSteps: [
                 `Audited Runtime Application Self-Protection configuration in ${file.path}:${lineNum}.`,
-                'Detected violation matching {code}.'
+                'Matched RASP-02: Unauthorized Debugger Attachment Permitted in Production Runtime.'
             ],
             remediationPrompt: "Detect and terminate application processes if unauthorized ptrace or remote debugger attach attempts occur.",
             status: 'OPEN',
@@ -69,7 +70,7 @@ export function evaluateRaspAntiTamperRules(file: CodeFile, lines: string[], cle
     }
     // RASP-03: Prototype Pollution Exploitation: Unfrozen Core Object Prototypes
     if ((/initializeRuntime/i.test(cleanContent) && !/Object\.freeze/i.test(cleanContent))) {
-        const matchLineIdx = lines.findIndex(l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('#') && !l.trim().startsWith('*'));
+        const matchLineIdx = locateMatchLine(lines, [/initializeRuntime/i], l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('#') && !l.trim().startsWith('*'));
         const lineNum = matchLineIdx !== -1 ? matchLineIdx + 1 : 1;
         findings.push({
             id: `rasp14603-${Date.now()}-${findingCounter.count++}`,
@@ -83,7 +84,7 @@ export function evaluateRaspAntiTamperRules(file: CodeFile, lines: string[], cle
             snippet: lines[matchLineIdx] || 'Runtime Application Self-Protection configuration',
             reproductionSteps: [
                 `Audited Runtime Application Self-Protection configuration in ${file.path}:${lineNum}.`,
-                'Detected violation matching {code}.'
+                'Matched RASP-03: Prototype Pollution Exploitation: Unfrozen Core Object Prototypes.'
             ],
             remediationPrompt: "Freeze Object.prototype, Array.prototype, and Function.prototype at process startup to prevent pollution.",
             status: 'OPEN',
@@ -93,7 +94,7 @@ export function evaluateRaspAntiTamperRules(file: CodeFile, lines: string[], cle
     }
     // RASP-04: Dynamic Memory Tampering: Insecure Memory Allocations in Native Addons
     if ((/(?:binding\.gyp|CMakeLists\.txt)/i.test(cleanContent) && !/-fstack-protector/i.test(cleanContent))) {
-        const matchLineIdx = lines.findIndex(l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('#') && !l.trim().startsWith('*'));
+        const matchLineIdx = locateMatchLine(lines, [/(?:binding\.gyp|CMakeLists\.txt)/i], l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('#') && !l.trim().startsWith('*'));
         const lineNum = matchLineIdx !== -1 ? matchLineIdx + 1 : 1;
         findings.push({
             id: `rasp14604-${Date.now()}-${findingCounter.count++}`,
@@ -107,7 +108,7 @@ export function evaluateRaspAntiTamperRules(file: CodeFile, lines: string[], cle
             snippet: lines[matchLineIdx] || 'Runtime Application Self-Protection configuration',
             reproductionSteps: [
                 `Audited Runtime Application Self-Protection configuration in ${file.path}:${lineNum}.`,
-                'Detected violation matching {code}.'
+                'Matched RASP-04: Dynamic Memory Tampering: Insecure Memory Allocations in Native Addons.'
             ],
             remediationPrompt: "Enable Address Space Layout Randomization (ASLR) and stack canary compiler flags on all native modules.",
             status: 'OPEN',
@@ -117,7 +118,7 @@ export function evaluateRaspAntiTamperRules(file: CodeFile, lines: string[], cle
     }
     // RASP-05: Unchecked Buffer Offsets Across Foreign Function Interface (FFI)
     if ((/ffiBridge|nativeCall/i.test(cleanContent) && !/validateBufferBounds/i.test(cleanContent))) {
-        const matchLineIdx = lines.findIndex(l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('#') && !l.trim().startsWith('*'));
+        const matchLineIdx = locateMatchLine(lines, [/ffiBridge|nativeCall/i], l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('#') && !l.trim().startsWith('*'));
         const lineNum = matchLineIdx !== -1 ? matchLineIdx + 1 : 1;
         findings.push({
             id: `rasp14605-${Date.now()}-${findingCounter.count++}`,
@@ -131,7 +132,7 @@ export function evaluateRaspAntiTamperRules(file: CodeFile, lines: string[], cle
             snippet: lines[matchLineIdx] || 'Runtime Application Self-Protection configuration',
             reproductionSteps: [
                 `Audited Runtime Application Self-Protection configuration in ${file.path}:${lineNum}.`,
-                'Detected violation matching {code}.'
+                'Matched RASP-05: Unchecked Buffer Offsets Across Foreign Function Interface (FFI).'
             ],
             remediationPrompt: "Validate memory bounds and argument pointer offsets before crossing native C/C++ addon boundaries.",
             status: 'OPEN',

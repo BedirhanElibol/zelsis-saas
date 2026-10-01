@@ -1055,5 +1055,26 @@ export const DATABASE_PERF_CATALOG: InfraRule[] = [
     description: "Financial balance transfers operating under default READ COMMITTED, risking race condition.",
     verificationControl: "Financial transactions explicitly set ISOLATION LEVEL SERIALIZABLE or REPEATABLE READ.",
     remediationPrompt: "Declare SET TRANSACTION ISOLATION LEVEL SERIALIZABLE for financial ledgers."
+  },
+  {
+    id: 6051,
+    owasp2025Category: "A04:2025-Insecure Design",
+    cweId: "CWE-400",
+    sourceUrl: "https://www.postgresql.org/docs/current/sql-createindex.html#SQL-CREATEINDEX-CONCURRENTLY",
+    sourceType: "official-standard",
+    positiveExample: "CREATE INDEX CONCURRENTLY idx_orders_user ON orders(user_id);",
+    negativeExample: "CREATE INDEX idx_orders_user ON orders(user_id);",
+    applicableLanguages: ["SQL"],
+    detectionMethod: "regex",
+    falsePositiveRisk: "low",
+    status: "published",
+    code: 'DB-PERF-51',
+    title: "Migration Takes a Blocking Table Lock on an Existing Table",
+    category: "Concurrency & Locks",
+    targetStack: "PostgreSQL / SQL",
+    riskLevel: 'HIGH',
+    description: "Adding a NOT NULL column without DEFAULT fails on non-empty tables, and CREATE INDEX without CONCURRENTLY blocks writes during the build.",
+    verificationControl: "Migrations on existing tables add columns as nullable or with a DEFAULT, and build indexes with CREATE INDEX CONCURRENTLY.",
+    remediationPrompt: "Add the column as nullable (or with a DEFAULT), backfill, then SET NOT NULL; build indexes on existing tables with CREATE INDEX CONCURRENTLY."
   }
 ];

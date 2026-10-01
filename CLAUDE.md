@@ -6,8 +6,9 @@
 
 # 2. Exact Verification Commands
 - Typecheck: `npx tsc --noEmit`
-- Linter: none configured (`npm run lint` is an alias of the typecheck)
-- Tests: `npm test` (runs `tests/test_suite.ts` via tsx)
+- Linter: `npm run lint` (ESLint 9 flat config; runs on TS 6 API via `scripts/eslint-ts6.cjs` until typescript-eslint supports TS 7)
+- E2E: `npm run test:e2e` (Playwright, `tests/e2e/`; set `PLAYWRIGHT_CHROMIUM_PATH` to reuse a local Chromium)
+- Tests: `npm test` (legacy `tests/test_suite.ts` + `node:test` files in `tests/unit/`, `tests/rules/`). Add rule fixtures to `tests/rules/cases.ts`.
 - Sync Types: `npx supabase gen types typescript --project-id ... > types/supabase.ts`
 
 # 3. Non-Obvious Conventions
@@ -24,7 +25,7 @@
 - Scope: Modify only files relevant to the active prompt. Do not reformat adjacent untouched code.
 
 # 5. Git & GitHub Protocol
-- Push Restriction: Push only when the user explicitly asks.
+- Push: Push verified commits to the active feature branch without asking. Never push to `main`/`master`.
 - Branch Protection: Don't commit directly to `main` or `master`; work on a feature branch (e.g., `feat/...`, `fix/...`).
 - Atomic Commits: Do not commit after every single file edit. Stage and commit only when a logical milestone is fully implemented and verified.
 - Commit Style: Use Conventional Commits (`feat(auth): ...`, `fix(ui): ...`). Keep commit descriptions under 72 characters.
@@ -34,3 +35,13 @@
 - Plan: For changes spanning >= 2 files, state a 3-bullet plan before editing.
 - Verify: Run `npx tsc --noEmit` (whole project) before reporting task completion.
 - Tone: Be terse. Output git diff summaries and verification status; omit pleasantries.
+
+<!-- BEGIN:nextjs-agent-rules -->
+
+# This is NOT the Next.js you know
+
+This version has breaking changes — APIs, conventions, and file structure may all differ from your training data. Read the relevant guide in `node_modules/next/dist/docs/` (resolved from this file's directory; in monorepos the `next` package may not be visible from the repo root) before writing any code. Heed deprecation notices.
+
+This block is written and re-added by `next dev` — verify at `node_modules/next/dist/server/lib/generate-agent-files.js`. Removing it from a diff only re-creates the uncommitted change; committing it with your work keeps the tree clean.
+
+<!-- END:nextjs-agent-rules -->

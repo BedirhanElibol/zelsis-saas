@@ -4,6 +4,7 @@
  */
 import { Finding } from "@/data/schema";
 import { CodeFile } from "../scanner-engine";
+import { locateMatchLine } from './shared/locate';
 export interface TlsCryptographyRuleResult {
     findings: Finding[];
     logs: string[];
@@ -15,13 +16,13 @@ export function evaluateTlsCryptographyRules(file: CodeFile, lines: string[], cl
     const logs: string[] = [];
     const lowerPath = file.path.toLowerCase().replace(/\\/g, "/");
     // Skip self-referential catalogs, mocks, and schema definitions
-    if (lowerPath.includes("data/catalogs/") || lowerPath.includes("data/mockdata") || lowerPath.includes("data/workspacefiles") || lowerPath.includes("data/schema") || lowerPath.includes("scratch/") || lowerPath.includes(".agent/") || lowerPath.includes("node_modules/") || lowerPath.endsWith(".d.ts")) {
+    if (lowerPath.includes("node_modules/") || lowerPath.endsWith(".d.ts")) {
         return { findings, logs };
     }
     const ts = new Date().toLocaleTimeString();
     // TLS-01: Deprecated TLS 1.0 / 1.1 Protocols Permitted on Public Endpoints
     if ((/(?:minVersion|secureProtocol)/i.test(cleanContent) && /(?:TLSv1|TLSv1_method)/i.test(cleanContent) && !/TLSv1_2|TLSv1_3/i.test(cleanContent))) {
-        const matchLineIdx = lines.findIndex(l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('#') && !l.trim().startsWith('*'));
+        const matchLineIdx = locateMatchLine(lines, [/(?:minVersion|secureProtocol)/i, /(?:TLSv1|TLSv1_method)/i], l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('#') && !l.trim().startsWith('*'));
         const lineNum = matchLineIdx !== -1 ? matchLineIdx + 1 : 1;
         findings.push({
             id: `tls12301-${Date.now()}-${findingCounter.count++}`,
@@ -45,7 +46,7 @@ export function evaluateTlsCryptographyRules(file: CodeFile, lines: string[], cl
     }
     // TLS-02: Weak Cipher Suite with Insecure CBC or RC4 Ciphers
     if ((/ciphers:/i.test(cleanContent) && /(?:RC4|3DES|DES|CBC)/i.test(cleanContent))) {
-        const matchLineIdx = lines.findIndex(l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('#') && !l.trim().startsWith('*'));
+        const matchLineIdx = locateMatchLine(lines, [/ciphers:/i, /(?:RC4|3DES|DES|CBC)/i], l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('#') && !l.trim().startsWith('*'));
         const lineNum = matchLineIdx !== -1 ? matchLineIdx + 1 : 1;
         findings.push({
             id: `tls12302-${Date.now()}-${findingCounter.count++}`,
@@ -69,7 +70,7 @@ export function evaluateTlsCryptographyRules(file: CodeFile, lines: string[], cl
     }
     // TLS-03: Missing HSTS (HTTP Strict Transport Security) Preload Directive
     if ((/Strict-Transport-Security/i.test(cleanContent) && !/preload/i.test(cleanContent))) {
-        const matchLineIdx = lines.findIndex(l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('#') && !l.trim().startsWith('*'));
+        const matchLineIdx = locateMatchLine(lines, [/Strict-Transport-Security/i], l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('#') && !l.trim().startsWith('*'));
         const lineNum = matchLineIdx !== -1 ? matchLineIdx + 1 : 1;
         findings.push({
             id: `tls12303-${Date.now()}-${findingCounter.count++}`,
@@ -93,7 +94,7 @@ export function evaluateTlsCryptographyRules(file: CodeFile, lines: string[], cl
     }
     // TLS-04: Expired or Self-Signed TLS Certificate in Production Traffic Path
     if ((/rejectUnauthorized:\s*false/i.test(cleanContent))) {
-        const matchLineIdx = lines.findIndex(l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('#') && !l.trim().startsWith('*'));
+        const matchLineIdx = locateMatchLine(lines, [/rejectUnauthorized:\s*false/i], l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('#') && !l.trim().startsWith('*'));
         const lineNum = matchLineIdx !== -1 ? matchLineIdx + 1 : 1;
         findings.push({
             id: `tls12304-${Date.now()}-${findingCounter.count++}`,
@@ -117,7 +118,7 @@ export function evaluateTlsCryptographyRules(file: CodeFile, lines: string[], cl
     }
     // TLS-05: Client Renegotiation Permitted Enabling TLS Denial of Service
     if ((/ssl_renegotiation/i.test(cleanContent) && !/renegotiation:\s*false/i.test(cleanContent))) {
-        const matchLineIdx = lines.findIndex(l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('#') && !l.trim().startsWith('*'));
+        const matchLineIdx = locateMatchLine(lines, [/ssl_renegotiation/i], l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('#') && !l.trim().startsWith('*'));
         const lineNum = matchLineIdx !== -1 ? matchLineIdx + 1 : 1;
         findings.push({
             id: `tls12305-${Date.now()}-${findingCounter.count++}`,

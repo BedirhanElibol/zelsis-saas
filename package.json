@@ -7,8 +7,13 @@
     "build": "next build",
     "start": "next start --port 3000",
     "typecheck": "tsc --noEmit",
-    "lint": "tsc --noEmit",
-    "test": "npx tsx tests/test_suite.ts"
+    "lint": "node -r ./scripts/eslint-ts6.cjs node_modules/eslint/bin/eslint.js .",
+    "test": "npm run test:suite && npm run test:unit",
+    "test:suite": "tsx tests/test_suite.ts",
+    "test:unit": "tsx --test --test-reporter=spec \"tests/unit/*.test.ts\" \"tests/rules/*.test.ts\"",
+    "test:e2e": "playwright test",
+    "audit:rules": "tsx scripts/rule-audit.ts",
+    "benchmark": "tsx scripts/benchmark/run.ts"
   },
   "dependencies": {
     "@number-flow/react": "^0.5.5",
@@ -31,12 +36,16 @@
     "zod": "^4.6.5"
   },
   "devDependencies": {
+    "@playwright/test": "^1.63.0",
     "@tailwindcss/postcss": "^4.3.3",
     "@types/canvas-confetti": "^1.9.0",
     "@types/node": "^26.6.3",
     "@types/react": "^18.3.18",
     "@types/react-dom": "^18.3.5",
+    "@typescript/typescript6": "^6.0.2",
     "autoprefixer": "^10.4.20",
+    "eslint": "^9.39.5",
+    "eslint-config-next": "^16.3.8",
     "postcss": "^8.5.28",
     "tailwindcss": "^4.3.3",
     "tsx": "^4.19.2",

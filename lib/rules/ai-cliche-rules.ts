@@ -7,6 +7,7 @@
  */
 import { Finding } from '@/data/schema';
 import { CodeFile } from '../scanner-engine';
+import { locateMatchLine } from './shared/locate';
 interface ClicheRuleResult {
     findings: Finding[];
     logs: string[];
@@ -19,19 +20,6 @@ export function evaluateAiClicheRules(file: CodeFile, lines: string[], cleanCont
     // Only evaluate frontend component files
     const isFrontend = file.path.endsWith('.tsx') || file.path.endsWith('.jsx') || file.path.endsWith('.html') || file.path.endsWith('.css');
     if (!isFrontend)
-        return { findings, logs };
-    const lowerFilePath = file.path.toLowerCase();
-    const isScannerRuleCatalog = lowerFilePath.includes('lib/rules/') ||
-        lowerFilePath.includes('data/mockdata.ts') ||
-        lowerFilePath.includes('data/workspacefiles.ts') ||
-        lowerFilePath.includes('lib/scanner-engine.ts') ||
-        lowerFilePath.includes('vulnerabilityplayground.tsx') ||
-        lowerFilePath.includes('ruleknowledgebasemodal.tsx') ||
-        lowerFilePath.includes('interactiveanalyzer.tsx') ||
-        lowerFilePath.includes('05_seed_data.sql') ||
-        lowerFilePath.includes('scratch/') ||
-        lowerFilePath.includes('.agent/');
-    if (isScannerRuleCatalog)
         return { findings, logs };
     const ts = new Date().toLocaleTimeString();
     // CLICHE-01: Decorative Hero Badge Pill & AI Landing Slop
@@ -685,7 +673,7 @@ export function evaluateAiClicheRules(file: CodeFile, lines: string[], cleanCont
     }
     // CLICHE-26: Rainbow Animated Conic Gradient Card Borders
     if (/conic-gradient.*(?:red|blue|pink|yellow)|animate-border.*conic|rainbow-border/i.test(cleanContent)) {
-        const matchLineIdx = lines.findIndex(l => !l.trim().startsWith('//') && !l.trim().startsWith('*') && (/cliche-26|rainbow/i.test(l) || lines.indexOf(l) === 0));
+        const matchLineIdx = locateMatchLine(lines, [/conic-gradient.*(?:red|blue|pink|yellow)|animate-border.*conic|rainbow-border/i], l => !l.trim().startsWith('//') && !l.trim().startsWith('*'));
         const lineNum = matchLineIdx !== -1 ? matchLineIdx + 1 : 1;
         findings.push({
             id: `cliche-${Date.now()}-${findingCounter.count++}`,
@@ -710,7 +698,7 @@ export function evaluateAiClicheRules(file: CodeFile, lines: string[], cleanCont
     }
     // CLICHE-27: Monotonous Matrix Grid Background Overlays
     if (/(?:bg-grid|bg-matrix|radial-gradient\(.*grid).*(?:opacity-10|opacity-20|opacity-5)/i.test(cleanContent)) {
-        const matchLineIdx = lines.findIndex(l => !l.trim().startsWith('//') && !l.trim().startsWith('*') && (/cliche-27|monotonous/i.test(l) || lines.indexOf(l) === 0));
+        const matchLineIdx = locateMatchLine(lines, [/(?:bg-grid|bg-matrix|radial-gradient\(.*grid).*(?:opacity-10|opacity-20|opacity-5)/i], l => !l.trim().startsWith('//') && !l.trim().startsWith('*'));
         const lineNum = matchLineIdx !== -1 ? matchLineIdx + 1 : 1;
         findings.push({
             id: `cliche-${Date.now()}-${findingCounter.count++}`,
@@ -735,7 +723,7 @@ export function evaluateAiClicheRules(file: CodeFile, lines: string[], cleanCont
     }
     // CLICHE-28: Fabricated "Active Now" Pulsing Ping Dot
     if (/animate-ping.*(?:Users\s*Active|Online\s*Now|Live\s*Users)/i.test(cleanContent)) {
-        const matchLineIdx = lines.findIndex(l => !l.trim().startsWith('//') && !l.trim().startsWith('*') && (/cliche-28|fabricated/i.test(l) || lines.indexOf(l) === 0));
+        const matchLineIdx = locateMatchLine(lines, [/animate-ping.*(?:Users\s*Active|Online\s*Now|Live\s*Users)/i], l => !l.trim().startsWith('//') && !l.trim().startsWith('*'));
         const lineNum = matchLineIdx !== -1 ? matchLineIdx + 1 : 1;
         findings.push({
             id: `cliche-${Date.now()}-${findingCounter.count++}`,
@@ -760,7 +748,7 @@ export function evaluateAiClicheRules(file: CodeFile, lines: string[], cleanCont
     }
     // CLICHE-29: Generic Archetype Testimonial Persona Titles
     if (/(?:Tech\s*Enthusiast|Early\s*Adopter|Digital\s*Nomad|Product\s*Guy)\b/i.test(cleanContent)) {
-        const matchLineIdx = lines.findIndex(l => !l.trim().startsWith('//') && !l.trim().startsWith('*') && (/cliche-29|generic/i.test(l) || lines.indexOf(l) === 0));
+        const matchLineIdx = locateMatchLine(lines, [/(?:Tech\s*Enthusiast|Early\s*Adopter|Digital\s*Nomad|Product\s*Guy)\b/i], l => !l.trim().startsWith('//') && !l.trim().startsWith('*'));
         const lineNum = matchLineIdx !== -1 ? matchLineIdx + 1 : 1;
         findings.push({
             id: `cliche-${Date.now()}-${findingCounter.count++}`,
@@ -785,7 +773,7 @@ export function evaluateAiClicheRules(file: CodeFile, lines: string[], cleanCont
     }
     // CLICHE-30: Asymmetric Bento Grid with Empty Filler Cards
     if (/(?:bento-grid|grid-cols-4.*bento).*(?:empty-card|spacer-card|decorative-box)/i.test(cleanContent)) {
-        const matchLineIdx = lines.findIndex(l => !l.trim().startsWith('//') && !l.trim().startsWith('*') && (/cliche-30|asymmetric/i.test(l) || lines.indexOf(l) === 0));
+        const matchLineIdx = locateMatchLine(lines, [/(?:bento-grid|grid-cols-4.*bento).*(?:empty-card|spacer-card|decorative-box)/i], l => !l.trim().startsWith('//') && !l.trim().startsWith('*'));
         const lineNum = matchLineIdx !== -1 ? matchLineIdx + 1 : 1;
         findings.push({
             id: `cliche-${Date.now()}-${findingCounter.count++}`,
@@ -810,7 +798,7 @@ export function evaluateAiClicheRules(file: CodeFile, lines: string[], cleanCont
     }
     // CLICHE-31: Floating Geometric Wireframe Polyhedra
     if (/(?:wireframe-(?:cube|sphere|polyhedron)|floating-(?:shapes|poly))/i.test(cleanContent)) {
-        const matchLineIdx = lines.findIndex(l => !l.trim().startsWith('//') && !l.trim().startsWith('*') && (/cliche-31|floating/i.test(l) || lines.indexOf(l) === 0));
+        const matchLineIdx = locateMatchLine(lines, [/(?:wireframe-(?:cube|sphere|polyhedron)|floating-(?:shapes|poly))/i], l => !l.trim().startsWith('//') && !l.trim().startsWith('*'));
         const lineNum = matchLineIdx !== -1 ? matchLineIdx + 1 : 1;
         findings.push({
             id: `cliche-${Date.now()}-${findingCounter.count++}`,
@@ -835,7 +823,7 @@ export function evaluateAiClicheRules(file: CodeFile, lines: string[], cleanCont
     }
     // CLICHE-32: Artificial Scarcity Countdown Banner
     if (/(?:Only\s*\d+\s*spots?\s*left|Tier\s*closing\s*in\s*\d+|Price\s*increases\s*in\s*\d+)/i.test(cleanContent)) {
-        const matchLineIdx = lines.findIndex(l => !l.trim().startsWith('//') && !l.trim().startsWith('*') && (/cliche-32|artificial/i.test(l) || lines.indexOf(l) === 0));
+        const matchLineIdx = locateMatchLine(lines, [/(?:Only\s*\d+\s*spots?\s*left|Tier\s*closing\s*in\s*\d+|Price\s*increases\s*in\s*\d+)/i], l => !l.trim().startsWith('//') && !l.trim().startsWith('*'));
         const lineNum = matchLineIdx !== -1 ? matchLineIdx + 1 : 1;
         findings.push({
             id: `cliche-${Date.now()}-${findingCounter.count++}`,
@@ -860,7 +848,7 @@ export function evaluateAiClicheRules(file: CodeFile, lines: string[], cleanCont
     }
     // CLICHE-33: Generic Robot / Brain / Neon Mascot Logo
     if (/header|navbar|logo/i.test(file.path) && /(?:lucide-bot|lucide-brain|robot-mascot|brain-sparkle)\b/i.test(cleanContent)) {
-        const matchLineIdx = lines.findIndex(l => !l.trim().startsWith('//') && !l.trim().startsWith('*') && (/cliche-33|generic/i.test(l) || lines.indexOf(l) === 0));
+        const matchLineIdx = locateMatchLine(lines, [/(?:lucide-bot|lucide-brain|robot-mascot|brain-sparkle)\b/i], l => !l.trim().startsWith('//') && !l.trim().startsWith('*'));
         const lineNum = matchLineIdx !== -1 ? matchLineIdx + 1 : 1;
         findings.push({
             id: `cliche-${Date.now()}-${findingCounter.count++}`,
@@ -885,7 +873,7 @@ export function evaluateAiClicheRules(file: CodeFile, lines: string[], cleanCont
     }
     // CLICHE-34: Arbitrary "Most Popular" Inverted Pricing Card
     if (/(?:scale-110.*popular|scale-105.*most-popular|pricing.*invert.*popular)/i.test(cleanContent)) {
-        const matchLineIdx = lines.findIndex(l => !l.trim().startsWith('//') && !l.trim().startsWith('*') && (/cliche-34|arbitrary/i.test(l) || lines.indexOf(l) === 0));
+        const matchLineIdx = locateMatchLine(lines, [/(?:scale-110.*popular|scale-105.*most-popular|pricing.*invert.*popular)/i], l => !l.trim().startsWith('//') && !l.trim().startsWith('*'));
         const lineNum = matchLineIdx !== -1 ? matchLineIdx + 1 : 1;
         findings.push({
             id: `cliche-${Date.now()}-${findingCounter.count++}`,
@@ -935,7 +923,7 @@ export function evaluateAiClicheRules(file: CodeFile, lines: string[], cleanCont
     }
     // CLICHE-36: Unreadable Frosted Glass over High-Contrast Text
     if (/backdrop-blur-(?:sm|md)\s+bg-white\/5\s+text-white\/30/i.test(cleanContent)) {
-        const matchLineIdx = lines.findIndex(l => !l.trim().startsWith('//') && !l.trim().startsWith('*') && (/cliche-36|unreadable/i.test(l) || lines.indexOf(l) === 0));
+        const matchLineIdx = locateMatchLine(lines, [/backdrop-blur-(?:sm|md)\s+bg-white\/5\s+text-white\/30/i], l => !l.trim().startsWith('//') && !l.trim().startsWith('*'));
         const lineNum = matchLineIdx !== -1 ? matchLineIdx + 1 : 1;
         findings.push({
             id: `cliche-${Date.now()}-${findingCounter.count++}`,
@@ -960,7 +948,7 @@ export function evaluateAiClicheRules(file: CodeFile, lines: string[], cleanCont
     }
     // CLICHE-37: Fabricated FAANG Customer Logo Parade
     if (/(?:Trusted\s*by|Used\s*by).*(?:Google|Apple|Meta|Netflix|Microsoft)\s*logos/i.test(cleanContent)) {
-        const matchLineIdx = lines.findIndex(l => !l.trim().startsWith('//') && !l.trim().startsWith('*') && (/cliche-37|fabricated/i.test(l) || lines.indexOf(l) === 0));
+        const matchLineIdx = locateMatchLine(lines, [/(?:Trusted\s*by|Used\s*by).*(?:Google|Apple|Meta|Netflix|Microsoft)\s*logos/i], l => !l.trim().startsWith('//') && !l.trim().startsWith('*'));
         const lineNum = matchLineIdx !== -1 ? matchLineIdx + 1 : 1;
         findings.push({
             id: `cliche-${Date.now()}-${findingCounter.count++}`,
@@ -1010,7 +998,7 @@ export function evaluateAiClicheRules(file: CodeFile, lines: string[], cleanCont
     }
     // CLICHE-39: Persistent Sticky Banner Blocking Mobile Viewport
     if (/(?:fixed\s+bottom-0.*fixed\s+top-0.*sticky|sticky\s+top-0.*fixed\s+bottom-0.*cookie)/i.test(cleanContent)) {
-        const matchLineIdx = lines.findIndex(l => !l.trim().startsWith('//') && !l.trim().startsWith('*') && (/cliche-39|persistent/i.test(l) || lines.indexOf(l) === 0));
+        const matchLineIdx = locateMatchLine(lines, [/(?:fixed\s+bottom-0.*fixed\s+top-0.*sticky|sticky\s+top-0.*fixed\s+bottom-0.*cookie)/i], l => !l.trim().startsWith('//') && !l.trim().startsWith('*'));
         const lineNum = matchLineIdx !== -1 ? matchLineIdx + 1 : 1;
         findings.push({
             id: `cliche-${Date.now()}-${findingCounter.count++}`,
@@ -1035,7 +1023,7 @@ export function evaluateAiClicheRules(file: CodeFile, lines: string[], cleanCont
     }
     // CLICHE-40: Blinding Radial Spotlight Halo Behind Hero Button
     if (/(?:blur-2xl|blur-3xl).*-inset-1.*bg-gradient/i.test(cleanContent)) {
-        const matchLineIdx = lines.findIndex(l => !l.trim().startsWith('//') && !l.trim().startsWith('*') && (/cliche-40|blinding/i.test(l) || lines.indexOf(l) === 0));
+        const matchLineIdx = locateMatchLine(lines, [/(?:blur-2xl|blur-3xl).*-inset-1.*bg-gradient/i], l => !l.trim().startsWith('//') && !l.trim().startsWith('*'));
         const lineNum = matchLineIdx !== -1 ? matchLineIdx + 1 : 1;
         findings.push({
             id: `cliche-${Date.now()}-${findingCounter.count++}`,
@@ -1060,7 +1048,7 @@ export function evaluateAiClicheRules(file: CodeFile, lines: string[], cleanCont
     }
     // CLICHE-41: Static Fake Product Hunt "#1 Product of the Day" Badge
     if (/(?:producthunt.*medal|product-of-the-day\.svg|ph-badge)/i.test(cleanContent) && !/https:\/\/www\.producthunt\.com/i.test(cleanContent)) {
-        const matchLineIdx = lines.findIndex(l => !l.trim().startsWith('//') && !l.trim().startsWith('*') && (/cliche-41|static/i.test(l) || lines.indexOf(l) === 0));
+        const matchLineIdx = locateMatchLine(lines, [/(?:producthunt.*medal|product-of-the-day\.svg|ph-badge)/i], l => !l.trim().startsWith('//') && !l.trim().startsWith('*'));
         const lineNum = matchLineIdx !== -1 ? matchLineIdx + 1 : 1;
         findings.push({
             id: `cliche-${Date.now()}-${findingCounter.count++}`,
@@ -1085,7 +1073,7 @@ export function evaluateAiClicheRules(file: CodeFile, lines: string[], cleanCont
     }
     // CLICHE-42: Buzzword Soup Hero Headline ("Supercharge Your Workflow")
     if (/(?:Supercharge|Revolutionize|Synergize|Unleash\s*the\s*Power).*(?:Workflow|Productivity|Potential)/i.test(cleanContent)) {
-        const matchLineIdx = lines.findIndex(l => !l.trim().startsWith('//') && !l.trim().startsWith('*') && (/cliche-42|buzzword/i.test(l) || lines.indexOf(l) === 0));
+        const matchLineIdx = locateMatchLine(lines, [/(?:Supercharge|Revolutionize|Synergize|Unleash\s*the\s*Power).*(?:Workflow|Productivity|Potential)/i], l => !l.trim().startsWith('//') && !l.trim().startsWith('*'));
         const lineNum = matchLineIdx !== -1 ? matchLineIdx + 1 : 1;
         findings.push({
             id: `cliche-${Date.now()}-${findingCounter.count++}`,
@@ -1110,7 +1098,7 @@ export function evaluateAiClicheRules(file: CodeFile, lines: string[], cleanCont
     }
     // CLICHE-43: Decorative Non-Functional Terminal with Fake Logs
     if (/(?:fake-terminal|mock-console|pseudo-terminal).*(?:Compiling\.\.\.|Bundling\.\.\.)/i.test(cleanContent)) {
-        const matchLineIdx = lines.findIndex(l => !l.trim().startsWith('//') && !l.trim().startsWith('*') && (/cliche-43|decorative/i.test(l) || lines.indexOf(l) === 0));
+        const matchLineIdx = locateMatchLine(lines, [/(?:fake-terminal|mock-console|pseudo-terminal).*(?:Compiling\.\.\.|Bundling\.\.\.)/i], l => !l.trim().startsWith('//') && !l.trim().startsWith('*'));
         const lineNum = matchLineIdx !== -1 ? matchLineIdx + 1 : 1;
         findings.push({
             id: `cliche-${Date.now()}-${findingCounter.count++}`,
@@ -1135,7 +1123,7 @@ export function evaluateAiClicheRules(file: CodeFile, lines: string[], cleanCont
     }
     // CLICHE-44: Monospace Body Text Misuse
     if (/font-mono\s+text-(?:base|lg)\s+leading-relaxed/i.test(cleanContent)) {
-        const matchLineIdx = lines.findIndex(l => !l.trim().startsWith('//') && !l.trim().startsWith('*') && (/cliche-44|monospace/i.test(l) || lines.indexOf(l) === 0));
+        const matchLineIdx = locateMatchLine(lines, [/font-mono\s+text-(?:base|lg)\s+leading-relaxed/i], l => !l.trim().startsWith('//') && !l.trim().startsWith('*'));
         const lineNum = matchLineIdx !== -1 ? matchLineIdx + 1 : 1;
         findings.push({
             id: `cliche-${Date.now()}-${findingCounter.count++}`,
@@ -1160,7 +1148,7 @@ export function evaluateAiClicheRules(file: CodeFile, lines: string[], cleanCont
     }
     // CLICHE-45: Uncontrollable Auto-Playing Testimonial Carousel
     if (/(?:autoPlay|autoplay).*interval:\s*(?:1000|2000)\b/i.test(cleanContent) && !/pauseOnHover/i.test(cleanContent)) {
-        const matchLineIdx = lines.findIndex(l => !l.trim().startsWith('//') && !l.trim().startsWith('*') && (/cliche-45|uncontrollable/i.test(l) || lines.indexOf(l) === 0));
+        const matchLineIdx = locateMatchLine(lines, [/(?:autoPlay|autoplay).*interval:\s*(?:1000|2000)\b/i], l => !l.trim().startsWith('//') && !l.trim().startsWith('*'));
         const lineNum = matchLineIdx !== -1 ? matchLineIdx + 1 : 1;
         findings.push({
             id: `cliche-${Date.now()}-${findingCounter.count++}`,
@@ -1185,7 +1173,7 @@ export function evaluateAiClicheRules(file: CodeFile, lines: string[], cleanCont
     }
     // CLICHE-46: Blown-Out Neon Box Shadow Glows
     if (/shadow-\[0_0_(?:40|50|60|80)px/i.test(cleanContent)) {
-        const matchLineIdx = lines.findIndex(l => !l.trim().startsWith('//') && !l.trim().startsWith('*') && (/cliche-46|blown-out/i.test(l) || lines.indexOf(l) === 0));
+        const matchLineIdx = locateMatchLine(lines, [/shadow-\[0_0_(?:40|50|60|80)px/i], l => !l.trim().startsWith('//') && !l.trim().startsWith('*'));
         const lineNum = matchLineIdx !== -1 ? matchLineIdx + 1 : 1;
         findings.push({
             id: `cliche-${Date.now()}-${findingCounter.count++}`,
@@ -1210,7 +1198,7 @@ export function evaluateAiClicheRules(file: CodeFile, lines: string[], cleanCont
     }
     // CLICHE-47: Formulaic Cliché Feature Comparison Matrix
     if (/(?:comparison-table|vs-competitors).*(?:Check.*X.*Check.*X|100%.*0%)/i.test(cleanContent)) {
-        const matchLineIdx = lines.findIndex(l => !l.trim().startsWith('//') && !l.trim().startsWith('*') && (/cliche-47|formulaic/i.test(l) || lines.indexOf(l) === 0));
+        const matchLineIdx = locateMatchLine(lines, [/(?:comparison-table|vs-competitors).*(?:Check.*X.*Check.*X|100%.*0%)/i], l => !l.trim().startsWith('//') && !l.trim().startsWith('*'));
         const lineNum = matchLineIdx !== -1 ? matchLineIdx + 1 : 1;
         findings.push({
             id: `cliche-${Date.now()}-${findingCounter.count++}`,
@@ -1235,7 +1223,7 @@ export function evaluateAiClicheRules(file: CodeFile, lines: string[], cleanCont
     }
     // CLICHE-48: Unlabeled Toggle Switch Interactive Ambiguity
     if (/<(?:Switch|Toggle)\b(?![^>]*(?:aria-label|aria-labelledby|<label))/i.test(cleanContent)) {
-        const matchLineIdx = lines.findIndex(l => !l.trim().startsWith('//') && !l.trim().startsWith('*') && (/cliche-48|unlabeled/i.test(l) || lines.indexOf(l) === 0));
+        const matchLineIdx = locateMatchLine(lines, [/<(?:Switch|Toggle)\b(?![^>]*(?:aria-label|aria-labelledby|<label))/i], l => !l.trim().startsWith('//') && !l.trim().startsWith('*'));
         const lineNum = matchLineIdx !== -1 ? matchLineIdx + 1 : 1;
         findings.push({
             id: `cliche-${Date.now()}-${findingCounter.count++}`,
@@ -1260,7 +1248,7 @@ export function evaluateAiClicheRules(file: CodeFile, lines: string[], cleanCont
     }
     // CLICHE-49: Decorative Hand-Drawn SVG Scribble Arrows
     if (/(?:scribble-arrow|hand-drawn-arrow|doodle-arrow)/i.test(cleanContent)) {
-        const matchLineIdx = lines.findIndex(l => !l.trim().startsWith('//') && !l.trim().startsWith('*') && (/cliche-49|decorative/i.test(l) || lines.indexOf(l) === 0));
+        const matchLineIdx = locateMatchLine(lines, [/(?:scribble-arrow|hand-drawn-arrow|doodle-arrow)/i], l => !l.trim().startsWith('//') && !l.trim().startsWith('*'));
         const lineNum = matchLineIdx !== -1 ? matchLineIdx + 1 : 1;
         findings.push({
             id: `cliche-${Date.now()}-${findingCounter.count++}`,
@@ -1285,7 +1273,7 @@ export function evaluateAiClicheRules(file: CodeFile, lines: string[], cleanCont
     }
     // CLICHE-50: Orphaned Dead Social Media Footer Anchors
     if (/href=["\']https?:\/\/(?:twitter|x|facebook|instagram)\.com\/?["\']/i.test(cleanContent)) {
-        const matchLineIdx = lines.findIndex(l => !l.trim().startsWith('//') && !l.trim().startsWith('*') && (/cliche-50|orphaned/i.test(l) || lines.indexOf(l) === 0));
+        const matchLineIdx = locateMatchLine(lines, [/href=["\']https?:\/\/(?:twitter|x|facebook|instagram)\.com\/?["\']/i], l => !l.trim().startsWith('//') && !l.trim().startsWith('*'));
         const lineNum = matchLineIdx !== -1 ? matchLineIdx + 1 : 1;
         findings.push({
             id: `cliche-${Date.now()}-${findingCounter.count++}`,
@@ -1310,7 +1298,7 @@ export function evaluateAiClicheRules(file: CodeFile, lines: string[], cleanCont
     }
     // CLICHE-51: Hyper-Saturated Particle Canvas CPU Drain
     if (/(?:tsparticles|particle-canvas|particles-bg)/i.test(cleanContent) && !/prefers-reduced-motion/i.test(cleanContent)) {
-        const matchLineIdx = lines.findIndex(l => !l.trim().startsWith('//') && !l.trim().startsWith('*') && (/cliche-51|hyper-saturated/i.test(l) || lines.indexOf(l) === 0));
+        const matchLineIdx = locateMatchLine(lines, [/(?:tsparticles|particle-canvas|particles-bg)/i], l => !l.trim().startsWith('//') && !l.trim().startsWith('*'));
         const lineNum = matchLineIdx !== -1 ? matchLineIdx + 1 : 1;
         findings.push({
             id: `cliche-${Date.now()}-${findingCounter.count++}`,
@@ -1335,7 +1323,7 @@ export function evaluateAiClicheRules(file: CodeFile, lines: string[], cleanCont
     }
     // CLICHE-52: Generic Intercom Chat Bubble Impersonation
     if (/(?:chat-bubble|intercom-bubble|live-support-bubble).*(?:mailto:|href="#")/i.test(cleanContent)) {
-        const matchLineIdx = lines.findIndex(l => !l.trim().startsWith('//') && !l.trim().startsWith('*') && (/cliche-52|generic/i.test(l) || lines.indexOf(l) === 0));
+        const matchLineIdx = locateMatchLine(lines, [/(?:chat-bubble|intercom-bubble|live-support-bubble).*(?:mailto:|href="#")/i], l => !l.trim().startsWith('//') && !l.trim().startsWith('*'));
         const lineNum = matchLineIdx !== -1 ? matchLineIdx + 1 : 1;
         findings.push({
             id: `cliche-${Date.now()}-${findingCounter.count++}`,
@@ -1360,7 +1348,7 @@ export function evaluateAiClicheRules(file: CodeFile, lines: string[], cleanCont
     }
     // CLICHE-53: 5-Star Rating Badge Without Review Count or Source
     if (/(?:Rated\s*5\.0|5\s*Stars?\s*Rating).*(?:top\s*companies|thousands\s*of\s*users)/i.test(cleanContent) && !/g2|capterra|trustpilot/i.test(cleanContent)) {
-        const matchLineIdx = lines.findIndex(l => !l.trim().startsWith('//') && !l.trim().startsWith('*') && (/cliche-53|5-star/i.test(l) || lines.indexOf(l) === 0));
+        const matchLineIdx = locateMatchLine(lines, [/(?:Rated\s*5\.0|5\s*Stars?\s*Rating).*(?:top\s*companies|thousands\s*of\s*users)/i], l => !l.trim().startsWith('//') && !l.trim().startsWith('*'));
         const lineNum = matchLineIdx !== -1 ? matchLineIdx + 1 : 1;
         findings.push({
             id: `cliche-${Date.now()}-${findingCounter.count++}`,
@@ -1385,7 +1373,7 @@ export function evaluateAiClicheRules(file: CodeFile, lines: string[], cleanCont
     }
     // CLICHE-54: Full-Bleed Unpadded Table Layout on Mobile
     if (/<table[\s>]/g.test(cleanContent) && !/overflow-x|overflow/i.test(cleanContent)) {
-        const matchLineIdx = lines.findIndex(l => !l.trim().startsWith('//') && !l.trim().startsWith('*') && (/cliche-54|full-bleed/i.test(l) || lines.indexOf(l) === 0));
+        const matchLineIdx = locateMatchLine(lines, [/<table[\s>]/g], l => !l.trim().startsWith('//') && !l.trim().startsWith('*'));
         const lineNum = matchLineIdx !== -1 ? matchLineIdx + 1 : 1;
         findings.push({
             id: `cliche-${Date.now()}-${findingCounter.count++}`,
@@ -1410,7 +1398,7 @@ export function evaluateAiClicheRules(file: CodeFile, lines: string[], cleanCont
     }
     // CLICHE-55: Default Native Select Menu in Polished Dark Mode
     if (/<select\b(?![^>]*(?:bg-|className))/i.test(cleanContent) && /dark/i.test(cleanContent)) {
-        const matchLineIdx = lines.findIndex(l => !l.trim().startsWith('//') && !l.trim().startsWith('*') && (/cliche-55|default/i.test(l) || lines.indexOf(l) === 0));
+        const matchLineIdx = locateMatchLine(lines, [/<select\b(?![^>]*(?:bg-|className))/i, /dark/i], l => !l.trim().startsWith('//') && !l.trim().startsWith('*'));
         const lineNum = matchLineIdx !== -1 ? matchLineIdx + 1 : 1;
         findings.push({
             id: `cliche-${Date.now()}-${findingCounter.count++}`,
@@ -1435,7 +1423,7 @@ export function evaluateAiClicheRules(file: CodeFile, lines: string[], cleanCont
     }
     // CLICHE-56: Fixed Floating Call-to-Action Masking Footer Links
     if (/fixed\s+bottom-0\s+left-0\s+right-0/i.test(cleanContent) && !/pb-|padding-bottom/i.test(cleanContent)) {
-        const matchLineIdx = lines.findIndex(l => !l.trim().startsWith('//') && !l.trim().startsWith('*') && (/cliche-56|fixed/i.test(l) || lines.indexOf(l) === 0));
+        const matchLineIdx = locateMatchLine(lines, [/fixed\s+bottom-0\s+left-0\s+right-0/i], l => !l.trim().startsWith('//') && !l.trim().startsWith('*'));
         const lineNum = matchLineIdx !== -1 ? matchLineIdx + 1 : 1;
         findings.push({
             id: `cliche-${Date.now()}-${findingCounter.count++}`,
@@ -1460,7 +1448,7 @@ export function evaluateAiClicheRules(file: CodeFile, lines: string[], cleanCont
     }
     // CLICHE-57: Nested Scroll Containers Causing Scrolljacking Traps
     if (/(?:overflow-y-scroll|overflow-y-auto)\s+h-(?:40|48|64)\b/i.test(cleanContent) && /card|feature/i.test(cleanContent)) {
-        const matchLineIdx = lines.findIndex(l => !l.trim().startsWith('//') && !l.trim().startsWith('*') && (/cliche-57|nested/i.test(l) || lines.indexOf(l) === 0));
+        const matchLineIdx = locateMatchLine(lines, [/(?:overflow-y-scroll|overflow-y-auto)\s+h-(?:40|48|64)\b/i, /card|feature/i], l => !l.trim().startsWith('//') && !l.trim().startsWith('*'));
         const lineNum = matchLineIdx !== -1 ? matchLineIdx + 1 : 1;
         findings.push({
             id: `cliche-${Date.now()}-${findingCounter.count++}`,
@@ -1485,7 +1473,7 @@ export function evaluateAiClicheRules(file: CodeFile, lines: string[], cleanCont
     }
     // CLICHE-58: Misaligned Hero Headline Gradient Cutoff
     if (/bg-clip-text\s+text-transparent/i.test(cleanContent) && !/pb-|leading-(?:tight|normal|relaxed)/i.test(cleanContent)) {
-        const matchLineIdx = lines.findIndex(l => !l.trim().startsWith('//') && !l.trim().startsWith('*') && (/cliche-58|misaligned/i.test(l) || lines.indexOf(l) === 0));
+        const matchLineIdx = locateMatchLine(lines, [/bg-clip-text\s+text-transparent/i], l => !l.trim().startsWith('//') && !l.trim().startsWith('*'));
         const lineNum = matchLineIdx !== -1 ? matchLineIdx + 1 : 1;
         findings.push({
             id: `cliche-${Date.now()}-${findingCounter.count++}`,
@@ -1510,7 +1498,7 @@ export function evaluateAiClicheRules(file: CodeFile, lines: string[], cleanCont
     }
     // CLICHE-59: Fake "Built for Enterprise" Security Shield Badges
     if (/(?:Military\s*Grade\s*256-bit|SOC2\s*Type\s*II\s*Ready|Bank-Grade\s*Security)/i.test(cleanContent)) {
-        const matchLineIdx = lines.findIndex(l => !l.trim().startsWith('//') && !l.trim().startsWith('*') && (/cliche-59|fake/i.test(l) || lines.indexOf(l) === 0));
+        const matchLineIdx = locateMatchLine(lines, [/(?:Military\s*Grade\s*256-bit|SOC2\s*Type\s*II\s*Ready|Bank-Grade\s*Security)/i], l => !l.trim().startsWith('//') && !l.trim().startsWith('*'));
         const lineNum = matchLineIdx !== -1 ? matchLineIdx + 1 : 1;
         findings.push({
             id: `cliche-${Date.now()}-${findingCounter.count++}`,
@@ -1535,7 +1523,7 @@ export function evaluateAiClicheRules(file: CodeFile, lines: string[], cleanCont
     }
     // CLICHE-60: Redundant Breadcrumb Navigation on 2-Level Site
     if (/(?:Home\s*>\s*Dashboard|Home\s*\/\s*App)\b/i.test(cleanContent) && !/breadcrumbs/i.test(cleanContent)) {
-        const matchLineIdx = lines.findIndex(l => !l.trim().startsWith('//') && !l.trim().startsWith('*') && (/cliche-60|redundant/i.test(l) || lines.indexOf(l) === 0));
+        const matchLineIdx = locateMatchLine(lines, [/(?:Home\s*>\s*Dashboard|Home\s*\/\s*App)\b/i], l => !l.trim().startsWith('//') && !l.trim().startsWith('*'));
         const lineNum = matchLineIdx !== -1 ? matchLineIdx + 1 : 1;
         findings.push({
             id: `cliche-${Date.now()}-${findingCounter.count++}`,
@@ -1560,7 +1548,7 @@ export function evaluateAiClicheRules(file: CodeFile, lines: string[], cleanCont
     }
     // CLICHE-61: Missing Input Placeholder Contrast in Dark Theme
     if (/placeholder:(?:text-white\/10|text-gray-600|text-slate-700)/i.test(cleanContent)) {
-        const matchLineIdx = lines.findIndex(l => !l.trim().startsWith('//') && !l.trim().startsWith('*') && (/cliche-61|missing/i.test(l) || lines.indexOf(l) === 0));
+        const matchLineIdx = locateMatchLine(lines, [/placeholder:(?:text-white\/10|text-gray-600|text-slate-700)/i], l => !l.trim().startsWith('//') && !l.trim().startsWith('*'));
         const lineNum = matchLineIdx !== -1 ? matchLineIdx + 1 : 1;
         findings.push({
             id: `cliche-${Date.now()}-${findingCounter.count++}`,
@@ -1585,7 +1573,7 @@ export function evaluateAiClicheRules(file: CodeFile, lines: string[], cleanCont
     }
     // CLICHE-62: Inflexible Fixed-Width Container Breakpoints
     if (/className=["\'][^"\']*\bw-\[1200px\]/i.test(cleanContent)) {
-        const matchLineIdx = lines.findIndex(l => !l.trim().startsWith('//') && !l.trim().startsWith('*') && (/cliche-62|inflexible/i.test(l) || lines.indexOf(l) === 0));
+        const matchLineIdx = locateMatchLine(lines, [/className=["\'][^"\']*\bw-\[1200px\]/i], l => !l.trim().startsWith('//') && !l.trim().startsWith('*'));
         const lineNum = matchLineIdx !== -1 ? matchLineIdx + 1 : 1;
         findings.push({
             id: `cliche-${Date.now()}-${findingCounter.count++}`,
@@ -1610,7 +1598,7 @@ export function evaluateAiClicheRules(file: CodeFile, lines: string[], cleanCont
     }
     // CLICHE-63: Fake "Press Mentions" Banner with Generic Icons
     if (/(?:As\s*seen\s*on|Featured\s*in).*(?:TechCrunch|Forbes|Bloomberg)/i.test(cleanContent) && !/href=/i.test(cleanContent)) {
-        const matchLineIdx = lines.findIndex(l => !l.trim().startsWith('//') && !l.trim().startsWith('*') && (/cliche-63|fake/i.test(l) || lines.indexOf(l) === 0));
+        const matchLineIdx = locateMatchLine(lines, [/(?:As\s*seen\s*on|Featured\s*in).*(?:TechCrunch|Forbes|Bloomberg)/i], l => !l.trim().startsWith('//') && !l.trim().startsWith('*'));
         const lineNum = matchLineIdx !== -1 ? matchLineIdx + 1 : 1;
         findings.push({
             id: `cliche-${Date.now()}-${findingCounter.count++}`,
@@ -1635,7 +1623,7 @@ export function evaluateAiClicheRules(file: CodeFile, lines: string[], cleanCont
     }
     // CLICHE-64: Misplaced Skeuomorphic Glass Reflection Strokes
     if (/border-gradient.*glass-reflection|reflection-stroke/i.test(cleanContent)) {
-        const matchLineIdx = lines.findIndex(l => !l.trim().startsWith('//') && !l.trim().startsWith('*') && (/cliche-64|misplaced/i.test(l) || lines.indexOf(l) === 0));
+        const matchLineIdx = locateMatchLine(lines, [/border-gradient.*glass-reflection|reflection-stroke/i], l => !l.trim().startsWith('//') && !l.trim().startsWith('*'));
         const lineNum = matchLineIdx !== -1 ? matchLineIdx + 1 : 1;
         findings.push({
             id: `cliche-${Date.now()}-${findingCounter.count++}`,
@@ -1660,7 +1648,7 @@ export function evaluateAiClicheRules(file: CodeFile, lines: string[], cleanCont
     }
     // CLICHE-65: Interactive Elements Disguised as Static Text
     if (/<a\b[^>]*className=["\'][^"\']*(?:text-inherit|text-current)(?![^"\']*underline)/i.test(cleanContent)) {
-        const matchLineIdx = lines.findIndex(l => !l.trim().startsWith('//') && !l.trim().startsWith('*') && (/cliche-65|interactive/i.test(l) || lines.indexOf(l) === 0));
+        const matchLineIdx = locateMatchLine(lines, [/<a\b[^>]*className=["\'][^"\']*(?:text-inherit|text-current)(?![^"\']*underline)/i], l => !l.trim().startsWith('//') && !l.trim().startsWith('*'));
         const lineNum = matchLineIdx !== -1 ? matchLineIdx + 1 : 1;
         findings.push({
             id: `cliche-${Date.now()}-${findingCounter.count++}`,
@@ -1685,7 +1673,7 @@ export function evaluateAiClicheRules(file: CodeFile, lines: string[], cleanCont
     }
     // CLICHE-66: Static Video Player Mockup with Fake Play Button
     if (/(?:video-mockup|video-preview).*(?:play-button|lucide-play)/i.test(cleanContent) && !/(?:<video|iframe|src=)/i.test(cleanContent)) {
-        const matchLineIdx = lines.findIndex(l => !l.trim().startsWith('//') && !l.trim().startsWith('*') && (/cliche-66|static/i.test(l) || lines.indexOf(l) === 0));
+        const matchLineIdx = locateMatchLine(lines, [/(?:video-mockup|video-preview).*(?:play-button|lucide-play)/i], l => !l.trim().startsWith('//') && !l.trim().startsWith('*'));
         const lineNum = matchLineIdx !== -1 ? matchLineIdx + 1 : 1;
         findings.push({
             id: `cliche-${Date.now()}-${findingCounter.count++}`,
@@ -1710,7 +1698,7 @@ export function evaluateAiClicheRules(file: CodeFile, lines: string[], cleanCont
     }
     // CLICHE-67: Unstyled Skeleton Screen Flickering
     if (/skeleton\b.*bg-white(?:\s|\/)/i.test(cleanContent) && /dark/i.test(cleanContent)) {
-        const matchLineIdx = lines.findIndex(l => !l.trim().startsWith('//') && !l.trim().startsWith('*') && (/cliche-67|unstyled/i.test(l) || lines.indexOf(l) === 0));
+        const matchLineIdx = locateMatchLine(lines, [/skeleton\b.*bg-white(?:\s|\/)/i, /dark/i], l => !l.trim().startsWith('//') && !l.trim().startsWith('*'));
         const lineNum = matchLineIdx !== -1 ? matchLineIdx + 1 : 1;
         findings.push({
             id: `cliche-${Date.now()}-${findingCounter.count++}`,
@@ -1735,7 +1723,7 @@ export function evaluateAiClicheRules(file: CodeFile, lines: string[], cleanCont
     }
     // CLICHE-68: Missing Tab Indicator Transition on Navigation
     if (/<Tab\b[^>]*onClick/i.test(cleanContent) && !/layoutId|transition/i.test(cleanContent)) {
-        const matchLineIdx = lines.findIndex(l => !l.trim().startsWith('//') && !l.trim().startsWith('*') && (/cliche-68|missing/i.test(l) || lines.indexOf(l) === 0));
+        const matchLineIdx = locateMatchLine(lines, [/<Tab\b[^>]*onClick/i], l => !l.trim().startsWith('//') && !l.trim().startsWith('*'));
         const lineNum = matchLineIdx !== -1 ? matchLineIdx + 1 : 1;
         findings.push({
             id: `cliche-${Date.now()}-${findingCounter.count++}`,
@@ -1760,7 +1748,7 @@ export function evaluateAiClicheRules(file: CodeFile, lines: string[], cleanCont
     }
     // CLICHE-69: Arbitrary "Beta" Pill Attached Indefinitely
     if (/(?:badge|pill).*(?:BETA|Beta)\b/i.test(cleanContent) && /copyright.*(?:2021|2022|2023)/i.test(cleanContent)) {
-        const matchLineIdx = lines.findIndex(l => !l.trim().startsWith('//') && !l.trim().startsWith('*') && (/cliche-69|arbitrary/i.test(l) || lines.indexOf(l) === 0));
+        const matchLineIdx = locateMatchLine(lines, [/(?:badge|pill).*(?:BETA|Beta)\b/i, /copyright.*(?:2021|2022|2023)/i], l => !l.trim().startsWith('//') && !l.trim().startsWith('*'));
         const lineNum = matchLineIdx !== -1 ? matchLineIdx + 1 : 1;
         findings.push({
             id: `cliche-${Date.now()}-${findingCounter.count++}`,
@@ -1785,7 +1773,7 @@ export function evaluateAiClicheRules(file: CodeFile, lines: string[], cleanCont
     }
     // CLICHE-70: Inconsistent Icon Stroke Widths across Sections
     if (/strokeWidth=["\'](?:1|1\.25)["\']/i.test(cleanContent) && /strokeWidth=["\'](?:2\.5|3)["\']/i.test(cleanContent)) {
-        const matchLineIdx = lines.findIndex(l => !l.trim().startsWith('//') && !l.trim().startsWith('*') && (/cliche-70|inconsistent/i.test(l) || lines.indexOf(l) === 0));
+        const matchLineIdx = locateMatchLine(lines, [/strokeWidth=["\'](?:1|1\.25)["\']/i, /strokeWidth=["\'](?:2\.5|3)["\']/i], l => !l.trim().startsWith('//') && !l.trim().startsWith('*'));
         const lineNum = matchLineIdx !== -1 ? matchLineIdx + 1 : 1;
         findings.push({
             id: `cliche-${Date.now()}-${findingCounter.count++}`,
@@ -1810,7 +1798,7 @@ export function evaluateAiClicheRules(file: CodeFile, lines: string[], cleanCont
     }
     // CLICHE-71: Ambiguous Back Button Navigation on Subpages
     if (/(?:router\.back\(\)|history\.back\(\))/i.test(cleanContent) && !/fallbackUrl|parentPath/i.test(cleanContent)) {
-        const matchLineIdx = lines.findIndex(l => !l.trim().startsWith('//') && !l.trim().startsWith('*') && (/cliche-71|ambiguous/i.test(l) || lines.indexOf(l) === 0));
+        const matchLineIdx = locateMatchLine(lines, [/(?:router\.back\(\)|history\.back\(\))/i], l => !l.trim().startsWith('//') && !l.trim().startsWith('*'));
         const lineNum = matchLineIdx !== -1 ? matchLineIdx + 1 : 1;
         findings.push({
             id: `cliche-${Date.now()}-${findingCounter.count++}`,
@@ -1835,7 +1823,7 @@ export function evaluateAiClicheRules(file: CodeFile, lines: string[], cleanCont
     }
     // CLICHE-72: Inverted Hero Visual Dominating Primary Action
     if (/(?:hero-graphic|hero-animation).*(?:w-full|h-\[600px\])/i.test(cleanContent) && !/cta-container/i.test(cleanContent)) {
-        const matchLineIdx = lines.findIndex(l => !l.trim().startsWith('//') && !l.trim().startsWith('*') && (/cliche-72|inverted/i.test(l) || lines.indexOf(l) === 0));
+        const matchLineIdx = locateMatchLine(lines, [/(?:hero-graphic|hero-animation).*(?:w-full|h-\[600px\])/i], l => !l.trim().startsWith('//') && !l.trim().startsWith('*'));
         const lineNum = matchLineIdx !== -1 ? matchLineIdx + 1 : 1;
         findings.push({
             id: `cliche-${Date.now()}-${findingCounter.count++}`,
@@ -1860,7 +1848,7 @@ export function evaluateAiClicheRules(file: CodeFile, lines: string[], cleanCont
     }
     // CLICHE-73: Broken Mobile Hamburger Menu Scroll Lock
     if ((/mobileMenuOpen|isMobileNav/i.test(cleanContent) && !/overflow-hidden|useLockBodyScroll|style\.overflow\s*=/i.test(cleanContent))) {
-        const matchLineIdx = lines.findIndex(l => !l.trim().startsWith('//') && !l.trim().startsWith('*') && (/cliche-73|broken/i.test(l) || lines.indexOf(l) === 0));
+        const matchLineIdx = locateMatchLine(lines, [/mobileMenuOpen|isMobileNav/i], l => !l.trim().startsWith('//') && !l.trim().startsWith('*'));
         const lineNum = matchLineIdx !== -1 ? matchLineIdx + 1 : 1;
         findings.push({
             id: `cliche-${Date.now()}-${findingCounter.count++}`,
@@ -1885,7 +1873,7 @@ export function evaluateAiClicheRules(file: CodeFile, lines: string[], cleanCont
     }
     // CLICHE-74: Unannounced External Link Navigation
     if (/<a\b[^>]*target=["\']_blank["\'](?![^>]*(?:rel=|noopener|ExternalLink))/i.test(cleanContent)) {
-        const matchLineIdx = lines.findIndex(l => !l.trim().startsWith('//') && !l.trim().startsWith('*') && (/cliche-74|unannounced/i.test(l) || lines.indexOf(l) === 0));
+        const matchLineIdx = locateMatchLine(lines, [/<a\b[^>]*target=["\']_blank["\'](?![^>]*(?:rel=|noopener|ExternalLink))/i], l => !l.trim().startsWith('//') && !l.trim().startsWith('*'));
         const lineNum = matchLineIdx !== -1 ? matchLineIdx + 1 : 1;
         findings.push({
             id: `cliche-${Date.now()}-${findingCounter.count++}`,

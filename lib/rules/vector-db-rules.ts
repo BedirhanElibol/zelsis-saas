@@ -4,6 +4,7 @@
  */
 import { Finding } from "@/data/schema";
 import { CodeFile } from "../scanner-engine";
+import { locateMatchLine } from './shared/locate';
 export interface VectorDbRuleResult {
     findings: Finding[];
     logs: string[];
@@ -15,7 +16,7 @@ export function evaluateVectorDbRules(file: CodeFile, lines: string[], cleanCont
     const logs: string[] = [];
     const lowerPath = file.path.toLowerCase().replace(/\\/g, "/");
     // Skip self-referential catalogs, mocks, and schema definitions
-    if (lowerPath.includes("data/catalogs/") || lowerPath.includes("data/mockdata") || lowerPath.includes("data/workspacefiles") || lowerPath.includes("data/schema") || lowerPath.includes("scratch/") || lowerPath.includes(".agent/") || lowerPath.includes("node_modules/") || lowerPath.endsWith(".d.ts")) {
+    if (lowerPath.includes("node_modules/") || lowerPath.endsWith(".d.ts")) {
         return { findings, logs };
     }
     const isVectorTarget = /pinecone|qdrant|chromadb|weaviate|milvus|pgvector|createCollection|searchVector/i.test(cleanContent);
@@ -25,7 +26,7 @@ export function evaluateVectorDbRules(file: CodeFile, lines: string[], cleanCont
     const ts = new Date().toLocaleTimeString();
     // VECTOR-01: Unindexed Vector Column Triggering Exhaustive Flat KNN Scans
     if ((/createCollection|create_index/i.test(cleanContent) && !/HNSW|IVF_FLAT/i.test(cleanContent))) {
-        const matchLineIdx = lines.findIndex(l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('#') && !l.trim().startsWith('*'));
+        const matchLineIdx = locateMatchLine(lines, [/createCollection|create_index/i], l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('#') && !l.trim().startsWith('*'));
         const lineNum = matchLineIdx !== -1 ? matchLineIdx + 1 : 1;
         findings.push({
             id: `vector13501-${Date.now()}-${findingCounter.count++}`,
@@ -39,7 +40,7 @@ export function evaluateVectorDbRules(file: CodeFile, lines: string[], cleanCont
             snippet: lines[matchLineIdx] || 'Vector Database configuration',
             reproductionSteps: [
                 `Audited Vector Database configuration in ${file.path}:${lineNum}.`,
-                'Detected violation matching {code}.'
+                'Matched VECTOR-01: Unindexed Vector Column Triggering Exhaustive Flat KNN Scans.'
             ],
             remediationPrompt: "Enforce HNSW or IVF index creation on high-dimensional vector columns before executing queries.",
             status: 'OPEN',
@@ -49,7 +50,7 @@ export function evaluateVectorDbRules(file: CodeFile, lines: string[], cleanCont
     }
     // VECTOR-02: Embedding Vector Dimension Mismatch at Query Time
     if ((/searchVector|similaritySearch/i.test(cleanContent) && !/assertDimension/i.test(cleanContent))) {
-        const matchLineIdx = lines.findIndex(l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('#') && !l.trim().startsWith('*'));
+        const matchLineIdx = locateMatchLine(lines, [/searchVector|similaritySearch/i], l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('#') && !l.trim().startsWith('*'));
         const lineNum = matchLineIdx !== -1 ? matchLineIdx + 1 : 1;
         findings.push({
             id: `vector13502-${Date.now()}-${findingCounter.count++}`,
@@ -63,7 +64,7 @@ export function evaluateVectorDbRules(file: CodeFile, lines: string[], cleanCont
             snippet: lines[matchLineIdx] || 'Vector Database configuration',
             reproductionSteps: [
                 `Audited Vector Database configuration in ${file.path}:${lineNum}.`,
-                'Detected violation matching {code}.'
+                'Matched VECTOR-02: Embedding Vector Dimension Mismatch at Query Time.'
             ],
             remediationPrompt: "Validate vector dimensions against collection schema (e.g. 1536 / 3072) prior to executing similarity search.",
             status: 'OPEN',
@@ -73,7 +74,7 @@ export function evaluateVectorDbRules(file: CodeFile, lines: string[], cleanCont
     }
     // VECTOR-03: Unbounded Similarity Query Limit (top_k > 1000) Causing Memory Exhaustion
     if ((/top_k:\s*\d{4,}/i.test(cleanContent) && !/maxTopK/i.test(cleanContent))) {
-        const matchLineIdx = lines.findIndex(l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('#') && !l.trim().startsWith('*'));
+        const matchLineIdx = locateMatchLine(lines, [/top_k:\s*\d{4,}/i], l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('#') && !l.trim().startsWith('*'));
         const lineNum = matchLineIdx !== -1 ? matchLineIdx + 1 : 1;
         findings.push({
             id: `vector13503-${Date.now()}-${findingCounter.count++}`,
@@ -87,7 +88,7 @@ export function evaluateVectorDbRules(file: CodeFile, lines: string[], cleanCont
             snippet: lines[matchLineIdx] || 'Vector Database configuration',
             reproductionSteps: [
                 `Audited Vector Database configuration in ${file.path}:${lineNum}.`,
-                'Detected violation matching {code}.'
+                'Matched VECTOR-03: Unbounded Similarity Query Limit (top_k > 1000) Causing Memory Exhaustion.'
             ],
             remediationPrompt: "Cap top_k retrieval parameters to prevent JVM / worker process out-of-memory crashes under load.",
             status: 'OPEN',
@@ -97,7 +98,7 @@ export function evaluateVectorDbRules(file: CodeFile, lines: string[], cleanCont
     }
     // VECTOR-04: HNSW Index Parameters M and efConstruction Suboptimally Tuned
     if ((/index_params/i.test(cleanContent) && !/efConstruction/i.test(cleanContent))) {
-        const matchLineIdx = lines.findIndex(l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('#') && !l.trim().startsWith('*'));
+        const matchLineIdx = locateMatchLine(lines, [/index_params/i], l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('#') && !l.trim().startsWith('*'));
         const lineNum = matchLineIdx !== -1 ? matchLineIdx + 1 : 1;
         findings.push({
             id: `vector13504-${Date.now()}-${findingCounter.count++}`,
@@ -111,7 +112,7 @@ export function evaluateVectorDbRules(file: CodeFile, lines: string[], cleanCont
             snippet: lines[matchLineIdx] || 'Vector Database configuration',
             reproductionSteps: [
                 `Audited Vector Database configuration in ${file.path}:${lineNum}.`,
-                'Detected violation matching {code}.'
+                'Matched VECTOR-04: HNSW Index Parameters M and efConstruction Suboptimally Tuned.'
             ],
             remediationPrompt: "Tune M (16-64) and efConstruction (100-512) to achieve balanced recall rate without excessive memory consumption.",
             status: 'OPEN',
@@ -121,7 +122,7 @@ export function evaluateVectorDbRules(file: CodeFile, lines: string[], cleanCont
     }
     // VECTOR-05: Missing Inverted Index on Vector Metadata Filter Fields
     if ((/vectorFilter|searchParams/i.test(cleanContent) && !/createPayloadIndex/i.test(cleanContent))) {
-        const matchLineIdx = lines.findIndex(l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('#') && !l.trim().startsWith('*'));
+        const matchLineIdx = locateMatchLine(lines, [/vectorFilter|searchParams/i], l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('#') && !l.trim().startsWith('*'));
         const lineNum = matchLineIdx !== -1 ? matchLineIdx + 1 : 1;
         findings.push({
             id: `vector13505-${Date.now()}-${findingCounter.count++}`,
@@ -135,7 +136,7 @@ export function evaluateVectorDbRules(file: CodeFile, lines: string[], cleanCont
             snippet: lines[matchLineIdx] || 'Vector Database configuration',
             reproductionSteps: [
                 `Audited Vector Database configuration in ${file.path}:${lineNum}.`,
-                'Detected violation matching {code}.'
+                'Matched VECTOR-05: Missing Inverted Index on Vector Metadata Filter Fields.'
             ],
             remediationPrompt: "Create payload/metadata secondary indices on frequently filtered attributes to avoid post-filtering table scans.",
             status: 'OPEN',

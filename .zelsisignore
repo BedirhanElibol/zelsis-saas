@@ -9,6 +9,19 @@ scratch/
 # Test Suites and Synthetic Vulnerability Verification Fixtures
 tests/
 
+# Zelsis's own rule definitions, catalogs and demo playgrounds contain vulnerable
+# patterns as data. The scanner itself has no hardcoded knowledge of these paths.
+lib/rules/
+lib/scanner/
+lib/scanner-engine.ts
+data/catalogs/
+data/mockData.ts
+data/workspaceFiles.ts
+components/dashboard/VulnerabilityPlayground.tsx
+components/dashboard/RuleKnowledgeBaseModal.tsx
+components/InteractiveAnalyzer.tsx
+sql/05_seed_data.sql
+
 # Package Lockfiles (evaluated by SCA dependency analyzer, not SAST code engine)
 package-lock.json
 yarn.lock

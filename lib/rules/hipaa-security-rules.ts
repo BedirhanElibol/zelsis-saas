@@ -4,6 +4,7 @@
  */
 import { Finding } from "@/data/schema";
 import { CodeFile } from "../scanner-engine";
+import { locateMatchLine } from './shared/locate';
 export interface HipaaSecurityRuleResult {
     findings: Finding[];
     logs: string[];
@@ -15,13 +16,13 @@ export function evaluateHipaaSecurityRules(file: CodeFile, lines: string[], clea
     const logs: string[] = [];
     const lowerPath = file.path.toLowerCase().replace(/\\/g, "/");
     // Skip self-referential catalogs, mocks, and schema definitions
-    if (lowerPath.includes("data/catalogs/") || lowerPath.includes("data/mockdata") || lowerPath.includes("data/workspacefiles") || lowerPath.includes("data/schema") || lowerPath.includes("scratch/") || lowerPath.includes(".agent/") || lowerPath.includes("node_modules/") || lowerPath.endsWith(".d.ts")) {
+    if (lowerPath.includes("node_modules/") || lowerPath.endsWith(".d.ts")) {
         return { findings, logs };
     }
     const ts = new Date().toLocaleTimeString();
     // HIPAASEC-01: HIPAA §164.312(a)(1) Access Control: Missing Unique User Identification
     if (((/healthcare_auth/i.test(lowerPath) || /healthcare/i.test(cleanContent)) && !/uniqueUserIdentifier/i.test(cleanContent))) {
-        const matchLineIdx = lines.findIndex(l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('#') && !l.trim().startsWith('*'));
+        const matchLineIdx = locateMatchLine(lines, [/healthcare/i], l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('#') && !l.trim().startsWith('*'));
         const lineNum = matchLineIdx !== -1 ? matchLineIdx + 1 : 1;
         findings.push({
             id: `hipaasec14401-${Date.now()}-${findingCounter.count++}`,
@@ -35,7 +36,7 @@ export function evaluateHipaaSecurityRules(file: CodeFile, lines: string[], clea
             snippet: lines[matchLineIdx] || 'HIPAA Security Rule configuration',
             reproductionSteps: [
                 `Audited HIPAA Security Rule configuration in ${file.path}:${lineNum}.`,
-                'Detected violation matching {code}.'
+                'Matched HIPAASEC-01: HIPAA \u00a7164.312(a)(1) Access Control: Missing Unique User Identification.'
             ],
             remediationPrompt: "Assign unique user identifiers to every healthcare worker accessing electronic Protected Health Information (ePHI).",
             status: 'OPEN',
@@ -45,7 +46,7 @@ export function evaluateHipaaSecurityRules(file: CodeFile, lines: string[], clea
     }
     // HIPAASEC-02: HIPAA §164.312(a)(2)(iii) Automatic Logoff on Inactive Clinical Workstations
     if (((/session_timeout/i.test(lowerPath) || /sessionTimeout/i.test(cleanContent)) && !/maxInactiveTimeout/i.test(cleanContent))) {
-        const matchLineIdx = lines.findIndex(l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('#') && !l.trim().startsWith('*'));
+        const matchLineIdx = locateMatchLine(lines, [/sessionTimeout/i], l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('#') && !l.trim().startsWith('*'));
         const lineNum = matchLineIdx !== -1 ? matchLineIdx + 1 : 1;
         findings.push({
             id: `hipaasec14402-${Date.now()}-${findingCounter.count++}`,
@@ -59,7 +60,7 @@ export function evaluateHipaaSecurityRules(file: CodeFile, lines: string[], clea
             snippet: lines[matchLineIdx] || 'HIPAA Security Rule configuration',
             reproductionSteps: [
                 `Audited HIPAA Security Rule configuration in ${file.path}:${lineNum}.`,
-                'Detected violation matching {code}.'
+                'Matched HIPAASEC-02: HIPAA \u00a7164.312(a)(2)(iii) Automatic Logoff on Inactive Clinical Workstations.'
             ],
             remediationPrompt: "Enforce automatic session termination after 15 minutes of inactivity on all clinical terminals accessing ePHI.",
             status: 'OPEN',
@@ -69,7 +70,7 @@ export function evaluateHipaaSecurityRules(file: CodeFile, lines: string[], clea
     }
     // HIPAASEC-03: HIPAA §164.312(a)(2)(iv) Encryption and Decryption of ePHI Stored at Rest
     if (((/patient_records|ehr_db/i.test(lowerPath) || /patient_records|ehr_db/i.test(cleanContent)) && !/aes256Gcm/i.test(cleanContent))) {
-        const matchLineIdx = lines.findIndex(l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('#') && !l.trim().startsWith('*'));
+        const matchLineIdx = locateMatchLine(lines, [/patient_records|ehr_db/i], l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('#') && !l.trim().startsWith('*'));
         const lineNum = matchLineIdx !== -1 ? matchLineIdx + 1 : 1;
         findings.push({
             id: `hipaasec14403-${Date.now()}-${findingCounter.count++}`,
@@ -83,7 +84,7 @@ export function evaluateHipaaSecurityRules(file: CodeFile, lines: string[], clea
             snippet: lines[matchLineIdx] || 'HIPAA Security Rule configuration',
             reproductionSteps: [
                 `Audited HIPAA Security Rule configuration in ${file.path}:${lineNum}.`,
-                'Detected violation matching {code}.'
+                'Matched HIPAASEC-03: HIPAA \u00a7164.312(a)(2)(iv) Encryption and Decryption of ePHI Stored at Rest.'
             ],
             remediationPrompt: "Encrypt all databases, storage volumes, and backups storing electronic Protected Health Information with AES-256.",
             status: 'OPEN',
@@ -93,7 +94,7 @@ export function evaluateHipaaSecurityRules(file: CodeFile, lines: string[], clea
     }
     // HIPAASEC-04: HIPAA §164.312(b) Audit Controls: Missing Immutable Logs for Medical Records
     if (((/medical_record/i.test(lowerPath) || /medicalRecord/i.test(cleanContent)) && !/immutableAuditTrail/i.test(cleanContent))) {
-        const matchLineIdx = lines.findIndex(l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('#') && !l.trim().startsWith('*'));
+        const matchLineIdx = locateMatchLine(lines, [/medicalRecord/i], l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('#') && !l.trim().startsWith('*'));
         const lineNum = matchLineIdx !== -1 ? matchLineIdx + 1 : 1;
         findings.push({
             id: `hipaasec14404-${Date.now()}-${findingCounter.count++}`,
@@ -107,7 +108,7 @@ export function evaluateHipaaSecurityRules(file: CodeFile, lines: string[], clea
             snippet: lines[matchLineIdx] || 'HIPAA Security Rule configuration',
             reproductionSteps: [
                 `Audited HIPAA Security Rule configuration in ${file.path}:${lineNum}.`,
-                'Detected violation matching {code}.'
+                'Matched HIPAASEC-04: HIPAA \u00a7164.312(b) Audit Controls: Missing Immutable Logs for Medical Records.'
             ],
             remediationPrompt: "Record and preserve immutable audit logs of all ePHI read, write, and export operations for a minimum of 6 years.",
             status: 'OPEN',
@@ -117,7 +118,7 @@ export function evaluateHipaaSecurityRules(file: CodeFile, lines: string[], clea
     }
     // HIPAASEC-05: HIPAA §164.312(c)(1) Data Integrity: Electronic Transmission Tampering Detection
     if (((/patient_telemetry/i.test(lowerPath) || /patientTelemetry/i.test(cleanContent)) && !/hmacSignature/i.test(cleanContent))) {
-        const matchLineIdx = lines.findIndex(l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('#') && !l.trim().startsWith('*'));
+        const matchLineIdx = locateMatchLine(lines, [/patientTelemetry/i], l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('#') && !l.trim().startsWith('*'));
         const lineNum = matchLineIdx !== -1 ? matchLineIdx + 1 : 1;
         findings.push({
             id: `hipaasec14405-${Date.now()}-${findingCounter.count++}`,
@@ -131,7 +132,7 @@ export function evaluateHipaaSecurityRules(file: CodeFile, lines: string[], clea
             snippet: lines[matchLineIdx] || 'HIPAA Security Rule configuration',
             reproductionSteps: [
                 `Audited HIPAA Security Rule configuration in ${file.path}:${lineNum}.`,
-                'Detected violation matching {code}.'
+                'Matched HIPAASEC-05: HIPAA \u00a7164.312(c)(1) Data Integrity: Electronic Transmission Tampering Detection.'
             ],
             remediationPrompt: "Use cryptographic HMAC or digital signatures to verify that patient health records have not been altered in transit.",
             status: 'OPEN',

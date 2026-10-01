@@ -4,6 +4,7 @@
  */
 import { Finding } from "@/data/schema";
 import { CodeFile } from "../scanner-engine";
+import { locateMatchLine } from './shared/locate';
 export interface SearchEngineRuleResult {
     findings: Finding[];
     logs: string[];
@@ -15,13 +16,13 @@ export function evaluateSearchEngineRules(file: CodeFile, lines: string[], clean
     const logs: string[] = [];
     const lowerPath = file.path.toLowerCase().replace(/\\/g, "/");
     // Skip self-referential catalogs, mocks, and schema definitions
-    if (lowerPath.includes("data/catalogs/") || lowerPath.includes("data/mockdata") || lowerPath.includes("data/workspacefiles") || lowerPath.includes("data/schema") || lowerPath.includes("scratch/") || lowerPath.includes(".agent/") || lowerPath.includes("node_modules/") || lowerPath.endsWith(".d.ts") || lowerPath.endsWith(".tsx") || lowerPath.endsWith(".jsx")) {
+    if (lowerPath.includes("node_modules/") || lowerPath.endsWith(".d.ts") || lowerPath.endsWith(".tsx") || lowerPath.endsWith(".jsx")) {
         return { findings, logs };
     }
     const ts = new Date().toLocaleTimeString();
     // SEARCH-01: Unbounded Deep Pagination via from + size Exceeding 10,000
     if ((/"from"\s*:\s*\d{5,}/i.test(cleanContent) && !/search_after/i.test(cleanContent))) {
-        const matchLineIdx = lines.findIndex(l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('#') && !l.trim().startsWith('*'));
+        const matchLineIdx = locateMatchLine(lines, [/"from"\s*:\s*\d{5,}/i], l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('#') && !l.trim().startsWith('*'));
         const lineNum = matchLineIdx !== -1 ? matchLineIdx + 1 : 1;
         findings.push({
             id: `search13001-${Date.now()}-${findingCounter.count++}`,
@@ -45,7 +46,7 @@ export function evaluateSearchEngineRules(file: CodeFile, lines: string[], clean
     }
     // SEARCH-02: Unindexed Leading Wildcard Search Triggering Full Cluster Scans
     if ((/wildcard/i.test(cleanContent) && /(?:'\*|"\*)/i.test(cleanContent))) {
-        const matchLineIdx = lines.findIndex(l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('#') && !l.trim().startsWith('*'));
+        const matchLineIdx = locateMatchLine(lines, [/wildcard/i, /(?:'\*|"\*)/i], l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('#') && !l.trim().startsWith('*'));
         const lineNum = matchLineIdx !== -1 ? matchLineIdx + 1 : 1;
         findings.push({
             id: `search13002-${Date.now()}-${findingCounter.count++}`,
@@ -69,7 +70,7 @@ export function evaluateSearchEngineRules(file: CodeFile, lines: string[], clean
     }
     // SEARCH-03: Missing Circuit Breaker on High-Cardinality Aggregations
     if ((/aggs/i.test(cleanContent) && !/circuit_breaker|max_buckets/i.test(cleanContent))) {
-        const matchLineIdx = lines.findIndex(l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('#') && !l.trim().startsWith('*'));
+        const matchLineIdx = locateMatchLine(lines, [/aggs/i], l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('#') && !l.trim().startsWith('*'));
         const lineNum = matchLineIdx !== -1 ? matchLineIdx + 1 : 1;
         findings.push({
             id: `search13003-${Date.now()}-${findingCounter.count++}`,
@@ -93,7 +94,7 @@ export function evaluateSearchEngineRules(file: CodeFile, lines: string[], clean
     }
     // SEARCH-04: Fielddata Memory Leakage on High-Cardinality Analyzed Text
     if ((/\"type\"\s*:\s*\"text\"/i.test(cleanContent) && /(?:\"fielddata\"|fielddata)\s*:\s*true/i.test(cleanContent))) {
-        const matchLineIdx = lines.findIndex(l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('#') && !l.trim().startsWith('*'));
+        const matchLineIdx = locateMatchLine(lines, [/\"type\"\s*:\s*\"text\"/i, /(?:\"fielddata\"|fielddata)\s*:\s*true/i], l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('#') && !l.trim().startsWith('*'));
         const lineNum = matchLineIdx !== -1 ? matchLineIdx + 1 : 1;
         findings.push({
             id: `search13004-${Date.now()}-${findingCounter.count++}`,
@@ -117,7 +118,7 @@ export function evaluateSearchEngineRules(file: CodeFile, lines: string[], clean
     }
     // SEARCH-05: Unmanaged Elasticsearch Index Lifecycle Management (ILM)
     if ((/createIndex/i.test(cleanContent) && !/lifecycle/i.test(cleanContent))) {
-        const matchLineIdx = lines.findIndex(l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('#') && !l.trim().startsWith('*'));
+        const matchLineIdx = locateMatchLine(lines, [/createIndex/i], l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('#') && !l.trim().startsWith('*'));
         const lineNum = matchLineIdx !== -1 ? matchLineIdx + 1 : 1;
         findings.push({
             id: `search13005-${Date.now()}-${findingCounter.count++}`,

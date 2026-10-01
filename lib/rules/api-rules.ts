@@ -4,6 +4,8 @@
  */
 import { Finding } from '@/data/schema';
 import { CodeFile } from '../scanner-engine';
+import { RATE_LIMIT_GUARD } from './shared/stack-signals';
+import { locateMatchLine } from './shared/locate';
 export interface ApiRuleResult {
     findings: Finding[];
     logs: string[];
@@ -15,20 +17,20 @@ export function evaluateApiRules(file: CodeFile, lines: string[], cleanContent: 
     const logs: string[] = [];
     const lowerPath = file.path.toLowerCase().replace(/\\/g, '/');
     // Skip self-referential catalogs, mocks, and schema definitions
-    if (lowerPath.includes('data/catalogs/') || lowerPath.includes('data/mockdata') || lowerPath.includes('data/workspacefiles') || lowerPath.includes('data/schema') || lowerPath.includes('scratch/') || lowerPath.includes('.agent/') || lowerPath.includes('node_modules/') || lowerPath.endsWith('.d.ts')) {
+    if (lowerPath.includes('node_modules/') || lowerPath.endsWith('.d.ts')) {
         return { findings, logs };
     }
     const ts = new Date().toLocaleTimeString();
     // API-01: Mutating Payment/Order Endpoint Missing Idempotency Key
     if (/(?:payment|checkout|order|subscription\/create)/i.test(lowerPath) && !lowerPath.includes("verify") && /export\s+async\s+function\s+POST/i.test(cleanContent) && !/idempotency-key|idempotencykey/i.test(cleanContent) && !lowerPath.includes("webhook")) {
-        const matchLineIdx = lines.findIndex(l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('*') && (/api-01|mutating/i.test(l) || lines.indexOf(l) === 0));
+        const matchLineIdx = locateMatchLine(lines, [/export\s+async\s+function\s+POST/i], l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('*'));
         const lineNum = matchLineIdx !== -1 ? matchLineIdx + 1 : 1;
         findings.push({
             id: `api01-${Date.now()}-${findingCounter.count++}`,
             ruleId: 7201,
             type: 'SECURITY',
             title: "API-01: Mutating Payment/Order Endpoint Missing Idempotency Key",
-            severity: 'CRITICAL',
+            severity: 'MEDIUM',
             category: "API Idempotency",
             filePath: file.path,
             lineRange: `L${lineNum}`,
@@ -46,7 +48,7 @@ export function evaluateApiRules(file: CodeFile, lines: string[], cleanContent: 
     }
     // API-02: Unversioned Public REST API Route Handler
     if (/app\/api\/(?!(?:v\d+|auth|health|webhooks?|mock|trpc|subscription))[a-zA-Z0-9_-]+\/route\.ts$/i.test(file.path) && /export\s+async\s+function\s+(?:GET|POST)/i.test(cleanContent) && !lowerPath.includes("v1") && !lowerPath.includes("v2")) {
-        const matchLineIdx = lines.findIndex(l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('*') && (/api-02|unversioned/i.test(l) || lines.indexOf(l) === 0));
+        const matchLineIdx = locateMatchLine(lines, [/export\s+async\s+function\s+(?:GET|POST)/i], l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('*'));
         const lineNum = matchLineIdx !== -1 ? matchLineIdx + 1 : 1;
         findings.push({
             id: `api02-${Date.now()}-${findingCounter.count++}`,
@@ -71,7 +73,7 @@ export function evaluateApiRules(file: CodeFile, lines: string[], cleanContent: 
     }
     // API-03: Collection Endpoint Missing Pagination Boundary
     if (/(?:app\/api|pages\/api)/i.test(lowerPath) && /findMany\(\s*\)(?!\s*\.take|\s*\.limit)/i.test(cleanContent)) {
-        const matchLineIdx = lines.findIndex(l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('*') && (/api-03|collection/i.test(l) || lines.indexOf(l) === 0));
+        const matchLineIdx = locateMatchLine(lines, [/findMany\(\s*\)(?!\s*\.take|\s*\.limit)/i], l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('*'));
         const lineNum = matchLineIdx !== -1 ? matchLineIdx + 1 : 1;
         findings.push({
             id: `api03-${Date.now()}-${findingCounter.count++}`,
@@ -96,7 +98,7 @@ export function evaluateApiRules(file: CodeFile, lines: string[], cleanContent: 
     }
     // API-04: Body Parser Missing Maximum Request Payload Limit
     if (/express\.json\(\s*(?:\)|\{\s*(?![^}]*limit))/i.test(cleanContent) || /bodyParser\.json\(\s*(?:\)|\{\s*(?![^}]*limit))/i.test(cleanContent)) {
-        const matchLineIdx = lines.findIndex(l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('*') && (/api-04|body/i.test(l) || lines.indexOf(l) === 0));
+        const matchLineIdx = locateMatchLine(lines, [/express\.json\(\s*(?:\)|\{\s*(?![^}]*limit))/i, /bodyParser\.json\(\s*(?:\)|\{\s*(?![^}]*limit))/i], l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('*'));
         const lineNum = matchLineIdx !== -1 ? matchLineIdx + 1 : 1;
         findings.push({
             id: `api04-${Date.now()}-${findingCounter.count++}`,
@@ -121,7 +123,7 @@ export function evaluateApiRules(file: CodeFile, lines: string[], cleanContent: 
     }
     // API-05: Non-Standard Error Response Violating RFC 7807
     if (/(?:app\/api|pages\/api)/i.test(lowerPath) && /return\s+NextResponse\.json\(\s*\{\s*err:\s*/i.test(cleanContent)) {
-        const matchLineIdx = lines.findIndex(l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('*') && (/api-05|non-standard/i.test(l) || lines.indexOf(l) === 0));
+        const matchLineIdx = locateMatchLine(lines, [/return\s+NextResponse\.json\(\s*\{\s*err:\s*/i], l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('*'));
         const lineNum = matchLineIdx !== -1 ? matchLineIdx + 1 : 1;
         findings.push({
             id: `api05-${Date.now()}-${findingCounter.count++}`,
@@ -146,7 +148,7 @@ export function evaluateApiRules(file: CodeFile, lines: string[], cleanContent: 
     }
     // API-06: Inconsistent Property Casing in API Schema
     if (/(?:app\/api|pages\/api)/i.test(lowerPath) && /NextResponse\.json\(\s*\{[^}]*\b[a-z]+_[a-z]+\b:[^}]*\b[a-z]+[A-Z][a-z]+\b:/i.test(cleanContent)) {
-        const matchLineIdx = lines.findIndex(l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('*') && (/api-06|inconsistent/i.test(l) || lines.indexOf(l) === 0));
+        const matchLineIdx = locateMatchLine(lines, [/NextResponse\.json\(\s*\{[^}]*\b[a-z]+_[a-z]+\b:[^}]*\b[a-z]+[A-Z][a-z]+\b:/i], l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('*'));
         const lineNum = matchLineIdx !== -1 ? matchLineIdx + 1 : 1;
         findings.push({
             id: `api06-${Date.now()}-${findingCounter.count++}`,
@@ -171,7 +173,7 @@ export function evaluateApiRules(file: CodeFile, lines: string[], cleanContent: 
     }
     // API-07: Health Check Endpoint Exposing Internal System Credentials
     if (/(?:health|healthz)/i.test(lowerPath) && /return\s+NextResponse\.json\([^)]*(?:database_url|db_password|secret_key)/i.test(cleanContent)) {
-        const matchLineIdx = lines.findIndex(l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('*') && (/api-07|health/i.test(l) || lines.indexOf(l) === 0));
+        const matchLineIdx = locateMatchLine(lines, [/return\s+NextResponse\.json\([^)]*(?:database_url|db_password|secret_key)/i], l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('*'));
         const lineNum = matchLineIdx !== -1 ? matchLineIdx + 1 : 1;
         findings.push({
             id: `api07-${Date.now()}-${findingCounter.count++}`,
@@ -196,7 +198,7 @@ export function evaluateApiRules(file: CodeFile, lines: string[], cleanContent: 
     }
     // API-08: Missing 'Retry-After' Header on Rate Limit Throttling (429)
     if (/(?:status:\s*429|res\.status\(429\))/i.test(cleanContent) && !/Retry-After/i.test(cleanContent) && /(?:app\/api|pages\/api)/i.test(lowerPath)) {
-        const matchLineIdx = lines.findIndex(l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('*') && (/api-08|missing/i.test(l) || lines.indexOf(l) === 0));
+        const matchLineIdx = locateMatchLine(lines, [/(?:status:\s*429|res\.status\(429\))/i], l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('*'));
         const lineNum = matchLineIdx !== -1 ? matchLineIdx + 1 : 1;
         findings.push({
             id: `api08-${Date.now()}-${findingCounter.count++}`,
@@ -221,7 +223,7 @@ export function evaluateApiRules(file: CodeFile, lines: string[], cleanContent: 
     }
     // API-09: CORS Preflight (OPTIONS) Missing Access-Control-Max-Age
     if (/export\s+async\s+function\s+OPTIONS/i.test(cleanContent) && /Access-Control-Allow-Origin/i.test(cleanContent) && !/Access-Control-Max-Age/i.test(cleanContent)) {
-        const matchLineIdx = lines.findIndex(l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('*') && (/api-09|cors/i.test(l) || lines.indexOf(l) === 0));
+        const matchLineIdx = locateMatchLine(lines, [/export\s+async\s+function\s+OPTIONS/i, /Access-Control-Allow-Origin/i], l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('*'));
         const lineNum = matchLineIdx !== -1 ? matchLineIdx + 1 : 1;
         findings.push({
             id: `api09-${Date.now()}-${findingCounter.count++}`,
@@ -246,7 +248,7 @@ export function evaluateApiRules(file: CodeFile, lines: string[], cleanContent: 
     }
     // API-10: Sensitive ID Exposure Using Sequential Integers
     if (/app\/api\/.*\/\[id\]\/route\.ts$/i.test(file.path) && /parseInt\s*\(\s*params\.id\s*,\s*10\s*\)/i.test(cleanContent) && /orders|billing|users/i.test(lowerPath)) {
-        const matchLineIdx = lines.findIndex(l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('*') && (/api-10|sensitive/i.test(l) || lines.indexOf(l) === 0));
+        const matchLineIdx = locateMatchLine(lines, [/parseInt\s*\(\s*params\.id\s*,\s*10\s*\)/i], l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('*'));
         const lineNum = matchLineIdx !== -1 ? matchLineIdx + 1 : 1;
         findings.push({
             id: `api10-${Date.now()}-${findingCounter.count++}`,
@@ -271,7 +273,7 @@ export function evaluateApiRules(file: CodeFile, lines: string[], cleanContent: 
     }
     // API-11: Missing Content-Type Validation on POST/PUT Endpoints
     if (/(?:app\/api|pages\/api)/i.test(lowerPath) && /export\s+async\s+function\s+(?:POST|PUT)/i.test(cleanContent) && /await\s+req\.json\(\)/i.test(cleanContent) && !/content-type/i.test(cleanContent)) {
-        const matchLineIdx = lines.findIndex(l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('*') && (/api-11|missing/i.test(l) || lines.indexOf(l) === 0));
+        const matchLineIdx = locateMatchLine(lines, [/export\s+async\s+function\s+(?:POST|PUT)/i, /await\s+req\.json\(\)/i], l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('*'));
         const lineNum = matchLineIdx !== -1 ? matchLineIdx + 1 : 1;
         findings.push({
             id: `api11-${Date.now()}-${findingCounter.count++}`,
@@ -296,7 +298,7 @@ export function evaluateApiRules(file: CodeFile, lines: string[], cleanContent: 
     }
     // API-12: Dangerous HTTP Method Override Header Allowed
     if (/X-HTTP-Method-Override/i.test(cleanContent) && !/verifyAdmin|trustedProxy/i.test(cleanContent)) {
-        const matchLineIdx = lines.findIndex(l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('*') && (/api-12|dangerous/i.test(l) || lines.indexOf(l) === 0));
+        const matchLineIdx = locateMatchLine(lines, [/X-HTTP-Method-Override/i], l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('*'));
         const lineNum = matchLineIdx !== -1 ? matchLineIdx + 1 : 1;
         findings.push({
             id: `api12-${Date.now()}-${findingCounter.count++}`,
@@ -321,7 +323,7 @@ export function evaluateApiRules(file: CodeFile, lines: string[], cleanContent: 
     }
     // API-13: API Endpoint Missing Strict JSON Schema / Zod Validation
     if (/(?:app\/api|pages\/api)/i.test(lowerPath) && /export\s+async\s+function\s+POST/i.test(cleanContent) && /const\s+body\s*=\s*await\s+req\.json\(\)\s*as\s+any/i.test(cleanContent)) {
-        const matchLineIdx = lines.findIndex(l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('*') && (/api-13|api/i.test(l) || lines.indexOf(l) === 0));
+        const matchLineIdx = locateMatchLine(lines, [/export\s+async\s+function\s+POST/i, /const\s+body\s*=\s*await\s+req\.json\(\)\s*as\s+any/i], l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('*'));
         const lineNum = matchLineIdx !== -1 ? matchLineIdx + 1 : 1;
         findings.push({
             id: `api13-${Date.now()}-${findingCounter.count++}`,
@@ -346,7 +348,7 @@ export function evaluateApiRules(file: CodeFile, lines: string[], cleanContent: 
     }
     // API-14: Missing Cache-Control Header on Authenticated User Data
     if (/(?:user\/profile|account\/billing)/i.test(lowerPath) && /export\s+async\s+function\s+GET/i.test(cleanContent) && !/Cache-Control/i.test(cleanContent) && /getUser|session/i.test(cleanContent)) {
-        const matchLineIdx = lines.findIndex(l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('*') && (/api-14|missing/i.test(l) || lines.indexOf(l) === 0));
+        const matchLineIdx = locateMatchLine(lines, [/export\s+async\s+function\s+GET/i, /getUser|session/i], l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('*'));
         const lineNum = matchLineIdx !== -1 ? matchLineIdx + 1 : 1;
         findings.push({
             id: `api14-${Date.now()}-${findingCounter.count++}`,
@@ -373,15 +375,15 @@ export function evaluateApiRules(file: CodeFile, lines: string[], cleanContent: 
     const getFuncMatch = cleanContent.match(/export\s+async\s+function\s+GET[\s\S]*?(?=export\s+(?:async\s+)?function|$)/i);
     const getBody = getFuncMatch ? getFuncMatch[0] : '';
     const sanitizedGetBody = getBody.replace(/createHmac\s*\([^)]*\)\s*\.update\s*\([^)]*\)/gi, '').replace(/createHash\s*\([^)]*\)\s*\.update\s*\([^)]*\)/gi, '');
-    if (/(?:app\/api|pages\/api)/i.test(lowerPath) && sanitizedGetBody && /(?:\.(?:from|table|collection)\s*\([^)]*\)\s*\.(?:delete|update|insert)\b|\.delete\s*\([^)]*\)|\.update\s*\([^)]*\)|\.insert\s*\([^)]*\)|DELETE\s+FROM|UPDATE\s+\w+\s+SET|INSERT\s+INTO)/i.test(sanitizedGetBody)) {
-        const matchLineIdx = lines.findIndex(l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('*') && (/(?:\.delete\(|\.update\(|\.insert\(|DELETE\s+FROM)/i.test(l) || /export\s+async\s+function\s+GET/i.test(l)));
+    if (/(?:app\/api|pages\/api)/i.test(lowerPath) && sanitizedGetBody && /(?:\.(?:from|table|collection)\s*\([^)]*\)\s*\.(?:delete|update|insert|upsert)\b|\bprisma\.\w+\.(?:delete|update|create|upsert)(?:Many)?\s*\(|\bdb\.(?:delete|update|insert)\s*\(|DELETE\s+FROM|UPDATE\s+\w+\s+SET|INSERT\s+INTO)/i.test(sanitizedGetBody)) {
+        const matchLineIdx = lines.findIndex(l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('*') && (/(?:\.(?:delete|update|insert|upsert|create)(?:Many)?\(|DELETE\s+FROM|UPDATE\s+\w+\s+SET|INSERT\s+INTO)/i.test(l) || /export\s+async\s+function\s+GET/i.test(l)));
         const lineNum = matchLineIdx !== -1 ? matchLineIdx + 1 : 1;
         findings.push({
             id: `api15-${Date.now()}-${findingCounter.count++}`,
             ruleId: 7215,
             type: 'SECURITY',
             title: "API-15: GET Endpoint Performing State-Mutating Actions",
-            severity: 'CRITICAL',
+            severity: 'HIGH',
             category: "REST Semantics",
             filePath: file.path,
             lineRange: `L${lineNum}`,
@@ -399,7 +401,7 @@ export function evaluateApiRules(file: CodeFile, lines: string[], cleanContent: 
     }
     // API-16: Missing ETag Header on Cacheable Entity Endpoints
     if (/(?:app\/api|pages\/api)/i.test(lowerPath) && /export\s+async\s+function\s+GET/i.test(cleanContent) && !/ETag/i.test(cleanContent)) {
-        const matchLineIdx = lines.findIndex(l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('*') && (/api-16|missing/i.test(l) || lines.indexOf(l) === 0));
+        const matchLineIdx = locateMatchLine(lines, [/export\s+async\s+function\s+GET/i], l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('*'));
         const lineNum = matchLineIdx !== -1 ? matchLineIdx + 1 : 1;
         findings.push({
             id: `api16-${Date.now()}-${findingCounter.count++}`,
@@ -424,7 +426,7 @@ export function evaluateApiRules(file: CodeFile, lines: string[], cleanContent: 
     }
     // API-17: Missing If-Match Header for Optimistic Concurrency Control
     if (/(?:app\/api|pages\/api)/i.test(lowerPath) && /export\s+async\s+function\s+(?:PUT|PATCH)/i.test(cleanContent) && !/if-match/i.test(cleanContent)) {
-        const matchLineIdx = lines.findIndex(l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('*') && (/api-17|missing/i.test(l) || lines.indexOf(l) === 0));
+        const matchLineIdx = locateMatchLine(lines, [/export\s+async\s+function\s+(?:PUT|PATCH)/i], l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('*'));
         const lineNum = matchLineIdx !== -1 ? matchLineIdx + 1 : 1;
         findings.push({
             id: `api17-${Date.now()}-${findingCounter.count++}`,
@@ -456,7 +458,7 @@ export function evaluateApiRules(file: CodeFile, lines: string[], cleanContent: 
             ruleId: 7218,
             type: 'SECURITY',
             title: "API-18: Unauthenticated Debug or Metric Endpoint in Production",
-            severity: 'CRITICAL',
+            severity: 'HIGH',
             category: "Information Disclosure",
             filePath: file.path,
             lineRange: `L${lineNum}`,
@@ -474,7 +476,7 @@ export function evaluateApiRules(file: CodeFile, lines: string[], cleanContent: 
     }
     // API-19: Wildcard Allowed Methods in CORS (Access-Control-Allow-Methods: '*')
     if (/Access-Control-Allow-Methods[\'"]?\s*[:=]\s*[\'"]\*[\'"]/i.test(cleanContent)) {
-        const matchLineIdx = lines.findIndex(l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('*') && (/api-19|wildcard/i.test(l) || lines.indexOf(l) === 0));
+        const matchLineIdx = locateMatchLine(lines, [/Access-Control-Allow-Methods[\'"]?\s*[:=]\s*[\'"]\*[\'"]/i], l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('*'));
         const lineNum = matchLineIdx !== -1 ? matchLineIdx + 1 : 1;
         findings.push({
             id: `api19-${Date.now()}-${findingCounter.count++}`,
@@ -498,8 +500,8 @@ export function evaluateApiRules(file: CodeFile, lines: string[], cleanContent: 
         logs.push(`[${ts}] 🌐 API-19: Wildcard Allowed Methods in CORS (Access-Control-Allow-Methods: '*') detected (${file.path}:${lineNum})`);
     }
     // API-20: Missing Rate Limiting on Authentication / Login Endpoints
-    if (/(?:api\/auth\/login|api\/auth\/signin)/i.test(lowerPath) && /export\s+async\s+function\s+POST/i.test(cleanContent) && !/rateLimit|limiter|checkLimit/i.test(cleanContent)) {
-        const matchLineIdx = lines.findIndex(l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('*') && (/api-20|missing/i.test(l) || lines.indexOf(l) === 0));
+    if (/api\/(?:v\d+\/)?(?:auth\/)?(?:login|signin|sign-in|signup|sign-up|register|forgot-password|reset-password|magic-link|otp|verify-otp|token)(?:\/|$|\b)/i.test(lowerPath) && /export\s+async\s+function\s+POST/i.test(cleanContent) && !RATE_LIMIT_GUARD.test(cleanContent)) {
+        const matchLineIdx = locateMatchLine(lines, [/export\s+async\s+function\s+POST/i], l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('*'));
         const lineNum = matchLineIdx !== -1 ? matchLineIdx + 1 : 1;
         findings.push({
             id: `api20-${Date.now()}-${findingCounter.count++}`,
@@ -524,7 +526,7 @@ export function evaluateApiRules(file: CodeFile, lines: string[], cleanContent: 
     }
     // API-21: Leaking Stack Traces in 500 Server Error Responses
     if (/(?:app\/api|pages\/api)/i.test(lowerPath) && /status:\s*500/i.test(cleanContent) && /(?:stack:\s*err\.stack|error:\s*err\.stack)/i.test(cleanContent)) {
-        const matchLineIdx = lines.findIndex(l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('*') && (/api-21|leaking/i.test(l) || lines.indexOf(l) === 0));
+        const matchLineIdx = locateMatchLine(lines, [/status:\s*500/i, /(?:stack:\s*err\.stack|error:\s*err\.stack)/i], l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('*'));
         const lineNum = matchLineIdx !== -1 ? matchLineIdx + 1 : 1;
         findings.push({
             id: `api21-${Date.now()}-${findingCounter.count++}`,
@@ -549,7 +551,7 @@ export function evaluateApiRules(file: CodeFile, lines: string[], cleanContent: 
     }
     // API-22: Webhook Receiver Missing Replay Attack Protection (Timestamp Check)
     if (/webhook/i.test(lowerPath) && /export\s+async\s+function\s+POST/i.test(cleanContent) && /signature/i.test(cleanContent) && !/timestamp|webhook-timestamp/i.test(cleanContent)) {
-        const matchLineIdx = lines.findIndex(l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('*') && (/api-22|webhook/i.test(l) || lines.indexOf(l) === 0));
+        const matchLineIdx = locateMatchLine(lines, [/export\s+async\s+function\s+POST/i, /signature/i], l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('*'));
         const lineNum = matchLineIdx !== -1 ? matchLineIdx + 1 : 1;
         findings.push({
             id: `api22-${Date.now()}-${findingCounter.count++}`,
@@ -574,7 +576,7 @@ export function evaluateApiRules(file: CodeFile, lines: string[], cleanContent: 
     }
     // API-23: Webhook Delivery Missing Cryptographic HMAC Signature
     if (/(?:function\s+(?:dispatch|send)Webhook|const\s+(?:dispatch|send)Webhook\s*=)/i.test(cleanContent) && !/createHmac|sha256/i.test(cleanContent) && !/slack|discord/i.test(cleanContent)) {
-        const matchLineIdx = lines.findIndex(l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('*') && (/api-23|webhook/i.test(l) || lines.indexOf(l) === 0));
+        const matchLineIdx = locateMatchLine(lines, [/(?:function\s+(?:dispatch|send)Webhook|const\s+(?:dispatch|send)Webhook\s*=)/i], l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('*'));
         const lineNum = matchLineIdx !== -1 ? matchLineIdx + 1 : 1;
         findings.push({
             id: `api23-${Date.now()}-${findingCounter.count++}`,
@@ -599,7 +601,7 @@ export function evaluateApiRules(file: CodeFile, lines: string[], cleanContent: 
     }
     // API-24: Missing Strict Type Validation on Webhook Event Type
     if (/webhook/i.test(lowerPath) && /switch\s*\(\s*event\.type\s*\)/i.test(cleanContent) && !/default\s*:/i.test(cleanContent)) {
-        const matchLineIdx = lines.findIndex(l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('*') && (/api-24|missing/i.test(l) || lines.indexOf(l) === 0));
+        const matchLineIdx = locateMatchLine(lines, [/switch\s*\(\s*event\.type\s*\)/i], l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('*'));
         const lineNum = matchLineIdx !== -1 ? matchLineIdx + 1 : 1;
         findings.push({
             id: `api24-${Date.now()}-${findingCounter.count++}`,
@@ -649,7 +651,7 @@ export function evaluateApiRules(file: CodeFile, lines: string[], cleanContent: 
     }
     // API-26: Unbounded Query Filter Parameters Exposing Full Table Scans
     if (/(?:where:\s*searchParams\.get\([\'"]filter[\'"]\)|where:\s*req\.query\.where)/i.test(cleanContent)) {
-        const matchLineIdx = lines.findIndex(l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('*') && (/api-26|unbounded/i.test(l) || lines.indexOf(l) === 0));
+        const matchLineIdx = locateMatchLine(lines, [/(?:where:\s*searchParams\.get\([\'"]filter[\'"]\)|where:\s*req\.query\.where)/i], l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('*'));
         const lineNum = matchLineIdx !== -1 ? matchLineIdx + 1 : 1;
         findings.push({
             id: `api26-${Date.now()}-${findingCounter.count++}`,
@@ -674,7 +676,7 @@ export function evaluateApiRules(file: CodeFile, lines: string[], cleanContent: 
     }
     // API-27: Missing Deprecation Notice on Sunsetting API Endpoints
     if (/(?:legacy|deprecated)/i.test(lowerPath) && /export\s+async\s+function\s+GET/i.test(cleanContent) && !/Deprecation|Sunset/i.test(cleanContent)) {
-        const matchLineIdx = lines.findIndex(l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('*') && (/api-27|missing/i.test(l) || lines.indexOf(l) === 0));
+        const matchLineIdx = locateMatchLine(lines, [/export\s+async\s+function\s+GET/i], l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('*'));
         const lineNum = matchLineIdx !== -1 ? matchLineIdx + 1 : 1;
         findings.push({
             id: `api27-${Date.now()}-${findingCounter.count++}`,
@@ -699,7 +701,7 @@ export function evaluateApiRules(file: CodeFile, lines: string[], cleanContent: 
     }
     // API-28: GraphQL Schema Exposing Introspection in Production
     if (/new\s+ApolloServer\s*\(\s*\{[^}]*introspection:\s*true/i.test(cleanContent) && !/process\.env\.NODE_ENV/i.test(cleanContent)) {
-        const matchLineIdx = lines.findIndex(l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('*') && (/api-28|graphql/i.test(l) || lines.indexOf(l) === 0));
+        const matchLineIdx = locateMatchLine(lines, [/new\s+ApolloServer\s*\(\s*\{[^}]*introspection:\s*true/i], l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('*'));
         const lineNum = matchLineIdx !== -1 ? matchLineIdx + 1 : 1;
         findings.push({
             id: `api28-${Date.now()}-${findingCounter.count++}`,
@@ -724,7 +726,7 @@ export function evaluateApiRules(file: CodeFile, lines: string[], cleanContent: 
     }
     // API-29: GraphQL Mutation Missing Field-Level Authorization Checks
     if (/Mutation:\s*\{[^}]*deleteAccount:\s*async\s*\([^)]*\)\s*=>\s*\{(?![^}]*context\.user)/i.test(cleanContent)) {
-        const matchLineIdx = lines.findIndex(l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('*') && (/api-29|graphql/i.test(l) || lines.indexOf(l) === 0));
+        const matchLineIdx = locateMatchLine(lines, [/Mutation:\s*\{[^}]*deleteAccount:\s*async\s*\([^)]*\)\s*=>\s*\{(?![^}]*context\.user)/i], l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('*'));
         const lineNum = matchLineIdx !== -1 ? matchLineIdx + 1 : 1;
         findings.push({
             id: `api29-${Date.now()}-${findingCounter.count++}`,
@@ -749,7 +751,7 @@ export function evaluateApiRules(file: CodeFile, lines: string[], cleanContent: 
     }
     // API-30: tRPC Procedure Missing Caller Context Authentication
     if (/t\.procedure\.mutation/i.test(cleanContent) && /deleteUser|updateBilling/i.test(cleanContent) && !/protectedProcedure|enforceUserIsAuthed/i.test(cleanContent)) {
-        const matchLineIdx = lines.findIndex(l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('*') && (/api-30|trpc/i.test(l) || lines.indexOf(l) === 0));
+        const matchLineIdx = locateMatchLine(lines, [/t\.procedure\.mutation/i, /deleteUser|updateBilling/i], l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('*'));
         const lineNum = matchLineIdx !== -1 ? matchLineIdx + 1 : 1;
         findings.push({
             id: `api30-${Date.now()}-${findingCounter.count++}`,
@@ -774,7 +776,7 @@ export function evaluateApiRules(file: CodeFile, lines: string[], cleanContent: 
     }
     // API-31: Accept-Encoding Missing Support for Brotli (br)
     if (/compressionMiddleware/i.test(cleanContent) && /gzip/i.test(cleanContent) && !/br|brotli/i.test(cleanContent)) {
-        const matchLineIdx = lines.findIndex(l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('*') && (/api-31|accept-encoding/i.test(l) || lines.indexOf(l) === 0));
+        const matchLineIdx = locateMatchLine(lines, [/compressionMiddleware/i, /gzip/i], l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('*'));
         const lineNum = matchLineIdx !== -1 ? matchLineIdx + 1 : 1;
         findings.push({
             id: `api31-${Date.now()}-${findingCounter.count++}`,
@@ -797,34 +799,9 @@ export function evaluateApiRules(file: CodeFile, lines: string[], cleanContent: 
         });
         logs.push(`[${ts}] 🌐 API-31: Accept-Encoding Missing Support for Brotli (br) detected (${file.path}:${lineNum})`);
     }
-    // API-32: Insecure Direct File Download via Relative Path Parameter
-    if (/(?:app\/api|pages\/api)/i.test(lowerPath) && /createReadStream\s*\(\s*(?:req\.query\.file|searchParams\.get\([\'"]file[\'"]\))\s*\)/i.test(cleanContent) && !/basename/i.test(cleanContent)) {
-        const matchLineIdx = lines.findIndex(l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('*') && (/api-32|insecure/i.test(l) || lines.indexOf(l) === 0));
-        const lineNum = matchLineIdx !== -1 ? matchLineIdx + 1 : 1;
-        findings.push({
-            id: `api32-${Date.now()}-${findingCounter.count++}`,
-            ruleId: 7232,
-            type: 'SECURITY',
-            title: "API-32: Insecure Direct File Download via Relative Path Parameter",
-            severity: 'CRITICAL',
-            category: "Path Traversal",
-            filePath: file.path,
-            lineRange: `L${lineNum}`,
-            snippet: lines[matchLineIdx] || "<detected API-32 pattern>",
-            reproductionSteps: [
-                `Scanned source code in ${file.path}:${lineNum}.`,
-                "Detected Insecure Direct File Download via Relative Path Parameter: API route accepting /api/v1/download?file=../../etc/passwd without canonical path sandboxing."
-            ],
-            remediationPrompt: "Sanitize filename with path.basename() and verify resolved path starts with safe storage directory.",
-            status: 'OPEN',
-            owner: "File Endpoints",
-            falsePositive: false
-        });
-        logs.push(`[${ts}] 🌐 API-32: Insecure Direct File Download via Relative Path Parameter detected (${file.path}:${lineNum})`);
-    }
     // API-33: API Bulk Creation Endpoint Lacking Batch Item Limit
     if (/(?:bulk|batch)/i.test(lowerPath) && /export\s+async\s+function\s+POST/i.test(cleanContent) && !/max\(|length\s*>\s*\d+|limit/i.test(cleanContent)) {
-        const matchLineIdx = lines.findIndex(l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('*') && (/api-33|api/i.test(l) || lines.indexOf(l) === 0));
+        const matchLineIdx = locateMatchLine(lines, [/export\s+async\s+function\s+POST/i], l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('*'));
         const lineNum = matchLineIdx !== -1 ? matchLineIdx + 1 : 1;
         findings.push({
             id: `api33-${Date.now()}-${findingCounter.count++}`,
@@ -849,7 +826,7 @@ export function evaluateApiRules(file: CodeFile, lines: string[], cleanContent: 
     }
     // API-34: Missing Content-Security-Policy on API JSON Endpoints
     if (/servePublicJsonDocs/i.test(cleanContent) && !/Content-Type-Options/i.test(cleanContent)) {
-        const matchLineIdx = lines.findIndex(l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('*') && (/api-34|missing/i.test(l) || lines.indexOf(l) === 0));
+        const matchLineIdx = locateMatchLine(lines, [/servePublicJsonDocs/i], l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('*'));
         const lineNum = matchLineIdx !== -1 ? matchLineIdx + 1 : 1;
         findings.push({
             id: `api34-${Date.now()}-${findingCounter.count++}`,
@@ -874,7 +851,7 @@ export function evaluateApiRules(file: CodeFile, lines: string[], cleanContent: 
     }
     // API-35: Unsanitized User-Controlled Filename in Content-Disposition
     if (/headers\.set\(\s*[\'"]Content-Disposition[\'"]\s*,\s*[\'"]attachment;\s*filename=[\'"]\s*\+\s*[a-zA-Z0-9_]+\s*\)/i.test(cleanContent)) {
-        const matchLineIdx = lines.findIndex(l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('*') && (/api-35|unsanitized/i.test(l) || lines.indexOf(l) === 0));
+        const matchLineIdx = locateMatchLine(lines, [/headers\.set\(\s*[\'"]Content-Disposition[\'"]\s*,\s*[\'"]attachment;\s*filename=[\'"]\s*\+\s*[a-zA-Z0-9_]+\s*\)/i], l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('*'));
         const lineNum = matchLineIdx !== -1 ? matchLineIdx + 1 : 1;
         findings.push({
             id: `api35-${Date.now()}-${findingCounter.count++}`,
@@ -899,7 +876,7 @@ export function evaluateApiRules(file: CodeFile, lines: string[], cleanContent: 
     }
     // API-36: Missing Vary Header on Content-Negotiated Responses
     if (/req\.headers\.get\([\'"]accept[\'"]\)[\s\S]*?text\/csv[\s\S]*?application\/json/i.test(cleanContent) && !/Vary/i.test(cleanContent)) {
-        const matchLineIdx = lines.findIndex(l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('*') && (/api-36|missing/i.test(l) || lines.indexOf(l) === 0));
+        const matchLineIdx = locateMatchLine(lines, [/req\.headers\.get\([\'"]accept[\'"]\)[\s\S]*?text\/csv[\s\S]*?application\/json/i], l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('*'));
         const lineNum = matchLineIdx !== -1 ? matchLineIdx + 1 : 1;
         findings.push({
             id: `api36-${Date.now()}-${findingCounter.count++}`,
@@ -924,7 +901,7 @@ export function evaluateApiRules(file: CodeFile, lines: string[], cleanContent: 
     }
     // API-37: Exposing Internal Database Errors in 400 Bad Request
     if (/(?:app\/api|pages\/api)/i.test(lowerPath) && /status:\s*400/i.test(cleanContent) && /error:\s*err\.original/i.test(cleanContent)) {
-        const matchLineIdx = lines.findIndex(l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('*') && (/api-37|exposing/i.test(l) || lines.indexOf(l) === 0));
+        const matchLineIdx = locateMatchLine(lines, [/status:\s*400/i, /error:\s*err\.original/i], l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('*'));
         const lineNum = matchLineIdx !== -1 ? matchLineIdx + 1 : 1;
         findings.push({
             id: `api37-${Date.now()}-${findingCounter.count++}`,
@@ -949,7 +926,7 @@ export function evaluateApiRules(file: CodeFile, lines: string[], cleanContent: 
     }
     // API-38: Session Cookie Omission of SameSite=Lax/Strict on API Auth
     if (/cookies\(\)\.set\s*\(\s*[\'"](?:session|token|auth)[\'"][^)]*sameSite:\s*[\'"]none[\'"](?![^)]*secure:\s*true)/i.test(cleanContent)) {
-        const matchLineIdx = lines.findIndex(l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('*') && (/api-38|session/i.test(l) || lines.indexOf(l) === 0));
+        const matchLineIdx = locateMatchLine(lines, [/cookies\(\)\.set\s*\(\s*[\'"](?:session|token|auth)[\'"][^)]*sameSite:\s*[\'"]none[\'"](?![^)]*secure:\s*true)/i], l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('*'));
         const lineNum = matchLineIdx !== -1 ? matchLineIdx + 1 : 1;
         findings.push({
             id: `api38-${Date.now()}-${findingCounter.count++}`,
@@ -974,7 +951,7 @@ export function evaluateApiRules(file: CodeFile, lines: string[], cleanContent: 
     }
     // API-39: Client IP Resolution Vulnerable to Spoofed X-Forwarded-For
     if (/function\s+getClientIp/i.test(cleanContent) && /req\.headers\.get\([\'"]x-forwarded-for[\'"]\)\?\.split\([\'"],[\'"]\)\[0\]/i.test(cleanContent) && !/cf-connecting-ip|x-real-ip/i.test(cleanContent)) {
-        const matchLineIdx = lines.findIndex(l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('*') && (/api-39|client/i.test(l) || lines.indexOf(l) === 0));
+        const matchLineIdx = locateMatchLine(lines, [/function\s+getClientIp/i, /req\.headers\.get\([\'"]x-forwarded-for[\'"]\)\?\.split\([\'"],[\'"]\)\[0\]/i], l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('*'));
         const lineNum = matchLineIdx !== -1 ? matchLineIdx + 1 : 1;
         findings.push({
             id: `api39-${Date.now()}-${findingCounter.count++}`,
@@ -999,7 +976,7 @@ export function evaluateApiRules(file: CodeFile, lines: string[], cleanContent: 
     }
     // API-40: Missing 204 No Content Status on Successful Empty Response
     if (/(?:app\/api|pages\/api)/i.test(lowerPath) && /export\s+async\s+function\s+DELETE/i.test(cleanContent) && /return\s+NextResponse\.json\(\s*\{\s*\}\s*,\s*\{\s*status:\s*200\s*\}\s*\)/i.test(cleanContent)) {
-        const matchLineIdx = lines.findIndex(l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('*') && (/api-40|missing/i.test(l) || lines.indexOf(l) === 0));
+        const matchLineIdx = locateMatchLine(lines, [/export\s+async\s+function\s+DELETE/i, /return\s+NextResponse\.json\(\s*\{\s*\}\s*,\s*\{\s*status:\s*200\s*\}\s*\)/i], l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('*'));
         const lineNum = matchLineIdx !== -1 ? matchLineIdx + 1 : 1;
         findings.push({
             id: `api40-${Date.now()}-${findingCounter.count++}`,
@@ -1024,7 +1001,7 @@ export function evaluateApiRules(file: CodeFile, lines: string[], cleanContent: 
     }
     // API-41: Missing 201 Created Status on Successful Resource Creation
     if (/(?:app\/api|pages\/api)/i.test(lowerPath) && /export\s+async\s+function\s+POST/i.test(cleanContent) && /prisma\.[a-zA-Z0-9_]+\.create/i.test(cleanContent) && /return\s+NextResponse\.json\([^,)]+\s*,\s*\{\s*status:\s*200\s*\}\s*\)/i.test(cleanContent)) {
-        const matchLineIdx = lines.findIndex(l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('*') && (/api-41|missing/i.test(l) || lines.indexOf(l) === 0));
+        const matchLineIdx = locateMatchLine(lines, [/export\s+async\s+function\s+POST/i, /prisma\.[a-zA-Z0-9_]+\.create/i, /return\s+NextResponse\.json\([^,)]+\s*,\s*\{\s*status:\s*200\s*\}\s*\)/i], l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('*'));
         const lineNum = matchLineIdx !== -1 ? matchLineIdx + 1 : 1;
         findings.push({
             id: `api41-${Date.now()}-${findingCounter.count++}`,
@@ -1048,15 +1025,15 @@ export function evaluateApiRules(file: CodeFile, lines: string[], cleanContent: 
         logs.push(`[${ts}] 🌐 API-41: Missing 201 Created Status on Successful Resource Creation detected (${file.path}:${lineNum})`);
     }
     // API-42: Missing Strict Origin Validation in WebSocket Handshake
-    if (/new\s+WebSocketServer\s*\(\s*\{(?![^}]*verifyClient)/i.test(cleanContent) && !/localhost/i.test(cleanContent)) {
-        const matchLineIdx = lines.findIndex(l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('*') && (/api-42|missing/i.test(l) || lines.indexOf(l) === 0));
+    if (/new\s+WebSocketServer\s*\(\s*\{(?![^}]*verifyClient)/i.test(cleanContent) && !/localhost/i.test(cleanContent) && !/headers\.origin|headers\[['"]origin['"]\]|allowedOrigins/i.test(cleanContent)) {
+        const matchLineIdx = locateMatchLine(lines, [/new\s+WebSocketServer\s*\(\s*\{(?![^}]*verifyClient)/i], l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('*'));
         const lineNum = matchLineIdx !== -1 ? matchLineIdx + 1 : 1;
         findings.push({
             id: `api42-${Date.now()}-${findingCounter.count++}`,
             ruleId: 7242,
             type: 'SECURITY',
             title: "API-42: Missing Strict Origin Validation in WebSocket Handshake",
-            severity: 'CRITICAL',
+            severity: 'HIGH',
             category: "WebSocket Security",
             filePath: file.path,
             lineRange: `L${lineNum}`,
@@ -1074,7 +1051,7 @@ export function evaluateApiRules(file: CodeFile, lines: string[], cleanContent: 
     }
     // API-43: Unbounded WebSocket Message Payload Size
     if (/new\s+WebSocketServer\s*\(\s*\{(?![^}]*maxPayload)/i.test(cleanContent)) {
-        const matchLineIdx = lines.findIndex(l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('*') && (/api-43|unbounded/i.test(l) || lines.indexOf(l) === 0));
+        const matchLineIdx = locateMatchLine(lines, [/new\s+WebSocketServer\s*\(\s*\{(?![^}]*maxPayload)/i], l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('*'));
         const lineNum = matchLineIdx !== -1 ? matchLineIdx + 1 : 1;
         findings.push({
             id: `api43-${Date.now()}-${findingCounter.count++}`,
@@ -1099,7 +1076,7 @@ export function evaluateApiRules(file: CodeFile, lines: string[], cleanContent: 
     }
     // API-44: Missing Heartbeat / Ping-Pong Keepalive on Long-Lived WebSockets
     if (/wss\.on\([\'"]connection[\'"][\s\S]*?ws\.on\([\'"]message[\'"]/i.test(cleanContent) && !/ping|pong|heartbeat/i.test(cleanContent)) {
-        const matchLineIdx = lines.findIndex(l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('*') && (/api-44|missing/i.test(l) || lines.indexOf(l) === 0));
+        const matchLineIdx = locateMatchLine(lines, [/wss\.on\([\'"]connection[\'"][\s\S]*?ws\.on\([\'"]message[\'"]/i], l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('*'));
         const lineNum = matchLineIdx !== -1 ? matchLineIdx + 1 : 1;
         findings.push({
             id: `api44-${Date.now()}-${findingCounter.count++}`,
@@ -1124,14 +1101,14 @@ export function evaluateApiRules(file: CodeFile, lines: string[], cleanContent: 
     }
     // API-45: API Token Generation Using Math.random Instead of Crypto
     if (/const\s+(?:token|apiKey|secret|otp)\s*=\s*Math\.random\(\)\.toString\(36\)/i.test(cleanContent)) {
-        const matchLineIdx = lines.findIndex(l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('*') && (/api-45|api/i.test(l) || lines.indexOf(l) === 0));
+        const matchLineIdx = locateMatchLine(lines, [/const\s+(?:token|apiKey|secret|otp)\s*=\s*Math\.random\(\)\.toString\(36\)/i], l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('*'));
         const lineNum = matchLineIdx !== -1 ? matchLineIdx + 1 : 1;
         findings.push({
             id: `api45-${Date.now()}-${findingCounter.count++}`,
             ruleId: 7245,
             type: 'SECURITY',
             title: "API-45: API Token Generation Using Math.random Instead of Crypto",
-            severity: 'CRITICAL',
+            severity: 'HIGH',
             category: "Cryptographic Security",
             filePath: file.path,
             lineRange: `L${lineNum}`,
@@ -1149,7 +1126,7 @@ export function evaluateApiRules(file: CodeFile, lines: string[], cleanContent: 
     }
     // API-46: Missing Timing-Safe Comparison on API Key Authentication
     if (/(?:apiKey|api_key|token)\s*===\s*(?:storedApiKey|secretKey|configuredKey)\b/i.test(cleanContent) && !/timingSafeEqual/i.test(cleanContent)) {
-        const matchLineIdx = lines.findIndex(l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('*') && (/api-46|missing/i.test(l) || lines.indexOf(l) === 0));
+        const matchLineIdx = locateMatchLine(lines, [/(?:apiKey|api_key|token)\s*===\s*(?:storedApiKey|secretKey|configuredKey)\b/i], l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('*'));
         const lineNum = matchLineIdx !== -1 ? matchLineIdx + 1 : 1;
         findings.push({
             id: `api46-${Date.now()}-${findingCounter.count++}`,
@@ -1174,7 +1151,7 @@ export function evaluateApiRules(file: CodeFile, lines: string[], cleanContent: 
     }
     // API-47: API Endpoint Returning Unfiltered Sensitive PII in User Objects
     if (/(?:app\/api|pages\/api)/i.test(lowerPath) && /return\s+NextResponse\.json\(\s*user\s*\)/i.test(cleanContent) && /password_hash|stripe_customer_id/i.test(cleanContent)) {
-        const matchLineIdx = lines.findIndex(l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('*') && (/api-47|api/i.test(l) || lines.indexOf(l) === 0));
+        const matchLineIdx = locateMatchLine(lines, [/return\s+NextResponse\.json\(\s*user\s*\)/i, /password_hash|stripe_customer_id/i], l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('*'));
         const lineNum = matchLineIdx !== -1 ? matchLineIdx + 1 : 1;
         findings.push({
             id: `api47-${Date.now()}-${findingCounter.count++}`,
@@ -1199,7 +1176,7 @@ export function evaluateApiRules(file: CodeFile, lines: string[], cleanContent: 
     }
     // API-48: Missing OpenAPI / Swagger Contract Documentation
     if (/exportApiDocumentation/i.test(cleanContent) && !/openapi:\s*[\'"]3\./i.test(cleanContent)) {
-        const matchLineIdx = lines.findIndex(l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('*') && (/api-48|missing/i.test(l) || lines.indexOf(l) === 0));
+        const matchLineIdx = locateMatchLine(lines, [/exportApiDocumentation/i], l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('*'));
         const lineNum = matchLineIdx !== -1 ? matchLineIdx + 1 : 1;
         findings.push({
             id: `api48-${Date.now()}-${findingCounter.count++}`,
@@ -1224,7 +1201,7 @@ export function evaluateApiRules(file: CodeFile, lines: string[], cleanContent: 
     }
     // API-49: Unsafe URL Redirection in OAuth Callback Handler
     if (/auth\/callback/i.test(lowerPath) && /NextResponse\.redirect\s*\(\s*(?:searchParams\.get\([\'"]next[\'"]\)|req\.query\.returnUrl)\s*\)/i.test(cleanContent) && !/startsWith\([\'"]\/[\'"]\)/i.test(cleanContent)) {
-        const matchLineIdx = lines.findIndex(l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('*') && (/api-49|unsafe/i.test(l) || lines.indexOf(l) === 0));
+        const matchLineIdx = locateMatchLine(lines, [/NextResponse\.redirect\s*\(\s*(?:searchParams\.get\([\'"]next[\'"]\)|req\.query\.returnUrl)\s*\)/i], l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('*'));
         const lineNum = matchLineIdx !== -1 ? matchLineIdx + 1 : 1;
         findings.push({
             id: `api49-${Date.now()}-${findingCounter.count++}`,
@@ -1249,7 +1226,7 @@ export function evaluateApiRules(file: CodeFile, lines: string[], cleanContent: 
     }
     // API-50: Exposing Internal Microservice Hostname in Public API Response
     if (/(?:app\/api|pages\/api)/i.test(lowerPath) && /return\s+NextResponse\.json\([^)]*\.svc\.cluster\.local/i.test(cleanContent)) {
-        const matchLineIdx = lines.findIndex(l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('*') && (/api-50|exposing/i.test(l) || lines.indexOf(l) === 0));
+        const matchLineIdx = locateMatchLine(lines, [/return\s+NextResponse\.json\([^)]*\.svc\.cluster\.local/i], l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('*'));
         const lineNum = matchLineIdx !== -1 ? matchLineIdx + 1 : 1;
         findings.push({
             id: `api50-${Date.now()}-${findingCounter.count++}`,

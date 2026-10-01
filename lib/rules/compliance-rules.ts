@@ -35,16 +35,7 @@ export function evaluateComplianceRules(file: CodeFile, lines: string[], cleanCo
     if (!isRelevant)
         return { findings, logs };
     // False-positive guard: Skip internal scanner engines, mock data, and rule definitions
-    const isExcluded = lowerPath.includes('lib/rules/') ||
-        lowerPath.includes('data/mockdata.ts') ||
-        lowerPath.includes('data/workspacefiles.ts') ||
-        lowerPath.includes('lib/scanner-engine.ts') ||
-        lowerPath.includes('vulnerabilityplayground.tsx') ||
-        lowerPath.includes('ruleknowledgebasemodal.tsx') ||
-        lowerPath.includes('interactiveanalyzer.tsx') ||
-        lowerPath.includes('scratch/') ||
-        lowerPath.includes('.agent/') ||
-        lowerPath.includes('dist/') ||
+    const isExcluded = lowerPath.includes('dist/') ||
         lowerPath.includes('build/') ||
         lowerPath.includes('node_modules/') ||
         lowerPath.includes('.next/');
@@ -387,7 +378,8 @@ export function evaluateComplianceRules(file: CodeFile, lines: string[], cleanCo
     // ---------------------------------------------------------------------------
     // COMPL-10 (Rule ID 2010): Max Consent Lifetime & Re-consent Policy (12-Month Expiry)
     // ---------------------------------------------------------------------------
-    if (cleanContent.includes('consent_status') || cleanContent.includes('zelsis_consent')) {
+    // Any consent cookie: custom names or common CMPs (Cookiebot, OneTrust, CookieYes, Klaro, Osano, vanilla-cookieconsent)
+    if (/consent|cc_cookie|optanon|cookiebot|cookieyes|klaro|osano|gdpr_?cookie/i.test(cleanContent) && /cookie|setCookie|cookies\(\)|document\.cookie|maxAge|expires/i.test(cleanContent)) {
         const excessiveCookieMaxAgeRegex = /maxAge\s*:\s*(?:[4-9]\d{7,}|[1-9]\d{8,})/;
         if (excessiveCookieMaxAgeRegex.test(cleanContent)) {
             const matchLineIdx = lines.findIndex(l => excessiveCookieMaxAgeRegex.test(l));

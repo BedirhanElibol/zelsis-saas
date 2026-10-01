@@ -1,4 +1,5 @@
 import { Project, Finding, SecurityRule, UiRule, ComplianceRule, ComplianceRuleSchema, InfraRule } from './schema';
+import { isImplementedRule } from '@/lib/rule-status';
 import {
   UI_CLICHE_CATALOG,
   UI_INTERACTION_CATALOG,
@@ -20,6 +21,7 @@ import {
   K8S_HARDENING_CATALOG,
   GO_MICROSERVICES_CATALOG,
   TENANT_ISOLATION_CATALOG,
+  SAAS_CORE_CATALOG,
   CLOUD_SECURITY_CATALOG,
   MOBILE_SECURITY_CATALOG,
   EVENT_STREAMING_CATALOG,
@@ -120,6 +122,7 @@ export {
   K8S_HARDENING_CATALOG,
   GO_MICROSERVICES_CATALOG,
   TENANT_ISOLATION_CATALOG,
+  SAAS_CORE_CATALOG,
   CLOUD_SECURITY_CATALOG,
   MOBILE_SECURITY_CATALOG,
   EVENT_STREAMING_CATALOG,
@@ -200,7 +203,7 @@ export {
   POLYGLOT_BACKEND_CATALOG,
                                                                                           };
 
-export const SECURITY_RULES_CATALOG: SecurityRule[] = [
+const ALL_SECURITY_RULES_CATALOG: SecurityRule[] = [
   {
     id: 1,
     code: 'SEC-01',
@@ -619,6 +622,7 @@ export const SECURITY_RULES_CATALOG: SecurityRule[] = [
   ...WEB3_SECURITY_CATALOG,
   ...PYTHON_ENTERPRISE_CATALOG,
   ...TENANT_ISOLATION_CATALOG,
+  ...SAAS_CORE_CATALOG,
   ...CLOUD_SECURITY_CATALOG,
   ...MOBILE_SECURITY_CATALOG,
   ...CICD_SUPPLYCHAIN_CATALOG,
@@ -647,7 +651,7 @@ export const SECURITY_RULES_CATALOG: SecurityRule[] = [
   ...CONFIDENTIAL_COMPUTING_RULES
 ];;
 
-export const UI_RULES_CATALOG: UiRule[] = [
+const ALL_UI_RULES_CATALOG: UiRule[] = [
   { id: 1301, code: 'UI-01', title: 'Generic Purple-Blue Neon Gradients', category: 'Color & Background', clichePattern: 'Overused neon purple/violet ambient glow gradients on every button and hero banner', whyAiDoesIt: 'LLM default aesthetic heuristic to create visual flair', zelsisSolution: 'Replace ambient glows with a semantic solid color palette (primary, destructive, muted); define brand identity through typography and negative space.' },
   { id: 1302, code: 'UI-02', title: '"Inter" Font Monotonicity', category: 'Typography & Fonts', clichePattern: 'Default unstyled system font stack (Inter/Geist) lacking brand character', whyAiDoesIt: 'Copying default Tailwind font stacks without defining custom brand typography', zelsisSolution: 'Select a distinct display font for headings and a high-readability sans/serif combination for body copy.' },
   { id: 1303, code: 'UI-03', title: 'Magic Wand (✨) / Sparkle Icon Flooding', category: 'Icons & Micro-copy', clichePattern: 'Sparkle or magic wand icons attached to every single input and action button', whyAiDoesIt: 'Over-signaling AI capabilities by prepending sparkle SVGs everywhere', zelsisSolution: 'Remove decorative sparkle icons. Use action-oriented micro-copy ("Summarize", "Filter", "Analyze") that describes what the AI actually executes.' },
@@ -1123,11 +1127,9 @@ export const MOCK_SCAN_LOGS = [
   '[00:14] 🎉 GATE EVALUATION COMPLETE: RELEASE GATE STATUS = PASSED (100/100 Readiness Score).'
 ];
 
-export const VIBEPOLISH_30_CATALOG: UiRule[] = UI_RULES_CATALOG.slice(0, 30);
-export const AI_CLICHE_25_CATALOG: UiRule[] = UI_RULES_CATALOG.filter(r => r.code.startsWith('CLICHE-'));
 export const AI_CLICHE_75_CATALOG: UiRule[] = UI_CLICHE_CATALOG;
 
-export const COMPLIANCE_RULES_CATALOG: ComplianceRule[] = [
+const ALL_COMPLIANCE_RULES_CATALOG: ComplianceRule[] = [
   {
     id: 2001,
     code: 'COMPL-01',
@@ -1316,7 +1318,7 @@ export const COMPLIANCE_RULES_CATALOG: ComplianceRule[] = [
   ...AI_AGENT_ETHICS_GOVERNANCE_RULES
 ];;
 
-export const INFRA_RULES_CATALOG: InfraRule[] = [
+const ALL_INFRA_RULES_CATALOG: InfraRule[] = [
   {
     id: 3001,
     code: 'INFRA-01',
@@ -1570,4 +1572,12 @@ export const INFRA_RULES_CATALOG: InfraRule[] = [
 export const DEMO_AUDIT_FINDINGS: Finding[] = SHOWCASE_DEMO_FINDINGS;
 
 
+// Catalogs shown to users only list rules the engine actually runs (planned entries stay in data/catalogs).
+export const SECURITY_RULES_CATALOG: SecurityRule[] = ALL_SECURITY_RULES_CATALOG.filter(isImplementedRule);
+export const UI_RULES_CATALOG: UiRule[] = ALL_UI_RULES_CATALOG.filter(isImplementedRule);
+export const COMPLIANCE_RULES_CATALOG: ComplianceRule[] = ALL_COMPLIANCE_RULES_CATALOG.filter(isImplementedRule);
+export const INFRA_RULES_CATALOG: InfraRule[] = ALL_INFRA_RULES_CATALOG.filter(isImplementedRule);
+
 export const RULES_CATALOG = [...SECURITY_RULES_CATALOG, ...UI_RULES_CATALOG, ...COMPLIANCE_RULES_CATALOG, ...INFRA_RULES_CATALOG];
+export const VIBEPOLISH_30_CATALOG: UiRule[] = UI_RULES_CATALOG.slice(0, 30);
+export const AI_CLICHE_25_CATALOG: UiRule[] = UI_RULES_CATALOG.filter(r => r.code.startsWith('CLICHE-'));

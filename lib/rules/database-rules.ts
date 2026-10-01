@@ -7,24 +7,26 @@
  */
 import { Finding } from '@/data/schema';
 import { CodeFile } from '../scanner-engine';
+import { emptyRepoContext, normalizeSqlName, RepoContext } from '../scanner/repo-context';
+import { locateMatchLine } from './shared/locate';
 export interface DatabaseRuleResult {
     findings: Finding[];
     logs: string[];
 }
 export function evaluateDatabaseRules(file: CodeFile, lines: string[], cleanContent: string, findingCounter: {
     count: number;
-}): DatabaseRuleResult {
+}, context: RepoContext = emptyRepoContext()): DatabaseRuleResult {
     const findings: Finding[] = [];
     const logs: string[] = [];
     const lowerPath = file.path.toLowerCase().replace(/\\/g, '/');
     // Skip self-referential catalogs, mocks, and schema definitions
-    if (lowerPath.includes('data/catalogs/') || lowerPath.includes('data/mockdata') || lowerPath.includes('data/workspacefiles') || lowerPath.includes('data/schema') || lowerPath.includes('scratch/') || lowerPath.includes('.agent/') || lowerPath.endsWith('.d.ts')) {
+    if (lowerPath.endsWith('.d.ts')) {
         return { findings, logs };
     }
     const ts = new Date().toLocaleTimeString();
     // DB-PERF-01: Prisma / ORM N+1 Query in Loop
     if (/(?:for\s*\([^)]+of|\.map\s*\(\s*(?:async\s*)?\([^)]*\)\s*=>)[\s\S]*?prisma\.[a-zA-Z0-9_]+\.(?:findMany|findUnique|findFirst)/i.test(cleanContent)) {
-        const matchLineIdx = lines.findIndex(l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('*') && (/db-perf-01|prisma/i.test(l) || lines.indexOf(l) === 0));
+        const matchLineIdx = locateMatchLine(lines, [/(?:for\s*\([^)]+of|\.map\s*\(\s*(?:async\s*)?\([^)]*\)\s*=>)[\s\S]*?prisma\.[a-zA-Z0-9_]+\.(?:findMany|findUnique|findFirst)/i], l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('*'));
         const lineNum = matchLineIdx !== -1 ? matchLineIdx + 1 : 1;
         findings.push({
             id: `dbperf-${Date.now()}-${findingCounter.count++}`,
@@ -49,7 +51,7 @@ export function evaluateDatabaseRules(file: CodeFile, lines: string[], cleanCont
     }
     // DB-PERF-02: Missing Index on Foreign Key Columns
     if (/REFERENCES\s+[a-zA-Z0-9_.]+\s*\([a-zA-Z0-9_]+\)/i.test(cleanContent) && !/CREATE\s+INDEX/i.test(cleanContent) && file.path.endsWith(".sql")) {
-        const matchLineIdx = lines.findIndex(l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('*') && (/db-perf-02|missing/i.test(l) || lines.indexOf(l) === 0));
+        const matchLineIdx = locateMatchLine(lines, [/REFERENCES\s+[a-zA-Z0-9_.]+\s*\([a-zA-Z0-9_]+\)/i], l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('*'));
         const lineNum = matchLineIdx !== -1 ? matchLineIdx + 1 : 1;
         findings.push({
             id: `dbperf-${Date.now()}-${findingCounter.count++}`,
@@ -74,7 +76,7 @@ export function evaluateDatabaseRules(file: CodeFile, lines: string[], cleanCont
     }
     // DB-PERF-03: Deep Offset Pagination Performance Trap
     if (/\.skip\(\s*(?:1000|[2-9]\d{3,}|\d{5,})\s*\)|OFFSET\s+(?:1000|[2-9]\d{3,}|\d{5,})\b/i.test(cleanContent)) {
-        const matchLineIdx = lines.findIndex(l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('*') && (/db-perf-03|deep/i.test(l) || lines.indexOf(l) === 0));
+        const matchLineIdx = locateMatchLine(lines, [/\.skip\(\s*(?:1000|[2-9]\d{3,}|\d{5,})\s*\)|OFFSET\s+(?:1000|[2-9]\d{3,}|\d{5,})\b/i], l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('*'));
         const lineNum = matchLineIdx !== -1 ? matchLineIdx + 1 : 1;
         findings.push({
             id: `dbperf-${Date.now()}-${findingCounter.count++}`,
@@ -99,7 +101,7 @@ export function evaluateDatabaseRules(file: CodeFile, lines: string[], cleanCont
     }
     // DB-PERF-04: Unbounded SELECT * Full Table Scan
     if (/SELECT\s+\*\s+FROM\s+[a-zA-Z0-9_]+(?!\s+WHERE|\s+LIMIT)/i.test(cleanContent) && file.path.endsWith(".sql")) {
-        const matchLineIdx = lines.findIndex(l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('*') && (/db-perf-04|unbounded/i.test(l) || lines.indexOf(l) === 0));
+        const matchLineIdx = locateMatchLine(lines, [/SELECT\s+\*\s+FROM\s+[a-zA-Z0-9_]+(?!\s+WHERE|\s+LIMIT)/i], l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('*'));
         const lineNum = matchLineIdx !== -1 ? matchLineIdx + 1 : 1;
         findings.push({
             id: `dbperf-${Date.now()}-${findingCounter.count++}`,
@@ -123,15 +125,17 @@ export function evaluateDatabaseRules(file: CodeFile, lines: string[], cleanCont
         logs.push(`[${ts}] 🗄️ DB-PERF-04: Unbounded SELECT * Full Table Scan detected (${file.path}:${lineNum})`);
     }
     // DB-PERF-05: Direct Unpooled Database Connection in Edge / Serverless
-    if (/(?:app\/api|pages\/api)/i.test(lowerPath) && /new\s+(?:Pool|Client)\s*\(/i.test(cleanContent) && !/globalThis|singleton/i.test(cleanContent)) {
-        const matchLineIdx = lines.findIndex(l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('*') && (/db-perf-05|direct/i.test(l) || lines.indexOf(l) === 0));
+    // A pg Pool/Client created inside the request handler opens new connections on every request; module scope is reused across warm invocations
+    const handlerBody = cleanContent.slice(Math.max(0, cleanContent.search(/export\s+(?:default\s+)?(?:async\s+)?function\s*(?:GET|POST|PUT|PATCH|DELETE|handler)?\s*\(/)));
+    if (/(?:app\/api|pages\/api)/i.test(lowerPath) && /from\s+['"]pg['"]|require\(\s*['"]pg['"]\s*\)/.test(cleanContent) && /export\s+(?:default\s+)?(?:async\s+)?function/.test(cleanContent) && /new\s+(?:Pool|Client)\s*\(/.test(handlerBody) && !/\.end\(\)/.test(handlerBody) && !/globalThis|singleton/i.test(cleanContent)) {
+        const matchLineIdx = locateMatchLine(lines, [/new\s+(?:Pool|Client)\s*\(/i], l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('*'));
         const lineNum = matchLineIdx !== -1 ? matchLineIdx + 1 : 1;
         findings.push({
             id: `dbperf-${Date.now()}-${findingCounter.count++}`,
             ruleId: 6005,
             type: 'INFRA_DATABASE',
             title: 'DB-PERF-05: Direct Unpooled Database Connection in Edge / Serverless',
-            severity: 'CRITICAL',
+            severity: 'HIGH',
             category: "Connection Pooling",
             filePath: file.path,
             lineRange: `L${lineNum}`,
@@ -149,7 +153,7 @@ export function evaluateDatabaseRules(file: CodeFile, lines: string[], cleanCont
     }
     // DB-PERF-06: Missing Composite Index on Multi-Column Filters
     if (/WHERE\s+[a-zA-Z0-9_]+\s*=\s*\$1\s+AND\s+[a-zA-Z0-9_]+\s*=\s*\$2/i.test(cleanContent) && !/INDEX/i.test(cleanContent) && file.path.endsWith(".sql")) {
-        const matchLineIdx = lines.findIndex(l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('*') && (/db-perf-06|missing/i.test(l) || lines.indexOf(l) === 0));
+        const matchLineIdx = locateMatchLine(lines, [/WHERE\s+[a-zA-Z0-9_]+\s*=\s*\$1\s+AND\s+[a-zA-Z0-9_]+\s*=\s*\$2/i], l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('*'));
         const lineNum = matchLineIdx !== -1 ? matchLineIdx + 1 : 1;
         findings.push({
             id: `dbperf-${Date.now()}-${findingCounter.count++}`,
@@ -174,7 +178,7 @@ export function evaluateDatabaseRules(file: CodeFile, lines: string[], cleanCont
     }
     // DB-PERF-07: Unindexed Leading Wildcard LIKE Query
     if (/ILIKE\s+[\'"]%[^\'"]+%[\'"]|LIKE\s+[\'"]%[^\'"]+%[\'"]/i.test(cleanContent) && !/gin_trgm_ops|tsvector/i.test(cleanContent)) {
-        const matchLineIdx = lines.findIndex(l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('*') && (/db-perf-07|unindexed/i.test(l) || lines.indexOf(l) === 0));
+        const matchLineIdx = locateMatchLine(lines, [/ILIKE\s+[\'"]%[^\'"]+%[\'"]|LIKE\s+[\'"]%[^\'"]+%[\'"]/i], l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('*'));
         const lineNum = matchLineIdx !== -1 ? matchLineIdx + 1 : 1;
         findings.push({
             id: `dbperf-${Date.now()}-${findingCounter.count++}`,
@@ -199,7 +203,7 @@ export function evaluateDatabaseRules(file: CodeFile, lines: string[], cleanCont
     }
     // DB-PERF-08: Missing ON DELETE Strategy on Foreign Key Constraints
     if (/FOREIGN\s+KEY[^\n]+(?<!ON\s+DELETE\s+(?:CASCADE|RESTRICT|SET\s+NULL|SET\s+DEFAULT|NO\s+ACTION));/i.test(cleanContent) && file.path.endsWith(".sql")) {
-        const matchLineIdx = lines.findIndex(l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('*') && (/db-perf-08|missing/i.test(l) || lines.indexOf(l) === 0));
+        const matchLineIdx = locateMatchLine(lines, [/FOREIGN\s+KEY[^\n]+(?<!ON\s+DELETE\s+(?:CASCADE|RESTRICT|SET\s+NULL|SET\s+DEFAULT|NO\s+ACTION));/i], l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('*'));
         const lineNum = matchLineIdx !== -1 ? matchLineIdx + 1 : 1;
         findings.push({
             id: `dbperf-${Date.now()}-${findingCounter.count++}`,
@@ -223,15 +227,31 @@ export function evaluateDatabaseRules(file: CodeFile, lines: string[], cleanCont
         logs.push(`[${ts}] 🗄️ DB-PERF-08: Missing ON DELETE Strategy on Foreign Key Constraints detected (${file.path}:${lineNum})`);
     }
     // DB-PERF-09: Long-Running External API Call Inside DB Transaction
-    if (/\$transaction\s*\(\s*async\s*\([^)]*\)\s*=>[\s\S]*?(?:fetch\(|axios\.|openai\.|anthropic\.)/i.test(cleanContent)) {
-        const matchLineIdx = lines.findIndex(l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('*') && (/db-perf-09|long-running/i.test(l) || lines.indexOf(l) === 0));
+    // Only calls inside the transaction callback body count, so brace-match the body instead of scanning to EOF
+    const txExternalCallLine = (() => {
+        for (const m of cleanContent.matchAll(/\$transaction\s*\(\s*async\s*\([^)]*\)\s*=>\s*\{/g)) {
+            let depth = 1;
+            let i = m.index! + m[0].length;
+            while (i < cleanContent.length && depth > 0) {
+                if (cleanContent[i] === '{') depth++;
+                else if (cleanContent[i] === '}') depth--;
+                i++;
+            }
+            const body = cleanContent.slice(m.index! + m[0].length, i);
+            const call = body.search(/\bfetch\(|axios\.|openai\.|anthropic\./);
+            if (call !== -1) return cleanContent.slice(0, m.index! + m[0].length + call).split('\n').length - 1;
+        }
+        return -1;
+    })();
+    if (txExternalCallLine !== -1) {
+        const matchLineIdx = txExternalCallLine;
         const lineNum = matchLineIdx !== -1 ? matchLineIdx + 1 : 1;
         findings.push({
             id: `dbperf-${Date.now()}-${findingCounter.count++}`,
             ruleId: 6009,
             type: 'INFRA_DATABASE',
             title: 'DB-PERF-09: Long-Running External API Call Inside DB Transaction',
-            severity: 'CRITICAL',
+            severity: 'HIGH',
             category: "Concurrency & Locks",
             filePath: file.path,
             lineRange: `L${lineNum}`,
@@ -248,7 +268,10 @@ export function evaluateDatabaseRules(file: CodeFile, lines: string[], cleanCont
         logs.push(`[${ts}] 🗄️ DB-PERF-09: Long-Running External API Call Inside DB Transaction detected (${file.path}:${lineNum})`);
     }
     // DB-PERF-10: PostgreSQL Public Table Missing Row Level Security (RLS)
-    if (/CREATE\s+TABLE\s+(?:public\.)?[a-zA-Z0-9_]+/i.test(cleanContent) && !/ENABLE\s+ROW\s+LEVEL\s+SECURITY/i.test(cleanContent) && file.path.endsWith(".sql")) {
+    const tablesWithoutRls = [...cleanContent.matchAll(/CREATE\s+TABLE\s+(?:IF\s+NOT\s+EXISTS\s+)?([\w."]+)/gi)]
+        .map((m) => normalizeSqlName(m[1]))
+        .filter((t) => !context.rlsEnabledTables.has(t) && !new RegExp(String.raw`ALTER\s+TABLE\s+[^;]*\b` + t + String.raw`\b[^;]*ENABLE\s+ROW\s+LEVEL\s+SECURITY`, 'i').test(cleanContent));
+    if (context.exposesDatabaseToClients && tablesWithoutRls.length > 0 && file.path.endsWith(".sql")) {
         const matchLineIdx = lines.findIndex(l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('*') && (/db-perf-10|create\s+table/i.test(l) || lines.indexOf(l) === 0));
         const lineNum = matchLineIdx !== -1 ? matchLineIdx + 1 : 1;
         findings.push({
@@ -274,7 +297,7 @@ export function evaluateDatabaseRules(file: CodeFile, lines: string[], cleanCont
     }
     // DB-PERF-11: Non-Deterministic findFirst without OrderBy
     if (/\.findFirst\(\s*\{(?![^}]*orderBy)/i.test(cleanContent)) {
-        const matchLineIdx = lines.findIndex(l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('*') && (/db-perf-11|non-deterministic/i.test(l) || lines.indexOf(l) === 0));
+        const matchLineIdx = locateMatchLine(lines, [/\.findFirst\(\s*\{(?![^}]*orderBy)/i], l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('*'));
         const lineNum = matchLineIdx !== -1 ? matchLineIdx + 1 : 1;
         findings.push({
             id: `dbperf-${Date.now()}-${findingCounter.count++}`,
@@ -299,7 +322,7 @@ export function evaluateDatabaseRules(file: CodeFile, lines: string[], cleanCont
     }
     // DB-PERF-12: Unbounded Bulk Insert Batch Exhaustion
     if (/createMany\(\s*\{\s*data:\s*\[[^\]]{500,}\]/i.test(cleanContent) && !/chunk/i.test(cleanContent)) {
-        const matchLineIdx = lines.findIndex(l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('*') && (/db-perf-12|unbounded/i.test(l) || lines.indexOf(l) === 0));
+        const matchLineIdx = locateMatchLine(lines, [/createMany\(\s*\{\s*data:\s*\[[^\]]{500,}\]/i], l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('*'));
         const lineNum = matchLineIdx !== -1 ? matchLineIdx + 1 : 1;
         findings.push({
             id: `dbperf-${Date.now()}-${findingCounter.count++}`,
@@ -324,7 +347,7 @@ export function evaluateDatabaseRules(file: CodeFile, lines: string[], cleanCont
     }
     // DB-PERF-13: Missing Connection Pool Acquisition Timeout
     if (/new\s+Pool\(\s*\{(?![^}]*connectionTimeoutMillis)/i.test(cleanContent) && !/mock|test/i.test(lowerPath)) {
-        const matchLineIdx = lines.findIndex(l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('*') && (/db-perf-13|missing/i.test(l) || lines.indexOf(l) === 0));
+        const matchLineIdx = locateMatchLine(lines, [/new\s+Pool\(\s*\{(?![^}]*connectionTimeoutMillis)/i], l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('*'));
         const lineNum = matchLineIdx !== -1 ? matchLineIdx + 1 : 1;
         findings.push({
             id: `dbperf-${Date.now()}-${findingCounter.count++}`,
@@ -349,7 +372,7 @@ export function evaluateDatabaseRules(file: CodeFile, lines: string[], cleanCont
     }
     // DB-PERF-14: Unindexed UUID Primary Key Fragmenting B-Tree
     if (/CREATE\s+TABLE\s+(?:public\.)?(?:high_throughput_logs|clickstream_events|metric_samples|raw_telemetry)[\s\S]*?id\s+UUID\s+PRIMARY\s+KEY\s+DEFAULT\s+gen_random_uuid\(\)/i.test(cleanContent) && file.path.endsWith(".sql")) {
-        const matchLineIdx = lines.findIndex(l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('*') && (/db-perf-14|unindexed/i.test(l) || lines.indexOf(l) === 0));
+        const matchLineIdx = locateMatchLine(lines, [/CREATE\s+TABLE\s+(?:public\.)?(?:high_throughput_logs|clickstream_events|metric_samples|raw_telemetry)[\s\S]*?id\s+UUID\s+PRIMARY\s+KEY\s+DEFAULT\s+gen_random_uuid\(\)/i], l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('*'));
         const lineNum = matchLineIdx !== -1 ? matchLineIdx + 1 : 1;
         findings.push({
             id: `dbperf-${Date.now()}-${findingCounter.count++}`,
@@ -373,15 +396,15 @@ export function evaluateDatabaseRules(file: CodeFile, lines: string[], cleanCont
         logs.push(`[${ts}] 🗄️ DB-PERF-14: Unindexed UUID Primary Key Fragmenting B-Tree detected (${file.path}:${lineNum})`);
     }
     // DB-PERF-15: Uncommitted Database Transaction Connection Leak
-    if (/const\s+client\s*=\s*await\s+pool\.connect\(\)/i.test(cleanContent) && !/client\.release\(\)/i.test(cleanContent)) {
-        const matchLineIdx = lines.findIndex(l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('*') && (/db-perf-15|uncommitted/i.test(l) || lines.indexOf(l) === 0));
+    if (/(?:const|let)\s+\w+\s*=\s*await\s+pool\.connect\(\)/i.test(cleanContent) && !/\.release\(\)/i.test(cleanContent)) {
+        const matchLineIdx = locateMatchLine(lines, [/(?:const|let)\s+\w+\s*=\s*await\s+pool\.connect\(\)/i], l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('*'));
         const lineNum = matchLineIdx !== -1 ? matchLineIdx + 1 : 1;
         findings.push({
             id: `dbperf-${Date.now()}-${findingCounter.count++}`,
             ruleId: 6015,
             type: 'INFRA_DATABASE',
             title: 'DB-PERF-15: Uncommitted Database Transaction Connection Leak',
-            severity: 'CRITICAL',
+            severity: 'HIGH',
             category: "Connection Pooling",
             filePath: file.path,
             lineRange: `L${lineNum}`,
@@ -399,7 +422,7 @@ export function evaluateDatabaseRules(file: CodeFile, lines: string[], cleanCont
     }
     // DB-PERF-16: Missing Dead-Letter Queue on CDC / Event Stream
     if (/supabase\.channel\([^)]+\)\.on\(\s*["\']postgres_changes["\']/i.test(cleanContent) && !/catch|error|deadletter|dlq/i.test(cleanContent)) {
-        const matchLineIdx = lines.findIndex(l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('*') && (/db-perf-16|missing/i.test(l) || lines.indexOf(l) === 0));
+        const matchLineIdx = locateMatchLine(lines, [/supabase\.channel\([^)]+\)\.on\(\s*["\']postgres_changes["\']/i], l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('*'));
         const lineNum = matchLineIdx !== -1 ? matchLineIdx + 1 : 1;
         findings.push({
             id: `dbperf-${Date.now()}-${findingCounter.count++}`,
@@ -424,7 +447,7 @@ export function evaluateDatabaseRules(file: CodeFile, lines: string[], cleanCont
     }
     // DB-PERF-17: Redundant Duplicate Indexes on Same Column Prefix
     if (/CREATE\s+INDEX\s+[^\n]+\s+ON\s+[a-zA-Z0-9_]+\s*\(\s*([a-zA-Z0-9_]+)\s*\)[\s\S]*?CREATE\s+INDEX\s+[^\n]+\s+ON\s+[a-zA-Z0-9_]+\s*\(\s*\1\s*,\s*[a-zA-Z0-9_]+\s*\)/i.test(cleanContent) && file.path.endsWith(".sql")) {
-        const matchLineIdx = lines.findIndex(l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('*') && (/db-perf-17|redundant/i.test(l) || lines.indexOf(l) === 0));
+        const matchLineIdx = locateMatchLine(lines, [/CREATE\s+INDEX\s+[^\n]+\s+ON\s+[a-zA-Z0-9_]+\s*\(\s*([a-zA-Z0-9_]+)\s*\)[\s\S]*?CREATE\s+INDEX\s+[^\n]+\s+ON\s+[a-zA-Z0-9_]+\s*\(\s*\1\s*,\s*[a-zA-Z0-9_]+\s*\)/i], l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('*'));
         const lineNum = matchLineIdx !== -1 ? matchLineIdx + 1 : 1;
         findings.push({
             id: `dbperf-${Date.now()}-${findingCounter.count++}`,
@@ -449,7 +472,7 @@ export function evaluateDatabaseRules(file: CodeFile, lines: string[], cleanCont
     }
     // DB-PERF-18: Unbounded JSONB Column Bloat Without Size Cap
     if (/data\s+JSONB\s+NOT\s+NULL/i.test(cleanContent) && !/CHECK\s*\(\s*octet_length/i.test(cleanContent) && file.path.endsWith(".sql")) {
-        const matchLineIdx = lines.findIndex(l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('*') && (/db-perf-18|unbounded/i.test(l) || lines.indexOf(l) === 0));
+        const matchLineIdx = locateMatchLine(lines, [/data\s+JSONB\s+NOT\s+NULL/i], l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('*'));
         const lineNum = matchLineIdx !== -1 ? matchLineIdx + 1 : 1;
         findings.push({
             id: `dbperf-${Date.now()}-${findingCounter.count++}`,
@@ -474,7 +497,7 @@ export function evaluateDatabaseRules(file: CodeFile, lines: string[], cleanCont
     }
     // DB-PERF-19: Missing Statement Timeout on Production Database
     if (/createPool|new\s+Pool/i.test(cleanContent) && !/statement_timeout/i.test(cleanContent) && !/test|mock/i.test(lowerPath)) {
-        const matchLineIdx = lines.findIndex(l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('*') && (/db-perf-19|missing/i.test(l) || lines.indexOf(l) === 0));
+        const matchLineIdx = locateMatchLine(lines, [/createPool|new\s+Pool/i], l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('*'));
         const lineNum = matchLineIdx !== -1 ? matchLineIdx + 1 : 1;
         findings.push({
             id: `dbperf-${Date.now()}-${findingCounter.count++}`,
@@ -499,7 +522,7 @@ export function evaluateDatabaseRules(file: CodeFile, lines: string[], cleanCont
     }
     // DB-PERF-20: Case-Insensitive Query Missing Functional Index
     if (/WHERE\s+LOWER\s*\(\s*[a-zA-Z0-9_]+\s*\)\s*=/i.test(cleanContent) && !/LOWER\(/i.test(cleanContent) && file.path.endsWith(".sql")) {
-        const matchLineIdx = lines.findIndex(l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('*') && (/db-perf-20|case-insensitive/i.test(l) || lines.indexOf(l) === 0));
+        const matchLineIdx = locateMatchLine(lines, [/WHERE\s+LOWER\s*\(\s*[a-zA-Z0-9_]+\s*\)\s*=/i], l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('*'));
         const lineNum = matchLineIdx !== -1 ? matchLineIdx + 1 : 1;
         findings.push({
             id: `dbperf-${Date.now()}-${findingCounter.count++}`,
@@ -524,7 +547,7 @@ export function evaluateDatabaseRules(file: CodeFile, lines: string[], cleanCont
     }
     // DB-PERF-21: Uncached Read-Heavy System Settings Queries
     if (/findUnique\(\s*\{\s*where:\s*\{\s*key:\s*["\']system_/i.test(cleanContent) && !/cache|redis/i.test(cleanContent)) {
-        const matchLineIdx = lines.findIndex(l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('*') && (/db-perf-21|uncached/i.test(l) || lines.indexOf(l) === 0));
+        const matchLineIdx = locateMatchLine(lines, [/findUnique\(\s*\{\s*where:\s*\{\s*key:\s*["\']system_/i], l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('*'));
         const lineNum = matchLineIdx !== -1 ? matchLineIdx + 1 : 1;
         findings.push({
             id: `dbperf-${Date.now()}-${findingCounter.count++}`,
@@ -549,7 +572,7 @@ export function evaluateDatabaseRules(file: CodeFile, lines: string[], cleanCont
     }
     // DB-PERF-22: Missing Table Partitioning on High-Volume Event Tables
     if (/CREATE\s+TABLE\s+(?:audit_logs|analytics_events|user_activities)/i.test(cleanContent) && !/PARTITION\s+BY/i.test(cleanContent) && file.path.endsWith(".sql")) {
-        const matchLineIdx = lines.findIndex(l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('*') && (/db-perf-22|missing/i.test(l) || lines.indexOf(l) === 0));
+        const matchLineIdx = locateMatchLine(lines, [/CREATE\s+TABLE\s+(?:audit_logs|analytics_events|user_activities)/i], l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('*'));
         const lineNum = matchLineIdx !== -1 ? matchLineIdx + 1 : 1;
         findings.push({
             id: `dbperf-${Date.now()}-${findingCounter.count++}`,
@@ -574,7 +597,7 @@ export function evaluateDatabaseRules(file: CodeFile, lines: string[], cleanCont
     }
     // DB-PERF-23: Un-indexed Array Containment Query (@>)
     if (/@>\s*ARRAY\[/i.test(cleanContent) && !/USING\s+gin/i.test(cleanContent) && file.path.endsWith(".sql")) {
-        const matchLineIdx = lines.findIndex(l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('*') && (/db-perf-23|un-indexed/i.test(l) || lines.indexOf(l) === 0));
+        const matchLineIdx = locateMatchLine(lines, [/@>\s*ARRAY\[/i], l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('*'));
         const lineNum = matchLineIdx !== -1 ? matchLineIdx + 1 : 1;
         findings.push({
             id: `dbperf-${Date.now()}-${findingCounter.count++}`,
@@ -599,7 +622,7 @@ export function evaluateDatabaseRules(file: CodeFile, lines: string[], cleanCont
     }
     // DB-PERF-24: Lock Contention from Table Alters in Production
     if (/ALTER\s+TABLE\s+[a-zA-Z0-9_]+\s+ADD\s+COLUMN\s+[^\n]+NOT\s+NULL\s+DEFAULT/i.test(cleanContent) && !/lock_timeout/i.test(cleanContent) && file.path.endsWith(".sql")) {
-        const matchLineIdx = lines.findIndex(l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('*') && (/db-perf-24|lock/i.test(l) || lines.indexOf(l) === 0));
+        const matchLineIdx = locateMatchLine(lines, [/ALTER\s+TABLE\s+[a-zA-Z0-9_]+\s+ADD\s+COLUMN\s+[^\n]+NOT\s+NULL\s+DEFAULT/i], l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('*'));
         const lineNum = matchLineIdx !== -1 ? matchLineIdx + 1 : 1;
         findings.push({
             id: `dbperf-${Date.now()}-${findingCounter.count++}`,
@@ -624,7 +647,7 @@ export function evaluateDatabaseRules(file: CodeFile, lines: string[], cleanCont
     }
     // DB-PERF-25: Missing Optimistic Concurrency Version Column
     if (/update\(\s*\{\s*where:\s*\{\s*id\s*\}[\s\S]*?data:\s*\{(?![^}]*version)/i.test(cleanContent) && /inventory|balance|seat/i.test(lowerPath)) {
-        const matchLineIdx = lines.findIndex(l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('*') && (/db-perf-25|missing/i.test(l) || lines.indexOf(l) === 0));
+        const matchLineIdx = locateMatchLine(lines, [/update\(\s*\{\s*where:\s*\{\s*id\s*\}[\s\S]*?data:\s*\{(?![^}]*version)/i], l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('*'));
         const lineNum = matchLineIdx !== -1 ? matchLineIdx + 1 : 1;
         findings.push({
             id: `dbperf-${Date.now()}-${findingCounter.count++}`,
@@ -649,7 +672,7 @@ export function evaluateDatabaseRules(file: CodeFile, lines: string[], cleanCont
     }
     // DB-PERF-26: Missing Index on Polymorphic Relationship Columns
     if (/entity_type\s+TEXT[\s\S]*?entity_id\s+(?:UUID|INT)/i.test(cleanContent) && !/CREATE\s+INDEX.*entity_type.*entity_id/i.test(cleanContent) && file.path.endsWith(".sql")) {
-        const matchLineIdx = lines.findIndex(l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('*') && (/db-perf-26|missing/i.test(l) || lines.indexOf(l) === 0));
+        const matchLineIdx = locateMatchLine(lines, [/entity_type\s+TEXT[\s\S]*?entity_id\s+(?:UUID|INT)/i], l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('*'));
         const lineNum = matchLineIdx !== -1 ? matchLineIdx + 1 : 1;
         findings.push({
             id: `dbperf-${Date.now()}-${findingCounter.count++}`,
@@ -674,7 +697,7 @@ export function evaluateDatabaseRules(file: CodeFile, lines: string[], cleanCont
     }
     // DB-PERF-27: Direct COUNT(*) Query on Giant Table
     if (/SELECT\s+COUNT\s*\(\s*\*\s*\)\s+FROM\s+(?:logs|events|transactions|users)/i.test(cleanContent) && !/WHERE/i.test(cleanContent) && file.path.endsWith(".sql")) {
-        const matchLineIdx = lines.findIndex(l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('*') && (/db-perf-27|direct/i.test(l) || lines.indexOf(l) === 0));
+        const matchLineIdx = locateMatchLine(lines, [/SELECT\s+COUNT\s*\(\s*\*\s*\)\s+FROM\s+(?:logs|events|transactions|users)/i], l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('*'));
         const lineNum = matchLineIdx !== -1 ? matchLineIdx + 1 : 1;
         findings.push({
             id: `dbperf-${Date.now()}-${findingCounter.count++}`,
@@ -699,7 +722,7 @@ export function evaluateDatabaseRules(file: CodeFile, lines: string[], cleanCont
     }
     // DB-PERF-28: Missing pg_stat_statements Query Monitoring
     if (/shared_preload_libraries/i.test(cleanContent) && !/pg_stat_statements/i.test(cleanContent) && /postgres.*conf/i.test(lowerPath)) {
-        const matchLineIdx = lines.findIndex(l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('*') && (/db-perf-28|missing/i.test(l) || lines.indexOf(l) === 0));
+        const matchLineIdx = locateMatchLine(lines, [/shared_preload_libraries/i], l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('*'));
         const lineNum = matchLineIdx !== -1 ? matchLineIdx + 1 : 1;
         findings.push({
             id: `dbperf-${Date.now()}-${findingCounter.count++}`,
@@ -724,7 +747,7 @@ export function evaluateDatabaseRules(file: CodeFile, lines: string[], cleanCont
     }
     // DB-PERF-29: Realtime WebSocket Channel Flooding Without Filter
     if (/(?:supabase\.channel|realtime\.channel|socket\.on)\([^)]+\)\.on\(\s*["\'](?:postgres_changes|change|events)["\'],\s*\{\s*event:\s*["\']\*["\'],\s*schema:\s*["\']public["\'],\s*table:\s*["\'][^"\']+["\']\s*\}\s*,\s*\(payload\)/i.test(cleanContent) && !/filter:/i.test(cleanContent)) {
-        const matchLineIdx = lines.findIndex(l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('*') && (/db-perf-29|channel/i.test(l) || lines.indexOf(l) === 0));
+        const matchLineIdx = locateMatchLine(lines, [/(?:supabase\.channel|realtime\.channel|socket\.on)\([^)]+\)\.on\(\s*["\'](?:postgres_changes|change|events)["\'],\s*\{\s*event:\s*["\']\*["\'],\s*schema:\s*["\']public["\'],\s*table:\s*["\'][^"\']+["\']\s*\}\s*,\s*\(payload\)/i], l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('*'));
         const lineNum = matchLineIdx !== -1 ? matchLineIdx + 1 : 1;
         findings.push({
             id: `dbperf-${Date.now()}-${findingCounter.count++}`,
@@ -749,7 +772,7 @@ export function evaluateDatabaseRules(file: CodeFile, lines: string[], cleanCont
     }
     // DB-PERF-30: Prisma Schema Missing @@index on Search Columns
     if (/model\s+[a-zA-Z0-9_]+\s*\{[\s\S]*?tenantId\s+String[\s\S]*?\}(?![^}]*@@index)/i.test(cleanContent) && file.path.endsWith(".prisma")) {
-        const matchLineIdx = lines.findIndex(l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('*') && (/db-perf-30|prisma/i.test(l) || lines.indexOf(l) === 0));
+        const matchLineIdx = locateMatchLine(lines, [/model\s+[a-zA-Z0-9_]+\s*\{[\s\S]*?tenantId\s+String[\s\S]*?\}(?![^}]*@@index)/i], l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('*'));
         const lineNum = matchLineIdx !== -1 ? matchLineIdx + 1 : 1;
         findings.push({
             id: `dbperf-${Date.now()}-${findingCounter.count++}`,
@@ -774,7 +797,7 @@ export function evaluateDatabaseRules(file: CodeFile, lines: string[], cleanCont
     }
     // DB-PERF-31: Implicit Type Coercion Preventing Index Scan
     if (/WHERE\s+[a-zA-Z0-9_]+_str\s*=\s*\d+\b/i.test(cleanContent) && file.path.endsWith(".sql")) {
-        const matchLineIdx = lines.findIndex(l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('*') && (/db-perf-31|implicit/i.test(l) || lines.indexOf(l) === 0));
+        const matchLineIdx = locateMatchLine(lines, [/WHERE\s+[a-zA-Z0-9_]+_str\s*=\s*\d+\b/i], l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('*'));
         const lineNum = matchLineIdx !== -1 ? matchLineIdx + 1 : 1;
         findings.push({
             id: `dbperf-${Date.now()}-${findingCounter.count++}`,
@@ -799,7 +822,7 @@ export function evaluateDatabaseRules(file: CodeFile, lines: string[], cleanCont
     }
     // DB-PERF-32: Unindexed Soft-Delete (deleted_at) Queries
     if (/deleted_at\s+IS\s+NULL/i.test(cleanContent) && !/WHERE\s+deleted_at\s+IS\s+NULL/i.test(cleanContent) && file.path.endsWith(".sql")) {
-        const matchLineIdx = lines.findIndex(l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('*') && (/db-perf-32|unindexed/i.test(l) || lines.indexOf(l) === 0));
+        const matchLineIdx = locateMatchLine(lines, [/deleted_at\s+IS\s+NULL/i], l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('*'));
         const lineNum = matchLineIdx !== -1 ? matchLineIdx + 1 : 1;
         findings.push({
             id: `dbperf-${Date.now()}-${findingCounter.count++}`,
@@ -824,7 +847,7 @@ export function evaluateDatabaseRules(file: CodeFile, lines: string[], cleanCont
     }
     // DB-PERF-33: Missing Foreign Key Cascade Delete Lock Warning
     if (/ON\s+DELETE\s+CASCADE/i.test(cleanContent) && /organizations|tenants|accounts/i.test(cleanContent) && file.path.endsWith(".sql")) {
-        const matchLineIdx = lines.findIndex(l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('*') && (/db-perf-33|missing/i.test(l) || lines.indexOf(l) === 0));
+        const matchLineIdx = locateMatchLine(lines, [/ON\s+DELETE\s+CASCADE/i, /organizations|tenants|accounts/i], l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('*'));
         const lineNum = matchLineIdx !== -1 ? matchLineIdx + 1 : 1;
         findings.push({
             id: `dbperf-${Date.now()}-${findingCounter.count++}`,
@@ -849,7 +872,7 @@ export function evaluateDatabaseRules(file: CodeFile, lines: string[], cleanCont
     }
     // DB-PERF-34: Unbounded In-Memory Array Sorting in ORM
     if (/(?:await\s+prisma\.[a-zA-Z0-9_]+\.findMany\(\)|await\s+db\.select\(\))[\s\S]*?\.sort\(\s*\([^)]*\)\s*=>/i.test(cleanContent)) {
-        const matchLineIdx = lines.findIndex(l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('*') && (/db-perf-34|unbounded/i.test(l) || lines.indexOf(l) === 0));
+        const matchLineIdx = locateMatchLine(lines, [/(?:await\s+prisma\.[a-zA-Z0-9_]+\.findMany\(\)|await\s+db\.select\(\))[\s\S]*?\.sort\(\s*\([^)]*\)\s*=>/i], l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('*'));
         const lineNum = matchLineIdx !== -1 ? matchLineIdx + 1 : 1;
         findings.push({
             id: `dbperf-${Date.now()}-${findingCounter.count++}`,
@@ -874,14 +897,14 @@ export function evaluateDatabaseRules(file: CodeFile, lines: string[], cleanCont
     }
     // DB-PERF-35: Missing Database Backup Automated Verification
     if (/backup_cron|pg_dump/i.test(cleanContent) && !/restore_test|verify_backup/i.test(cleanContent) && /script|ci/i.test(lowerPath)) {
-        const matchLineIdx = lines.findIndex(l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('*') && (/db-perf-35|missing/i.test(l) || lines.indexOf(l) === 0));
+        const matchLineIdx = locateMatchLine(lines, [/backup_cron|pg_dump/i], l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('*'));
         const lineNum = matchLineIdx !== -1 ? matchLineIdx + 1 : 1;
         findings.push({
             id: `dbperf-${Date.now()}-${findingCounter.count++}`,
             ruleId: 6035,
             type: 'INFRA_DATABASE',
             title: 'DB-PERF-35: Missing Database Backup Automated Verification',
-            severity: 'CRITICAL',
+            severity: 'LOW',
             category: "Disaster Recovery",
             filePath: file.path,
             lineRange: `L${lineNum}`,
@@ -899,7 +922,7 @@ export function evaluateDatabaseRules(file: CodeFile, lines: string[], cleanCont
     }
     // DB-PERF-36: Prisma include Over-Fetching Nested Graphs
     if (/include:\s*\{[\s\S]*?include:\s*\{[\s\S]*?include:\s*\{/i.test(cleanContent)) {
-        const matchLineIdx = lines.findIndex(l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('*') && (/db-perf-36|prisma/i.test(l) || lines.indexOf(l) === 0));
+        const matchLineIdx = locateMatchLine(lines, [/include:\s*\{[\s\S]*?include:\s*\{[\s\S]*?include:\s*\{/i], l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('*'));
         const lineNum = matchLineIdx !== -1 ? matchLineIdx + 1 : 1;
         findings.push({
             id: `dbperf-${Date.now()}-${findingCounter.count++}`,
@@ -924,7 +947,7 @@ export function evaluateDatabaseRules(file: CodeFile, lines: string[], cleanCont
     }
     // DB-PERF-37: Missing Unique Constraint on Natural Key Columns
     if (/email\s+TEXT\s+NOT\s+NULL/i.test(cleanContent) && !/UNIQUE/i.test(cleanContent) && file.path.endsWith(".sql")) {
-        const matchLineIdx = lines.findIndex(l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('*') && (/db-perf-37|missing/i.test(l) || lines.indexOf(l) === 0));
+        const matchLineIdx = locateMatchLine(lines, [/email\s+TEXT\s+NOT\s+NULL/i], l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('*'));
         const lineNum = matchLineIdx !== -1 ? matchLineIdx + 1 : 1;
         findings.push({
             id: `dbperf-${Date.now()}-${findingCounter.count++}`,
@@ -949,7 +972,7 @@ export function evaluateDatabaseRules(file: CodeFile, lines: string[], cleanCont
     }
     // DB-PERF-38: Database Connection String with Plaintext Password in Repo
     if (/DATABASE_URL\s*=\s*["\']postgres(?:ql)?:\/\/[^:]+:[^@]+@/i.test(cleanContent) && !/\.env/i.test(lowerPath) && !/localhost/i.test(cleanContent)) {
-        const matchLineIdx = lines.findIndex(l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('*') && (/db-perf-38|database/i.test(l) || lines.indexOf(l) === 0));
+        const matchLineIdx = locateMatchLine(lines, [/DATABASE_URL\s*=\s*["\']postgres(?:ql)?:\/\/[^:]+:[^@]+@/i], l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('*'));
         const lineNum = matchLineIdx !== -1 ? matchLineIdx + 1 : 1;
         findings.push({
             id: `dbperf-${Date.now()}-${findingCounter.count++}`,
@@ -974,7 +997,7 @@ export function evaluateDatabaseRules(file: CodeFile, lines: string[], cleanCont
     }
     // DB-PERF-39: Missing Deadlock Detection & Automatic Retry
     if (/\$transaction/i.test(cleanContent) && !/40P01|deadlock|retry/i.test(cleanContent) && /payment|ledger|transfer/i.test(lowerPath)) {
-        const matchLineIdx = lines.findIndex(l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('*') && (/db-perf-39|missing/i.test(l) || lines.indexOf(l) === 0));
+        const matchLineIdx = locateMatchLine(lines, [/\$transaction/i], l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('*'));
         const lineNum = matchLineIdx !== -1 ? matchLineIdx + 1 : 1;
         findings.push({
             id: `dbperf-${Date.now()}-${findingCounter.count++}`,
@@ -999,7 +1022,7 @@ export function evaluateDatabaseRules(file: CodeFile, lines: string[], cleanCont
     }
     // DB-PERF-40: Unindexed Date Range Query Bottleneck
     if (/WHERE\s+created_at\s+BETWEEN/i.test(cleanContent) && !/CREATE\s+INDEX.*created_at/i.test(cleanContent) && file.path.endsWith(".sql")) {
-        const matchLineIdx = lines.findIndex(l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('*') && (/db-perf-40|unindexed/i.test(l) || lines.indexOf(l) === 0));
+        const matchLineIdx = locateMatchLine(lines, [/WHERE\s+created_at\s+BETWEEN/i], l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('*'));
         const lineNum = matchLineIdx !== -1 ? matchLineIdx + 1 : 1;
         findings.push({
             id: `dbperf-${Date.now()}-${findingCounter.count++}`,
@@ -1024,7 +1047,7 @@ export function evaluateDatabaseRules(file: CodeFile, lines: string[], cleanCont
     }
     // DB-PERF-41: Synchronous Heavy Aggregation in User Request Path
     if (/app\/api\/dashboard/i.test(lowerPath) && /GROUP\s+BY\s+[a-zA-Z0-9_,\s]+/i.test(cleanContent) && !/materialized|rollup/i.test(cleanContent)) {
-        const matchLineIdx = lines.findIndex(l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('*') && (/db-perf-41|synchronous/i.test(l) || lines.indexOf(l) === 0));
+        const matchLineIdx = locateMatchLine(lines, [/GROUP\s+BY\s+[a-zA-Z0-9_,\s]+/i], l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('*'));
         const lineNum = matchLineIdx !== -1 ? matchLineIdx + 1 : 1;
         findings.push({
             id: `dbperf-${Date.now()}-${findingCounter.count++}`,
@@ -1049,7 +1072,7 @@ export function evaluateDatabaseRules(file: CodeFile, lines: string[], cleanCont
     }
     // DB-PERF-42: Missing Autovacuum Tuning on High-Churn Tables
     if (/autovacuum_vacuum_scale_factor/i.test(cleanContent) && />\s*0\.2/i.test(cleanContent)) {
-        const matchLineIdx = lines.findIndex(l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('*') && (/db-perf-42|missing/i.test(l) || lines.indexOf(l) === 0));
+        const matchLineIdx = locateMatchLine(lines, [/autovacuum_vacuum_scale_factor/i, />\s*0\.2/i], l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('*'));
         const lineNum = matchLineIdx !== -1 ? matchLineIdx + 1 : 1;
         findings.push({
             id: `dbperf-${Date.now()}-${findingCounter.count++}`,
@@ -1074,7 +1097,7 @@ export function evaluateDatabaseRules(file: CodeFile, lines: string[], cleanCont
     }
     // DB-PERF-43: Unprepared Dynamic SQL Query Injections
     if (/(?:db\.query|client\.query|prisma\.\$queryRawUnsafe)\s*\(\s*`[^`]*\$\{/i.test(cleanContent)) {
-        const matchLineIdx = lines.findIndex(l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('*') && (/db-perf-43|unprepared/i.test(l) || lines.indexOf(l) === 0));
+        const matchLineIdx = locateMatchLine(lines, [/(?:db\.query|client\.query|prisma\.\$queryRawUnsafe)\s*\(\s*`[^`]*\$\{/i], l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('*'));
         const lineNum = matchLineIdx !== -1 ? matchLineIdx + 1 : 1;
         findings.push({
             id: `dbperf-${Date.now()}-${findingCounter.count++}`,
@@ -1099,7 +1122,7 @@ export function evaluateDatabaseRules(file: CodeFile, lines: string[], cleanCont
     }
     // DB-PERF-44: Missing Read Replica Routing for Analytical Queries
     if (/app\/api\/(?:reports|export|analytics)/i.test(lowerPath) && /prisma\./i.test(cleanContent) && !/readReplica|RO_DATABASE_URL/i.test(cleanContent)) {
-        const matchLineIdx = lines.findIndex(l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('*') && (/db-perf-44|missing/i.test(l) || lines.indexOf(l) === 0));
+        const matchLineIdx = locateMatchLine(lines, [/prisma\./i], l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('*'));
         const lineNum = matchLineIdx !== -1 ? matchLineIdx + 1 : 1;
         findings.push({
             id: `dbperf-${Date.now()}-${findingCounter.count++}`,
@@ -1124,7 +1147,7 @@ export function evaluateDatabaseRules(file: CodeFile, lines: string[], cleanCont
     }
     // DB-PERF-45: Unindexed Enum Column Filtering
     if (/WHERE\s+status\s*=\s*[\'"](?:PENDING|PROCESSING)[\'"]/i.test(cleanContent) && !/CREATE\s+INDEX.*WHERE\s+status/i.test(cleanContent) && file.path.endsWith(".sql")) {
-        const matchLineIdx = lines.findIndex(l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('*') && (/db-perf-45|unindexed/i.test(l) || lines.indexOf(l) === 0));
+        const matchLineIdx = locateMatchLine(lines, [/WHERE\s+status\s*=\s*[\'"](?:PENDING|PROCESSING)[\'"]/i], l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('*'));
         const lineNum = matchLineIdx !== -1 ? matchLineIdx + 1 : 1;
         findings.push({
             id: `dbperf-${Date.now()}-${findingCounter.count++}`,
@@ -1149,7 +1172,7 @@ export function evaluateDatabaseRules(file: CodeFile, lines: string[], cleanCont
     }
     // DB-PERF-46: Missing Redis Lock on Database Mutation Race Condition
     if (/stripe-webhook|polar-webhook/i.test(lowerPath) && /updateUserTier|creditBalance/i.test(cleanContent) && !/redlock|advisory_lock|mutex/i.test(cleanContent)) {
-        const matchLineIdx = lines.findIndex(l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('*') && (/db-perf-46|missing/i.test(l) || lines.indexOf(l) === 0));
+        const matchLineIdx = locateMatchLine(lines, [/updateUserTier|creditBalance/i], l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('*'));
         const lineNum = matchLineIdx !== -1 ? matchLineIdx + 1 : 1;
         findings.push({
             id: `dbperf-${Date.now()}-${findingCounter.count++}`,
@@ -1174,7 +1197,7 @@ export function evaluateDatabaseRules(file: CodeFile, lines: string[], cleanCont
     }
     // DB-PERF-47: Un-batched ORM DeleteMany Cascade Contention
     if (/prisma\.[a-zA-Z0-9_]+\.deleteMany\(\s*\{(?![^}]*limit)/i.test(cleanContent) && !/chunk/i.test(cleanContent) && /cleanup|prune|cron/i.test(lowerPath)) {
-        const matchLineIdx = lines.findIndex(l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('*') && (/db-perf-47|un-batched/i.test(l) || lines.indexOf(l) === 0));
+        const matchLineIdx = locateMatchLine(lines, [/prisma\.[a-zA-Z0-9_]+\.deleteMany\(\s*\{(?![^}]*limit)/i], l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('*'));
         const lineNum = matchLineIdx !== -1 ? matchLineIdx + 1 : 1;
         findings.push({
             id: `dbperf-${Date.now()}-${findingCounter.count++}`,
@@ -1199,14 +1222,14 @@ export function evaluateDatabaseRules(file: CodeFile, lines: string[], cleanCont
     }
     // DB-PERF-48: Missing SSL/TLS Enforcement on Production DB Connections
     if (/DATABASE_URL.*postgres/i.test(cleanContent) && !/sslmode=require|ssl=true/i.test(cleanContent) && !/localhost|127\.0\.0\.1/i.test(cleanContent) && /production/i.test(cleanContent)) {
-        const matchLineIdx = lines.findIndex(l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('*') && (/db-perf-48|missing/i.test(l) || lines.indexOf(l) === 0));
+        const matchLineIdx = locateMatchLine(lines, [/DATABASE_URL.*postgres/i, /production/i], l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('*'));
         const lineNum = matchLineIdx !== -1 ? matchLineIdx + 1 : 1;
         findings.push({
             id: `dbperf-${Date.now()}-${findingCounter.count++}`,
             ruleId: 6048,
             type: 'INFRA_DATABASE',
             title: 'DB-PERF-48: Missing SSL/TLS Enforcement on Production DB Connections',
-            severity: 'CRITICAL',
+            severity: 'MEDIUM',
             category: "Database Security",
             filePath: file.path,
             lineRange: `L${lineNum}`,
@@ -1224,7 +1247,7 @@ export function evaluateDatabaseRules(file: CodeFile, lines: string[], cleanCont
     }
     // DB-PERF-49: Unbounded Connection Spike on HTTP Traffic Burst
     if (/new\s+Pool\(\s*\{[\s\S]*?max:\s*(?:50|100|200)\b/i.test(cleanContent) && /serverless|vercel/i.test(lowerPath)) {
-        const matchLineIdx = lines.findIndex(l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('*') && (/db-perf-49|unbounded/i.test(l) || lines.indexOf(l) === 0));
+        const matchLineIdx = locateMatchLine(lines, [/new\s+Pool\(\s*\{[\s\S]*?max:\s*(?:50|100|200)\b/i], l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('*'));
         const lineNum = matchLineIdx !== -1 ? matchLineIdx + 1 : 1;
         findings.push({
             id: `dbperf-${Date.now()}-${findingCounter.count++}`,
@@ -1249,7 +1272,7 @@ export function evaluateDatabaseRules(file: CodeFile, lines: string[], cleanCont
     }
     // DB-PERF-50: Missing Transaction Isolation Level Specification
     if (/BEGIN\s+TRANSACTION;(?!\s+ISOLATION\s+LEVEL)/i.test(cleanContent) && /balance|ledger|transfer/i.test(lowerPath) && file.path.endsWith(".sql")) {
-        const matchLineIdx = lines.findIndex(l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('*') && (/db-perf-50|missing/i.test(l) || lines.indexOf(l) === 0));
+        const matchLineIdx = locateMatchLine(lines, [/BEGIN\s+TRANSACTION;(?!\s+ISOLATION\s+LEVEL)/i], l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('*'));
         const lineNum = matchLineIdx !== -1 ? matchLineIdx + 1 : 1;
         findings.push({
             id: `dbperf-${Date.now()}-${findingCounter.count++}`,
@@ -1271,6 +1294,43 @@ export function evaluateDatabaseRules(file: CodeFile, lines: string[], cleanCont
             falsePositive: false
         });
         logs.push(`[${ts}] 🗄️ DB-PERF-50: Missing Transaction Isolation Level Specification detected (${file.path}:${lineNum})`);
+    }
+    // DB-PERF-51: Migration Takes a Blocking Table Lock (NOT NULL without DEFAULT / non-concurrent index)
+    if (/\.sql$/i.test(lowerPath) && /migrations?\//i.test(lowerPath)) {
+        const createdTables = new Set(
+            Array.from(cleanContent.matchAll(/CREATE\s+TABLE\s+(?:IF\s+NOT\s+EXISTS\s+)?([\w."]+)/gi), (m) => m[1].replace(/"/g, '').split('.').pop()!.toLowerCase())
+        );
+        const lockingStatements = cleanContent.split(';').map((stmt) => stmt.replace(/--[^\n]*/g, '')).filter((stmt) => {
+            if (/ADD\s+COLUMN[^,]*\bNOT\s+NULL\b/i.test(stmt) && !/\bDEFAULT\b/i.test(stmt)) return true;
+            const index = stmt.match(/CREATE\s+(?:UNIQUE\s+)?INDEX\s+(?!CONCURRENTLY)(?:IF\s+NOT\s+EXISTS\s+)?[\w."]+\s+ON\s+(?:ONLY\s+)?([\w."]+)/i);
+            return !!index && !createdTables.has(index[1].replace(/"/g, '').split('.').pop()!.toLowerCase());
+        });
+        if (lockingStatements.length > 0) {
+            const statementLines = lockingStatements[0].split('\n').map((l) => l.trim()).filter(Boolean);
+            const firstStatement = statementLines.find((l) => /ADD\s+COLUMN|CREATE\s+(?:UNIQUE\s+)?INDEX/i.test(l)) || statementLines[0] || '';
+            const matchLineIdx = lines.findIndex(l => l.includes(firstStatement));
+            const lineNum = matchLineIdx !== -1 ? matchLineIdx + 1 : 1;
+            findings.push({
+                id: `dbperf-${Date.now()}-${findingCounter.count++}`,
+                ruleId: 6051,
+                type: 'INFRA_DATABASE',
+                title: 'DB-PERF-51: Migration Takes a Blocking Table Lock on an Existing Table',
+                severity: 'HIGH',
+                category: "Concurrency & Locks",
+                filePath: file.path,
+                lineRange: `L${lineNum}`,
+                snippet: lines[matchLineIdx] || firstStatement,
+                reproductionSteps: [
+                    `Scanned migration ${file.path}:${lineNum}.`,
+                    'Adding a NOT NULL column without DEFAULT fails on non-empty tables, and CREATE INDEX without CONCURRENTLY blocks writes for the whole build.'
+                ],
+                remediationPrompt: "Add the column as nullable (or with a DEFAULT), backfill, then SET NOT NULL; build indexes on existing tables with CREATE INDEX CONCURRENTLY in a migration that does not run inside a transaction.",
+                status: 'OPEN',
+                owner: 'Database Architect',
+                falsePositive: false
+            });
+            logs.push(`[${ts}] 🗄️ DB-PERF-51: Blocking migration lock detected (${file.path}:${lineNum})`);
+        }
     }
     return { findings, logs };
 }

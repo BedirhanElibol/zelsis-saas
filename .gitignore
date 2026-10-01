@@ -59,3 +59,10 @@ ZELSIS_MASTER_SECURITY_AUDIT_REPORT.md
 implementation_plan.md
 task.md
 walkthrough.md
+
+# Playwright
+/playwright-report/
+/test-results/
+
+# Benchmark corpus clones
+/.cache/

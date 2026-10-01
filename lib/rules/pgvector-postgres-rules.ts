@@ -4,6 +4,7 @@
  */
 import { Finding } from "@/data/schema";
 import { CodeFile } from "../scanner-engine";
+import { locateMatchLine } from './shared/locate';
 export interface PgvectorPostgresRuleResult {
     findings: Finding[];
     logs: string[];
@@ -15,13 +16,13 @@ export function evaluatePgvectorPostgresRules(file: CodeFile, lines: string[], c
     const logs: string[] = [];
     const lowerPath = file.path.toLowerCase().replace(/\\/g, "/");
     // Skip self-referential catalogs, mocks, and schema definitions
-    if (lowerPath.includes("data/catalogs/") || lowerPath.includes("data/mockdata") || lowerPath.includes("data/workspacefiles") || lowerPath.includes("data/schema") || lowerPath.includes("scratch/") || lowerPath.includes(".agent/") || lowerPath.includes("node_modules/") || lowerPath.endsWith(".d.ts")) {
+    if (lowerPath.includes("node_modules/") || lowerPath.endsWith(".d.ts")) {
         return { findings, logs };
     }
     const ts = new Date().toLocaleTimeString();
     // PG-01: Vector Similarity Search Without HNSW or IVFFlat Index
     if ((/ORDER\s+BY\s+[a-zA-Z0-9_]+\s*<=>/i.test(cleanContent) && !/hnsw|ivfflat/i.test(cleanContent))) {
-        const matchLineIdx = lines.findIndex(l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('*'));
+        const matchLineIdx = locateMatchLine(lines, [/ORDER\s+BY\s+[a-zA-Z0-9_]+\s*<=>/i], l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('*'));
         const lineNum = matchLineIdx !== -1 ? matchLineIdx + 1 : 1;
         findings.push({
             id: `pg10301-${Date.now()}-${findingCounter.count++}`,
@@ -45,7 +46,7 @@ export function evaluatePgvectorPostgresRules(file: CodeFile, lines: string[], c
     }
     // PG-02: Missing Index on High-Cardinality Foreign Key Columns
     if ((/REFERENCES\s+[a-zA-Z0-9_]+\s*\([a-zA-Z0-9_]+\)/i.test(cleanContent))) {
-        const matchLineIdx = lines.findIndex(l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('*'));
+        const matchLineIdx = locateMatchLine(lines, [/REFERENCES\s+[a-zA-Z0-9_]+\s*\([a-zA-Z0-9_]+\)/i], l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('*'));
         const lineNum = matchLineIdx !== -1 ? matchLineIdx + 1 : 1;
         findings.push({
             id: `pg10302-${Date.now()}-${findingCounter.count++}`,
@@ -69,7 +70,7 @@ export function evaluatePgvectorPostgresRules(file: CodeFile, lines: string[], c
     }
     // PG-03: Exhaustion of Connection Pool via Missing Max Connection Limits
     if ((/new\s+Pool\s*\([\s\S]*?\)/i.test(cleanContent) && !/max:|poolSize/i.test(cleanContent))) {
-        const matchLineIdx = lines.findIndex(l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('*'));
+        const matchLineIdx = locateMatchLine(lines, [/new\s+Pool\s*\([\s\S]*?\)/i], l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('*'));
         const lineNum = matchLineIdx !== -1 ? matchLineIdx + 1 : 1;
         findings.push({
             id: `pg10303-${Date.now()}-${findingCounter.count++}`,
@@ -93,7 +94,7 @@ export function evaluatePgvectorPostgresRules(file: CodeFile, lines: string[], c
     }
     // PG-04: Unbounded Statement Execution Time (Missing statement_timeout)
     if ((/createPool|new\s+Client/i.test(cleanContent) && !/statement_timeout/i.test(cleanContent))) {
-        const matchLineIdx = lines.findIndex(l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('*'));
+        const matchLineIdx = locateMatchLine(lines, [/createPool|new\s+Client/i], l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('*'));
         const lineNum = matchLineIdx !== -1 ? matchLineIdx + 1 : 1;
         findings.push({
             id: `pg10304-${Date.now()}-${findingCounter.count++}`,
@@ -117,7 +118,7 @@ export function evaluatePgvectorPostgresRules(file: CodeFile, lines: string[], c
     }
     // PG-05: Deadlock Risk from Non-Deterministic Lock Acquisition Order
     if ((/SELECT\s+[\s\S]*?FOR\s+UPDATE/i.test(cleanContent) && !/ORDER\s+BY/i.test(cleanContent))) {
-        const matchLineIdx = lines.findIndex(l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('*'));
+        const matchLineIdx = locateMatchLine(lines, [/SELECT\s+[\s\S]*?FOR\s+UPDATE/i], l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('*'));
         const lineNum = matchLineIdx !== -1 ? matchLineIdx + 1 : 1;
         findings.push({
             id: `pg10305-${Date.now()}-${findingCounter.count++}`,

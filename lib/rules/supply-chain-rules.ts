@@ -4,6 +4,7 @@
  */
 import { Finding } from '@/data/schema';
 import { CodeFile } from '../scanner-engine';
+import { locateMatchLine } from './shared/locate';
 export interface SupplyChainRuleResult {
     findings: Finding[];
     logs: string[];
@@ -15,13 +16,13 @@ export function evaluateSupplyChainRules(file: CodeFile, lines: string[], cleanC
     const logs: string[] = [];
     const lowerPath = file.path.toLowerCase().replace(/\\/g, '/');
     // Skip self-referential catalogs, mocks, and schema definitions
-    if (lowerPath.includes('data/catalogs/') || lowerPath.includes('data/mockdata') || lowerPath.includes('data/workspacefiles') || lowerPath.includes('data/schema') || lowerPath.includes('scratch/') || lowerPath.includes('.agent/') || lowerPath.includes('node_modules/') || lowerPath.endsWith('.d.ts')) {
+    if (lowerPath.includes('node_modules/') || lowerPath.endsWith('.d.ts')) {
         return { findings, logs };
     }
     const ts = new Date().toLocaleTimeString();
     // SUPPLY-01: Wildcard Package Dependency Version ('*')
     if (/package\.json$/i.test(file.path) && /"(?:dependencies|devDependencies)":\s*\{[^}]*"[^"]+"\s*:\s*"\*"/i.test(cleanContent)) {
-        const matchLineIdx = lines.findIndex(l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('*') && (/supply-01|wildcard/i.test(l) || lines.indexOf(l) === 0));
+        const matchLineIdx = locateMatchLine(lines, [/"(?:dependencies|devDependencies)":\s*\{[^}]*"[^"]+"\s*:\s*"\*"/i], l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('*'));
         const lineNum = matchLineIdx !== -1 ? matchLineIdx + 1 : 1;
         findings.push({
             id: `supply01-${Date.now()}-${findingCounter.count++}`,
@@ -46,7 +47,7 @@ export function evaluateSupplyChainRules(file: CodeFile, lines: string[], cleanC
     }
     // SUPPLY-02: Dangerous npm Lifecycle Script (preinstall / postinstall curl)
     if (/package\.json$/i.test(file.path) && /"(?:preinstall|postinstall)":\s*"[^"]*(?:curl|wget)\s+[^"\']*\|\s*(?:sh|bash)/i.test(cleanContent)) {
-        const matchLineIdx = lines.findIndex(l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('*') && (/supply-02|dangerous/i.test(l) || lines.indexOf(l) === 0));
+        const matchLineIdx = locateMatchLine(lines, [/"(?:preinstall|postinstall)":\s*"[^"]*(?:curl|wget)\s+[^"\']*\|\s*(?:sh|bash)/i], l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('*'));
         const lineNum = matchLineIdx !== -1 ? matchLineIdx + 1 : 1;
         findings.push({
             id: `supply02-${Date.now()}-${findingCounter.count++}`,
@@ -71,7 +72,7 @@ export function evaluateSupplyChainRules(file: CodeFile, lines: string[], cleanC
     }
     // SUPPLY-03: Missing Lockfile Integrity Guarantee
     if (file.path.toLowerCase().endsWith("package.json") && /"scripts":\s*\{[^}]*"(?:preinstall|install|postinstall|ci|build)":\s*"[^"]*npm\s+(?:i\b|install\b)(?![^"]*--(?:package-lock-only|ci))/i.test(cleanContent)) {
-        const matchLineIdx = lines.findIndex(l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('*') && (/supply-03|missing/i.test(l) || lines.indexOf(l) === 0));
+        const matchLineIdx = locateMatchLine(lines, [/"scripts":\s*\{[^}]*"(?:preinstall|install|postinstall|ci|build)":\s*"[^"]*npm\s+(?:i\b|install\b)(?![^"]*--(?:package-lock-only|ci))/i], l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('*'));
         const lineNum = matchLineIdx !== -1 ? matchLineIdx + 1 : 1;
         findings.push({
             id: `supply03-${Date.now()}-${findingCounter.count++}`,
@@ -95,8 +96,8 @@ export function evaluateSupplyChainRules(file: CodeFile, lines: string[], cleanC
         logs.push(`[${ts}] 📦 SUPPLY-03: Missing Lockfile Integrity Guarantee detected (${file.path}:${lineNum})`);
     }
     // SUPPLY-04: Known Malicious / Deprecated Package (event-stream)
-    if (/package\.json$/i.test(file.path) && /"(?:event-stream|flatmap-stream)":/i.test(cleanContent)) {
-        const matchLineIdx = lines.findIndex(l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('*') && (/supply-04|known/i.test(l) || lines.indexOf(l) === 0));
+    if (/package\.json$/i.test(file.path) && /"flatmap-stream":|"event-stream":\s*"[~^=]?3\.3\.6"/i.test(cleanContent)) {
+        const matchLineIdx = locateMatchLine(lines, [/"flatmap-stream":|"event-stream":\s*"[~^=]?3\.3\.6"/i], l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('*'));
         const lineNum = matchLineIdx !== -1 ? matchLineIdx + 1 : 1;
         findings.push({
             id: `supply04-${Date.now()}-${findingCounter.count++}`,
@@ -121,7 +122,7 @@ export function evaluateSupplyChainRules(file: CodeFile, lines: string[], cleanC
     }
     // SUPPLY-05: Unpinned Git Dependency (git+https:// without Commit SHA)
     if (/package\.json$/i.test(file.path) && /"git\+https?:\/\/[^"#]+#(?:main|master)"/i.test(cleanContent)) {
-        const matchLineIdx = lines.findIndex(l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('*') && (/supply-05|unpinned/i.test(l) || lines.indexOf(l) === 0));
+        const matchLineIdx = locateMatchLine(lines, [/"git\+https?:\/\/[^"#]+#(?:main|master)"/i], l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('*'));
         const lineNum = matchLineIdx !== -1 ? matchLineIdx + 1 : 1;
         findings.push({
             id: `supply05-${Date.now()}-${findingCounter.count++}`,
@@ -146,7 +147,7 @@ export function evaluateSupplyChainRules(file: CodeFile, lines: string[], cleanC
     }
     // SUPPLY-06: External CDN Script Missing Subresource Integrity (SRI)
     if (/<script\b[^>]*src=["\']https:\/\/(?:cdn|cdnjs|unpkg)[^"\']*["\'](?![^>]*\bintegrity=)[^>]*>/i.test(cleanContent) && /\.(?:html|tsx|jsx)$/i.test(file.path)) {
-        const matchLineIdx = lines.findIndex(l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('*') && (/supply-06|external/i.test(l) || lines.indexOf(l) === 0));
+        const matchLineIdx = locateMatchLine(lines, [/<script\b[^>]*src=["\']https:\/\/(?:cdn|cdnjs|unpkg)[^"\']*["\'](?![^>]*\bintegrity=)[^>]*>/i], l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('*'));
         const lineNum = matchLineIdx !== -1 ? matchLineIdx + 1 : 1;
         findings.push({
             id: `supply06-${Date.now()}-${findingCounter.count++}`,
@@ -170,8 +171,9 @@ export function evaluateSupplyChainRules(file: CodeFile, lines: string[], cleanC
         logs.push(`[${ts}] 📦 SUPPLY-06: External CDN Script Missing Subresource Integrity (SRI) detected (${file.path}:${lineNum})`);
     }
     // SUPPLY-07: Public Leaked Internal npm Registry Token in .npmrc
-    if (/\.npmrc$/i.test(file.path) && /:_authToken=[a-zA-Z0-9_-]{20,}/i.test(cleanContent) && !/\$\{NPM_TOKEN\}/i.test(cleanContent)) {
-        const matchLineIdx = lines.findIndex(l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('*') && (/supply-07|public/i.test(l) || lines.indexOf(l) === 0));
+    // .npmrc registry lines start with "//", which comment stripping removes: read the raw file
+    if (/\.npmrc$/i.test(file.path) && /:_authToken=[a-zA-Z0-9_-]{20,}/i.test(file.content)) {
+        const matchLineIdx = lines.findIndex(l => /:_authToken=[a-zA-Z0-9_-]{20,}/i.test(l));
         const lineNum = matchLineIdx !== -1 ? matchLineIdx + 1 : 1;
         findings.push({
             id: `supply07-${Date.now()}-${findingCounter.count++}`,
@@ -196,7 +198,7 @@ export function evaluateSupplyChainRules(file: CodeFile, lines: string[], cleanC
     }
     // SUPPLY-08: Typo-Squatting Package Hazard (e.g. cross-env-shell, lodash.js)
     if (/package\.json$/i.test(file.path) && /"(?:cross-env-shell|lodash\.js|mongose|expres)":/i.test(cleanContent)) {
-        const matchLineIdx = lines.findIndex(l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('*') && (/supply-08|typo-squatting/i.test(l) || lines.indexOf(l) === 0));
+        const matchLineIdx = locateMatchLine(lines, [/"(?:cross-env-shell|lodash\.js|mongose|expres)":/i], l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('*'));
         const lineNum = matchLineIdx !== -1 ? matchLineIdx + 1 : 1;
         findings.push({
             id: `supply08-${Date.now()}-${findingCounter.count++}`,
@@ -221,7 +223,7 @@ export function evaluateSupplyChainRules(file: CodeFile, lines: string[], cleanC
     }
     // SUPPLY-09: Deprecated Package Import: 'request' or 'request-promise'
     if (/package\.json$/i.test(file.path) && /"(?:request|request-promise)":/i.test(cleanContent)) {
-        const matchLineIdx = lines.findIndex(l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('*') && (/supply-09|deprecated/i.test(l) || lines.indexOf(l) === 0));
+        const matchLineIdx = locateMatchLine(lines, [/"(?:request|request-promise)":/i], l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('*'));
         const lineNum = matchLineIdx !== -1 ? matchLineIdx + 1 : 1;
         findings.push({
             id: `supply09-${Date.now()}-${findingCounter.count++}`,
@@ -246,7 +248,7 @@ export function evaluateSupplyChainRules(file: CodeFile, lines: string[], cleanC
     }
     // SUPPLY-10: Missing Software Bill of Materials (SBOM) Generation in CI
     if (/\.github\/workflows\/.*\.ya?ml$/i.test(file.path) && /release:|publish:/i.test(cleanContent) && !/cyclonedx|syft|spdx/i.test(cleanContent)) {
-        const matchLineIdx = lines.findIndex(l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('*') && (/supply-10|missing/i.test(l) || lines.indexOf(l) === 0));
+        const matchLineIdx = locateMatchLine(lines, [/release:|publish:/i], l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('*'));
         const lineNum = matchLineIdx !== -1 ? matchLineIdx + 1 : 1;
         findings.push({
             id: `supply10-${Date.now()}-${findingCounter.count++}`,
@@ -271,7 +273,7 @@ export function evaluateSupplyChainRules(file: CodeFile, lines: string[], cleanC
     }
     // SUPPLY-11: Unscoped Private Package Vulnerable to Dependency Confusion
     if (/package\.json$/i.test(file.path) && /"dependencies":\s*\{[^}]*"internal-(?:auth|payment|crypto)":/i.test(cleanContent)) {
-        const matchLineIdx = lines.findIndex(l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('*') && (/supply-11|unscoped/i.test(l) || lines.indexOf(l) === 0));
+        const matchLineIdx = locateMatchLine(lines, [/"dependencies":\s*\{[^}]*"internal-(?:auth|payment|crypto)":/i], l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('*'));
         const lineNum = matchLineIdx !== -1 ? matchLineIdx + 1 : 1;
         findings.push({
             id: `supply11-${Date.now()}-${findingCounter.count++}`,
@@ -296,7 +298,7 @@ export function evaluateSupplyChainRules(file: CodeFile, lines: string[], cleanC
     }
     // SUPPLY-12: Missing Automated Dependency Vulnerability Scanning in CI
     if (/\.github\/workflows\/.*\.ya?ml$/i.test(file.path) && /pull_request:/i.test(cleanContent) && /npm\s+test/i.test(cleanContent) && !/audit|snyk|trivy/i.test(cleanContent)) {
-        const matchLineIdx = lines.findIndex(l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('*') && (/supply-12|missing/i.test(l) || lines.indexOf(l) === 0));
+        const matchLineIdx = locateMatchLine(lines, [/pull_request:/i, /npm\s+test/i], l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('*'));
         const lineNum = matchLineIdx !== -1 ? matchLineIdx + 1 : 1;
         findings.push({
             id: `supply12-${Date.now()}-${findingCounter.count++}`,
@@ -321,7 +323,7 @@ export function evaluateSupplyChainRules(file: CodeFile, lines: string[], cleanC
     }
     // SUPPLY-13: Deprecated Cryptography Package Import: 'crypto-js'
     if (/package\.json$/i.test(file.path) && /"crypto-js":/i.test(cleanContent)) {
-        const matchLineIdx = lines.findIndex(l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('*') && (/supply-13|deprecated/i.test(l) || lines.indexOf(l) === 0));
+        const matchLineIdx = locateMatchLine(lines, [/"crypto-js":/i], l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('*'));
         const lineNum = matchLineIdx !== -1 ? matchLineIdx + 1 : 1;
         findings.push({
             id: `supply13-${Date.now()}-${findingCounter.count++}`,
@@ -346,7 +348,7 @@ export function evaluateSupplyChainRules(file: CodeFile, lines: string[], cleanC
     }
     // SUPPLY-14: Python Dependency Unpinned in requirements.txt
     if (/requirements\.txt$/i.test(file.path) && /^[a-zA-Z0-9_-]+$/m.test(cleanContent)) {
-        const matchLineIdx = lines.findIndex(l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('*') && (/supply-14|python/i.test(l) || lines.indexOf(l) === 0));
+        const matchLineIdx = locateMatchLine(lines, [/^[a-zA-Z0-9_-]+$/m], l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('*'));
         const lineNum = matchLineIdx !== -1 ? matchLineIdx + 1 : 1;
         findings.push({
             id: `supply14-${Date.now()}-${findingCounter.count++}`,
@@ -371,7 +373,7 @@ export function evaluateSupplyChainRules(file: CodeFile, lines: string[], cleanC
     }
     // SUPPLY-15: Missing Hash Verification in pip requirements.txt
     if (/requirements\.txt$/i.test(file.path) && /^[a-zA-Z0-9_-]+==[0-9.]+/m.test(cleanContent) && !/--hash=/i.test(cleanContent)) {
-        const matchLineIdx = lines.findIndex(l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('*') && (/supply-15|missing/i.test(l) || lines.indexOf(l) === 0));
+        const matchLineIdx = locateMatchLine(lines, [/^[a-zA-Z0-9_-]+==[0-9.]+/m], l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('*'));
         const lineNum = matchLineIdx !== -1 ? matchLineIdx + 1 : 1;
         findings.push({
             id: `supply15-${Date.now()}-${findingCounter.count++}`,
@@ -421,14 +423,14 @@ export function evaluateSupplyChainRules(file: CodeFile, lines: string[], cleanC
     }
     // SUPPLY-17: Insecure Package Registry URL (HTTP instead of HTTPS)
     if (/(?:\.npmrc|package\.json|pip\.conf)$/i.test(file.path) && /http:\/\/(?:registry\.npmjs\.org|pypi\.org)/i.test(cleanContent)) {
-        const matchLineIdx = lines.findIndex(l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('*') && (/supply-17|insecure/i.test(l) || lines.indexOf(l) === 0));
+        const matchLineIdx = locateMatchLine(lines, [/http:\/\/(?:registry\.npmjs\.org|pypi\.org)/i], l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('*'));
         const lineNum = matchLineIdx !== -1 ? matchLineIdx + 1 : 1;
         findings.push({
             id: `supply17-${Date.now()}-${findingCounter.count++}`,
             ruleId: 7317,
             type: 'SECURITY',
             title: "SUPPLY-17: Insecure Package Registry URL (HTTP instead of HTTPS)",
-            severity: 'CRITICAL',
+            severity: 'HIGH',
             category: "Transport Security",
             filePath: file.path,
             lineRange: `L${lineNum}`,
@@ -446,7 +448,7 @@ export function evaluateSupplyChainRules(file: CodeFile, lines: string[], cleanC
     }
     // SUPPLY-18: Pre-release Alpha/Beta Dependency in Production
     if (/package\.json$/i.test(file.path) && /"dependencies":\s*\{[^}]*"[^"]+"\s*:\s*"[^"]*-(?:alpha|beta|canary)\./i.test(cleanContent)) {
-        const matchLineIdx = lines.findIndex(l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('*') && (/supply-18|pre-release/i.test(l) || lines.indexOf(l) === 0));
+        const matchLineIdx = locateMatchLine(lines, [/"dependencies":\s*\{[^}]*"[^"]+"\s*:\s*"[^"]*-(?:alpha|beta|canary)\./i], l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('*'));
         const lineNum = matchLineIdx !== -1 ? matchLineIdx + 1 : 1;
         findings.push({
             id: `supply18-${Date.now()}-${findingCounter.count++}`,
@@ -471,7 +473,7 @@ export function evaluateSupplyChainRules(file: CodeFile, lines: string[], cleanC
     }
     // SUPPLY-19: Unverified Direct Tarball / URL Package Dependency
     if (/package\.json$/i.test(file.path) && /"dependencies":\s*\{[^}]*"[^"]+"\s*:\s*"https?:\/\/[^"]+\.tgz"/i.test(cleanContent)) {
-        const matchLineIdx = lines.findIndex(l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('*') && (/supply-19|unverified/i.test(l) || lines.indexOf(l) === 0));
+        const matchLineIdx = locateMatchLine(lines, [/"dependencies":\s*\{[^}]*"[^"]+"\s*:\s*"https?:\/\/[^"]+\.tgz"/i], l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('*'));
         const lineNum = matchLineIdx !== -1 ? matchLineIdx + 1 : 1;
         findings.push({
             id: `supply19-${Date.now()}-${findingCounter.count++}`,
@@ -496,7 +498,7 @@ export function evaluateSupplyChainRules(file: CodeFile, lines: string[], cleanC
     }
     // SUPPLY-20: Unmaintained / Abandoned Package Import (left-pad)
     if (/package\.json$/i.test(file.path) && /"left-pad":/i.test(cleanContent)) {
-        const matchLineIdx = lines.findIndex(l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('*') && (/supply-20|unmaintained/i.test(l) || lines.indexOf(l) === 0));
+        const matchLineIdx = locateMatchLine(lines, [/"left-pad":/i], l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('*'));
         const lineNum = matchLineIdx !== -1 ? matchLineIdx + 1 : 1;
         findings.push({
             id: `supply20-${Date.now()}-${findingCounter.count++}`,
@@ -521,7 +523,7 @@ export function evaluateSupplyChainRules(file: CodeFile, lines: string[], cleanC
     }
     // SUPPLY-21: Missing Automated Dependency Update Bot Configuration
     if (file.path.toLowerCase().endsWith("package.json") && /"publishConfig":\s*\{[^}]*"access":\s*"public"/i.test(cleanContent) && !/dependabot|renovate/i.test(cleanContent)) {
-        const matchLineIdx = lines.findIndex(l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('*') && (/supply-21|missing/i.test(l) || lines.indexOf(l) === 0));
+        const matchLineIdx = locateMatchLine(lines, [/"publishConfig":\s*\{[^}]*"access":\s*"public"/i], l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('*'));
         const lineNum = matchLineIdx !== -1 ? matchLineIdx + 1 : 1;
         findings.push({
             id: `supply21-${Date.now()}-${findingCounter.count++}`,
@@ -546,7 +548,7 @@ export function evaluateSupplyChainRules(file: CodeFile, lines: string[], cleanC
     }
     // SUPPLY-22: GitHub Actions Workflow Using Mutable Branch Ref (@main)
     if (/\.github\/workflows\/.*\.ya?ml$/i.test(file.path) && /uses:\s*actions\/[a-zA-Z0-9_-]+@(main|master)\b/i.test(cleanContent)) {
-        const matchLineIdx = lines.findIndex(l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('*') && (/supply-22|github/i.test(l) || lines.indexOf(l) === 0));
+        const matchLineIdx = locateMatchLine(lines, [/uses:\s*actions\/[a-zA-Z0-9_-]+@(main|master)\b/i], l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('*'));
         const lineNum = matchLineIdx !== -1 ? matchLineIdx + 1 : 1;
         findings.push({
             id: `supply22-${Date.now()}-${findingCounter.count++}`,
@@ -571,7 +573,7 @@ export function evaluateSupplyChainRules(file: CodeFile, lines: string[], cleanC
     }
     // SUPPLY-23: GitHub Actions Step Running Untrusted Pull Request Code
     if (/\.github\/workflows\/.*\.ya?ml$/i.test(file.path) && /on:\s*pull_request_target/i.test(cleanContent) && /actions\/checkout/i.test(cleanContent) && /run:/i.test(cleanContent)) {
-        const matchLineIdx = lines.findIndex(l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('*') && (/supply-23|github/i.test(l) || lines.indexOf(l) === 0));
+        const matchLineIdx = locateMatchLine(lines, [/on:\s*pull_request_target/i, /actions\/checkout/i, /run:/i], l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('*'));
         const lineNum = matchLineIdx !== -1 ? matchLineIdx + 1 : 1;
         findings.push({
             id: `supply23-${Date.now()}-${findingCounter.count++}`,
@@ -596,7 +598,7 @@ export function evaluateSupplyChainRules(file: CodeFile, lines: string[], cleanC
     }
     // SUPPLY-24: Missing Strict Package Manager Engine Lock
     if (/package\.json$/i.test(file.path) && /"workspaces":/i.test(cleanContent) && !/"packageManager":/i.test(cleanContent)) {
-        const matchLineIdx = lines.findIndex(l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('*') && (/supply-24|missing/i.test(l) || lines.indexOf(l) === 0));
+        const matchLineIdx = locateMatchLine(lines, [/"workspaces":/i], l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('*'));
         const lineNum = matchLineIdx !== -1 ? matchLineIdx + 1 : 1;
         findings.push({
             id: `supply24-${Date.now()}-${findingCounter.count++}`,
@@ -621,7 +623,7 @@ export function evaluateSupplyChainRules(file: CodeFile, lines: string[], cleanC
     }
     // SUPPLY-25: Vulnerable Prototype Pollution in Deprecated 'lodash' (<4.17.21)
     if (/package\.json$/i.test(file.path) && /"lodash":\s*"(?:\^?3\.|~?3\.|\^?4\.(?:0|1[0-6])\.)/i.test(cleanContent)) {
-        const matchLineIdx = lines.findIndex(l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('*') && (/supply-25|vulnerable/i.test(l) || lines.indexOf(l) === 0));
+        const matchLineIdx = locateMatchLine(lines, [/"lodash":\s*"(?:\^?3\.|~?3\.|\^?4\.(?:0|1[0-6])\.)/i], l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('*'));
         const lineNum = matchLineIdx !== -1 ? matchLineIdx + 1 : 1;
         findings.push({
             id: `supply25-${Date.now()}-${findingCounter.count++}`,
@@ -646,7 +648,7 @@ export function evaluateSupplyChainRules(file: CodeFile, lines: string[], cleanC
     }
     // SUPPLY-26: Vulnerable XML Parser Susceptible to XXE Injection
     if (/package\.json$/i.test(file.path) && /"xml2js":\s*"(?:\^?0\.[0-3]\.)/i.test(cleanContent)) {
-        const matchLineIdx = lines.findIndex(l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('*') && (/supply-26|vulnerable/i.test(l) || lines.indexOf(l) === 0));
+        const matchLineIdx = locateMatchLine(lines, [/"xml2js":\s*"(?:\^?0\.[0-3]\.)/i], l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('*'));
         const lineNum = matchLineIdx !== -1 ? matchLineIdx + 1 : 1;
         findings.push({
             id: `supply26-${Date.now()}-${findingCounter.count++}`,
@@ -671,7 +673,7 @@ export function evaluateSupplyChainRules(file: CodeFile, lines: string[], cleanC
     }
     // SUPPLY-27: Unused Dependencies Retained in package.json
     if (/package\.json$/i.test(file.path) && /"abandonedUnusedDep":/i.test(cleanContent)) {
-        const matchLineIdx = lines.findIndex(l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('*') && (/supply-27|unused/i.test(l) || lines.indexOf(l) === 0));
+        const matchLineIdx = locateMatchLine(lines, [/"abandonedUnusedDep":/i], l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('*'));
         const lineNum = matchLineIdx !== -1 ? matchLineIdx + 1 : 1;
         findings.push({
             id: `supply27-${Date.now()}-${findingCounter.count++}`,
@@ -721,7 +723,7 @@ export function evaluateSupplyChainRules(file: CodeFile, lines: string[], cleanC
     }
     // SUPPLY-29: Over-Permissive GitHub Actions GITHUB_TOKEN Default
     if (/\.github\/workflows\/.*\.ya?ml$/i.test(file.path) && /permissions:\s*write-all/i.test(cleanContent)) {
-        const matchLineIdx = lines.findIndex(l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('*') && (/supply-29|over-permissive/i.test(l) || lines.indexOf(l) === 0));
+        const matchLineIdx = locateMatchLine(lines, [/permissions:\s*write-all/i], l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('*'));
         const lineNum = matchLineIdx !== -1 ? matchLineIdx + 1 : 1;
         findings.push({
             id: `supply29-${Date.now()}-${findingCounter.count++}`,
@@ -746,7 +748,7 @@ export function evaluateSupplyChainRules(file: CodeFile, lines: string[], cleanC
     }
     // SUPPLY-30: Dangerous Inline Bash Script in CI Without ShellCheck
     if (/\.github\/workflows\/.*\.ya?ml$/i.test(file.path) && /run:\s*\|\s*\n\s*(?!set\s+-e)[a-zA-Z0-9]/i.test(cleanContent)) {
-        const matchLineIdx = lines.findIndex(l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('*') && (/supply-30|dangerous/i.test(l) || lines.indexOf(l) === 0));
+        const matchLineIdx = locateMatchLine(lines, [/run:\s*\|\s*\n\s*(?!set\s+-e)[a-zA-Z0-9]/i], l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('*'));
         const lineNum = matchLineIdx !== -1 ? matchLineIdx + 1 : 1;
         findings.push({
             id: `supply30-${Date.now()}-${findingCounter.count++}`,
@@ -796,7 +798,7 @@ export function evaluateSupplyChainRules(file: CodeFile, lines: string[], cleanC
     }
     // SUPPLY-32: Insecure Gradle / Maven Dependency Without Checksum
     if (/(?:build\.gradle|pom\.xml)$/i.test(file.path) && /http:\/\/(?:repo\.maven\.apache\.org|jcenter)/i.test(cleanContent)) {
-        const matchLineIdx = lines.findIndex(l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('*') && (/supply-32|insecure/i.test(l) || lines.indexOf(l) === 0));
+        const matchLineIdx = locateMatchLine(lines, [/http:\/\/(?:repo\.maven\.apache\.org|jcenter)/i], l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('*'));
         const lineNum = matchLineIdx !== -1 ? matchLineIdx + 1 : 1;
         findings.push({
             id: `supply32-${Date.now()}-${findingCounter.count++}`,
@@ -821,7 +823,7 @@ export function evaluateSupplyChainRules(file: CodeFile, lines: string[], cleanC
     }
     // SUPPLY-33: Rust Cargo.lock Missing in Binary Application Repository
     if (/Cargo\.toml$/i.test(file.path) && /\[\[bin\]\]/i.test(cleanContent)) {
-        const matchLineIdx = lines.findIndex(l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('*') && (/supply-33|rust/i.test(l) || lines.indexOf(l) === 0));
+        const matchLineIdx = locateMatchLine(lines, [/\[\[bin\]\]/i], l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('*'));
         const lineNum = matchLineIdx !== -1 ? matchLineIdx + 1 : 1;
         findings.push({
             id: `supply33-${Date.now()}-${findingCounter.count++}`,
@@ -846,7 +848,7 @@ export function evaluateSupplyChainRules(file: CodeFile, lines: string[], cleanC
     }
     // SUPPLY-34: Direct Dependency on Native Binary Compilers in Runtime
     if (file.path.toLowerCase().endsWith("dockerfile") && /FROM\s+[^\n]+\s+AS\s+runner[\s\S]*?RUN\s+apk\s+add\s+[^\n]*(?:gcc|g\+\+|make)/i.test(cleanContent)) {
-        const matchLineIdx = lines.findIndex(l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('*') && (/supply-34|direct/i.test(l) || lines.indexOf(l) === 0));
+        const matchLineIdx = locateMatchLine(lines, [/FROM\s+[^\n]+\s+AS\s+runner[\s\S]*?RUN\s+apk\s+add\s+[^\n]*(?:gcc|g\+\+|make)/i], l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('*'));
         const lineNum = matchLineIdx !== -1 ? matchLineIdx + 1 : 1;
         findings.push({
             id: `supply34-${Date.now()}-${findingCounter.count++}`,
@@ -871,7 +873,7 @@ export function evaluateSupplyChainRules(file: CodeFile, lines: string[], cleanC
     }
     // SUPPLY-35: Composer / PHP Dependency Vulnerable to Unserialized Payload
     if (/composer\.json$/i.test(file.path) && /"vulnerable\/php-unserialize":/i.test(cleanContent)) {
-        const matchLineIdx = lines.findIndex(l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('*') && (/supply-35|composer/i.test(l) || lines.indexOf(l) === 0));
+        const matchLineIdx = locateMatchLine(lines, [/"vulnerable\/php-unserialize":/i], l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('*'));
         const lineNum = matchLineIdx !== -1 ? matchLineIdx + 1 : 1;
         findings.push({
             id: `supply35-${Date.now()}-${findingCounter.count++}`,
@@ -896,7 +898,7 @@ export function evaluateSupplyChainRules(file: CodeFile, lines: string[], cleanC
     }
     // SUPPLY-36: Unpinned Action in Third-Party Marketplace Step
     if (/\.github\/workflows\/.*\.ya?ml$/i.test(file.path) && /uses:\s*(?!actions\/)[a-zA-Z0-9_-]+\/[a-zA-Z0-9_-]+@(v\d+|latest)/i.test(cleanContent)) {
-        const matchLineIdx = lines.findIndex(l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('*') && (/supply-36|unpinned/i.test(l) || lines.indexOf(l) === 0));
+        const matchLineIdx = locateMatchLine(lines, [/uses:\s*(?!actions\/)[a-zA-Z0-9_-]+\/[a-zA-Z0-9_-]+@(v\d+|latest)/i], l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('*'));
         const lineNum = matchLineIdx !== -1 ? matchLineIdx + 1 : 1;
         findings.push({
             id: `supply36-${Date.now()}-${findingCounter.count++}`,
@@ -921,7 +923,7 @@ export function evaluateSupplyChainRules(file: CodeFile, lines: string[], cleanC
     }
     // SUPPLY-37: Missing Vulnerability Disclosure Policy (SECURITY.md)
     if (file.path.toLowerCase().endsWith("package.json") && /"publishConfig":\s*\{[^}]*"access":\s*"public"/i.test(cleanContent) && !/SECURITY\.md/i.test(cleanContent)) {
-        const matchLineIdx = lines.findIndex(l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('*') && (/supply-37|missing/i.test(l) || lines.indexOf(l) === 0));
+        const matchLineIdx = locateMatchLine(lines, [/"publishConfig":\s*\{[^}]*"access":\s*"public"/i], l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('*'));
         const lineNum = matchLineIdx !== -1 ? matchLineIdx + 1 : 1;
         findings.push({
             id: `supply37-${Date.now()}-${findingCounter.count++}`,
@@ -946,7 +948,7 @@ export function evaluateSupplyChainRules(file: CodeFile, lines: string[], cleanC
     }
     // SUPPLY-38: Public NPM Package Missing 2FA Requirement
     if (/package\.json$/i.test(file.path) && /"publishConfig":\s*\{(?![^}]*access:\s*"restricted")/i.test(cleanContent)) {
-        const matchLineIdx = lines.findIndex(l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('*') && (/supply-38|public/i.test(l) || lines.indexOf(l) === 0));
+        const matchLineIdx = locateMatchLine(lines, [/"publishConfig":\s*\{(?![^}]*access:\s*"restricted")/i], l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('*'));
         const lineNum = matchLineIdx !== -1 ? matchLineIdx + 1 : 1;
         findings.push({
             id: `supply38-${Date.now()}-${findingCounter.count++}`,
@@ -971,7 +973,7 @@ export function evaluateSupplyChainRules(file: CodeFile, lines: string[], cleanC
     }
     // SUPPLY-39: Unverified Download of Standalone Binary CLI Tools in CI
     if (/\.github\/workflows\/.*\.ya?ml$/i.test(file.path) && /curl\s+-[a-zA-Z]*\s+https?:\/\/[^\s]+\s*\|\s*(?:bash|sh)/i.test(cleanContent) && !/sha256sum/i.test(cleanContent)) {
-        const matchLineIdx = lines.findIndex(l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('*') && (/supply-39|unverified/i.test(l) || lines.indexOf(l) === 0));
+        const matchLineIdx = locateMatchLine(lines, [/curl\s+-[a-zA-Z]*\s+https?:\/\/[^\s]+\s*\|\s*(?:bash|sh)/i], l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('*'));
         const lineNum = matchLineIdx !== -1 ? matchLineIdx + 1 : 1;
         findings.push({
             id: `supply39-${Date.now()}-${findingCounter.count++}`,
@@ -1021,7 +1023,7 @@ export function evaluateSupplyChainRules(file: CodeFile, lines: string[], cleanC
     }
     // SUPPLY-41: Using Unpinned Node.js Alpine Package Repository
     if (file.path.toLowerCase().endsWith("dockerfile") && /apk\s+add\s+--no-cache\s+[a-zA-Z0-9_-]+(?!=)/i.test(cleanContent)) {
-        const matchLineIdx = lines.findIndex(l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('*') && (/supply-41|using/i.test(l) || lines.indexOf(l) === 0));
+        const matchLineIdx = locateMatchLine(lines, [/apk\s+add\s+--no-cache\s+[a-zA-Z0-9_-]+(?!=)/i], l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('*'));
         const lineNum = matchLineIdx !== -1 ? matchLineIdx + 1 : 1;
         findings.push({
             id: `supply41-${Date.now()}-${findingCounter.count++}`,
@@ -1096,7 +1098,7 @@ export function evaluateSupplyChainRules(file: CodeFile, lines: string[], cleanC
     }
     // SUPPLY-44: Unverified Third-Party Analytics SDK Bundle
     if (/<script\b[^>]*src=["\']https:\/\/[^"\']*(?:hotjar|fullstory|mouseflow)\.com[^"\']*["\'][^>]*>/i.test(cleanContent) && /\.(?:html|tsx|jsx)$/i.test(file.path)) {
-        const matchLineIdx = lines.findIndex(l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('*') && (/supply-44|unverified/i.test(l) || lines.indexOf(l) === 0));
+        const matchLineIdx = locateMatchLine(lines, [/<script\b[^>]*src=["\']https:\/\/[^"\']*(?:hotjar|fullstory|mouseflow)\.com[^"\']*["\'][^>]*>/i], l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('*'));
         const lineNum = matchLineIdx !== -1 ? matchLineIdx + 1 : 1;
         findings.push({
             id: `supply44-${Date.now()}-${findingCounter.count++}`,
@@ -1121,7 +1123,7 @@ export function evaluateSupplyChainRules(file: CodeFile, lines: string[], cleanC
     }
     // SUPPLY-45: Dependency Overrides (pnpm.overrides) Suppressing Security Patch
     if (/package\.json$/i.test(file.path) && /"(?:pnpm\.overrides|resolutions)":\s*\{[^}]*"[^"]+":\s*"[0-3]\./i.test(cleanContent)) {
-        const matchLineIdx = lines.findIndex(l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('*') && (/supply-45|dependency/i.test(l) || lines.indexOf(l) === 0));
+        const matchLineIdx = locateMatchLine(lines, [/"(?:pnpm\.overrides|resolutions)":\s*\{[^}]*"[^"]+":\s*"[0-3]\./i], l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('*'));
         const lineNum = matchLineIdx !== -1 ? matchLineIdx + 1 : 1;
         findings.push({
             id: `supply45-${Date.now()}-${findingCounter.count++}`,
@@ -1171,7 +1173,7 @@ export function evaluateSupplyChainRules(file: CodeFile, lines: string[], cleanC
     }
     // SUPPLY-47: Missing .npmignore Leading to Secret Exposure in NPM Tarball
     if (/package\.json$/i.test(file.path) && /"publishConfig":\s*\{[^}]*"access":\s*"public"/i.test(cleanContent) && !/"files":/i.test(cleanContent)) {
-        const matchLineIdx = lines.findIndex(l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('*') && (/supply-47|missing/i.test(l) || lines.indexOf(l) === 0));
+        const matchLineIdx = locateMatchLine(lines, [/"publishConfig":\s*\{[^}]*"access":\s*"public"/i], l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('*'));
         const lineNum = matchLineIdx !== -1 ? matchLineIdx + 1 : 1;
         findings.push({
             id: `supply47-${Date.now()}-${findingCounter.count++}`,
@@ -1196,7 +1198,7 @@ export function evaluateSupplyChainRules(file: CodeFile, lines: string[], cleanC
     }
     // SUPPLY-48: Missing Automated Static Analysis for GitHub Actions (actionlint)
     if (/\.github\/workflows\/.*\.ya?ml$/i.test(file.path) && /run:\s*\|/i.test(cleanContent) && !/actionlint/i.test(cleanContent) && /steps:/i.test(cleanContent)) {
-        const matchLineIdx = lines.findIndex(l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('*') && (/supply-48|missing/i.test(l) || lines.indexOf(l) === 0));
+        const matchLineIdx = locateMatchLine(lines, [/run:\s*\|/i, /steps:/i], l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('*'));
         const lineNum = matchLineIdx !== -1 ? matchLineIdx + 1 : 1;
         findings.push({
             id: `supply48-${Date.now()}-${findingCounter.count++}`,
@@ -1221,7 +1223,7 @@ export function evaluateSupplyChainRules(file: CodeFile, lines: string[], cleanC
     }
     // SUPPLY-49: Over-Permissive File Permissions in Published NPM Tarball
     if (/package\.json$/i.test(file.path) && /(?:chmod\s+(?:-R\s+)?(?:777|0777)|umask\s+000)/i.test(cleanContent)) {
-        const matchLineIdx = lines.findIndex(l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('*') && (/supply-49|over-permissive/i.test(l) || lines.indexOf(l) === 0));
+        const matchLineIdx = locateMatchLine(lines, [/(?:chmod\s+(?:-R\s+)?(?:777|0777)|umask\s+000)/i], l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('*'));
         const lineNum = matchLineIdx !== -1 ? matchLineIdx + 1 : 1;
         findings.push({
             id: `supply49-${Date.now()}-${findingCounter.count++}`,
@@ -1246,7 +1248,7 @@ export function evaluateSupplyChainRules(file: CodeFile, lines: string[], cleanC
     }
     // SUPPLY-50: Third-Party Component Library with Deprecated React 19 Peer Dependency
     if (/package\.json$/i.test(file.path) && /"dependencies":\s*\{[^}]*"legacy-react-component":/i.test(cleanContent)) {
-        const matchLineIdx = lines.findIndex(l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('*') && (/supply-50|third-party/i.test(l) || lines.indexOf(l) === 0));
+        const matchLineIdx = locateMatchLine(lines, [/"dependencies":\s*\{[^}]*"legacy-react-component":/i], l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('*'));
         const lineNum = matchLineIdx !== -1 ? matchLineIdx + 1 : 1;
         findings.push({
             id: `supply50-${Date.now()}-${findingCounter.count++}`,

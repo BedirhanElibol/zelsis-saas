@@ -4,6 +4,7 @@
  */
 import { Finding } from "@/data/schema";
 import { CodeFile } from "../scanner-engine";
+import { locateMatchLine } from './shared/locate';
 export interface FedrampComplianceRuleResult {
     findings: Finding[];
     logs: string[];
@@ -15,7 +16,7 @@ export function evaluateFedrampComplianceRules(file: CodeFile, lines: string[], 
     const logs: string[] = [];
     const lowerPath = file.path.toLowerCase().replace(/\\/g, "/");
     // Skip self-referential catalogs, mocks, and schema definitions
-    if (lowerPath.includes("data/catalogs/") || lowerPath.includes("data/mockdata") || lowerPath.includes("data/workspacefiles") || lowerPath.includes("data/schema") || lowerPath.includes("scratch/") || lowerPath.includes(".agent/") || lowerPath.includes("node_modules/") || lowerPath.endsWith(".d.ts")) {
+    if (lowerPath.includes("node_modules/") || lowerPath.endsWith(".d.ts")) {
         return { findings, logs };
     }
     const ts = new Date().toLocaleTimeString();
@@ -35,7 +36,7 @@ export function evaluateFedrampComplianceRules(file: CodeFile, lines: string[], 
             snippet: lines[matchLineIdx] || 'FedRAMP High configuration',
             reproductionSteps: [
                 `Audited FedRAMP High configuration in ${file.path}:${lineNum}.`,
-                'Detected violation matching {code}.'
+                'Matched FEDRAMP-01: FedRAMP AC-2 Account Management: Deprovisioning Delay Exceeding 24 Hours.'
             ],
             remediationPrompt: "Automate employee access deprovisioning within 24 hours of separation or role transfer.",
             status: 'OPEN',
@@ -45,7 +46,7 @@ export function evaluateFedrampComplianceRules(file: CodeFile, lines: string[], 
     }
     // FEDRAMP-02: FedRAMP AC-17 Remote Access: Missing FIPS 140-3 Validated Cryptography
     if ((/vpn_config|bastion/i.test(cleanContent) && !/fipsMode/i.test(cleanContent))) {
-        const matchLineIdx = lines.findIndex(l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('#') && !l.trim().startsWith('*'));
+        const matchLineIdx = locateMatchLine(lines, [/vpn_config|bastion/i], l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('#') && !l.trim().startsWith('*'));
         const lineNum = matchLineIdx !== -1 ? matchLineIdx + 1 : 1;
         findings.push({
             id: `fedramp13902-${Date.now()}-${findingCounter.count++}`,
@@ -59,7 +60,7 @@ export function evaluateFedrampComplianceRules(file: CodeFile, lines: string[], 
             snippet: lines[matchLineIdx] || 'FedRAMP High configuration',
             reproductionSteps: [
                 `Audited FedRAMP High configuration in ${file.path}:${lineNum}.`,
-                'Detected violation matching {code}.'
+                'Matched FEDRAMP-02: FedRAMP AC-17 Remote Access: Missing FIPS 140-3 Validated Cryptography.'
             ],
             remediationPrompt: "Mandate FIPS 140-3 Level 2+ cryptographic modules for all administrative VPN and bastion access.",
             status: 'OPEN',
@@ -69,7 +70,7 @@ export function evaluateFedrampComplianceRules(file: CodeFile, lines: string[], 
     }
     // FEDRAMP-03: FedRAMP AU-6 Audit Review: Centralized Immutable SIEM Streaming Delay
     if ((/audit_forwarder/i.test(cleanContent) && !/siemStreamBuffer/i.test(cleanContent))) {
-        const matchLineIdx = lines.findIndex(l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('#') && !l.trim().startsWith('*'));
+        const matchLineIdx = locateMatchLine(lines, [/audit_forwarder/i], l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('#') && !l.trim().startsWith('*'));
         const lineNum = matchLineIdx !== -1 ? matchLineIdx + 1 : 1;
         findings.push({
             id: `fedramp13903-${Date.now()}-${findingCounter.count++}`,
@@ -83,7 +84,7 @@ export function evaluateFedrampComplianceRules(file: CodeFile, lines: string[], 
             snippet: lines[matchLineIdx] || 'FedRAMP High configuration',
             reproductionSteps: [
                 `Audited FedRAMP High configuration in ${file.path}:${lineNum}.`,
-                'Detected violation matching {code}.'
+                'Matched FEDRAMP-03: FedRAMP AU-6 Audit Review: Centralized Immutable SIEM Streaming Delay.'
             ],
             remediationPrompt: "Stream all operating system and application security logs to a FedRAMP-authorized SIEM within 5 minutes.",
             status: 'OPEN',
@@ -107,7 +108,7 @@ export function evaluateFedrampComplianceRules(file: CodeFile, lines: string[], 
             snippet: lines[matchLineIdx] || 'FedRAMP High configuration',
             reproductionSteps: [
                 `Audited FedRAMP High configuration in ${file.path}:${lineNum}.`,
-                'Detected violation matching {code}.'
+                'Matched FEDRAMP-04: FedRAMP CM-8 Inventory: Missing Continuous Automated Asset Discovery.'
             ],
             remediationPrompt: "Maintain an automated real-time inventory of all virtual machines, containers, and serverless assets.",
             status: 'OPEN',
@@ -131,7 +132,7 @@ export function evaluateFedrampComplianceRules(file: CodeFile, lines: string[], 
             snippet: lines[matchLineIdx] || 'FedRAMP High configuration',
             reproductionSteps: [
                 `Audited FedRAMP High configuration in ${file.path}:${lineNum}.`,
-                'Detected violation matching {code}.'
+                'Matched FEDRAMP-05: FedRAMP IA-2 Identification: Missing PIV/CAC Hardware-Bound MFA for Federal Data.'
             ],
             remediationPrompt: "Enforce phishing-resistant hardware token MFA (FIDO2/WebAuthn or PIV/CAC) for system access.",
             status: 'OPEN',

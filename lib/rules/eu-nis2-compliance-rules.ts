@@ -4,6 +4,7 @@
  */
 import { Finding } from "@/data/schema";
 import { CodeFile } from "../scanner-engine";
+import { locateMatchLine } from './shared/locate';
 export interface EuNis2ComplianceRuleResult {
     findings: Finding[];
     logs: string[];
@@ -15,13 +16,13 @@ export function evaluateEuNis2ComplianceRules(file: CodeFile, lines: string[], c
     const logs: string[] = [];
     const lowerPath = file.path.toLowerCase().replace(/\\/g, "/");
     // Skip self-referential catalogs, mocks, and schema definitions
-    if (lowerPath.includes("data/catalogs/") || lowerPath.includes("data/mockdata") || lowerPath.includes("data/workspacefiles") || lowerPath.includes("data/schema") || lowerPath.includes("scratch/") || lowerPath.includes(".agent/") || lowerPath.includes("node_modules/") || lowerPath.endsWith(".d.ts")) {
+    if (lowerPath.includes("node_modules/") || lowerPath.endsWith(".d.ts")) {
         return { findings, logs };
     }
     const ts = new Date().toLocaleTimeString();
     // NIS2-01: EU NIS2 Directive Article 21: Missing Documented All-Hazards Cybersecurity Risk Management Policy
     if (cleanContent.includes('nis2MissingRiskManagementFramework') || ((/security_governance|compliance_policy/i.test(lowerPath) || /RiskManagement|cybersecurityPolicy/i.test(cleanContent)) && !/nis2CompliantPolicy/i.test(cleanContent))) {
-        const matchLineIdx = lines.findIndex(l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('#') && !l.trim().startsWith('*'));
+        const matchLineIdx = locateMatchLine(lines, [/RiskManagement|cybersecurityPolicy/i], l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('#') && !l.trim().startsWith('*'));
         const lineNum = matchLineIdx !== -1 ? matchLineIdx + 1 : 1;
         findings.push({
             id: `nis215401-${Date.now()}-${findingCounter.count++}`,
@@ -35,7 +36,7 @@ export function evaluateEuNis2ComplianceRules(file: CodeFile, lines: string[], c
             snippet: lines[matchLineIdx] || 'EU NIS2 Critical Infrastructure configuration',
             reproductionSteps: [
                 `Audited EU NIS2 Critical Infrastructure configuration in ${file.path}:${lineNum}.`,
-                'Detected violation matching {code}.'
+                'Matched NIS2-01: EU NIS2 Directive Article 21: Missing Documented All-Hazards Cybersecurity Risk Management Policy.'
             ],
             remediationPrompt: "Adopt and maintain a formal NIS2 Article 21 cybersecurity policy covering risk analysis, incident handling, and system security.",
             status: 'OPEN',
@@ -45,7 +46,7 @@ export function evaluateEuNis2ComplianceRules(file: CodeFile, lines: string[], c
     }
     // NIS2-02: EU NIS2 Directive Article 23: Inadequate 24-Hour Early Warning and Incident Notification SLA
     if (cleanContent.includes('nis2InadequateEarlyWarningSla') || ((/incident_response|soc_workflows/i.test(lowerPath) || /incidentSla|csirtNotification/i.test(cleanContent)) && cleanContent.includes('missing24hEarlyWarningProcedure') && !/csirtAutomatedAlert24h/i.test(cleanContent))) {
-        const matchLineIdx = lines.findIndex(l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('#') && !l.trim().startsWith('*'));
+        const matchLineIdx = locateMatchLine(lines, [/incidentSla|csirtNotification/i], l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('#') && !l.trim().startsWith('*'));
         const lineNum = matchLineIdx !== -1 ? matchLineIdx + 1 : 1;
         findings.push({
             id: `nis215402-${Date.now()}-${findingCounter.count++}`,
@@ -59,7 +60,7 @@ export function evaluateEuNis2ComplianceRules(file: CodeFile, lines: string[], c
             snippet: lines[matchLineIdx] || 'EU NIS2 Critical Infrastructure configuration',
             reproductionSteps: [
                 `Audited EU NIS2 Critical Infrastructure configuration in ${file.path}:${lineNum}.`,
-                'Detected violation matching {code}.'
+                'Matched NIS2-02: EU NIS2 Directive Article 23: Inadequate 24-Hour Early Warning and Incident Notification SLA.'
             ],
             remediationPrompt: "Implement automated incident notification pipelines ensuring NIS2-compliant 24h early warning and 72h detailed incident reporting to national authorities.",
             status: 'OPEN',
@@ -69,7 +70,7 @@ export function evaluateEuNis2ComplianceRules(file: CodeFile, lines: string[], c
     }
     // NIS2-03: EU NIS2 Directive Article 21(2)(d): Inadequate Supply Chain Risk Management and Vendor Cybersecurity Audits
     if (cleanContent.includes('nis2InadequateSupplyChainRiskAudits') || ((/vendor_management|supply_chain/i.test(lowerPath) || /vendorAudit|supplierRisk/i.test(cleanContent)) && !/supplierSecurityAuditCatalog/i.test(cleanContent))) {
-        const matchLineIdx = lines.findIndex(l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('#') && !l.trim().startsWith('*'));
+        const matchLineIdx = locateMatchLine(lines, [/vendorAudit|supplierRisk/i], l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('#') && !l.trim().startsWith('*'));
         const lineNum = matchLineIdx !== -1 ? matchLineIdx + 1 : 1;
         findings.push({
             id: `nis215403-${Date.now()}-${findingCounter.count++}`,
@@ -83,7 +84,7 @@ export function evaluateEuNis2ComplianceRules(file: CodeFile, lines: string[], c
             snippet: lines[matchLineIdx] || 'EU NIS2 Critical Infrastructure configuration',
             reproductionSteps: [
                 `Audited EU NIS2 Critical Infrastructure configuration in ${file.path}:${lineNum}.`,
-                'Detected violation matching {code}.'
+                'Matched NIS2-03: EU NIS2 Directive Article 21(2)(d): Inadequate Supply Chain Risk Management and Vendor Cybersecurity Audits.'
             ],
             remediationPrompt: "Enforce supply chain security assessments and contractual security requirements across all tier-1 IT service providers and component vendors.",
             status: 'OPEN',
@@ -93,7 +94,7 @@ export function evaluateEuNis2ComplianceRules(file: CodeFile, lines: string[], c
     }
     // NIS2-04: EU NIS2 Directive Article 21(2)(e): Missing Vulnerability Handling, Disclosure and Coordinated CSIRT Reporting
     if (cleanContent.includes('nis2MissingVulnerabilityDisclosurePolicy') || ((/vulnerability_handling|security_txt/i.test(lowerPath) || /disclosurePolicy/i.test(cleanContent)) && !/coordinatedDisclosureProcess/i.test(cleanContent))) {
-        const matchLineIdx = lines.findIndex(l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('#') && !l.trim().startsWith('*'));
+        const matchLineIdx = locateMatchLine(lines, [/disclosurePolicy/i], l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('#') && !l.trim().startsWith('*'));
         const lineNum = matchLineIdx !== -1 ? matchLineIdx + 1 : 1;
         findings.push({
             id: `nis215404-${Date.now()}-${findingCounter.count++}`,
@@ -107,7 +108,7 @@ export function evaluateEuNis2ComplianceRules(file: CodeFile, lines: string[], c
             snippet: lines[matchLineIdx] || 'EU NIS2 Critical Infrastructure configuration',
             reproductionSteps: [
                 `Audited EU NIS2 Critical Infrastructure configuration in ${file.path}:${lineNum}.`,
-                'Detected violation matching {code}.'
+                'Matched NIS2-04: EU NIS2 Directive Article 21(2)(e): Missing Vulnerability Handling, Disclosure and Coordinated CSIRT Reporting.'
             ],
             remediationPrompt: "Publish a coordinated vulnerability disclosure policy and integrate automated CVE scanning across all release deployment stages.",
             status: 'OPEN',
@@ -117,7 +118,7 @@ export function evaluateEuNis2ComplianceRules(file: CodeFile, lines: string[], c
     }
     // NIS2-05: EU NIS2 Directive Article 20: Lack of Management Body Cybersecurity Governance Training and Approval Records
     if (cleanContent.includes('nis2MissingManagementBoardTrainingRecords') || ((/board_governance|executive_compliance/i.test(lowerPath) || /managementBoard/i.test(cleanContent)) && !/boardApprovalRecordsTracked/i.test(cleanContent))) {
-        const matchLineIdx = lines.findIndex(l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('#') && !l.trim().startsWith('*'));
+        const matchLineIdx = locateMatchLine(lines, [/managementBoard/i], l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('#') && !l.trim().startsWith('*'));
         const lineNum = matchLineIdx !== -1 ? matchLineIdx + 1 : 1;
         findings.push({
             id: `nis215405-${Date.now()}-${findingCounter.count++}`,
@@ -131,7 +132,7 @@ export function evaluateEuNis2ComplianceRules(file: CodeFile, lines: string[], c
             snippet: lines[matchLineIdx] || 'EU NIS2 Critical Infrastructure configuration',
             reproductionSteps: [
                 `Audited EU NIS2 Critical Infrastructure configuration in ${file.path}:${lineNum}.`,
-                'Detected violation matching {code}.'
+                'Matched NIS2-05: EU NIS2 Directive Article 20: Lack of Management Body Cybersecurity Governance Training and Approval Records.'
             ],
             remediationPrompt: "Conduct mandatory annual cybersecurity training for executive management and maintain board approval records for cybersecurity measures.",
             status: 'OPEN',

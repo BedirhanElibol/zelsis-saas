@@ -4,6 +4,7 @@
  */
 import { Finding } from "@/data/schema";
 import { CodeFile } from "../scanner-engine";
+import { locateMatchLine } from './shared/locate';
 export interface DnsSecurityRuleResult {
     findings: Finding[];
     logs: string[];
@@ -15,13 +16,13 @@ export function evaluateDnsSecurityRules(file: CodeFile, lines: string[], cleanC
     const logs: string[] = [];
     const lowerPath = file.path.toLowerCase().replace(/\\/g, "/");
     // Skip self-referential catalogs, mocks, and schema definitions
-    if (lowerPath.includes("data/catalogs/") || lowerPath.includes("data/mockdata") || lowerPath.includes("data/workspacefiles") || lowerPath.includes("data/schema") || lowerPath.includes("scratch/") || lowerPath.includes(".agent/") || lowerPath.includes("node_modules/") || lowerPath.endsWith(".d.ts")) {
+    if (lowerPath.includes("node_modules/") || lowerPath.endsWith(".d.ts")) {
         return { findings, logs };
     }
     const ts = new Date().toLocaleTimeString();
     // DNS-01: DNSSEC Signature Validation Missing on Authoritative Zone
     if ((/dnsZone/i.test(cleanContent) && !/dnssec|rrsig/i.test(cleanContent))) {
-        const matchLineIdx = lines.findIndex(l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('#') && !l.trim().startsWith('*'));
+        const matchLineIdx = locateMatchLine(lines, [/dnsZone/i], l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('#') && !l.trim().startsWith('*'));
         const lineNum = matchLineIdx !== -1 ? matchLineIdx + 1 : 1;
         findings.push({
             id: `dns-11801-${Date.now()}-${findingCounter.count++}`,
@@ -45,7 +46,7 @@ export function evaluateDnsSecurityRules(file: CodeFile, lines: string[], cleanC
     }
     // DNS-02: Dangling DNS Record Vulnerable to Subdomain Takeover
     if ((/CNAME/i.test(cleanContent) && !/verifiedOwner/i.test(cleanContent))) {
-        const matchLineIdx = lines.findIndex(l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('#') && !l.trim().startsWith('*'));
+        const matchLineIdx = locateMatchLine(lines, [/CNAME/i], l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('#') && !l.trim().startsWith('*'));
         const lineNum = matchLineIdx !== -1 ? matchLineIdx + 1 : 1;
         findings.push({
             id: `dns-11802-${Date.now()}-${findingCounter.count++}`,
@@ -69,7 +70,7 @@ export function evaluateDnsSecurityRules(file: CodeFile, lines: string[], cleanC
     }
     // DNS-03: Missing CAA (Certification Authority Authorization) Record
     if ((/dnsRecords/i.test(cleanContent) && !/issue\s*"letsencrypt\.org"|CAA/i.test(cleanContent))) {
-        const matchLineIdx = lines.findIndex(l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('#') && !l.trim().startsWith('*'));
+        const matchLineIdx = locateMatchLine(lines, [/dnsRecords/i], l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('#') && !l.trim().startsWith('*'));
         const lineNum = matchLineIdx !== -1 ? matchLineIdx + 1 : 1;
         findings.push({
             id: `dns-11803-${Date.now()}-${findingCounter.count++}`,
@@ -93,7 +94,7 @@ export function evaluateDnsSecurityRules(file: CodeFile, lines: string[], cleanC
     }
     // DNS-04: Unrestricted Zone Transfer (AXFR) Allowed on Public Nameservers
     if ((/named\.conf/i.test(cleanContent) && !/allow-transfer\s*\{\s*none;/i.test(cleanContent))) {
-        const matchLineIdx = lines.findIndex(l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('#') && !l.trim().startsWith('*'));
+        const matchLineIdx = locateMatchLine(lines, [/named\.conf/i], l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('#') && !l.trim().startsWith('*'));
         const lineNum = matchLineIdx !== -1 ? matchLineIdx + 1 : 1;
         findings.push({
             id: `dns-11804-${Date.now()}-${findingCounter.count++}`,
@@ -117,7 +118,7 @@ export function evaluateDnsSecurityRules(file: CodeFile, lines: string[], cleanC
     }
     // DNS-05: Missing DNS Rebinding Attack Protection on Internal Endpoints
     if ((/httpServer/i.test(cleanContent) && !/validateHostHeader/i.test(cleanContent))) {
-        const matchLineIdx = lines.findIndex(l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('#') && !l.trim().startsWith('*'));
+        const matchLineIdx = locateMatchLine(lines, [/httpServer/i], l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('#') && !l.trim().startsWith('*'));
         const lineNum = matchLineIdx !== -1 ? matchLineIdx + 1 : 1;
         findings.push({
             id: `dns-11805-${Date.now()}-${findingCounter.count++}`,

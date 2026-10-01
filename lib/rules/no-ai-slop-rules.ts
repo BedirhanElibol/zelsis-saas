@@ -46,7 +46,7 @@ export function evaluateNoAiSlopRules(file: CodeFile, lines: string[], cleanCont
         (lowerPath.endsWith('.md') && !lowerPath.includes('plan.md') && !lowerPath.includes('architecture.md'));
     if (!isEligibleFile)
         return { findings, logs };
-    if (lowerPath.includes('data/catalogs/') || lowerPath.includes('data/mockdata') || lowerPath.includes('data/workspacefiles') || lowerPath.includes('data/schema') || lowerPath.includes('scratch/') || lowerPath.includes('.agent/') || lowerPath.includes('node_modules/') || lowerPath.endsWith('.d.ts') || lowerPath.includes('rules/')) {
+    if (lowerPath.includes('node_modules/') || lowerPath.endsWith('.d.ts') || lowerPath.includes('rules/')) {
         return { findings, logs };
     }
     const ts = new Date().toLocaleTimeString();

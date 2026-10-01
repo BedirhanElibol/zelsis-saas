@@ -4,6 +4,7 @@
  */
 import { Finding } from "@/data/schema";
 import { CodeFile } from "../scanner-engine";
+import { locateMatchLine } from './shared/locate';
 export interface SbomAttestationRuleResult {
     findings: Finding[];
     logs: string[];
@@ -15,7 +16,7 @@ export function evaluateSbomAttestationRules(file: CodeFile, lines: string[], cl
     const logs: string[] = [];
     const lowerPath = file.path.toLowerCase().replace(/\\/g, "/");
     // Skip self-referential catalogs, mocks, and schema definitions
-    if (lowerPath.includes("data/catalogs/") || lowerPath.includes("data/mockdata") || lowerPath.includes("data/workspacefiles") || lowerPath.includes("data/schema") || lowerPath.includes("scratch/") || lowerPath.includes(".agent/") || lowerPath.includes("node_modules/") || lowerPath.endsWith(".d.ts") || lowerPath.endsWith(".tsx") || lowerPath.endsWith(".jsx")) {
+    if (lowerPath.includes("node_modules/") || lowerPath.endsWith(".d.ts") || lowerPath.endsWith(".tsx") || lowerPath.endsWith(".jsx")) {
         return { findings, logs };
     }
     const ts = new Date().toLocaleTimeString();
@@ -45,7 +46,7 @@ export function evaluateSbomAttestationRules(file: CodeFile, lines: string[], cl
     }
     // SBOM-02: Unsigned Container Images and Missing Cosign Cryptographic Signatures
     if ((/docker\s+push/i.test(cleanContent) && !/cosign\s+sign/i.test(cleanContent))) {
-        const matchLineIdx = lines.findIndex(l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('#') && !l.trim().startsWith('*'));
+        const matchLineIdx = locateMatchLine(lines, [/docker\s+push/i], l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('#') && !l.trim().startsWith('*'));
         const lineNum = matchLineIdx !== -1 ? matchLineIdx + 1 : 1;
         findings.push({
             id: `sbom12602-${Date.now()}-${findingCounter.count++}`,
@@ -68,8 +69,8 @@ export function evaluateSbomAttestationRules(file: CodeFile, lines: string[], cl
         logs.push(`[${ts}] [SBOM AUDIT] Found SBOM-02: Unsigned Container Images and Missing Cosign Cryptographic Signatures at ${file.path}:${lineNum}`);
     }
     // SBOM-03: SLSA Level 3 Provenance Attestation Missing in CI/CD Build Pipeline
-    if ((/github-actions/i.test(cleanContent) && !/slsa-framework/i.test(cleanContent))) {
-        const matchLineIdx = lines.findIndex(l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('#') && !l.trim().startsWith('*'));
+    if (/\.github\/workflows\/[^/]+\.ya?ml$/i.test(file.path) && /^\s*release\s*:|^\s*tags\s*:|npm\s+publish|docker\s+push|docker\/build-push-action|goreleaser|gh\s+release|action-gh-release|twine\s+upload|cargo\s+publish/im.test(cleanContent) && !/slsa-framework|attest-build-provenance|provenance\s*:\s*true|--provenance/i.test(cleanContent)) {
+        const matchLineIdx = locateMatchLine(lines, [/^\s*release\s*:|^\s*tags\s*:|npm\s+publish|docker\s+push|docker\/build-push-action|goreleaser|gh\s+release|action-gh-release|twine\s+upload|cargo\s+publish/im], l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('#') && !l.trim().startsWith('*'));
         const lineNum = matchLineIdx !== -1 ? matchLineIdx + 1 : 1;
         findings.push({
             id: `sbom12603-${Date.now()}-${findingCounter.count++}`,
@@ -93,7 +94,7 @@ export function evaluateSbomAttestationRules(file: CodeFile, lines: string[], cl
     }
     // SBOM-04: Dependency Confusion Risk with Unscoped Internal Package Names
     if (/package\.json$/i.test(lowerPath) && /"(?:dependencies|devDependencies)":\s*\{[^}]*"(?:internal-|company-|corp-|private-|myorg-)[a-z0-9-]+":/i.test(cleanContent) && !/@[a-z0-9-]+\//i.test(cleanContent)) {
-        const matchLineIdx = lines.findIndex(l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('#') && !l.trim().startsWith('*'));
+        const matchLineIdx = locateMatchLine(lines, [/"(?:dependencies|devDependencies)":\s*\{[^}]*"(?:internal-|company-|corp-|private-|myorg-)[a-z0-9-]+":/i], l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('#') && !l.trim().startsWith('*'));
         const lineNum = matchLineIdx !== -1 ? matchLineIdx + 1 : 1;
         findings.push({
             id: `sbom12604-${Date.now()}-${findingCounter.count++}`,
@@ -116,8 +117,9 @@ export function evaluateSbomAttestationRules(file: CodeFile, lines: string[], cl
         logs.push(`[${ts}] [SBOM AUDIT] Found SBOM-04: Dependency Confusion Risk with Unscoped Internal Package Names at ${file.path}:${lineNum}`);
     }
     // SBOM-05: Unvetted Third-Party GitHub Actions in Production CI/CD Workflows
-    if ((/uses:\s*[a-zA-Z0-9-]+\/[a-zA-Z0-9-]+@v[0-9]+/i.test(cleanContent))) {
-        const matchLineIdx = lines.findIndex(l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('#') && !l.trim().startsWith('*'));
+    const thirdPartyActionRegex = /^\s*-?\s*uses\s*:\s*['\"]?(?!(?:actions|github)\/)[\w.-]+\/[\w./-]+@(?![0-9a-f]{40}\b)[\w.-]+/i;
+    if (/\.github\/workflows\/[^/]+\.ya?ml$/i.test(file.path) && lines.some(l => thirdPartyActionRegex.test(l))) {
+        const matchLineIdx = lines.findIndex(l => thirdPartyActionRegex.test(l));
         const lineNum = matchLineIdx !== -1 ? matchLineIdx + 1 : 1;
         findings.push({
             id: `sbom12605-${Date.now()}-${findingCounter.count++}`,

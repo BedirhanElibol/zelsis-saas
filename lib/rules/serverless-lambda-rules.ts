@@ -4,6 +4,7 @@
  */
 import { Finding } from "@/data/schema";
 import { CodeFile } from "../scanner-engine";
+import { locateMatchLine } from './shared/locate';
 export interface ServerlessLambdaRuleResult {
     findings: Finding[];
     logs: string[];
@@ -15,13 +16,13 @@ export function evaluateServerlessLambdaRules(file: CodeFile, lines: string[], c
     const logs: string[] = [];
     const lowerPath = file.path.toLowerCase().replace(/\\/g, "/");
     // Skip self-referential catalogs, mocks, and schema definitions
-    if (lowerPath.includes("data/catalogs/") || lowerPath.includes("data/mockdata") || lowerPath.includes("data/workspacefiles") || lowerPath.includes("data/schema") || lowerPath.includes("scratch/") || lowerPath.includes(".agent/") || lowerPath.includes("node_modules/") || lowerPath.endsWith(".d.ts")) {
+    if (lowerPath.includes("node_modules/") || lowerPath.endsWith(".d.ts")) {
         return { findings, logs };
     }
     const ts = new Date().toLocaleTimeString();
     // SLS-01: Unbounded Function Execution Timeout (Runaway Billing Risk)
     if ((/timeout:\s*900/i.test(cleanContent))) {
-        const matchLineIdx = lines.findIndex(l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('*'));
+        const matchLineIdx = locateMatchLine(lines, [/timeout:\s*900/i], l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('*'));
         const lineNum = matchLineIdx !== -1 ? matchLineIdx + 1 : 1;
         findings.push({
             id: `sls11301-${Date.now()}-${findingCounter.count++}`,
@@ -45,7 +46,7 @@ export function evaluateServerlessLambdaRules(file: CodeFile, lines: string[], c
     }
     // SLS-02: Heavyweight Module Initialization Inside Handler Loop (Cold Start Spike)
     if ((/exports\.handler\s*=\s*async[\s\S]*?new\s+(?:PrismaClient|MongoClient)/.test(cleanContent))) {
-        const matchLineIdx = lines.findIndex(l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('*'));
+        const matchLineIdx = locateMatchLine(lines, [/exports\.handler\s*=\s*async[\s\S]*?new\s+(?:PrismaClient|MongoClient)/], l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('*'));
         const lineNum = matchLineIdx !== -1 ? matchLineIdx + 1 : 1;
         findings.push({
             id: `sls11302-${Date.now()}-${findingCounter.count++}`,
@@ -69,7 +70,7 @@ export function evaluateServerlessLambdaRules(file: CodeFile, lines: string[], c
     }
     // SLS-03: Missing Dead-Letter Queue (DLQ) on Asynchronous Serverless Event Sources
     if ((/events:\s*-[\s\S]*?sns:|events:\s*-[\s\S]*?sqs:/i.test(cleanContent) && !/dead_letter_config|onError/i.test(cleanContent))) {
-        const matchLineIdx = lines.findIndex(l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('*'));
+        const matchLineIdx = locateMatchLine(lines, [/events:\s*-[\s\S]*?sns:|events:\s*-[\s\S]*?sqs:/i], l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('*'));
         const lineNum = matchLineIdx !== -1 ? matchLineIdx + 1 : 1;
         findings.push({
             id: `sls11303-${Date.now()}-${findingCounter.count++}`,
@@ -93,7 +94,7 @@ export function evaluateServerlessLambdaRules(file: CodeFile, lines: string[], c
     }
     // SLS-04: Direct Unpooled Database Connection in Autoscaling Serverless Workers
     if ((/new\s+Client\s*\([\s\S]*?\)/.test(cleanContent) && !/rdsProxy|pooler|accelerate/i.test(cleanContent))) {
-        const matchLineIdx = lines.findIndex(l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('*'));
+        const matchLineIdx = locateMatchLine(lines, [/new\s+Client\s*\([\s\S]*?\)/], l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('*'));
         const lineNum = matchLineIdx !== -1 ? matchLineIdx + 1 : 1;
         findings.push({
             id: `sls11304-${Date.now()}-${findingCounter.count++}`,
@@ -117,7 +118,7 @@ export function evaluateServerlessLambdaRules(file: CodeFile, lines: string[], c
     }
     // SLS-05: Uncleaned /tmp Ephemeral Disk Space in Warm Container Instances
     if ((/fs\.writeFileSync\s*\(\s*['"]\/tmp\//.test(cleanContent) && !/unlink|cleanup/i.test(cleanContent))) {
-        const matchLineIdx = lines.findIndex(l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('*'));
+        const matchLineIdx = locateMatchLine(lines, [/fs\.writeFileSync\s*\(\s*['"]\/tmp\//], l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('*'));
         const lineNum = matchLineIdx !== -1 ? matchLineIdx + 1 : 1;
         findings.push({
             id: `sls11305-${Date.now()}-${findingCounter.count++}`,

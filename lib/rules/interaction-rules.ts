@@ -7,6 +7,7 @@
  */
 import { Finding } from '@/data/schema';
 import { CodeFile } from '../scanner-engine';
+import { locateMatchLine } from './shared/locate';
 export interface InteractionRuleResult {
     findings: Finding[];
     logs: string[];
@@ -26,7 +27,7 @@ export function evaluateInteractionRules(file: CodeFile, lines: string[], cleanC
     const lowerPath = file.path.toLowerCase().replace(/\\/g, '/');
     // UI-INTERACT-01: Modal Overlay Missing Backdrop Click Dismissal
     if (/fixed\s+inset-0|role=["\']dialog["\']/i.test(cleanContent) && !/target\s*===\s*(?:\w+\.)?currentTarget|onBackdropClick|backdrop/i.test(cleanContent) && /modal|dialog/i.test(lowerPath)) {
-        const matchLineIdx = lines.findIndex(l => !l.trim().startsWith('//') && !l.trim().startsWith('*') && (/ui-interact-01|modal/i.test(l) || lines.indexOf(l) === 0));
+        const matchLineIdx = locateMatchLine(lines, [/fixed\s+inset-0|role=["\']dialog["\']/i], l => !l.trim().startsWith('//') && !l.trim().startsWith('*'));
         const lineNum = matchLineIdx !== -1 ? matchLineIdx + 1 : 1;
         findings.push({
             id: `interact-${Date.now()}-${findingCounter.count++}`,
@@ -51,7 +52,7 @@ export function evaluateInteractionRules(file: CodeFile, lines: string[], cleanC
     }
     // UI-INTERACT-02: Modal Dialog Missing Keyboard Escape Listener
     if (/fixed\s+inset-0|role=["\']dialog["\']/i.test(cleanContent) && !/Escape|keydown/i.test(cleanContent) && /modal|dialog/i.test(lowerPath)) {
-        const matchLineIdx = lines.findIndex(l => !l.trim().startsWith('//') && !l.trim().startsWith('*') && (/ui-interact-02|modal/i.test(l) || lines.indexOf(l) === 0));
+        const matchLineIdx = locateMatchLine(lines, [/fixed\s+inset-0|role=["\']dialog["\']/i], l => !l.trim().startsWith('//') && !l.trim().startsWith('*'));
         const lineNum = matchLineIdx !== -1 ? matchLineIdx + 1 : 1;
         findings.push({
             id: `interact-${Date.now()}-${findingCounter.count++}`,
@@ -76,7 +77,7 @@ export function evaluateInteractionRules(file: CodeFile, lines: string[], cleanC
     }
     // UI-INTERACT-03: Missing Focus Trap in Open Modal Dialog
     if (/role=["\']dialog["\']/i.test(cleanContent) && !/FocusTrap|focus-trap|autoFocus/i.test(cleanContent) && /modal|dialog/i.test(lowerPath) && (cleanContent.match(/<input\b/gi) || []).length > 2) {
-        const matchLineIdx = lines.findIndex(l => !l.trim().startsWith('//') && !l.trim().startsWith('*') && (/ui-interact-03|missing/i.test(l) || lines.indexOf(l) === 0));
+        const matchLineIdx = locateMatchLine(lines, [/role=["\']dialog["\']/i], l => !l.trim().startsWith('//') && !l.trim().startsWith('*'));
         const lineNum = matchLineIdx !== -1 ? matchLineIdx + 1 : 1;
         findings.push({
             id: `interact-${Date.now()}-${findingCounter.count++}`,
@@ -101,7 +102,7 @@ export function evaluateInteractionRules(file: CodeFile, lines: string[], cleanC
     }
     // UI-INTERACT-04: Disruptive autoFocus Input Hijacking
     if (/\bautoFocus\b/i.test(cleanContent) && !/search|command-palette|cmdk/i.test(lowerPath)) {
-        const matchLineIdx = lines.findIndex(l => !l.trim().startsWith('//') && !l.trim().startsWith('*') && (/ui-interact-04|disruptive/i.test(l) || lines.indexOf(l) === 0));
+        const matchLineIdx = locateMatchLine(lines, [/\bautoFocus\b/i], l => !l.trim().startsWith('//') && !l.trim().startsWith('*'));
         const lineNum = matchLineIdx !== -1 ? matchLineIdx + 1 : 1;
         findings.push({
             id: `interact-${Date.now()}-${findingCounter.count++}`,
@@ -126,7 +127,7 @@ export function evaluateInteractionRules(file: CodeFile, lines: string[], cleanC
     }
     // UI-INTERACT-05: Arbitrary Z-Index Escalation War (z-[99999])
     if (/z-\[(?:9999|99999|999999)\]/i.test(cleanContent)) {
-        const matchLineIdx = lines.findIndex(l => !l.trim().startsWith('//') && !l.trim().startsWith('*') && (/ui-interact-05|arbitrary/i.test(l) || lines.indexOf(l) === 0));
+        const matchLineIdx = locateMatchLine(lines, [/z-\[(?:9999|99999|999999)\]/i], l => !l.trim().startsWith('//') && !l.trim().startsWith('*'));
         const lineNum = matchLineIdx !== -1 ? matchLineIdx + 1 : 1;
         findings.push({
             id: `interact-${Date.now()}-${findingCounter.count++}`,
@@ -151,7 +152,7 @@ export function evaluateInteractionRules(file: CodeFile, lines: string[], cleanC
     }
     // UI-INTERACT-06: Button Dimensions Shift During Loading State
     if (/<button\b[^>]*>(?:(?!\bmin-w-\b)[\s\S])*?\{\s*(?:loading|isSubmitting|isPending)\s*\?\s*<Spinner/i.test(cleanContent)) {
-        const matchLineIdx = lines.findIndex(l => !l.trim().startsWith('//') && !l.trim().startsWith('*') && (/ui-interact-06|button/i.test(l) || lines.indexOf(l) === 0));
+        const matchLineIdx = locateMatchLine(lines, [/<button\b[^>]*>(?:(?!\bmin-w-\b)[\s\S])*?\{\s*(?:loading|isSubmitting|isPending)\s*\?\s*<Spinner/i], l => !l.trim().startsWith('//') && !l.trim().startsWith('*'));
         const lineNum = matchLineIdx !== -1 ? matchLineIdx + 1 : 1;
         findings.push({
             id: `interact-${Date.now()}-${findingCounter.count++}`,
@@ -176,7 +177,7 @@ export function evaluateInteractionRules(file: CodeFile, lines: string[], cleanC
     }
     // UI-INTERACT-07: Viewport Horizontal Overflow from w-screen
     if (/\bw-screen\b/i.test(cleanContent) && !/fixed|absolute/i.test(cleanContent)) {
-        const matchLineIdx = lines.findIndex(l => !l.trim().startsWith('//') && !l.trim().startsWith('*') && (/ui-interact-07|viewport/i.test(l) || lines.indexOf(l) === 0));
+        const matchLineIdx = locateMatchLine(lines, [/\bw-screen\b/i], l => !l.trim().startsWith('//') && !l.trim().startsWith('*'));
         const lineNum = matchLineIdx !== -1 ? matchLineIdx + 1 : 1;
         findings.push({
             id: `interact-${Date.now()}-${findingCounter.count++}`,
@@ -201,7 +202,7 @@ export function evaluateInteractionRules(file: CodeFile, lines: string[], cleanC
     }
     // UI-INTERACT-08: Hydration Mismatch from Client-Only Window Checks
     if (/typeof\s+window\s*!==\s*["\']undefined["\']\s*\?/i.test(cleanContent) && !/useEffect|useState/i.test(cleanContent)) {
-        const matchLineIdx = lines.findIndex(l => !l.trim().startsWith('//') && !l.trim().startsWith('*') && (/ui-interact-08|hydration/i.test(l) || lines.indexOf(l) === 0));
+        const matchLineIdx = locateMatchLine(lines, [/typeof\s+window\s*!==\s*["\']undefined["\']\s*\?/i], l => !l.trim().startsWith('//') && !l.trim().startsWith('*'));
         const lineNum = matchLineIdx !== -1 ? matchLineIdx + 1 : 1;
         findings.push({
             id: `interact-${Date.now()}-${findingCounter.count++}`,
@@ -226,7 +227,7 @@ export function evaluateInteractionRules(file: CodeFile, lines: string[], cleanC
     }
     // UI-INTERACT-09: Unvalidated Dynamic URL Query Parameters
     if (/searchParams\.get\([^)]+\)/i.test(cleanContent) && !/(?:includes|VALID_|default|switch|\|\|)/i.test(cleanContent)) {
-        const matchLineIdx = lines.findIndex(l => !l.trim().startsWith('//') && !l.trim().startsWith('*') && (/ui-interact-09|unvalidated/i.test(l) || lines.indexOf(l) === 0));
+        const matchLineIdx = locateMatchLine(lines, [/searchParams\.get\([^)]+\)/i], l => !l.trim().startsWith('//') && !l.trim().startsWith('*'));
         const lineNum = matchLineIdx !== -1 ? matchLineIdx + 1 : 1;
         findings.push({
             id: `interact-${Date.now()}-${findingCounter.count++}`,
@@ -251,7 +252,7 @@ export function evaluateInteractionRules(file: CodeFile, lines: string[], cleanC
     }
     // UI-INTERACT-10: Scroll Lock without Scrollbar Width Compensation
     if (/document\.body\.style\.overflow\s*=\s*["\']hidden["\']/i.test(cleanContent) && !/paddingRight|scrollbarWidth/i.test(cleanContent)) {
-        const matchLineIdx = lines.findIndex(l => !l.trim().startsWith('//') && !l.trim().startsWith('*') && (/ui-interact-10|scroll/i.test(l) || lines.indexOf(l) === 0));
+        const matchLineIdx = locateMatchLine(lines, [/document\.body\.style\.overflow\s*=\s*["\']hidden["\']/i], l => !l.trim().startsWith('//') && !l.trim().startsWith('*'));
         const lineNum = matchLineIdx !== -1 ? matchLineIdx + 1 : 1;
         findings.push({
             id: `interact-${Date.now()}-${findingCounter.count++}`,
@@ -278,7 +279,7 @@ export function evaluateInteractionRules(file: CodeFile, lines: string[], cleanC
     const submitButtons = cleanContent.match(/<button\b[^>]*\btype=["']submit["'][^>]*>/gi) || [];
     const hasUnprotectedSubmit = submitButtons.length > 0 && submitButtons.every(btn => !/\bdisabled\b|\bisSubmitting\b|\bisPending\b|\bloading\b/i.test(btn)) && !/isSubmitting|isPending|isSaving|loading/i.test(cleanContent);
     if (hasUnprotectedSubmit && /onSubmit/i.test(cleanContent)) {
-        const matchLineIdx = lines.findIndex(l => !l.trim().startsWith('//') && !l.trim().startsWith('*') && (/ui-interact-11|double-click/i.test(l) || lines.indexOf(l) === 0));
+        const matchLineIdx = locateMatchLine(lines, [/onSubmit/i], l => !l.trim().startsWith('//') && !l.trim().startsWith('*'));
         const lineNum = matchLineIdx !== -1 ? matchLineIdx + 1 : 1;
         findings.push({
             id: `interact-${Date.now()}-${findingCounter.count++}`,
@@ -303,7 +304,7 @@ export function evaluateInteractionRules(file: CodeFile, lines: string[], cleanC
     }
     // UI-INTERACT-12: Missing aria-expanded on Collapsible Accordion Triggers
     if (/accordion|collapsible/i.test(cleanContent) && /<button\b/i.test(cleanContent) && !/aria-expanded/i.test(cleanContent)) {
-        const matchLineIdx = lines.findIndex(l => !l.trim().startsWith('//') && !l.trim().startsWith('*') && (/ui-interact-12|missing/i.test(l) || lines.indexOf(l) === 0));
+        const matchLineIdx = locateMatchLine(lines, [/accordion|collapsible/i, /<button\b/i], l => !l.trim().startsWith('//') && !l.trim().startsWith('*'));
         const lineNum = matchLineIdx !== -1 ? matchLineIdx + 1 : 1;
         findings.push({
             id: `interact-${Date.now()}-${findingCounter.count++}`,
@@ -328,7 +329,7 @@ export function evaluateInteractionRules(file: CodeFile, lines: string[], cleanC
     }
     // UI-INTERACT-13: Transient Tooltip Disappearing on Hover
     if (/role=["\']tooltip["\']/i.test(cleanContent) && !/pointer-events-none/i.test(cleanContent)) {
-        const matchLineIdx = lines.findIndex(l => !l.trim().startsWith('//') && !l.trim().startsWith('*') && (/ui-interact-13|transient/i.test(l) || lines.indexOf(l) === 0));
+        const matchLineIdx = locateMatchLine(lines, [/role=["\']tooltip["\']/i], l => !l.trim().startsWith('//') && !l.trim().startsWith('*'));
         const lineNum = matchLineIdx !== -1 ? matchLineIdx + 1 : 1;
         findings.push({
             id: `interact-${Date.now()}-${findingCounter.count++}`,
@@ -353,7 +354,7 @@ export function evaluateInteractionRules(file: CodeFile, lines: string[], cleanC
     }
     // UI-INTERACT-14: Keyboard Tab Trap in Code / Text Area
     if (/<textarea\b/i.test(cleanContent) && /e\.key\s*===\s*["\']Tab["\']/i.test(cleanContent) && !/Escape/i.test(cleanContent)) {
-        const matchLineIdx = lines.findIndex(l => !l.trim().startsWith('//') && !l.trim().startsWith('*') && (/ui-interact-14|keyboard/i.test(l) || lines.indexOf(l) === 0));
+        const matchLineIdx = locateMatchLine(lines, [/<textarea\b/i, /e\.key\s*===\s*["\']Tab["\']/i], l => !l.trim().startsWith('//') && !l.trim().startsWith('*'));
         const lineNum = matchLineIdx !== -1 ? matchLineIdx + 1 : 1;
         findings.push({
             id: `interact-${Date.now()}-${findingCounter.count++}`,
@@ -378,7 +379,7 @@ export function evaluateInteractionRules(file: CodeFile, lines: string[], cleanC
     }
     // UI-INTERACT-15: Accidental Form Loss on Unsaved Navigation
     if ((cleanContent.match(/<input\b|<textarea\b/gi) || []).length > 5 && /onClose/i.test(cleanContent) && !/isDirty|confirm|dirty/i.test(cleanContent)) {
-        const matchLineIdx = lines.findIndex(l => !l.trim().startsWith('//') && !l.trim().startsWith('*') && (/ui-interact-15|accidental/i.test(l) || lines.indexOf(l) === 0));
+        const matchLineIdx = locateMatchLine(lines, [/onClose/i], l => !l.trim().startsWith('//') && !l.trim().startsWith('*'));
         const lineNum = matchLineIdx !== -1 ? matchLineIdx + 1 : 1;
         findings.push({
             id: `interact-${Date.now()}-${findingCounter.count++}`,
@@ -403,7 +404,7 @@ export function evaluateInteractionRules(file: CodeFile, lines: string[], cleanC
     }
     // UI-INTERACT-16: Dropdown Menu Leaking on Outside Document Click
     if (/dropdown|menu/i.test(lowerPath) && /isOpen|setIsOpen/i.test(cleanContent) && !/mousedown|pointerdown|outside|useClickOutside/i.test(cleanContent)) {
-        const matchLineIdx = lines.findIndex(l => !l.trim().startsWith('//') && !l.trim().startsWith('*') && (/ui-interact-16|dropdown/i.test(l) || lines.indexOf(l) === 0));
+        const matchLineIdx = locateMatchLine(lines, [/isOpen|setIsOpen/i], l => !l.trim().startsWith('//') && !l.trim().startsWith('*'));
         const lineNum = matchLineIdx !== -1 ? matchLineIdx + 1 : 1;
         findings.push({
             id: `interact-${Date.now()}-${findingCounter.count++}`,
@@ -428,7 +429,7 @@ export function evaluateInteractionRules(file: CodeFile, lines: string[], cleanC
     }
     // UI-INTERACT-17: Touch Target Overlap on Mobile Viewports
     if ((cleanContent.match(/<button\b/gi) || []).length >= 2 && /flex\s+(?:items-center\s+)?gap-(?:0|0\.5|1)(?!\.\d)\b/i.test(cleanContent) && /mobile/i.test(lowerPath)) {
-        const matchLineIdx = lines.findIndex(l => !l.trim().startsWith('//') && !l.trim().startsWith('*') && (/ui-interact-17|touch/i.test(l) || lines.indexOf(l) === 0));
+        const matchLineIdx = locateMatchLine(lines, [/flex\s+(?:items-center\s+)?gap-(?:0|0\.5|1)(?!\.\d)\b/i], l => !l.trim().startsWith('//') && !l.trim().startsWith('*'));
         const lineNum = matchLineIdx !== -1 ? matchLineIdx + 1 : 1;
         findings.push({
             id: `interact-${Date.now()}-${findingCounter.count++}`,
@@ -453,7 +454,7 @@ export function evaluateInteractionRules(file: CodeFile, lines: string[], cleanC
     }
     // UI-INTERACT-18: Focus Ring Clipped by overflow-hidden Containers
     if (/overflow-hidden/i.test(cleanContent) && /focus-visible:ring/i.test(cleanContent) && !/ring-offset|p-/i.test(cleanContent)) {
-        const matchLineIdx = lines.findIndex(l => !l.trim().startsWith('//') && !l.trim().startsWith('*') && (/ui-interact-18|focus/i.test(l) || lines.indexOf(l) === 0));
+        const matchLineIdx = locateMatchLine(lines, [/overflow-hidden/i, /focus-visible:ring/i], l => !l.trim().startsWith('//') && !l.trim().startsWith('*'));
         const lineNum = matchLineIdx !== -1 ? matchLineIdx + 1 : 1;
         findings.push({
             id: `interact-${Date.now()}-${findingCounter.count++}`,
@@ -478,7 +479,7 @@ export function evaluateInteractionRules(file: CodeFile, lines: string[], cleanC
     }
     // UI-INTERACT-19: Sticky Header Obscuring Hash-Anchored Section Titles
     if (/<h[2-4]\b[^>]*id=["\'][^"\']+["\']/i.test(cleanContent) && /href=["\']#[^"\']+["\']/i.test(cleanContent) && !/scroll-mt|scroll-margin/i.test(cleanContent) && /fixed|sticky/i.test(cleanContent)) {
-        const matchLineIdx = lines.findIndex(l => !l.trim().startsWith('//') && !l.trim().startsWith('*') && (/ui-interact-19|sticky/i.test(l) || lines.indexOf(l) === 0));
+        const matchLineIdx = locateMatchLine(lines, [/<h[2-4]\b[^>]*id=["\'][^"\']+["\']/i, /href=["\']#[^"\']+["\']/i, /fixed|sticky/i], l => !l.trim().startsWith('//') && !l.trim().startsWith('*'));
         const lineNum = matchLineIdx !== -1 ? matchLineIdx + 1 : 1;
         findings.push({
             id: `interact-${Date.now()}-${findingCounter.count++}`,
@@ -528,7 +529,7 @@ export function evaluateInteractionRules(file: CodeFile, lines: string[], cleanC
     }
     // UI-INTERACT-21: Clipboard Copy Button Lacking Confirmation State
     if (/clipboard\.writeText/i.test(cleanContent) && !/copied|isCopied|setCopied/i.test(cleanContent)) {
-        const matchLineIdx = lines.findIndex(l => !l.trim().startsWith('//') && !l.trim().startsWith('*') && (/ui-interact-21|clipboard/i.test(l) || lines.indexOf(l) === 0));
+        const matchLineIdx = locateMatchLine(lines, [/clipboard\.writeText/i], l => !l.trim().startsWith('//') && !l.trim().startsWith('*'));
         const lineNum = matchLineIdx !== -1 ? matchLineIdx + 1 : 1;
         findings.push({
             id: `interact-${Date.now()}-${findingCounter.count++}`,
@@ -553,7 +554,7 @@ export function evaluateInteractionRules(file: CodeFile, lines: string[], cleanC
     }
     // UI-INTERACT-22: Auto-Closing Notification Dismissal Too Fast
     if (/setTimeout\([^,]+,\s*(?:1000|1500|2000)\)/i.test(cleanContent) && /toast|alert/i.test(lowerPath)) {
-        const matchLineIdx = lines.findIndex(l => !l.trim().startsWith('//') && !l.trim().startsWith('*') && (/ui-interact-22|auto-closing/i.test(l) || lines.indexOf(l) === 0));
+        const matchLineIdx = locateMatchLine(lines, [/setTimeout\([^,]+,\s*(?:1000|1500|2000)\)/i], l => !l.trim().startsWith('//') && !l.trim().startsWith('*'));
         const lineNum = matchLineIdx !== -1 ? matchLineIdx + 1 : 1;
         findings.push({
             id: `interact-${Date.now()}-${findingCounter.count++}`,
@@ -578,7 +579,7 @@ export function evaluateInteractionRules(file: CodeFile, lines: string[], cleanC
     }
     // UI-INTERACT-23: Nested Button Invalid HTML Hierarchy
     if (/<button\b[^>]*>(?:(?!<\/button>)[\s\S])*?<button\b/i.test(cleanContent) || /<a\b[^>]*>(?:(?!<\/a>)[\s\S])*?<button\b/i.test(cleanContent)) {
-        const matchLineIdx = lines.findIndex(l => !l.trim().startsWith('//') && !l.trim().startsWith('*') && (/ui-interact-23|nested/i.test(l) || lines.indexOf(l) === 0));
+        const matchLineIdx = locateMatchLine(lines, [/<button\b[^>]*>(?:(?!<\/button>)[\s\S])*?<button\b/i, /<a\b[^>]*>(?:(?!<\/a>)[\s\S])*?<button\b/i], l => !l.trim().startsWith('//') && !l.trim().startsWith('*'));
         const lineNum = matchLineIdx !== -1 ? matchLineIdx + 1 : 1;
         findings.push({
             id: `interact-${Date.now()}-${findingCounter.count++}`,
@@ -603,7 +604,7 @@ export function evaluateInteractionRules(file: CodeFile, lines: string[], cleanC
     }
     // UI-INTERACT-24: Missing Loading State on Long Async Actions
     if (/onClick\s*=\s*\{async/i.test(cleanContent) && !/loading|pending|disabled|spinner/i.test(cleanContent)) {
-        const matchLineIdx = lines.findIndex(l => !l.trim().startsWith('//') && !l.trim().startsWith('*') && (/ui-interact-24|missing/i.test(l) || lines.indexOf(l) === 0));
+        const matchLineIdx = locateMatchLine(lines, [/onClick\s*=\s*\{async/i], l => !l.trim().startsWith('//') && !l.trim().startsWith('*'));
         const lineNum = matchLineIdx !== -1 ? matchLineIdx + 1 : 1;
         findings.push({
             id: `interact-${Date.now()}-${findingCounter.count++}`,
@@ -628,7 +629,7 @@ export function evaluateInteractionRules(file: CodeFile, lines: string[], cleanC
     }
     // UI-INTERACT-25: Unchecked File Upload Size and Type Traps
     if (/<input\b[^>]*type=["\']file["\'](?![^>]*(?:accept=|maxSize|size))/i.test(cleanContent)) {
-        const matchLineIdx = lines.findIndex(l => !l.trim().startsWith('//') && !l.trim().startsWith('*') && (/ui-interact-25|unchecked/i.test(l) || lines.indexOf(l) === 0));
+        const matchLineIdx = locateMatchLine(lines, [/<input\b[^>]*type=["\']file["\'](?![^>]*(?:accept=|maxSize|size))/i], l => !l.trim().startsWith('//') && !l.trim().startsWith('*'));
         const lineNum = matchLineIdx !== -1 ? matchLineIdx + 1 : 1;
         findings.push({
             id: `interact-${Date.now()}-${findingCounter.count++}`,
@@ -653,7 +654,7 @@ export function evaluateInteractionRules(file: CodeFile, lines: string[], cleanC
     }
     // UI-INTERACT-26: Search Input Missing Clear Button (X)
     if (/<input\b[^>]*type=["\']search["\'](?![^>]*(?:clear|reset|<X\b|SearchCheck))/i.test(cleanContent) && !/hasClear/i.test(cleanContent)) {
-        const matchLineIdx = lines.findIndex(l => !l.trim().startsWith('//') && !l.trim().startsWith('*') && (/ui-interact-26|search/i.test(l) || lines.indexOf(l) === 0));
+        const matchLineIdx = locateMatchLine(lines, [/<input\b[^>]*type=["\']search["\'](?![^>]*(?:clear|reset|<X\b|SearchCheck))/i], l => !l.trim().startsWith('//') && !l.trim().startsWith('*'));
         const lineNum = matchLineIdx !== -1 ? matchLineIdx + 1 : 1;
         findings.push({
             id: `interact-${Date.now()}-${findingCounter.count++}`,
@@ -678,7 +679,7 @@ export function evaluateInteractionRules(file: CodeFile, lines: string[], cleanC
     }
     // UI-INTERACT-27: Infinite Scroll Lacking Footer Access
     if (/infinite-scroll|useInfiniteQuery/i.test(cleanContent) && /<footer\b/i.test(cleanContent)) {
-        const matchLineIdx = lines.findIndex(l => !l.trim().startsWith('//') && !l.trim().startsWith('*') && (/ui-interact-27|infinite/i.test(l) || lines.indexOf(l) === 0));
+        const matchLineIdx = locateMatchLine(lines, [/infinite-scroll|useInfiniteQuery/i, /<footer\b/i], l => !l.trim().startsWith('//') && !l.trim().startsWith('*'));
         const lineNum = matchLineIdx !== -1 ? matchLineIdx + 1 : 1;
         findings.push({
             id: `interact-${Date.now()}-${findingCounter.count++}`,
@@ -703,7 +704,7 @@ export function evaluateInteractionRules(file: CodeFile, lines: string[], cleanC
     }
     // UI-INTERACT-28: Password Input Lacking Visibility Toggle
     if (/<input\b[^>]*type=["\']password["\']/i.test(cleanContent) && !/showPassword|togglePassword|Eye|EyeOff|showSecret|isPasswordVisible|revealPassword|toggle/i.test(cleanContent)) {
-        const matchLineIdx = lines.findIndex(l => !l.trim().startsWith('//') && !l.trim().startsWith('*') && (/ui-interact-28|password/i.test(l) || lines.indexOf(l) === 0));
+        const matchLineIdx = locateMatchLine(lines, [/<input\b[^>]*type=["\']password["\']/i], l => !l.trim().startsWith('//') && !l.trim().startsWith('*'));
         const lineNum = matchLineIdx !== -1 ? matchLineIdx + 1 : 1;
         findings.push({
             id: `interact-${Date.now()}-${findingCounter.count++}`,
@@ -728,7 +729,7 @@ export function evaluateInteractionRules(file: CodeFile, lines: string[], cleanC
     }
     // UI-INTERACT-29: Tab Component Lacking Arrow Key Keyboard Navigation
     if (/role=["\']tablist["\']/i.test(cleanContent) && !/ArrowRight|ArrowLeft|onKeyDown/i.test(cleanContent)) {
-        const matchLineIdx = lines.findIndex(l => !l.trim().startsWith('//') && !l.trim().startsWith('*') && (/ui-interact-29|tab/i.test(l) || lines.indexOf(l) === 0));
+        const matchLineIdx = locateMatchLine(lines, [/role=["\']tablist["\']/i], l => !l.trim().startsWith('//') && !l.trim().startsWith('*'));
         const lineNum = matchLineIdx !== -1 ? matchLineIdx + 1 : 1;
         findings.push({
             id: `interact-${Date.now()}-${findingCounter.count++}`,
@@ -753,7 +754,7 @@ export function evaluateInteractionRules(file: CodeFile, lines: string[], cleanC
     }
     // UI-INTERACT-30: Accordion Item Closing While User Is Typing Inside Form
     if (/AccordionItem/i.test(cleanContent) && /<form\b/i.test(cleanContent) && !/preventCollapse/i.test(cleanContent)) {
-        const matchLineIdx = lines.findIndex(l => !l.trim().startsWith('//') && !l.trim().startsWith('*') && (/ui-interact-30|accordion/i.test(l) || lines.indexOf(l) === 0));
+        const matchLineIdx = locateMatchLine(lines, [/AccordionItem/i, /<form\b/i], l => !l.trim().startsWith('//') && !l.trim().startsWith('*'));
         const lineNum = matchLineIdx !== -1 ? matchLineIdx + 1 : 1;
         findings.push({
             id: `interact-${Date.now()}-${findingCounter.count++}`,
@@ -778,7 +779,7 @@ export function evaluateInteractionRules(file: CodeFile, lines: string[], cleanC
     }
     // UI-INTERACT-31: Slider / Range Input Missing Numeric Value Label
     if (/<input\b[^>]*type=["\']range["\']/i.test(cleanContent) && !/aria-valuenow|aria-valuetext|aria-label|font-mono|minScore|\bvalue\b/i.test(cleanContent)) {
-        const matchLineIdx = lines.findIndex(l => !l.trim().startsWith('//') && !l.trim().startsWith('*') && (/ui-interact-31|slider/i.test(l) || lines.indexOf(l) === 0));
+        const matchLineIdx = locateMatchLine(lines, [/<input\b[^>]*type=["\']range["\']/i], l => !l.trim().startsWith('//') && !l.trim().startsWith('*'));
         const lineNum = matchLineIdx !== -1 ? matchLineIdx + 1 : 1;
         findings.push({
             id: `interact-${Date.now()}-${findingCounter.count++}`,
@@ -803,7 +804,7 @@ export function evaluateInteractionRules(file: CodeFile, lines: string[], cleanC
     }
     // UI-INTERACT-32: Audio / Video Auto-Play with Sound
     if (/<video\b[^>]*autoPlay(?![^>]*muted)/i.test(cleanContent)) {
-        const matchLineIdx = lines.findIndex(l => !l.trim().startsWith('//') && !l.trim().startsWith('*') && (/ui-interact-32|audio/i.test(l) || lines.indexOf(l) === 0));
+        const matchLineIdx = locateMatchLine(lines, [/<video\b[^>]*autoPlay(?![^>]*muted)/i], l => !l.trim().startsWith('//') && !l.trim().startsWith('*'));
         const lineNum = matchLineIdx !== -1 ? matchLineIdx + 1 : 1;
         findings.push({
             id: `interact-${Date.now()}-${findingCounter.count++}`,
@@ -853,7 +854,7 @@ export function evaluateInteractionRules(file: CodeFile, lines: string[], cleanC
     }
     // UI-INTERACT-34: Radio Button Group Missing Default Selection
     if (/<input\b[^>]*type=["\']radio["\'](?![^>]*(?:checked|defaultChecked))/i.test(cleanContent)) {
-        const matchLineIdx = lines.findIndex(l => !l.trim().startsWith('//') && !l.trim().startsWith('*') && (/ui-interact-34|radio/i.test(l) || lines.indexOf(l) === 0));
+        const matchLineIdx = locateMatchLine(lines, [/<input\b[^>]*type=["\']radio["\'](?![^>]*(?:checked|defaultChecked))/i], l => !l.trim().startsWith('//') && !l.trim().startsWith('*'));
         const lineNum = matchLineIdx !== -1 ? matchLineIdx + 1 : 1;
         findings.push({
             id: `interact-${Date.now()}-${findingCounter.count++}`,
@@ -878,7 +879,7 @@ export function evaluateInteractionRules(file: CodeFile, lines: string[], cleanC
     }
     // UI-INTERACT-35: Checkbox Label Click Area Disconnected
     if (/<label\b(?![^>]*htmlFor)[^>]*>[\s\S]*?<\/label>\s*<input\b[^>]*type=["\']checkbox["\']/i.test(cleanContent)) {
-        const matchLineIdx = lines.findIndex(l => !l.trim().startsWith('//') && !l.trim().startsWith('*') && (/ui-interact-35|checkbox/i.test(l) || lines.indexOf(l) === 0));
+        const matchLineIdx = locateMatchLine(lines, [/<label\b(?![^>]*htmlFor)[^>]*>[\s\S]*?<\/label>\s*<input\b[^>]*type=["\']checkbox["\']/i], l => !l.trim().startsWith('//') && !l.trim().startsWith('*'));
         const lineNum = matchLineIdx !== -1 ? matchLineIdx + 1 : 1;
         findings.push({
             id: `interact-${Date.now()}-${findingCounter.count++}`,
@@ -903,7 +904,7 @@ export function evaluateInteractionRules(file: CodeFile, lines: string[], cleanC
     }
     // UI-INTERACT-36: Auto-Complete Dropdown Obscuring Submit Button
     if (/autocomplete-dropdown|suggestions-menu/i.test(cleanContent) && !/max-h-|maxHeight/i.test(cleanContent)) {
-        const matchLineIdx = lines.findIndex(l => !l.trim().startsWith('//') && !l.trim().startsWith('*') && (/ui-interact-36|auto-complete/i.test(l) || lines.indexOf(l) === 0));
+        const matchLineIdx = locateMatchLine(lines, [/autocomplete-dropdown|suggestions-menu/i], l => !l.trim().startsWith('//') && !l.trim().startsWith('*'));
         const lineNum = matchLineIdx !== -1 ? matchLineIdx + 1 : 1;
         findings.push({
             id: `interact-${Date.now()}-${findingCounter.count++}`,
@@ -953,7 +954,7 @@ export function evaluateInteractionRules(file: CodeFile, lines: string[], cleanC
     }
     // UI-INTERACT-38: Context Menu Trigger Colliding with Mobile Long-Press
     if (/onContextMenu/i.test(cleanContent) && !/onTouchHold|longPress|contextMenuButton/i.test(cleanContent)) {
-        const matchLineIdx = lines.findIndex(l => !l.trim().startsWith('//') && !l.trim().startsWith('*') && (/ui-interact-38|context/i.test(l) || lines.indexOf(l) === 0));
+        const matchLineIdx = locateMatchLine(lines, [/onContextMenu/i], l => !l.trim().startsWith('//') && !l.trim().startsWith('*'));
         const lineNum = matchLineIdx !== -1 ? matchLineIdx + 1 : 1;
         findings.push({
             id: `interact-${Date.now()}-${findingCounter.count++}`,
@@ -978,7 +979,7 @@ export function evaluateInteractionRules(file: CodeFile, lines: string[], cleanC
     }
     // UI-INTERACT-39: Missing Confirmation on Destructive Delete Actions
     if (/handleDelete|deleteProject|onDelete/i.test(cleanContent) && !/confirm|modal|isDeleteModalOpen|Prompt/i.test(cleanContent)) {
-        const matchLineIdx = lines.findIndex(l => !l.trim().startsWith('//') && !l.trim().startsWith('*') && (/ui-interact-39|missing/i.test(l) || lines.indexOf(l) === 0));
+        const matchLineIdx = locateMatchLine(lines, [/handleDelete|deleteProject|onDelete/i], l => !l.trim().startsWith('//') && !l.trim().startsWith('*'));
         const lineNum = matchLineIdx !== -1 ? matchLineIdx + 1 : 1;
         findings.push({
             id: `interact-${Date.now()}-${findingCounter.count++}`,
@@ -1003,7 +1004,7 @@ export function evaluateInteractionRules(file: CodeFile, lines: string[], cleanC
     }
     // UI-INTERACT-40: Interactive Chart Missing Keyboard Accessible Data Table
     if (/<(?:ResponsiveContainer|BarChart|LineChart|PieChart)\b/i.test(cleanContent) && !/aria-label|role=["\']img["\']|summary|table/i.test(cleanContent)) {
-        const matchLineIdx = lines.findIndex(l => !l.trim().startsWith('//') && !l.trim().startsWith('*') && (/ui-interact-40|interactive/i.test(l) || lines.indexOf(l) === 0));
+        const matchLineIdx = locateMatchLine(lines, [/<(?:ResponsiveContainer|BarChart|LineChart|PieChart)\b/i], l => !l.trim().startsWith('//') && !l.trim().startsWith('*'));
         const lineNum = matchLineIdx !== -1 ? matchLineIdx + 1 : 1;
         findings.push({
             id: `interact-${Date.now()}-${findingCounter.count++}`,
@@ -1028,7 +1029,7 @@ export function evaluateInteractionRules(file: CodeFile, lines: string[], cleanC
     }
     // UI-INTERACT-41: Draggable Kanban / List Lacking Keyboard Reordering
     if (/Draggable|droppable/i.test(cleanContent) && !/dragHandleProps|keyboardEvents/i.test(cleanContent)) {
-        const matchLineIdx = lines.findIndex(l => !l.trim().startsWith('//') && !l.trim().startsWith('*') && (/ui-interact-41|draggable/i.test(l) || lines.indexOf(l) === 0));
+        const matchLineIdx = locateMatchLine(lines, [/Draggable|droppable/i], l => !l.trim().startsWith('//') && !l.trim().startsWith('*'));
         const lineNum = matchLineIdx !== -1 ? matchLineIdx + 1 : 1;
         findings.push({
             id: `interact-${Date.now()}-${findingCounter.count++}`,
@@ -1053,7 +1054,7 @@ export function evaluateInteractionRules(file: CodeFile, lines: string[], cleanC
     }
     // UI-INTERACT-42: Sticky Elements Overlapping Floating Action Buttons
     if (/fixed\s+bottom-(?:4|6|8)/i.test(cleanContent) && /sticky\s+bottom-0/i.test(cleanContent)) {
-        const matchLineIdx = lines.findIndex(l => !l.trim().startsWith('//') && !l.trim().startsWith('*') && (/ui-interact-42|sticky/i.test(l) || lines.indexOf(l) === 0));
+        const matchLineIdx = locateMatchLine(lines, [/fixed\s+bottom-(?:4|6|8)/i, /sticky\s+bottom-0/i], l => !l.trim().startsWith('//') && !l.trim().startsWith('*'));
         const lineNum = matchLineIdx !== -1 ? matchLineIdx + 1 : 1;
         findings.push({
             id: `interact-${Date.now()}-${findingCounter.count++}`,
@@ -1078,7 +1079,7 @@ export function evaluateInteractionRules(file: CodeFile, lines: string[], cleanC
     }
     // UI-INTERACT-43: Form Submission Resetting Cursor Position in Controlled Input
     if (/onChange\s*=\s*\{\s*\(e\)\s*=>\s*setValue\(e\.target\.value\.replace/i.test(cleanContent) && !/selectionStart/i.test(cleanContent)) {
-        const matchLineIdx = lines.findIndex(l => !l.trim().startsWith('//') && !l.trim().startsWith('*') && (/ui-interact-43|form/i.test(l) || lines.indexOf(l) === 0));
+        const matchLineIdx = locateMatchLine(lines, [/onChange\s*=\s*\{\s*\(e\)\s*=>\s*setValue\(e\.target\.value\.replace/i], l => !l.trim().startsWith('//') && !l.trim().startsWith('*'));
         const lineNum = matchLineIdx !== -1 ? matchLineIdx + 1 : 1;
         findings.push({
             id: `interact-${Date.now()}-${findingCounter.count++}`,
@@ -1103,7 +1104,7 @@ export function evaluateInteractionRules(file: CodeFile, lines: string[], cleanC
     }
     // UI-INTERACT-44: Broken Zoom Affordance on Pinch Gestures
     if (/user-scalable\s*=\s*no|maximum-scale\s*=\s*1(?:\.0)?\b/i.test(cleanContent)) {
-        const matchLineIdx = lines.findIndex(l => !l.trim().startsWith('//') && !l.trim().startsWith('*') && (/ui-interact-44|broken/i.test(l) || lines.indexOf(l) === 0));
+        const matchLineIdx = locateMatchLine(lines, [/user-scalable\s*=\s*no|maximum-scale\s*=\s*1(?:\.0)?\b/i], l => !l.trim().startsWith('//') && !l.trim().startsWith('*'));
         const lineNum = matchLineIdx !== -1 ? matchLineIdx + 1 : 1;
         findings.push({
             id: `interact-${Date.now()}-${findingCounter.count++}`,
@@ -1153,7 +1154,7 @@ export function evaluateInteractionRules(file: CodeFile, lines: string[], cleanC
     }
     // UI-INTERACT-46: Missing Empty State Action Button
     if (/No\s*(?:items|results|data)\s*found/i.test(cleanContent) && !/<button\b|<Link\b/i.test(cleanContent)) {
-        const matchLineIdx = lines.findIndex(l => !l.trim().startsWith('//') && !l.trim().startsWith('*') && (/ui-interact-46|missing/i.test(l) || lines.indexOf(l) === 0));
+        const matchLineIdx = locateMatchLine(lines, [/No\s*(?:items|results|data)\s*found/i], l => !l.trim().startsWith('//') && !l.trim().startsWith('*'));
         const lineNum = matchLineIdx !== -1 ? matchLineIdx + 1 : 1;
         findings.push({
             id: `interact-${Date.now()}-${findingCounter.count++}`,
@@ -1178,7 +1179,7 @@ export function evaluateInteractionRules(file: CodeFile, lines: string[], cleanC
     }
     // UI-INTERACT-47: Animated Counter Freezing on Rapid Page Scroll
     if (/useCountUp|requestAnimationFrame/i.test(cleanContent) && !/cancelAnimationFrame|clean/i.test(cleanContent)) {
-        const matchLineIdx = lines.findIndex(l => !l.trim().startsWith('//') && !l.trim().startsWith('*') && (/ui-interact-47|animated/i.test(l) || lines.indexOf(l) === 0));
+        const matchLineIdx = locateMatchLine(lines, [/useCountUp|requestAnimationFrame/i], l => !l.trim().startsWith('//') && !l.trim().startsWith('*'));
         const lineNum = matchLineIdx !== -1 ? matchLineIdx + 1 : 1;
         findings.push({
             id: `interact-${Date.now()}-${findingCounter.count++}`,
@@ -1203,7 +1204,7 @@ export function evaluateInteractionRules(file: CodeFile, lines: string[], cleanC
     }
     // UI-INTERACT-48: Multi-Step Wizard Lacking Step History Navigation
     if (/step|wizard/i.test(lowerPath) && /currentStep/i.test(cleanContent) && !/history|hash|pushState|replaceState/i.test(cleanContent)) {
-        const matchLineIdx = lines.findIndex(l => !l.trim().startsWith('//') && !l.trim().startsWith('*') && (/ui-interact-48|multi-step/i.test(l) || lines.indexOf(l) === 0));
+        const matchLineIdx = locateMatchLine(lines, [/currentStep/i], l => !l.trim().startsWith('//') && !l.trim().startsWith('*'));
         const lineNum = matchLineIdx !== -1 ? matchLineIdx + 1 : 1;
         findings.push({
             id: `interact-${Date.now()}-${findingCounter.count++}`,
@@ -1228,7 +1229,7 @@ export function evaluateInteractionRules(file: CodeFile, lines: string[], cleanC
     }
     // UI-INTERACT-49: Unescaped Error Message Rendering in UI Alert
     if (/<(?:Alert|Badge|p)\b[^>]*>\{error\.message\}<\//i.test(cleanContent) && !/sanitize|userMessage/i.test(cleanContent)) {
-        const matchLineIdx = lines.findIndex(l => !l.trim().startsWith('//') && !l.trim().startsWith('*') && (/ui-interact-49|unescaped/i.test(l) || lines.indexOf(l) === 0));
+        const matchLineIdx = locateMatchLine(lines, [/<(?:Alert|Badge|p)\b[^>]*>\{error\.message\}<\//i], l => !l.trim().startsWith('//') && !l.trim().startsWith('*'));
         const lineNum = matchLineIdx !== -1 ? matchLineIdx + 1 : 1;
         findings.push({
             id: `interact-${Date.now()}-${findingCounter.count++}`,
@@ -1253,7 +1254,7 @@ export function evaluateInteractionRules(file: CodeFile, lines: string[], cleanC
     }
     // UI-INTERACT-50: Scanner Countdown Missing Zero-Second Transition
     if (/countdownSeconds\s*===?\s*0\b/i.test(cleanContent) && !/onComplete|completeScan|router\.push/i.test(cleanContent)) {
-        const matchLineIdx = lines.findIndex(l => !l.trim().startsWith('//') && !l.trim().startsWith('*') && (/ui-interact-50|scanner/i.test(l) || lines.indexOf(l) === 0));
+        const matchLineIdx = locateMatchLine(lines, [/countdownSeconds\s*===?\s*0\b/i], l => !l.trim().startsWith('//') && !l.trim().startsWith('*'));
         const lineNum = matchLineIdx !== -1 ? matchLineIdx + 1 : 1;
         findings.push({
             id: `interact-${Date.now()}-${findingCounter.count++}`,

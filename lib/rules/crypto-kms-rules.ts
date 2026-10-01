@@ -4,6 +4,7 @@
  */
 import { Finding } from "@/data/schema";
 import { CodeFile } from "../scanner-engine";
+import { locateMatchLine } from './shared/locate';
 export interface CryptoKmsRuleResult {
     findings: Finding[];
     logs: string[];
@@ -15,13 +16,13 @@ export function evaluateCryptoKmsRules(file: CodeFile, lines: string[], cleanCon
     const logs: string[] = [];
     const lowerPath = file.path.toLowerCase().replace(/\\/g, "/");
     // Skip self-referential catalogs, mocks, and schema definitions
-    if (lowerPath.includes("data/catalogs/") || lowerPath.includes("data/mockdata") || lowerPath.includes("data/workspacefiles") || lowerPath.includes("data/schema") || lowerPath.includes("scratch/") || lowerPath.includes(".agent/") || lowerPath.includes("node_modules/") || lowerPath.endsWith(".d.ts")) {
+    if (lowerPath.includes("node_modules/") || lowerPath.endsWith(".d.ts")) {
         return { findings, logs };
     }
     const ts = new Date().toLocaleTimeString();
     // CRYPTO-01: Hardcoded Cryptographic Keys and Static Salts in Source Code
     if (/(?:aesKey|secretKey)\s*[:=]\s*["'][a-zA-Z0-9+/=_-]{16,}["']/i.test(cleanContent) && !/process\.env/i.test(cleanContent)) {
-        const matchLineIdx = lines.findIndex(l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('#') && !l.trim().startsWith('*'));
+        const matchLineIdx = locateMatchLine(lines, [/(?:aesKey|secretKey)\s*[:=]\s*["'][a-zA-Z0-9+/=_-]{16,}["']/i], l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('#') && !l.trim().startsWith('*'));
         const lineNum = matchLineIdx !== -1 ? matchLineIdx + 1 : 1;
         findings.push({
             id: `crypto13301-${Date.now()}-${findingCounter.count++}`,
@@ -35,7 +36,7 @@ export function evaluateCryptoKmsRules(file: CodeFile, lines: string[], cleanCon
             snippet: lines[matchLineIdx] || 'Enterprise KMS configuration',
             reproductionSteps: [
                 `Audited Enterprise KMS configuration in ${file.path}:${lineNum}.`,
-                'Detected violation matching {code}.'
+                'Matched CRYPTO-01: Hardcoded Cryptographic Keys and Static Salts in Source Code.'
             ],
             remediationPrompt: "Disallow static cryptographic keys in source code; retrieve key material from dedicated KMS or HSM.",
             status: 'OPEN',
@@ -45,7 +46,7 @@ export function evaluateCryptoKmsRules(file: CodeFile, lines: string[], cleanCon
     }
     // CRYPTO-02: Missing Automated Master Key Rotation Schedule Exceeding 90 Days
     if ((/kmsKey/i.test(cleanContent) && !/enableKeyRotation/i.test(cleanContent))) {
-        const matchLineIdx = lines.findIndex(l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('#') && !l.trim().startsWith('*'));
+        const matchLineIdx = locateMatchLine(lines, [/kmsKey/i], l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('#') && !l.trim().startsWith('*'));
         const lineNum = matchLineIdx !== -1 ? matchLineIdx + 1 : 1;
         findings.push({
             id: `crypto13302-${Date.now()}-${findingCounter.count++}`,
@@ -59,7 +60,7 @@ export function evaluateCryptoKmsRules(file: CodeFile, lines: string[], cleanCon
             snippet: lines[matchLineIdx] || 'Enterprise KMS configuration',
             reproductionSteps: [
                 `Audited Enterprise KMS configuration in ${file.path}:${lineNum}.`,
-                'Detected violation matching {code}.'
+                'Matched CRYPTO-02: Missing Automated Master Key Rotation Schedule Exceeding 90 Days.'
             ],
             remediationPrompt: "Enforce automated 90-day cryptographic key rotation on all envelope encryption KMS master keys.",
             status: 'OPEN',
@@ -69,7 +70,7 @@ export function evaluateCryptoKmsRules(file: CodeFile, lines: string[], cleanCon
     }
     // CRYPTO-03: Insecure Legacy Cipher Modes Permitted (AES-ECB / Unauthenticated CBC)
     if ((/(?:aes-128-ecb|aes-256-ecb)/i.test(cleanContent))) {
-        const matchLineIdx = lines.findIndex(l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('#') && !l.trim().startsWith('*'));
+        const matchLineIdx = locateMatchLine(lines, [/(?:aes-128-ecb|aes-256-ecb)/i], l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('#') && !l.trim().startsWith('*'));
         const lineNum = matchLineIdx !== -1 ? matchLineIdx + 1 : 1;
         findings.push({
             id: `crypto13303-${Date.now()}-${findingCounter.count++}`,
@@ -83,7 +84,7 @@ export function evaluateCryptoKmsRules(file: CodeFile, lines: string[], cleanCon
             snippet: lines[matchLineIdx] || 'Enterprise KMS configuration',
             reproductionSteps: [
                 `Audited Enterprise KMS configuration in ${file.path}:${lineNum}.`,
-                'Detected violation matching {code}.'
+                'Matched CRYPTO-03: Insecure Legacy Cipher Modes Permitted (AES-ECB / Unauthenticated CBC).'
             ],
             remediationPrompt: "Enforce authenticated AEAD encryption (AES-256-GCM or ChaCha20-Poly1305); reject ECB and unauthenticated CBC.",
             status: 'OPEN',
@@ -93,7 +94,7 @@ export function evaluateCryptoKmsRules(file: CodeFile, lines: string[], cleanCon
     }
     // CRYPTO-04: Cryptographic Nonce Reuse in Galois/Counter Mode (GCM) Encryption
     if ((/createCipheriv.*gcm/i.test(cleanContent) && !/randomBytes/i.test(cleanContent))) {
-        const matchLineIdx = lines.findIndex(l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('#') && !l.trim().startsWith('*'));
+        const matchLineIdx = locateMatchLine(lines, [/createCipheriv.*gcm/i], l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('#') && !l.trim().startsWith('*'));
         const lineNum = matchLineIdx !== -1 ? matchLineIdx + 1 : 1;
         findings.push({
             id: `crypto13304-${Date.now()}-${findingCounter.count++}`,
@@ -107,7 +108,7 @@ export function evaluateCryptoKmsRules(file: CodeFile, lines: string[], cleanCon
             snippet: lines[matchLineIdx] || 'Enterprise KMS configuration',
             reproductionSteps: [
                 `Audited Enterprise KMS configuration in ${file.path}:${lineNum}.`,
-                'Detected violation matching {code}.'
+                'Matched CRYPTO-04: Cryptographic Nonce Reuse in Galois/Counter Mode (GCM) Encryption.'
             ],
             remediationPrompt: "Ensure unique 96-bit initialization vectors/nonces per encryption operation to prevent plaintext recovery.",
             status: 'OPEN',
@@ -117,7 +118,7 @@ export function evaluateCryptoKmsRules(file: CodeFile, lines: string[], cleanCon
     }
     // CRYPTO-05: Weak Asymmetric Key Strengths (RSA < 3072 bits or ECC < 256 bits)
     if ((/generateKeyPair.*rsa/i.test(cleanContent))) {
-        const matchLineIdx = lines.findIndex(l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('#') && !l.trim().startsWith('*'));
+        const matchLineIdx = locateMatchLine(lines, [/generateKeyPair.*rsa/i], l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('#') && !l.trim().startsWith('*'));
         const lineNum = matchLineIdx !== -1 ? matchLineIdx + 1 : 1;
         findings.push({
             id: `crypto13305-${Date.now()}-${findingCounter.count++}`,
@@ -131,7 +132,7 @@ export function evaluateCryptoKmsRules(file: CodeFile, lines: string[], cleanCon
             snippet: lines[matchLineIdx] || 'Enterprise KMS configuration',
             reproductionSteps: [
                 `Audited Enterprise KMS configuration in ${file.path}:${lineNum}.`,
-                'Detected violation matching {code}.'
+                'Matched CRYPTO-05: Weak Asymmetric Key Strengths (RSA < 3072 bits or ECC < 256 bits).'
             ],
             remediationPrompt: "Mandate minimum RSA-3072 or ECC P-256 / Ed25519 for all digital signatures and key exchange.",
             status: 'OPEN',

@@ -4,6 +4,7 @@
  */
 import { Finding } from '@/data/schema';
 import { CodeFile } from '../scanner-engine';
+import { locateMatchLine } from './shared/locate';
 export interface PrivacyComplianceRuleResult {
     findings: Finding[];
     logs: string[];
@@ -15,13 +16,13 @@ export function evaluatePrivacyComplianceRules(file: CodeFile, lines: string[], 
     const logs: string[] = [];
     const lowerPath = file.path.toLowerCase().replace(/\\/g, '/');
     // Skip self-referential catalogs, mocks, and schema definitions
-    if (lowerPath.includes('data/catalogs/') || lowerPath.includes('data/mockdata') || lowerPath.includes('data/workspacefiles') || lowerPath.includes('data/schema') || lowerPath.includes('scratch/') || lowerPath.includes('.agent/') || lowerPath.includes('node_modules/') || lowerPath.endsWith('.d.ts')) {
+    if (lowerPath.includes('node_modules/') || lowerPath.endsWith('.d.ts')) {
         return { findings, logs };
     }
     const ts = new Date().toLocaleTimeString();
     // PRIVACY-01: Plaintext PII Logged to Standard Output / Console
     if (/console\.(?:log|info|warn|error)\s*\([^)]*(?:password|creditCard|ssn|rawSecret|userSecret)[^)]*\)/i.test(cleanContent) && !/test|spec|mock/i.test(lowerPath)) {
-        const matchLineIdx = lines.findIndex(l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('*') && (/privacy-01|plaintext/i.test(l) || lines.indexOf(l) === 0));
+        const matchLineIdx = locateMatchLine(lines, [/console\.(?:log|info|warn|error)\s*\([^)]*(?:password|creditCard|ssn|rawSecret|userSecret)[^)]*\)/i], l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('*'));
         const lineNum = matchLineIdx !== -1 ? matchLineIdx + 1 : 1;
         findings.push({
             id: `privacy01-${Date.now()}-${findingCounter.count++}`,
@@ -46,7 +47,7 @@ export function evaluatePrivacyComplianceRules(file: CodeFile, lines: string[], 
     }
     // PRIVACY-02: Third-Party Tracking Scripts Injected Before Cookie Consent
     if (/<Script[^>]*src=["\']https:\/\/(?:www\.google-analytics\.com|connect\.facebook\.net)[^"\']*["\'][^>]*>/i.test(cleanContent) && !/hasConsented|cookieConsent/i.test(cleanContent)) {
-        const matchLineIdx = lines.findIndex(l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('*') && (/privacy-02|third-party/i.test(l) || lines.indexOf(l) === 0));
+        const matchLineIdx = locateMatchLine(lines, [/<Script[^>]*src=["\']https:\/\/(?:www\.google-analytics\.com|connect\.facebook\.net)[^"\']*["\'][^>]*>/i], l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('*'));
         const lineNum = matchLineIdx !== -1 ? matchLineIdx + 1 : 1;
         findings.push({
             id: `privacy02-${Date.now()}-${findingCounter.count++}`,
@@ -71,7 +72,7 @@ export function evaluatePrivacyComplianceRules(file: CodeFile, lines: string[], 
     }
     // PRIVACY-03: Missing Right-to-be-Forgotten (RTBF) Cascading Deletion Hooks
     if (/deleteUserAccount|purgeProfile/i.test(cleanContent) && !/cascade|deleteMany|purgeRelatedData/i.test(cleanContent)) {
-        const matchLineIdx = lines.findIndex(l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('*') && (/privacy-03|missing/i.test(l) || lines.indexOf(l) === 0));
+        const matchLineIdx = locateMatchLine(lines, [/deleteUserAccount|purgeProfile/i], l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('*'));
         const lineNum = matchLineIdx !== -1 ? matchLineIdx + 1 : 1;
         findings.push({
             id: `privacy03-${Date.now()}-${findingCounter.count++}`,
@@ -96,7 +97,7 @@ export function evaluatePrivacyComplianceRules(file: CodeFile, lines: string[], 
     }
     // PRIVACY-04: Unencrypted Database Backups Stored in Cloud Storage Buckets
     if (/pg_dump\s+.*>\s*.*\.sql\b/i.test(cleanContent) && !/gpg|openssl|kms/i.test(cleanContent)) {
-        const matchLineIdx = lines.findIndex(l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('*') && (/privacy-04|unencrypted/i.test(l) || lines.indexOf(l) === 0));
+        const matchLineIdx = locateMatchLine(lines, [/pg_dump\s+.*>\s*.*\.sql\b/i], l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('*'));
         const lineNum = matchLineIdx !== -1 ? matchLineIdx + 1 : 1;
         findings.push({
             id: `privacy04-${Date.now()}-${findingCounter.count++}`,
@@ -121,7 +122,7 @@ export function evaluatePrivacyComplianceRules(file: CodeFile, lines: string[], 
     }
     // PRIVACY-05: Cross-Border Customer Data Transfer Without Legal Safeguards
     if (/euCustomerDataReplication/i.test(cleanContent) && !/scc|standardContractualClauses/i.test(cleanContent)) {
-        const matchLineIdx = lines.findIndex(l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('*') && (/privacy-05|cross-border/i.test(l) || lines.indexOf(l) === 0));
+        const matchLineIdx = locateMatchLine(lines, [/euCustomerDataReplication/i], l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('*'));
         const lineNum = matchLineIdx !== -1 ? matchLineIdx + 1 : 1;
         findings.push({
             id: `privacy05-${Date.now()}-${findingCounter.count++}`,
@@ -146,7 +147,7 @@ export function evaluatePrivacyComplianceRules(file: CodeFile, lines: string[], 
     }
     // PRIVACY-06: Storage of Personal Data Beyond Defined Retention Schedules
     if (/userAuditLogsTable|rawCustomerEvents/i.test(cleanContent) && !/retentionDays|purgeExpiredLogs/i.test(cleanContent)) {
-        const matchLineIdx = lines.findIndex(l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('*') && (/privacy-06|storage/i.test(l) || lines.indexOf(l) === 0));
+        const matchLineIdx = locateMatchLine(lines, [/userAuditLogsTable|rawCustomerEvents/i], l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('*'));
         const lineNum = matchLineIdx !== -1 ? matchLineIdx + 1 : 1;
         findings.push({
             id: `privacy06-${Date.now()}-${findingCounter.count++}`,
@@ -171,7 +172,7 @@ export function evaluatePrivacyComplianceRules(file: CodeFile, lines: string[], 
     }
     // PRIVACY-07: Unmasked PII Forwarded to Third-Party Error Trackers (Sentry)
     if (/Sentry\.init\s*\(\{[\s\S]*?sendDefaultPii:\s*true/i.test(cleanContent) && !/beforeSend/i.test(cleanContent)) {
-        const matchLineIdx = lines.findIndex(l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('*') && (/privacy-07|unmasked/i.test(l) || lines.indexOf(l) === 0));
+        const matchLineIdx = locateMatchLine(lines, [/Sentry\.init\s*\(\{[\s\S]*?sendDefaultPii:\s*true/i], l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('*'));
         const lineNum = matchLineIdx !== -1 ? matchLineIdx + 1 : 1;
         findings.push({
             id: `privacy07-${Date.now()}-${findingCounter.count++}`,
@@ -221,7 +222,7 @@ export function evaluatePrivacyComplianceRules(file: CodeFile, lines: string[], 
     }
     // PRIVACY-09: Unrestricted Access to Sensitive Personal Health Information (PHI)
     if (/medicalRecords|patientDiagnostics/i.test(cleanContent) && !/auditLog|phiEncryption/i.test(cleanContent)) {
-        const matchLineIdx = lines.findIndex(l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('*') && (/privacy-09|unrestricted/i.test(l) || lines.indexOf(l) === 0));
+        const matchLineIdx = locateMatchLine(lines, [/medicalRecords|patientDiagnostics/i], l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('*'));
         const lineNum = matchLineIdx !== -1 ? matchLineIdx + 1 : 1;
         findings.push({
             id: `privacy09-${Date.now()}-${findingCounter.count++}`,
@@ -271,7 +272,7 @@ export function evaluatePrivacyComplianceRules(file: CodeFile, lines: string[], 
     }
     // PRIVACY-11: Unencrypted Sensitive Fields in Database Tables (SSN, ID)
     if (/ssn\s*:\s*(?:String|Text|VARCHAR)\b/i.test(cleanContent) && !/encrypted/i.test(cleanContent)) {
-        const matchLineIdx = lines.findIndex(l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('*') && (/privacy-11|unencrypted/i.test(l) || lines.indexOf(l) === 0));
+        const matchLineIdx = locateMatchLine(lines, [/ssn\s*:\s*(?:String|Text|VARCHAR)\b/i], l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('*'));
         const lineNum = matchLineIdx !== -1 ? matchLineIdx + 1 : 1;
         findings.push({
             id: `privacy11-${Date.now()}-${findingCounter.count++}`,
@@ -321,7 +322,7 @@ export function evaluatePrivacyComplianceRules(file: CodeFile, lines: string[], 
     }
     // PRIVACY-13: Broad Consent Bundling with Terms of Service Acceptance
     if (/<input[^>]*type=["\']checkbox["\'][^>]*>.*agree to Terms.*and receive marketing emails/i.test(cleanContent)) {
-        const matchLineIdx = lines.findIndex(l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('*') && (/privacy-13|broad/i.test(l) || lines.indexOf(l) === 0));
+        const matchLineIdx = locateMatchLine(lines, [/<input[^>]*type=["\']checkbox["\'][^>]*>.*agree to Terms.*and receive marketing emails/i], l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('*'));
         const lineNum = matchLineIdx !== -1 ? matchLineIdx + 1 : 1;
         findings.push({
             id: `privacy13-${Date.now()}-${findingCounter.count++}`,
@@ -371,7 +372,7 @@ export function evaluatePrivacyComplianceRules(file: CodeFile, lines: string[], 
     }
     // PRIVACY-15: Unprotected Exposure of Customer PII in URL Query Strings
     if (/(?:router\.push|window\.location\.href\s*=)\s*`[^`]*[?&]email=\$\{/i.test(cleanContent) && !/test|spec|mock/i.test(lowerPath)) {
-        const matchLineIdx = lines.findIndex(l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('*') && (/privacy-15|unprotected/i.test(l) || lines.indexOf(l) === 0));
+        const matchLineIdx = locateMatchLine(lines, [/(?:router\.push|window\.location\.href\s*=)\s*`[^`]*[?&]email=\$\{/i], l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('*'));
         const lineNum = matchLineIdx !== -1 ? matchLineIdx + 1 : 1;
         findings.push({
             id: `privacy15-${Date.now()}-${findingCounter.count++}`,
@@ -421,7 +422,7 @@ export function evaluatePrivacyComplianceRules(file: CodeFile, lines: string[], 
     }
     // PRIVACY-17: Insecure Transmission of Payment Cardholder Data (PCI DSS)
     if (/cardNumber/i.test(cleanContent) && /cvv/i.test(cleanContent) && !/token|stripe|tokenize/i.test(cleanContent) && !/test|mock|spec/i.test(lowerPath)) {
-        const matchLineIdx = lines.findIndex(l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('*') && (/privacy-17|insecure/i.test(l) || lines.indexOf(l) === 0));
+        const matchLineIdx = locateMatchLine(lines, [/cardNumber/i, /cvv/i], l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('*'));
         const lineNum = matchLineIdx !== -1 ? matchLineIdx + 1 : 1;
         findings.push({
             id: `privacy17-${Date.now()}-${findingCounter.count++}`,
@@ -471,7 +472,7 @@ export function evaluatePrivacyComplianceRules(file: CodeFile, lines: string[], 
     }
     // PRIVACY-19: Unrestricted Internal Employee Access to Customer Personal Data
     if (/dbAdminPortalHandler/i.test(cleanContent) && !/justInTimeApproval|auditAccess/i.test(cleanContent)) {
-        const matchLineIdx = lines.findIndex(l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('*') && (/privacy-19|unrestricted/i.test(l) || lines.indexOf(l) === 0));
+        const matchLineIdx = locateMatchLine(lines, [/dbAdminPortalHandler/i], l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('*'));
         const lineNum = matchLineIdx !== -1 ? matchLineIdx + 1 : 1;
         findings.push({
             id: `privacy19-${Date.now()}-${findingCounter.count++}`,
@@ -496,7 +497,7 @@ export function evaluatePrivacyComplianceRules(file: CodeFile, lines: string[], 
     }
     // PRIVACY-20: Missing Granular Opt-Out for Automated Profiling & AI Decisions
     if (/executeAutomatedCreditScoring/i.test(cleanContent) && !/humanReviewRequested|optOutAutomatedDecision/i.test(cleanContent)) {
-        const matchLineIdx = lines.findIndex(l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('*') && (/privacy-20|missing/i.test(l) || lines.indexOf(l) === 0));
+        const matchLineIdx = locateMatchLine(lines, [/executeAutomatedCreditScoring/i], l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('*'));
         const lineNum = matchLineIdx !== -1 ? matchLineIdx + 1 : 1;
         findings.push({
             id: `privacy20-${Date.now()}-${findingCounter.count++}`,
@@ -521,7 +522,7 @@ export function evaluatePrivacyComplianceRules(file: CodeFile, lines: string[], 
     }
     // PRIVACY-21: Unencrypted Ephemeral Caching of PII in In-Memory Stores
     if (/redisClient\.set\s*\(\s*`user_pii_/i.test(cleanContent) && !/encrypt/i.test(cleanContent)) {
-        const matchLineIdx = lines.findIndex(l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('*') && (/privacy-21|unencrypted/i.test(l) || lines.indexOf(l) === 0));
+        const matchLineIdx = locateMatchLine(lines, [/redisClient\.set\s*\(\s*`user_pii_/i], l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('*'));
         const lineNum = matchLineIdx !== -1 ? matchLineIdx + 1 : 1;
         findings.push({
             id: `privacy21-${Date.now()}-${findingCounter.count++}`,
@@ -571,7 +572,7 @@ export function evaluatePrivacyComplianceRules(file: CodeFile, lines: string[], 
     }
     // PRIVACY-23: Missing Secure Destruction Protocol for Physical and Cloud Media
     if (/decommissionStorageVolume/i.test(cleanContent) && !/cryptoErase|shredData/i.test(cleanContent)) {
-        const matchLineIdx = lines.findIndex(l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('*') && (/privacy-23|missing/i.test(l) || lines.indexOf(l) === 0));
+        const matchLineIdx = locateMatchLine(lines, [/decommissionStorageVolume/i], l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('*'));
         const lineNum = matchLineIdx !== -1 ? matchLineIdx + 1 : 1;
         findings.push({
             id: `privacy23-${Date.now()}-${findingCounter.count++}`,
@@ -596,7 +597,7 @@ export function evaluatePrivacyComplianceRules(file: CodeFile, lines: string[], 
     }
     // PRIVACY-24: Unchecked Geolocation Tracking without Explicit Permission
     if (/navigator\.geolocation\.watchPosition/i.test(cleanContent) && !/hasGrantedLocationConsent/i.test(cleanContent)) {
-        const matchLineIdx = lines.findIndex(l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('*') && (/privacy-24|unchecked/i.test(l) || lines.indexOf(l) === 0));
+        const matchLineIdx = locateMatchLine(lines, [/navigator\.geolocation\.watchPosition/i], l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('*'));
         const lineNum = matchLineIdx !== -1 ? matchLineIdx + 1 : 1;
         findings.push({
             id: `privacy24-${Date.now()}-${findingCounter.count++}`,
@@ -621,7 +622,7 @@ export function evaluatePrivacyComplianceRules(file: CodeFile, lines: string[], 
     }
     // PRIVACY-25: Insecure Session Recording Tools Capturing Form Input PII
     if (/(?:LogRocket|FullStory)\.init\s*\(\{[\s\S]*?maskAllInputs:\s*false/i.test(cleanContent)) {
-        const matchLineIdx = lines.findIndex(l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('*') && (/privacy-25|insecure/i.test(l) || lines.indexOf(l) === 0));
+        const matchLineIdx = locateMatchLine(lines, [/(?:LogRocket|FullStory)\.init\s*\(\{[\s\S]*?maskAllInputs:\s*false/i], l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('*'));
         const lineNum = matchLineIdx !== -1 ? matchLineIdx + 1 : 1;
         findings.push({
             id: `privacy25-${Date.now()}-${findingCounter.count++}`,
@@ -671,7 +672,7 @@ export function evaluatePrivacyComplianceRules(file: CodeFile, lines: string[], 
     }
     // PRIVACY-27: Unredacted Customer Financial Identifiers in Invoices and Receipts
     if (/renderInvoicePdf/i.test(cleanContent) && !/maskAccount|slice\(-4\)/i.test(cleanContent)) {
-        const matchLineIdx = lines.findIndex(l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('*') && (/privacy-27|unredacted/i.test(l) || lines.indexOf(l) === 0));
+        const matchLineIdx = locateMatchLine(lines, [/renderInvoicePdf/i], l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('*'));
         const lineNum = matchLineIdx !== -1 ? matchLineIdx + 1 : 1;
         findings.push({
             id: `privacy27-${Date.now()}-${findingCounter.count++}`,
@@ -696,7 +697,7 @@ export function evaluatePrivacyComplianceRules(file: CodeFile, lines: string[], 
     }
     // PRIVACY-28: Missing Privacy Notice Updates on Material Policy Changes
     if (/publishPolicyChange/i.test(cleanContent) && !/sendPolicyEmail|broadcastPolicyNotice/i.test(cleanContent)) {
-        const matchLineIdx = lines.findIndex(l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('*') && (/privacy-28|missing/i.test(l) || lines.indexOf(l) === 0));
+        const matchLineIdx = locateMatchLine(lines, [/publishPolicyChange/i], l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('*'));
         const lineNum = matchLineIdx !== -1 ? matchLineIdx + 1 : 1;
         findings.push({
             id: `privacy28-${Date.now()}-${findingCounter.count++}`,
@@ -721,7 +722,7 @@ export function evaluatePrivacyComplianceRules(file: CodeFile, lines: string[], 
     }
     // PRIVACY-29: Unverified Third-Party Social Login Data Harvesting
     if (/scopes:\s*\[[\s\S]*?["\']user_friends["\']|["\']user_photos["\']|["\']user_posts["\']/i.test(cleanContent)) {
-        const matchLineIdx = lines.findIndex(l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('*') && (/privacy-29|unverified/i.test(l) || lines.indexOf(l) === 0));
+        const matchLineIdx = locateMatchLine(lines, [/scopes:\s*\[[\s\S]*?["\']user_friends["\']|["\']user_photos["\']|["\']user_posts["\']/i], l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('*'));
         const lineNum = matchLineIdx !== -1 ? matchLineIdx + 1 : 1;
         findings.push({
             id: `privacy29-${Date.now()}-${findingCounter.count++}`,
@@ -746,7 +747,7 @@ export function evaluatePrivacyComplianceRules(file: CodeFile, lines: string[], 
     }
     // PRIVACY-30: Lack of Anonymization in Analytics and Business Intelligence
     if (/exportAnalyticsPipeline/i.test(cleanContent) && !/anonymize|hashEmail/i.test(cleanContent)) {
-        const matchLineIdx = lines.findIndex(l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('*') && (/privacy-30|lack/i.test(l) || lines.indexOf(l) === 0));
+        const matchLineIdx = locateMatchLine(lines, [/exportAnalyticsPipeline/i], l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('*'));
         const lineNum = matchLineIdx !== -1 ? matchLineIdx + 1 : 1;
         findings.push({
             id: `privacy30-${Date.now()}-${findingCounter.count++}`,
@@ -771,7 +772,7 @@ export function evaluatePrivacyComplianceRules(file: CodeFile, lines: string[], 
     }
     // PRIVACY-31: Unprotected Public S3 Buckets Containing User Avatars or Uploads
     if (/aws_s3_bucket\.user_uploads/i.test(cleanContent)) {
-        const matchLineIdx = lines.findIndex(l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('*') && (/privacy-31|unprotected/i.test(l) || lines.indexOf(l) === 0));
+        const matchLineIdx = locateMatchLine(lines, [/aws_s3_bucket\.user_uploads/i], l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('*'));
         const lineNum = matchLineIdx !== -1 ? matchLineIdx + 1 : 1;
         findings.push({
             id: `privacy31-${Date.now()}-${findingCounter.count++}`,
@@ -846,7 +847,7 @@ export function evaluatePrivacyComplianceRules(file: CodeFile, lines: string[], 
     }
     // PRIVACY-34: Missing Privacy Impact Review on Mergers and Acquisitions
     if (/databaseMigrationForCorporateAcquisition/i.test(cleanContent) && !/consentVerification/i.test(cleanContent)) {
-        const matchLineIdx = lines.findIndex(l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('*') && (/privacy-34|missing/i.test(l) || lines.indexOf(l) === 0));
+        const matchLineIdx = locateMatchLine(lines, [/databaseMigrationForCorporateAcquisition/i], l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('*'));
         const lineNum = matchLineIdx !== -1 ? matchLineIdx + 1 : 1;
         findings.push({
             id: `privacy34-${Date.now()}-${findingCounter.count++}`,
@@ -896,7 +897,7 @@ export function evaluatePrivacyComplianceRules(file: CodeFile, lines: string[], 
     }
     // PRIVACY-36: Missing Purpose Limitation Enforcement in Database Query Logic
     if (/queryMarketingRecipients/i.test(cleanContent) && !/purpose === ["\']marketing["\']|consentedMarketing/i.test(cleanContent)) {
-        const matchLineIdx = lines.findIndex(l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('*') && (/privacy-36|missing/i.test(l) || lines.indexOf(l) === 0));
+        const matchLineIdx = locateMatchLine(lines, [/queryMarketingRecipients/i], l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('*'));
         const lineNum = matchLineIdx !== -1 ? matchLineIdx + 1 : 1;
         findings.push({
             id: `privacy36-${Date.now()}-${findingCounter.count++}`,
@@ -921,7 +922,7 @@ export function evaluatePrivacyComplianceRules(file: CodeFile, lines: string[], 
     }
     // PRIVACY-37: Unencrypted Email Transmissions Containing Sensitive Documents
     if (/sendMail\s*\(\{[\s\S]*?attachments:\s*\[[\s\S]*?path:.*tax_return\.pdf/i.test(cleanContent) && !/securePortalLink/i.test(cleanContent)) {
-        const matchLineIdx = lines.findIndex(l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('*') && (/privacy-37|unencrypted/i.test(l) || lines.indexOf(l) === 0));
+        const matchLineIdx = locateMatchLine(lines, [/sendMail\s*\(\{[\s\S]*?attachments:\s*\[[\s\S]*?path:.*tax_return\.pdf/i], l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('*'));
         const lineNum = matchLineIdx !== -1 ? matchLineIdx + 1 : 1;
         findings.push({
             id: `privacy37-${Date.now()}-${findingCounter.count++}`,
@@ -946,7 +947,7 @@ export function evaluatePrivacyComplianceRules(file: CodeFile, lines: string[], 
     }
     // PRIVACY-38: Missing Encryption Key Management & Separation of Duties
     if (/DATABASE_ENCRYPTION_KEY\s*=\s*process\.env\.APP_MASTER_SECRET/i.test(cleanContent)) {
-        const matchLineIdx = lines.findIndex(l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('*') && (/privacy-38|missing/i.test(l) || lines.indexOf(l) === 0));
+        const matchLineIdx = locateMatchLine(lines, [/DATABASE_ENCRYPTION_KEY\s*=\s*process\.env\.APP_MASTER_SECRET/i], l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('*'));
         const lineNum = matchLineIdx !== -1 ? matchLineIdx + 1 : 1;
         findings.push({
             id: `privacy38-${Date.now()}-${findingCounter.count++}`,
@@ -971,7 +972,7 @@ export function evaluatePrivacyComplianceRules(file: CodeFile, lines: string[], 
     }
     // PRIVACY-39: Unverified Consent for Push Notifications and Web Workers
     if (/Notification\.requestPermission\(\)/i.test(cleanContent) && !/onClick|handleUserClick/i.test(cleanContent)) {
-        const matchLineIdx = lines.findIndex(l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('*') && (/privacy-39|unverified/i.test(l) || lines.indexOf(l) === 0));
+        const matchLineIdx = locateMatchLine(lines, [/Notification\.requestPermission\(\)/i], l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('*'));
         const lineNum = matchLineIdx !== -1 ? matchLineIdx + 1 : 1;
         findings.push({
             id: `privacy39-${Date.now()}-${findingCounter.count++}`,
@@ -996,7 +997,7 @@ export function evaluatePrivacyComplianceRules(file: CodeFile, lines: string[], 
     }
     // PRIVACY-40: Missing Pseudonymization in Internal Microservice Event Streams
     if (/kafkaProducer\.send\s*\(\{[\s\S]*?email:\s*user\.email\b/i.test(cleanContent)) {
-        const matchLineIdx = lines.findIndex(l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('*') && (/privacy-40|missing/i.test(l) || lines.indexOf(l) === 0));
+        const matchLineIdx = locateMatchLine(lines, [/kafkaProducer\.send\s*\(\{[\s\S]*?email:\s*user\.email\b/i], l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('*'));
         const lineNum = matchLineIdx !== -1 ? matchLineIdx + 1 : 1;
         findings.push({
             id: `privacy40-${Date.now()}-${findingCounter.count++}`,
@@ -1021,7 +1022,7 @@ export function evaluatePrivacyComplianceRules(file: CodeFile, lines: string[], 
     }
     // PRIVACY-41: Lack of User Verification Prior to Fulfilling Subject Access Requests
     if (/fulfillDsarExportRequest/i.test(cleanContent) && !/verifyIdentity|sessionValid/i.test(cleanContent)) {
-        const matchLineIdx = lines.findIndex(l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('*') && (/privacy-41|lack/i.test(l) || lines.indexOf(l) === 0));
+        const matchLineIdx = locateMatchLine(lines, [/fulfillDsarExportRequest/i], l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('*'));
         const lineNum = matchLineIdx !== -1 ? matchLineIdx + 1 : 1;
         findings.push({
             id: `privacy41-${Date.now()}-${findingCounter.count++}`,
@@ -1046,7 +1047,7 @@ export function evaluatePrivacyComplianceRules(file: CodeFile, lines: string[], 
     }
     // PRIVACY-42: Insecure Storage of Customer Biometric Authentication Templates
     if (/rawFingerprintTemplate|rawFaceScanMatrix/i.test(cleanContent) && !/webauthnPasskeyOnly/i.test(cleanContent)) {
-        const matchLineIdx = lines.findIndex(l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('*') && (/privacy-42|insecure/i.test(l) || lines.indexOf(l) === 0));
+        const matchLineIdx = locateMatchLine(lines, [/rawFingerprintTemplate|rawFaceScanMatrix/i], l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('*'));
         const lineNum = matchLineIdx !== -1 ? matchLineIdx + 1 : 1;
         findings.push({
             id: `privacy42-${Date.now()}-${findingCounter.count++}`,
@@ -1071,7 +1072,7 @@ export function evaluatePrivacyComplianceRules(file: CodeFile, lines: string[], 
     }
     // PRIVACY-43: Missing Privacy-Preserving Defaults in Default User Profiles
     if (/isPublic:\s*true\b/i.test(cleanContent) && !/optInChoice/i.test(cleanContent)) {
-        const matchLineIdx = lines.findIndex(l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('*') && (/privacy-43|missing/i.test(l) || lines.indexOf(l) === 0));
+        const matchLineIdx = locateMatchLine(lines, [/isPublic:\s*true\b/i], l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('*'));
         const lineNum = matchLineIdx !== -1 ? matchLineIdx + 1 : 1;
         findings.push({
             id: `privacy43-${Date.now()}-${findingCounter.count++}`,
@@ -1096,7 +1097,7 @@ export function evaluatePrivacyComplianceRules(file: CodeFile, lines: string[], 
     }
     // PRIVACY-44: Unchecked Data Retention on Failed Payment Transaction Logs
     if (/failedCheckoutLogs/i.test(cleanContent) && !/purgeSchedule/i.test(cleanContent)) {
-        const matchLineIdx = lines.findIndex(l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('*') && (/privacy-44|unchecked/i.test(l) || lines.indexOf(l) === 0));
+        const matchLineIdx = locateMatchLine(lines, [/failedCheckoutLogs/i], l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('*'));
         const lineNum = matchLineIdx !== -1 ? matchLineIdx + 1 : 1;
         findings.push({
             id: `privacy44-${Date.now()}-${findingCounter.count++}`,
@@ -1146,7 +1147,7 @@ export function evaluatePrivacyComplianceRules(file: CodeFile, lines: string[], 
     }
     // PRIVACY-46: Unrestricted Customer Voice and Call Audio Recording
     if (/startMediaStreamRecording/i.test(cleanContent) && !/playConsentChime/i.test(cleanContent)) {
-        const matchLineIdx = lines.findIndex(l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('*') && (/privacy-46|unrestricted/i.test(l) || lines.indexOf(l) === 0));
+        const matchLineIdx = locateMatchLine(lines, [/startMediaStreamRecording/i], l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('*'));
         const lineNum = matchLineIdx !== -1 ? matchLineIdx + 1 : 1;
         findings.push({
             id: `privacy46-${Date.now()}-${findingCounter.count++}`,
@@ -1171,7 +1172,7 @@ export function evaluatePrivacyComplianceRules(file: CodeFile, lines: string[], 
     }
     // PRIVACY-47: Missing Cross-Device Tracking Disclosures in Privacy Policy
     if (/crossDeviceGraphBuilder/i.test(cleanContent) && !/crossDeviceDisclosure/i.test(cleanContent)) {
-        const matchLineIdx = lines.findIndex(l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('*') && (/privacy-47|missing/i.test(l) || lines.indexOf(l) === 0));
+        const matchLineIdx = locateMatchLine(lines, [/crossDeviceGraphBuilder/i], l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('*'));
         const lineNum = matchLineIdx !== -1 ? matchLineIdx + 1 : 1;
         findings.push({
             id: `privacy47-${Date.now()}-${findingCounter.count++}`,
@@ -1196,7 +1197,7 @@ export function evaluatePrivacyComplianceRules(file: CodeFile, lines: string[], 
     }
     // PRIVACY-48: Unencrypted Local Caching of Customer PII in Progressive Web Apps
     if (/indexedDB\.open\s*\(\s*["\']offline_customer_data["\']/i.test(cleanContent) && !/cryptoKey/i.test(cleanContent)) {
-        const matchLineIdx = lines.findIndex(l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('*') && (/privacy-48|unencrypted/i.test(l) || lines.indexOf(l) === 0));
+        const matchLineIdx = locateMatchLine(lines, [/indexedDB\.open\s*\(\s*["\']offline_customer_data["\']/i], l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('*'));
         const lineNum = matchLineIdx !== -1 ? matchLineIdx + 1 : 1;
         findings.push({
             id: `privacy48-${Date.now()}-${findingCounter.count++}`,

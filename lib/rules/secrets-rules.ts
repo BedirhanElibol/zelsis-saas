@@ -43,7 +43,7 @@ export function evaluateSecretRules(file: CodeFile, lines: string[], rawContentO
     const logs: string[] = [];
     const lowerPath = file.path.toLowerCase().replace(/\\/g, '/');
     // Skip self-referential rule catalogs, mocks, and schema definitions
-    if (lowerPath.includes('data/catalogs/') || lowerPath.includes('data/mockdata') || lowerPath.includes('data/workspacefiles') || lowerPath.includes('data/schema') || lowerPath.includes('scratch/') || lowerPath.includes('.agent/') || lowerPath.endsWith('.d.ts')) {
+    if (lowerPath.endsWith('.d.ts')) {
         return { findings, logs };
     }
     const contentToScan = rawContentOrClean || file.content;
@@ -471,7 +471,8 @@ export function evaluateSecretRules(file: CodeFile, lines: string[], rawContentO
     // SEC-SECRET-16: Google Cloud Service Account JSON Key
     const pattern16 = /"type":\s*"service_account"[\s\S]*"private_key":\s*"-----BEGIN/i;
     if (pattern16.test(contentToScan)) {
-        const matchLineIdx = lines.findIndex(l => pattern16.test(l) && !isDummyPlaceholder(l));
+        // Multi-line signature (service account JSON): point at the private_key line
+        const matchLineIdx = lines.findIndex(l => /"private_key":\s*"-----BEGIN/i.test(l) && !isDummyPlaceholder(l));
         if (matchLineIdx !== -1) {
             const lineNum = matchLineIdx + 1;
             findings.push({
@@ -483,7 +484,7 @@ export function evaluateSecretRules(file: CodeFile, lines: string[], rawContentO
                 category: "Cloud Credentials",
                 filePath: file.path,
                 lineRange: `L${lineNum}`,
-                snippet: maskSecretInLine(lines[matchLineIdx] || "[REDACTED_SECRET]", pattern16),
+                snippet: maskSecretInLine(lines[matchLineIdx] || "[REDACTED_SECRET]", /-----BEGIN[^"]*/),
                 reproductionSteps: [
                     `Scanned source code at ${file.path}:${lineNum}.`,
                     "Detected unredacted secret token matching Google Cloud Service Account JSON Key signature: GCP Service Account private key JSON committed in repo."

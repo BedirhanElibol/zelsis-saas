@@ -4,6 +4,8 @@
  */
 import { Finding } from "@/data/schema";
 import { CodeFile } from "../scanner-engine";
+import { LLM_CALL, RATE_LIMIT_GUARD } from './shared/stack-signals';
+import { locateMatchLine } from './shared/locate';
 export interface WafEdgeRuleResult {
     findings: Finding[];
     logs: string[];
@@ -15,13 +17,13 @@ export function evaluateWafEdgeRules(file: CodeFile, lines: string[], cleanConte
     const logs: string[] = [];
     const lowerPath = file.path.toLowerCase().replace(/\\/g, "/");
     // Skip self-referential catalogs, mocks, and schema definitions
-    if (lowerPath.includes("data/catalogs/") || lowerPath.includes("data/mockdata") || lowerPath.includes("data/workspacefiles") || lowerPath.includes("data/schema") || lowerPath.includes("scratch/") || lowerPath.includes(".agent/") || lowerPath.includes("node_modules/") || lowerPath.endsWith(".d.ts")) {
+    if (lowerPath.includes("node_modules/") || lowerPath.endsWith(".d.ts")) {
         return { findings, logs };
     }
     const ts = new Date().toLocaleTimeString();
     // WAF-01: WAF Origin Bypass via Unvalidated X-Forwarded-Host Header
     if ((/req\.headers\.get\s*\(\s*['"]x-forwarded-host['"]\s*\)/i.test(cleanContent) && !/allowedOrigins|trustedHosts/i.test(cleanContent))) {
-        const matchLineIdx = lines.findIndex(l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('*'));
+        const matchLineIdx = locateMatchLine(lines, [/req\.headers\.get\s*\(\s*['"]x-forwarded-host['"]\s*\)/i], l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('*'));
         const lineNum = matchLineIdx !== -1 ? matchLineIdx + 1 : 1;
         findings.push({
             id: `waf10401-${Date.now()}-${findingCounter.count++}`,
@@ -44,8 +46,9 @@ export function evaluateWafEdgeRules(file: CodeFile, lines: string[], cleanConte
         logs.push(`[${ts}] [WAF AUDIT] Found WAF-01: WAF Origin Bypass via Unvalidated X-Forwarded-Host Header at ${file.path}:${lineNum}`);
     }
     // WAF-02: Missing Edge Rate Limiting on High-Cost AI Inference Endpoints
-    if ((/export\s+async\s+function\s+POST/i.test(cleanContent) && !/rateLimit|ratelimit|limiter/i.test(cleanContent))) {
-        const matchLineIdx = lines.findIndex(l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('*'));
+    const callsAiInference = /chat\.completions|chat\/completions|messages\.create|responses\.create|generateText|streamText|generateObject|streamObject|from\s+['"](?:openai|@anthropic-ai\/sdk|@ai-sdk\/[\w-]+|ai|@google\/generative-ai|@google\/genai|@mistralai\/mistralai|groq-sdk|cohere-ai|replicate|together-ai|ollama)['"]|api\.openai\.com|api\.anthropic\.com|generativelanguage\.googleapis\.com|api\.mistral\.ai|api\.groq\.com|openrouter\.ai\/api|api\.together\.xyz|api\.cohere\.(?:ai|com)|api\.deepseek\.com|api\.x\.ai/i.test(cleanContent);
+    if ((callsAiInference || LLM_CALL.test(cleanContent)) && /export\s+async\s+function\s+POST/i.test(cleanContent) && !RATE_LIMIT_GUARD.test(cleanContent)) {
+        const matchLineIdx = locateMatchLine(lines, [LLM_CALL, /export\s+async\s+function\s+POST/i], l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('*'));
         const lineNum = matchLineIdx !== -1 ? matchLineIdx + 1 : 1;
         findings.push({
             id: `waf10402-${Date.now()}-${findingCounter.count++}`,
@@ -69,7 +72,7 @@ export function evaluateWafEdgeRules(file: CodeFile, lines: string[], cleanConte
     }
     // WAF-03: Direct Cloud Origin IP Exposure Bypassing WAF Inspection
     if ((/(?:origin_ip|direct_backend_ip)\s*=\s*['"]\d+\.\d+\.\d+\.\d+['"]/i.test(cleanContent))) {
-        const matchLineIdx = lines.findIndex(l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('*'));
+        const matchLineIdx = locateMatchLine(lines, [/(?:origin_ip|direct_backend_ip)\s*=\s*['"]\d+\.\d+\.\d+\.\d+['"]/i], l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('*'));
         const lineNum = matchLineIdx !== -1 ? matchLineIdx + 1 : 1;
         findings.push({
             id: `waf10403-${Date.now()}-${findingCounter.count++}`,
@@ -93,7 +96,7 @@ export function evaluateWafEdgeRules(file: CodeFile, lines: string[], cleanConte
     }
     // WAF-04: Permissive Geo-Blocking on Privileged Administration Portals
     if ((/\/admin\b/i.test(cleanContent) && !/country|geo|vpn|ipAllowlist/i.test(cleanContent))) {
-        const matchLineIdx = lines.findIndex(l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('*'));
+        const matchLineIdx = locateMatchLine(lines, [/\/admin\b/i], l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('*'));
         const lineNum = matchLineIdx !== -1 ? matchLineIdx + 1 : 1;
         findings.push({
             id: `waf10404-${Date.now()}-${findingCounter.count++}`,
@@ -117,7 +120,7 @@ export function evaluateWafEdgeRules(file: CodeFile, lines: string[], cleanConte
     }
     // WAF-05: Unchecked HTTP Request Body Size Exceeding Edge WAF Inspection Buffer
     if ((/bodyParser|maxBodySize/i.test(cleanContent))) {
-        const matchLineIdx = lines.findIndex(l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('*'));
+        const matchLineIdx = locateMatchLine(lines, [/bodyParser|maxBodySize/i], l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('*'));
         const lineNum = matchLineIdx !== -1 ? matchLineIdx + 1 : 1;
         findings.push({
             id: `waf10405-${Date.now()}-${findingCounter.count++}`,

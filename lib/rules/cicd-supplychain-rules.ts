@@ -4,6 +4,7 @@
  */
 import { Finding } from "@/data/schema";
 import { CodeFile } from "../scanner-engine";
+import { locateMatchLine } from './shared/locate';
 export interface CicdSupplyChainRuleResult {
     findings: Finding[];
     logs: string[];
@@ -15,7 +16,7 @@ export function evaluateCicdSupplyChainRules(file: CodeFile, lines: string[], cl
     const logs: string[] = [];
     const lowerPath = file.path.toLowerCase().replace(/\\/g, "/");
     // Skip self-referential catalogs, mocks, and non-cicd paths
-    if (lowerPath.includes("data/catalogs/") || lowerPath.includes("data/mockdata") || lowerPath.includes("data/workspacefiles") || lowerPath.includes("data/schema") || lowerPath.includes("scratch/") || lowerPath.includes(".agent/") || lowerPath.includes("node_modules/") || lowerPath.endsWith(".d.ts")) {
+    if (lowerPath.includes("node_modules/") || lowerPath.endsWith(".d.ts")) {
         return { findings, logs };
     }
     const isCicd = lowerPath.includes(".github/workflows/") || lowerPath.endsWith(".gitlab-ci.yml") || lowerPath.includes("jenkinsfile") || cleanContent.includes("pull_request_target");
@@ -47,8 +48,9 @@ export function evaluateCicdSupplyChainRules(file: CodeFile, lines: string[], cl
         logs.push(`[${ts}] [CICD SEC] Found CICD-SEC-01: Dangerous pull_request_target Workflow with Untrusted Checkout at ${file.path}:${lineNum}`);
     }
     // CICD-SEC-02: Unpinned Third-Party Action Mutable Reference (@v1)
-    if ((/uses\s*:\s*[a-zA-Z0-9-_]+\/[a-zA-Z0-9-_]+@v[0-9]+/i.test(cleanContent))) {
-        const matchLineIdx = lines.findIndex(l => !l.trim().startsWith('#'));
+    const unpinnedActionRegex = /^\s*-?\s*uses\s*:\s*['\"]?[\w.-]+\/[\w./-]+@(?![0-9a-f]{40}\b)[\w.-]+/i;
+    if (/\.github\/workflows\/[^/]+\.ya?ml$/i.test(file.path) && lines.some(l => unpinnedActionRegex.test(l))) {
+        const matchLineIdx = lines.findIndex(l => unpinnedActionRegex.test(l));
         const lineNum = matchLineIdx !== -1 ? matchLineIdx + 1 : 1;
         findings.push({
             id: `cicdsec9502-${Date.now()}-${findingCounter.count++}`,
@@ -71,8 +73,19 @@ export function evaluateCicdSupplyChainRules(file: CodeFile, lines: string[], cl
         logs.push(`[${ts}] [CICD SEC] Found CICD-SEC-02: Unpinned Third-Party Action Mutable Reference (@v1) at ${file.path}:${lineNum}`);
     }
     // CICD-SEC-03: Script Injection via Unescaped GitHub Context Expression
-    if (/run\s*:[\s\S]*?\$\{\{\s*github\.event\.(?:issue\.title|pull_request\.title|head_ref)/i.test(cleanContent)) {
-        const matchLineIdx = lines.findIndex(l => !l.trim().startsWith('#'));
+    const untrustedContextRegex = /\$\{\{\s*github\.(?:head_ref|event\.(?:issue|pull_request|comment|review|review_comment|discussion|discussion_comment|head_commit|commits|pages)\b[\w.\[\]*]*\.(?:title|body|message|ref|label|name|email|page_name))/i;
+    const indentOf = (l: string) => l.length - l.trimStart().length;
+    const isInsideRunScript = (idx: number) => {
+        if (/^\s*-?\s*(?:run|script)\s*:/.test(lines[idx])) return true;
+        for (let i = idx - 1, indent = indentOf(lines[idx]); i >= 0; i--) {
+            if (!lines[i].trim() || lines[i].trim().startsWith('#') || indentOf(lines[i]) >= indent) continue;
+            return /^\s*-?\s*(?:run|script)\s*:/.test(lines[i]);
+        }
+        return false;
+    };
+    const injectionLineIdx = lines.findIndex((l, i) => untrustedContextRegex.test(l) && isInsideRunScript(i));
+    if (injectionLineIdx !== -1) {
+        const matchLineIdx = injectionLineIdx;
         const lineNum = matchLineIdx !== -1 ? matchLineIdx + 1 : 1;
         findings.push({
             id: `cicdsec9503-${Date.now()}-${findingCounter.count++}`,
@@ -96,7 +109,7 @@ export function evaluateCicdSupplyChainRules(file: CodeFile, lines: string[], cl
     }
     // CICD-SEC-04: Overprivileged GITHUB_TOKEN Permissions (permissions: write-all)
     if (/permissions\s*:\s*write-all/i.test(cleanContent)) {
-        const matchLineIdx = lines.findIndex(l => !l.trim().startsWith('#'));
+        const matchLineIdx = locateMatchLine(lines, [/permissions\s*:\s*write-all/i], l => !l.trim().startsWith('#'));
         const lineNum = matchLineIdx !== -1 ? matchLineIdx + 1 : 1;
         findings.push({
             id: `cicdsec9504-${Date.now()}-${findingCounter.count++}`,
@@ -120,7 +133,7 @@ export function evaluateCicdSupplyChainRules(file: CodeFile, lines: string[], cl
     }
     // CICD-SEC-05: Exposed Secret Tokens in Build Log Outputs
     if ((/run\s*:[\s\S]*?echo\s+["']?\$\{\{\s*secrets\./i.test(cleanContent))) {
-        const matchLineIdx = lines.findIndex(l => !l.trim().startsWith('#'));
+        const matchLineIdx = locateMatchLine(lines, [/run\s*:[\s\S]*?echo\s+["']?\$\{\{\s*secrets\./i], l => !l.trim().startsWith('#'));
         const lineNum = matchLineIdx !== -1 ? matchLineIdx + 1 : 1;
         findings.push({
             id: `cicdsec9505-${Date.now()}-${findingCounter.count++}`,

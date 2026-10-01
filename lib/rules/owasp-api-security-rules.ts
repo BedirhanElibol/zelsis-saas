@@ -4,6 +4,7 @@
  */
 import { Finding } from "@/data/schema";
 import { CodeFile } from "../scanner-engine";
+import { locateMatchLine } from './shared/locate';
 export interface OwaspApiSecurityRuleResult {
     findings: Finding[];
     logs: string[];
@@ -15,7 +16,7 @@ export function evaluateOwaspApiSecurityRules(file: CodeFile, lines: string[], c
     const logs: string[] = [];
     const lowerPath = file.path.toLowerCase().replace(/\\/g, "/");
     // Skip self-referential catalogs, mocks, and schema definitions
-    if (lowerPath.includes("data/catalogs/") || lowerPath.includes("data/mockdata") || lowerPath.includes("data/workspacefiles") || lowerPath.includes("data/schema") || lowerPath.includes("scratch/") || lowerPath.includes(".agent/") || lowerPath.includes("node_modules/") || lowerPath.endsWith(".d.ts")) {
+    if (lowerPath.includes("node_modules/") || lowerPath.endsWith(".d.ts")) {
         return { findings, logs };
     }
     const isApiTarget = lowerPath.startsWith("app/api/") || lowerPath.startsWith("pages/api/") || lowerPath.includes("/api/") || lowerPath.includes("server/") || lowerPath.includes("backend/");
@@ -25,7 +26,7 @@ export function evaluateOwaspApiSecurityRules(file: CodeFile, lines: string[], c
     const ts = new Date().toLocaleTimeString();
     // APIDEF-01: API1:2023 Broken Object Level Authorization (BOLA): Insecure Record Lookup
     if ((/lookupResource|getItem/i.test(cleanContent) && !/verifyOwnership/i.test(cleanContent))) {
-        const matchLineIdx = lines.findIndex(l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('#') && !l.trim().startsWith('*'));
+        const matchLineIdx = locateMatchLine(lines, [/lookupResource|getItem/i], l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('#') && !l.trim().startsWith('*'));
         const lineNum = matchLineIdx !== -1 ? matchLineIdx + 1 : 1;
         findings.push({
             id: `apidef14301-${Date.now()}-${findingCounter.count++}`,
@@ -39,7 +40,7 @@ export function evaluateOwaspApiSecurityRules(file: CodeFile, lines: string[], c
             snippet: lines[matchLineIdx] || 'OWASP API Top 10 configuration',
             reproductionSteps: [
                 `Audited OWASP API Top 10 configuration in ${file.path}:${lineNum}.`,
-                'Detected violation matching {code}.'
+                'Matched APIDEF-01: API1:2023 Broken Object Level Authorization (BOLA): Insecure Record Lookup.'
             ],
             remediationPrompt: "Validate user authorization and tenant ownership for every resource identifier supplied in API paths.",
             status: 'OPEN',
@@ -49,7 +50,7 @@ export function evaluateOwaspApiSecurityRules(file: CodeFile, lines: string[], c
     }
     // APIDEF-02: API2:2023 Broken Authentication: Insecure Token Invalidation on Logout
     if ((/logoutHandler/i.test(cleanContent) && !/blacklistToken/i.test(cleanContent))) {
-        const matchLineIdx = lines.findIndex(l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('#') && !l.trim().startsWith('*'));
+        const matchLineIdx = locateMatchLine(lines, [/logoutHandler/i], l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('#') && !l.trim().startsWith('*'));
         const lineNum = matchLineIdx !== -1 ? matchLineIdx + 1 : 1;
         findings.push({
             id: `apidef14302-${Date.now()}-${findingCounter.count++}`,
@@ -63,7 +64,7 @@ export function evaluateOwaspApiSecurityRules(file: CodeFile, lines: string[], c
             snippet: lines[matchLineIdx] || 'OWASP API Top 10 configuration',
             reproductionSteps: [
                 `Audited OWASP API Top 10 configuration in ${file.path}:${lineNum}.`,
-                'Detected violation matching {code}.'
+                'Matched APIDEF-02: API2:2023 Broken Authentication: Insecure Token Invalidation on Logout.'
             ],
             remediationPrompt: "Revoke and blacklist JWTs in a distributed Redis cache upon user logout or credentials reset.",
             status: 'OPEN',
@@ -73,7 +74,7 @@ export function evaluateOwaspApiSecurityRules(file: CodeFile, lines: string[], c
     }
     // APIDEF-03: API3:2023 Broken Object Property Level Authorization: Mass Assignment
     if ((/updateProfile|saveUser/i.test(cleanContent) && !/pickAllowedFields/i.test(cleanContent))) {
-        const matchLineIdx = lines.findIndex(l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('#') && !l.trim().startsWith('*'));
+        const matchLineIdx = locateMatchLine(lines, [/updateProfile|saveUser/i], l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('#') && !l.trim().startsWith('*'));
         const lineNum = matchLineIdx !== -1 ? matchLineIdx + 1 : 1;
         findings.push({
             id: `apidef14303-${Date.now()}-${findingCounter.count++}`,
@@ -87,7 +88,7 @@ export function evaluateOwaspApiSecurityRules(file: CodeFile, lines: string[], c
             snippet: lines[matchLineIdx] || 'OWASP API Top 10 configuration',
             reproductionSteps: [
                 `Audited OWASP API Top 10 configuration in ${file.path}:${lineNum}.`,
-                'Detected violation matching {code}.'
+                'Matched APIDEF-03: API3:2023 Broken Object Property Level Authorization: Mass Assignment.'
             ],
             remediationPrompt: "Disallow bulk assignment on sensitive object properties (isAdmin, role, verified, balance) in API handlers.",
             status: 'OPEN',
@@ -97,7 +98,7 @@ export function evaluateOwaspApiSecurityRules(file: CodeFile, lines: string[], c
     }
     // APIDEF-04: API4:2023 Unrestricted Resource Consumption: Missing Client Rate Limits
     if ((/exportData|heavySearch/i.test(cleanContent) && !/checkRateLimit/i.test(cleanContent))) {
-        const matchLineIdx = lines.findIndex(l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('#') && !l.trim().startsWith('*'));
+        const matchLineIdx = locateMatchLine(lines, [/exportData|heavySearch/i], l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('#') && !l.trim().startsWith('*'));
         const lineNum = matchLineIdx !== -1 ? matchLineIdx + 1 : 1;
         findings.push({
             id: `apidef14304-${Date.now()}-${findingCounter.count++}`,
@@ -111,7 +112,7 @@ export function evaluateOwaspApiSecurityRules(file: CodeFile, lines: string[], c
             snippet: lines[matchLineIdx] || 'OWASP API Top 10 configuration',
             reproductionSteps: [
                 `Audited OWASP API Top 10 configuration in ${file.path}:${lineNum}.`,
-                'Detected violation matching {code}.'
+                'Matched APIDEF-04: API4:2023 Unrestricted Resource Consumption: Missing Client Rate Limits.'
             ],
             remediationPrompt: "Enforce token-bucket rate limits and query pagination bounds on resource-intensive analytical routes.",
             status: 'OPEN',
@@ -121,7 +122,7 @@ export function evaluateOwaspApiSecurityRules(file: CodeFile, lines: string[], c
     }
     // APIDEF-05: API5:2023 Broken Function Level Authorization: Admin Routes Missing Scope Check
     if ((/adminRouter|manageTenant/i.test(cleanContent) && !/requireRole/i.test(cleanContent))) {
-        const matchLineIdx = lines.findIndex(l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('#') && !l.trim().startsWith('*'));
+        const matchLineIdx = locateMatchLine(lines, [/adminRouter|manageTenant/i], l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('#') && !l.trim().startsWith('*'));
         const lineNum = matchLineIdx !== -1 ? matchLineIdx + 1 : 1;
         findings.push({
             id: `apidef14305-${Date.now()}-${findingCounter.count++}`,
@@ -135,7 +136,7 @@ export function evaluateOwaspApiSecurityRules(file: CodeFile, lines: string[], c
             snippet: lines[matchLineIdx] || 'OWASP API Top 10 configuration',
             reproductionSteps: [
                 `Audited OWASP API Top 10 configuration in ${file.path}:${lineNum}.`,
-                'Detected violation matching {code}.'
+                'Matched APIDEF-05: API5:2023 Broken Function Level Authorization: Admin Routes Missing Scope Check.'
             ],
             remediationPrompt: "Enforce role-based permission checks before executing administrative API operations.",
             status: 'OPEN',

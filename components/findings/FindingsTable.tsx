@@ -8,6 +8,7 @@ import { Search, Filter, ArrowRight, Layers, Check, RotateCcw, Play, Copy, Lock,
 import { ClipboardToastBadge, useClipboardToast } from '../ui/Toast';
 import { safeLower, safeString, safeTrim, safeReplace } from '@/lib/safe-utils';
 import { hasFixPromptAccess } from '@/lib/subscription-utils';
+import { ExperimentalBadge, UnprovenBadge } from '@/components/findings/ExperimentalBadge';
 
 interface FindingsTableProps {
   findings: Finding[];
@@ -563,6 +564,8 @@ export const FindingsTable: React.FC<FindingsTableProps> = ({
                 <div>
                   <h3 className="text-xs sm:text-sm font-extrabold text-[#EDEDED] leading-snug">
                     {item.title}
+                    {item.maturity === 'experimental' && <ExperimentalBadge className="ml-2" />}
+                    {item.maturity === 'unproven' && item.severity === 'CRITICAL' && <UnprovenBadge className="ml-2" />}
                   </h3>
                   <div className="flex flex-wrap items-center gap-2 mt-1">
                     <span className="px-1.5 py-0.5 rounded bg-white/10 text-zinc-300 font-semibold text-[10px]">
@@ -821,6 +824,8 @@ export const FindingsTable: React.FC<FindingsTableProps> = ({
 
                   {/* Title */}
                   <td className="py-3.5 px-4 font-bold text-[#EDEDED] max-w-xs truncate">
+                    {item.maturity === 'experimental' && <ExperimentalBadge className="mr-2" />}
+                    {item.maturity === 'unproven' && item.severity === 'CRITICAL' && <UnprovenBadge className="mr-2" />}
                     {item.title}
                   </td>
 

@@ -1,5 +1,6 @@
 import type { Finding } from '@/data/schema';
 import type { CodeFile } from '../scanner-engine';
+import { AUTH_GUARD, isOutboundWebhookSender } from './shared/stack-signals';
 export function evaluateSecurityRules(file: CodeFile, lines: string[], cleanContentOrCounter: string | {
     count: number;
 }, counterMaybe?: {
@@ -14,9 +15,6 @@ export function evaluateSecurityRules(file: CodeFile, lines: string[], cleanCont
     const findingCounter = typeof cleanContentOrCounter === 'object' ? cleanContentOrCounter : (counterMaybe || { count: 1 });
     const ts = new Date().toLocaleTimeString();
     const lowerPath = file.path.toLowerCase();
-    if (lowerPath.includes('data/catalogs/')) {
-        return { findings, logs };
-    }
     // Rule 1: Exposed Stripe/OpenAI API Keys (SEC-01)
     if (cleanContent.includes('sk_live_') || cleanContent.includes('sk-proj-') || /api[_-]?key\s*=\s*["']sk-[a-zA-Z0-9_-]{20,}/i.test(cleanContent)) {
         const matchLineIdx = lines.findIndex(l => !l.trim().startsWith('//') && !l.trim().startsWith('*') && (l.includes('sk_live_') || l.includes('sk-proj-') || /sk-[a-zA-Z0-9_-]{20,}/i.test(l)));
@@ -350,10 +348,10 @@ export function evaluateSecurityRules(file: CodeFile, lines: string[], cleanCont
     }
     // Rule 15 / SEC-15: Unauthenticated Next.js API Mutation Route Handler
     const isApiRoute = (lowerPath.includes('app/api/') || lowerPath.includes('pages/api/')) && /\.(?:ts|js)$/i.test(file.path);
-    const isPublicWebhookOrHealth = lowerPath.includes('webhook') || lowerPath.includes('health') || lowerPath.includes('ping') || lowerPath.includes('auth/callback');
+    const isPublicWebhookOrHealth = (lowerPath.includes('webhook') && !isOutboundWebhookSender(cleanContent)) || lowerPath.includes('health') || lowerPath.includes('ping') || lowerPath.includes('auth/callback');
     if (isApiRoute && !isPublicWebhookOrHealth) {
         const hasMutationExport = /export\s+async\s+function\s+(?:POST|PUT|DELETE|PATCH)\b/.test(cleanContent);
-        const hasAuthCheck = /(?:auth|session|supabase\.auth|verify|currentUser|getUser|getSession|apiKey|checkRateLimit|rateLimiter|req\.headers\.get\(['"]authorization['"]\))/i.test(cleanContent);
+        const hasAuthCheck = AUTH_GUARD.test(cleanContent) || /(?:auth|session|verify|apiKey|checkRateLimit|rateLimiter|req\.headers\.get\(['"]authorization['"]\))/i.test(cleanContent);
         if (hasMutationExport && !hasAuthCheck) {
             const matchLineIdx = lines.findIndex(l => /export\s+async\s+function\s+(?:POST|PUT|DELETE|PATCH)\b/.test(l));
             const lineNum = matchLineIdx !== -1 ? matchLineIdx + 1 : 1;
@@ -382,17 +380,26 @@ export function evaluateSecurityRules(file: CodeFile, lines: string[], cleanCont
     }
     // Rule 16 / SEC-16: SSRF in Webhook & Outbound Fetch Dispatch
     if (isCodeFile && !isPublicWebhookOrHealth) {
-        const outboundFetchRegex = /fetch\s*\(\s*(?:req\.(?:body|query|params)\.[a-zA-Z0-9_]+|url|targetUrl|webhookUrl|callbackUrl)/i;
+        const outboundFetchRegex = /fetch\s*\(\s*(?:req\.(?:body|query|params)\.[a-zA-Z0-9_]+|url|targetUrl|webhookUrl|callbackUrl)\b/i;
         const ssrfGuardRegex = /(?:validateSafeTargetUrl|isAllowedWebhookUrl|isPrivateIp|ssrfGuard|allowedDomains|new URL\([^)]*\)\.hostname)/i;
-        if (outboundFetchRegex.test(cleanContent) && !ssrfGuardRegex.test(cleanContent)) {
+        // fetch(url) is only SSRF when that variable comes from the request, not from config or constants
+        const REQUEST_INPUT = String.raw`(?:req\.(?:body|query|params)|(?:await\s+)?(?:req|request)\.json\(\)|(?:url\.)?searchParams\.get\()`;
+        const directRequestFetch = /fetch\s*\(\s*req\.(?:body|query|params)\.[a-zA-Z0-9_]+/i.test(cleanContent);
+        const urlFromRequest = new RegExp(
+            String.raw`\b(?:url|targetUrl|webhookUrl|callbackUrl)\b[^\n=;]*=\s*${REQUEST_INPUT}` +
+            String.raw`|\{[^}]*\b(?:url|targetUrl|webhookUrl|callbackUrl)\b[^}]*\}\s*=\s*${REQUEST_INPUT}`,
+            'i'
+        ).test(cleanContent);
+        if (outboundFetchRegex.test(cleanContent) && (directRequestFetch || urlFromRequest) && !ssrfGuardRegex.test(cleanContent)) {
             const matchLineIdx = lines.findIndex(l => !l.trim().startsWith('//') && outboundFetchRegex.test(l));
             const lineNum = matchLineIdx !== -1 ? matchLineIdx + 1 : 1;
             const snippet = lines.slice(Math.max(0, lineNum - 2), Math.min(lines.length, lineNum + 2)).join('\n');
             findings.push({
                 id: `real-find-${Date.now()}-${findingCounter.count++}`,
-                ruleId: 16,
+                // Own id: 16 is the innerHTML XSS rule, whose fixtures must not count as SSRF evidence
+                ruleId: 27101,
                 type: 'SECURITY',
-                title: 'Server-Side Request Forgery (SSRF) in Outbound Fetch / Webhook Dispatch',
+                title: 'SEC-SSRF-01: Server-Side Request Forgery (SSRF) in Outbound Fetch / Webhook Dispatch',
                 severity: 'CRITICAL',
                 category: 'Network & SSRF',
                 filePath: file.path,
@@ -407,12 +414,12 @@ export function evaluateSecurityRules(file: CodeFile, lines: string[], cleanCont
                 owner: 'Security Lead',
                 falsePositive: false
             });
-            logs.push(`[${ts}] 🛑 CRITICAL: SEC-16 Unvalidated outbound fetch / SSRF risk in ${file.path}:${lineNum}`);
+            logs.push(`[${ts}] 🛑 CRITICAL: SEC-SSRF-01 Unvalidated outbound fetch / SSRF risk in ${file.path}:${lineNum}`);
         }
     }
     // Rule 17 / SEC-17: Broken Object Level Authorization (BOLA / IDOR)
     if (isApiRoute) {
-        const dbQueryWithParamRegex = /(?:prisma\.[a-zA-Z0-9_]+\.(?:findUnique|findFirst|update|delete)|supabase\.from\([^)]+\)\.(?:select|update|delete))\s*\([^)]*(?:params\.id|query\.id|req\.params|req\.query)/i;
+        const dbQueryWithParamRegex = /(?:prisma\.[a-zA-Z0-9_]+\.(?:findUnique|findFirst|update|delete)|supabase\.from\([^)]+\)\.(?:select|update|delete))\s*\([^)]*(?:params\.id|query\.id|req\.params|req\.query)\b/i;
         const tenantCheckRegex = /(?:auth\.uid\(\)|user_id|userId|session\.user\.id|tenantId|orgId|account_id)/i;
         if (dbQueryWithParamRegex.test(cleanContent) && !tenantCheckRegex.test(cleanContent)) {
             const matchLineIdx = lines.findIndex(l => !l.trim().startsWith('//') && dbQueryWithParamRegex.test(l));
@@ -442,7 +449,7 @@ export function evaluateSecurityRules(file: CodeFile, lines: string[], cleanCont
     }
     // Rule 18 / SEC-18: Prompt Injection Risk via Direct User String Interpolation (LLM01)
     if (isCodeFile) {
-        const promptConcatRegex = /(?:messages:\s*\[[^\]]*(?:content:\s*`[^`]*\$\{(?:req\.body|prompt|userInput|query|text)|content:\s*(?:userInput|prompt|text)\s*\+))/i;
+        const promptConcatRegex = /(?:messages:\s*\[[^\]]*(?:content:\s*`[^`]*\$\{(?:req\.body|prompt|userInput|query|text)\b|content:\s*(?:userInput|prompt|text)\s*\+))/i;
         const promptGuardRegex = /(?:sanitizePrompt|validatePrompt|systemGuard|delimiter|guardrails|zod)/i;
         if (promptConcatRegex.test(cleanContent) && !promptGuardRegex.test(cleanContent)) {
             const matchLineIdx = lines.findIndex(l => !l.trim().startsWith('//') && promptConcatRegex.test(l));
@@ -472,7 +479,7 @@ export function evaluateSecurityRules(file: CodeFile, lines: string[], cleanCont
     }
     // Rule 19 / SEC-19: Excessive Agency & Unbounded Function Calling (OWASP LLM08)
     if (isCodeFile) {
-        const llmToolCallRegex = /(?:tools:\s*\[[^\]]*(?:exec|deleteDatabase|dropTable|eval|sendEmail|transferFunds)|autoRun:\s*true)/i;
+        const llmToolCallRegex = /(?:tools:\s*\[[^\]]*(?:exec|deleteDatabase|dropTable|eval|sendEmail|transferFunds)\b|autoRun:\s*true)/i;
         const humanInLoopRegex = /(?:confirmWithUser|requireApproval|humanInTheLoop|dryRun)/i;
         if (llmToolCallRegex.test(cleanContent) && !humanInLoopRegex.test(cleanContent)) {
             const matchLineIdx = lines.findIndex(l => !l.trim().startsWith('//') && llmToolCallRegex.test(l));
@@ -502,7 +509,7 @@ export function evaluateSecurityRules(file: CodeFile, lines: string[], cleanCont
     }
     // Rule 23 / SEC-23: Mass Assignment in Database Mutations
     if (isApiRoute) {
-        const massAssignRegex = /(?:prisma\.[a-zA-Z0-9_]+\.(?:create|update)\s*\(\s*\{\s*data:\s*(?:req\.body|await req\.json\(\)|body)|db\.[a-zA-Z0-9_]+\.create\s*\(\s*(?:req\.body|body)\s*\))/i;
+        const massAssignRegex = /(?:prisma\.[a-zA-Z0-9_]+\.(?:create|update)\s*\(\s*\{\s*data:\s*(?:req\.body|await req\.json\(\)|body)\b|db\.[a-zA-Z0-9_]+\.create\s*\(\s*(?:req\.body|body)\s*\))/i;
         const schemaParseRegex = /(?:parse|safeParse|validate|pick|whitelist|allowedFields)/i;
         if (massAssignRegex.test(cleanContent) && !schemaParseRegex.test(cleanContent)) {
             const matchLineIdx = lines.findIndex(l => !l.trim().startsWith('//') && massAssignRegex.test(l));
@@ -532,8 +539,9 @@ export function evaluateSecurityRules(file: CodeFile, lines: string[], cleanCont
     }
     // Rule 24 / SEC-24: Path Traversal in File Operations (CWE-22)
     if (isCodeFile) {
-        const pathTraversalRegex = /(?:fs\.(?:readFile|createReadStream|promises\.readFile|readFileSync))\s*\([^)]*(?:req\.(?:query|params|body)|searchParams\.get|params\.)/i;
-        const pathSanitizeRegex = /(?:path\.resolve|path\.basename|sanitizeFilename|starts_with|startsWith)/i;
+        const pathTraversalRegex = /(?:\bfs\.(?:promises\.)?|\bfsp\.|(?<![.\w]))(?:readFile|readFileSync|createReadStream|unlink|unlinkSync|rm)\s*\([^)]*(?:req\.(?:query|params|body)|searchParams\.get|params\.)/i;
+        // path.resolve alone does not keep the result inside the base directory; a prefix check or basename does
+        const pathSanitizeRegex = /(?:path\.basename|sanitizeFilename|starts_with|startsWith)/i;
         if (pathTraversalRegex.test(cleanContent) && !pathSanitizeRegex.test(cleanContent)) {
             const matchLineIdx = lines.findIndex(l => !l.trim().startsWith('//') && pathTraversalRegex.test(l));
             const lineNum = matchLineIdx !== -1 ? matchLineIdx + 1 : 1;
@@ -655,8 +663,9 @@ export function evaluateSecurityRules(file: CodeFile, lines: string[], cleanCont
     // Rule 28 / SEC-28: JWT Algorithm Confusion & None Algorithm Acceptance
     if (isCodeFile && cleanContent.includes('jwt.verify')) {
         const jwtVerifyWithoutAlgRegex = /jwt\.verify\s*\([^,]+,\s*[^,)]+\s*\)/;
-        if (jwtVerifyWithoutAlgRegex.test(cleanContent)) {
-            const matchLineIdx = lines.findIndex(l => !l.trim().startsWith('//') && jwtVerifyWithoutAlgRegex.test(l));
+        const noneAlgorithmRegex = /algorithms\s*:\s*\[[^\]]*['"]none['"]/i;
+        if (jwtVerifyWithoutAlgRegex.test(cleanContent) || noneAlgorithmRegex.test(cleanContent)) {
+            const matchLineIdx = lines.findIndex(l => !l.trim().startsWith('//') && (jwtVerifyWithoutAlgRegex.test(l) || noneAlgorithmRegex.test(l)));
             const lineNum = matchLineIdx !== -1 ? matchLineIdx + 1 : 1;
             const snippet = lines.slice(Math.max(0, lineNum - 2), Math.min(lines.length, lineNum + 2)).join('\n');
             findings.push({
@@ -712,8 +721,9 @@ export function evaluateSecurityRules(file: CodeFile, lines: string[], cleanCont
         }
     }
     // Rule 31 / SEC-31: Insecure File Deserialization / YAML / XML External Entity (XXE)
-    if (isCodeFile && (cleanContent.includes('yaml.load') || cleanContent.includes('xml2js'))) {
-        const unsafeYamlRegex = /yaml\.load\s*\([^,)]+\)/;
+    // js-yaml >= 4 load() is safe by default; flag PyYAML unsafe loaders and js-yaml 3's full schema only
+    if (isCodeFile && /yaml\.(?:unsafe_)?load|DEFAULT_FULL_SCHEMA/.test(cleanContent)) {
+        const unsafeYamlRegex = /yaml\.(?:unsafe_load(?:_all)?\s*\(|load(?:_all)?\s*\([^)]*Loader\s*=\s*(?:yaml\.)?(?:Unsafe)?Loader\b|load\s*\([^)]*DEFAULT_FULL_SCHEMA)/;
         if (unsafeYamlRegex.test(cleanContent)) {
             const matchLineIdx = lines.findIndex(l => !l.trim().startsWith('//') && unsafeYamlRegex.test(l));
             const lineNum = matchLineIdx !== -1 ? matchLineIdx + 1 : 1;
@@ -730,9 +740,9 @@ export function evaluateSecurityRules(file: CodeFile, lines: string[], cleanCont
                 snippet: snippet || lines[matchLineIdx] || 'const data = yaml.load(userFile);',
                 reproductionSteps: [
                     `Scanned YAML parser execution at ${file.path}:${lineNum}.`,
-                    'Detected unsafe yaml.load() call vulnerable to arbitrary object instantiation and remote code execution.'
+                    'Detected a YAML loader that instantiates arbitrary objects (yaml.unsafe_load, Loader=yaml.Loader/UnsafeLoader, or js-yaml DEFAULT_FULL_SCHEMA), allowing remote code execution from attacker-controlled YAML.'
                 ],
-                remediationPrompt: `Replace unsafe yaml.load() with YAML.parse() or yaml.load(file, { schema: yaml.FAILSAFE_SCHEMA }) in ${file.path}:${lineNum}.`,
+                remediationPrompt: `Use yaml.safe_load() (Python) or js-yaml 4 load() with the default schema in ${file.path}:${lineNum}.`,
                 status: 'OPEN',
                 owner: 'Security Architect',
                 falsePositive: false
@@ -799,10 +809,19 @@ export function evaluateSecurityRules(file: CodeFile, lines: string[], cleanCont
         }
     }
     // Rule 4004 / LLM-04: Insecure Vector Search / Cross-Tenant Retrieval
-    if (isCodeFile && (cleanContent.includes('vectorStore') || cleanContent.includes('pinecone') || cleanContent.includes('match_documents'))) {
-        const vectorQueryRegex = /(?:pinecone.*\.query|supabase\.rpc\(['"]match_documents['"])\s*\(\s*\{(?![^}]*(?:tenant_id|tenantId|user_id|userId))/;
+    // Unscoped similarity search in code that serves signed-in users (single-tenant search without auth is fine)
+    const servesUsers = /\b(?:getUser|getSession|getServerSession|currentUser|userId|tenantId|orgId)\b|\bauth\(\)|session\.user|req\.user/.test(cleanContent);
+    if (isCodeFile && servesUsers) {
+        const SCOPE = '(?:tenant|user|org|account|workspace|owner|namespace|filter)';
+        const vectorQueryRegex = new RegExp(
+            String.raw`\.rpc\(\s*['"]match_\w+['"]\s*,\s*\{(?![^}]*${SCOPE})` +
+            String.raw`|\.similaritySearch(?:WithScore)?\(\s*[^,()]+(?:,\s*\d+)?\s*\)` +
+            // Pinecone index.namespace(tenant) scopes every query made through it
+            (/\.namespace\(/.test(cleanContent) ? '' : String.raw`|\.query\(\s*\{(?=[^}]*\b(?:topK|vector)\b)(?![^}]*${SCOPE})`),
+            'i'
+        );
         if (vectorQueryRegex.test(cleanContent)) {
-            const matchLineIdx = lines.findIndex(l => !l.trim().startsWith('//') && /pinecone.*\.query|match_documents/.test(l));
+            const matchLineIdx = lines.findIndex(l => !l.trim().startsWith('//') && /\.rpc\(\s*['"]match_|similaritySearch|\.query\(\s*\{/.test(l));
             const lineNum = matchLineIdx !== -1 ? matchLineIdx + 1 : 1;
             const snippet = lines.slice(Math.max(0, lineNum - 2), Math.min(lines.length, lineNum + 2)).join('\n');
             findings.push({
@@ -863,7 +882,18 @@ export function evaluateSecurityRules(file: CodeFile, lines: string[], cleanCont
     }
     // Rule 33 / SEC-33: Command Injection via Unsanitized Child Process Execution
     if (isCodeFile && (cleanContent.includes('child_process') || cleanContent.includes('execSync(') || cleanContent.includes('exec('))) {
-        const cmdInjRegex = /(?:child_process\.(?:exec|execSync|spawn|spawnSync)|\bexec\s*\(|\bexecSync\s*\()\s*(?:`[^`]*\$\{[^}]+\}|['"][^'"]*['"]\s*\+|[a-zA-Z0-9_.]+\s*\+|[^,\)]*\b(?:req\.|params\.|query\.|body\.|userInput|cmd|command|host|input))/;
+        // Shell commands built from dynamic values, or passed a value that comes from the request.
+        // A variable merely named `command` / `cmd` holding a constant is not injection.
+        const cmdRequestVars = new Set<string>();
+        for (const m of cleanContent.matchAll(/(?:const|let|var)\s+(\w+)\s*=\s*[^;\n]*(?:\breq(?:uest)?\.(?:query|body|params)\b|searchParams\.get\()/g)) cmdRequestVars.add(m[1]);
+        for (const m of cleanContent.matchAll(/(?:const|let|var)\s*\{([^}]*)\}\s*=\s*(?:await\s+)?(?:req(?:uest)?\.(?:query|body|params|json\(\))|request\.json\(\))/g)) {
+            m[1].split(',').map((x) => x.split(':').pop()!.split('=')[0].trim()).filter((x) => /^\w+$/.test(x)).forEach((x) => cmdRequestVars.add(x));
+        }
+        const cmdRequestRef = String.raw`\b(?:req(?:uest)?\.(?:query|body|params)\.\w+` + (cmdRequestVars.size ? '|' + [...cmdRequestVars].join('|') : '') + String.raw`)\b`;
+        // Developer tooling (scripts/, bin/, tools/) receives no request input: only request-derived values count there
+        const isDevTooling = /(?:^|\/)(?:scripts|bin|tools|\.husky)\//i.test(lowerPath);
+        const dynamicShell = String.raw`\x60[^\x60]*\$\{[^}]+\}|['"][^'"]*['"]\s*\+|[a-zA-Z0-9_.]+\s*\+|`;
+        const cmdInjRegex = new RegExp(String.raw`(?:child_process\.(?:exec|execSync)|\bexec\s*\(|\bexecSync\s*\()\s*(?:` + (isDevTooling ? '' : dynamicShell) + cmdRequestRef + ')');
         if (cmdInjRegex.test(cleanContent)) {
             const matchLineIdx = lines.findIndex(l => !l.trim().startsWith('//') && !l.trim().startsWith('*') && cmdInjRegex.test(l));
             const lineNum = matchLineIdx !== -1 ? matchLineIdx + 1 : 1;
@@ -891,9 +921,17 @@ export function evaluateSecurityRules(file: CodeFile, lines: string[], cleanCont
         }
     }
     // Rule 34 / SEC-34: Server-Side Request Forgery (SSRF) via Unvalidated HTTP Request
-    if (isCodeFile && (cleanContent.includes('fetch(') || cleanContent.includes('axios.') || cleanContent.includes('http.get('))) {
-        const ssrfRegex = /(?:fetch|axios\.(?:get|post|request)|http\.get|https\.get)\s*\(\s*(?:req\.(?:query|body|params)\.[a-zA-Z0-9_]+|userInput|targetUrl|url)\b/;
-        if (ssrfRegex.test(cleanContent) && !cleanContent.includes('validateSafeTargetUrl') && !cleanContent.includes('isAllowedWebhookUrl')) {
+    const httpClient = String.raw`(?:fetch|axios(?:\.(?:get|post|put|request|head))?|https?\.(?:get|request)|needle(?:\.(?:get|post|request))?|got(?:\.(?:get|post))?|request(?:\.(?:get|post))?|superagent\.(?:get|post)|undici\.request|ky(?:\.(?:get|post))?)`;
+    if (isCodeFile && new RegExp(httpClient + String.raw`\s*\(`).test(cleanContent)) {
+        // Only URLs that come from the request: direct req.* access or variables assigned / destructured from it
+        const requestVars = new Set<string>();
+        for (const m of cleanContent.matchAll(/(?:const|let|var)\s+(\w+)\s*=\s*[^;\n]*(?:\breq(?:uest)?\.(?:query|body|params)\b|searchParams\.get\(|\bformData\.get\()/g)) requestVars.add(m[1]);
+        for (const m of cleanContent.matchAll(/(?:const|let|var)\s*\{([^}]*)\}\s*=\s*(?:await\s+)?(?:req(?:uest)?\.(?:query|body|params|json\(\))|request\.json\(\))/g)) {
+            m[1].split(',').map((x) => x.split(':').pop()!.split('=')[0].trim()).filter(Boolean).forEach((x) => requestVars.add(x));
+        }
+        const requestUrl = String.raw`(?:req(?:uest)?\.(?:query|body|params)\.\w+` + (requestVars.size ? String.raw`|\b(?:` + [...requestVars].filter((v) => /^\w+$/.test(v)).join('|') + String.raw`)\b` : '') + ')';
+        const ssrfRegex = new RegExp(httpClient + String.raw`\s*\(\s*(?:\x60[^\x60]*\$\{\s*` + requestUrl + String.raw`|new\s+URL\(\s*` + requestUrl + '|' + requestUrl + ')');
+        if (ssrfRegex.test(cleanContent) && !/validateSafeTargetUrl|isAllowedWebhookUrl|\b(?:ALLOWED|allowed|ALLOW|allow)\w*\.(?:has|includes)\(\s*\w+\.(?:hostname|host|origin)|\.(?:hostname|host|origin)\s*(?:===|!==)|isAllowed\w*\(|validate\w*Url\(|(?:assert|ensure|is)Safe\w*Url\(|ssrfGuard|ssrf-?(?:req-)?filter/i.test(cleanContent)) {
             const matchLineIdx = lines.findIndex(l => !l.trim().startsWith('//') && !l.trim().startsWith('*') && ssrfRegex.test(l));
             const lineNum = matchLineIdx !== -1 ? matchLineIdx + 1 : 1;
             const snippet = lines.slice(Math.max(0, lineNum - 2), Math.min(lines.length, lineNum + 2)).join('\n');
@@ -1035,7 +1073,11 @@ export function evaluateSecurityRules(file: CodeFile, lines: string[], cleanCont
     }
     // Rule 39 / SEC-39: Insecure Unverified JWT Decoding (Missing Signature Verification)
     if (isCodeFile && cleanContent.includes('jwt.decode(')) {
-        const jwtDecodeRegex = /\bjwt\.decode\s*\([^)]+\)/;
+        // PyJWT's jwt.decode(token, key, algorithms=[...]) verifies the signature; only flag disabled verification there.
+        const isPython = /\.py$/i.test(file.path);
+        const jwtDecodeRegex = isPython
+            ? /\bjwt\.decode\s*\((?:\s*\w+\s*\)|[^)]*verify_signature["']?\s*:\s*False|[^)]*verify\s*=\s*False)/
+            : /\bjwt\.decode\s*\([^)]+\)/;
         if (jwtDecodeRegex.test(cleanContent) && !cleanContent.includes('jwt.verify(')) {
             const matchLineIdx = lines.findIndex(l => !l.trim().startsWith('//') && !l.trim().startsWith('*') && jwtDecodeRegex.test(l));
             const lineNum = matchLineIdx !== -1 ? matchLineIdx + 1 : 1;
@@ -1093,8 +1135,15 @@ export function evaluateSecurityRules(file: CodeFile, lines: string[], cleanCont
     }
     // Rule 41 / SEC-41: Open Redirection Vulnerability via Untrusted URL Target
     if (isCodeFile && cleanContent.includes('redirect(')) {
-        const openRedirectRegex = /(?:res\.redirect|redirect|NextResponse\.redirect)\s*\(\s*(?:req\.(?:query|body|params)|searchParams\.get|\b(?:next|url|redirectUrl|target|targetUrl|returnTo)\b)/i;
-        if (openRedirectRegex.test(cleanContent)) {
+        const redirectTarget = String.raw`\b(?:next|url|redirectUrl|redirectTo|target|targetUrl|returnTo|returnUrl|callbackUrl)\b`;
+        const openRedirectRegex = new RegExp(
+            String.raw`(?:res\.redirect|redirect|NextResponse\.redirect)\s*\(\s*(?:req\.(?:query|body|params)|searchParams\.get|` +
+            redirectTarget + String.raw`(?:\s+as\s+\w+)?\s*(?:[),]|\|\||\?\?)|` + '`' + String.raw`\$\{\s*` + redirectTarget + String.raw`\s*\}|new\s+URL\(\s*` + redirectTarget + ')',
+            'i'
+        );
+        // Explicit same-origin helpers mark the redirect as validated
+        const redirectGuardRegex = /isSafeRedirect|isRelativeUrl|allowedRedirect|isSameOrigin/i;
+        if (openRedirectRegex.test(cleanContent) && !redirectGuardRegex.test(cleanContent)) {
             const matchLineIdx = lines.findIndex(l => !l.trim().startsWith('//') && !l.trim().startsWith('*') && openRedirectRegex.test(l));
             const lineNum = matchLineIdx !== -1 ? matchLineIdx + 1 : 1;
             const snippet = lines.slice(Math.max(0, lineNum - 2), Math.min(lines.length, lineNum + 2)).join('\n');

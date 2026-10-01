@@ -4,6 +4,7 @@
  */
 import { Finding } from "@/data/schema";
 import { CodeFile } from "../scanner-engine";
+import { locateMatchLine } from './shared/locate';
 export interface PciDssV4RuleResult {
     findings: Finding[];
     logs: string[];
@@ -15,14 +16,14 @@ export function evaluatePciDssV4Rules(file: CodeFile, lines: string[], cleanCont
     const logs: string[] = [];
     const lowerPath = file.path.toLowerCase().replace(/\\/g, "/");
     // Skip self-referential catalogs, mocks, and schema definitions
-    if (lowerPath.includes("data/catalogs/") || lowerPath.includes("data/mockdata") || lowerPath.includes("data/workspacefiles") || lowerPath.includes("data/schema") || lowerPath.includes("scratch/") || lowerPath.includes(".agent/") || lowerPath.includes("node_modules/") || lowerPath.endsWith(".d.ts")) {
+    if (lowerPath.includes("node_modules/") || lowerPath.endsWith(".d.ts")) {
         return { findings, logs };
     }
     const ts = new Date().toLocaleTimeString();
     // PCI4-01: PCI-DSS Req 3.4 Unencrypted Primary Account Numbers (PAN) at Rest
     // Note: Ignore Lucide icon components (<CreditCard) and UI labels
     if ((/(?:storeCard|saveCard|rawCardNumber|creditCardPan)\s*[:=]/i.test(cleanContent) && !cleanContent.includes('<CreditCard') && !/aes256GcmEncrypt/i.test(cleanContent))) {
-        const matchLineIdx = lines.findIndex(l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('#') && !l.trim().startsWith('*'));
+        const matchLineIdx = locateMatchLine(lines, [/(?:storeCard|saveCard|rawCardNumber|creditCardPan)\s*[:=]/i], l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('#') && !l.trim().startsWith('*'));
         const lineNum = matchLineIdx !== -1 ? matchLineIdx + 1 : 1;
         findings.push({
             id: `pci412901-${Date.now()}-${findingCounter.count++}`,
@@ -47,7 +48,7 @@ export function evaluatePciDssV4Rules(file: CodeFile, lines: string[], cleanCont
     // PCI4-02: PCI-DSS Req 6.4.3 Insecure Third-Party Scripts on Payment Pages
     // Only applies if payment/checkout view actually loads an external <script> tag
     if (/<script\s+[^>]*src=/i.test(cleanContent) && /payment|checkout/i.test(lowerPath) && !/integrity=|Content-Security-Policy/i.test(cleanContent)) {
-        const matchLineIdx = lines.findIndex(l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('#') && !l.trim().startsWith('*'));
+        const matchLineIdx = locateMatchLine(lines, [/<script\s+[^>]*src=/i], l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('#') && !l.trim().startsWith('*'));
         const lineNum = matchLineIdx !== -1 ? matchLineIdx + 1 : 1;
         findings.push({
             id: `pci412902-${Date.now()}-${findingCounter.count++}`,
@@ -71,7 +72,7 @@ export function evaluatePciDssV4Rules(file: CodeFile, lines: string[], cleanCont
     }
     // PCI4-03: PCI-DSS Req 8.4.2 Multi-Factor Authentication Missing for CDE Access
     if (((/cdeaccess/i.test(lowerPath) || /cdeAccess/i.test(cleanContent)) && !/enforceMfa/i.test(cleanContent))) {
-        const matchLineIdx = lines.findIndex(l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('#') && !l.trim().startsWith('*'));
+        const matchLineIdx = locateMatchLine(lines, [/cdeAccess/i], l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('#') && !l.trim().startsWith('*'));
         const lineNum = matchLineIdx !== -1 ? matchLineIdx + 1 : 1;
         findings.push({
             id: `pci412903-${Date.now()}-${findingCounter.count++}`,
@@ -95,7 +96,7 @@ export function evaluatePciDssV4Rules(file: CodeFile, lines: string[], cleanCont
     }
     // PCI4-04: PCI-DSS Req 10.4.1 Automated Audit Log Review and Anomaly Alerts
     if (((/cdeaudit/i.test(lowerPath) || /cdeAudit/i.test(cleanContent)) && !/automatedAnomalyDetection/i.test(cleanContent))) {
-        const matchLineIdx = lines.findIndex(l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('#') && !l.trim().startsWith('*'));
+        const matchLineIdx = locateMatchLine(lines, [/cdeAudit/i], l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('#') && !l.trim().startsWith('*'));
         const lineNum = matchLineIdx !== -1 ? matchLineIdx + 1 : 1;
         findings.push({
             id: `pci412904-${Date.now()}-${findingCounter.count++}`,
@@ -119,7 +120,7 @@ export function evaluatePciDssV4Rules(file: CodeFile, lines: string[], cleanCont
     }
     // PCI4-05: PCI-DSS Req 11.6.1 Tamper-Detection Mechanism for Payment Checkout
     if (((/paymentgateway/i.test(lowerPath) || /paymentGateway/i.test(cleanContent)) && !/tamperDetection/i.test(cleanContent))) {
-        const matchLineIdx = lines.findIndex(l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('#') && !l.trim().startsWith('*'));
+        const matchLineIdx = locateMatchLine(lines, [/paymentGateway/i], l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('#') && !l.trim().startsWith('*'));
         const lineNum = matchLineIdx !== -1 ? matchLineIdx + 1 : 1;
         findings.push({
             id: `pci412905-${Date.now()}-${findingCounter.count++}`,

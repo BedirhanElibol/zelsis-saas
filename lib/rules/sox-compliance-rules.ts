@@ -4,6 +4,7 @@
  */
 import { Finding } from "@/data/schema";
 import { CodeFile } from "../scanner-engine";
+import { locateMatchLine } from './shared/locate';
 export interface SoxComplianceRuleResult {
     findings: Finding[];
     logs: string[];
@@ -15,7 +16,7 @@ export function evaluateSoxComplianceRules(file: CodeFile, lines: string[], clea
     const logs: string[] = [];
     const lowerPath = file.path.toLowerCase().replace(/\\/g, "/");
     // Skip self-referential catalogs, mocks, and schema definitions
-    if (lowerPath.includes("data/catalogs/") || lowerPath.includes("data/mockdata") || lowerPath.includes("data/workspacefiles") || lowerPath.includes("data/schema") || lowerPath.includes("scratch/") || lowerPath.includes(".agent/") || lowerPath.includes("node_modules/") || lowerPath.endsWith(".d.ts")) {
+    if (lowerPath.includes("node_modules/") || lowerPath.endsWith(".d.ts")) {
         return { findings, logs };
     }
     const ts = new Date().toLocaleTimeString();
@@ -35,7 +36,7 @@ export function evaluateSoxComplianceRules(file: CodeFile, lines: string[], clea
             snippet: lines[matchLineIdx] || 'SOX ITGC configuration',
             reproductionSteps: [
                 `Audited SOX ITGC configuration in ${file.path}:${lineNum}.`,
-                'Detected violation matching {code}.'
+                'Matched SOX-01: SOX ITGC Change Management: Lack of Independent Peer Review on Financial Code.'
             ],
             remediationPrompt: "Mandate at least one independent, documented peer approval before deploying to financial systems.",
             status: 'OPEN',
@@ -45,7 +46,7 @@ export function evaluateSoxComplianceRules(file: CodeFile, lines: string[], clea
     }
     // SOX-02: SOX ITGC Segregation of Duties (SoD): Developers Possessing Production DB Write Access
     if (((/sox/i.test(lowerPath) || /sox/i.test(cleanContent)) && !/restrictWriteAccess/i.test(cleanContent))) {
-        const matchLineIdx = lines.findIndex(l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('#') && !l.trim().startsWith('*'));
+        const matchLineIdx = locateMatchLine(lines, [/sox/i], l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('#') && !l.trim().startsWith('*'));
         const lineNum = matchLineIdx !== -1 ? matchLineIdx + 1 : 1;
         findings.push({
             id: `sox13402-${Date.now()}-${findingCounter.count++}`,
@@ -59,7 +60,7 @@ export function evaluateSoxComplianceRules(file: CodeFile, lines: string[], clea
             snippet: lines[matchLineIdx] || 'SOX ITGC configuration',
             reproductionSteps: [
                 `Audited SOX ITGC configuration in ${file.path}:${lineNum}.`,
-                'Detected violation matching {code}.'
+                'Matched SOX-02: SOX ITGC Segregation of Duties (SoD): Developers Possessing Production DB Write Access.'
             ],
             remediationPrompt: "Revoke direct production write and DDL permissions from development and engineering staff.",
             status: 'OPEN',
@@ -69,7 +70,7 @@ export function evaluateSoxComplianceRules(file: CodeFile, lines: string[], clea
     }
     // SOX-03: SOX ITGC Audit Trail: Missing Immutable Logging for Financial Transaction Modifications
     if ((/ledger|journal/i.test(cleanContent) && !/immutableAuditLog/i.test(cleanContent))) {
-        const matchLineIdx = lines.findIndex(l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('#') && !l.trim().startsWith('*'));
+        const matchLineIdx = locateMatchLine(lines, [/ledger|journal/i], l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('#') && !l.trim().startsWith('*'));
         const lineNum = matchLineIdx !== -1 ? matchLineIdx + 1 : 1;
         findings.push({
             id: `sox13403-${Date.now()}-${findingCounter.count++}`,
@@ -83,7 +84,7 @@ export function evaluateSoxComplianceRules(file: CodeFile, lines: string[], clea
             snippet: lines[matchLineIdx] || 'SOX ITGC configuration',
             reproductionSteps: [
                 `Audited SOX ITGC configuration in ${file.path}:${lineNum}.`,
-                'Detected violation matching {code}.'
+                'Matched SOX-03: SOX ITGC Audit Trail: Missing Immutable Logging for Financial Transaction Modifications.'
             ],
             remediationPrompt: "Ensure immutable, append-only audit logging with cryptographic hashing for all financial table changes.",
             status: 'OPEN',
@@ -107,7 +108,7 @@ export function evaluateSoxComplianceRules(file: CodeFile, lines: string[], clea
             snippet: lines[matchLineIdx] || 'SOX ITGC configuration',
             reproductionSteps: [
                 `Audited SOX ITGC configuration in ${file.path}:${lineNum}.`,
-                'Detected violation matching {code}.'
+                'Matched SOX-04: SOX ITGC Access Governance: Dormant Financial Accounts Active Beyond 30 Days.'
             ],
             remediationPrompt: "Automate suspension and deprovisioning of financial application accounts dormant for over 30 days.",
             status: 'OPEN',
@@ -131,7 +132,7 @@ export function evaluateSoxComplianceRules(file: CodeFile, lines: string[], clea
             snippet: lines[matchLineIdx] || 'SOX ITGC configuration',
             reproductionSteps: [
                 `Audited SOX ITGC configuration in ${file.path}:${lineNum}.`,
-                'Detected violation matching {code}.'
+                'Matched SOX-05: SOX ITGC Disaster Recovery: Untested Annual Financial Ledger Backup Restoration.'
             ],
             remediationPrompt: "Conduct and document quarterly automated restoration drills for financial general ledger databases.",
             status: 'OPEN',

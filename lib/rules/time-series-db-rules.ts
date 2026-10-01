@@ -4,6 +4,7 @@
  */
 import { Finding } from "@/data/schema";
 import { CodeFile } from "../scanner-engine";
+import { locateMatchLine } from './shared/locate';
 export interface TimeSeriesDbRuleResult {
     findings: Finding[];
     logs: string[];
@@ -15,13 +16,13 @@ export function evaluateTimeSeriesDbRules(file: CodeFile, lines: string[], clean
     const logs: string[] = [];
     const lowerPath = file.path.toLowerCase().replace(/\\/g, "/");
     // Skip self-referential catalogs, mocks, and schema definitions
-    if (lowerPath.includes("data/catalogs/") || lowerPath.includes("data/mockdata") || lowerPath.includes("data/workspacefiles") || lowerPath.includes("data/schema") || lowerPath.includes("scratch/") || lowerPath.includes(".agent/") || lowerPath.includes("node_modules/") || lowerPath.endsWith(".d.ts")) {
+    if (lowerPath.includes("node_modules/") || lowerPath.endsWith(".d.ts")) {
         return { findings, logs };
     }
     const ts = new Date().toLocaleTimeString();
     // TSDB-01: Unindexed Timestamp Column Triggering Full Table Scans in Metric Queries
     if ((/create\s*table.*ENGINE\s*=\s*MergeTree/i.test(cleanContent) && !/ORDER BY/i.test(cleanContent))) {
-        const matchLineIdx = lines.findIndex(l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('#') && !l.trim().startsWith('*'));
+        const matchLineIdx = locateMatchLine(lines, [/create\s*table.*ENGINE\s*=\s*MergeTree/i], l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('#') && !l.trim().startsWith('*'));
         const lineNum = matchLineIdx !== -1 ? matchLineIdx + 1 : 1;
         findings.push({
             id: `tsdb14001-${Date.now()}-${findingCounter.count++}`,
@@ -35,7 +36,7 @@ export function evaluateTimeSeriesDbRules(file: CodeFile, lines: string[], clean
             snippet: lines[matchLineIdx] || 'Time-Series Database configuration',
             reproductionSteps: [
                 `Audited Time-Series Database configuration in ${file.path}:${lineNum}.`,
-                'Detected violation matching {code}.'
+                'Matched TSDB-01: Unindexed Timestamp Column Triggering Full Table Scans in Metric Queries.'
             ],
             remediationPrompt: "Enforce clustering or primary sorting keys on timestamp and metric dimensions.",
             status: 'OPEN',
@@ -59,7 +60,7 @@ export function evaluateTimeSeriesDbRules(file: CodeFile, lines: string[], clean
             snippet: lines[matchLineIdx] || 'Time-Series Database configuration',
             reproductionSteps: [
                 `Audited Time-Series Database configuration in ${file.path}:${lineNum}.`,
-                'Detected violation matching {code}.'
+                'Matched TSDB-02: Missing Automated Retention Policy and Data Tiering for Historical Telemetry.'
             ],
             remediationPrompt: "Configure automatic compression and tiered storage offloading for historical metrics.",
             status: 'OPEN',
@@ -69,7 +70,7 @@ export function evaluateTimeSeriesDbRules(file: CodeFile, lines: string[], clean
     }
     // TSDB-03: High-Cardinality Tag Explosion Exhausting TSDB Inverted Index Memory
     if ((/recordMetric|emitEvent/i.test(cleanContent) && !/sanitizeMetricTags/i.test(cleanContent))) {
-        const matchLineIdx = lines.findIndex(l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('#') && !l.trim().startsWith('*'));
+        const matchLineIdx = locateMatchLine(lines, [/recordMetric|emitEvent/i], l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('#') && !l.trim().startsWith('*'));
         const lineNum = matchLineIdx !== -1 ? matchLineIdx + 1 : 1;
         findings.push({
             id: `tsdb14003-${Date.now()}-${findingCounter.count++}`,
@@ -83,7 +84,7 @@ export function evaluateTimeSeriesDbRules(file: CodeFile, lines: string[], clean
             snippet: lines[matchLineIdx] || 'Time-Series Database configuration',
             reproductionSteps: [
                 `Audited Time-Series Database configuration in ${file.path}:${lineNum}.`,
-                'Detected violation matching {code}.'
+                'Matched TSDB-03: High-Cardinality Tag Explosion Exhausting TSDB Inverted Index Memory.'
             ],
             remediationPrompt: "Enforce limits on unique tag/label values (e.g. banning user IDs or trace IDs in metric tag sets).",
             status: 'OPEN',
@@ -93,7 +94,7 @@ export function evaluateTimeSeriesDbRules(file: CodeFile, lines: string[], clean
     }
     // TSDB-04: Small-Batch Micro-Insertions Causing Excessive Columnar File Fragmentation
     if (((/writeTelemetry/i.test(lowerPath) || /writeTelemetry/i.test(cleanContent)) && !/batchBuffer/i.test(cleanContent))) {
-        const matchLineIdx = lines.findIndex(l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('#') && !l.trim().startsWith('*'));
+        const matchLineIdx = locateMatchLine(lines, [/writeTelemetry/i], l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('#') && !l.trim().startsWith('*'));
         const lineNum = matchLineIdx !== -1 ? matchLineIdx + 1 : 1;
         findings.push({
             id: `tsdb14004-${Date.now()}-${findingCounter.count++}`,
@@ -107,7 +108,7 @@ export function evaluateTimeSeriesDbRules(file: CodeFile, lines: string[], clean
             snippet: lines[matchLineIdx] || 'Time-Series Database configuration',
             reproductionSteps: [
                 `Audited Time-Series Database configuration in ${file.path}:${lineNum}.`,
-                'Detected violation matching {code}.'
+                'Matched TSDB-04: Small-Batch Micro-Insertions Causing Excessive Columnar File Fragmentation.'
             ],
             remediationPrompt: "Batch metric writes (minimum 5,000-10,000 points per HTTP/TCP write request).",
             status: 'OPEN',
@@ -117,7 +118,7 @@ export function evaluateTimeSeriesDbRules(file: CodeFile, lines: string[], clean
     }
     // TSDB-05: Uncompressed Historical Columnar Storage Consuming Excessive Disk Space
     if ((/column_definition/i.test(cleanContent) && !/CODEC\(ZSTD\)|Gorilla/i.test(cleanContent))) {
-        const matchLineIdx = lines.findIndex(l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('#') && !l.trim().startsWith('*'));
+        const matchLineIdx = locateMatchLine(lines, [/column_definition/i], l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('#') && !l.trim().startsWith('*'));
         const lineNum = matchLineIdx !== -1 ? matchLineIdx + 1 : 1;
         findings.push({
             id: `tsdb14005-${Date.now()}-${findingCounter.count++}`,
@@ -131,7 +132,7 @@ export function evaluateTimeSeriesDbRules(file: CodeFile, lines: string[], clean
             snippet: lines[matchLineIdx] || 'Time-Series Database configuration',
             reproductionSteps: [
                 `Audited Time-Series Database configuration in ${file.path}:${lineNum}.`,
-                'Detected violation matching {code}.'
+                'Matched TSDB-05: Uncompressed Historical Columnar Storage Consuming Excessive Disk Space.'
             ],
             remediationPrompt: "Enable ZSTD or Gorilla columnar compression codecs on time-series chunks.",
             status: 'OPEN',

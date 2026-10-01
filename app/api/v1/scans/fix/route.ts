@@ -22,7 +22,8 @@ export async function POST(req: NextRequest) {
   const rateLimit = await checkRateLimit(req, {
     maxRequests: 30,
     windowSeconds: 60,
-    prefix: 'scans-fix'
+    prefix: 'scans-fix',
+    failClosed: true
   });
   if (!rateLimit.allowed) {
     return createRateLimitResponse(rateLimit);

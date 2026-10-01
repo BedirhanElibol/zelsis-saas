@@ -1,0 +1,4166 @@
+{
+ "generatedAt": "2026-10-01",
+ "corpus": [
+  {
+   "name": "vercel/nextjs-subscription-payments",
+   "sha": "bdd0813206e47e6b218d42f15a7976c8a0d3c3eb",
+   "kind": "clean",
+   "stack": "Next.js + Supabase + Stripe"
+  },
+  {
+   "name": "shadcn-ui/taxonomy",
+   "sha": "298a8857c7128a0d121e7f699dfd729f23b3966d",
+   "kind": "clean",
+   "stack": "Next.js + Prisma + Stripe + NextAuth"
+  },
+  {
+   "name": "fastapi/full-stack-fastapi-template",
+   "sha": "cb740b656d7a0a6c5e12c7bf8e50343ec94ee9c7",
+   "kind": "clean",
+   "stack": "FastAPI + React"
+  },
+  {
+   "name": "gothinkster/node-express-realworld-example-app",
+   "sha": "30b68e1e881462b2f4164ea09ab4c4f5699c7b0b",
+   "kind": "clean",
+   "stack": "Express + Prisma"
+  },
+  {
+   "name": "gothinkster/golang-gin-realworld-example-app",
+   "sha": "626c372d259472148d93303f74aa9b9a1cdcef24",
+   "kind": "clean",
+   "stack": "Go + Gin"
+  },
+  {
+   "name": "laravel/laravel",
+   "sha": "06d016a364a37430eec9cbc52209adce3d7667ce",
+   "kind": "clean",
+   "stack": "Laravel"
+  },
+  {
+   "name": "documenso/documenso",
+   "sha": "8a41a3bf618d9e46e2e1c0f437aa0488d91b85de",
+   "kind": "clean",
+   "stack": "Remix/React Router + Prisma + tRPC (production SaaS)"
+  },
+  {
+   "name": "supabase/supabase-js",
+   "sha": "a684cf97b67fd71670bab5030fe88b219f2c09fe",
+   "kind": "clean",
+   "stack": "TypeScript SDK"
+  },
+  {
+   "name": "OWASP/NodeGoat",
+   "sha": "c5cb68a7084e4ae7dcc60e6a98768720a81841e8",
+   "kind": "vulnerable",
+   "stack": "Express + MongoDB"
+  },
+  {
+   "name": "appsecco/dvna",
+   "sha": "9ba473add536f66ac9007966acb2a775dd31277a",
+   "kind": "vulnerable",
+   "stack": "Express + Sequelize"
+  },
+  {
+   "name": "juice-shop/juice-shop",
+   "sha": "1618a611b173b4bf114028e6e02549950606e29d",
+   "kind": "vulnerable",
+   "stack": "Express + Angular + Sequelize"
+  },
+  {
+   "name": "spring-projects/spring-petclinic",
+   "sha": "500158f732419217507c7656904b8e6aa1bcc0d6",
+   "kind": "clean",
+   "stack": "Java + Spring Boot"
+  },
+  {
+   "name": "dotnet-architecture/eShopOnWeb",
+   "sha": "4da8212117e87d808d4bbc7da6286fd2147ce606",
+   "kind": "clean",
+   "stack": "C# + ASP.NET Core"
+  },
+  {
+   "name": "rubygems/rubygems.org",
+   "sha": "36e040d0c8a3282959bff078894a5d458f991472",
+   "kind": "clean",
+   "stack": "Ruby on Rails (production service)"
+  },
+  {
+   "name": "django/djangoproject.com",
+   "sha": "fc7a27e9fa6c7f2561dd761eae87da69b90126e5",
+   "kind": "clean",
+   "stack": "Python + Django (production site)"
+  },
+  {
+   "name": "WebGoat/WebGoat",
+   "sha": "3284a8e466dfde083858f681e89aabb94e8b9c9e",
+   "kind": "vulnerable",
+   "stack": "Java + Spring"
+  },
+  {
+   "name": "OWASP/railsgoat",
+   "sha": "f5951f13089d85c979de09e7da3c8c0fb982f94a",
+   "kind": "vulnerable",
+   "stack": "Ruby on Rails"
+  },
+  {
+   "name": "digininja/DVWA",
+   "sha": "b496a5d3de6b967410155e1b7d3e51e9d035eb22",
+   "kind": "vulnerable",
+   "stack": "PHP"
+  },
+  {
+   "name": "adeyosemanputra/pygoat",
+   "sha": "19d17cc8874861142b330636d068bbde54e86b85",
+   "kind": "vulnerable",
+   "stack": "Python + Django"
+  },
+  {
+   "name": "anxolerd/dvpwa",
+   "sha": "a1d8f89fac2e57093189853c6527c2b01fc1d9c1",
+   "kind": "vulnerable",
+   "stack": "Python + aiohttp"
+  }
+ ],
+ "summary": {
+  "cleanRepos": 12,
+  "cleanReposGateFailed": 2,
+  "cleanHighCriticalFindings": 888,
+  "cleanGatingHighCriticalFindings": 115,
+  "documentedFlaws": 38,
+  "documentedFlawsDetected": 37,
+  "recall": 0.97,
+  "documentedFlawsBlockingGate": 36,
+  "rulesFiringOnClean": 206,
+  "experimentalRules": 106
+ },
+ "repos": [
+  {
+   "repo": "vercel/nextjs-subscription-payments",
+   "sha": "bdd0813206e47e6b218d42f15a7976c8a0d3c3eb",
+   "kind": "clean",
+   "stack": "Next.js + Supabase + Stripe",
+   "files": 67,
+   "scanMs": 454,
+   "gate": "WARNING",
+   "score": 48,
+   "critical": 0,
+   "high": 3,
+   "medium": 17,
+   "low": 7,
+   "experimental": 12,
+   "allHighCritical": 15,
+   "detectedFramework": "Next.js"
+  },
+  {
+   "repo": "shadcn-ui/taxonomy",
+   "sha": "298a8857c7128a0d121e7f699dfd729f23b3966d",
+   "kind": "clean",
+   "stack": "Next.js + Prisma + Stripe + NextAuth",
+   "files": 140,
+   "scanMs": 433,
+   "gate": "WARNING",
+   "score": 60,
+   "critical": 0,
+   "high": 1,
+   "medium": 34,
+   "low": 11,
+   "experimental": 26,
+   "allHighCritical": 27,
+   "detectedFramework": "Next.js"
+  },
+  {
+   "repo": "fastapi/full-stack-fastapi-template",
+   "sha": "cb740b656d7a0a6c5e12c7bf8e50343ec94ee9c7",
+   "kind": "clean",
+   "stack": "FastAPI + React",
+   "files": 204,
+   "scanMs": 687,
+   "gate": "WARNING",
+   "score": 47,
+   "critical": 0,
+   "high": 2,
+   "medium": 45,
+   "low": 15,
+   "experimental": 11,
+   "allHighCritical": 13,
+   "detectedFramework": "React"
+  },
+  {
+   "repo": "gothinkster/node-express-realworld-example-app",
+   "sha": "30b68e1e881462b2f4164ea09ab4c4f5699c7b0b",
+   "kind": "clean",
+   "stack": "Express + Prisma",
+   "files": 58,
+   "scanMs": 105,
+   "gate": "FAILED",
+   "score": 29,
+   "critical": 2,
+   "high": 2,
+   "medium": 6,
+   "low": 0,
+   "experimental": 18,
+   "allHighCritical": 22,
+   "detectedFramework": "Express"
+  },
+  {
+   "repo": "gothinkster/golang-gin-realworld-example-app",
+   "sha": "626c372d259472148d93303f74aa9b9a1cdcef24",
+   "kind": "clean",
+   "stack": "Go + Gin",
+   "files": 27,
+   "scanMs": 156,
+   "gate": "WARNING",
+   "score": 75,
+   "critical": 0,
+   "high": 2,
+   "medium": 5,
+   "low": 2,
+   "experimental": 1,
+   "allHighCritical": 3,
+   "detectedFramework": null
+  },
+  {
+   "repo": "laravel/laravel",
+   "sha": "06d016a364a37430eec9cbc52209adce3d7667ce",
+   "kind": "clean",
+   "stack": "Laravel",
+   "files": 40,
+   "scanMs": 120,
+   "gate": "PASSED",
+   "score": 86,
+   "critical": 0,
+   "high": 0,
+   "medium": 7,
+   "low": 1,
+   "experimental": 7,
+   "allHighCritical": 7,
+   "detectedFramework": "Laravel"
+  },
+  {
+   "repo": "documenso/documenso",
+   "sha": "8a41a3bf618d9e46e2e1c0f437aa0488d91b85de",
+   "kind": "clean",
+   "stack": "Remix/React Router + Prisma + tRPC (production SaaS)",
+   "files": 2481,
+   "scanMs": 11353,
+   "gate": "WARNING",
+   "score": 25,
+   "critical": 0,
+   "high": 57,
+   "medium": 743,
+   "low": 210,
+   "experimental": 518,
+   "allHighCritical": 575,
+   "detectedFramework": "React"
+  },
+  {
+   "repo": "supabase/supabase-js",
+   "sha": "a684cf97b67fd71670bab5030fe88b219f2c09fe",
+   "kind": "clean",
+   "stack": "TypeScript SDK",
+   "files": 471,
+   "scanMs": 2752,
+   "gate": "FAILED",
+   "score": 0,
+   "critical": 10,
+   "high": 1,
+   "medium": 46,
+   "low": 34,
+   "experimental": 45,
+   "allHighCritical": 56,
+   "detectedFramework": "Next.js"
+  },
+  {
+   "repo": "OWASP/NodeGoat",
+   "sha": "c5cb68a7084e4ae7dcc60e6a98768720a81841e8",
+   "kind": "vulnerable",
+   "stack": "Express + MongoDB",
+   "files": 87,
+   "scanMs": 304,
+   "gate": "FAILED",
+   "score": 0,
+   "critical": 5,
+   "high": 5,
+   "medium": 24,
+   "low": 13,
+   "experimental": 20,
+   "allHighCritical": 30,
+   "detectedFramework": "Express"
+  },
+  {
+   "repo": "appsecco/dvna",
+   "sha": "9ba473add536f66ac9007966acb2a775dd31277a",
+   "kind": "vulnerable",
+   "stack": "Express + Sequelize",
+   "files": 21,
+   "scanMs": 40,
+   "gate": "FAILED",
+   "score": 0,
+   "critical": 4,
+   "high": 4,
+   "medium": 5,
+   "low": 0,
+   "experimental": 11,
+   "allHighCritical": 19,
+   "detectedFramework": "Express"
+  },
+  {
+   "repo": "juice-shop/juice-shop",
+   "sha": "1618a611b173b4bf114028e6e02549950606e29d",
+   "kind": "vulnerable",
+   "stack": "Express + Angular + Sequelize",
+   "files": 965,
+   "scanMs": 8777,
+   "gate": "FAILED",
+   "score": 0,
+   "critical": 176,
+   "high": 22,
+   "medium": 92,
+   "low": 59,
+   "experimental": 76,
+   "allHighCritical": 274,
+   "detectedFramework": "Express"
+  },
+  {
+   "repo": "spring-projects/spring-petclinic",
+   "sha": "500158f732419217507c7656904b8e6aa1bcc0d6",
+   "kind": "clean",
+   "stack": "Java + Spring Boot",
+   "files": 84,
+   "scanMs": 240,
+   "gate": "WARNING",
+   "score": 39,
+   "critical": 0,
+   "high": 8,
+   "medium": 12,
+   "low": 21,
+   "experimental": 30,
+   "allHighCritical": 38,
+   "detectedFramework": "Spring Boot"
+  },
+  {
+   "repo": "dotnet-architecture/eShopOnWeb",
+   "sha": "4da8212117e87d808d4bbc7da6286fd2147ce606",
+   "kind": "clean",
+   "stack": "C# + ASP.NET Core",
+   "files": 350,
+   "scanMs": 793,
+   "gate": "WARNING",
+   "score": 30,
+   "critical": 0,
+   "high": 7,
+   "medium": 19,
+   "low": 1,
+   "experimental": 18,
+   "allHighCritical": 25,
+   "detectedFramework": null
+  },
+  {
+   "repo": "rubygems/rubygems.org",
+   "sha": "36e040d0c8a3282959bff078894a5d458f991472",
+   "kind": "clean",
+   "stack": "Ruby on Rails (production service)",
+   "files": 1698,
+   "scanMs": 4487,
+   "gate": "WARNING",
+   "score": 30,
+   "critical": 0,
+   "high": 7,
+   "medium": 25,
+   "low": 9,
+   "experimental": 51,
+   "allHighCritical": 58,
+   "detectedFramework": "Ruby on Rails"
+  },
+  {
+   "repo": "django/djangoproject.com",
+   "sha": "fc7a27e9fa6c7f2561dd761eae87da69b90126e5",
+   "kind": "clean",
+   "stack": "Python + Django (production site)",
+   "files": 434,
+   "scanMs": 1799,
+   "gate": "WARNING",
+   "score": 25,
+   "critical": 0,
+   "high": 13,
+   "medium": 34,
+   "low": 31,
+   "experimental": 36,
+   "allHighCritical": 49,
+   "detectedFramework": "Django"
+  },
+  {
+   "repo": "WebGoat/WebGoat",
+   "sha": "3284a8e466dfde083858f681e89aabb94e8b9c9e",
+   "kind": "vulnerable",
+   "stack": "Java + Spring",
+   "files": 635,
+   "scanMs": 2089,
+   "gate": "FAILED",
+   "score": 0,
+   "critical": 16,
+   "high": 13,
+   "medium": 78,
+   "low": 139,
+   "experimental": 38,
+   "allHighCritical": 67,
+   "detectedFramework": "Spring Boot"
+  },
+  {
+   "repo": "OWASP/railsgoat",
+   "sha": "f5951f13089d85c979de09e7da3c8c0fb982f94a",
+   "kind": "vulnerable",
+   "stack": "Ruby on Rails",
+   "files": 187,
+   "scanMs": 661,
+   "gate": "FAILED",
+   "score": 0,
+   "critical": 4,
+   "high": 14,
+   "medium": 5,
+   "low": 5,
+   "experimental": 13,
+   "allHighCritical": 31,
+   "detectedFramework": "Ruby on Rails"
+  },
+  {
+   "repo": "digininja/DVWA",
+   "sha": "b496a5d3de6b967410155e1b7d3e51e9d035eb22",
+   "kind": "vulnerable",
+   "stack": "PHP",
+   "files": 195,
+   "scanMs": 538,
+   "gate": "FAILED",
+   "score": 0,
+   "critical": 52,
+   "high": 33,
+   "medium": 9,
+   "low": 7,
+   "experimental": 22,
+   "allHighCritical": 107,
+   "detectedFramework": null
+  },
+  {
+   "repo": "adeyosemanputra/pygoat",
+   "sha": "19d17cc8874861142b330636d068bbde54e86b85",
+   "kind": "vulnerable",
+   "stack": "Python + Django",
+   "files": 217,
+   "scanMs": 698,
+   "gate": "FAILED",
+   "score": 0,
+   "critical": 18,
+   "high": 42,
+   "medium": 52,
+   "low": 40,
+   "experimental": 28,
+   "allHighCritical": 88,
+   "detectedFramework": null
+  },
+  {
+   "repo": "anxolerd/dvpwa",
+   "sha": "a1d8f89fac2e57093189853c6527c2b01fc1d9c1",
+   "kind": "vulnerable",
+   "stack": "Python + aiohttp",
+   "files": 30,
+   "scanMs": 256,
+   "gate": "FAILED",
+   "score": 27,
+   "critical": 2,
+   "high": 4,
+   "medium": 2,
+   "low": 0,
+   "experimental": 7,
+   "allHighCritical": 13,
+   "detectedFramework": null
+  }
+ ],
+ "recall": [
+  {
+   "repo": "OWASP/NodeGoat",
+   "flaw": "Server-side JS injection via eval(req.body.preTax)",
+   "file": "app/routes/contributions.js",
+   "found": true,
+   "blocksGate": true,
+   "matchedBy": [
+    "Dynamic Code Execution (eval / Function Remote Code Execution)"
+   ]
+  },
+  {
+   "repo": "OWASP/NodeGoat",
+   "flaw": "NoSQL injection through $where string",
+   "file": "app/data/allocations-dao.js",
+   "found": true,
+   "blocksGate": true,
+   "matchedBy": [
+    "MongoDB NoSQL Injection via $where JavaScript Evaluation or Raw Request Query Object"
+   ]
+  },
+  {
+   "repo": "OWASP/NodeGoat",
+   "flaw": "Open redirect via res.redirect(req.query.url)",
+   "file": "app/routes/index.js",
+   "found": true,
+   "blocksGate": true,
+   "matchedBy": [
+    "Open Redirect via Unvalidated Return URL (CWE-601)",
+    "Unvalidated Open Redirection Vulnerability (Open Redirect)"
+   ]
+  },
+  {
+   "repo": "OWASP/NodeGoat",
+   "flaw": "SSRF via needle.get(url + symbol)",
+   "file": "app/routes/research.js",
+   "found": true,
+   "blocksGate": true,
+   "matchedBy": [
+    "Server-Side Request Forgery (SSRF) via Unvalidated Target URL"
+   ]
+  },
+  {
+   "repo": "OWASP/NodeGoat",
+   "flaw": "Hardcoded session cookie secret",
+   "file": "config/env/all.js",
+   "found": true,
+   "blocksGate": true,
+   "matchedBy": [
+    "Hardcoded Session or Crypto Secret Key in Application Configuration"
+   ]
+  },
+  {
+   "repo": "appsecco/dvna",
+   "flaw": "SQL injection by string concatenation in sequelize.query",
+   "file": "core/appHandler.js",
+   "found": true,
+   "blocksGate": true,
+   "matchedBy": [
+    "SQL Injection: String Concatenation in Node.js Database Client Query"
+   ]
+  },
+  {
+   "repo": "appsecco/dvna",
+   "flaw": "Command injection: exec('ping -c 2 ' + req.body.address)",
+   "file": "core/appHandler.js",
+   "found": true,
+   "blocksGate": true,
+   "matchedBy": [
+    "Dynamic Code Execution (eval / Function Remote Code Execution)",
+    "Command Injection via Unsanitized Child Process Execution",
+    "THREAT-02: MITRE T1059 Command Execution: Unmonitored Interactive Shell Spawning in Web Pods [experimental]"
+   ]
+  },
+  {
+   "repo": "appsecco/dvna",
+   "flaw": "Insecure deserialization with node-serialize unserialize",
+   "file": "core/appHandler.js",
+   "found": true,
+   "blocksGate": true,
+   "matchedBy": [
+    "JS-SEC-01: Insecure Deserialization With a Function-Reviving Library (RCE)"
+   ]
+  },
+  {
+   "repo": "appsecco/dvna",
+   "flaw": "XXE: libxmljs parseXmlString with noent:true",
+   "file": "core/appHandler.js",
+   "found": true,
+   "blocksGate": true,
+   "matchedBy": [
+    "JS-SEC-02: XML External Entity (XXE) Expansion Enabled"
+   ]
+  },
+  {
+   "repo": "appsecco/dvna",
+   "flaw": "Open redirect via res.redirect(req.query.url)",
+   "file": "core/appHandler.js",
+   "found": true,
+   "blocksGate": false,
+   "matchedBy": [
+    "Unvalidated Open Redirection Vulnerability (Open Redirect)"
+   ]
+  },
+  {
+   "repo": "appsecco/dvna",
+   "flaw": "Code injection via mathjs.eval(req.body.eqn)",
+   "file": "core/appHandler.js",
+   "found": true,
+   "blocksGate": true,
+   "matchedBy": [
+    "Dynamic Code Execution (eval / Function Remote Code Execution)"
+   ]
+  },
+  {
+   "repo": "juice-shop/juice-shop",
+   "flaw": "SQL injection in login query template literal",
+   "file": "routes/login.ts",
+   "found": true,
+   "blocksGate": true,
+   "matchedBy": [
+    "SQL Injection: String Concatenation in Node.js Database Client Query"
+   ]
+  },
+  {
+   "repo": "juice-shop/juice-shop",
+   "flaw": "Union SQL injection in product search",
+   "file": "routes/search.ts",
+   "found": true,
+   "blocksGate": true,
+   "matchedBy": [
+    "SQL Injection: String Concatenation in Node.js Database Client Query"
+   ]
+  },
+  {
+   "repo": "juice-shop/juice-shop",
+   "flaw": "Hardcoded RSA private key for JWT signing",
+   "file": "lib/insecurity.ts",
+   "found": true,
+   "blocksGate": true,
+   "matchedBy": [
+    "SEC-SECRET-45: RSA Private Key Block Exposure"
+   ]
+  },
+  {
+   "repo": "juice-shop/juice-shop",
+   "flaw": "MD5 password hashing",
+   "file": "lib/insecurity.ts",
+   "found": true,
+   "blocksGate": true,
+   "matchedBy": [
+    "Use of Broken Cryptographic Hash Function (MD5 / SHA-1)"
+   ]
+  },
+  {
+   "repo": "juice-shop/juice-shop",
+   "flaw": "SSRF via fetch(user-supplied imageUrl)",
+   "file": "routes/profileImageUrlUpload.ts",
+   "found": true,
+   "blocksGate": true,
+   "matchedBy": [
+    "Server-Side Request Forgery (SSRF) via Unvalidated Target URL"
+   ]
+  },
+  {
+   "repo": "WebGoat/WebGoat",
+   "flaw": "SQL injection: string-built query passed to Statement.executeQuery",
+   "file": "src/main/java/org/owasp/webgoat/lessons/sqlinjection/introduction/SqlInjectionLesson5a.java",
+   "found": true,
+   "blocksGate": true,
+   "matchedBy": [
+    "CORE-01: SQL Injection: Query Built From Dynamic Values"
+   ]
+  },
+  {
+   "repo": "WebGoat/WebGoat",
+   "flaw": "SQL injection in access_log search",
+   "file": "src/main/java/org/owasp/webgoat/lessons/sqlinjection/introduction/SqlInjectionLesson10.java",
+   "found": true,
+   "blocksGate": true,
+   "matchedBy": [
+    "CORE-01: SQL Injection: Query Built From Dynamic Values"
+   ]
+  },
+  {
+   "repo": "WebGoat/WebGoat",
+   "flaw": "Java deserialization with ObjectInputStream.readObject on user data",
+   "file": "src/main/java/org/owasp/webgoat/lessons/deserialization/InsecureDeserializationTask.java",
+   "found": true,
+   "blocksGate": true,
+   "matchedBy": [
+    "JAVA-SEC-03: Unrestricted Java Deserialization via ObjectInputStream.readObject",
+    "CORE-03: Insecure Deserialization of Untrusted Data"
+   ]
+  },
+  {
+   "repo": "WebGoat/WebGoat",
+   "flaw": "XXE: XMLInputFactory without disabling external entities",
+   "file": "src/main/java/org/owasp/webgoat/lessons/xxe/CommentsCache.java",
+   "found": false,
+   "blocksGate": false,
+   "matchedBy": []
+  },
+  {
+   "repo": "OWASP/railsgoat",
+   "flaw": "SQL injection: User.where with interpolated params",
+   "file": "app/controllers/users_controller.rb",
+   "found": true,
+   "blocksGate": true,
+   "matchedBy": [
+    "CORE-01: SQL Injection: Query Built From Dynamic Values"
+   ]
+  },
+  {
+   "repo": "OWASP/railsgoat",
+   "flaw": "Mass assignment: params.require(:user).permit!",
+   "file": "app/controllers/users_controller.rb",
+   "found": true,
+   "blocksGate": true,
+   "matchedBy": [
+    "RUBY-SEC-02: Insecure Mass Assignment via params.permit!"
+   ]
+  },
+  {
+   "repo": "OWASP/railsgoat",
+   "flaw": "Command injection: system() with interpolated file name",
+   "file": "app/models/benefits.rb",
+   "found": true,
+   "blocksGate": true,
+   "matchedBy": [
+    "CORE-02: OS Command Injection: Shell Command Built From Dynamic Values"
+   ]
+  },
+  {
+   "repo": "OWASP/railsgoat",
+   "flaw": "Insecure deserialization: Marshal.load(params[:user])",
+   "file": "app/controllers/password_resets_controller.rb",
+   "found": true,
+   "blocksGate": true,
+   "matchedBy": [
+    "CORE-03: Insecure Deserialization of Untrusted Data"
+   ]
+  },
+  {
+   "repo": "OWASP/railsgoat",
+   "flaw": "Stored XSS via html_safe on user first name",
+   "file": "app/views/layouts/shared/_header.html.erb",
+   "found": true,
+   "blocksGate": true,
+   "matchedBy": [
+    "CORE-05: Cross-Site Scripting (XSS): Output Escaping Bypassed"
+   ]
+  },
+  {
+   "repo": "digininja/DVWA",
+   "flaw": "SQL injection: $id interpolated into query",
+   "file": "vulnerabilities/sqli/source/low.php",
+   "found": true,
+   "blocksGate": true,
+   "matchedBy": [
+    "PHP-SEC-01: SQL Injection via Unparameterized Query Concatenation",
+    "CORE-01: SQL Injection: Query Built From Dynamic Values"
+   ]
+  },
+  {
+   "repo": "digininja/DVWA",
+   "flaw": "Command injection: shell_exec('ping ' . $target)",
+   "file": "vulnerabilities/exec/source/low.php",
+   "found": true,
+   "blocksGate": true,
+   "matchedBy": [
+    "CORE-02: OS Command Injection: Shell Command Built From Dynamic Values"
+   ]
+  },
+  {
+   "repo": "digininja/DVWA",
+   "flaw": "File inclusion: include($file) from request",
+   "file": "vulnerabilities/fi/index.php",
+   "found": true,
+   "blocksGate": true,
+   "matchedBy": [
+    "CORE-06: File Inclusion: include/require With a Request-Controlled Path"
+   ]
+  },
+  {
+   "repo": "digininja/DVWA",
+   "flaw": "Reflected XSS: $_GET['name'] echoed into HTML",
+   "file": "vulnerabilities/xss_r/source/low.php",
+   "found": true,
+   "blocksGate": true,
+   "matchedBy": [
+    "CORE-05: Cross-Site Scripting (XSS): Output Escaping Bypassed"
+   ]
+  },
+  {
+   "repo": "digininja/DVWA",
+   "flaw": "Unrestricted file upload (no type/extension check)",
+   "file": "vulnerabilities/upload/source/low.php",
+   "found": true,
+   "blocksGate": true,
+   "matchedBy": [
+    "CORE-07: Unrestricted File Upload"
+   ]
+  },
+  {
+   "repo": "adeyosemanputra/pygoat",
+   "flaw": "SQL injection: concatenated query passed to objects.raw",
+   "file": "introduction/views.py",
+   "found": true,
+   "blocksGate": true,
+   "matchedBy": [
+    "CORE-01: SQL Injection: Query Built From Dynamic Values"
+   ]
+  },
+  {
+   "repo": "adeyosemanputra/pygoat",
+   "flaw": "Insecure deserialization: pickle.loads / yaml.load with yaml.Loader",
+   "file": "introduction/views.py",
+   "found": true,
+   "blocksGate": true,
+   "matchedBy": [
+    "PY-SEC-01: Unsafe Pickle Deserialization (Remote Code Execution)",
+    "CORE-03: Insecure Deserialization of Untrusted Data"
+   ]
+  },
+  {
+   "repo": "adeyosemanputra/pygoat",
+   "flaw": "Code injection: eval() on request value",
+   "file": "introduction/views.py",
+   "found": true,
+   "blocksGate": true,
+   "matchedBy": [
+    "Dynamic Code Execution (eval / Function Remote Code Execution)",
+    "PY-SEC-01: Unsafe Pickle Deserialization (Remote Code Execution)",
+    "PY-SEC-11: Dynamic Code Execution via eval() or exec()"
+   ]
+  },
+  {
+   "repo": "adeyosemanputra/pygoat",
+   "flaw": "SSRF: requests.get(request.POST[\"url\"])",
+   "file": "introduction/views.py",
+   "found": true,
+   "blocksGate": true,
+   "matchedBy": [
+    "PY-SEC-14: Server-Side Request Forgery (SSRF) via Dynamic URL Fetch"
+   ]
+  },
+  {
+   "repo": "adeyosemanputra/pygoat",
+   "flaw": "MD5 password hashing",
+   "file": "introduction/views.py",
+   "found": true,
+   "blocksGate": true,
+   "matchedBy": [
+    "CORE-08: Weak Password Hashing (MD5 / SHA-1)"
+   ]
+  },
+  {
+   "repo": "anxolerd/dvpwa",
+   "flaw": "SQL injection: % string formatting in INSERT",
+   "file": "sqli/dao/student.py",
+   "found": true,
+   "blocksGate": true,
+   "matchedBy": [
+    "CORE-01: SQL Injection: Query Built From Dynamic Values"
+   ]
+  },
+  {
+   "repo": "anxolerd/dvpwa",
+   "flaw": "MD5 password hashing",
+   "file": "sqli/dao/user.py",
+   "found": true,
+   "blocksGate": true,
+   "matchedBy": [
+    "CORE-08: Weak Password Hashing (MD5 / SHA-1)"
+   ]
+  },
+  {
+   "repo": "anxolerd/dvpwa",
+   "flaw": "Template autoescaping disabled (autoescape=False)",
+   "file": "sqli/app.py",
+   "found": true,
+   "blocksGate": true,
+   "matchedBy": [
+    "CORE-05: Cross-Site Scripting (XSS): Output Escaping Bypassed"
+   ]
+  }
+ ],
+ "rules": [
+  {
+   "ruleId": 7328,
+   "title": "SUPPLY-28: Missing License Compliance Verification in CI",
+   "severity": "MEDIUM",
+   "cleanRepos": [
+    "fastapi/full-stack-fastapi-template",
+    "gothinkster/golang-gin-realworld-example-app",
+    "laravel/laravel",
+    "documenso/documenso",
+    "supabase/supabase-js",
+    "spring-projects/spring-petclinic",
+    "dotnet-architecture/eShopOnWeb",
+    "rubygems/rubygems.org",
+    "django/djangoproject.com"
+   ],
+   "cleanFindings": 68,
+   "vulnerableRepos": [
+    "OWASP/NodeGoat",
+    "juice-shop/juice-shop",
+    "WebGoat/WebGoat",
+    "OWASP/railsgoat",
+    "digininja/DVWA",
+    "adeyosemanputra/pygoat"
+   ]
+  },
+  {
+   "ruleId": 1026,
+   "title": "WCAG 2.2 AA: Interactive Input Missing Accessible Label or Keyboard Focus Ring",
+   "severity": "MEDIUM",
+   "cleanRepos": [
+    "vercel/nextjs-subscription-payments",
+    "shadcn-ui/taxonomy",
+    "fastapi/full-stack-fastapi-template",
+    "documenso/documenso",
+    "supabase/supabase-js",
+    "spring-projects/spring-petclinic",
+    "django/djangoproject.com"
+   ],
+   "cleanFindings": 205,
+   "vulnerableRepos": [
+    "OWASP/NodeGoat",
+    "juice-shop/juice-shop",
+    "WebGoat/WebGoat",
+    "adeyosemanputra/pygoat"
+   ]
+  },
+  {
+   "ruleId": 48,
+   "title": "UI-48: Dynamic Variable Injection Missing Fallback",
+   "severity": "HIGH",
+   "cleanRepos": [
+    "shadcn-ui/taxonomy",
+    "fastapi/full-stack-fastapi-template",
+    "documenso/documenso",
+    "supabase/supabase-js",
+    "spring-projects/spring-petclinic",
+    "rubygems/rubygems.org",
+    "django/djangoproject.com"
+   ],
+   "cleanFindings": 113,
+   "vulnerableRepos": [
+    "OWASP/NodeGoat",
+    "juice-shop/juice-shop",
+    "WebGoat/WebGoat",
+    "OWASP/railsgoat",
+    "adeyosemanputra/pygoat",
+    "anxolerd/dvpwa"
+   ]
+  },
+  {
+   "ruleId": 10404,
+   "title": "WAF-04: Permissive Geo-Blocking on Privileged Administration Portals",
+   "severity": "MEDIUM",
+   "cleanRepos": [
+    "vercel/nextjs-subscription-payments",
+    "fastapi/full-stack-fastapi-template",
+    "documenso/documenso",
+    "supabase/supabase-js",
+    "dotnet-architecture/eShopOnWeb",
+    "rubygems/rubygems.org",
+    "django/djangoproject.com"
+   ],
+   "cleanFindings": 82,
+   "vulnerableRepos": [
+    "appsecco/dvna",
+    "juice-shop/juice-shop",
+    "WebGoat/WebGoat",
+    "OWASP/railsgoat",
+    "digininja/DVWA",
+    "adeyosemanputra/pygoat"
+   ]
+  },
+  {
+   "ruleId": 13805,
+   "title": "ASVS-05: ASVS V6.2 Cryptographic Storage: Using Insecure Random Salt or Low Iteration Counts",
+   "severity": "CRITICAL",
+   "cleanRepos": [
+    "fastapi/full-stack-fastapi-template",
+    "gothinkster/node-express-realworld-example-app",
+    "gothinkster/golang-gin-realworld-example-app",
+    "laravel/laravel",
+    "documenso/documenso",
+    "supabase/supabase-js",
+    "rubygems/rubygems.org"
+   ],
+   "cleanFindings": 32,
+   "vulnerableRepos": [
+    "OWASP/NodeGoat",
+    "appsecco/dvna",
+    "OWASP/railsgoat",
+    "adeyosemanputra/pygoat"
+   ]
+  },
+  {
+   "ruleId": 7348,
+   "title": "SUPPLY-48: Missing Automated Static Analysis for GitHub Actions (actionlint)",
+   "severity": "LOW",
+   "cleanRepos": [
+    "fastapi/full-stack-fastapi-template",
+    "gothinkster/golang-gin-realworld-example-app",
+    "documenso/documenso",
+    "supabase/supabase-js",
+    "spring-projects/spring-petclinic",
+    "rubygems/rubygems.org",
+    "django/djangoproject.com"
+   ],
+   "cleanFindings": 27,
+   "vulnerableRepos": [
+    "OWASP/NodeGoat",
+    "juice-shop/juice-shop",
+    "WebGoat/WebGoat",
+    "OWASP/railsgoat",
+    "digininja/DVWA",
+    "adeyosemanputra/pygoat"
+   ]
+  },
+  {
+   "ruleId": 7330,
+   "title": "SUPPLY-30: Dangerous Inline Bash Script in CI Without ShellCheck",
+   "severity": "LOW",
+   "cleanRepos": [
+    "fastapi/full-stack-fastapi-template",
+    "gothinkster/golang-gin-realworld-example-app",
+    "documenso/documenso",
+    "supabase/supabase-js",
+    "spring-projects/spring-petclinic",
+    "rubygems/rubygems.org",
+    "django/djangoproject.com"
+   ],
+   "cleanFindings": 21,
+   "vulnerableRepos": [
+    "OWASP/NodeGoat",
+    "juice-shop/juice-shop",
+    "WebGoat/WebGoat",
+    "OWASP/railsgoat",
+    "digininja/DVWA",
+    "adeyosemanputra/pygoat"
+   ]
+  },
+  {
+   "ruleId": 8314,
+   "title": "IAC-14: Dockerfile Missing HEALTHCHECK Instruction",
+   "severity": "MEDIUM",
+   "cleanRepos": [
+    "fastapi/full-stack-fastapi-template",
+    "gothinkster/node-express-realworld-example-app",
+    "documenso/documenso",
+    "spring-projects/spring-petclinic",
+    "dotnet-architecture/eShopOnWeb",
+    "rubygems/rubygems.org",
+    "django/djangoproject.com"
+   ],
+   "cleanFindings": 9,
+   "vulnerableRepos": [
+    "OWASP/NodeGoat",
+    "appsecco/dvna",
+    "juice-shop/juice-shop",
+    "OWASP/railsgoat",
+    "digininja/DVWA",
+    "adeyosemanputra/pygoat"
+   ]
+  },
+  {
+   "ruleId": 13005,
+   "title": "SEARCH-05: Unmanaged Elasticsearch Index Lifecycle Management (ILM)",
+   "severity": "MEDIUM",
+   "cleanRepos": [
+    "shadcn-ui/taxonomy",
+    "gothinkster/node-express-realworld-example-app",
+    "documenso/documenso",
+    "supabase/supabase-js",
+    "dotnet-architecture/eShopOnWeb",
+    "rubygems/rubygems.org"
+   ],
+   "cleanFindings": 56,
+   "vulnerableRepos": []
+  },
+  {
+   "ruleId": 1027,
+   "title": "Unoptimized Raster <img> Tag or Heavy Inline Data URI (Performance Optimization)",
+   "severity": "LOW",
+   "cleanRepos": [
+    "shadcn-ui/taxonomy",
+    "fastapi/full-stack-fastapi-template",
+    "documenso/documenso",
+    "spring-projects/spring-petclinic",
+    "rubygems/rubygems.org",
+    "django/djangoproject.com"
+   ],
+   "cleanFindings": 42,
+   "vulnerableRepos": [
+    "juice-shop/juice-shop",
+    "WebGoat/WebGoat",
+    "adeyosemanputra/pygoat"
+   ]
+  },
+  {
+   "ruleId": 10201,
+   "title": "GRPC-01: Missing Per-RPC Client Deadline / Timeout Propagation",
+   "severity": "HIGH",
+   "cleanRepos": [
+    "fastapi/full-stack-fastapi-template",
+    "documenso/documenso",
+    "supabase/supabase-js",
+    "dotnet-architecture/eShopOnWeb",
+    "rubygems/rubygems.org",
+    "django/djangoproject.com"
+   ],
+   "cleanFindings": 21,
+   "vulnerableRepos": []
+  },
+  {
+   "ruleId": 3002,
+   "title": "Dockerfile Executes as Root User (Container Privilege Escalation Risk)",
+   "severity": "HIGH",
+   "cleanRepos": [
+    "fastapi/full-stack-fastapi-template",
+    "gothinkster/node-express-realworld-example-app",
+    "spring-projects/spring-petclinic",
+    "dotnet-architecture/eShopOnWeb",
+    "rubygems/rubygems.org",
+    "django/djangoproject.com"
+   ],
+   "cleanFindings": 8,
+   "vulnerableRepos": [
+    "OWASP/NodeGoat",
+    "appsecco/dvna",
+    "OWASP/railsgoat",
+    "digininja/DVWA",
+    "adeyosemanputra/pygoat"
+   ]
+  },
+  {
+   "ruleId": 1004,
+   "title": "UI-04: Absence of Empty State Component Fallback",
+   "severity": "MEDIUM",
+   "cleanRepos": [
+    "vercel/nextjs-subscription-payments",
+    "shadcn-ui/taxonomy",
+    "fastapi/full-stack-fastapi-template",
+    "documenso/documenso",
+    "supabase/supabase-js"
+   ],
+   "cleanFindings": 172,
+   "vulnerableRepos": []
+  },
+  {
+   "ruleId": 12003,
+   "title": "GRPH-03: Missing Schema Index on High-Cardinality Graph Properties",
+   "severity": "HIGH",
+   "cleanRepos": [
+    "shadcn-ui/taxonomy",
+    "documenso/documenso",
+    "supabase/supabase-js",
+    "dotnet-architecture/eShopOnWeb",
+    "rubygems/rubygems.org"
+   ],
+   "cleanFindings": 40,
+   "vulnerableRepos": []
+  },
+  {
+   "ruleId": 9502,
+   "title": "CICD-SEC-02: Unpinned Third-Party Action Mutable Reference (@v1)",
+   "severity": "HIGH",
+   "cleanRepos": [
+    "gothinkster/golang-gin-realworld-example-app",
+    "documenso/documenso",
+    "spring-projects/spring-petclinic",
+    "dotnet-architecture/eShopOnWeb",
+    "django/djangoproject.com"
+   ],
+   "cleanFindings": 25,
+   "vulnerableRepos": [
+    "OWASP/NodeGoat",
+    "juice-shop/juice-shop",
+    "WebGoat/WebGoat",
+    "OWASP/railsgoat",
+    "digininja/DVWA",
+    "adeyosemanputra/pygoat"
+   ]
+  },
+  {
+   "ruleId": 2004,
+   "title": "User Data Collection Form Missing Mandatory Privacy Consent Disclosure",
+   "severity": "MEDIUM",
+   "cleanRepos": [
+    "vercel/nextjs-subscription-payments",
+    "shadcn-ui/taxonomy",
+    "fastapi/full-stack-fastapi-template",
+    "documenso/documenso",
+    "django/djangoproject.com"
+   ],
+   "cleanFindings": 14,
+   "vulnerableRepos": [
+    "OWASP/NodeGoat",
+    "WebGoat/WebGoat",
+    "adeyosemanputra/pygoat"
+   ]
+  },
+  {
+   "ruleId": 7102,
+   "title": "WEB-PERF-02: Unsized Image or Video Element Causing Layout Shift",
+   "severity": "HIGH",
+   "cleanRepos": [
+    "shadcn-ui/taxonomy",
+    "documenso/documenso",
+    "spring-projects/spring-petclinic",
+    "rubygems/rubygems.org",
+    "django/djangoproject.com"
+   ],
+   "cleanFindings": 14,
+   "vulnerableRepos": [
+    "juice-shop/juice-shop",
+    "WebGoat/WebGoat",
+    "adeyosemanputra/pygoat"
+   ]
+  },
+  {
+   "ruleId": 12605,
+   "title": "SBOM-05: Unvetted Third-Party GitHub Actions in Production CI/CD Workflows",
+   "severity": "HIGH",
+   "cleanRepos": [
+    "gothinkster/golang-gin-realworld-example-app",
+    "documenso/documenso",
+    "spring-projects/spring-petclinic",
+    "dotnet-architecture/eShopOnWeb",
+    "django/djangoproject.com"
+   ],
+   "cleanFindings": 14,
+   "vulnerableRepos": [
+    "juice-shop/juice-shop",
+    "WebGoat/WebGoat",
+    "OWASP/railsgoat",
+    "digininja/DVWA"
+   ]
+  },
+  {
+   "ruleId": 7336,
+   "title": "SUPPLY-36: Unpinned Action in Third-Party Marketplace Step",
+   "severity": "MEDIUM",
+   "cleanRepos": [
+    "gothinkster/golang-gin-realworld-example-app",
+    "documenso/documenso",
+    "spring-projects/spring-petclinic",
+    "dotnet-architecture/eShopOnWeb",
+    "django/djangoproject.com"
+   ],
+   "cleanFindings": 13,
+   "vulnerableRepos": [
+    "juice-shop/juice-shop",
+    "WebGoat/WebGoat",
+    "OWASP/railsgoat",
+    "digininja/DVWA"
+   ]
+  },
+  {
+   "ruleId": 1228,
+   "title": "UI-INTERACT-28: Password Input Lacking Visibility Toggle",
+   "severity": "LOW",
+   "cleanRepos": [
+    "vercel/nextjs-subscription-payments",
+    "fastapi/full-stack-fastapi-template",
+    "documenso/documenso",
+    "supabase/supabase-js",
+    "django/djangoproject.com"
+   ],
+   "cleanFindings": 10,
+   "vulnerableRepos": [
+    "OWASP/NodeGoat",
+    "juice-shop/juice-shop",
+    "WebGoat/WebGoat",
+    "adeyosemanputra/pygoat"
+   ]
+  },
+  {
+   "ruleId": 11705,
+   "title": "CRON-05: Missing Exponential Backoff on Worker Transient Failures",
+   "severity": "MEDIUM",
+   "cleanRepos": [
+    "fastapi/full-stack-fastapi-template",
+    "laravel/laravel",
+    "supabase/supabase-js",
+    "rubygems/rubygems.org",
+    "django/djangoproject.com"
+   ],
+   "cleanFindings": 10,
+   "vulnerableRepos": []
+  },
+  {
+   "ruleId": 12603,
+   "title": "SBOM-03: SLSA Level 3 Provenance Attestation Missing in CI/CD Build Pipeline",
+   "severity": "HIGH",
+   "cleanRepos": [
+    "fastapi/full-stack-fastapi-template",
+    "laravel/laravel",
+    "documenso/documenso",
+    "rubygems/rubygems.org",
+    "django/djangoproject.com"
+   ],
+   "cleanFindings": 8,
+   "vulnerableRepos": [
+    "juice-shop/juice-shop",
+    "WebGoat/WebGoat",
+    "digininja/DVWA"
+   ]
+  },
+  {
+   "ruleId": 7004,
+   "title": "CLOUD-04: Docker Container Running as Default Root User",
+   "severity": "HIGH",
+   "cleanRepos": [
+    "fastapi/full-stack-fastapi-template",
+    "spring-projects/spring-petclinic",
+    "dotnet-architecture/eShopOnWeb",
+    "rubygems/rubygems.org",
+    "django/djangoproject.com"
+   ],
+   "cleanFindings": 7,
+   "vulnerableRepos": [
+    "appsecco/dvna",
+    "OWASP/railsgoat",
+    "digininja/DVWA",
+    "adeyosemanputra/pygoat"
+   ]
+  },
+  {
+   "ruleId": 3013,
+   "title": "Container Compose Definition Missing Read-Only Root Filesystem Guard",
+   "severity": "HIGH",
+   "cleanRepos": [
+    "supabase/supabase-js",
+    "spring-projects/spring-petclinic",
+    "dotnet-architecture/eShopOnWeb",
+    "rubygems/rubygems.org",
+    "django/djangoproject.com"
+   ],
+   "cleanFindings": 7,
+   "vulnerableRepos": [
+    "OWASP/NodeGoat",
+    "appsecco/dvna",
+    "juice-shop/juice-shop",
+    "OWASP/railsgoat",
+    "adeyosemanputra/pygoat",
+    "anxolerd/dvpwa"
+   ]
+  },
+  {
+   "ruleId": 6008,
+   "title": "DB-PERF-08: Missing ON DELETE Strategy on Foreign Key Constraints",
+   "severity": "HIGH",
+   "cleanRepos": [
+    "shadcn-ui/taxonomy",
+    "gothinkster/node-express-realworld-example-app",
+    "documenso/documenso",
+    "spring-projects/spring-petclinic"
+   ],
+   "cleanFindings": 59,
+   "vulnerableRepos": [
+    "WebGoat/WebGoat",
+    "anxolerd/dvpwa"
+   ]
+  },
+  {
+   "ruleId": 11402,
+   "title": "GW-02: Missing Token Bucket Rate Limiting on Credential Authentication Routes",
+   "severity": "CRITICAL",
+   "cleanRepos": [
+    "shadcn-ui/taxonomy",
+    "fastapi/full-stack-fastapi-template",
+    "documenso/documenso",
+    "rubygems/rubygems.org"
+   ],
+   "cleanFindings": 35,
+   "vulnerableRepos": [
+    "digininja/DVWA"
+   ]
+  },
+  {
+   "ruleId": 2008,
+   "title": "Missing Session Revocation / tokenVersion Invalidation on Password Reset",
+   "severity": "HIGH",
+   "cleanRepos": [
+    "vercel/nextjs-subscription-payments",
+    "gothinkster/node-express-realworld-example-app",
+    "documenso/documenso",
+    "rubygems/rubygems.org"
+   ],
+   "cleanFindings": 20,
+   "vulnerableRepos": [
+    "OWASP/NodeGoat",
+    "juice-shop/juice-shop",
+    "WebGoat/WebGoat",
+    "OWASP/railsgoat"
+   ]
+  },
+  {
+   "ruleId": 7310,
+   "title": "SUPPLY-10: Missing Software Bill of Materials (SBOM) Generation in CI",
+   "severity": "LOW",
+   "cleanRepos": [
+    "fastapi/full-stack-fastapi-template",
+    "laravel/laravel",
+    "supabase/supabase-js",
+    "dotnet-architecture/eShopOnWeb"
+   ],
+   "cleanFindings": 5,
+   "vulnerableRepos": [
+    "juice-shop/juice-shop",
+    "WebGoat/WebGoat"
+   ]
+  },
+  {
+   "ruleId": 10603,
+   "title": "SOC2-03: Missing Automated Dependency Vulnerability Scanning in CI/CD (CC7.1)",
+   "severity": "HIGH",
+   "cleanRepos": [
+    "fastapi/full-stack-fastapi-template",
+    "supabase/supabase-js",
+    "spring-projects/spring-petclinic",
+    "rubygems/rubygems.org"
+   ],
+   "cleanFindings": 5,
+   "vulnerableRepos": [
+    "juice-shop/juice-shop"
+   ]
+  },
+  {
+   "ruleId": 8226,
+   "title": "PRIVACY-26: Missing Opt-Out Mechanism for Sale / Sharing of Personal Info",
+   "severity": "HIGH",
+   "cleanRepos": [
+    "vercel/nextjs-subscription-payments",
+    "shadcn-ui/taxonomy",
+    "fastapi/full-stack-fastapi-template",
+    "documenso/documenso"
+   ],
+   "cleanFindings": 4,
+   "vulnerableRepos": []
+  },
+  {
+   "ruleId": 6011,
+   "title": "DB-PERF-11: Non-Deterministic findFirst without OrderBy",
+   "severity": "MEDIUM",
+   "cleanRepos": [
+    "shadcn-ui/taxonomy",
+    "gothinkster/node-express-realworld-example-app",
+    "documenso/documenso"
+   ],
+   "cleanFindings": 218,
+   "vulnerableRepos": []
+  },
+  {
+   "ruleId": 7138,
+   "title": "WEB-PERF-38: Missing HTML Lang Attribute Delaying Accessibility Tree",
+   "severity": "LOW",
+   "cleanRepos": [
+    "documenso/documenso",
+    "spring-projects/spring-petclinic",
+    "django/djangoproject.com"
+   ],
+   "cleanFindings": 42,
+   "vulnerableRepos": [
+    "OWASP/NodeGoat",
+    "juice-shop/juice-shop",
+    "WebGoat/WebGoat",
+    "OWASP/railsgoat",
+    "adeyosemanputra/pygoat"
+   ]
+  },
+  {
+   "ruleId": 8609,
+   "title": "NEXT15-09: React 19 useActionState Missing Double-Submit Guard",
+   "severity": "MEDIUM",
+   "cleanRepos": [
+    "vercel/nextjs-subscription-payments",
+    "shadcn-ui/taxonomy",
+    "documenso/documenso"
+   ],
+   "cleanFindings": 12,
+   "vulnerableRepos": []
+  },
+  {
+   "ruleId": 10902,
+   "title": "OAUTH-02: Permissive Wildcard Redirect URI in OAuth Client Configuration",
+   "severity": "CRITICAL",
+   "cleanRepos": [
+    "vercel/nextjs-subscription-payments",
+    "supabase/supabase-js",
+    "rubygems/rubygems.org"
+   ],
+   "cleanFindings": 11,
+   "vulnerableRepos": [
+    "juice-shop/juice-shop"
+   ]
+  },
+  {
+   "ruleId": 111,
+   "title": "UI-111: TypeScript \"any\" Type Escape",
+   "severity": "MEDIUM",
+   "cleanRepos": [
+    "fastapi/full-stack-fastapi-template",
+    "gothinkster/node-express-realworld-example-app",
+    "supabase/supabase-js"
+   ],
+   "cleanFindings": 11,
+   "vulnerableRepos": [
+    "juice-shop/juice-shop"
+   ]
+  },
+  {
+   "ruleId": 15201,
+   "title": "WASM-EDGE-01: Unbounded WebAssembly Linear Memory Allocation Permitting Edge Worker OOM",
+   "severity": "CRITICAL",
+   "cleanRepos": [
+    "supabase/supabase-js",
+    "dotnet-architecture/eShopOnWeb",
+    "rubygems/rubygems.org"
+   ],
+   "cleanFindings": 10,
+   "vulnerableRepos": [
+    "juice-shop/juice-shop",
+    "WebGoat/WebGoat"
+   ]
+  },
+  {
+   "ruleId": 16,
+   "title": "Unsanitized Direct InnerHTML DOM Mutation (XSS Risk)",
+   "severity": "HIGH",
+   "cleanRepos": [
+    "documenso/documenso",
+    "rubygems/rubygems.org",
+    "django/djangoproject.com"
+   ],
+   "cleanFindings": 9,
+   "vulnerableRepos": [
+    "juice-shop/juice-shop",
+    "WebGoat/WebGoat",
+    "OWASP/railsgoat",
+    "digininja/DVWA",
+    "adeyosemanputra/pygoat",
+    "anxolerd/dvpwa"
+   ]
+  },
+  {
+   "ruleId": 274,
+   "title": "CLICHE-74: Unannounced External Link Navigation",
+   "severity": "LOW",
+   "cleanRepos": [
+    "vercel/nextjs-subscription-payments",
+    "documenso/documenso",
+    "django/djangoproject.com"
+   ],
+   "cleanFindings": 8,
+   "vulnerableRepos": [
+    "OWASP/NodeGoat",
+    "juice-shop/juice-shop",
+    "WebGoat/WebGoat",
+    "adeyosemanputra/pygoat"
+   ]
+  },
+  {
+   "ruleId": 11103,
+   "title": "CDN-03: Missing Access-Control-Max-Age Preflight Caching Header on Cross-Origin APIs",
+   "severity": "MEDIUM",
+   "cleanRepos": [
+    "documenso/documenso",
+    "supabase/supabase-js",
+    "django/djangoproject.com"
+   ],
+   "cleanFindings": 7,
+   "vulnerableRepos": []
+  },
+  {
+   "ruleId": 1202,
+   "title": "UI-INTERACT-02: Modal Dialog Missing Keyboard Escape Listener",
+   "severity": "LOW",
+   "cleanRepos": [
+    "shadcn-ui/taxonomy",
+    "fastapi/full-stack-fastapi-template",
+    "documenso/documenso"
+   ],
+   "cleanFindings": 5,
+   "vulnerableRepos": []
+  },
+  {
+   "ruleId": 10305,
+   "title": "PG-05: Deadlock Risk from Non-Deterministic Lock Acquisition Order",
+   "severity": "HIGH",
+   "cleanRepos": [
+    "vercel/nextjs-subscription-payments",
+    "documenso/documenso",
+    "supabase/supabase-js"
+   ],
+   "cleanFindings": 4,
+   "vulnerableRepos": []
+  },
+  {
+   "ruleId": 1007,
+   "title": "UI-07: Conversational Chat-Wrapper Lock-In Trap",
+   "severity": "HIGH",
+   "cleanRepos": [
+    "documenso/documenso",
+    "supabase/supabase-js",
+    "rubygems/rubygems.org"
+   ],
+   "cleanFindings": 3,
+   "vulnerableRepos": []
+  },
+  {
+   "ruleId": 134,
+   "title": "UI-134: Unvirtualized Long List (Missing Virtual Scrolling)",
+   "severity": "MEDIUM",
+   "cleanRepos": [
+    "documenso/documenso",
+    "supabase/supabase-js",
+    "rubygems/rubygems.org"
+   ],
+   "cleanFindings": 3,
+   "vulnerableRepos": []
+  },
+  {
+   "ruleId": 3019,
+   "title": "Docker Compose Database Port Exposed Directly on Host (0.0.0.0 Exposure Risk)",
+   "severity": "HIGH",
+   "cleanRepos": [
+    "supabase/supabase-js",
+    "spring-projects/spring-petclinic",
+    "django/djangoproject.com"
+   ],
+   "cleanFindings": 3,
+   "vulnerableRepos": [
+    "anxolerd/dvpwa"
+   ]
+  },
+  {
+   "ruleId": 9101,
+   "title": "TENANT-01: Cross-Tenant Query Missing Tenant ID Filter Clause",
+   "severity": "CRITICAL",
+   "cleanRepos": [
+    "shadcn-ui/taxonomy",
+    "documenso/documenso"
+   ],
+   "cleanFindings": 117,
+   "vulnerableRepos": []
+  },
+  {
+   "ruleId": 6036,
+   "title": "DB-PERF-36: Prisma include Over-Fetching Nested Graphs",
+   "severity": "HIGH",
+   "cleanRepos": [
+    "gothinkster/node-express-realworld-example-app",
+    "documenso/documenso"
+   ],
+   "cleanFindings": 38,
+   "vulnerableRepos": []
+  },
+  {
+   "ruleId": 20,
+   "title": "Vulnerable Dependency or Wildcard Version in package.json",
+   "severity": "HIGH",
+   "cleanRepos": [
+    "gothinkster/node-express-realworld-example-app",
+    "documenso/documenso"
+   ],
+   "cleanFindings": 33,
+   "vulnerableRepos": [
+    "OWASP/NodeGoat",
+    "appsecco/dvna",
+    "juice-shop/juice-shop"
+   ]
+  },
+  {
+   "ruleId": 6051,
+   "title": "DB-PERF-51: Migration Takes a Blocking Table Lock on an Existing Table",
+   "severity": "HIGH",
+   "cleanRepos": [
+    "gothinkster/node-express-realworld-example-app",
+    "documenso/documenso"
+   ],
+   "cleanFindings": 33,
+   "vulnerableRepos": []
+  },
+  {
+   "ruleId": 1011,
+   "title": "UI-11: Uninformative \"AI Thinking...\" Spinner",
+   "severity": "MEDIUM",
+   "cleanRepos": [
+    "documenso/documenso",
+    "dotnet-architecture/eShopOnWeb"
+   ],
+   "cleanFindings": 29,
+   "vulnerableRepos": [
+    "juice-shop/juice-shop",
+    "WebGoat/WebGoat"
+   ]
+  },
+  {
+   "ruleId": 6001,
+   "title": "DB-PERF-01: Prisma / ORM N+1 Query in Loop",
+   "severity": "HIGH",
+   "cleanRepos": [
+    "gothinkster/node-express-realworld-example-app",
+    "documenso/documenso"
+   ],
+   "cleanFindings": 28,
+   "vulnerableRepos": []
+  },
+  {
+   "ruleId": 115,
+   "title": "UI-115: Monolithic Overly Long Source File (>500 Lines)",
+   "severity": "MEDIUM",
+   "cleanRepos": [
+    "fastapi/full-stack-fastapi-template",
+    "documenso/documenso"
+   ],
+   "cleanFindings": 26,
+   "vulnerableRepos": []
+  },
+  {
+   "ruleId": 248,
+   "title": "CLICHE-48: Unlabeled Toggle Switch Interactive Ambiguity",
+   "severity": "LOW",
+   "cleanRepos": [
+    "documenso/documenso",
+    "django/djangoproject.com"
+   ],
+   "cleanFindings": 13,
+   "vulnerableRepos": []
+  },
+  {
+   "ruleId": 1028,
+   "title": "Duplicate <h1> Elements Violating Semantic Hierarchy",
+   "severity": "MEDIUM",
+   "cleanRepos": [
+    "documenso/documenso",
+    "django/djangoproject.com"
+   ],
+   "cleanFindings": 11,
+   "vulnerableRepos": [
+    "juice-shop/juice-shop",
+    "adeyosemanputra/pygoat"
+   ]
+  },
+  {
+   "ruleId": 255,
+   "title": "CLICHE-55: Default Native Select Menu in Polished Dark Mode",
+   "severity": "LOW",
+   "cleanRepos": [
+    "documenso/documenso",
+    "django/djangoproject.com"
+   ],
+   "cleanFindings": 9,
+   "vulnerableRepos": []
+  },
+  {
+   "ruleId": 1003,
+   "title": "UI-03: Overused Sparkle / Magic Wand Icon Cliché",
+   "severity": "LOW",
+   "cleanRepos": [
+    "documenso/documenso",
+    "supabase/supabase-js"
+   ],
+   "cleanFindings": 8,
+   "vulnerableRepos": []
+  },
+  {
+   "ruleId": 254,
+   "title": "CLICHE-54: Full-Bleed Unpadded Table Layout on Mobile",
+   "severity": "LOW",
+   "cleanRepos": [
+    "spring-projects/spring-petclinic",
+    "django/djangoproject.com"
+   ],
+   "cleanFindings": 8,
+   "vulnerableRepos": [
+    "OWASP/NodeGoat",
+    "juice-shop/juice-shop",
+    "WebGoat/WebGoat"
+   ]
+  },
+  {
+   "ruleId": 1226,
+   "title": "UI-INTERACT-26: Search Input Missing Clear Button (X)",
+   "severity": "LOW",
+   "cleanRepos": [
+    "shadcn-ui/taxonomy",
+    "documenso/documenso"
+   ],
+   "cleanFindings": 6,
+   "vulnerableRepos": [
+    "juice-shop/juice-shop"
+   ]
+  },
+  {
+   "ruleId": 1212,
+   "title": "UI-INTERACT-12: Missing aria-expanded on Collapsible Accordion Triggers",
+   "severity": "LOW",
+   "cleanRepos": [
+    "fastapi/full-stack-fastapi-template",
+    "documenso/documenso"
+   ],
+   "cleanFindings": 6,
+   "vulnerableRepos": [
+    "WebGoat/WebGoat"
+   ]
+  },
+  {
+   "ruleId": 8610,
+   "title": "NEXT15-10: Next.js 15 Dynamic APIs (cookies, headers) Accessed Synchronously",
+   "severity": "CRITICAL",
+   "cleanRepos": [
+    "vercel/nextjs-subscription-payments",
+    "shadcn-ui/taxonomy"
+   ],
+   "cleanFindings": 5,
+   "vulnerableRepos": []
+  },
+  {
+   "ruleId": 1220,
+   "title": "UI-INTERACT-20: Unannounced Dynamic Toast / Alert Notifications",
+   "severity": "LOW",
+   "cleanRepos": [
+    "vercel/nextjs-subscription-payments",
+    "shadcn-ui/taxonomy"
+   ],
+   "cleanFindings": 5,
+   "vulnerableRepos": []
+  },
+  {
+   "ruleId": 14104,
+   "title": "SLSA-04: Mutable Git Tags Used in Release Pipeline Rather Than Commit SHAs",
+   "severity": "HIGH",
+   "cleanRepos": [
+    "documenso/documenso",
+    "django/djangoproject.com"
+   ],
+   "cleanFindings": 5,
+   "vulnerableRepos": [
+    "juice-shop/juice-shop",
+    "WebGoat/WebGoat",
+    "digininja/DVWA"
+   ]
+  },
+  {
+   "ruleId": 11701,
+   "title": "CRON-01: Distributed Mutex Lock Missing on Periodic Worker",
+   "severity": "HIGH",
+   "cleanRepos": [
+    "documenso/documenso",
+    "supabase/supabase-js"
+   ],
+   "cleanFindings": 5,
+   "vulnerableRepos": [
+    "OWASP/NodeGoat",
+    "juice-shop/juice-shop",
+    "WebGoat/WebGoat",
+    "OWASP/railsgoat",
+    "anxolerd/dvpwa"
+   ]
+  },
+  {
+   "ruleId": 106,
+   "title": "UI-106: Empty Silent Catch Block",
+   "severity": "HIGH",
+   "cleanRepos": [
+    "supabase/supabase-js",
+    "rubygems/rubygems.org"
+   ],
+   "cleanFindings": 5,
+   "vulnerableRepos": [
+    "WebGoat/WebGoat",
+    "OWASP/railsgoat",
+    "anxolerd/dvpwa"
+   ]
+  },
+  {
+   "ruleId": 1034,
+   "title": "Synchronous Render-Blocking Script Tag Detected in Document Head",
+   "severity": "MEDIUM",
+   "cleanRepos": [
+    "spring-projects/spring-petclinic",
+    "django/djangoproject.com"
+   ],
+   "cleanFindings": 5,
+   "vulnerableRepos": [
+    "OWASP/NodeGoat",
+    "juice-shop/juice-shop",
+    "WebGoat/WebGoat",
+    "adeyosemanputra/pygoat"
+   ]
+  },
+  {
+   "ruleId": 13803,
+   "title": "ASVS-03: ASVS V4.1 Access Control: Insecure Direct Object References (IDOR) on Tenant APIs",
+   "severity": "CRITICAL",
+   "cleanRepos": [
+    "spring-projects/spring-petclinic",
+    "dotnet-architecture/eShopOnWeb"
+   ],
+   "cleanFindings": 5,
+   "vulnerableRepos": []
+  },
+  {
+   "ruleId": 1204,
+   "title": "UI-INTERACT-04: Disruptive autoFocus Input Hijacking",
+   "severity": "LOW",
+   "cleanRepos": [
+    "shadcn-ui/taxonomy",
+    "documenso/documenso"
+   ],
+   "cleanFindings": 4,
+   "vulnerableRepos": [
+    "WebGoat/WebGoat"
+   ]
+  },
+  {
+   "ruleId": 7001,
+   "title": "SCA: CVE-2024-34351 - Next.js Server Actions Server-Side Request Forgery (SSRF) (next@13.3.2-canary.13)",
+   "severity": "HIGH",
+   "cleanRepos": [
+    "shadcn-ui/taxonomy",
+    "gothinkster/node-express-realworld-example-app"
+   ],
+   "cleanFindings": 4,
+   "vulnerableRepos": [
+    "appsecco/dvna",
+    "juice-shop/juice-shop"
+   ]
+  },
+  {
+   "ruleId": 11405,
+   "title": "GW-05: Missing API Deprecation and Sunset Announcement Headers",
+   "severity": "LOW",
+   "cleanRepos": [
+    "documenso/documenso",
+    "rubygems/rubygems.org"
+   ],
+   "cleanFindings": 4,
+   "vulnerableRepos": []
+  },
+  {
+   "ruleId": 7321,
+   "title": "SUPPLY-21: Missing Automated Dependency Update Bot Configuration",
+   "severity": "LOW",
+   "cleanRepos": [
+    "documenso/documenso",
+    "supabase/supabase-js"
+   ],
+   "cleanFindings": 4,
+   "vulnerableRepos": []
+  },
+  {
+   "ruleId": 7337,
+   "title": "SUPPLY-37: Missing Vulnerability Disclosure Policy (SECURITY.md)",
+   "severity": "LOW",
+   "cleanRepos": [
+    "documenso/documenso",
+    "supabase/supabase-js"
+   ],
+   "cleanFindings": 4,
+   "vulnerableRepos": []
+  },
+  {
+   "ruleId": 7338,
+   "title": "SUPPLY-38: Public NPM Package Missing 2FA Requirement",
+   "severity": "HIGH",
+   "cleanRepos": [
+    "documenso/documenso",
+    "supabase/supabase-js"
+   ],
+   "cleanFindings": 4,
+   "vulnerableRepos": []
+  },
+  {
+   "ruleId": 25011,
+   "title": "COPY-SLOP-01: Banned AI Buzzword \"streamline\" Detected in UI Copy",
+   "severity": "LOW",
+   "cleanRepos": [
+    "documenso/documenso",
+    "django/djangoproject.com"
+   ],
+   "cleanFindings": 4,
+   "vulnerableRepos": [
+    "OWASP/NodeGoat"
+   ]
+  },
+  {
+   "ruleId": 11802,
+   "title": "DNS-02: Dangling DNS Record Vulnerable to Subdomain Takeover",
+   "severity": "CRITICAL",
+   "cleanRepos": [
+    "dotnet-architecture/eShopOnWeb",
+    "django/djangoproject.com"
+   ],
+   "cleanFindings": 4,
+   "vulnerableRepos": [
+    "OWASP/railsgoat"
+   ]
+  },
+  {
+   "ruleId": 1127,
+   "title": "Bloated Monolithic Library Barrel Import (Missing optimizePackageImports)",
+   "severity": "MEDIUM",
+   "cleanRepos": [
+    "shadcn-ui/taxonomy",
+    "documenso/documenso"
+   ],
+   "cleanFindings": 3,
+   "vulnerableRepos": []
+  },
+  {
+   "ruleId": 3009,
+   "title": "Serverless Connection Pool Exhaustion Hazard (Prisma Missing Global Singleton)",
+   "severity": "CRITICAL",
+   "cleanRepos": [
+    "shadcn-ui/taxonomy",
+    "gothinkster/node-express-realworld-example-app"
+   ],
+   "cleanFindings": 3,
+   "vulnerableRepos": []
+  },
+  {
+   "ruleId": 216,
+   "title": "CLICHE-16: Non-Functional Theme Toggle Button",
+   "severity": "MEDIUM",
+   "cleanRepos": [
+    "documenso/documenso",
+    "django/djangoproject.com"
+   ],
+   "cleanFindings": 3,
+   "vulnerableRepos": []
+  },
+  {
+   "ruleId": 11505,
+   "title": "DATA-05: Unencrypted Sensitive Customer PII in Data Warehouse Staging Tables",
+   "severity": "CRITICAL",
+   "cleanRepos": [
+    "supabase/supabase-js",
+    "spring-projects/spring-petclinic"
+   ],
+   "cleanFindings": 3,
+   "vulnerableRepos": [
+    "WebGoat/WebGoat"
+   ]
+  },
+  {
+   "ruleId": 14704,
+   "title": "GRPCSEC-04: Unprotected gRPC Server Reflection Enabled in Production",
+   "severity": "HIGH",
+   "cleanRepos": [
+    "spring-projects/spring-petclinic",
+    "dotnet-architecture/eShopOnWeb"
+   ],
+   "cleanFindings": 3,
+   "vulnerableRepos": [
+    "adeyosemanputra/pygoat"
+   ]
+  },
+  {
+   "ruleId": 7222,
+   "title": "API-22: Webhook Receiver Missing Replay Attack Protection (Timestamp Check)",
+   "severity": "HIGH",
+   "cleanRepos": [
+    "vercel/nextjs-subscription-payments",
+    "shadcn-ui/taxonomy"
+   ],
+   "cleanFindings": 2,
+   "vulnerableRepos": []
+  },
+  {
+   "ruleId": 1211,
+   "title": "UI-INTERACT-11: Double-Click Duplicate Mutation Hazard",
+   "severity": "LOW",
+   "cleanRepos": [
+    "vercel/nextjs-subscription-payments",
+    "documenso/documenso"
+   ],
+   "cleanFindings": 2,
+   "vulnerableRepos": [
+    "WebGoat/WebGoat",
+    "adeyosemanputra/pygoat"
+   ]
+  },
+  {
+   "ruleId": 23008,
+   "title": "SAAS-08: Next.js Version Vulnerable to Middleware Authorization Bypass (CVE-2025-29927)",
+   "severity": "HIGH",
+   "cleanRepos": [
+    "vercel/nextjs-subscription-payments",
+    "shadcn-ui/taxonomy"
+   ],
+   "cleanFindings": 2,
+   "vulnerableRepos": []
+  },
+  {
+   "ruleId": 8430,
+   "title": "CHAOS-30: Lack of Automated Schema Drift Detection in Staging",
+   "severity": "MEDIUM",
+   "cleanRepos": [
+    "fastapi/full-stack-fastapi-template",
+    "documenso/documenso"
+   ],
+   "cleanFindings": 2,
+   "vulnerableRepos": []
+  },
+  {
+   "ruleId": 13403,
+   "title": "SOX-03: SOX ITGC Audit Trail: Missing Immutable Logging for Financial Transaction Modifications",
+   "severity": "CRITICAL",
+   "cleanRepos": [
+    "laravel/laravel",
+    "django/djangoproject.com"
+   ],
+   "cleanFindings": 2,
+   "vulnerableRepos": [
+    "juice-shop/juice-shop"
+   ]
+  },
+  {
+   "ruleId": 12602,
+   "title": "SBOM-02: Unsigned Container Images and Missing Cosign Cryptographic Signatures",
+   "severity": "CRITICAL",
+   "cleanRepos": [
+    "documenso/documenso",
+    "rubygems/rubygems.org"
+   ],
+   "cleanFindings": 2,
+   "vulnerableRepos": [
+    "juice-shop/juice-shop"
+   ]
+  },
+  {
+   "ruleId": 10802,
+   "title": "ISO-02: Privileged Access Rights Granted Without Documented Approval (A.5.18)",
+   "severity": "HIGH",
+   "cleanRepos": [
+    "supabase/supabase-js",
+    "spring-projects/spring-petclinic"
+   ],
+   "cleanFindings": 2,
+   "vulnerableRepos": []
+  },
+  {
+   "ruleId": 8123,
+   "title": "ZERO-AUTH-23: Missing Secure Context Requirement on WebAuthn Credentials",
+   "severity": "HIGH",
+   "cleanRepos": [
+    "supabase/supabase-js",
+    "rubygems/rubygems.org"
+   ],
+   "cleanFindings": 2,
+   "vulnerableRepos": []
+  },
+  {
+   "ruleId": 6002,
+   "title": "DB-PERF-02: Missing Index on Foreign Key Columns",
+   "severity": "HIGH",
+   "cleanRepos": [
+    "supabase/supabase-js",
+    "spring-projects/spring-petclinic"
+   ],
+   "cleanFindings": 2,
+   "vulnerableRepos": [
+    "digininja/DVWA"
+   ]
+  },
+  {
+   "ruleId": 6007,
+   "title": "DB-PERF-07: Unindexed Leading Wildcard LIKE Query",
+   "severity": "MEDIUM",
+   "cleanRepos": [
+    "supabase/supabase-js",
+    "rubygems/rubygems.org"
+   ],
+   "cleanFindings": 2,
+   "vulnerableRepos": [
+    "juice-shop/juice-shop"
+   ]
+  },
+  {
+   "ruleId": 3008,
+   "title": "Production Dockerfile Missing Automated Health Check (HEALTHCHECK) Directive",
+   "severity": "MEDIUM",
+   "cleanRepos": [
+    "dotnet-architecture/eShopOnWeb",
+    "rubygems/rubygems.org"
+   ],
+   "cleanFindings": 2,
+   "vulnerableRepos": [
+    "OWASP/NodeGoat",
+    "juice-shop/juice-shop",
+    "adeyosemanputra/pygoat"
+   ]
+  },
+  {
+   "ruleId": 7032,
+   "title": "CLOUD-32: Docker HEALTHCHECK Directive Omitted in Production",
+   "severity": "MEDIUM",
+   "cleanRepos": [
+    "dotnet-architecture/eShopOnWeb",
+    "rubygems/rubygems.org"
+   ],
+   "cleanFindings": 2,
+   "vulnerableRepos": [
+    "OWASP/NodeGoat",
+    "juice-shop/juice-shop",
+    "adeyosemanputra/pygoat"
+   ]
+  },
+  {
+   "ruleId": 1207,
+   "title": "UI-INTERACT-07: Viewport Horizontal Overflow from w-screen",
+   "severity": "LOW",
+   "cleanRepos": [
+    "documenso/documenso"
+   ],
+   "cleanFindings": 44,
+   "vulnerableRepos": []
+  },
+  {
+   "ruleId": 1239,
+   "title": "UI-INTERACT-39: Missing Confirmation on Destructive Delete Actions",
+   "severity": "LOW",
+   "cleanRepos": [
+    "documenso/documenso"
+   ],
+   "cleanFindings": 19,
+   "vulnerableRepos": []
+  },
+  {
+   "ruleId": 7301,
+   "title": "SUPPLY-01: Wildcard Package Dependency Version ('*')",
+   "severity": "HIGH",
+   "cleanRepos": [
+    "documenso/documenso"
+   ],
+   "cleanFindings": 12,
+   "vulnerableRepos": []
+  },
+  {
+   "ruleId": 13602,
+   "title": "THREAT-02: MITRE T1059 Command Execution: Unmonitored Interactive Shell Spawning in Web Pods",
+   "severity": "CRITICAL",
+   "cleanRepos": [
+    "supabase/supabase-js"
+   ],
+   "cleanFindings": 7,
+   "vulnerableRepos": [
+    "OWASP/NodeGoat",
+    "appsecco/dvna",
+    "juice-shop/juice-shop"
+   ]
+  },
+  {
+   "ruleId": 1041,
+   "title": "Reverse Tab-Nabbing Security Hazard (target=\"_blank\" Missing rel=\"noopener noreferrer\")",
+   "severity": "MEDIUM",
+   "cleanRepos": [
+    "django/djangoproject.com"
+   ],
+   "cleanFindings": 6,
+   "vulnerableRepos": [
+    "OWASP/NodeGoat",
+    "juice-shop/juice-shop",
+    "WebGoat/WebGoat",
+    "adeyosemanputra/pygoat"
+   ]
+  },
+  {
+   "ruleId": 1205,
+   "title": "UI-INTERACT-05: Arbitrary Z-Index Escalation War (z-[99999])",
+   "severity": "LOW",
+   "cleanRepos": [
+    "documenso/documenso"
+   ],
+   "cleanFindings": 5,
+   "vulnerableRepos": []
+  },
+  {
+   "ruleId": 1230,
+   "title": "UI-INTERACT-30: Accordion Item Closing While User Is Typing Inside Form",
+   "severity": "LOW",
+   "cleanRepos": [
+    "documenso/documenso"
+   ],
+   "cleanFindings": 5,
+   "vulnerableRepos": []
+  },
+  {
+   "ruleId": 3001,
+   "title": "PostgreSQL Table \"users\" Missing Row Level Security (RLS)",
+   "severity": "CRITICAL",
+   "cleanRepos": [
+    "supabase/supabase-js"
+   ],
+   "cleanFindings": 5,
+   "vulnerableRepos": []
+  },
+  {
+   "ruleId": 1240,
+   "title": "UI-INTERACT-40: Interactive Chart Missing Keyboard Accessible Data Table",
+   "severity": "LOW",
+   "cleanRepos": [
+    "documenso/documenso"
+   ],
+   "cleanFindings": 4,
+   "vulnerableRepos": []
+  },
+  {
+   "ruleId": 8071,
+   "title": "LLM-COST-01: Unbounded Token Generation (Missing max_tokens Guard)",
+   "severity": "HIGH",
+   "cleanRepos": [
+    "documenso/documenso"
+   ],
+   "cleanFindings": 4,
+   "vulnerableRepos": [
+    "juice-shop/juice-shop"
+   ]
+  },
+  {
+   "ruleId": 13502,
+   "title": "VECTOR-02: Embedding Vector Dimension Mismatch at Query Time",
+   "severity": "HIGH",
+   "cleanRepos": [
+    "django/djangoproject.com"
+   ],
+   "cleanFindings": 4,
+   "vulnerableRepos": []
+  },
+  {
+   "ruleId": 7216,
+   "title": "API-16: Missing ETag Header on Cacheable Entity Endpoints",
+   "severity": "LOW",
+   "cleanRepos": [
+    "shadcn-ui/taxonomy"
+   ],
+   "cleanFindings": 3,
+   "vulnerableRepos": []
+  },
+  {
+   "ruleId": 11105,
+   "title": "CDN-05: Uncached Dynamic API Responses Missing Cache-Control Revalidation Headers",
+   "severity": "HIGH",
+   "cleanRepos": [
+    "shadcn-ui/taxonomy"
+   ],
+   "cleanFindings": 3,
+   "vulnerableRepos": []
+  },
+  {
+   "ruleId": 9027,
+   "title": "GO-27: Nil Pointer Dereference on Unchecked Error Return",
+   "severity": "MEDIUM",
+   "cleanRepos": [
+    "gothinkster/golang-gin-realworld-example-app"
+   ],
+   "cleanFindings": 3,
+   "vulnerableRepos": []
+  },
+  {
+   "ruleId": 18005,
+   "title": "PHP-SEC-05: Reflected Cross-Site Scripting (XSS) via Direct Echo",
+   "severity": "HIGH",
+   "cleanRepos": [
+    "laravel/laravel"
+   ],
+   "cleanFindings": 3,
+   "vulnerableRepos": [
+    "digininja/DVWA"
+   ]
+  },
+  {
+   "ruleId": 1224,
+   "title": "UI-INTERACT-24: Missing Loading State on Long Async Actions",
+   "severity": "LOW",
+   "cleanRepos": [
+    "documenso/documenso"
+   ],
+   "cleanFindings": 3,
+   "vulnerableRepos": []
+  },
+  {
+   "ruleId": 1241,
+   "title": "UI-INTERACT-41: Draggable Kanban / List Lacking Keyboard Reordering",
+   "severity": "LOW",
+   "cleanRepos": [
+    "documenso/documenso"
+   ],
+   "cleanFindings": 3,
+   "vulnerableRepos": []
+  },
+  {
+   "ruleId": 35,
+   "title": "Path Traversal Vulnerability via User-Controlled File Path",
+   "severity": "HIGH",
+   "cleanRepos": [
+    "supabase/supabase-js"
+   ],
+   "cleanFindings": 3,
+   "vulnerableRepos": [
+    "juice-shop/juice-shop"
+   ]
+  },
+  {
+   "ruleId": 10302,
+   "title": "PG-02: Missing Index on High-Cardinality Foreign Key Columns",
+   "severity": "HIGH",
+   "cleanRepos": [
+    "spring-projects/spring-petclinic"
+   ],
+   "cleanFindings": 3,
+   "vulnerableRepos": [
+    "digininja/DVWA",
+    "anxolerd/dvpwa"
+   ]
+  },
+  {
+   "ruleId": 23003,
+   "title": "SAAS-03: SECURITY DEFINER Function Without a Fixed search_path",
+   "severity": "HIGH",
+   "cleanRepos": [
+    "vercel/nextjs-subscription-payments"
+   ],
+   "cleanFindings": 2,
+   "vulnerableRepos": []
+  },
+  {
+   "ruleId": 7217,
+   "title": "API-17: Missing If-Match Header for Optimistic Concurrency Control",
+   "severity": "MEDIUM",
+   "cleanRepos": [
+    "shadcn-ui/taxonomy"
+   ],
+   "cleanFindings": 2,
+   "vulnerableRepos": []
+  },
+  {
+   "ruleId": 14,
+   "title": "Insecure Hardcoded Fallback for Cryptographic Session / JWT Secret",
+   "severity": "CRITICAL",
+   "cleanRepos": [
+    "gothinkster/node-express-realworld-example-app"
+   ],
+   "cleanFindings": 2,
+   "vulnerableRepos": []
+  },
+  {
+   "ruleId": 8125,
+   "title": "ZERO-AUTH-25: Missing Audit Trail for Administrative Privilege Changes",
+   "severity": "MEDIUM",
+   "cleanRepos": [
+    "documenso/documenso"
+   ],
+   "cleanFindings": 2,
+   "vulnerableRepos": [
+    "juice-shop/juice-shop"
+   ]
+  },
+  {
+   "ruleId": 1216,
+   "title": "UI-INTERACT-16: Dropdown Menu Leaking on Outside Document Click",
+   "severity": "LOW",
+   "cleanRepos": [
+    "documenso/documenso"
+   ],
+   "cleanFindings": 2,
+   "vulnerableRepos": []
+  },
+  {
+   "ruleId": 1247,
+   "title": "UI-INTERACT-47: Animated Counter Freezing on Rapid Page Scroll",
+   "severity": "LOW",
+   "cleanRepos": [
+    "documenso/documenso"
+   ],
+   "cleanFindings": 2,
+   "vulnerableRepos": [
+    "juice-shop/juice-shop",
+    "adeyosemanputra/pygoat"
+   ]
+  },
+  {
+   "ruleId": 1248,
+   "title": "UI-INTERACT-48: Multi-Step Wizard Lacking Step History Navigation",
+   "severity": "LOW",
+   "cleanRepos": [
+    "documenso/documenso"
+   ],
+   "cleanFindings": 2,
+   "vulnerableRepos": []
+  },
+  {
+   "ruleId": 1229,
+   "title": "UI-INTERACT-29: Tab Component Lacking Arrow Key Keyboard Navigation",
+   "severity": "LOW",
+   "cleanRepos": [
+    "documenso/documenso"
+   ],
+   "cleanFindings": 2,
+   "vulnerableRepos": [
+    "WebGoat/WebGoat"
+   ]
+  },
+  {
+   "ruleId": 8143,
+   "title": "ZERO-AUTH-43: Missing Identity Verification on Webhook Receiver Endpoints",
+   "severity": "CRITICAL",
+   "cleanRepos": [
+    "documenso/documenso"
+   ],
+   "cleanFindings": 2,
+   "vulnerableRepos": []
+  },
+  {
+   "ruleId": 8014,
+   "title": "LLM-SEC-14: Missing Content Moderation on User-Facing AI Generations",
+   "severity": "HIGH",
+   "cleanRepos": [
+    "documenso/documenso"
+   ],
+   "cleanFindings": 2,
+   "vulnerableRepos": [
+    "juice-shop/juice-shop"
+   ]
+  },
+  {
+   "ruleId": 8072,
+   "title": "LLM-COST-02: Missing Token Budget Rate Limiter on LLM Endpoint",
+   "severity": "HIGH",
+   "cleanRepos": [
+    "documenso/documenso"
+   ],
+   "cleanFindings": 2,
+   "vulnerableRepos": []
+  },
+  {
+   "ruleId": 17304,
+   "title": "EDGE-AI-OPT-04: Disabled Graph Fusion on ONNX Runtime Multi-Head Attention Subgraphs",
+   "severity": "HIGH",
+   "cleanRepos": [
+    "documenso/documenso"
+   ],
+   "cleanFindings": 2,
+   "vulnerableRepos": []
+  },
+  {
+   "ruleId": 11604,
+   "title": "AIACT-04: Missing Machine-Readable Watermarking on Synthetic AI Content (Article 50)",
+   "severity": "HIGH",
+   "cleanRepos": [
+    "documenso/documenso"
+   ],
+   "cleanFindings": 2,
+   "vulnerableRepos": [
+    "juice-shop/juice-shop"
+   ]
+  },
+  {
+   "ruleId": 14305,
+   "title": "APIDEF-05: API5:2023 Broken Function Level Authorization: Admin Routes Missing Scope Check",
+   "severity": "CRITICAL",
+   "cleanRepos": [
+    "documenso/documenso"
+   ],
+   "cleanFindings": 2,
+   "vulnerableRepos": []
+  },
+  {
+   "ruleId": 14303,
+   "title": "APIDEF-03: API3:2023 Broken Object Property Level Authorization: Mass Assignment",
+   "severity": "CRITICAL",
+   "cleanRepos": [
+    "documenso/documenso"
+   ],
+   "cleanFindings": 2,
+   "vulnerableRepos": []
+  },
+  {
+   "ruleId": 1129,
+   "title": "Disabled Button Pointer-Events Trap (Keyboard & Screen Reader Hazard)",
+   "severity": "MEDIUM",
+   "cleanRepos": [
+    "documenso/documenso"
+   ],
+   "cleanFindings": 2,
+   "vulnerableRepos": []
+  },
+  {
+   "ruleId": 3,
+   "title": "Permissive Row Level Security (RLS) Policy (USING true)",
+   "severity": "CRITICAL",
+   "cleanRepos": [
+    "supabase/supabase-js"
+   ],
+   "cleanFindings": 2,
+   "vulnerableRepos": []
+  },
+  {
+   "ruleId": 45,
+   "title": "Permissive Database Row Level Security (RLS) Bypass Policy",
+   "severity": "CRITICAL",
+   "cleanRepos": [
+    "supabase/supabase-js"
+   ],
+   "cleanFindings": 2,
+   "vulnerableRepos": []
+  },
+  {
+   "ruleId": 3007,
+   "title": "Kubernetes Workload Manifest Missing CPU/Memory Resource Limits (DoS Risk)",
+   "severity": "HIGH",
+   "cleanRepos": [
+    "spring-projects/spring-petclinic"
+   ],
+   "cleanFindings": 2,
+   "vulnerableRepos": []
+  },
+  {
+   "ruleId": 7011,
+   "title": "CLOUD-11: Kubernetes Pod Missing CPU & Memory Requests/Limits",
+   "severity": "HIGH",
+   "cleanRepos": [
+    "spring-projects/spring-petclinic"
+   ],
+   "cleanFindings": 2,
+   "vulnerableRepos": []
+  },
+  {
+   "ruleId": 8902,
+   "title": "K8S-02: Container Allowed to Run as Root User",
+   "severity": "HIGH",
+   "cleanRepos": [
+    "spring-projects/spring-petclinic"
+   ],
+   "cleanFindings": 2,
+   "vulnerableRepos": []
+  },
+  {
+   "ruleId": 8903,
+   "title": "K8S-03: Missing CPU and Memory Resource Limits",
+   "severity": "HIGH",
+   "cleanRepos": [
+    "spring-projects/spring-petclinic"
+   ],
+   "cleanFindings": 2,
+   "vulnerableRepos": []
+  },
+  {
+   "ruleId": 8907,
+   "title": "K8S-07: Missing Liveness and Readiness Health Probes",
+   "severity": "HIGH",
+   "cleanRepos": [
+    "spring-projects/spring-petclinic"
+   ],
+   "cleanFindings": 2,
+   "vulnerableRepos": []
+  },
+  {
+   "ruleId": 12303,
+   "title": "TLS-03: Missing HSTS (HTTP Strict Transport Security) Preload Directive",
+   "severity": "HIGH",
+   "cleanRepos": [
+    "rubygems/rubygems.org"
+   ],
+   "cleanFindings": 2,
+   "vulnerableRepos": [
+    "OWASP/railsgoat"
+   ]
+  },
+  {
+   "ruleId": 13802,
+   "title": "ASVS-02: ASVS V3.2 Session Management: Permitting Session Fixation or Insecure Cookie Flags",
+   "severity": "CRITICAL",
+   "cleanRepos": [
+    "vercel/nextjs-subscription-payments"
+   ],
+   "cleanFindings": 1,
+   "vulnerableRepos": []
+  },
+  {
+   "ruleId": 233,
+   "title": "CLICHE-AI-COMMENT-03: Unresolved AI Placeholder / Incomplete Code Comment",
+   "severity": "MEDIUM",
+   "cleanRepos": [
+    "shadcn-ui/taxonomy"
+   ],
+   "cleanFindings": 1,
+   "vulnerableRepos": [
+    "WebGoat/WebGoat"
+   ]
+  },
+  {
+   "ruleId": 7202,
+   "title": "API-02: Unversioned Public REST API Route Handler",
+   "severity": "MEDIUM",
+   "cleanRepos": [
+    "shadcn-ui/taxonomy"
+   ],
+   "cleanFindings": 1,
+   "vulnerableRepos": []
+  },
+  {
+   "ruleId": 7211,
+   "title": "API-11: Missing Content-Type Validation on POST/PUT Endpoints",
+   "severity": "MEDIUM",
+   "cleanRepos": [
+    "shadcn-ui/taxonomy"
+   ],
+   "cleanFindings": 1,
+   "vulnerableRepos": []
+  },
+  {
+   "ruleId": 10304,
+   "title": "PG-04: Unbounded Statement Execution Time (Missing statement_timeout)",
+   "severity": "HIGH",
+   "cleanRepos": [
+    "shadcn-ui/taxonomy"
+   ],
+   "cleanFindings": 1,
+   "vulnerableRepos": []
+  },
+  {
+   "ruleId": 11304,
+   "title": "SLS-04: Direct Unpooled Database Connection in Autoscaling Serverless Workers",
+   "severity": "CRITICAL",
+   "cleanRepos": [
+    "shadcn-ui/taxonomy"
+   ],
+   "cleanFindings": 1,
+   "vulnerableRepos": []
+  },
+  {
+   "ruleId": 7125,
+   "title": "WEB-PERF-25: Missing Image Format Modernization (WebP / AVIF)",
+   "severity": "MEDIUM",
+   "cleanRepos": [
+    "shadcn-ui/taxonomy"
+   ],
+   "cleanFindings": 1,
+   "vulnerableRepos": []
+  },
+  {
+   "ruleId": 7318,
+   "title": "SUPPLY-18: Pre-release Alpha/Beta Dependency in Production",
+   "severity": "MEDIUM",
+   "cleanRepos": [
+    "shadcn-ui/taxonomy"
+   ],
+   "cleanFindings": 1,
+   "vulnerableRepos": []
+  },
+  {
+   "ruleId": 6033,
+   "title": "DB-PERF-33: Missing Foreign Key Cascade Delete Lock Warning",
+   "severity": "HIGH",
+   "cleanRepos": [
+    "shadcn-ui/taxonomy"
+   ],
+   "cleanFindings": 1,
+   "vulnerableRepos": []
+  },
+  {
+   "ruleId": 12205,
+   "title": "CONTAINER-05: Exposed Docker Daemon Unix Socket Inside Container",
+   "severity": "CRITICAL",
+   "cleanRepos": [
+    "fastapi/full-stack-fastapi-template"
+   ],
+   "cleanFindings": 1,
+   "vulnerableRepos": []
+  },
+  {
+   "ruleId": 1201,
+   "title": "UI-INTERACT-01: Modal Overlay Missing Backdrop Click Dismissal",
+   "severity": "LOW",
+   "cleanRepos": [
+    "fastapi/full-stack-fastapi-template"
+   ],
+   "cleanFindings": 1,
+   "vulnerableRepos": []
+  },
+  {
+   "ruleId": 7324,
+   "title": "SUPPLY-24: Missing Strict Package Manager Engine Lock",
+   "severity": "LOW",
+   "cleanRepos": [
+    "fastapi/full-stack-fastapi-template"
+   ],
+   "cleanFindings": 1,
+   "vulnerableRepos": []
+  },
+  {
+   "ruleId": 8102,
+   "title": "ZERO-AUTH-02: Excessive JWT Token Expiration Lifespan (>1 Hour)",
+   "severity": "HIGH",
+   "cleanRepos": [
+    "gothinkster/node-express-realworld-example-app"
+   ],
+   "cleanFindings": 1,
+   "vulnerableRepos": []
+  },
+  {
+   "ruleId": 7130,
+   "title": "WEB-PERF-30: Missing Compression Middleware for Custom Server Responses",
+   "severity": "HIGH",
+   "cleanRepos": [
+    "gothinkster/node-express-realworld-example-app"
+   ],
+   "cleanFindings": 1,
+   "vulnerableRepos": [
+    "OWASP/NodeGoat"
+   ]
+  },
+  {
+   "ruleId": 7204,
+   "title": "API-04: Body Parser Missing Maximum Request Payload Limit",
+   "severity": "HIGH",
+   "cleanRepos": [
+    "gothinkster/node-express-realworld-example-app"
+   ],
+   "cleanFindings": 1,
+   "vulnerableRepos": [
+    "OWASP/NodeGoat"
+   ]
+  },
+  {
+   "ruleId": 9903,
+   "title": "OTEL-03: Missing Health Check Liveness and Readiness Probe Endpoints",
+   "severity": "MEDIUM",
+   "cleanRepos": [
+    "gothinkster/node-express-realworld-example-app"
+   ],
+   "cleanFindings": 1,
+   "vulnerableRepos": [
+    "OWASP/NodeGoat",
+    "appsecco/dvna",
+    "juice-shop/juice-shop"
+   ]
+  },
+  {
+   "ruleId": 10405,
+   "title": "WAF-05: Unchecked HTTP Request Body Size Exceeding Edge WAF Inspection Buffer",
+   "severity": "HIGH",
+   "cleanRepos": [
+    "gothinkster/node-express-realworld-example-app"
+   ],
+   "cleanFindings": 1,
+   "vulnerableRepos": [
+    "OWASP/NodeGoat",
+    "appsecco/dvna",
+    "juice-shop/juice-shop"
+   ]
+  },
+  {
+   "ruleId": 7340,
+   "title": "SUPPLY-40: Missing Snyk or Dependabot Auto-Merge Safeguard",
+   "severity": "MEDIUM",
+   "cleanRepos": [
+    "laravel/laravel"
+   ],
+   "cleanFindings": 1,
+   "vulnerableRepos": []
+  },
+  {
+   "ruleId": 1221,
+   "title": "UI-INTERACT-21: Clipboard Copy Button Lacking Confirmation State",
+   "severity": "LOW",
+   "cleanRepos": [
+    "documenso/documenso"
+   ],
+   "cleanFindings": 1,
+   "vulnerableRepos": []
+  },
+  {
+   "ruleId": 1246,
+   "title": "UI-INTERACT-46: Missing Empty State Action Button",
+   "severity": "LOW",
+   "cleanRepos": [
+    "documenso/documenso"
+   ],
+   "cleanFindings": 1,
+   "vulnerableRepos": [
+    "juice-shop/juice-shop"
+   ]
+  },
+  {
+   "ruleId": 1249,
+   "title": "UI-INTERACT-49: Unescaped Error Message Rendering in UI Alert",
+   "severity": "LOW",
+   "cleanRepos": [
+    "documenso/documenso"
+   ],
+   "cleanFindings": 1,
+   "vulnerableRepos": []
+  },
+  {
+   "ruleId": 1223,
+   "title": "UI-INTERACT-23: Nested Button Invalid HTML Hierarchy",
+   "severity": "LOW",
+   "cleanRepos": [
+    "documenso/documenso"
+   ],
+   "cleanFindings": 1,
+   "vulnerableRepos": [
+    "juice-shop/juice-shop",
+    "WebGoat/WebGoat"
+   ]
+  },
+  {
+   "ruleId": 218,
+   "title": "CLICHE-18: Repetitive 3-Column Card Grid Sections",
+   "severity": "LOW",
+   "cleanRepos": [
+    "documenso/documenso"
+   ],
+   "cleanFindings": 1,
+   "vulnerableRepos": []
+  },
+  {
+   "ruleId": 231,
+   "title": "CLICHE-AI-COMMENT-01: Synthetic LLM Prompt Artifact & Header Injection",
+   "severity": "HIGH",
+   "cleanRepos": [
+    "documenso/documenso"
+   ],
+   "cleanFindings": 1,
+   "vulnerableRepos": []
+  },
+  {
+   "ruleId": 1029,
+   "title": "WCAG 2.2 AA: Non-Semantic Clickable Container Missing Keyboard Accessibility",
+   "severity": "HIGH",
+   "cleanRepos": [
+    "documenso/documenso"
+   ],
+   "cleanFindings": 1,
+   "vulnerableRepos": []
+  },
+  {
+   "ruleId": 11803,
+   "title": "DNS-03: Missing CAA (Certification Authority Authorization) Record",
+   "severity": "HIGH",
+   "cleanRepos": [
+    "documenso/documenso"
+   ],
+   "cleanFindings": 1,
+   "vulnerableRepos": []
+  },
+  {
+   "ruleId": 217,
+   "title": "CLICHE-17: Excessive Center-Alignment (text-center Abuse)",
+   "severity": "MEDIUM",
+   "cleanRepos": [
+    "documenso/documenso"
+   ],
+   "cleanFindings": 1,
+   "vulnerableRepos": []
+  },
+  {
+   "ruleId": 41,
+   "title": "Unvalidated Open Redirection Vulnerability (Open Redirect)",
+   "severity": "MEDIUM",
+   "cleanRepos": [
+    "documenso/documenso"
+   ],
+   "cleanFindings": 1,
+   "vulnerableRepos": [
+    "OWASP/NodeGoat",
+    "appsecco/dvna"
+   ]
+  },
+  {
+   "ruleId": 9404,
+   "title": "EVENT-04: At-Least-Once Duplication Without Idempotent Processing",
+   "severity": "HIGH",
+   "cleanRepos": [
+    "documenso/documenso"
+   ],
+   "cleanFindings": 1,
+   "vulnerableRepos": []
+  },
+  {
+   "ruleId": 8073,
+   "title": "LLM-COST-03: Uncached Vector Embedding Loop (Compounding API Cost)",
+   "severity": "HIGH",
+   "cleanRepos": [
+    "documenso/documenso"
+   ],
+   "cleanFindings": 1,
+   "vulnerableRepos": []
+  },
+  {
+   "ruleId": 7006,
+   "title": "CLOUD-06: Docker Secret Leak via Build ARG or ENV",
+   "severity": "CRITICAL",
+   "cleanRepos": [
+    "documenso/documenso"
+   ],
+   "cleanFindings": 1,
+   "vulnerableRepos": []
+  },
+  {
+   "ruleId": 7341,
+   "title": "SUPPLY-41: Using Unpinned Node.js Alpine Package Repository",
+   "severity": "LOW",
+   "cleanRepos": [
+    "documenso/documenso"
+   ],
+   "cleanFindings": 1,
+   "vulnerableRepos": []
+  },
+  {
+   "ruleId": 13305,
+   "title": "CRYPTO-05: Weak Asymmetric Key Strengths (RSA < 3072 bits or ECC < 256 bits)",
+   "severity": "HIGH",
+   "cleanRepos": [
+    "documenso/documenso"
+   ],
+   "cleanFindings": 1,
+   "vulnerableRepos": []
+  },
+  {
+   "ruleId": 10204,
+   "title": "GRPC-04: Missing Canonical Status Code Error Mapping (Raw Stack Exposure)",
+   "severity": "HIGH",
+   "cleanRepos": [
+    "documenso/documenso"
+   ],
+   "cleanFindings": 1,
+   "vulnerableRepos": [
+    "OWASP/NodeGoat"
+   ]
+  },
+  {
+   "ruleId": 11702,
+   "title": "CRON-02: Unbounded Job Queue Backlog Without Rate Limiting",
+   "severity": "HIGH",
+   "cleanRepos": [
+    "documenso/documenso"
+   ],
+   "cleanFindings": 1,
+   "vulnerableRepos": []
+  },
+  {
+   "ruleId": 11703,
+   "title": "CRON-03: Missing Dead Letter Queue (DLQ) for Failed Cron Jobs",
+   "severity": "HIGH",
+   "cleanRepos": [
+    "documenso/documenso"
+   ],
+   "cleanFindings": 1,
+   "vulnerableRepos": []
+  },
+  {
+   "ruleId": 11704,
+   "title": "CRON-04: Non-Idempotent Job Handler Causing Duplicate Processing",
+   "severity": "CRITICAL",
+   "cleanRepos": [
+    "documenso/documenso"
+   ],
+   "cleanFindings": 1,
+   "vulnerableRepos": []
+  },
+  {
+   "ruleId": 8044,
+   "title": "LLM-SEC-44: Lack of Deterministic Schema Enforcement on JSON Outputs",
+   "severity": "HIGH",
+   "cleanRepos": [
+    "documenso/documenso"
+   ],
+   "cleanFindings": 1,
+   "vulnerableRepos": []
+  },
+  {
+   "ruleId": 8117,
+   "title": "ZERO-AUTH-17: Weak Default Password Policy in User Registration",
+   "severity": "MEDIUM",
+   "cleanRepos": [
+    "documenso/documenso"
+   ],
+   "cleanFindings": 1,
+   "vulnerableRepos": []
+  },
+  {
+   "ruleId": 8133,
+   "title": "ZERO-AUTH-33: Unchecked Client IP Forwarding Header Spoofing",
+   "severity": "HIGH",
+   "cleanRepos": [
+    "documenso/documenso"
+   ],
+   "cleanFindings": 1,
+   "vulnerableRepos": []
+  },
+  {
+   "ruleId": 7017,
+   "title": "CLOUD-17: Missing Exponential Backoff on Cloud SDK Invocations",
+   "severity": "MEDIUM",
+   "cleanRepos": [
+    "documenso/documenso"
+   ],
+   "cleanFindings": 1,
+   "vulnerableRepos": []
+  },
+  {
+   "ruleId": 7347,
+   "title": "SUPPLY-47: Missing .npmignore Leading to Secret Exposure in NPM Tarball",
+   "severity": "HIGH",
+   "cleanRepos": [
+    "documenso/documenso"
+   ],
+   "cleanFindings": 1,
+   "vulnerableRepos": []
+  },
+  {
+   "ruleId": 25013,
+   "title": "UI-CLICHE-04: Misplaced Sparkles Icon on Non-Generative Action Trigger",
+   "severity": "LOW",
+   "cleanRepos": [
+    "documenso/documenso"
+   ],
+   "cleanFindings": 1,
+   "vulnerableRepos": []
+  },
+  {
+   "ruleId": 8435,
+   "title": "CHAOS-35: Unbounded Event Listener Growth on Global Window Object",
+   "severity": "HIGH",
+   "cleanRepos": [
+    "documenso/documenso"
+   ],
+   "cleanFindings": 1,
+   "vulnerableRepos": [
+    "juice-shop/juice-shop"
+   ]
+  },
+  {
+   "ruleId": 219,
+   "title": "CLICHE-19: Default Indigo-600 Color Fallback (#4F46E5)",
+   "severity": "LOW",
+   "cleanRepos": [
+    "supabase/supabase-js"
+   ],
+   "cleanFindings": 1,
+   "vulnerableRepos": []
+  },
+  {
+   "ruleId": 6010,
+   "title": "DB-PERF-10: PostgreSQL Public Table Missing Row Level Security (RLS)",
+   "severity": "CRITICAL",
+   "cleanRepos": [
+    "supabase/supabase-js"
+   ],
+   "cleanFindings": 1,
+   "vulnerableRepos": []
+  },
+  {
+   "ruleId": 9103,
+   "title": "TENANT-03: Missing Tenant Schema Isolation Check on Database Migration",
+   "severity": "HIGH",
+   "cleanRepos": [
+    "supabase/supabase-js"
+   ],
+   "cleanFindings": 1,
+   "vulnerableRepos": []
+  },
+  {
+   "ruleId": 16303,
+   "title": "LLM-ORCH-03: Unprotected Agent Inter-Communication Deadlocks in Asynchronous Swarms",
+   "severity": "HIGH",
+   "cleanRepos": [
+    "supabase/supabase-js"
+   ],
+   "cleanFindings": 1,
+   "vulnerableRepos": []
+  },
+  {
+   "ruleId": 38,
+   "title": "Insecure Pseudo-Random Number Generator Used in Security Context (Math.random)",
+   "severity": "HIGH",
+   "cleanRepos": [
+    "supabase/supabase-js"
+   ],
+   "cleanFindings": 1,
+   "vulnerableRepos": [
+    "juice-shop/juice-shop"
+   ]
+  },
+  {
+   "ruleId": 13302,
+   "title": "CRYPTO-02: Missing Automated Master Key Rotation Schedule Exceeding 90 Days",
+   "severity": "HIGH",
+   "cleanRepos": [
+    "supabase/supabase-js"
+   ],
+   "cleanFindings": 1,
+   "vulnerableRepos": []
+  },
+  {
+   "ruleId": 16603,
+   "title": "VEC-OPT-03: Disabled SIMD Vector Acceleration (AVX-512 / ARM NEON) in Vector Distance Compute",
+   "severity": "CRITICAL",
+   "cleanRepos": [
+    "supabase/supabase-js"
+   ],
+   "cleanFindings": 1,
+   "vulnerableRepos": []
+  },
+  {
+   "ruleId": 3004,
+   "title": "Permissive Wildcard CORS (\"*\") Allows Arbitrary Cross-Origin Requests",
+   "severity": "HIGH",
+   "cleanRepos": [
+    "supabase/supabase-js"
+   ],
+   "cleanFindings": 1,
+   "vulnerableRepos": []
+  },
+  {
+   "ruleId": 5099,
+   "title": "SEC-SECRET-99: JWT Hardcoded Secret Key Constant",
+   "severity": "CRITICAL",
+   "cleanRepos": [
+    "supabase/supabase-js"
+   ],
+   "cleanFindings": 1,
+   "vulnerableRepos": []
+  },
+  {
+   "ruleId": 15203,
+   "title": "WASM-EDGE-03: Unrestricted WebAssembly Network Socket Binding on Edge Compute Gateways",
+   "severity": "HIGH",
+   "cleanRepos": [
+    "supabase/supabase-js"
+   ],
+   "cleanFindings": 1,
+   "vulnerableRepos": [
+    "juice-shop/juice-shop",
+    "WebGoat/WebGoat"
+   ]
+  },
+  {
+   "ruleId": 6004,
+   "title": "DB-PERF-04: Unbounded SELECT * Full Table Scan",
+   "severity": "HIGH",
+   "cleanRepos": [
+    "spring-projects/spring-petclinic"
+   ],
+   "cleanFindings": 1,
+   "vulnerableRepos": []
+  },
+  {
+   "ruleId": 11801,
+   "title": "DNS-01: DNSSEC Signature Validation Missing on Authoritative Zone",
+   "severity": "HIGH",
+   "cleanRepos": [
+    "dotnet-architecture/eShopOnWeb"
+   ],
+   "cleanFindings": 1,
+   "vulnerableRepos": []
+  },
+  {
+   "ruleId": 13902,
+   "title": "FEDRAMP-02: FedRAMP AC-17 Remote Access: Missing FIPS 140-3 Validated Cryptography",
+   "severity": "CRITICAL",
+   "cleanRepos": [
+    "dotnet-architecture/eShopOnWeb"
+   ],
+   "cleanFindings": 1,
+   "vulnerableRepos": []
+  },
+  {
+   "ruleId": 5100,
+   "title": "SEC-SECRET-100: Generic High-Entropy Hex/Base64 API Key",
+   "severity": "CRITICAL",
+   "cleanRepos": [
+    "dotnet-architecture/eShopOnWeb"
+   ],
+   "cleanFindings": 1,
+   "vulnerableRepos": [
+    "adeyosemanputra/pygoat"
+   ]
+  },
+  {
+   "ruleId": 117,
+   "title": "UI-117: Uncleaned Event Listener Memory Leak",
+   "severity": "HIGH",
+   "cleanRepos": [
+    "dotnet-architecture/eShopOnWeb"
+   ],
+   "cleanFindings": 1,
+   "vulnerableRepos": [
+    "OWASP/railsgoat"
+   ]
+  },
+  {
+   "ruleId": 14901,
+   "title": "GLBA-01: GLBA §314.4(a) Designation of Qualified Information Security Officer",
+   "severity": "CRITICAL",
+   "cleanRepos": [
+    "rubygems/rubygems.org"
+   ],
+   "cleanFindings": 1,
+   "vulnerableRepos": []
+  },
+  {
+   "ruleId": 8121,
+   "title": "ZERO-AUTH-21: Unrestricted API Key Scope (Full Account Access by Default)",
+   "severity": "HIGH",
+   "cleanRepos": [
+    "rubygems/rubygems.org"
+   ],
+   "cleanFindings": 1,
+   "vulnerableRepos": []
+  },
+  {
+   "ruleId": 13002,
+   "title": "SEARCH-02: Unindexed Leading Wildcard Search Triggering Full Cluster Scans",
+   "severity": "HIGH",
+   "cleanRepos": [
+    "rubygems/rubygems.org"
+   ],
+   "cleanFindings": 1,
+   "vulnerableRepos": []
+  },
+  {
+   "ruleId": 8812,
+   "title": "PY-SEC-12: Weak Cryptographic Hash Algorithm (MD5 / SHA-1)",
+   "severity": "HIGH",
+   "cleanRepos": [
+    "django/djangoproject.com"
+   ],
+   "cleanFindings": 1,
+   "vulnerableRepos": [
+    "adeyosemanputra/pygoat"
+   ]
+  },
+  {
+   "ruleId": 8845,
+   "title": "PY-SEC-45: Missing Request Timeout on Python Requests / HTTPX Calls",
+   "severity": "MEDIUM",
+   "cleanRepos": [
+    "django/djangoproject.com"
+   ],
+   "cleanFindings": 1,
+   "vulnerableRepos": [
+    "adeyosemanputra/pygoat"
+   ]
+  },
+  {
+   "ruleId": 8809,
+   "title": "PY-SEC-09: Hardcoded Secret Key in Flask / Django Settings",
+   "severity": "CRITICAL",
+   "cleanRepos": [
+    "django/djangoproject.com"
+   ],
+   "cleanFindings": 1,
+   "vulnerableRepos": [
+    "adeyosemanputra/pygoat"
+   ]
+  },
+  {
+   "ruleId": 8805,
+   "title": "PY-SEC-05: Django / Flask DEBUG Mode Enabled in Production Settings",
+   "severity": "HIGH",
+   "cleanRepos": [
+    "django/djangoproject.com"
+   ],
+   "cleanFindings": 1,
+   "vulnerableRepos": [
+    "adeyosemanputra/pygoat"
+   ]
+  },
+  {
+   "ruleId": 8822,
+   "title": "PY-SEC-22: Flask / Django Session Cookie Missing Secure or HttpOnly Flags",
+   "severity": "MEDIUM",
+   "cleanRepos": [
+    "django/djangoproject.com"
+   ],
+   "cleanFindings": 1,
+   "vulnerableRepos": []
+  },
+  {
+   "ruleId": 215,
+   "title": "CLICHE-15: Overloaded Fake Corporate Footer (5 Columns)",
+   "severity": "LOW",
+   "cleanRepos": [
+    "django/djangoproject.com"
+   ],
+   "cleanFindings": 1,
+   "vulnerableRepos": []
+  },
+  {
+   "ruleId": 8803,
+   "title": "PY-SEC-03: Subprocess Execution with shell=True",
+   "severity": "CRITICAL",
+   "cleanRepos": [
+    "django/djangoproject.com"
+   ],
+   "cleanFindings": 1,
+   "vulnerableRepos": [
+    "adeyosemanputra/pygoat"
+   ]
+  },
+  {
+   "ruleId": 8824,
+   "title": "PY-SEC-24: Use of Assert Statement for Security or Authorization Checks",
+   "severity": "HIGH",
+   "cleanRepos": [
+    "django/djangoproject.com"
+   ],
+   "cleanFindings": 1,
+   "vulnerableRepos": []
+  },
+  {
+   "ruleId": 8817,
+   "title": "PY-SEC-17: CSRF Protection Disabled (@csrf_exempt / WTF_CSRF_ENABLED = False)",
+   "severity": "HIGH",
+   "cleanRepos": [
+    "django/djangoproject.com"
+   ],
+   "cleanFindings": 1,
+   "vulnerableRepos": [
+    "adeyosemanputra/pygoat"
+   ]
+  },
+  {
+   "ruleId": 8804,
+   "title": "PY-SEC-04: Python SQL Injection via String Interpolation (f-string / format / %)",
+   "severity": "CRITICAL",
+   "cleanRepos": [
+    "django/djangoproject.com"
+   ],
+   "cleanFindings": 1,
+   "vulnerableRepos": []
+  },
+  {
+   "ruleId": 10604,
+   "title": "SOC2-04: Absence of Regular Automated Database Backup Verification (CC5.2)",
+   "severity": "HIGH",
+   "cleanRepos": [
+    "django/djangoproject.com"
+   ],
+   "cleanFindings": 1,
+   "vulnerableRepos": []
+  },
+  {
+   "ruleId": 33,
+   "title": "Command Injection via Unsanitized Child Process Execution",
+   "severity": "CRITICAL",
+   "cleanRepos": [],
+   "cleanFindings": 0,
+   "vulnerableRepos": [
+    "OWASP/NodeGoat",
+    "appsecco/dvna"
+   ]
+  },
+  {
+   "ruleId": 3020,
+   "title": "MongoDB NoSQL Injection via $where JavaScript Evaluation or Raw Request Query Object",
+   "severity": "CRITICAL",
+   "cleanRepos": [],
+   "cleanFindings": 0,
+   "vulnerableRepos": [
+    "OWASP/NodeGoat",
+    "juice-shop/juice-shop"
+   ]
+  },
+  {
+   "ruleId": 32,
+   "title": "Dynamic Code Execution (eval / Function Remote Code Execution)",
+   "severity": "CRITICAL",
+   "cleanRepos": [],
+   "cleanFindings": 0,
+   "vulnerableRepos": [
+    "OWASP/NodeGoat",
+    "appsecco/dvna",
+    "juice-shop/juice-shop",
+    "OWASP/railsgoat",
+    "digininja/DVWA",
+    "adeyosemanputra/pygoat",
+    "anxolerd/dvpwa"
+   ]
+  },
+  {
+   "ruleId": 25,
+   "title": "Open Redirect via Unvalidated Return URL (CWE-601)",
+   "severity": "HIGH",
+   "cleanRepos": [],
+   "cleanFindings": 0,
+   "vulnerableRepos": [
+    "OWASP/NodeGoat"
+   ]
+  },
+  {
+   "ruleId": 34,
+   "title": "Server-Side Request Forgery (SSRF) via Unvalidated Target URL",
+   "severity": "CRITICAL",
+   "cleanRepos": [],
+   "cleanFindings": 0,
+   "vulnerableRepos": [
+    "OWASP/NodeGoat",
+    "juice-shop/juice-shop"
+   ]
+  },
+  {
+   "ruleId": 10801,
+   "title": "ISO-01: Missing Cryptographic Key Lifecycle and Revocation Procedure (A.8.24)",
+   "severity": "CRITICAL",
+   "cleanRepos": [],
+   "cleanFindings": 0,
+   "vulnerableRepos": [
+    "OWASP/NodeGoat"
+   ]
+  },
+  {
+   "ruleId": 12102,
+   "title": "AUDIT-02: Missing RFC 5424 Structured JSON Format for SIEM Ingestion",
+   "severity": "MEDIUM",
+   "cleanRepos": [],
+   "cleanFindings": 0,
+   "vulnerableRepos": [
+    "OWASP/NodeGoat",
+    "anxolerd/dvpwa"
+   ]
+  },
+  {
+   "ruleId": 43,
+   "title": "Hardcoded Session or Crypto Secret Key in Application Configuration",
+   "severity": "HIGH",
+   "cleanRepos": [],
+   "cleanFindings": 0,
+   "vulnerableRepos": [
+    "OWASP/NodeGoat"
+   ]
+  },
+  {
+   "ruleId": 3016,
+   "title": "Production Server Missing Graceful Shutdown SIGTERM/SIGINT Signal Handlers",
+   "severity": "MEDIUM",
+   "cleanRepos": [],
+   "cleanFindings": 0,
+   "vulnerableRepos": [
+    "OWASP/NodeGoat",
+    "appsecco/dvna"
+   ]
+  },
+  {
+   "ruleId": 3021,
+   "title": "SQL Injection: String Concatenation in Node.js Database Client Query",
+   "severity": "CRITICAL",
+   "cleanRepos": [],
+   "cleanFindings": 0,
+   "vulnerableRepos": [
+    "appsecco/dvna",
+    "juice-shop/juice-shop"
+   ]
+  },
+  {
+   "ruleId": 24001,
+   "title": "JS-SEC-01: Insecure Deserialization With a Function-Reviving Library (RCE)",
+   "severity": "CRITICAL",
+   "cleanRepos": [],
+   "cleanFindings": 0,
+   "vulnerableRepos": [
+    "appsecco/dvna"
+   ]
+  },
+  {
+   "ruleId": 24002,
+   "title": "JS-SEC-02: XML External Entity (XXE) Expansion Enabled",
+   "severity": "HIGH",
+   "cleanRepos": [],
+   "cleanFindings": 0,
+   "vulnerableRepos": [
+    "appsecco/dvna"
+   ]
+  },
+  {
+   "ruleId": 10903,
+   "title": "OAUTH-03: Missing Cryptographic State / Nonce Parameter on Social Auth Handshake",
+   "severity": "HIGH",
+   "cleanRepos": [],
+   "cleanFindings": 0,
+   "vulnerableRepos": [
+    "appsecco/dvna"
+   ]
+  },
+  {
+   "ruleId": 12101,
+   "title": "AUDIT-01: Plaintext Credentials or PII Leaked in Application Logs",
+   "severity": "CRITICAL",
+   "cleanRepos": [],
+   "cleanFindings": 0,
+   "vulnerableRepos": [
+    "juice-shop/juice-shop"
+   ]
+  },
+  {
+   "ruleId": 9705,
+   "title": "FINTECH-05: Plaintext Cardholder Data Logged to Application Telemetry",
+   "severity": "CRITICAL",
+   "cleanRepos": [],
+   "cleanFindings": 0,
+   "vulnerableRepos": [
+    "juice-shop/juice-shop"
+   ]
+  },
+  {
+   "ruleId": 8701,
+   "title": "WEB3-01: Reentrancy Vulnerability (Checks-Effects-Interactions Violation)",
+   "severity": "CRITICAL",
+   "cleanRepos": [],
+   "cleanFindings": 0,
+   "vulnerableRepos": [
+    "juice-shop/juice-shop",
+    "adeyosemanputra/pygoat"
+   ]
+  },
+  {
+   "ruleId": 18041,
+   "title": "NOSQL-SEC-01: MongoDB $where Arbitrary JavaScript Evaluation Injection",
+   "severity": "CRITICAL",
+   "cleanRepos": [],
+   "cleanFindings": 0,
+   "vulnerableRepos": [
+    "juice-shop/juice-shop"
+   ]
+  },
+  {
+   "ruleId": 18102,
+   "title": "MONGO-SEC-01: MongoDB NoSQL Injection via $where or Unvalidated Object Filter",
+   "severity": "CRITICAL",
+   "cleanRepos": [],
+   "cleanFindings": 0,
+   "vulnerableRepos": [
+    "juice-shop/juice-shop"
+   ]
+  },
+  {
+   "ruleId": 8406,
+   "title": "CHAOS-06: Process Missing Graceful Shutdown Handlers (SIGTERM / SIGINT)",
+   "severity": "HIGH",
+   "cleanRepos": [],
+   "cleanFindings": 0,
+   "vulnerableRepos": [
+    "juice-shop/juice-shop"
+   ]
+  },
+  {
+   "ruleId": 7039,
+   "title": "CLOUD-39: Missing VPC Flow Logs on Production Subnets",
+   "severity": "MEDIUM",
+   "cleanRepos": [],
+   "cleanFindings": 0,
+   "vulnerableRepos": [
+    "juice-shop/juice-shop"
+   ]
+  },
+  {
+   "ruleId": 8308,
+   "title": "IAC-08: VPC Flow Logs Disabled on Production Network Subnets",
+   "severity": "MEDIUM",
+   "cleanRepos": [],
+   "cleanFindings": 0,
+   "vulnerableRepos": [
+    "juice-shop/juice-shop"
+   ]
+  },
+  {
+   "ruleId": 8328,
+   "title": "IAC-28: AWS Elastic Load Balancer (ALB) Dropping HTTP to HTTPS Redirection",
+   "severity": "HIGH",
+   "cleanRepos": [],
+   "cleanFindings": 0,
+   "vulnerableRepos": [
+    "juice-shop/juice-shop"
+   ]
+  },
+  {
+   "ruleId": 8336,
+   "title": "IAC-36: Terraform AWS Security Group Egress Open to All Protocols and Ports",
+   "severity": "MEDIUM",
+   "cleanRepos": [],
+   "cleanFindings": 0,
+   "vulnerableRepos": [
+    "juice-shop/juice-shop"
+   ]
+  },
+  {
+   "ruleId": 13103,
+   "title": "SDP-03: Inbound Perimeter Firewall Ports Open to Public Internet",
+   "severity": "CRITICAL",
+   "cleanRepos": [],
+   "cleanFindings": 0,
+   "vulnerableRepos": [
+    "juice-shop/juice-shop"
+   ]
+  },
+  {
+   "ruleId": 10103,
+   "title": "ECOMM-03: Coupon Code Re-entrancy / Parallel Redemption Exploit",
+   "severity": "HIGH",
+   "cleanRepos": [],
+   "cleanFindings": 0,
+   "vulnerableRepos": [
+    "juice-shop/juice-shop"
+   ]
+  },
+  {
+   "ruleId": 13601,
+   "title": "THREAT-01: MITRE T1078 Valid Accounts: Missing Detection on Impossible Travel Anomalies",
+   "severity": "CRITICAL",
+   "cleanRepos": [],
+   "cleanFindings": 0,
+   "vulnerableRepos": [
+    "juice-shop/juice-shop"
+   ]
+  },
+  {
+   "ruleId": 1225,
+   "title": "UI-INTERACT-25: Unchecked File Upload Size and Type Traps",
+   "severity": "LOW",
+   "cleanRepos": [],
+   "cleanFindings": 0,
+   "vulnerableRepos": [
+    "juice-shop/juice-shop",
+    "WebGoat/WebGoat",
+    "adeyosemanputra/pygoat"
+   ]
+  },
+  {
+   "ruleId": 14401,
+   "title": "HIPAASEC-01: HIPAA §164.312(a)(1) Access Control: Missing Unique User Identification",
+   "severity": "CRITICAL",
+   "cleanRepos": [],
+   "cleanFindings": 0,
+   "vulnerableRepos": [
+    "juice-shop/juice-shop"
+   ]
+  },
+  {
+   "ruleId": 7028,
+   "title": "CLOUD-28: Unencrypted CloudWatch / Sentry Log Stream",
+   "severity": "MEDIUM",
+   "cleanRepos": [],
+   "cleanFindings": 0,
+   "vulnerableRepos": [
+    "juice-shop/juice-shop"
+   ]
+  },
+  {
+   "ruleId": 8327,
+   "title": "IAC-27: Terraform AWS Provider Missing Default Resource Tags",
+   "severity": "LOW",
+   "cleanRepos": [],
+   "cleanFindings": 0,
+   "vulnerableRepos": [
+    "juice-shop/juice-shop"
+   ]
+  },
+  {
+   "ruleId": 5045,
+   "title": "SEC-SECRET-45: RSA Private Key Block Exposure",
+   "severity": "CRITICAL",
+   "cleanRepos": [],
+   "cleanFindings": 0,
+   "vulnerableRepos": [
+    "juice-shop/juice-shop"
+   ]
+  },
+  {
+   "ruleId": 37,
+   "title": "Use of Broken Cryptographic Hash Function (MD5 / SHA-1)",
+   "severity": "HIGH",
+   "cleanRepos": [],
+   "cleanFindings": 0,
+   "vulnerableRepos": [
+    "juice-shop/juice-shop"
+   ]
+  },
+  {
+   "ruleId": 10904,
+   "title": "OAUTH-04: JWT Algorithm Confusion Vulnerability (Accepting 'none' Algorithm)",
+   "severity": "CRITICAL",
+   "cleanRepos": [],
+   "cleanFindings": 0,
+   "vulnerableRepos": [
+    "juice-shop/juice-shop"
+   ]
+  },
+  {
+   "ruleId": 7303,
+   "title": "SUPPLY-03: Missing Lockfile Integrity Guarantee",
+   "severity": "HIGH",
+   "cleanRepos": [],
+   "cleanFindings": 0,
+   "vulnerableRepos": [
+    "juice-shop/juice-shop"
+   ]
+  },
+  {
+   "ruleId": 31,
+   "title": "Insecure YAML Deserialization (CWE-502 Remote Code Execution)",
+   "severity": "CRITICAL",
+   "cleanRepos": [],
+   "cleanFindings": 0,
+   "vulnerableRepos": [
+    "juice-shop/juice-shop",
+    "adeyosemanputra/pygoat"
+   ]
+  },
+  {
+   "ruleId": 8401,
+   "title": "CHAOS-01: Downstream HTTP Fetch Missing Timeout Signal (AbortSignal)",
+   "severity": "HIGH",
+   "cleanRepos": [],
+   "cleanFindings": 0,
+   "vulnerableRepos": [
+    "juice-shop/juice-shop"
+   ]
+  },
+  {
+   "ruleId": 18012,
+   "title": "JAVA-SEC-02: Hardcoded Password or Secret Key in Java Source Code",
+   "severity": "HIGH",
+   "cleanRepos": [],
+   "cleanFindings": 0,
+   "vulnerableRepos": [
+    "WebGoat/WebGoat"
+   ]
+  },
+  {
+   "ruleId": 24101,
+   "title": "CORE-01: SQL Injection: Query Built From Dynamic Values",
+   "severity": "CRITICAL",
+   "cleanRepos": [],
+   "cleanFindings": 0,
+   "vulnerableRepos": [
+    "WebGoat/WebGoat",
+    "OWASP/railsgoat",
+    "digininja/DVWA",
+    "adeyosemanputra/pygoat",
+    "anxolerd/dvpwa"
+   ]
+  },
+  {
+   "ruleId": 5049,
+   "title": "SEC-SECRET-49: Generic Private Key Block Exposure",
+   "severity": "CRITICAL",
+   "cleanRepos": [],
+   "cleanFindings": 0,
+   "vulnerableRepos": [
+    "WebGoat/WebGoat"
+   ]
+  },
+  {
+   "ruleId": 18015,
+   "title": "JAVA-SEC-05: Cryptographically Weak Cipher or Hash in Java (DES / RC4 / MD5 / ECB)",
+   "severity": "HIGH",
+   "cleanRepos": [],
+   "cleanFindings": 0,
+   "vulnerableRepos": [
+    "WebGoat/WebGoat"
+   ]
+  },
+  {
+   "ruleId": 18013,
+   "title": "JAVA-SEC-03: Unrestricted Java Deserialization via ObjectInputStream.readObject",
+   "severity": "CRITICAL",
+   "cleanRepos": [],
+   "cleanFindings": 0,
+   "vulnerableRepos": [
+    "WebGoat/WebGoat"
+   ]
+  },
+  {
+   "ruleId": 24103,
+   "title": "CORE-03: Insecure Deserialization of Untrusted Data",
+   "severity": "CRITICAL",
+   "cleanRepos": [],
+   "cleanFindings": 0,
+   "vulnerableRepos": [
+    "WebGoat/WebGoat",
+    "OWASP/railsgoat",
+    "adeyosemanputra/pygoat"
+   ]
+  },
+  {
+   "ruleId": 9003,
+   "title": "JAVA-SEC-01: Potential Log4Shell Vulnerability (Log4j)",
+   "severity": "CRITICAL",
+   "cleanRepos": [],
+   "cleanFindings": 0,
+   "vulnerableRepos": [
+    "WebGoat/WebGoat"
+   ]
+  },
+  {
+   "ruleId": 1234,
+   "title": "UI-INTERACT-34: Radio Button Group Missing Default Selection",
+   "severity": "LOW",
+   "cleanRepos": [],
+   "cleanFindings": 0,
+   "vulnerableRepos": [
+    "WebGoat/WebGoat",
+    "adeyosemanputra/pygoat"
+   ]
+  },
+  {
+   "ruleId": 8131,
+   "title": "ZERO-AUTH-31: Insecure JWT Storage in Browser LocalStorage",
+   "severity": "HIGH",
+   "cleanRepos": [],
+   "cleanFindings": 0,
+   "vulnerableRepos": [
+    "WebGoat/WebGoat"
+   ]
+  },
+  {
+   "ruleId": 24105,
+   "title": "CORE-05: Cross-Site Scripting (XSS): Output Escaping Bypassed",
+   "severity": "HIGH",
+   "cleanRepos": [],
+   "cleanFindings": 0,
+   "vulnerableRepos": [
+    "OWASP/railsgoat",
+    "digininja/DVWA",
+    "anxolerd/dvpwa"
+   ]
+  },
+  {
+   "ruleId": 18032,
+   "title": "RUBY-SEC-02: Insecure Mass Assignment via params.permit!",
+   "severity": "HIGH",
+   "cleanRepos": [],
+   "cleanFindings": 0,
+   "vulnerableRepos": [
+    "OWASP/railsgoat"
+   ]
+  },
+  {
+   "ruleId": 24102,
+   "title": "CORE-02: OS Command Injection: Shell Command Built From Dynamic Values",
+   "severity": "CRITICAL",
+   "cleanRepos": [],
+   "cleanFindings": 0,
+   "vulnerableRepos": [
+    "OWASP/railsgoat",
+    "digininja/DVWA",
+    "adeyosemanputra/pygoat"
+   ]
+  },
+  {
+   "ruleId": 24108,
+   "title": "CORE-08: Weak Password Hashing (MD5 / SHA-1)",
+   "severity": "HIGH",
+   "cleanRepos": [],
+   "cleanFindings": 0,
+   "vulnerableRepos": [
+    "OWASP/railsgoat",
+    "digininja/DVWA",
+    "adeyosemanputra/pygoat",
+    "anxolerd/dvpwa"
+   ]
+  },
+  {
+   "ruleId": 18001,
+   "title": "PHP-SEC-01: SQL Injection via Unparameterized Query Concatenation",
+   "severity": "CRITICAL",
+   "cleanRepos": [],
+   "cleanFindings": 0,
+   "vulnerableRepos": [
+    "digininja/DVWA"
+   ]
+  },
+  {
+   "ruleId": 8,
+   "title": "Wildcard Access-Control-Allow-Origin (*) CORS Vulnerability",
+   "severity": "HIGH",
+   "cleanRepos": [],
+   "cleanFindings": 0,
+   "vulnerableRepos": [
+    "digininja/DVWA"
+   ]
+  },
+  {
+   "ruleId": 13303,
+   "title": "CRYPTO-03: Insecure Legacy Cipher Modes Permitted (AES-ECB / Unauthenticated CBC)",
+   "severity": "CRITICAL",
+   "cleanRepos": [],
+   "cleanFindings": 0,
+   "vulnerableRepos": [
+    "digininja/DVWA"
+   ]
+  },
+  {
+   "ruleId": 24106,
+   "title": "CORE-06: File Inclusion: include/require With a Request-Controlled Path",
+   "severity": "CRITICAL",
+   "cleanRepos": [],
+   "cleanFindings": 0,
+   "vulnerableRepos": [
+    "digininja/DVWA"
+   ]
+  },
+  {
+   "ruleId": 24107,
+   "title": "CORE-07: Unrestricted File Upload",
+   "severity": "HIGH",
+   "cleanRepos": [],
+   "cleanFindings": 0,
+   "vulnerableRepos": [
+    "digininja/DVWA"
+   ]
+  },
+  {
+   "ruleId": 8835,
+   "title": "PY-SEC-35: Broad Exception Handling Swallowing Critical Errors (except: pass)",
+   "severity": "MEDIUM",
+   "cleanRepos": [],
+   "cleanFindings": 0,
+   "vulnerableRepos": [
+    "adeyosemanputra/pygoat"
+   ]
+  },
+  {
+   "ruleId": 8823,
+   "title": "PY-SEC-23: Insecure Server Binding to All Network Interfaces (0.0.0.0)",
+   "severity": "MEDIUM",
+   "cleanRepos": [],
+   "cleanFindings": 0,
+   "vulnerableRepos": [
+    "adeyosemanputra/pygoat"
+   ]
+  },
+  {
+   "ruleId": 8825,
+   "title": "PY-SEC-25: Flask Weak Default Secret Key",
+   "severity": "HIGH",
+   "cleanRepos": [],
+   "cleanFindings": 0,
+   "vulnerableRepos": [
+    "adeyosemanputra/pygoat"
+   ]
+  },
+  {
+   "ruleId": 8801,
+   "title": "PY-SEC-01: Unsafe Pickle Deserialization (Remote Code Execution)",
+   "severity": "CRITICAL",
+   "cleanRepos": [],
+   "cleanFindings": 0,
+   "vulnerableRepos": [
+    "adeyosemanputra/pygoat"
+   ]
+  },
+  {
+   "ruleId": 8826,
+   "title": "PY-SEC-26: Cryptographically Weak PRNG Used for Security Tokens",
+   "severity": "HIGH",
+   "cleanRepos": [],
+   "cleanFindings": 0,
+   "vulnerableRepos": [
+    "adeyosemanputra/pygoat"
+   ]
+  },
+  {
+   "ruleId": 8827,
+   "title": "PY-SEC-27: Django ALLOWED_HOSTS Configured with Wildcard (*)",
+   "severity": "HIGH",
+   "cleanRepos": [],
+   "cleanFindings": 0,
+   "vulnerableRepos": [
+    "adeyosemanputra/pygoat"
+   ]
+  },
+  {
+   "ruleId": 13801,
+   "title": "ASVS-01: ASVS V2.1 Password Security: Permitting Weak Passwords or Failing Breached Checks",
+   "severity": "CRITICAL",
+   "cleanRepos": [],
+   "cleanFindings": 0,
+   "vulnerableRepos": [
+    "adeyosemanputra/pygoat"
+   ]
+  },
+  {
+   "ruleId": 7103,
+   "title": "WEB-PERF-03: Synchronous Third-Party Script Tag Blocking Render",
+   "severity": "HIGH",
+   "cleanRepos": [],
+   "cleanFindings": 0,
+   "vulnerableRepos": [
+    "adeyosemanputra/pygoat"
+   ]
+  },
+  {
+   "ruleId": 7306,
+   "title": "SUPPLY-06: External CDN Script Missing Subresource Integrity (SRI)",
+   "severity": "HIGH",
+   "cleanRepos": [],
+   "cleanFindings": 0,
+   "vulnerableRepos": [
+    "adeyosemanputra/pygoat"
+   ]
+  },
+  {
+   "ruleId": 1219,
+   "title": "UI-INTERACT-19: Sticky Header Obscuring Hash-Anchored Section Titles",
+   "severity": "LOW",
+   "cleanRepos": [],
+   "cleanFindings": 0,
+   "vulnerableRepos": [
+    "adeyosemanputra/pygoat"
+   ]
+  },
+  {
+   "ruleId": 8802,
+   "title": "PY-SEC-02: Insecure PyYAML load() Without SafeLoader",
+   "severity": "CRITICAL",
+   "cleanRepos": [],
+   "cleanFindings": 0,
+   "vulnerableRepos": [
+    "adeyosemanputra/pygoat"
+   ]
+  },
+  {
+   "ruleId": 8811,
+   "title": "PY-SEC-11: Dynamic Code Execution via eval() or exec()",
+   "severity": "CRITICAL",
+   "cleanRepos": [],
+   "cleanFindings": 0,
+   "vulnerableRepos": [
+    "adeyosemanputra/pygoat"
+   ]
+  },
+  {
+   "ruleId": 8814,
+   "title": "PY-SEC-14: Server-Side Request Forgery (SSRF) via Dynamic URL Fetch",
+   "severity": "HIGH",
+   "cleanRepos": [],
+   "cleanFindings": 0,
+   "vulnerableRepos": [
+    "adeyosemanputra/pygoat"
+   ]
+  },
+  {
+   "ruleId": 21,
+   "title": "Potential Secret or PII Log Leakage in Application Telemetry",
+   "severity": "HIGH",
+   "cleanRepos": [],
+   "cleanFindings": 0,
+   "vulnerableRepos": [
+    "adeyosemanputra/pygoat"
+   ]
+  },
+  {
+   "ruleId": 24104,
+   "title": "CORE-04: XML External Entity (XXE) Processing Enabled",
+   "severity": "HIGH",
+   "cleanRepos": [],
+   "cleanFindings": 0,
+   "vulnerableRepos": [
+    "adeyosemanputra/pygoat"
+   ]
+  },
+  {
+   "ruleId": 7104,
+   "title": "WEB-PERF-04: Non-Passive Touch or Wheel Event Listener",
+   "severity": "MEDIUM",
+   "cleanRepos": [],
+   "cleanFindings": 0,
+   "vulnerableRepos": [
+    "anxolerd/dvpwa"
+   ]
+  }
+ ]
+}

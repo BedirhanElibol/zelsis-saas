@@ -1,4 +1,5 @@
 import { CodeFile } from './scanner-engine';
+import { isDependencyFile } from '@/lib/scanner/dependencies';
 
 export interface FetchProgress {
   phase: 'connecting' | 'tree' | 'fetching';
@@ -174,6 +175,8 @@ export function prioritizeFilesForScan<T extends { path: string }>(files: T[], m
 
     // Tier 1: Critical project manifests & infrastructure configs (90-100)
     if (lower.endsWith('package.json')) return 100;
+    // Lockfiles carry the exact dependency versions checked against OSV.dev
+    if (isDependencyFile(lower)) return 99;
     if (lower.endsWith('next.config.js') || lower.endsWith('next.config.mjs') || lower.endsWith('next.config.ts')) return 98;
     if (lower.includes('.env')) return 97;
     if (lower.endsWith('dockerfile') || lower.includes('docker-compose')) return 96;
@@ -350,7 +353,7 @@ export async function fetchGithubRepositoryData(
             // Apply 200KB per-file cap to prevent ReDoS or memory exhaustion across rules
             const files: CodeFile[] = data.files.map((f: { path: string; content?: string }) => {
               let content = typeof f.content === 'string' ? f.content : '';
-              if (content.length > 200000) {
+              if (content.length > 200000 && !isDependencyFile(f.path)) {
                 content = content.slice(0, 200000);
               }
               return { path: f.path, content };
@@ -587,8 +590,8 @@ export async function fetchGithubRepositoryData(
         (item) =>
           item.type === 'blob' &&
           typeof item.path === 'string' &&
-          (!item.size || item.size <= 2000000) &&
-          (/(\.(ts|tsx|js|jsx|json|css|sql|html|py|yml|yaml|toml|sh|ps1|c|cpp|cc|cxx|h|hpp|java|kt|kts|go|rs|php|cs|rb|swift|xml|plist|gradle|md|mdx|zelsisignore|shipguardignore)$)|(\.env(\.[a-zA-Z0-9_\-]+)?$)|((?:^|\/)(?:dockerfile|makefile|podfile)$)/i.test(item.path)) &&
+          (!item.size || item.size <= (isDependencyFile(item.path) ? 8000000 : 2000000)) &&
+          (isDependencyFile(item.path) || /(\.(ts|tsx|js|jsx|json|css|sql|html|py|yml|yaml|toml|sh|ps1|c|cpp|cc|cxx|h|hpp|java|kt|kts|go|rs|php|cs|rb|swift|xml|plist|gradle|md|mdx|zelsisignore|shipguardignore)$)|(\.env(\.[a-zA-Z0-9_\-]+)?$)|((?:^|\/)(?:dockerfile|makefile|podfile)$)/i.test(item.path)) &&
           !item.path.includes('node_modules') &&
           !item.path.includes('.next') &&
           !item.path.includes('.git') &&
@@ -648,7 +651,7 @@ export async function fetchGithubRepositoryData(
             if (rawRes.ok) {
               let content = await rawRes.text();
               // File size guard: cap at 200KB per-file limit to avoid ReDoS or memory exhaustion across rules
-              if (content.length > 200000) {
+              if (content.length > 200000 && !isDependencyFile(file.path)) {
                 content = content.slice(0, 200000);
               }
               return { path: file.path, content };

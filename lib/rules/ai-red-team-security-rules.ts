@@ -4,6 +4,7 @@
  */
 import { Finding } from "@/data/schema";
 import { CodeFile } from "../scanner-engine";
+import { locateMatchLine } from './shared/locate';
 export interface AiRedTeamSecurityRuleResult {
     findings: Finding[];
     logs: string[];
@@ -15,13 +16,13 @@ export function evaluateAiRedTeamSecurityRules(file: CodeFile, lines: string[], 
     const logs: string[] = [];
     const lowerPath = file.path.toLowerCase().replace(/\\/g, "/");
     // Skip self-referential catalogs, mocks, and schema definitions
-    if (lowerPath.includes("data/catalogs/") || lowerPath.includes("data/mockdata") || lowerPath.includes("data/workspacefiles") || lowerPath.includes("data/schema") || lowerPath.includes("scratch/") || lowerPath.includes(".agent/") || lowerPath.includes("node_modules/") || lowerPath.endsWith(".d.ts")) {
+    if (lowerPath.includes("node_modules/") || lowerPath.endsWith(".d.ts")) {
         return { findings, logs };
     }
     const ts = new Date().toLocaleTimeString();
     // AI-RED-01: Vulnerability to Adversarial Few-Shot Jailbreak Prompts Bypassing Safety Alignment
     if (((/prompt_guard|safety_eval/i.test(lowerPath) || /jailbreakDetector|guardrailClass/i.test(cleanContent)) && !/semanticGuardrailFilter/i.test(cleanContent))) {
-        const matchLineIdx = lines.findIndex(l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('#') && !l.trim().startsWith('*'));
+        const matchLineIdx = locateMatchLine(lines, [/jailbreakDetector|guardrailClass/i], l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('#') && !l.trim().startsWith('*'));
         const lineNum = matchLineIdx !== -1 ? matchLineIdx + 1 : 1;
         findings.push({
             id: `aired16001-${Date.now()}-${findingCounter.count++}`,
@@ -35,7 +36,7 @@ export function evaluateAiRedTeamSecurityRules(file: CodeFile, lines: string[], 
             snippet: lines[matchLineIdx] || 'AI Red Teaming & Jailbreak Defense configuration',
             reproductionSteps: [
                 `Audited AI Red Teaming & Jailbreak Defense configuration in ${file.path}:${lineNum}.`,
-                'Detected violation matching {code}.'
+                'Matched AI-RED-01: Vulnerability to Adversarial Few-Shot Jailbreak Prompts Bypassing Safety Alignment.'
             ],
             remediationPrompt: "Deploy semantic guardrail classifiers and input intent filters to detect multi-turn jailbreak attempts prior to model ingestion.",
             status: 'OPEN',
@@ -45,7 +46,7 @@ export function evaluateAiRedTeamSecurityRules(file: CodeFile, lines: string[], 
     }
     // AI-RED-02: System Prompt Extraction and Intellectual Property Leakage via Roleplay Attacks
     if (((/system_prompt|canary_check/i.test(lowerPath) || /systemInstruction|promptCanary/i.test(cleanContent)) && !/canaryTokenActive/i.test(cleanContent))) {
-        const matchLineIdx = lines.findIndex(l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('#') && !l.trim().startsWith('*'));
+        const matchLineIdx = locateMatchLine(lines, [/systemInstruction|promptCanary/i], l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('#') && !l.trim().startsWith('*'));
         const lineNum = matchLineIdx !== -1 ? matchLineIdx + 1 : 1;
         findings.push({
             id: `aired16002-${Date.now()}-${findingCounter.count++}`,
@@ -59,7 +60,7 @@ export function evaluateAiRedTeamSecurityRules(file: CodeFile, lines: string[], 
             snippet: lines[matchLineIdx] || 'AI Red Teaming & Jailbreak Defense configuration',
             reproductionSteps: [
                 `Audited AI Red Teaming & Jailbreak Defense configuration in ${file.path}:${lineNum}.`,
-                'Detected violation matching {code}.'
+                'Matched AI-RED-02: System Prompt Extraction and Intellectual Property Leakage via Roleplay Attacks.'
             ],
             remediationPrompt: "Inject adversarial canary tokens and enforce system instruction confidentiality guardrails blocking role reversal instructions.",
             status: 'OPEN',
@@ -69,7 +70,7 @@ export function evaluateAiRedTeamSecurityRules(file: CodeFile, lines: string[], 
     }
     // AI-RED-03: Indirect Prompt Injection via Unsanitized Third-Party Web Search / RAG Document Chunks
     if (((/rag_search|untrusted_retrieval/i.test(lowerPath) || /retrievedDocumentChunk/i.test(cleanContent)) && !/isolateRagContextBoundary/i.test(cleanContent))) {
-        const matchLineIdx = lines.findIndex(l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('#') && !l.trim().startsWith('*'));
+        const matchLineIdx = locateMatchLine(lines, [/retrievedDocumentChunk/i], l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('#') && !l.trim().startsWith('*'));
         const lineNum = matchLineIdx !== -1 ? matchLineIdx + 1 : 1;
         findings.push({
             id: `aired16003-${Date.now()}-${findingCounter.count++}`,
@@ -83,7 +84,7 @@ export function evaluateAiRedTeamSecurityRules(file: CodeFile, lines: string[], 
             snippet: lines[matchLineIdx] || 'AI Red Teaming & Jailbreak Defense configuration',
             reproductionSteps: [
                 `Audited AI Red Teaming & Jailbreak Defense configuration in ${file.path}:${lineNum}.`,
-                'Detected violation matching {code}.'
+                'Matched AI-RED-03: Indirect Prompt Injection via Unsanitized Third-Party Web Search / RAG Document Chunks.'
             ],
             remediationPrompt: "Isolate untrusted external retrieval content within strict XML/JSON data boundaries and validate model instructions against policy.",
             status: 'OPEN',
@@ -93,7 +94,7 @@ export function evaluateAiRedTeamSecurityRules(file: CodeFile, lines: string[], 
     }
     // AI-RED-04: Output Delimiter Hijacking Permitting Arbitrary Markdown / Code Block Escape
     if (((/delimiter_guard|output_sanitizer/i.test(lowerPath) || /outputBoundary/i.test(cleanContent)) && !/escapeOutputDelimiters/i.test(cleanContent))) {
-        const matchLineIdx = lines.findIndex(l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('#') && !l.trim().startsWith('*'));
+        const matchLineIdx = locateMatchLine(lines, [/outputBoundary/i], l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('#') && !l.trim().startsWith('*'));
         const lineNum = matchLineIdx !== -1 ? matchLineIdx + 1 : 1;
         findings.push({
             id: `aired16004-${Date.now()}-${findingCounter.count++}`,
@@ -107,7 +108,7 @@ export function evaluateAiRedTeamSecurityRules(file: CodeFile, lines: string[], 
             snippet: lines[matchLineIdx] || 'AI Red Teaming & Jailbreak Defense configuration',
             reproductionSteps: [
                 `Audited AI Red Teaming & Jailbreak Defense configuration in ${file.path}:${lineNum}.`,
-                'Detected violation matching {code}.'
+                'Matched AI-RED-04: Output Delimiter Hijacking Permitting Arbitrary Markdown / Code Block Escape.'
             ],
             remediationPrompt: "Sanitize model output stream boundaries to prevent malicious instruction payloads hijacking application execution wrappers.",
             status: 'OPEN',
@@ -117,7 +118,7 @@ export function evaluateAiRedTeamSecurityRules(file: CodeFile, lines: string[], 
     }
     // AI-RED-05: Multi-Lingual and Base64 Obfuscated Token Smuggling Bypassing Moderation Filters
     if (((/input_moderation|token_filter/i.test(lowerPath) || /moderationInput/i.test(cleanContent)) && cleanContent.includes('base64ObfuscatedTokenBypass') && !/decodeAndNormalizeInputs/i.test(cleanContent))) {
-        const matchLineIdx = lines.findIndex(l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('#') && !l.trim().startsWith('*'));
+        const matchLineIdx = locateMatchLine(lines, [/moderationInput/i], l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('#') && !l.trim().startsWith('*'));
         const lineNum = matchLineIdx !== -1 ? matchLineIdx + 1 : 1;
         findings.push({
             id: `aired16005-${Date.now()}-${findingCounter.count++}`,
@@ -131,7 +132,7 @@ export function evaluateAiRedTeamSecurityRules(file: CodeFile, lines: string[], 
             snippet: lines[matchLineIdx] || 'AI Red Teaming & Jailbreak Defense configuration',
             reproductionSteps: [
                 `Audited AI Red Teaming & Jailbreak Defense configuration in ${file.path}:${lineNum}.`,
-                'Detected violation matching {code}.'
+                'Matched AI-RED-05: Multi-Lingual and Base64 Obfuscated Token Smuggling Bypassing Moderation Filters.'
             ],
             remediationPrompt: "Normalize and decode multi-lingual, leetspeak, and base64 encoded user inputs before passing to safety moderation classifiers.",
             status: 'OPEN',

@@ -4,6 +4,7 @@
  */
 import { Finding } from "@/data/schema";
 import { CodeFile } from "../scanner-engine";
+import { locateMatchLine } from './shared/locate';
 export interface WasmRuntimeRuleResult {
     findings: Finding[];
     logs: string[];
@@ -15,13 +16,13 @@ export function evaluateWasmRuntimeRules(file: CodeFile, lines: string[], cleanC
     const logs: string[] = [];
     const lowerPath = file.path.toLowerCase().replace(/\\/g, "/");
     // Skip self-referential catalogs, mocks, and schema definitions
-    if (lowerPath.includes("data/catalogs/") || lowerPath.includes("data/mockdata") || lowerPath.includes("data/workspacefiles") || lowerPath.includes("data/schema") || lowerPath.includes("scratch/") || lowerPath.includes(".agent/") || lowerPath.includes("node_modules/") || lowerPath.endsWith(".d.ts")) {
+    if (lowerPath.includes("node_modules/") || lowerPath.endsWith(".d.ts")) {
         return { findings, logs };
     }
     const ts = new Date().toLocaleTimeString();
     // WASM-01: Unbounded WebAssembly Linear Memory Allocation
     if ((/WebAssembly\.Memory/i.test(cleanContent) && !/maximum:\s*\d+/i.test(cleanContent))) {
-        const matchLineIdx = lines.findIndex(l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('#') && !l.trim().startsWith('*'));
+        const matchLineIdx = locateMatchLine(lines, [/WebAssembly\.Memory/i], l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('#') && !l.trim().startsWith('*'));
         const lineNum = matchLineIdx !== -1 ? matchLineIdx + 1 : 1;
         findings.push({
             id: `wasm12701-${Date.now()}-${findingCounter.count++}`,
@@ -45,7 +46,7 @@ export function evaluateWasmRuntimeRules(file: CodeFile, lines: string[], cleanC
     }
     // WASM-02: Missing Gas Metering or Execution Fuel Limits in Wasm Runtime
     if ((/(?:wasmtime|wasmer|wasm_engine)/i.test(cleanContent) && !/consumeFuel|consume_fuel|gasLimit/i.test(cleanContent))) {
-        const matchLineIdx = lines.findIndex(l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('#') && !l.trim().startsWith('*'));
+        const matchLineIdx = locateMatchLine(lines, [/(?:wasmtime|wasmer|wasm_engine)/i], l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('#') && !l.trim().startsWith('*'));
         const lineNum = matchLineIdx !== -1 ? matchLineIdx + 1 : 1;
         findings.push({
             id: `wasm12702-${Date.now()}-${findingCounter.count++}`,
@@ -69,7 +70,7 @@ export function evaluateWasmRuntimeRules(file: CodeFile, lines: string[], cleanC
     }
     // WASM-03: Unrestricted WASI Filesystem Preopens Permitting Host Traversal
     if ((/preopen(?:s|Dir)/i.test(cleanContent) && /(?:'\/'|"\/")/i.test(cleanContent))) {
-        const matchLineIdx = lines.findIndex(l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('#') && !l.trim().startsWith('*'));
+        const matchLineIdx = locateMatchLine(lines, [/preopen(?:s|Dir)/i, /(?:'\/'|"\/")/i], l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('#') && !l.trim().startsWith('*'));
         const lineNum = matchLineIdx !== -1 ? matchLineIdx + 1 : 1;
         findings.push({
             id: `wasm12703-${Date.now()}-${findingCounter.count++}`,
@@ -93,7 +94,7 @@ export function evaluateWasmRuntimeRules(file: CodeFile, lines: string[], cleanC
     }
     // WASM-04: Shared Wasm Module State Causing Cross-Request Data Leakage
     if ((/let\s+wasmInstance/i.test(cleanContent) && !/newInstancePerRequest/i.test(cleanContent))) {
-        const matchLineIdx = lines.findIndex(l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('#') && !l.trim().startsWith('*'));
+        const matchLineIdx = locateMatchLine(lines, [/let\s+wasmInstance/i], l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('#') && !l.trim().startsWith('*'));
         const lineNum = matchLineIdx !== -1 ? matchLineIdx + 1 : 1;
         findings.push({
             id: `wasm12704-${Date.now()}-${findingCounter.count++}`,
@@ -117,7 +118,7 @@ export function evaluateWasmRuntimeRules(file: CodeFile, lines: string[], cleanC
     }
     // WASM-05: Unvalidated Host Function Bindings Permitting Privilege Escalation
     if ((/importObject/i.test(cleanContent) && !/validateHostCallArgs/i.test(cleanContent))) {
-        const matchLineIdx = lines.findIndex(l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('#') && !l.trim().startsWith('*'));
+        const matchLineIdx = locateMatchLine(lines, [/importObject/i], l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('#') && !l.trim().startsWith('*'));
         const lineNum = matchLineIdx !== -1 ? matchLineIdx + 1 : 1;
         findings.push({
             id: `wasm12705-${Date.now()}-${findingCounter.count++}`,

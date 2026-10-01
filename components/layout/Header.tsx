@@ -12,6 +12,7 @@ import { UserAvatar } from '@/components/ui/UserAvatar';
 import { getSubscriptionValidity } from '@/lib/subscription-utils';
 import { openCustomerPortal } from '@/lib/billing-portal';
 import { TierDetailsModal } from '../pricing/TierDetailsModal';
+import { UNDETECTED_FRAMEWORK } from '@/lib/scanner/stack-detect';
 
 interface HeaderProps {
   projects: Project[];
@@ -127,8 +128,8 @@ export const Header: React.FC<HeaderProps> = ({
       name: displayName,
       repoUrl: cleanRepoUrl,
       githubToken: savedToken,
-      framework: 'Next.js 15',
-      providers: ['GitHub Action', 'Vercel'],
+      framework: UNDETECTED_FRAMEWORK,
+      providers: [],
       lastScanAt: 'Ready to Run Audit',
       readinessScore: 100,
       gateStatus: 'PASSED',

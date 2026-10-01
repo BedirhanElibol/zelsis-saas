@@ -13,6 +13,8 @@
  */
 import type { Finding } from '@/data/schema';
 import type { CodeFile } from '../scanner-engine';
+import { emptyRepoContext, normalizeSqlName, RepoContext } from '../scanner/repo-context';
+import { DB_MUTATION } from './shared/stack-signals';
 export interface InfraRuleResult {
     findings: Finding[];
     logs: string[];
@@ -25,21 +27,13 @@ function extractSnippet(lines: string[], lineNum: number): string {
 }
 export function evaluateInfraRules(file: CodeFile, lines: string[], cleanContent: string, findingCounter: {
     count: number;
-}): InfraRuleResult {
+}, context: RepoContext = emptyRepoContext()): InfraRuleResult {
     const findings: Finding[] = [];
     const logs: string[] = [];
     const ts = new Date().toLocaleTimeString();
     const lowerPath = file.path.toLowerCase().replace(/\\/g, '/');
     // False-positive guard: Skip internal scanner engines, mock data, and rule definitions
-    const isExcluded = lowerPath.includes('lib/rules/') ||
-        lowerPath.includes('data/mockdata.ts') ||
-        lowerPath.includes('data/workspacefiles.ts') ||
-        lowerPath.includes('lib/scanner-engine.ts') ||
-        lowerPath.includes('vulnerabilityplayground.tsx') ||
-        lowerPath.includes('ruleknowledgebasemodal.tsx') ||
-        lowerPath.includes('scratch/') ||
-        lowerPath.includes('.agent/') ||
-        lowerPath.includes('dist/') ||
+    const isExcluded = lowerPath.includes('dist/') ||
         lowerPath.includes('build/') ||
         lowerPath.includes('node_modules/') ||
         lowerPath.includes('.next/');
@@ -49,7 +43,8 @@ export function evaluateInfraRules(file: CodeFile, lines: string[], cleanContent
     // RULE 3001 (INFRA-01): PostgreSQL Missing Row Level Security (RLS)
     // =========================================================================
     const isSqlFile = lowerPath.endsWith('.sql') || lowerPath.includes('migration') || lowerPath.includes('schema');
-    if (isSqlFile) {
+    // RLS only protects tables that clients can query directly (Supabase / PostgREST); skip server-only databases
+    if (isSqlFile && context.exposesDatabaseToClients) {
         const tableRegex = /create\s+table\s+(?:if\s+not\s+exists\s+)?([a-zA-Z0-9_."]+)/gi;
         let match: RegExpExecArray | null;
         while ((match = tableRegex.exec(cleanContent)) !== null) {
@@ -57,7 +52,7 @@ export function evaluateInfraRules(file: CodeFile, lines: string[], cleanContent
             const simpleName = rawTableName.includes('.') ? rawTableName.split('.').pop()! : rawTableName;
             // Check if RLS is enabled for this table anywhere in the file
             const rlsPattern = new RegExp(`alter\\s+table\\s+(?:if\\s+exists\\s+)?(?:[a-zA-Z0-9_."]+\\.)?${simpleName}\\s+enable\\s+row\\s+level\\s+security`, 'i');
-            if (!rlsPattern.test(cleanContent)) {
+            if (!rlsPattern.test(cleanContent) && !context.rlsEnabledTables.has(normalizeSqlName(rawTableName))) {
                 const lineNum = cleanContent.slice(0, match.index).split('\n').length;
                 const findingId = `real-find-${Date.now()}-${findingCounter.count++}`;
                 const snippet = extractSnippet(lines, lineNum);
@@ -278,7 +273,7 @@ export function evaluateInfraRules(file: CodeFile, lines: string[], cleanContent
     const isActionFile = lowerPath.endsWith('.ts') || lowerPath.endsWith('.tsx') || lowerPath.endsWith('.js');
     if (isActionFile) {
         const hasUseServer = /['"]use server['"]/i.test(cleanContent);
-        const hasDbMutation = /(?:supabase\.from\([^)]+\)\.(?:insert|update|delete|upsert)|db\.(?:insert|update|delete)|prisma\.[a-zA-Z0-9_]+\.(?:create|update|delete|upsert))/i.test(cleanContent);
+        const hasDbMutation = DB_MUTATION.test(cleanContent);
         const hasValidation = /\.parse\(|\.safeParse\(|zod|yup|valibot/i.test(cleanContent);
         if (hasUseServer && hasDbMutation && !hasValidation) {
             let lineNum = 1;
@@ -700,7 +695,13 @@ export function evaluateInfraRules(file: CodeFile, lines: string[], cleanContent
     // =========================================================================
     const isJsTs = lowerPath.endsWith('.js') || lowerPath.endsWith('.ts') || lowerPath.endsWith('.mjs');
     if (isJsTs && !lowerPath.includes('test') && !lowerPath.includes('spec')) {
-        const rawSqlConcatRegex = /(?:connection|pool|db|client)\.query\s*\(\s*(?:["'][^"']*\b(?:SELECT|INSERT|UPDATE|DELETE)\b[^"']*["']\s*\+|\`[^`]*\b(?:SELECT|INSERT|UPDATE|DELETE)\b[^`]*\$\{)/i;
+        // Raw SQL built by concatenation / interpolation, passed inline or through a variable to any query API
+        // (pg, mysql, sequelize.query, knex.raw, Prisma $queryRawUnsafe, TypeORM query, better-sqlite3 prepare/exec)
+        const sqlKeyword = String.raw`\b(?:SELECT|INSERT|UPDATE|DELETE)\b`;
+        const dynamicSql = String.raw`(?:"[^"\n]*` + sqlKeyword + String.raw`[^"\n]*"\s*\+|'[^'\n]*` + sqlKeyword + String.raw`[^'\n]*'\s*\+|\x60[^\x60]*` + sqlKeyword + String.raw`[^\x60]*\$\{)`;
+        const queryCall = String.raw`(?:\.(?:query|raw|execute|exec|prepare|unsafe)|\$(?:queryRawUnsafe|executeRawUnsafe))\s*\(\s*`;
+        const sqlVars = [...cleanContent.matchAll(new RegExp(String.raw`(?:const|let|var)\s+(\w+)\s*=\s*` + dynamicSql, 'gi'))].map((m) => m[1]);
+        const rawSqlConcatRegex = new RegExp(queryCall + '(?:' + dynamicSql + (sqlVars.length ? String.raw`|\b(?:` + sqlVars.join('|') + String.raw`)\b` : '') + ')', 'i');
         if (rawSqlConcatRegex.test(cleanContent)) {
             const matchLineIdx = lines.findIndex(l => rawSqlConcatRegex.test(l));
             const lineNum = matchLineIdx !== -1 ? matchLineIdx + 1 : 1;

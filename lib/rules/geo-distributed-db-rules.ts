@@ -4,6 +4,7 @@
  */
 import { Finding } from "@/data/schema";
 import { CodeFile } from "../scanner-engine";
+import { locateMatchLine } from './shared/locate';
 export interface GeoDistributedDbRuleResult {
     findings: Finding[];
     logs: string[];
@@ -16,7 +17,7 @@ export function evaluateGeoDistributedDbRules(file: CodeFile, lines: string[], c
     const lowerPath = file.path.toLowerCase().replace(/\\/g, "/");
     // Skip standard SQL files unless explicitly targeting CockroachDB/Yugabyte/Geo-distributed schemas
     if (
-        lowerPath.includes("data/catalogs/") || lowerPath.includes("data/mockdata") || lowerPath.includes("data/workspacefiles") || lowerPath.includes("data/schema") || lowerPath.includes("scratch/") || lowerPath.includes(".agent/") || lowerPath.includes("node_modules/") || lowerPath.endsWith(".d.ts") ||
+        lowerPath.includes("node_modules/") || lowerPath.endsWith(".d.ts") ||
         (!/cockroach|yugabyte|geo_dist|spanner/i.test(lowerPath) && !/cockroachdb|yugabytedb|google_spanner/i.test(cleanContent))
     ) {
         return { findings, logs };
@@ -24,7 +25,7 @@ export function evaluateGeoDistributedDbRules(file: CodeFile, lines: string[], c
     const ts = new Date().toLocaleTimeString();
     // GEODIST-01: Unpartitioned Multi-Region Tables Triggering Cross-WAN Latency Spikes
     if ((/CREATE TABLE/i.test(cleanContent) && !/REGIONAL BY ROW|PARTITION BY/i.test(cleanContent))) {
-        const matchLineIdx = lines.findIndex(l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('#') && !l.trim().startsWith('*'));
+        const matchLineIdx = locateMatchLine(lines, [/CREATE TABLE/i], l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('#') && !l.trim().startsWith('*'));
         const lineNum = matchLineIdx !== -1 ? matchLineIdx + 1 : 1;
         findings.push({
             id: `geodist15001-${Date.now()}-${findingCounter.count++}`,
@@ -38,7 +39,7 @@ export function evaluateGeoDistributedDbRules(file: CodeFile, lines: string[], c
             snippet: lines[matchLineIdx] || 'Geo-Distributed Database configuration',
             reproductionSteps: [
                 `Audited Geo-Distributed Database configuration in ${file.path}:${lineNum}.`,
-                'Detected violation matching {code}.'
+                'Matched GEODIST-01: Unpartitioned Multi-Region Tables Triggering Cross-WAN Latency Spikes.'
             ],
             remediationPrompt: "Apply regional table locality (e.g. REGIONAL BY ROW) to anchor data partitions close to user geographies.",
             status: 'OPEN',
@@ -48,7 +49,7 @@ export function evaluateGeoDistributedDbRules(file: CodeFile, lines: string[], c
     }
     // GEODIST-02: Single Failure Domain: Replicas Concentrated in a Single Region
     if (((/cluster_topology/i.test(lowerPath) || /cluster_topology/i.test(cleanContent)) && !/multiRegionReplication/i.test(cleanContent))) {
-        const matchLineIdx = lines.findIndex(l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('#') && !l.trim().startsWith('*'));
+        const matchLineIdx = locateMatchLine(lines, [/cluster_topology/i], l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('#') && !l.trim().startsWith('*'));
         const lineNum = matchLineIdx !== -1 ? matchLineIdx + 1 : 1;
         findings.push({
             id: `geodist15002-${Date.now()}-${findingCounter.count++}`,
@@ -62,7 +63,7 @@ export function evaluateGeoDistributedDbRules(file: CodeFile, lines: string[], c
             snippet: lines[matchLineIdx] || 'Geo-Distributed Database configuration',
             reproductionSteps: [
                 `Audited Geo-Distributed Database configuration in ${file.path}:${lineNum}.`,
-                'Detected violation matching {code}.'
+                'Matched GEODIST-02: Single Failure Domain: Replicas Concentrated in a Single Region.'
             ],
             remediationPrompt: "Ensure Raft consensus replicas span across at least three distinct cloud availability zones and regions.",
             status: 'OPEN',
@@ -72,7 +73,7 @@ export function evaluateGeoDistributedDbRules(file: CodeFile, lines: string[], c
     }
     // GEODIST-03: Cross-Region Distributed Deadlocks on High-Contention Transactions
     if ((/executeTransaction/i.test(cleanContent) && !/sortKeysBeforeUpdate/i.test(cleanContent))) {
-        const matchLineIdx = lines.findIndex(l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('#') && !l.trim().startsWith('*'));
+        const matchLineIdx = locateMatchLine(lines, [/executeTransaction/i], l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('#') && !l.trim().startsWith('*'));
         const lineNum = matchLineIdx !== -1 ? matchLineIdx + 1 : 1;
         findings.push({
             id: `geodist15003-${Date.now()}-${findingCounter.count++}`,
@@ -86,7 +87,7 @@ export function evaluateGeoDistributedDbRules(file: CodeFile, lines: string[], c
             snippet: lines[matchLineIdx] || 'Geo-Distributed Database configuration',
             reproductionSteps: [
                 `Audited Geo-Distributed Database configuration in ${file.path}:${lineNum}.`,
-                'Detected violation matching {code}.'
+                'Matched GEODIST-03: Cross-Region Distributed Deadlocks on High-Contention Transactions.'
             ],
             remediationPrompt: "Design schema primary keys and isolation levels to avoid multi-region distributed locking cascades.",
             status: 'OPEN',
@@ -96,7 +97,7 @@ export function evaluateGeoDistributedDbRules(file: CodeFile, lines: string[], c
     }
     // GEODIST-04: Unbounded Multi-Region CDC Streams Causing Network Buffer Bloat
     if ((/changefeed|cdcStream/i.test(cleanContent) && !/buffer_size_limit/i.test(cleanContent))) {
-        const matchLineIdx = lines.findIndex(l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('#') && !l.trim().startsWith('*'));
+        const matchLineIdx = locateMatchLine(lines, [/changefeed|cdcStream/i], l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('#') && !l.trim().startsWith('*'));
         const lineNum = matchLineIdx !== -1 ? matchLineIdx + 1 : 1;
         findings.push({
             id: `geodist15004-${Date.now()}-${findingCounter.count++}`,
@@ -110,7 +111,7 @@ export function evaluateGeoDistributedDbRules(file: CodeFile, lines: string[], c
             snippet: lines[matchLineIdx] || 'Geo-Distributed Database configuration',
             reproductionSteps: [
                 `Audited Geo-Distributed Database configuration in ${file.path}:${lineNum}.`,
-                'Detected violation matching {code}.'
+                'Matched GEODIST-04: Unbounded Multi-Region CDC Streams Causing Network Buffer Bloat.'
             ],
             remediationPrompt: "Configure backpressure and buffer memory caps on cross-region change data capture (CDC) export streams.",
             status: 'OPEN',
@@ -120,7 +121,7 @@ export function evaluateGeoDistributedDbRules(file: CodeFile, lines: string[], c
     }
     // GEODIST-05: Missing Mutual TLS Node-to-Node Inter-Region Cluster Encryption
     if (((/node_interconnect/i.test(lowerPath) || /node_interconnect/i.test(cleanContent)) && !/requireMtls/i.test(cleanContent))) {
-        const matchLineIdx = lines.findIndex(l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('#') && !l.trim().startsWith('*'));
+        const matchLineIdx = locateMatchLine(lines, [/node_interconnect/i], l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('#') && !l.trim().startsWith('*'));
         const lineNum = matchLineIdx !== -1 ? matchLineIdx + 1 : 1;
         findings.push({
             id: `geodist15005-${Date.now()}-${findingCounter.count++}`,
@@ -134,7 +135,7 @@ export function evaluateGeoDistributedDbRules(file: CodeFile, lines: string[], c
             snippet: lines[matchLineIdx] || 'Geo-Distributed Database configuration',
             reproductionSteps: [
                 `Audited Geo-Distributed Database configuration in ${file.path}:${lineNum}.`,
-                'Detected violation matching {code}.'
+                'Matched GEODIST-05: Missing Mutual TLS Node-to-Node Inter-Region Cluster Encryption.'
             ],
             remediationPrompt: "Enforce TLS 1.3 with mutual certificate authentication across all internal inter-region database nodes.",
             status: 'OPEN',

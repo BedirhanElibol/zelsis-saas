@@ -18,6 +18,7 @@ export { PYTHON_ENTERPRISE_CATALOG } from './python-enterprise-catalog';
 export { K8S_HARDENING_CATALOG } from './k8s-hardening-catalog';
 export { GO_MICROSERVICES_CATALOG } from './go-microservices-catalog';
 export { TENANT_ISOLATION_CATALOG } from './tenant-isolation-catalog';
+export { SAAS_CORE_CATALOG } from './saas-core-catalog';
 export { CLOUD_SECURITY_CATALOG } from './cloud-security-catalog';
 export { MOBILE_SECURITY_CATALOG } from './mobile-security-catalog';
 export { EVENT_STREAMING_CATALOG } from './event-streaming-catalog';

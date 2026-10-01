@@ -3,7 +3,7 @@
 import React from 'react';
 import { X, Check, Lock, Shield, ArrowRight, Zap, ExternalLink } from 'lucide-react';
 import { UserTier } from '@/data/schema';
-import { RULES_CATALOG } from '@/data/mockData';
+import { formatCount, RULE_COUNTS } from '@/lib/rule-status';
 
 interface TierDetailsModalProps {
   isOpen: boolean;
@@ -41,23 +41,23 @@ export const TierDetailsModal: React.FC<TierDetailsModalProps> = ({
     {
       category: 'Rule Engine & Analysis Depth',
       items: [
-        { label: 'Security & Bug Inventory', free: '20 Core OWASP Rules', pro: `${RULES_CATALOG.length}+ Verified Production Rules`, enterprise: 'All Rules + Custom Company Rules' },
-        { label: 'Secret Detection & RLS', free: 'Basic Surface Check', pro: 'Deep Static & Vault Analysis', enterprise: 'Deep Static + Custom Token Patterns' },
-        { label: '1,000+ File Repositories', free: 'Standard Buffer', pro: 'Cooperative Event Loop Yielding', enterprise: 'Monorepo & Multi-Package Analysis' }
+        { label: 'Security & Bug Inventory', free: `All ${formatCount(RULE_COUNTS.gating)} active rules`, pro: `All ${formatCount(RULE_COUNTS.gating)} active rules`, enterprise: `All ${formatCount(RULE_COUNTS.gating)} active rules` },
+        { label: 'Secret Detection & RLS', free: 'Same rules on every plan', pro: 'Same rules on every plan', enterprise: 'Same rules on every plan' },
+        { label: 'Large Repositories', free: 'Same engine on every plan', pro: 'Same engine on every plan', enterprise: 'Same engine on every plan' }
       ]
     },
     {
       category: 'AI Remediation & Patching',
       items: [
-        { label: '1-Click AI Fix Prompts', free: '1 Trial Prompt', pro: 'Unlimited 1-Click Fix Prompts', enterprise: 'Unlimited Fix Prompts + PR Diffs' },
-        { label: 'Unified Git Diff Patches', free: 'Locked', pro: 'Instant Unified Diffs', enterprise: 'Multi-File Unified Git Diffs' }
+        { label: '1-Click AI Fix Prompts', free: '1 Trial Prompt', pro: 'Unlimited 1-Click Fix Prompts', enterprise: 'Unlimited 1-Click Fix Prompts' },
+        { label: 'Unified Git Diff Patches', free: 'Locked', pro: 'Instant Unified Diffs', enterprise: 'Instant Unified Diffs' }
       ]
     },
     {
       category: 'Executive Reports & Compliance',
       items: [
-        { label: 'Official PDF Release Certificate', free: 'Locked', pro: 'Included (Instant Download)', enterprise: 'Branded PDF Certificate & Export' },
-        { label: 'Jira Markdown & HTML Export', free: 'Locked', pro: 'Included', enterprise: 'Included (Jira, Linear, Markdown)' },
+        { label: 'PDF Readiness Report', free: 'Locked', pro: 'Included (Instant Download)', enterprise: 'Included (Instant Download)' },
+        { label: 'Jira Markdown & HTML Export', free: 'Locked', pro: 'Included', enterprise: 'Included' },
         { label: 'SOC2 & ISO27001 Readiness', free: 'Not Included', pro: 'Standard Checkpoints', enterprise: 'Comprehensive Audit Checkpoints' }
       ]
     },
@@ -65,7 +65,7 @@ export const TierDetailsModal: React.FC<TierDetailsModalProps> = ({
       category: 'Support & Operations',
       items: [
         { label: 'Support Channel', free: 'Community', pro: '24-Hour Email Support', enterprise: 'Priority Email & Slack Support' },
-        { label: 'GitHub Actions / CI/CD Gate', free: 'Locked', pro: 'Automated PR Status Checks', enterprise: 'Custom Webhook Pipeline & PR Checks' }
+        { label: 'GitHub Actions / CI/CD Gate', free: 'Locked', pro: 'Gate API + generated CI workflows', enterprise: 'Gate API + generated CI workflows' }
       ]
     }
   ];

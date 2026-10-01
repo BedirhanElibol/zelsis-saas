@@ -4,6 +4,7 @@
  */
 import { Finding } from "@/data/schema";
 import { CodeFile } from "../scanner-engine";
+import { locateMatchLine } from './shared/locate';
 export interface CyberDeceptionRuleResult {
     findings: Finding[];
     logs: string[];
@@ -15,7 +16,7 @@ export function evaluateCyberDeceptionRules(file: CodeFile, lines: string[], cle
     const logs: string[] = [];
     const lowerPath = file.path.toLowerCase().replace(/\\/g, "/");
     // Skip self-referential catalogs, mocks, and schema definitions
-    if (lowerPath.includes("data/catalogs/") || lowerPath.includes("data/mockdata") || lowerPath.includes("data/workspacefiles") || lowerPath.includes("data/schema") || lowerPath.includes("scratch/") || lowerPath.includes(".agent/") || lowerPath.includes("node_modules/") || lowerPath.endsWith(".d.ts")) {
+    if (lowerPath.includes("node_modules/") || lowerPath.endsWith(".d.ts")) {
         return { findings, logs };
     }
     const ts = new Date().toLocaleTimeString();
@@ -35,7 +36,7 @@ export function evaluateCyberDeceptionRules(file: CodeFile, lines: string[], cle
             snippet: lines[matchLineIdx] || 'Cyber Deception & Honeypots configuration',
             reproductionSteps: [
                 `Audited Cyber Deception & Honeypots configuration in ${file.path}:${lineNum}.`,
-                'Detected violation matching {code}.'
+                'Matched DECEPTION-01: Missing Honeytoken Decoy Credentials in Source Code Repositories.'
             ],
             remediationPrompt: "Deploy inactive canary API keys in repositories to detect unauthorized code exfiltration and cloning.",
             status: 'OPEN',
@@ -45,7 +46,7 @@ export function evaluateCyberDeceptionRules(file: CodeFile, lines: string[], cle
     }
     // DECEPTION-02: Unmonitored Decoy Database Tables (Honeytables) in Production Schema
     if (((/honeytable|decoy_table/i.test(lowerPath) || /honeytable|decoy_table/i.test(cleanContent)) && !/alertOnDecoyAccess/i.test(cleanContent))) {
-        const matchLineIdx = lines.findIndex(l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('#') && !l.trim().startsWith('*'));
+        const matchLineIdx = locateMatchLine(lines, [/honeytable|decoy_table/i], l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('#') && !l.trim().startsWith('*'));
         const lineNum = matchLineIdx !== -1 ? matchLineIdx + 1 : 1;
         findings.push({
             id: `deception15102-${Date.now()}-${findingCounter.count++}`,
@@ -59,7 +60,7 @@ export function evaluateCyberDeceptionRules(file: CodeFile, lines: string[], cle
             snippet: lines[matchLineIdx] || 'Cyber Deception & Honeypots configuration',
             reproductionSteps: [
                 `Audited Cyber Deception & Honeypots configuration in ${file.path}:${lineNum}.`,
-                'Detected violation matching {code}.'
+                'Matched DECEPTION-02: Unmonitored Decoy Database Tables (Honeytables) in Production Schema.'
             ],
             remediationPrompt: "Create trigger-based decoy tables alerting immediately on any read or write access attempt by attackers.",
             status: 'OPEN',
@@ -83,7 +84,7 @@ export function evaluateCyberDeceptionRules(file: CodeFile, lines: string[], cle
             snippet: lines[matchLineIdx] || 'Cyber Deception & Honeypots configuration',
             reproductionSteps: [
                 `Audited Cyber Deception & Honeypots configuration in ${file.path}:${lineNum}.`,
-                'Detected violation matching {code}.'
+                'Matched DECEPTION-03: Lack of Network Breadcrumb Lures on Compromised Internal Endpoints.'
             ],
             remediationPrompt: "Plant decoy internal DNS entries and SMB share links to bait lateral movement across enterprise subnets.",
             status: 'OPEN',
@@ -107,7 +108,7 @@ export function evaluateCyberDeceptionRules(file: CodeFile, lines: string[], cle
             snippet: lines[matchLineIdx] || 'Cyber Deception & Honeypots configuration',
             reproductionSteps: [
                 `Audited Cyber Deception & Honeypots configuration in ${file.path}:${lineNum}.`,
-                'Detected violation matching {code}.'
+                'Matched DECEPTION-04: Missing Active Honeypot Ports on Internal Container Worker Nodes.'
             ],
             remediationPrompt: "Deploy lightweight low-interaction honeypot listeners inside cluster networks to trap internal port scans.",
             status: 'OPEN',
@@ -131,7 +132,7 @@ export function evaluateCyberDeceptionRules(file: CodeFile, lines: string[], cle
             snippet: lines[matchLineIdx] || 'Cyber Deception & Honeypots configuration',
             reproductionSteps: [
                 `Audited Cyber Deception & Honeypots configuration in ${file.path}:${lineNum}.`,
-                'Detected violation matching {code}.'
+                'Matched DECEPTION-05: Unmonitored Canary Documents in Sensitive Cloud Storage Shares.'
             ],
             remediationPrompt: "Place canary documents with embedded tracking pixels in internal file shares to detect data exfiltration.",
             status: 'OPEN',

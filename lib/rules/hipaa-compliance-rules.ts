@@ -4,6 +4,7 @@
  */
 import { Finding } from "@/data/schema";
 import { CodeFile } from "../scanner-engine";
+import { locateMatchLine } from './shared/locate';
 export interface HipaaComplianceRuleResult {
     findings: Finding[];
     logs: string[];
@@ -16,7 +17,7 @@ export function evaluateHipaaComplianceRules(file: CodeFile, lines: string[], cl
     const lowerPath = file.path.toLowerCase().replace(/\\/g, "/");
     // Skip files that do not handle healthcare, patient, or PHI data
     if (
-        lowerPath.includes("data/catalogs/") || lowerPath.includes("data/mockdata") || lowerPath.includes("data/workspacefiles") || lowerPath.includes("data/schema") || lowerPath.includes("scratch/") || lowerPath.includes(".agent/") || lowerPath.includes("node_modules/") || lowerPath.endsWith(".d.ts") ||
+        lowerPath.includes("node_modules/") || lowerPath.endsWith(".d.ts") ||
         (!/(?:health|patient|medical|phi|ehr|clinical|doctor)/i.test(cleanContent) && !/(?:health|patient|medical|phi|ehr)/i.test(lowerPath))
     ) {
         return { findings, logs };
@@ -24,7 +25,7 @@ export function evaluateHipaaComplianceRules(file: CodeFile, lines: string[], cl
     const ts = new Date().toLocaleTimeString();
     // HIPAA-01: Unencrypted Protected Health Information (PHI) at Rest
     if ((/(?:medical_record|diagnosis|patient_health_record)/i.test(cleanContent))) {
-        const matchLineIdx = lines.findIndex(l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('*'));
+        const matchLineIdx = locateMatchLine(lines, [/(?:medical_record|diagnosis|patient_health_record)/i], l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('*'));
         const lineNum = matchLineIdx !== -1 ? matchLineIdx + 1 : 1;
         findings.push({
             id: `hipaa9801-${Date.now()}-${findingCounter.count++}`,
@@ -48,7 +49,7 @@ export function evaluateHipaaComplianceRules(file: CodeFile, lines: string[], cl
     }
     // HIPAA-02: PHI Exposed in URL Query Parameters / Referral Headers
     if ((/fetch\s*\([`'"].*?[?&](?:mrn|diagnosis|ssn|patient_id)=\$\{/i.test(cleanContent))) {
-        const matchLineIdx = lines.findIndex(l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('*'));
+        const matchLineIdx = locateMatchLine(lines, [/fetch\s*\([`'"].*?[?&](?:mrn|diagnosis|ssn|patient_id)=\$\{/i], l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('*'));
         const lineNum = matchLineIdx !== -1 ? matchLineIdx + 1 : 1;
         findings.push({
             id: `hipaa9802-${Date.now()}-${findingCounter.count++}`,
@@ -72,7 +73,7 @@ export function evaluateHipaaComplianceRules(file: CodeFile, lines: string[], cl
     }
     // HIPAA-03: Missing Audit Trail for PHI Record Access and Modification
     if ((/(?:patient|medicalRecord|ehr|phi)\.(?:find|query|select)/i.test(cleanContent) && !/auditLog|auditTrail|recordAccess/i.test(cleanContent))) {
-        const matchLineIdx = lines.findIndex(l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('*'));
+        const matchLineIdx = locateMatchLine(lines, [/(?:patient|medicalRecord|ehr|phi)\.(?:find|query|select)/i], l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('*'));
         const lineNum = matchLineIdx !== -1 ? matchLineIdx + 1 : 1;
         findings.push({
             id: `hipaa9803-${Date.now()}-${findingCounter.count++}`,
@@ -96,7 +97,7 @@ export function evaluateHipaaComplianceRules(file: CodeFile, lines: string[], cl
     }
     // HIPAA-04: Third-Party Analytics Tracking Pixels on Health Portal
     if ((/fbq\s*\(\s*['"]track['"]/i.test(cleanContent))) {
-        const matchLineIdx = lines.findIndex(l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('*'));
+        const matchLineIdx = locateMatchLine(lines, [/fbq\s*\(\s*['"]track['"]/i], l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('*'));
         const lineNum = matchLineIdx !== -1 ? matchLineIdx + 1 : 1;
         findings.push({
             id: `hipaa9804-${Date.now()}-${findingCounter.count++}`,
@@ -120,7 +121,7 @@ export function evaluateHipaaComplianceRules(file: CodeFile, lines: string[], cl
     }
     // HIPAA-05: Automated Session Timeout Missing on Clinical Terminal
     if ((/session\.(?:maxAge|timeout)/i.test(cleanContent) && /(?:Infinity|null|undefined|86400000)/.test(cleanContent))) {
-        const matchLineIdx = lines.findIndex(l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('*'));
+        const matchLineIdx = locateMatchLine(lines, [/session\.(?:maxAge|timeout)/i, /(?:Infinity|null|undefined|86400000)/], l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('*'));
         const lineNum = matchLineIdx !== -1 ? matchLineIdx + 1 : 1;
         findings.push({
             id: `hipaa9805-${Date.now()}-${findingCounter.count++}`,

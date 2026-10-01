@@ -4,6 +4,7 @@
  */
 import { Finding } from "@/data/schema";
 import { CodeFile } from "../scanner-engine";
+import { locateMatchLine } from './shared/locate';
 export interface GraphqlSecurityRuleResult {
     findings: Finding[];
     logs: string[];
@@ -15,7 +16,7 @@ export function evaluateGraphqlSecurityRules(file: CodeFile, lines: string[], cl
     const logs: string[] = [];
     const lowerPath = file.path.toLowerCase().replace(/\\/g, "/");
     // Skip self-referential catalogs, mocks, and schema definitions
-    if (lowerPath.includes("data/catalogs/") || lowerPath.includes("data/mockdata") || lowerPath.includes("data/workspacefiles") || lowerPath.includes("data/schema") || lowerPath.includes("scratch/") || lowerPath.includes(".agent/") || lowerPath.includes("node_modules/") || lowerPath.endsWith(".d.ts")) {
+    if (lowerPath.includes("node_modules/") || lowerPath.endsWith(".d.ts")) {
         return { findings, logs };
     }
     const ts = new Date().toLocaleTimeString();
@@ -24,7 +25,7 @@ export function evaluateGraphqlSecurityRules(file: CodeFile, lines: string[], cl
         (cleanContent.includes("ApolloServer") || cleanContent.includes("createYoga") || cleanContent.includes("buildSchema") || cleanContent.includes("gql`") || /type\s+(Query|Mutation|Subscription)\s*\{/i.test(cleanContent));
     // GQL-01: Unrestricted GraphQL Query Depth (DoS Vulnerability)
     if (isGqlRelated && /(?:ApolloServer|createYoga|buildSchema)/i.test(cleanContent) && !/depthLimit|maxDepth|queryDepth/i.test(cleanContent) && !cleanContent.includes('ZelsisProductionHardened')) {
-        const matchLineIdx = lines.findIndex(l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('*'));
+        const matchLineIdx = locateMatchLine(lines, [/(?:ApolloServer|createYoga|buildSchema)/i], l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('*'));
         const lineNum = matchLineIdx !== -1 ? matchLineIdx + 1 : 1;
         findings.push({
             id: `gql8501-${Date.now()}-${findingCounter.count++}`,
@@ -49,7 +50,7 @@ export function evaluateGraphqlSecurityRules(file: CodeFile, lines: string[], cl
     }
     // GQL-02: Production GraphQL Introspection Enabled
     if (isGqlRelated && /introspection\s*:\s*true/i.test(cleanContent) && !/process\.env\.NODE_ENV\s*!==?\s*['"]production['"]/i.test(cleanContent)) {
-        const matchLineIdx = lines.findIndex(l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('*'));
+        const matchLineIdx = locateMatchLine(lines, [/introspection\s*:\s*true/i], l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('*'));
         const lineNum = matchLineIdx !== -1 ? matchLineIdx + 1 : 1;
         findings.push({
             id: `gql8502-${Date.now()}-${findingCounter.count++}`,
@@ -74,7 +75,7 @@ export function evaluateGraphqlSecurityRules(file: CodeFile, lines: string[], cl
     }
     // GQL-03: Query Complexity & Cost Limit Disabled
     if (isGqlRelated && /(?:ApolloServer|createYoga)/i.test(cleanContent) && !/queryComplexity|costAnalysis|complexityLimit/i.test(cleanContent)) {
-        const matchLineIdx = lines.findIndex(l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('*'));
+        const matchLineIdx = locateMatchLine(lines, [/(?:ApolloServer|createYoga)/i], l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('*'));
         const lineNum = matchLineIdx !== -1 ? matchLineIdx + 1 : 1;
         findings.push({
             id: `gql8503-${Date.now()}-${findingCounter.count++}`,
@@ -99,7 +100,7 @@ export function evaluateGraphqlSecurityRules(file: CodeFile, lines: string[], cl
     }
     // GQL-04: Batch Request & Query Multiplexing Amplification Attack
     if (isGqlRelated && /allowBatchedHttpRequests\s*:\s*true/i.test(cleanContent) && !/maxBatchSize|batchLimit/i.test(cleanContent)) {
-        const matchLineIdx = lines.findIndex(l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('*'));
+        const matchLineIdx = locateMatchLine(lines, [/allowBatchedHttpRequests\s*:\s*true/i], l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('*'));
         const lineNum = matchLineIdx !== -1 ? matchLineIdx + 1 : 1;
         findings.push({
             id: `gql8504-${Date.now()}-${findingCounter.count++}`,
@@ -124,7 +125,7 @@ export function evaluateGraphqlSecurityRules(file: CodeFile, lines: string[], cl
     }
     // GQL-05: Circular Fragment Reference Hazard
     if (cleanContent.includes('fragment ') && /fragment\s+([a-zA-Z0-9_]+)[\s\S]*?\.\.\.\1/i.test(cleanContent)) {
-        const matchLineIdx = lines.findIndex(l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('*'));
+        const matchLineIdx = locateMatchLine(lines, [/fragment\s+([a-zA-Z0-9_]+)[\s\S]*?\.\.\.\1/i], l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('*'));
         const lineNum = matchLineIdx !== -1 ? matchLineIdx + 1 : 1;
         findings.push({
             id: `gql8505-${Date.now()}-${findingCounter.count++}`,
@@ -149,7 +150,7 @@ export function evaluateGraphqlSecurityRules(file: CodeFile, lines: string[], cl
     }
     // GQL-06: Missing Field-Level Authorization Directive
     if (isGqlRelated && /(?:passwordHash|ssn|stripeCustomerId|creditCardNumber)\s*:\s*String/i.test(cleanContent) && !/@auth|@hasRole|@private/i.test(cleanContent)) {
-        const matchLineIdx = lines.findIndex(l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('*'));
+        const matchLineIdx = locateMatchLine(lines, [/(?:passwordHash|ssn|stripeCustomerId|creditCardNumber)\s*:\s*String/i], l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('*'));
         const lineNum = matchLineIdx !== -1 ? matchLineIdx + 1 : 1;
         findings.push({
             id: `gql8506-${Date.now()}-${findingCounter.count++}`,
@@ -174,7 +175,7 @@ export function evaluateGraphqlSecurityRules(file: CodeFile, lines: string[], cl
     }
     // GQL-07: GraphQL Playground / GraphiQL Exposed in Production
     if (isGqlRelated && /(?:playground|graphiql)\s*:\s*true/i.test(cleanContent) && !/process\.env\.NODE_ENV\s*!==?\s*['"]production['"]/i.test(cleanContent)) {
-        const matchLineIdx = lines.findIndex(l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('*'));
+        const matchLineIdx = locateMatchLine(lines, [/(?:playground|graphiql)\s*:\s*true/i], l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('*'));
         const lineNum = matchLineIdx !== -1 ? matchLineIdx + 1 : 1;
         findings.push({
             id: `gql8507-${Date.now()}-${findingCounter.count++}`,
@@ -199,7 +200,7 @@ export function evaluateGraphqlSecurityRules(file: CodeFile, lines: string[], cl
     }
     // GQL-08: Internal Error Stack Trace Leakage in formatError
     if (isGqlRelated && /formatError\s*:\s*\([^)]*\)\s*=>[^{]*err(?:\.message)?/i.test(cleanContent) && !/process\.env\.NODE_ENV|maskError/i.test(cleanContent)) {
-        const matchLineIdx = lines.findIndex(l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('*'));
+        const matchLineIdx = locateMatchLine(lines, [/formatError\s*:\s*\([^)]*\)\s*=>[^{]*err(?:\.message)?/i], l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('*'));
         const lineNum = matchLineIdx !== -1 ? matchLineIdx + 1 : 1;
         findings.push({
             id: `gql8508-${Date.now()}-${findingCounter.count++}`,
@@ -224,7 +225,7 @@ export function evaluateGraphqlSecurityRules(file: CodeFile, lines: string[], cl
     }
     // GQL-09: Unbounded List Pagination in Resolvers
     if (isGqlRelated && /first|limit/i.test(cleanContent) && /async\s+resolve\s*\([^)]*args[^)]*\)[\s\S]*?take\s*:\s*args\.(?:first|limit)/i.test(cleanContent) && !/Math\.min|clamp/i.test(cleanContent)) {
-        const matchLineIdx = lines.findIndex(l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('*'));
+        const matchLineIdx = locateMatchLine(lines, [/first|limit/i, /async\s+resolve\s*\([^)]*args[^)]*\)[\s\S]*?take\s*:\s*args\.(?:first|limit)/i], l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('*'));
         const lineNum = matchLineIdx !== -1 ? matchLineIdx + 1 : 1;
         findings.push({
             id: `gql8509-${Date.now()}-${findingCounter.count++}`,
@@ -249,7 +250,7 @@ export function evaluateGraphqlSecurityRules(file: CodeFile, lines: string[], cl
     }
     // GQL-10: Missing CSRF Protection on GraphQL Mutations
     if (isGqlRelated && /csrfPrevention\s*:\s*false/i.test(cleanContent)) {
-        const matchLineIdx = lines.findIndex(l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('*'));
+        const matchLineIdx = locateMatchLine(lines, [/csrfPrevention\s*:\s*false/i], l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('*'));
         const lineNum = matchLineIdx !== -1 ? matchLineIdx + 1 : 1;
         findings.push({
             id: `gql8510-${Date.now()}-${findingCounter.count++}`,
@@ -274,7 +275,7 @@ export function evaluateGraphqlSecurityRules(file: CodeFile, lines: string[], cl
     }
     // GQL-11: N+1 Database Query Avalanche (Missing DataLoader)
     if (isGqlRelated && /async\s+resolve\s*\([^)]*parent[^)]*\)[\s\S]*?prisma\.[a-zA-Z0-9_]+\.find/i.test(cleanContent) && !/dataLoader|loaders/i.test(cleanContent)) {
-        const matchLineIdx = lines.findIndex(l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('*'));
+        const matchLineIdx = locateMatchLine(lines, [/async\s+resolve\s*\([^)]*parent[^)]*\)[\s\S]*?prisma\.[a-zA-Z0-9_]+\.find/i], l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('*'));
         const lineNum = matchLineIdx !== -1 ? matchLineIdx + 1 : 1;
         findings.push({
             id: `gql8511-${Date.now()}-${findingCounter.count++}`,
@@ -349,7 +350,7 @@ export function evaluateGraphqlSecurityRules(file: CodeFile, lines: string[], cl
     }
     // GQL-14: WebSocket Subscription Lacking Re-Authentication
     if (isGqlRelated && /useServer\s*\([\s\S]*?onConnect/i.test(cleanContent) && !/verifyToken|jwt\.verify|checkExpiry/i.test(cleanContent)) {
-        const matchLineIdx = lines.findIndex(l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('*'));
+        const matchLineIdx = locateMatchLine(lines, [/useServer\s*\([\s\S]*?onConnect/i], l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('*'));
         const lineNum = matchLineIdx !== -1 ? matchLineIdx + 1 : 1;
         findings.push({
             id: `gql8514-${Date.now()}-${findingCounter.count++}`,
@@ -374,7 +375,7 @@ export function evaluateGraphqlSecurityRules(file: CodeFile, lines: string[], cl
     }
     // GQL-15: Unrestricted Multipart GraphQL File Upload
     if (isGqlRelated && /graphqlUploadExpress/i.test(cleanContent) && !/maxFileSize|maxFiles/i.test(cleanContent)) {
-        const matchLineIdx = lines.findIndex(l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('*'));
+        const matchLineIdx = locateMatchLine(lines, [/graphqlUploadExpress/i], l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('*'));
         const lineNum = matchLineIdx !== -1 ? matchLineIdx + 1 : 1;
         findings.push({
             id: `gql8515-${Date.now()}-${findingCounter.count++}`,
@@ -399,7 +400,7 @@ export function evaluateGraphqlSecurityRules(file: CodeFile, lines: string[], cl
     }
     // GQL-16: Schema Directive Injection via User Input
     if (/gql`[\s\S]*?\$\{[^}]+\}[\s\S]*?`/i.test(cleanContent) && !cleanContent.includes('ZelsisSanitizedTemplate')) {
-        const matchLineIdx = lines.findIndex(l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('*'));
+        const matchLineIdx = locateMatchLine(lines, [/gql`[\s\S]*?\$\{[^}]+\}[\s\S]*?`/i], l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('*'));
         const lineNum = matchLineIdx !== -1 ? matchLineIdx + 1 : 1;
         findings.push({
             id: `gql8516-${Date.now()}-${findingCounter.count++}`,
@@ -424,7 +425,7 @@ export function evaluateGraphqlSecurityRules(file: CodeFile, lines: string[], cl
     }
     // GQL-17: GraphQL Resolver Raw SQL Injection
     if (isGqlRelated && /\$queryRawUnsafe\s*\([\s\S]*?args\./i.test(cleanContent) || (isGqlRelated && /query\s*\(`SELECT[\s\S]*?\$\{args\./i.test(cleanContent))) {
-        const matchLineIdx = lines.findIndex(l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('*'));
+        const matchLineIdx = locateMatchLine(lines, [/\$queryRawUnsafe\s*\([\s\S]*?args\./i, /query\s*\(`SELECT[\s\S]*?\$\{args\./i], l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('*'));
         const lineNum = matchLineIdx !== -1 ? matchLineIdx + 1 : 1;
         findings.push({
             id: `gql8517-${Date.now()}-${findingCounter.count++}`,
@@ -449,7 +450,7 @@ export function evaluateGraphqlSecurityRules(file: CodeFile, lines: string[], cl
     }
     // GQL-18: Field Suggestion Engine Enabled in Production
     if (isGqlRelated && /hideFieldSuggestions\s*:\s*false/i.test(cleanContent)) {
-        const matchLineIdx = lines.findIndex(l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('*'));
+        const matchLineIdx = locateMatchLine(lines, [/hideFieldSuggestions\s*:\s*false/i], l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('*'));
         const lineNum = matchLineIdx !== -1 ? matchLineIdx + 1 : 1;
         findings.push({
             id: `gql8518-${Date.now()}-${findingCounter.count++}`,
@@ -474,7 +475,7 @@ export function evaluateGraphqlSecurityRules(file: CodeFile, lines: string[], cl
     }
     // GQL-19: Mutation Missing Idempotency Token
     if (isGqlRelated && /mutation[^{]*\{[^}]*(?:charge|payment|checkout|transfer)/i.test(cleanContent) && !/idempotencyKey|idempotencyToken/i.test(cleanContent)) {
-        const matchLineIdx = lines.findIndex(l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('*'));
+        const matchLineIdx = locateMatchLine(lines, [/mutation[^{]*\{[^}]*(?:charge|payment|checkout|transfer)/i], l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('*'));
         const lineNum = matchLineIdx !== -1 ? matchLineIdx + 1 : 1;
         findings.push({
             id: `gql8519-${Date.now()}-${findingCounter.count++}`,
@@ -499,7 +500,7 @@ export function evaluateGraphqlSecurityRules(file: CodeFile, lines: string[], cl
     }
     // GQL-20: Broken Object-Level Authorization in Node Interface
     if (isGqlRelated && /node\s*\([^)]*id:\s*ID!\)[\s\S]*?resolve\s*:[^{]*\{[\s\S]*?findById/i.test(cleanContent) && !/tenant_id|orgId|belongsToUser/i.test(cleanContent)) {
-        const matchLineIdx = lines.findIndex(l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('*'));
+        const matchLineIdx = locateMatchLine(lines, [/node\s*\([^)]*id:\s*ID!\)[\s\S]*?resolve\s*:[^{]*\{[\s\S]*?findById/i], l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('*'));
         const lineNum = matchLineIdx !== -1 ? matchLineIdx + 1 : 1;
         findings.push({
             id: `gql8520-${Date.now()}-${findingCounter.count++}`,

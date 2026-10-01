@@ -153,7 +153,7 @@ jobs:
                   CI/CD &amp; GitHub PR Release Gate
                 </h2>
                 <p className="text-xs text-[#A1A1AA]">
-                  Enforce automated pre-merge AST security gates on every Pull Request
+                  Enforce automated pre-merge security gates on every Pull Request
                 </p>
               </div>
             </div>
@@ -177,7 +177,7 @@ jobs:
                   CI/CD Integration is a Pro Feature
                 </h3>
                 <p className="text-xs text-[#A1A1AA] leading-relaxed">
-                  Enforce automated pre-merge AST security gates on every Pull Request with GitHub Actions, GitLab CI, and CLI integration.
+                  Enforce automated pre-merge security gates on every Pull Request with GitHub Actions, GitLab CI, and CLI integration.
                   Available on <span className="text-white font-semibold">Pro</span> and <span className="text-white font-semibold">Enterprise</span> plans.
                 </p>
               </div>

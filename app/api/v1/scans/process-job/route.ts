@@ -10,19 +10,25 @@ import { validateSafeTargetUrl } from '@/lib/ssrf-guard';
 import { checkRateLimit, createRateLimitResponse } from '@/lib/rate-limiter';
 import { hasFixPromptAccess, isPlatformAdminEmail, resolveServerPlanTier } from '@/lib/subscription-utils';
 import { redactScanResultFixes } from '@/lib/fix-gate';
+import { isValidInternalSecret } from '@/lib/internal-auth';
 
 export const maxDuration = 30;
 export const revalidate = 3600;
 
 export async function POST(req: NextRequest) {
-  const rateLimit = await checkRateLimit(req, {
-    maxRequests: 10,
-    windowSeconds: 60,
-    prefix: 'process-job'
-  });
-
-  if (!rateLimit.allowed) {
-    return createRateLimitResponse(rateLimit);
+  // 1. Authenticate Internal Invocation (constant-time). Only unauthenticated callers are
+  // IP rate-limited: genuine worker calls all share the server's egress IP.
+  if (!isValidInternalSecret(req.headers.get('x-zelsis-internal-secret'))) {
+    const rateLimit = await checkRateLimit(req, {
+      maxRequests: 10,
+      windowSeconds: 60,
+      prefix: 'process-job'
+    });
+    if (!rateLimit.allowed) {
+      return createRateLimitResponse(rateLimit);
+    }
+    logger.warn('[Process Job] Unauthorized background worker invocation attempted');
+    return NextResponse.json({ error: 'Unauthorized internal worker route' }, { status: 401 });
   }
 
   // Validate Content-Type
@@ -36,14 +42,6 @@ export async function POST(req: NextRequest) {
 
   const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || '';
   const serviceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
-  const internalSecret = process.env.INTERNAL_API_SECRET || process.env.SUPABASE_SERVICE_ROLE_KEY || 'zelsis-internal-worker-secret';
-
-  // 1. Authenticate Internal Invocation
-  const receivedSecret = req.headers.get('x-zelsis-internal-secret');
-  if (receivedSecret !== internalSecret) {
-    logger.warn('[Process Job] Unauthorized background worker invocation attempted');
-    return NextResponse.json({ error: 'Unauthorized internal worker route' }, { status: 401 });
-  }
 
   let body: any = {};
   try {
@@ -228,7 +226,7 @@ export async function POST(req: NextRequest) {
       current_phase: 'Executing deterministic AST security rules'
     });
 
-    const result = await runStaticCodeScan(filesToScan, resolvedTargetName);
+    const result = await runStaticCodeScan(filesToScan, resolvedTargetName, { dependencyAudit: { timeoutMs: 8000 } });
 
     // ─── Phase 4: AGGREGATING (Persisting Findings & Manifest) ───
     await updateJobState({

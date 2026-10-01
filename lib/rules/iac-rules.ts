@@ -4,6 +4,7 @@
  */
 import { Finding } from '@/data/schema';
 import { CodeFile } from '../scanner-engine';
+import { locateMatchLine } from './shared/locate';
 export interface IacRuleResult {
     findings: Finding[];
     logs: string[];
@@ -15,13 +16,13 @@ export function evaluateIacRules(file: CodeFile, lines: string[], cleanContent: 
     const logs: string[] = [];
     const lowerPath = file.path.toLowerCase().replace(/\\/g, '/');
     // Skip self-referential catalogs, mocks, and schema definitions
-    if (lowerPath.includes('data/catalogs/') || lowerPath.includes('data/mockdata') || lowerPath.includes('data/workspacefiles') || lowerPath.includes('data/schema') || lowerPath.includes('scratch/') || lowerPath.includes('.agent/') || lowerPath.includes('node_modules/') || lowerPath.endsWith('.d.ts')) {
+    if (lowerPath.includes('node_modules/') || lowerPath.endsWith('.d.ts')) {
         return { findings, logs };
     }
     const ts = new Date().toLocaleTimeString();
     // IAC-01: Security Group Ingress Open to World on SSH Port 22
     if (/(?:aws_security_group|AWS::EC2::SecurityGroup)/i.test(cleanContent) && /from_port\s*=\s*22\b/i.test(cleanContent) && /0\.0\.0\.0\/0/i.test(cleanContent)) {
-        const matchLineIdx = lines.findIndex(l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('*') && (/iac-01|security/i.test(l) || lines.indexOf(l) === 0));
+        const matchLineIdx = locateMatchLine(lines, [/(?:aws_security_group|AWS::EC2::SecurityGroup)/i, /from_port\s*=\s*22\b/i, /0\.0\.0\.0\/0/i], l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('*'));
         const lineNum = matchLineIdx !== -1 ? matchLineIdx + 1 : 1;
         findings.push({
             id: `iac01-${Date.now()}-${findingCounter.count++}`,
@@ -46,7 +47,7 @@ export function evaluateIacRules(file: CodeFile, lines: string[], cleanContent: 
     }
     // IAC-02: Security Group Ingress Open to World on RDP Port 3389
     if (/(?:aws_security_group|AWS::EC2::SecurityGroup)/i.test(cleanContent) && /from_port\s*=\s*3389\b/i.test(cleanContent) && /0\.0\.0\.0\/0/i.test(cleanContent)) {
-        const matchLineIdx = lines.findIndex(l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('*') && (/iac-02|security/i.test(l) || lines.indexOf(l) === 0));
+        const matchLineIdx = locateMatchLine(lines, [/(?:aws_security_group|AWS::EC2::SecurityGroup)/i, /from_port\s*=\s*3389\b/i, /0\.0\.0\.0\/0/i], l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('*'));
         const lineNum = matchLineIdx !== -1 ? matchLineIdx + 1 : 1;
         findings.push({
             id: `iac02-${Date.now()}-${findingCounter.count++}`,
@@ -71,7 +72,7 @@ export function evaluateIacRules(file: CodeFile, lines: string[], cleanContent: 
     }
     // IAC-03: Security Group Ingress Open to World on Database Ports (5432 / 3306)
     if (/(?:aws_security_group|AWS::EC2::SecurityGroup)/i.test(cleanContent) && /(?:from_port\s*=\s*5432|from_port\s*=\s*3306)\b/i.test(cleanContent) && /0\.0\.0\.0\/0/i.test(cleanContent)) {
-        const matchLineIdx = lines.findIndex(l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('*') && (/iac-03|security/i.test(l) || lines.indexOf(l) === 0));
+        const matchLineIdx = locateMatchLine(lines, [/(?:aws_security_group|AWS::EC2::SecurityGroup)/i, /(?:from_port\s*=\s*5432|from_port\s*=\s*3306)\b/i, /0\.0\.0\.0\/0/i], l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('*'));
         const lineNum = matchLineIdx !== -1 ? matchLineIdx + 1 : 1;
         findings.push({
             id: `iac03-${Date.now()}-${findingCounter.count++}`,
@@ -96,7 +97,7 @@ export function evaluateIacRules(file: CodeFile, lines: string[], cleanContent: 
     }
     // IAC-04: AWS EBS Storage Volume Missing Default Encryption
     if (/(?:aws_ebs_volume|root_block_device)\b/i.test(cleanContent) && !/encrypted\s*=\s*true/i.test(cleanContent) && /\.(?:tf|hcl)$/i.test(file.path)) {
-        const matchLineIdx = lines.findIndex(l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('*') && (/iac-04|aws/i.test(l) || lines.indexOf(l) === 0));
+        const matchLineIdx = locateMatchLine(lines, [/(?:aws_ebs_volume|root_block_device)\b/i], l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('*'));
         const lineNum = matchLineIdx !== -1 ? matchLineIdx + 1 : 1;
         findings.push({
             id: `iac04-${Date.now()}-${findingCounter.count++}`,
@@ -121,7 +122,7 @@ export function evaluateIacRules(file: CodeFile, lines: string[], cleanContent: 
     }
     // IAC-05: IAM Policy with Wildcard Administrative Actions (Action: *)
     if (/(?:aws_iam_policy|aws_iam_role_policy)\b/i.test(cleanContent) && /"Action"\s*:\s*"\*"/i.test(cleanContent) && /"Resource"\s*:\s*"\*"/i.test(cleanContent)) {
-        const matchLineIdx = lines.findIndex(l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('*') && (/iac-05|iam/i.test(l) || lines.indexOf(l) === 0));
+        const matchLineIdx = locateMatchLine(lines, [/(?:aws_iam_policy|aws_iam_role_policy)\b/i, /"Action"\s*:\s*"\*"/i, /"Resource"\s*:\s*"\*"/i], l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('*'));
         const lineNum = matchLineIdx !== -1 ? matchLineIdx + 1 : 1;
         findings.push({
             id: `iac05-${Date.now()}-${findingCounter.count++}`,
@@ -146,7 +147,7 @@ export function evaluateIacRules(file: CodeFile, lines: string[], cleanContent: 
     }
     // IAC-06: S3 Bucket Versioning Disabled on Critical Storage
     if (/aws_s3_bucket_versioning\b/i.test(cleanContent) && /status\s*=\s*["\']Disabled["\']/i.test(cleanContent)) {
-        const matchLineIdx = lines.findIndex(l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('*') && (/iac-06|s3/i.test(l) || lines.indexOf(l) === 0));
+        const matchLineIdx = locateMatchLine(lines, [/aws_s3_bucket_versioning\b/i, /status\s*=\s*["\']Disabled["\']/i], l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('*'));
         const lineNum = matchLineIdx !== -1 ? matchLineIdx + 1 : 1;
         findings.push({
             id: `iac06-${Date.now()}-${findingCounter.count++}`,
@@ -171,7 +172,7 @@ export function evaluateIacRules(file: CodeFile, lines: string[], cleanContent: 
     }
     // IAC-07: AWS CloudTrail Multi-Region Audit Logging Disabled
     if (/aws_cloudtrail\b/i.test(cleanContent) && /is_multi_region_trail\s*=\s*false/i.test(cleanContent)) {
-        const matchLineIdx = lines.findIndex(l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('*') && (/iac-07|aws/i.test(l) || lines.indexOf(l) === 0));
+        const matchLineIdx = locateMatchLine(lines, [/aws_cloudtrail\b/i, /is_multi_region_trail\s*=\s*false/i], l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('*'));
         const lineNum = matchLineIdx !== -1 ? matchLineIdx + 1 : 1;
         findings.push({
             id: `iac07-${Date.now()}-${findingCounter.count++}`,
@@ -196,7 +197,7 @@ export function evaluateIacRules(file: CodeFile, lines: string[], cleanContent: 
     }
     // IAC-08: VPC Flow Logs Disabled on Production Network Subnets
     if (/aws_vpc\b/i.test(cleanContent) && !/aws_flow_log/i.test(cleanContent)) {
-        const matchLineIdx = lines.findIndex(l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('*') && (/iac-08|vpc/i.test(l) || lines.indexOf(l) === 0));
+        const matchLineIdx = locateMatchLine(lines, [/aws_vpc\b/i], l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('*'));
         const lineNum = matchLineIdx !== -1 ? matchLineIdx + 1 : 1;
         findings.push({
             id: `iac08-${Date.now()}-${findingCounter.count++}`,
@@ -221,7 +222,7 @@ export function evaluateIacRules(file: CodeFile, lines: string[], cleanContent: 
     }
     // IAC-09: RDS Database Instance Missing Automated Backup Retention
     if (/aws_db_instance\b/i.test(cleanContent) && /backup_retention_period\s*=\s*0\b/i.test(cleanContent)) {
-        const matchLineIdx = lines.findIndex(l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('*') && (/iac-09|rds/i.test(l) || lines.indexOf(l) === 0));
+        const matchLineIdx = locateMatchLine(lines, [/aws_db_instance\b/i, /backup_retention_period\s*=\s*0\b/i], l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('*'));
         const lineNum = matchLineIdx !== -1 ? matchLineIdx + 1 : 1;
         findings.push({
             id: `iac09-${Date.now()}-${findingCounter.count++}`,
@@ -246,7 +247,7 @@ export function evaluateIacRules(file: CodeFile, lines: string[], cleanContent: 
     }
     // IAC-10: RDS Database Instance Publicly Accessible (publicly_accessible = true)
     if (/aws_db_instance\b/i.test(cleanContent) && /publicly_accessible\s*=\s*true/i.test(cleanContent)) {
-        const matchLineIdx = lines.findIndex(l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('*') && (/iac-10|rds/i.test(l) || lines.indexOf(l) === 0));
+        const matchLineIdx = locateMatchLine(lines, [/aws_db_instance\b/i, /publicly_accessible\s*=\s*true/i], l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('*'));
         const lineNum = matchLineIdx !== -1 ? matchLineIdx + 1 : 1;
         findings.push({
             id: `iac10-${Date.now()}-${findingCounter.count++}`,
@@ -271,7 +272,7 @@ export function evaluateIacRules(file: CodeFile, lines: string[], cleanContent: 
     }
     // IAC-11: Kubernetes Namespace Missing NetworkPolicy Isolation
     if (/kind:\s*Namespace\b/i.test(cleanContent) && !/kind:\s*NetworkPolicy/i.test(cleanContent) && /\.(?:ya?ml)$/i.test(file.path)) {
-        const matchLineIdx = lines.findIndex(l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('*') && (/iac-11|kubernetes/i.test(l) || lines.indexOf(l) === 0));
+        const matchLineIdx = locateMatchLine(lines, [/kind:\s*Namespace\b/i], l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('*'));
         const lineNum = matchLineIdx !== -1 ? matchLineIdx + 1 : 1;
         findings.push({
             id: `iac11-${Date.now()}-${findingCounter.count++}`,
@@ -296,7 +297,7 @@ export function evaluateIacRules(file: CodeFile, lines: string[], cleanContent: 
     }
     // IAC-12: Kubernetes Container Running with Host PID or IPC Namespace
     if (/(?:hostPID\s*:\s*true|hostIPC\s*:\s*true)/i.test(cleanContent) && /\.(?:ya?ml)$/i.test(file.path)) {
-        const matchLineIdx = lines.findIndex(l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('*') && (/iac-12|kubernetes/i.test(l) || lines.indexOf(l) === 0));
+        const matchLineIdx = locateMatchLine(lines, [/(?:hostPID\s*:\s*true|hostIPC\s*:\s*true)/i], l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('*'));
         const lineNum = matchLineIdx !== -1 ? matchLineIdx + 1 : 1;
         findings.push({
             id: `iac12-${Date.now()}-${findingCounter.count++}`,
@@ -321,7 +322,7 @@ export function evaluateIacRules(file: CodeFile, lines: string[], cleanContent: 
     }
     // IAC-13: Kubernetes Secret Injected as Plaintext Environment Variable
     if (/valueFrom:\s*\{\s*secretKeyRef:/i.test(cleanContent) && /\.(?:ya?ml)$/i.test(file.path)) {
-        const matchLineIdx = lines.findIndex(l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('*') && (/iac-13|kubernetes/i.test(l) || lines.indexOf(l) === 0));
+        const matchLineIdx = locateMatchLine(lines, [/valueFrom:\s*\{\s*secretKeyRef:/i], l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('*'));
         const lineNum = matchLineIdx !== -1 ? matchLineIdx + 1 : 1;
         findings.push({
             id: `iac13-${Date.now()}-${findingCounter.count++}`,
@@ -371,7 +372,7 @@ export function evaluateIacRules(file: CodeFile, lines: string[], cleanContent: 
     }
     // IAC-15: Kubernetes Pod Missing ReadOnlyRootFilesystem Enforcement
     if (/securityContext:\s*\{(?![^}]*readOnlyRootFilesystem:\s*true)/i.test(cleanContent) && /\.(?:ya?ml)$/i.test(file.path)) {
-        const matchLineIdx = lines.findIndex(l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('*') && (/iac-15|kubernetes/i.test(l) || lines.indexOf(l) === 0));
+        const matchLineIdx = locateMatchLine(lines, [/securityContext:\s*\{(?![^}]*readOnlyRootFilesystem:\s*true)/i], l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('*'));
         const lineNum = matchLineIdx !== -1 ? matchLineIdx + 1 : 1;
         findings.push({
             id: `iac15-${Date.now()}-${findingCounter.count++}`,
@@ -396,7 +397,7 @@ export function evaluateIacRules(file: CodeFile, lines: string[], cleanContent: 
     }
     // IAC-16: AWS S3 Bucket Missing Default Server-Side Encryption Rule
     if (/aws_s3_bucket\b/i.test(cleanContent) && cleanContent.includes("s3BucketLacksEncryptionResource") && !/aws_s3_bucket_server_side_encryption_configuration/i.test(cleanContent) && /\.(?:tf|hcl)$/i.test(file.path)) {
-        const matchLineIdx = lines.findIndex(l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('*') && (/iac-16|aws/i.test(l) || lines.indexOf(l) === 0));
+        const matchLineIdx = locateMatchLine(lines, [/aws_s3_bucket\b/i], l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('*'));
         const lineNum = matchLineIdx !== -1 ? matchLineIdx + 1 : 1;
         findings.push({
             id: `iac16-${Date.now()}-${findingCounter.count++}`,
@@ -421,7 +422,7 @@ export function evaluateIacRules(file: CodeFile, lines: string[], cleanContent: 
     }
     // IAC-17: Kubernetes Ingress Missing TLS Termination Certificate
     if (/kind:\s*Ingress\b/i.test(cleanContent) && !/tls:\s*\[/i.test(cleanContent) && /\.(?:ya?ml)$/i.test(file.path)) {
-        const matchLineIdx = lines.findIndex(l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('*') && (/iac-17|kubernetes/i.test(l) || lines.indexOf(l) === 0));
+        const matchLineIdx = locateMatchLine(lines, [/kind:\s*Ingress\b/i], l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('*'));
         const lineNum = matchLineIdx !== -1 ? matchLineIdx + 1 : 1;
         findings.push({
             id: `iac17-${Date.now()}-${findingCounter.count++}`,
@@ -446,7 +447,7 @@ export function evaluateIacRules(file: CodeFile, lines: string[], cleanContent: 
     }
     // IAC-18: AWS CloudFront Distribution Missing WAF WebACL Association
     if (/aws_cloudfront_distribution\b/i.test(cleanContent) && !/web_acl_id\s*=/i.test(cleanContent)) {
-        const matchLineIdx = lines.findIndex(l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('*') && (/iac-18|aws/i.test(l) || lines.indexOf(l) === 0));
+        const matchLineIdx = locateMatchLine(lines, [/aws_cloudfront_distribution\b/i], l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('*'));
         const lineNum = matchLineIdx !== -1 ? matchLineIdx + 1 : 1;
         findings.push({
             id: `iac18-${Date.now()}-${findingCounter.count++}`,
@@ -471,7 +472,7 @@ export function evaluateIacRules(file: CodeFile, lines: string[], cleanContent: 
     }
     // IAC-19: Terraform State Backend Missing State Locking (DynamoDB)
     if (/backend\s+["\']s3["\']\s*\{(?![^}]*dynamodb_table)/i.test(cleanContent) && /\.(?:tf|hcl)$/i.test(file.path)) {
-        const matchLineIdx = lines.findIndex(l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('*') && (/iac-19|terraform/i.test(l) || lines.indexOf(l) === 0));
+        const matchLineIdx = locateMatchLine(lines, [/backend\s+["\']s3["\']\s*\{(?![^}]*dynamodb_table)/i], l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('*'));
         const lineNum = matchLineIdx !== -1 ? matchLineIdx + 1 : 1;
         findings.push({
             id: `iac19-${Date.now()}-${findingCounter.count++}`,
@@ -496,7 +497,7 @@ export function evaluateIacRules(file: CodeFile, lines: string[], cleanContent: 
     }
     // IAC-20: AWS KMS Key Policy Permitting Wildcard Principal (*)
     if (/aws_kms_key\b/i.test(cleanContent) && /"Principal"\s*:\s*\{[^}]*"AWS"\s*:\s*"\*"/i.test(cleanContent)) {
-        const matchLineIdx = lines.findIndex(l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('*') && (/iac-20|aws/i.test(l) || lines.indexOf(l) === 0));
+        const matchLineIdx = locateMatchLine(lines, [/aws_kms_key\b/i, /"Principal"\s*:\s*\{[^}]*"AWS"\s*:\s*"\*"/i], l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('*'));
         const lineNum = matchLineIdx !== -1 ? matchLineIdx + 1 : 1;
         findings.push({
             id: `iac20-${Date.now()}-${findingCounter.count++}`,
@@ -521,7 +522,7 @@ export function evaluateIacRules(file: CodeFile, lines: string[], cleanContent: 
     }
     // IAC-21: Container Running with hostNetwork Enabled
     if (/hostNetwork\s*:\s*true/i.test(cleanContent) && /\.(?:ya?ml|dockerfile)$/i.test(file.path)) {
-        const matchLineIdx = lines.findIndex(l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('*') && (/iac-21|container/i.test(l) || lines.indexOf(l) === 0));
+        const matchLineIdx = locateMatchLine(lines, [/hostNetwork\s*:\s*true/i], l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('*'));
         const lineNum = matchLineIdx !== -1 ? matchLineIdx + 1 : 1;
         findings.push({
             id: `iac21-${Date.now()}-${findingCounter.count++}`,
@@ -546,7 +547,7 @@ export function evaluateIacRules(file: CodeFile, lines: string[], cleanContent: 
     }
     // IAC-22: Terraform Resource Using Hardcoded Plaintext Passwords
     if (/\.(?:tf|hcl)$/i.test(file.path) && /password\s*=\s*["\'][^"\'$]{6,}["\']/i.test(cleanContent) && !/data\.aws_secretsmanager/i.test(cleanContent) && !/test|spec|mock/i.test(lowerPath)) {
-        const matchLineIdx = lines.findIndex(l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('*') && (/iac-22|terraform/i.test(l) || lines.indexOf(l) === 0));
+        const matchLineIdx = locateMatchLine(lines, [/password\s*=\s*["\'][^"\'$]{6,}["\']/i], l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('*'));
         const lineNum = matchLineIdx !== -1 ? matchLineIdx + 1 : 1;
         findings.push({
             id: `iac22-${Date.now()}-${findingCounter.count++}`,
@@ -571,7 +572,7 @@ export function evaluateIacRules(file: CodeFile, lines: string[], cleanContent: 
     }
     // IAC-23: AWS Elasticache Redis Cluster Missing In-Transit Encryption
     if (/aws_elasticache_replication_group\b/i.test(cleanContent) && /transit_encryption_enabled\s*=\s*false/i.test(cleanContent)) {
-        const matchLineIdx = lines.findIndex(l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('*') && (/iac-23|aws/i.test(l) || lines.indexOf(l) === 0));
+        const matchLineIdx = locateMatchLine(lines, [/aws_elasticache_replication_group\b/i, /transit_encryption_enabled\s*=\s*false/i], l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('*'));
         const lineNum = matchLineIdx !== -1 ? matchLineIdx + 1 : 1;
         findings.push({
             id: `iac23-${Date.now()}-${findingCounter.count++}`,
@@ -596,7 +597,7 @@ export function evaluateIacRules(file: CodeFile, lines: string[], cleanContent: 
     }
     // IAC-24: AWS S3 Bucket Policy Permitting Wildcard Principal (*)
     if (/aws_s3_bucket_policy\b/i.test(cleanContent) && /"Principal"\s*:\s*"\*"/i.test(cleanContent)) {
-        const matchLineIdx = lines.findIndex(l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('*') && (/iac-24|aws/i.test(l) || lines.indexOf(l) === 0));
+        const matchLineIdx = locateMatchLine(lines, [/aws_s3_bucket_policy\b/i, /"Principal"\s*:\s*"\*"/i], l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('*'));
         const lineNum = matchLineIdx !== -1 ? matchLineIdx + 1 : 1;
         findings.push({
             id: `iac24-${Date.now()}-${findingCounter.count++}`,
@@ -621,7 +622,7 @@ export function evaluateIacRules(file: CodeFile, lines: string[], cleanContent: 
     }
     // IAC-25: Kubernetes Pod Missing Non-Root User (runAsNonRoot: true)
     if (/securityContext:\s*\{(?![^}]*runAsNonRoot:\s*true)/i.test(cleanContent) && /\.(?:ya?ml)$/i.test(file.path)) {
-        const matchLineIdx = lines.findIndex(l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('*') && (/iac-25|kubernetes/i.test(l) || lines.indexOf(l) === 0));
+        const matchLineIdx = locateMatchLine(lines, [/securityContext:\s*\{(?![^}]*runAsNonRoot:\s*true)/i], l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('*'));
         const lineNum = matchLineIdx !== -1 ? matchLineIdx + 1 : 1;
         findings.push({
             id: `iac25-${Date.now()}-${findingCounter.count++}`,
@@ -646,7 +647,7 @@ export function evaluateIacRules(file: CodeFile, lines: string[], cleanContent: 
     }
     // IAC-26: AWS Lambda Function Missing VPC Configuration for DB Access
     if (/aws_lambda_function\b/i.test(cleanContent) && !/vpc_config/i.test(cleanContent)) {
-        const matchLineIdx = lines.findIndex(l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('*') && (/iac-26|aws/i.test(l) || lines.indexOf(l) === 0));
+        const matchLineIdx = locateMatchLine(lines, [/aws_lambda_function\b/i], l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('*'));
         const lineNum = matchLineIdx !== -1 ? matchLineIdx + 1 : 1;
         findings.push({
             id: `iac26-${Date.now()}-${findingCounter.count++}`,
@@ -671,7 +672,7 @@ export function evaluateIacRules(file: CodeFile, lines: string[], cleanContent: 
     }
     // IAC-27: Terraform AWS Provider Missing Default Resource Tags
     if (/provider\s+["\']aws["\']\s*\{(?![^}]*default_tags)/i.test(cleanContent)) {
-        const matchLineIdx = lines.findIndex(l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('*') && (/iac-27|terraform/i.test(l) || lines.indexOf(l) === 0));
+        const matchLineIdx = locateMatchLine(lines, [/provider\s+["\']aws["\']\s*\{(?![^}]*default_tags)/i], l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('*'));
         const lineNum = matchLineIdx !== -1 ? matchLineIdx + 1 : 1;
         findings.push({
             id: `iac27-${Date.now()}-${findingCounter.count++}`,
@@ -696,7 +697,7 @@ export function evaluateIacRules(file: CodeFile, lines: string[], cleanContent: 
     }
     // IAC-28: AWS Elastic Load Balancer (ALB) Dropping HTTP to HTTPS Redirection
     if (/aws_lb_listener\b/i.test(cleanContent) && /port\s*=\s*80\b/i.test(cleanContent) && /type\s*=\s*["\']forward["\']/i.test(cleanContent)) {
-        const matchLineIdx = lines.findIndex(l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('*') && (/iac-28|aws/i.test(l) || lines.indexOf(l) === 0));
+        const matchLineIdx = locateMatchLine(lines, [/aws_lb_listener\b/i, /port\s*=\s*80\b/i, /type\s*=\s*["\']forward["\']/i], l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('*'));
         const lineNum = matchLineIdx !== -1 ? matchLineIdx + 1 : 1;
         findings.push({
             id: `iac28-${Date.now()}-${findingCounter.count++}`,
@@ -721,7 +722,7 @@ export function evaluateIacRules(file: CodeFile, lines: string[], cleanContent: 
     }
     // IAC-29: Kubernetes Pod Permitting Linux Capabilities (ALL)
     if (/capabilities:\s*\{[^}]*add:\s*\[[\s\S]*?["\']ALL["\']/i.test(cleanContent) && /\.(?:ya?ml)$/i.test(file.path)) {
-        const matchLineIdx = lines.findIndex(l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('*') && (/iac-29|kubernetes/i.test(l) || lines.indexOf(l) === 0));
+        const matchLineIdx = locateMatchLine(lines, [/capabilities:\s*\{[^}]*add:\s*\[[\s\S]*?["\']ALL["\']/i], l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('*'));
         const lineNum = matchLineIdx !== -1 ? matchLineIdx + 1 : 1;
         findings.push({
             id: `iac29-${Date.now()}-${findingCounter.count++}`,
@@ -746,7 +747,7 @@ export function evaluateIacRules(file: CodeFile, lines: string[], cleanContent: 
     }
     // IAC-30: AWS Secrets Manager Secret Missing KMS Customer-Managed Key
     if (/aws_secretsmanager_secret\b/i.test(cleanContent) && !/kms_key_id\s*=/i.test(cleanContent)) {
-        const matchLineIdx = lines.findIndex(l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('*') && (/iac-30|aws/i.test(l) || lines.indexOf(l) === 0));
+        const matchLineIdx = locateMatchLine(lines, [/aws_secretsmanager_secret\b/i], l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('*'));
         const lineNum = matchLineIdx !== -1 ? matchLineIdx + 1 : 1;
         findings.push({
             id: `iac30-${Date.now()}-${findingCounter.count++}`,
@@ -771,7 +772,7 @@ export function evaluateIacRules(file: CodeFile, lines: string[], cleanContent: 
     }
     // IAC-31: Docker Compose Version 2/3 File Declaring Privileged Flag
     if (/docker-compose.*\.ya?ml$/i.test(file.path) && /privileged\s*:\s*true/i.test(cleanContent)) {
-        const matchLineIdx = lines.findIndex(l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('*') && (/iac-31|docker/i.test(l) || lines.indexOf(l) === 0));
+        const matchLineIdx = locateMatchLine(lines, [/privileged\s*:\s*true/i], l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('*'));
         const lineNum = matchLineIdx !== -1 ? matchLineIdx + 1 : 1;
         findings.push({
             id: `iac31-${Date.now()}-${findingCounter.count++}`,
@@ -796,7 +797,7 @@ export function evaluateIacRules(file: CodeFile, lines: string[], cleanContent: 
     }
     // IAC-32: AWS RDS Instance Missing Deletion Protection
     if (/aws_db_instance\b/i.test(cleanContent) && !/deletion_protection\s*=\s*true/i.test(cleanContent)) {
-        const matchLineIdx = lines.findIndex(l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('*') && (/iac-32|aws/i.test(l) || lines.indexOf(l) === 0));
+        const matchLineIdx = locateMatchLine(lines, [/aws_db_instance\b/i], l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('*'));
         const lineNum = matchLineIdx !== -1 ? matchLineIdx + 1 : 1;
         findings.push({
             id: `iac32-${Date.now()}-${findingCounter.count++}`,
@@ -821,7 +822,7 @@ export function evaluateIacRules(file: CodeFile, lines: string[], cleanContent: 
     }
     // IAC-33: AWS OpenSearch / Elasticsearch Cluster Missing Node-to-Node Encryption
     if (/aws_opensearch_domain\b/i.test(cleanContent) && /node_to_node_encryption\s*\{[^}]*enabled\s*=\s*false/i.test(cleanContent)) {
-        const matchLineIdx = lines.findIndex(l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('*') && (/iac-33|aws/i.test(l) || lines.indexOf(l) === 0));
+        const matchLineIdx = locateMatchLine(lines, [/aws_opensearch_domain\b/i, /node_to_node_encryption\s*\{[^}]*enabled\s*=\s*false/i], l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('*'));
         const lineNum = matchLineIdx !== -1 ? matchLineIdx + 1 : 1;
         findings.push({
             id: `iac33-${Date.now()}-${findingCounter.count++}`,
@@ -846,7 +847,7 @@ export function evaluateIacRules(file: CodeFile, lines: string[], cleanContent: 
     }
     // IAC-34: Kubernetes Service Account Automatically Mounting API Tokens
     if (/kind:\s*ServiceAccount\b/i.test(cleanContent) && !/automountServiceAccountToken:\s*false/i.test(cleanContent) && /\.(?:ya?ml)$/i.test(file.path)) {
-        const matchLineIdx = lines.findIndex(l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('*') && (/iac-34|kubernetes/i.test(l) || lines.indexOf(l) === 0));
+        const matchLineIdx = locateMatchLine(lines, [/kind:\s*ServiceAccount\b/i], l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('*'));
         const lineNum = matchLineIdx !== -1 ? matchLineIdx + 1 : 1;
         findings.push({
             id: `iac34-${Date.now()}-${findingCounter.count++}`,
@@ -871,7 +872,7 @@ export function evaluateIacRules(file: CodeFile, lines: string[], cleanContent: 
     }
     // IAC-35: AWS CloudFront Distribution Using Insecure SSL/TLS Protocols (TLSv1)
     if (/aws_cloudfront_distribution\b/i.test(cleanContent) && /minimum_protocol_version\s*=\s*["\']TLSv1["\']/i.test(cleanContent)) {
-        const matchLineIdx = lines.findIndex(l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('*') && (/iac-35|aws/i.test(l) || lines.indexOf(l) === 0));
+        const matchLineIdx = locateMatchLine(lines, [/aws_cloudfront_distribution\b/i, /minimum_protocol_version\s*=\s*["\']TLSv1["\']/i], l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('*'));
         const lineNum = matchLineIdx !== -1 ? matchLineIdx + 1 : 1;
         findings.push({
             id: `iac35-${Date.now()}-${findingCounter.count++}`,
@@ -896,7 +897,7 @@ export function evaluateIacRules(file: CodeFile, lines: string[], cleanContent: 
     }
     // IAC-36: Terraform AWS Security Group Egress Open to All Protocols and Ports
     if (/aws_security_group\b/i.test(cleanContent) && /protocol\s*=\s*["\']-1["\']/i.test(cleanContent) && /0\.0\.0\.0\/0/i.test(cleanContent)) {
-        const matchLineIdx = lines.findIndex(l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('*') && (/iac-36|terraform/i.test(l) || lines.indexOf(l) === 0));
+        const matchLineIdx = locateMatchLine(lines, [/aws_security_group\b/i, /protocol\s*=\s*["\']-1["\']/i, /0\.0\.0\.0\/0/i], l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('*'));
         const lineNum = matchLineIdx !== -1 ? matchLineIdx + 1 : 1;
         findings.push({
             id: `iac36-${Date.now()}-${findingCounter.count++}`,
@@ -921,7 +922,7 @@ export function evaluateIacRules(file: CodeFile, lines: string[], cleanContent: 
     }
     // IAC-37: Kubernetes StatefulSet Missing VolumeClaimTemplate Storage Limits
     if (/kind:\s*StatefulSet\b/i.test(cleanContent) && !/requests:\s*\{[^}]*storage:/i.test(cleanContent) && /\.(?:ya?ml)$/i.test(file.path)) {
-        const matchLineIdx = lines.findIndex(l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('*') && (/iac-37|kubernetes/i.test(l) || lines.indexOf(l) === 0));
+        const matchLineIdx = locateMatchLine(lines, [/kind:\s*StatefulSet\b/i], l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('*'));
         const lineNum = matchLineIdx !== -1 ? matchLineIdx + 1 : 1;
         findings.push({
             id: `iac37-${Date.now()}-${findingCounter.count++}`,
@@ -946,7 +947,7 @@ export function evaluateIacRules(file: CodeFile, lines: string[], cleanContent: 
     }
     // IAC-38: AWS EKS Cluster Endpoint Publicly Accessible Without CIDR Whitelist
     if (/aws_eks_cluster\b/i.test(cleanContent) && /endpoint_public_access\s*=\s*true/i.test(cleanContent) && !/public_access_cidrs/i.test(cleanContent)) {
-        const matchLineIdx = lines.findIndex(l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('*') && (/iac-38|aws/i.test(l) || lines.indexOf(l) === 0));
+        const matchLineIdx = locateMatchLine(lines, [/aws_eks_cluster\b/i, /endpoint_public_access\s*=\s*true/i], l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('*'));
         const lineNum = matchLineIdx !== -1 ? matchLineIdx + 1 : 1;
         findings.push({
             id: `iac38-${Date.now()}-${findingCounter.count++}`,
@@ -971,7 +972,7 @@ export function evaluateIacRules(file: CodeFile, lines: string[], cleanContent: 
     }
     // IAC-39: AWS SQS Queue Missing Dead Letter Queue (RedrivePolicy)
     if (/aws_sqs_queue\b/i.test(cleanContent) && !/redrive_policy/i.test(cleanContent)) {
-        const matchLineIdx = lines.findIndex(l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('*') && (/iac-39|aws/i.test(l) || lines.indexOf(l) === 0));
+        const matchLineIdx = locateMatchLine(lines, [/aws_sqs_queue\b/i], l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('*'));
         const lineNum = matchLineIdx !== -1 ? matchLineIdx + 1 : 1;
         findings.push({
             id: `iac39-${Date.now()}-${findingCounter.count++}`,
@@ -996,7 +997,7 @@ export function evaluateIacRules(file: CodeFile, lines: string[], cleanContent: 
     }
     // IAC-40: AWS SNS Topic Missing KMS Customer-Managed Key Encryption
     if (/aws_sns_topic\b/i.test(cleanContent) && !/kms_master_key_id/i.test(cleanContent)) {
-        const matchLineIdx = lines.findIndex(l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('*') && (/iac-40|aws/i.test(l) || lines.indexOf(l) === 0));
+        const matchLineIdx = locateMatchLine(lines, [/aws_sns_topic\b/i], l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('*'));
         const lineNum = matchLineIdx !== -1 ? matchLineIdx + 1 : 1;
         findings.push({
             id: `iac40-${Date.now()}-${findingCounter.count++}`,
@@ -1021,7 +1022,7 @@ export function evaluateIacRules(file: CodeFile, lines: string[], cleanContent: 
     }
     // IAC-41: Kubernetes Pod Missing Seccomp Profile Configuration
     if (/kind:\s*Pod\b/i.test(cleanContent) && !/seccompProfile/i.test(cleanContent) && /\.(?:ya?ml)$/i.test(file.path)) {
-        const matchLineIdx = lines.findIndex(l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('*') && (/iac-41|kubernetes/i.test(l) || lines.indexOf(l) === 0));
+        const matchLineIdx = locateMatchLine(lines, [/kind:\s*Pod\b/i], l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('*'));
         const lineNum = matchLineIdx !== -1 ? matchLineIdx + 1 : 1;
         findings.push({
             id: `iac41-${Date.now()}-${findingCounter.count++}`,
@@ -1046,7 +1047,7 @@ export function evaluateIacRules(file: CodeFile, lines: string[], cleanContent: 
     }
     // IAC-42: AWS Lambda Function Runtime Using Deprecated Node.js or Python
     if (/aws_lambda_function\b/i.test(cleanContent) && /runtime\s*=\s*["\'](?:nodejs1[0-6]\.x|python3\.[6-8])["\']/i.test(cleanContent)) {
-        const matchLineIdx = lines.findIndex(l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('*') && (/iac-42|aws/i.test(l) || lines.indexOf(l) === 0));
+        const matchLineIdx = locateMatchLine(lines, [/aws_lambda_function\b/i, /runtime\s*=\s*["\'](?:nodejs1[0-6]\.x|python3\.[6-8])["\']/i], l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('*'));
         const lineNum = matchLineIdx !== -1 ? matchLineIdx + 1 : 1;
         findings.push({
             id: `iac42-${Date.now()}-${findingCounter.count++}`,
@@ -1071,7 +1072,7 @@ export function evaluateIacRules(file: CodeFile, lines: string[], cleanContent: 
     }
     // IAC-43: Terraform AWS API Gateway Missing Access Logging
     if (/aws_apigatewayv2_stage\b/i.test(cleanContent) && !/access_log_settings/i.test(cleanContent)) {
-        const matchLineIdx = lines.findIndex(l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('*') && (/iac-43|terraform/i.test(l) || lines.indexOf(l) === 0));
+        const matchLineIdx = locateMatchLine(lines, [/aws_apigatewayv2_stage\b/i], l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('*'));
         const lineNum = matchLineIdx !== -1 ? matchLineIdx + 1 : 1;
         findings.push({
             id: `iac43-${Date.now()}-${findingCounter.count++}`,
@@ -1096,7 +1097,7 @@ export function evaluateIacRules(file: CodeFile, lines: string[], cleanContent: 
     }
     // IAC-44: AWS RDS Parameter Group Enforcing SSL/TLS Disabled
     if (/aws_db_parameter_group\b/i.test(cleanContent) && /name\s*=\s*["\']rds\.force_ssl["\'][\s\S]*?value\s*=\s*["\']0["\']/i.test(cleanContent)) {
-        const matchLineIdx = lines.findIndex(l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('*') && (/iac-44|aws/i.test(l) || lines.indexOf(l) === 0));
+        const matchLineIdx = locateMatchLine(lines, [/aws_db_parameter_group\b/i, /name\s*=\s*["\']rds\.force_ssl["\'][\s\S]*?value\s*=\s*["\']0["\']/i], l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('*'));
         const lineNum = matchLineIdx !== -1 ? matchLineIdx + 1 : 1;
         findings.push({
             id: `iac44-${Date.now()}-${findingCounter.count++}`,
@@ -1121,7 +1122,7 @@ export function evaluateIacRules(file: CodeFile, lines: string[], cleanContent: 
     }
     // IAC-45: Kubernetes Ingress Allowing Insecure Snippet Annotations
     if (/nginx\.ingress\.kubernetes\.io\/configuration-snippet/i.test(cleanContent) && /\.(?:ya?ml)$/i.test(file.path)) {
-        const matchLineIdx = lines.findIndex(l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('*') && (/iac-45|kubernetes/i.test(l) || lines.indexOf(l) === 0));
+        const matchLineIdx = locateMatchLine(lines, [/nginx\.ingress\.kubernetes\.io\/configuration-snippet/i], l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('*'));
         const lineNum = matchLineIdx !== -1 ? matchLineIdx + 1 : 1;
         findings.push({
             id: `iac45-${Date.now()}-${findingCounter.count++}`,
@@ -1146,7 +1147,7 @@ export function evaluateIacRules(file: CodeFile, lines: string[], cleanContent: 
     }
     // IAC-46: AWS Backup Plan Missing Production Vault Association
     if (/aws_backup_plan\b/i.test(cleanContent) && !/aws_backup_selection/i.test(cleanContent)) {
-        const matchLineIdx = lines.findIndex(l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('*') && (/iac-46|aws/i.test(l) || lines.indexOf(l) === 0));
+        const matchLineIdx = locateMatchLine(lines, [/aws_backup_plan\b/i], l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('*'));
         const lineNum = matchLineIdx !== -1 ? matchLineIdx + 1 : 1;
         findings.push({
             id: `iac46-${Date.now()}-${findingCounter.count++}`,
@@ -1171,7 +1172,7 @@ export function evaluateIacRules(file: CodeFile, lines: string[], cleanContent: 
     }
     // IAC-47: AWS WAF WebACL Missing Common Rule Set (AWSManagedRulesCommonRuleSet)
     if (/aws_wafv2_web_acl\b/i.test(cleanContent) && !/AWSManagedRulesCommonRuleSet/i.test(cleanContent)) {
-        const matchLineIdx = lines.findIndex(l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('*') && (/iac-47|aws/i.test(l) || lines.indexOf(l) === 0));
+        const matchLineIdx = locateMatchLine(lines, [/aws_wafv2_web_acl\b/i], l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('*'));
         const lineNum = matchLineIdx !== -1 ? matchLineIdx + 1 : 1;
         findings.push({
             id: `iac47-${Date.now()}-${findingCounter.count++}`,
@@ -1196,7 +1197,7 @@ export function evaluateIacRules(file: CodeFile, lines: string[], cleanContent: 
     }
     // IAC-48: Terraform AWS EC2 Instance Missing IMDSv2 Enforcement
     if (/aws_instance\b/i.test(cleanContent) && /metadata_options\s*\{[^}]*http_tokens\s*=\s*["\']optional["\']/i.test(cleanContent)) {
-        const matchLineIdx = lines.findIndex(l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('*') && (/iac-48|terraform/i.test(l) || lines.indexOf(l) === 0));
+        const matchLineIdx = locateMatchLine(lines, [/aws_instance\b/i, /metadata_options\s*\{[^}]*http_tokens\s*=\s*["\']optional["\']/i], l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('*'));
         const lineNum = matchLineIdx !== -1 ? matchLineIdx + 1 : 1;
         findings.push({
             id: `iac48-${Date.now()}-${findingCounter.count++}`,
@@ -1221,7 +1222,7 @@ export function evaluateIacRules(file: CodeFile, lines: string[], cleanContent: 
     }
     // IAC-49: Kubernetes Pod Tolerating All Taints (*)
     if (/tolerations:\s*\[[\s\S]*?operator:\s*["\']Exists["\'](?![^}]*key:)/i.test(cleanContent) && /\.(?:ya?ml)$/i.test(file.path)) {
-        const matchLineIdx = lines.findIndex(l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('*') && (/iac-49|kubernetes/i.test(l) || lines.indexOf(l) === 0));
+        const matchLineIdx = locateMatchLine(lines, [/tolerations:\s*\[[\s\S]*?operator:\s*["\']Exists["\'](?![^}]*key:)/i], l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('*'));
         const lineNum = matchLineIdx !== -1 ? matchLineIdx + 1 : 1;
         findings.push({
             id: `iac49-${Date.now()}-${findingCounter.count++}`,
@@ -1246,7 +1247,7 @@ export function evaluateIacRules(file: CodeFile, lines: string[], cleanContent: 
     }
     // IAC-50: AWS Route 53 Hosted Zone Missing DNSSEC Verification
     if (/aws_route53_zone\b/i.test(cleanContent) && !/aws_route53_key_signing_key/i.test(cleanContent)) {
-        const matchLineIdx = lines.findIndex(l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('*') && (/iac-50|aws/i.test(l) || lines.indexOf(l) === 0));
+        const matchLineIdx = locateMatchLine(lines, [/aws_route53_zone\b/i], l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('*'));
         const lineNum = matchLineIdx !== -1 ? matchLineIdx + 1 : 1;
         findings.push({
             id: `iac50-${Date.now()}-${findingCounter.count++}`,

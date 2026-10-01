@@ -144,7 +144,7 @@ export const ScanRunnerView: React.FC<ScanRunnerViewProps> = ({
           logger.debug('[ScanRunnerView] Telemetry error notice:', telemetryErr);
         });
       }
-      onCompleteScanRef.current(scanResult);
+      onCompleteScanRef.current({ ...scanResult, durationMs: elapsedSeconds * 1000 });
     }
   }, [countdownSeconds, isFinished, scanResult, project.id, elapsedSeconds, onCompleteScanTelemetry]);
 

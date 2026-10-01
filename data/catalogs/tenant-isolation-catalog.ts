@@ -108,5 +108,26 @@ export const TENANT_ISOLATION_CATALOG: SecurityRule[] = [
     description: "Asynchronous background jobs executing heavy workloads without checking tenant subscription quota balances.",
     verificationControl: "Verify tenant resource limits and deduct quota units before scheduling asynchronous job execution.",
     claudePrompt: "Check and decrement tenant quota counter in Redis before dispatching background compute tasks."
+  },
+  {
+    id: 9106,
+    owasp2025Category: "A01:2025-Broken Access Control",
+    cweId: "CWE-639",
+    sourceUrl: "https://cwe.mitre.org/data/definitions/639.html",
+    sourceType: "official-standard",
+    positiveExample: "admin.from('invoices').select('*').eq('id', params.id).eq('user_id', user.id)",
+    negativeExample: "admin.from('invoices').select('*').eq('id', params.id)",
+    applicableLanguages: ["TypeScript", "JavaScript"],
+    detectionMethod: "regex",
+    falsePositiveRisk: "medium",
+    status: "published",
+    code: "TENANT-06",
+    title: "IDOR - Record Loaded by Request ID Without Owner Scoping",
+    category: "Multi-Tenant Isolation",
+    owaspTag: "Broken Object Level Authorization",
+    riskLevel: "CRITICAL",
+    description: "A record is loaded by an id from the request without filtering by owner or tenant (ORM queries, or Supabase service-role clients that bypass RLS), exposing other users' records.",
+    verificationControl: "Every service-role lookup by request id resolves the caller and filters by user_id / org_id, or uses the user-scoped client so RLS applies.",
+    claudePrompt: "Scope the lookup to the caller (e.g. where: { id, userId: session.user.id } in Prisma, .eq('user_id', user.id) in Supabase, { _id: id, owner: req.user.id } in Mongoose) or verify ownership before returning the record."
   }
 ];

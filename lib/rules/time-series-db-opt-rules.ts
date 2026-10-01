@@ -4,6 +4,7 @@
  */
 import { Finding } from "@/data/schema";
 import { CodeFile } from "../scanner-engine";
+import { locateMatchLine } from './shared/locate';
 export interface TimeSeriesDbOptRuleResult {
     findings: Finding[];
     logs: string[];
@@ -15,13 +16,13 @@ export function evaluateTimeSeriesDbOptRules(file: CodeFile, lines: string[], cl
     const logs: string[] = [];
     const lowerPath = file.path.toLowerCase().replace(/\\/g, "/");
     // Skip self-referential catalogs, mocks, and schema definitions
-    if (lowerPath.includes("data/catalogs/") || lowerPath.includes("data/mockdata") || lowerPath.includes("data/workspacefiles") || lowerPath.includes("data/schema") || lowerPath.includes("scratch/") || lowerPath.includes(".agent/") || lowerPath.includes("node_modules/") || lowerPath.endsWith(".d.ts")) {
+    if (lowerPath.includes("node_modules/") || lowerPath.endsWith(".d.ts")) {
         return { findings, logs };
     }
     const ts = new Date().toLocaleTimeString();
     // TSDB-OPT-01: TimescaleDB Hypertable Chunk Interval Sizing Exceeding In-Memory RAM Working Set
     if (((/hypertable|timescale_schema/i.test(lowerPath) || /create_hypertable/i.test(cleanContent)) && !/chunk_time_interval/i.test(cleanContent))) {
-        const matchLineIdx = lines.findIndex(l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('#') && !l.trim().startsWith('*'));
+        const matchLineIdx = locateMatchLine(lines, [/create_hypertable/i], l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('#') && !l.trim().startsWith('*'));
         const lineNum = matchLineIdx !== -1 ? matchLineIdx + 1 : 1;
         findings.push({
             id: `tsdbopt15901-${Date.now()}-${findingCounter.count++}`,
@@ -35,7 +36,7 @@ export function evaluateTimeSeriesDbOptRules(file: CodeFile, lines: string[], cl
             snippet: lines[matchLineIdx] || 'Time-Series Database Optimization configuration',
             reproductionSteps: [
                 `Audited Time-Series Database Optimization configuration in ${file.path}:${lineNum}.`,
-                'Detected violation matching {code}.'
+                'Matched TSDB-OPT-01: TimescaleDB Hypertable Chunk Interval Sizing Exceeding In-Memory RAM Working Set.'
             ],
             remediationPrompt: "Configure hypertable chunk intervals (e.g. 1 day or 12 hours) so that recent chunk indexes fit fully into shared memory buffers.",
             status: 'OPEN',
@@ -45,7 +46,7 @@ export function evaluateTimeSeriesDbOptRules(file: CodeFile, lines: string[], cl
     }
     // TSDB-OPT-02: ClickHouse MergeTree Missing Partition Granularity Causing Shard Thread Starvation
     if (((/clickhouse_ddl|mergetree/i.test(lowerPath) || /ENGINE\s*=\s*MergeTree/i.test(cleanContent)) && !/PARTITION BY/i.test(cleanContent))) {
-        const matchLineIdx = lines.findIndex(l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('#') && !l.trim().startsWith('*'));
+        const matchLineIdx = locateMatchLine(lines, [/ENGINE\s*=\s*MergeTree/i], l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('#') && !l.trim().startsWith('*'));
         const lineNum = matchLineIdx !== -1 ? matchLineIdx + 1 : 1;
         findings.push({
             id: `tsdbopt15902-${Date.now()}-${findingCounter.count++}`,
@@ -59,7 +60,7 @@ export function evaluateTimeSeriesDbOptRules(file: CodeFile, lines: string[], cl
             snippet: lines[matchLineIdx] || 'Time-Series Database Optimization configuration',
             reproductionSteps: [
                 `Audited Time-Series Database Optimization configuration in ${file.path}:${lineNum}.`,
-                'Detected violation matching {code}.'
+                'Matched TSDB-OPT-02: ClickHouse MergeTree Missing Partition Granularity Causing Shard Thread Starvation.'
             ],
             remediationPrompt: "Partition MergeTree tables by reasonable time intervals (e.g. toYYYYMM) to avoid excessive part mutation overhead.",
             status: 'OPEN',
@@ -69,7 +70,7 @@ export function evaluateTimeSeriesDbOptRules(file: CodeFile, lines: string[], cl
     }
     // TSDB-OPT-03: Missing Columnar DoubleDelta or Gorilla Compression Codecs on Numeric Metric Series
     if (((/timeseries_schema|column_codecs/i.test(lowerPath) || /CODEC\(/i.test(cleanContent)) && !/DoubleDelta|Gorilla/i.test(cleanContent))) {
-        const matchLineIdx = lines.findIndex(l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('#') && !l.trim().startsWith('*'));
+        const matchLineIdx = locateMatchLine(lines, [/CODEC\(/i], l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('#') && !l.trim().startsWith('*'));
         const lineNum = matchLineIdx !== -1 ? matchLineIdx + 1 : 1;
         findings.push({
             id: `tsdbopt15903-${Date.now()}-${findingCounter.count++}`,
@@ -83,7 +84,7 @@ export function evaluateTimeSeriesDbOptRules(file: CodeFile, lines: string[], cl
             snippet: lines[matchLineIdx] || 'Time-Series Database Optimization configuration',
             reproductionSteps: [
                 `Audited Time-Series Database Optimization configuration in ${file.path}:${lineNum}.`,
-                'Detected violation matching {code}.'
+                'Matched TSDB-OPT-03: Missing Columnar DoubleDelta or Gorilla Compression Codecs on Numeric Metric Series.'
             ],
             remediationPrompt: "Apply Gorilla or DoubleDelta compression encodings to floating point and integer telemetry streams to reduce storage by 80%+.",
             status: 'OPEN',
@@ -93,7 +94,7 @@ export function evaluateTimeSeriesDbOptRules(file: CodeFile, lines: string[], cl
     }
     // TSDB-OPT-04: Unscheduled Continuous Aggregates Causing Real-Time Metric Query CPU Spikes
     if (((/continuous_aggs|rollup_views/i.test(lowerPath) || /continuous_aggregate/i.test(cleanContent)) && !/add_continuous_aggregate_policy/i.test(cleanContent))) {
-        const matchLineIdx = lines.findIndex(l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('#') && !l.trim().startsWith('*'));
+        const matchLineIdx = locateMatchLine(lines, [/continuous_aggregate/i], l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('#') && !l.trim().startsWith('*'));
         const lineNum = matchLineIdx !== -1 ? matchLineIdx + 1 : 1;
         findings.push({
             id: `tsdbopt15904-${Date.now()}-${findingCounter.count++}`,
@@ -107,7 +108,7 @@ export function evaluateTimeSeriesDbOptRules(file: CodeFile, lines: string[], cl
             snippet: lines[matchLineIdx] || 'Time-Series Database Optimization configuration',
             reproductionSteps: [
                 `Audited Time-Series Database Optimization configuration in ${file.path}:${lineNum}.`,
-                'Detected violation matching {code}.'
+                'Matched TSDB-OPT-04: Unscheduled Continuous Aggregates Causing Real-Time Metric Query CPU Spikes.'
             ],
             remediationPrompt: "Materialize downsampled time-series rollups using continuous aggregate views with automated refresh policies.",
             status: 'OPEN',
@@ -117,7 +118,7 @@ export function evaluateTimeSeriesDbOptRules(file: CodeFile, lines: string[], cl
     }
     // TSDB-OPT-05: Missing Automated Data Retention Policy on Raw High-Frequency Metric Partitions
     if (((/retention_policy|metric_cleanup/i.test(lowerPath) || /drop_chunks/i.test(cleanContent)) && !/add_retention_policy/i.test(cleanContent))) {
-        const matchLineIdx = lines.findIndex(l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('#') && !l.trim().startsWith('*'));
+        const matchLineIdx = locateMatchLine(lines, [/drop_chunks/i], l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('#') && !l.trim().startsWith('*'));
         const lineNum = matchLineIdx !== -1 ? matchLineIdx + 1 : 1;
         findings.push({
             id: `tsdbopt15905-${Date.now()}-${findingCounter.count++}`,
@@ -131,7 +132,7 @@ export function evaluateTimeSeriesDbOptRules(file: CodeFile, lines: string[], cl
             snippet: lines[matchLineIdx] || 'Time-Series Database Optimization configuration',
             reproductionSteps: [
                 `Audited Time-Series Database Optimization configuration in ${file.path}:${lineNum}.`,
-                'Detected violation matching {code}.'
+                'Matched TSDB-OPT-05: Missing Automated Data Retention Policy on Raw High-Frequency Metric Partitions.'
             ],
             remediationPrompt: "Implement automated drop_chunks retention policies discarding raw granular metric data after 30 to 90 days.",
             status: 'OPEN',

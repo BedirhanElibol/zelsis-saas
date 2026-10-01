@@ -4,6 +4,7 @@
  */
 import { Finding } from "@/data/schema";
 import { CodeFile } from "../scanner-engine";
+import { locateMatchLine } from './shared/locate';
 export interface CppMemoryRuleResult {
     findings: Finding[];
     logs: string[];
@@ -15,7 +16,7 @@ export function evaluateCppMemoryRules(file: CodeFile, lines: string[], cleanCon
     const logs: string[] = [];
     const lowerPath = file.path.toLowerCase().replace(/\\/g, "/");
     // Skip self-referential catalogs, mocks, and non-cpp paths
-    if (lowerPath.includes("data/catalogs/") || lowerPath.includes("data/mockdata") || lowerPath.includes("data/workspacefiles") || lowerPath.includes("data/schema") || lowerPath.includes("scratch/") || lowerPath.includes(".agent/") || lowerPath.includes("node_modules/") || lowerPath.endsWith(".d.ts")) {
+    if (lowerPath.includes("node_modules/") || lowerPath.endsWith(".d.ts")) {
         return { findings, logs };
     }
     const isCpp = lowerPath.endsWith(".c") || lowerPath.endsWith(".cpp") || lowerPath.endsWith(".cc") || lowerPath.endsWith(".h") || lowerPath.endsWith(".hpp");
@@ -24,7 +25,7 @@ export function evaluateCppMemoryRules(file: CodeFile, lines: string[], cleanCon
     const ts = new Date().toLocaleTimeString();
     // CPP-SEC-01: Use of Unbounded String Copy Function (strcpy / gets / sprintf)
     if ((/\b(?:strcpy|gets|sprintf)\s*\(/i.test(cleanContent))) {
-        const matchLineIdx = lines.findIndex(l => !l.trim().startsWith('//') && !l.trim().startsWith('/*') && !l.trim().startsWith('*'));
+        const matchLineIdx = locateMatchLine(lines, [/\b(?:strcpy|gets|sprintf)\s*\(/i], l => !l.trim().startsWith('//') && !l.trim().startsWith('/*') && !l.trim().startsWith('*'));
         const lineNum = matchLineIdx !== -1 ? matchLineIdx + 1 : 1;
         findings.push({
             id: `cppsec10001-${Date.now()}-${findingCounter.count++}`,
@@ -48,7 +49,7 @@ export function evaluateCppMemoryRules(file: CodeFile, lines: string[], cleanCon
     }
     // CPP-SEC-02: Use-After-Free Vulnerability (Dangling Pointer Dereference)
     if ((/free\s*\(\s*([a-zA-Z0-9_]+)\s*\)[\s\S]{1,200}\b\1(?:->|\.|\s*=\s*\*)/.test(cleanContent))) {
-        const matchLineIdx = lines.findIndex(l => !l.trim().startsWith('//') && !l.trim().startsWith('/*') && !l.trim().startsWith('*'));
+        const matchLineIdx = locateMatchLine(lines, [/free\s*\(\s*([a-zA-Z0-9_]+)\s*\)[\s\S]{1,200}\b\1(?:->|\.|\s*=\s*\*)/], l => !l.trim().startsWith('//') && !l.trim().startsWith('/*') && !l.trim().startsWith('*'));
         const lineNum = matchLineIdx !== -1 ? matchLineIdx + 1 : 1;
         findings.push({
             id: `cppsec10002-${Date.now()}-${findingCounter.count++}`,
@@ -72,7 +73,7 @@ export function evaluateCppMemoryRules(file: CodeFile, lines: string[], cleanCon
     }
     // CPP-SEC-03: Double Free Vulnerability (Repeated Deallocation)
     if ((/free\s*\(\s*([a-zA-Z0-9_]+)\s*\)[\s\S]{1,150}free\s*\(\s*\1\s*\)/.test(cleanContent))) {
-        const matchLineIdx = lines.findIndex(l => !l.trim().startsWith('//') && !l.trim().startsWith('/*') && !l.trim().startsWith('*'));
+        const matchLineIdx = locateMatchLine(lines, [/free\s*\(\s*([a-zA-Z0-9_]+)\s*\)[\s\S]{1,150}free\s*\(\s*\1\s*\)/], l => !l.trim().startsWith('//') && !l.trim().startsWith('/*') && !l.trim().startsWith('*'));
         const lineNum = matchLineIdx !== -1 ? matchLineIdx + 1 : 1;
         findings.push({
             id: `cppsec10003-${Date.now()}-${findingCounter.count++}`,
@@ -96,7 +97,7 @@ export function evaluateCppMemoryRules(file: CodeFile, lines: string[], cleanCon
     }
     // CPP-SEC-04: Integer Overflow Leading to Heap Buffer Overflow in malloc
     if ((/malloc\s*\(\s*[a-zA-Z0-9_]+\s*\*\s*[a-zA-Z0-9_]+\s*\)/i.test(cleanContent))) {
-        const matchLineIdx = lines.findIndex(l => !l.trim().startsWith('//') && !l.trim().startsWith('/*') && !l.trim().startsWith('*'));
+        const matchLineIdx = locateMatchLine(lines, [/malloc\s*\(\s*[a-zA-Z0-9_]+\s*\*\s*[a-zA-Z0-9_]+\s*\)/i], l => !l.trim().startsWith('//') && !l.trim().startsWith('/*') && !l.trim().startsWith('*'));
         const lineNum = matchLineIdx !== -1 ? matchLineIdx + 1 : 1;
         findings.push({
             id: `cppsec10004-${Date.now()}-${findingCounter.count++}`,
@@ -120,7 +121,7 @@ export function evaluateCppMemoryRules(file: CodeFile, lines: string[], cleanCon
     }
     // CPP-SEC-05: Uninitialized Stack Variable Usage
     if ((/(?:char|int|uint8_t)\s+[a-zA-Z0-9_]+\[\d+\]\s*;/.test(cleanContent) && !/memset|bzero|\{\s*0\s*\}/i.test(cleanContent))) {
-        const matchLineIdx = lines.findIndex(l => !l.trim().startsWith('//') && !l.trim().startsWith('/*') && !l.trim().startsWith('*'));
+        const matchLineIdx = locateMatchLine(lines, [/(?:char|int|uint8_t)\s+[a-zA-Z0-9_]+\[\d+\]\s*;/], l => !l.trim().startsWith('//') && !l.trim().startsWith('/*') && !l.trim().startsWith('*'));
         const lineNum = matchLineIdx !== -1 ? matchLineIdx + 1 : 1;
         findings.push({
             id: `cppsec10005-${Date.now()}-${findingCounter.count++}`,

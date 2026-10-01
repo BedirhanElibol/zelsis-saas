@@ -33,7 +33,7 @@ export const TIER_CONFIGS: Record<UserTier, TierFeatureConfig> = {
     pdfExportAccess: false,
     cicdIntegration: false,
     customRules: false,
-    ruleInventory: '20 Core OWASP Rules',
+    ruleInventory: 'All active rules',
     supportSla: 'Community Support',
     concurrentWorkers: 1,
     historyRetentionDays: 7
@@ -49,7 +49,7 @@ export const TIER_CONFIGS: Record<UserTier, TierFeatureConfig> = {
     pdfExportAccess: true,
     cicdIntegration: true,
     customRules: false,
-    ruleInventory: 'All Verified Production Rules',
+    ruleInventory: 'All active rules',
     supportSla: '24-Hour Email Support',
     concurrentWorkers: 5,
     historyRetentionDays: 90
@@ -65,7 +65,7 @@ export const TIER_CONFIGS: Record<UserTier, TierFeatureConfig> = {
     pdfExportAccess: true,
     cicdIntegration: true,
     customRules: true,
-    ruleInventory: 'All Rules + Custom Policy Catalog',
+    ruleInventory: 'All active rules',
     supportSla: 'Priority Email & Slack Support',
     concurrentWorkers: 'Unlimited',
     historyRetentionDays: 'Unlimited'

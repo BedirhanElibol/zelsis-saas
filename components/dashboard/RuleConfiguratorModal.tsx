@@ -2,9 +2,8 @@
 
 import React, { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { X, Sliders, CheckCircle2, ShieldCheck, Zap, AlertTriangle, Lock } from 'lucide-react';
+import { X, Sliders, CheckCircle2, Copy } from 'lucide-react';
 import { UserTier } from '@/data/schema';
-import { isCustomRulesAllowed } from '@/lib/quota-manager';
 
 interface RuleConfiguratorModalProps {
   isOpen: boolean;
@@ -14,26 +13,26 @@ interface RuleConfiguratorModalProps {
   onOpenCheckout?: (plan?: 'Pro' | 'Enterprise') => void;
 }
 
+/** Commonly tuned rules; ids match the engine so the generated .zelsisrc.json suppresses exactly these. */
+const TUNABLE_RULES = [
+  { id: 1, name: 'Exposed hardcoded secret API key', category: 'SECURITY', severity: 'CRITICAL' },
+  { id: 3, name: 'Permissive row level security policy (USING true)', category: 'SECURITY', severity: 'CRITICAL' },
+  { id: 14, name: 'Hardcoded fallback for session / JWT secret', category: 'SECURITY', severity: 'CRITICAL' },
+  { id: 8, name: 'Wildcard CORS (Access-Control-Allow-Origin: *)', category: 'SECURITY', severity: 'HIGH' },
+  { id: 16, name: 'Unsanitized innerHTML mutation (XSS risk)', category: 'SECURITY', severity: 'HIGH' },
+  { id: 101, name: 'Missing Content-Security-Policy header', category: 'SECURITY', severity: 'CRITICAL' },
+  { id: 102, name: 'Missing HSTS header', category: 'SECURITY', severity: 'HIGH' },
+  { id: 1001, name: 'Generic purple-blue neon gradient', category: 'VIBEPOLISH', severity: 'MEDIUM' },
+  { id: 201, name: 'Decorative floating hero pill badge', category: 'VIBEPOLISH', severity: 'MEDIUM' },
+  { id: 202, name: 'Paired dual CTA buttons in hero', category: 'VIBEPOLISH', severity: 'LOW' }
+] as const;
+
 export const RuleConfiguratorModal: React.FC<RuleConfiguratorModalProps> = ({
   isOpen,
   onClose,
   projectName,
-  userTier,
-  onOpenCheckout,
 }) => {
-  const isAllowed = isCustomRulesAllowed(userTier);
-  const [rules, setRules] = useState([
-    { id: 1, name: 'SEC-01: Exposed API Keys & Tokens', category: 'SECURITY', severity: 'CRITICAL', enabled: true },
-    { id: 3, name: 'SEC-03: Permissive Row Level Security (RLS)', category: 'SECURITY', severity: 'CRITICAL', enabled: true },
-    { id: 8, name: 'SEC-08: Wildcard CORS Configuration (*)', category: 'SECURITY', severity: 'HIGH', enabled: true },
-    { id: 16, name: 'SEC-16: Unsanitized innerHTML DOM Mutation', category: 'SECURITY', severity: 'HIGH', enabled: true },
-    { id: 101, name: 'SEC-WEB-01: Missing Content-Security-Policy', category: 'SECURITY', severity: 'CRITICAL', enabled: true },
-    { id: 102, name: 'SEC-WEB-02: Missing HSTS Security Header', category: 'SECURITY', severity: 'HIGH', enabled: true },
-    { id: 26, name: 'UI-01: Generic Neon Gradient Cliché', category: 'VIBEPOLISH', severity: 'MEDIUM', enabled: true },
-    { id: 27, name: 'UI-03: Sparkle Icon Overuse (Replace with Action Micro-Copy)', category: 'VIBEPOLISH', severity: 'LOW', enabled: true },
-    { id: 28, name: 'UI-04: Absence of Empty State Component Fallback', category: 'VIBEPOLISH', severity: 'MEDIUM', enabled: true },
-    { id: 29, name: 'UI-07: Conversational Chat-Wrapper Lock-In Trap', category: 'VIBEPOLISH', severity: 'HIGH', enabled: true }
-  ]);
+  const [rules, setRules] = useState(() => TUNABLE_RULES.map((r) => ({ ...r, enabled: true })));
 
   const [savedStatus, setSavedStatus] = useState(false);
 
@@ -47,6 +46,8 @@ export const RuleConfiguratorModal: React.FC<RuleConfiguratorModalProps> = ({
   }, [isOpen, onClose]);
 
   if (!isOpen) return null;
+
+  const rcJson = JSON.stringify({ ignoreRules: rules.filter((r) => !r.enabled).map((r) => String(r.id)) }, null, 2);
 
   const toggleRule = (index: number) => {
     setRules((prev) =>
@@ -74,10 +75,10 @@ export const RuleConfiguratorModal: React.FC<RuleConfiguratorModalProps> = ({
               </div>
               <div>
                 <h2 className="text-lg font-extrabold text-[#EDEDED]">
-                  Release Gate Rule Engine Configurator
+                  Rule Configuration
                 </h2>
                 <p className="text-xs text-[#94A3B8]">
-                  Customize OWASP &amp; VibePolish UI clearance rules for {projectName}
+                  Generate a .zelsisrc.json for {projectName}. Commit it to the repository root; the next scan applies it.
                 </p>
               </div>
             </div>
@@ -90,45 +91,12 @@ export const RuleConfiguratorModal: React.FC<RuleConfiguratorModalProps> = ({
             </button>
           </div>
 
-          {!isAllowed ? (
-            <div className="flex flex-col items-center justify-center gap-6 py-12 px-6 bg-[#0A0A0A] border border-white/10 rounded-2xl text-center my-2">
-              <div className="w-14 h-14 rounded-2xl bg-white/5 border border-white/10 flex items-center justify-center">
-                <Lock size={26} className="text-zinc-400" />
-              </div>
-              <div className="max-w-md">
-                <h3 className="text-base font-extrabold text-[#EDEDED] mb-2">
-                  Custom Rule Engine is an Enterprise Feature
-                </h3>
-                <p className="text-xs text-[#A1A1AA] leading-relaxed">
-                  Tailor OWASP clearance thresholds, custom security rule matrices, and organization-wide compliance policies.
-                  Available exclusively on the <span className="text-white font-semibold">Enterprise</span> plan.
-                </p>
-              </div>
-              <div className="flex items-center gap-3 w-full max-w-xs">
-                <button
-                  type="button"
-                  onClick={onClose}
-                  className="btn btn-secondary text-xs px-4 py-2.5 flex-1 min-h-[44px]"
-                >
-                  Cancel
-                </button>
-                <button
-                  type="button"
-                  onClick={() => onOpenCheckout?.('Enterprise')}
-                  className="btn btn-primary text-xs px-5 py-2.5 font-bold rounded-xl flex items-center justify-center gap-2 bg-white text-black hover:bg-neutral-200 transition-all shadow-sm flex-1 min-h-[44px]"
-                >
-                  <Lock size={13} />
-                  <span>Upgrade to Enterprise</span>
-                </button>
-              </div>
-            </div>
-          ) : (
-            <>
+          <>
               {/* Rules List */}
               <div className="max-h-[20rem] overflow-y-auto space-y-2 pr-1">
                 {rules.length === 0 ? (
                   <div className="p-8 text-center bg-[#0A0A0A] rounded-xl border border-white/10 text-xs text-[#94A3B8]">
-                    No rules active in custom configuration. Reset to default OWASP &amp; VibePolish rule matrix.
+                    No rules listed.
                   </div>
                 ) : (
                   rules.map((rule, idx) => (
@@ -173,18 +141,18 @@ export const RuleConfiguratorModal: React.FC<RuleConfiguratorModalProps> = ({
                   ))
                 )}
               </div>
-              {/* Saved Status */}
+              <pre className="p-3 rounded-xl bg-[#0A0A0A] border border-white/10 text-[11px] font-mono text-zinc-300 overflow-x-auto">{rcJson}</pre>
               {savedStatus && (
                 <div className="p-3 rounded-xl bg-white/5 border border-white/10 text-white text-xs font-mono flex items-center gap-2">
                   <CheckCircle2 size={16} />
-                  <span>Rule Configuration Saved! Rule matrix updated for {projectName}.</span>
+                  <span>Copied. Save it as .zelsisrc.json in the repository root of {projectName}.</span>
                 </div>
               )}
 
               {/* Footer Actions */}
               <div className="flex items-center justify-between pt-2 border-t border-white/10">
                 <div className="text-xs text-[#94A3B8] font-mono">
-                  {rules.filter((r) => r.enabled).length} of {rules.length} Rules Active
+                  {rules.filter((r) => !r.enabled).length} rule(s) suppressed
                 </div>
 
                 <div className="flex items-center gap-2">
@@ -194,16 +162,15 @@ export const RuleConfiguratorModal: React.FC<RuleConfiguratorModalProps> = ({
                   <button
                     className="btn btn-primary text-xs px-5 py-2 font-bold uppercase tracking-wider rounded-lg bg-white text-black hover:bg-neutral-200 transition-all shadow-sm min-h-[44px]"
                     onClick={() => {
-                      setSavedStatus(true);
-                      setTimeout(onClose, 1200);
+                      navigator.clipboard.writeText(rcJson).then(() => setSavedStatus(true)).catch(() => setSavedStatus(false));
                     }}
                   >
-                    Save Rule Matrix
+                    <Copy size={12} className="inline mr-1.5" aria-hidden="true" />
+                    Copy .zelsisrc.json
                   </button>
                 </div>
               </div>
-            </>
-          )}
+          </>
         </motion.div>
       </div>
     </AnimatePresence>

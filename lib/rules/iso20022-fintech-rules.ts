@@ -4,6 +4,7 @@
  */
 import { Finding } from "@/data/schema";
 import { CodeFile } from "../scanner-engine";
+import { locateMatchLine } from './shared/locate';
 export interface Iso20022FintechRuleResult {
     findings: Finding[];
     logs: string[];
@@ -15,13 +16,13 @@ export function evaluateIso20022FintechRules(file: CodeFile, lines: string[], cl
     const logs: string[] = [];
     const lowerPath = file.path.toLowerCase().replace(/\\/g, "/");
     // Skip self-referential catalogs, mocks, and schema definitions
-    if (lowerPath.includes("data/catalogs/") || lowerPath.includes("data/mockdata") || lowerPath.includes("data/workspacefiles") || lowerPath.includes("data/schema") || lowerPath.includes("scratch/") || lowerPath.includes(".agent/") || lowerPath.includes("node_modules/") || lowerPath.endsWith(".d.ts")) {
+    if (lowerPath.includes("node_modules/") || lowerPath.endsWith(".d.ts")) {
         return { findings, logs };
     }
     const ts = new Date().toLocaleTimeString();
     // ISO20022-01: ISO 20022 pacs.008 XML Syntax Validation Failure on Customer Credit Transfers
     if (cleanContent.includes('iso20022Pacs008SyntaxValidationFailure') || ((/payment_xml|pacs008|clearing/i.test(lowerPath) || /pacs\.008|FIToFICstmrCdtTrf/i.test(cleanContent)) && !/validateIso20022Schema/i.test(cleanContent))) {
-        const matchLineIdx = lines.findIndex(l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('#') && !l.trim().startsWith('*'));
+        const matchLineIdx = locateMatchLine(lines, [/pacs\.008|FIToFICstmrCdtTrf/i], l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('#') && !l.trim().startsWith('*'));
         const lineNum = matchLineIdx !== -1 ? matchLineIdx + 1 : 1;
         findings.push({
             id: `iso2002215801-${Date.now()}-${findingCounter.count++}`,
@@ -35,7 +36,7 @@ export function evaluateIso20022FintechRules(file: CodeFile, lines: string[], cl
             snippet: lines[matchLineIdx] || 'ISO 20022 Financial Messaging configuration',
             reproductionSteps: [
                 `Audited ISO 20022 Financial Messaging configuration in ${file.path}:${lineNum}.`,
-                'Detected violation matching {code}.'
+                'Matched ISO20022-01: ISO 20022 pacs.008 XML Syntax Validation Failure on Customer Credit Transfers.'
             ],
             remediationPrompt: "Validate all outgoing and incoming pacs.008 financial messages against official ISO 20022 XSD schemas prior to clearing.",
             status: 'OPEN',
@@ -45,7 +46,7 @@ export function evaluateIso20022FintechRules(file: CodeFile, lines: string[], cl
     }
     // ISO20022-02: Missing ISO 20022 End-to-End Identification (EndToEndId) Truncation Protection
     if (cleanContent.includes('iso20022EndToEndIdTruncationRisk') || ((/payment_routing|ledger_hop/i.test(lowerPath) || /EndToEndId/i.test(cleanContent)) && !/preserveFullEndToEndId/i.test(cleanContent))) {
-        const matchLineIdx = lines.findIndex(l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('#') && !l.trim().startsWith('*'));
+        const matchLineIdx = locateMatchLine(lines, [/EndToEndId/i], l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('#') && !l.trim().startsWith('*'));
         const lineNum = matchLineIdx !== -1 ? matchLineIdx + 1 : 1;
         findings.push({
             id: `iso2002215802-${Date.now()}-${findingCounter.count++}`,
@@ -59,7 +60,7 @@ export function evaluateIso20022FintechRules(file: CodeFile, lines: string[], cl
             snippet: lines[matchLineIdx] || 'ISO 20022 Financial Messaging configuration',
             reproductionSteps: [
                 `Audited ISO 20022 Financial Messaging configuration in ${file.path}:${lineNum}.`,
-                'Detected violation matching {code}.'
+                'Matched ISO20022-02: Missing ISO 20022 End-to-End Identification (EndToEndId) Truncation Protection.'
             ],
             remediationPrompt: "Ensure the 35-character EndToEndId element is preserved across all intermediary ledger hops without truncation or alteration.",
             status: 'OPEN',
@@ -69,7 +70,7 @@ export function evaluateIso20022FintechRules(file: CodeFile, lines: string[], cl
     }
     // ISO20022-03: FedNow / SEPA Instant Payment Settlement SLA Timeout Governance Failure
     if (cleanContent.includes('iso20022InstantSettlementTimeoutExceeded') || ((/instant_rail|fednow|sepa_instant/i.test(lowerPath) || /settlementTimeout|instantPaymentSla/i.test(cleanContent)) && !/maxSettlementTimeoutMs/i.test(cleanContent))) {
-        const matchLineIdx = lines.findIndex(l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('#') && !l.trim().startsWith('*'));
+        const matchLineIdx = locateMatchLine(lines, [/settlementTimeout|instantPaymentSla/i], l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('#') && !l.trim().startsWith('*'));
         const lineNum = matchLineIdx !== -1 ? matchLineIdx + 1 : 1;
         findings.push({
             id: `iso2002215803-${Date.now()}-${findingCounter.count++}`,
@@ -83,7 +84,7 @@ export function evaluateIso20022FintechRules(file: CodeFile, lines: string[], cl
             snippet: lines[matchLineIdx] || 'ISO 20022 Financial Messaging configuration',
             reproductionSteps: [
                 `Audited ISO 20022 Financial Messaging configuration in ${file.path}:${lineNum}.`,
-                'Detected violation matching {code}.'
+                'Matched ISO20022-03: FedNow / SEPA Instant Payment Settlement SLA Timeout Governance Failure.'
             ],
             remediationPrompt: "Enforce strict 10-second roundtrip transaction timeouts for instant credit transfers conforming to FedNow and SEPA rules.",
             status: 'OPEN',
@@ -93,7 +94,7 @@ export function evaluateIso20022FintechRules(file: CodeFile, lines: string[], cl
     }
     // ISO20022-04: Unvalidated Structured Creditor Reference (ISO 11649 RF Creditor Reference)
     if (cleanContent.includes('iso20022InvalidRfCreditorReference') || ((/creditor_ref|billing_reconcile/i.test(lowerPath) || /CdtrRefInf/i.test(cleanContent)) && !/verifyIso11649CheckDigit/i.test(cleanContent))) {
-        const matchLineIdx = lines.findIndex(l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('#') && !l.trim().startsWith('*'));
+        const matchLineIdx = locateMatchLine(lines, [/CdtrRefInf/i], l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('#') && !l.trim().startsWith('*'));
         const lineNum = matchLineIdx !== -1 ? matchLineIdx + 1 : 1;
         findings.push({
             id: `iso2002215804-${Date.now()}-${findingCounter.count++}`,
@@ -107,7 +108,7 @@ export function evaluateIso20022FintechRules(file: CodeFile, lines: string[], cl
             snippet: lines[matchLineIdx] || 'ISO 20022 Financial Messaging configuration',
             reproductionSteps: [
                 `Audited ISO 20022 Financial Messaging configuration in ${file.path}:${lineNum}.`,
-                'Detected violation matching {code}.'
+                'Matched ISO20022-04: Unvalidated Structured Creditor Reference (ISO 11649 RF Creditor Reference).'
             ],
             remediationPrompt: "Validate creditor reference formats using ISO 11649 mod 97-10 check digits to eliminate reconciliation billing mismatch.",
             status: 'OPEN',
@@ -117,7 +118,7 @@ export function evaluateIso20022FintechRules(file: CodeFile, lines: string[], cl
     }
     // ISO20022-05: Truncation of Ultimate Debtor and Creditor Regulatory Compliance Fields
     if (cleanContent.includes('iso20022UltimatePartiesTruncation') || ((/aml_compliance|fatf_travel_rule/i.test(lowerPath) || /UltmtDbtr|UltmtCdtr/i.test(cleanContent)) && !/retainUltimatePartiesData/i.test(cleanContent))) {
-        const matchLineIdx = lines.findIndex(l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('#') && !l.trim().startsWith('*'));
+        const matchLineIdx = locateMatchLine(lines, [/UltmtDbtr|UltmtCdtr/i], l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('#') && !l.trim().startsWith('*'));
         const lineNum = matchLineIdx !== -1 ? matchLineIdx + 1 : 1;
         findings.push({
             id: `iso2002215805-${Date.now()}-${findingCounter.count++}`,
@@ -131,7 +132,7 @@ export function evaluateIso20022FintechRules(file: CodeFile, lines: string[], cl
             snippet: lines[matchLineIdx] || 'ISO 20022 Financial Messaging configuration',
             reproductionSteps: [
                 `Audited ISO 20022 Financial Messaging configuration in ${file.path}:${lineNum}.`,
-                'Detected violation matching {code}.'
+                'Matched ISO20022-05: Truncation of Ultimate Debtor and Creditor Regulatory Compliance Fields.'
             ],
             remediationPrompt: "Retain complete regulatory identity fields (UltimateDebtor, UltimateCreditor) to prevent AML / FATF Travel Rule sanctions violations.",
             status: 'OPEN',

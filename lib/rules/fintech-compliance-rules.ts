@@ -4,6 +4,8 @@
  */
 import { Finding } from "@/data/schema";
 import { CodeFile } from "../scanner-engine";
+import { PAYMENT_SDK, REQUEST_BODY, WEBHOOK_VERIFY } from './shared/stack-signals';
+import { locateMatchLine } from './shared/locate';
 export interface FintechComplianceRuleResult {
     findings: Finding[];
     logs: string[];
@@ -15,13 +17,13 @@ export function evaluateFintechComplianceRules(file: CodeFile, lines: string[], 
     const logs: string[] = [];
     const lowerPath = file.path.toLowerCase().replace(/\\/g, "/");
     // Skip self-referential catalogs, mocks, and schema definitions
-    if (lowerPath.includes("data/catalogs/") || lowerPath.includes("data/mockdata") || lowerPath.includes("data/workspacefiles") || lowerPath.includes("data/schema") || lowerPath.includes("scratch/") || lowerPath.includes(".agent/") || lowerPath.includes("node_modules/") || lowerPath.endsWith(".d.ts")) {
+    if (lowerPath.includes("node_modules/") || lowerPath.endsWith(".d.ts")) {
         return { findings, logs };
     }
     const ts = new Date().toLocaleTimeString();
     // FINTECH-01: Storage of Sensitive Authentication Data (Card CVV / CVC)
     if (/(?:CREATE\s+TABLE|ALTER\s+TABLE)[\s\S]*?\b(?:cvv|cvc|card_security_code)\b\s+(?:varchar|text|int)/i.test(cleanContent) || (/\b(?:cvv|cvc|card_security_code)\b/i.test(cleanContent) && /(?:db\.|schema\.|columns|migration)/i.test(cleanContent))) {
-        const matchLineIdx = lines.findIndex(l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('*'));
+        const matchLineIdx = locateMatchLine(lines, [/(?:CREATE\s+TABLE|ALTER\s+TABLE)[\s\S]*?\b(?:cvv|cvc|card_security_code)\b\s+(?:varchar|text|int)/i, /\b(?:cvv|cvc|card_security_code)\b/i, /(?:db\.|schema\.|columns|migration)/i], l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('*'));
         const lineNum = matchLineIdx !== -1 ? matchLineIdx + 1 : 1;
         findings.push({
             id: `fintech9701-${Date.now()}-${findingCounter.count++}`,
@@ -45,7 +47,7 @@ export function evaluateFintechComplianceRules(file: CodeFile, lines: string[], 
     }
     // FINTECH-02: Unmasked Primary Account Number (PAN) Displayed in UI
     if (/<span>\s*\{[a-zA-Z0-9_]+\.cardNumber\}\s*<\/span>/i.test(cleanContent) || (/\bcardNumber\b/i.test(cleanContent) && /<[a-z]+[^>]*>\{[^}]*cardNumber[^}]*\}<\/[a-z]+>/i.test(cleanContent))) {
-        const matchLineIdx = lines.findIndex(l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('*'));
+        const matchLineIdx = locateMatchLine(lines, [/<span>\s*\{[a-zA-Z0-9_]+\.cardNumber\}\s*<\/span>/i, /\bcardNumber\b/i, /<[a-z]+[^>]*>\{[^}]*cardNumber[^}]*\}<\/[a-z]+>/i], l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('*'));
         const lineNum = matchLineIdx !== -1 ? matchLineIdx + 1 : 1;
         findings.push({
             id: `fintech9702-${Date.now()}-${findingCounter.count++}`,
@@ -69,7 +71,7 @@ export function evaluateFintechComplianceRules(file: CodeFile, lines: string[], 
     }
     // FINTECH-03: Missing Idempotency-Key on Financial Payment Mutation
     if ((/stripe\.charges\.create\s*\([\s\S]*?\)/i.test(cleanContent) || /stripe\.paymentIntents\.create\s*\([\s\S]*?\)/i.test(cleanContent)) && !/idempotencyKey/i.test(cleanContent)) {
-        const matchLineIdx = lines.findIndex(l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('*'));
+        const matchLineIdx = locateMatchLine(lines, [/stripe\.charges\.create\s*\([\s\S]*?\)/i, /stripe\.paymentIntents\.create\s*\([\s\S]*?\)/i], l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('*'));
         const lineNum = matchLineIdx !== -1 ? matchLineIdx + 1 : 1;
         findings.push({
             id: `fintech9703-${Date.now()}-${findingCounter.count++}`,
@@ -92,8 +94,9 @@ export function evaluateFintechComplianceRules(file: CodeFile, lines: string[], 
         logs.push(`[${ts}] [FINTECH AUDIT] Found FINTECH-03: Missing Idempotency-Key on Financial Payment Mutation at ${file.path}:${lineNum}`);
     }
     // FINTECH-04: Insecure Webhook Signature Verification on Payment Callback
-    if (lowerPath.includes('webhook') && /(?:payment|stripe|polar|billing|checkout|subscription|invoice)/i.test(lowerPath + cleanContent) && /req\.(?:body|json)\s*\(\)/.test(cleanContent) && !/constructEvent|verifySignature|crypto\.createHmac|webhookSecret/i.test(cleanContent)) {
-        const matchLineIdx = lines.findIndex(l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('*'));
+    const isWebhookCode = lowerPath.includes('webhook') || /\.(?:post|all)\s*\(\s*['"`][^'"`]*webhook/i.test(cleanContent);
+    if (isWebhookCode && (PAYMENT_SDK.test(lowerPath + cleanContent) || /(?:payment|billing|checkout|subscription|invoice|order)/i.test(lowerPath + cleanContent)) && REQUEST_BODY.test(cleanContent) && !WEBHOOK_VERIFY.test(cleanContent)) {
+        const matchLineIdx = locateMatchLine(lines, [PAYMENT_SDK, /(?:payment|billing|checkout|subscription|invoice|order)/i, REQUEST_BODY], l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('*'));
         const lineNum = matchLineIdx !== -1 ? matchLineIdx + 1 : 1;
         findings.push({
             id: `fintech9704-${Date.now()}-${findingCounter.count++}`,
@@ -117,7 +120,7 @@ export function evaluateFintechComplianceRules(file: CodeFile, lines: string[], 
     }
     // FINTECH-05: Plaintext Cardholder Data Logged to Application Telemetry
     if (/(?:console\.log|logger\.(?:info|debug|error))\s*\([^)]*(?:card(?:Number|_number)?|cvv|cvc|pan)\b/i.test(cleanContent)) {
-        const matchLineIdx = lines.findIndex(l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('*'));
+        const matchLineIdx = locateMatchLine(lines, [/(?:console\.log|logger\.(?:info|debug|error))\s*\([^)]*(?:card(?:Number|_number)?|cvv|cvc|pan)\b/i], l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('*'));
         const lineNum = matchLineIdx !== -1 ? matchLineIdx + 1 : 1;
         findings.push({
             id: `fintech9705-${Date.now()}-${findingCounter.count++}`,

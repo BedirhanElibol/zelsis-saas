@@ -1,0 +1,505 @@
+{
+ "generatedAt": "2026-10-01",
+ "summary": {
+  "cleanRepos": 12,
+  "cleanReposGateFailed": 2,
+  "cleanHighCriticalFindings": 888,
+  "cleanGatingHighCriticalFindings": 115,
+  "documentedFlaws": 38,
+  "documentedFlawsDetected": 37,
+  "recall": 0.97,
+  "documentedFlawsBlockingGate": 36,
+  "rulesFiringOnClean": 206,
+  "experimentalRules": 106
+ },
+ "repos": [
+  {
+   "repo": "vercel/nextjs-subscription-payments",
+   "sha": "bdd0813",
+   "kind": "clean",
+   "stack": "Next.js + Supabase + Stripe",
+   "files": 67,
+   "scanMs": 454,
+   "gate": "WARNING",
+   "critical": 0,
+   "high": 3
+  },
+  {
+   "repo": "shadcn-ui/taxonomy",
+   "sha": "298a885",
+   "kind": "clean",
+   "stack": "Next.js + Prisma + Stripe + NextAuth",
+   "files": 140,
+   "scanMs": 433,
+   "gate": "WARNING",
+   "critical": 0,
+   "high": 1
+  },
+  {
+   "repo": "fastapi/full-stack-fastapi-template",
+   "sha": "cb740b6",
+   "kind": "clean",
+   "stack": "FastAPI + React",
+   "files": 204,
+   "scanMs": 687,
+   "gate": "WARNING",
+   "critical": 0,
+   "high": 2
+  },
+  {
+   "repo": "gothinkster/node-express-realworld-example-app",
+   "sha": "30b68e1",
+   "kind": "clean",
+   "stack": "Express + Prisma",
+   "files": 58,
+   "scanMs": 105,
+   "gate": "FAILED",
+   "critical": 2,
+   "high": 2
+  },
+  {
+   "repo": "gothinkster/golang-gin-realworld-example-app",
+   "sha": "626c372",
+   "kind": "clean",
+   "stack": "Go + Gin",
+   "files": 27,
+   "scanMs": 156,
+   "gate": "WARNING",
+   "critical": 0,
+   "high": 2
+  },
+  {
+   "repo": "laravel/laravel",
+   "sha": "06d016a",
+   "kind": "clean",
+   "stack": "Laravel",
+   "files": 40,
+   "scanMs": 120,
+   "gate": "PASSED",
+   "critical": 0,
+   "high": 0
+  },
+  {
+   "repo": "documenso/documenso",
+   "sha": "8a41a3b",
+   "kind": "clean",
+   "stack": "Remix/React Router + Prisma + tRPC (production SaaS)",
+   "files": 2481,
+   "scanMs": 11353,
+   "gate": "WARNING",
+   "critical": 0,
+   "high": 57
+  },
+  {
+   "repo": "supabase/supabase-js",
+   "sha": "a684cf9",
+   "kind": "clean",
+   "stack": "TypeScript SDK",
+   "files": 471,
+   "scanMs": 2752,
+   "gate": "FAILED",
+   "critical": 10,
+   "high": 1
+  },
+  {
+   "repo": "OWASP/NodeGoat",
+   "sha": "c5cb68a",
+   "kind": "vulnerable",
+   "stack": "Express + MongoDB",
+   "files": 87,
+   "scanMs": 304,
+   "gate": "FAILED",
+   "critical": 5,
+   "high": 5
+  },
+  {
+   "repo": "appsecco/dvna",
+   "sha": "9ba473a",
+   "kind": "vulnerable",
+   "stack": "Express + Sequelize",
+   "files": 21,
+   "scanMs": 40,
+   "gate": "FAILED",
+   "critical": 4,
+   "high": 4
+  },
+  {
+   "repo": "juice-shop/juice-shop",
+   "sha": "1618a61",
+   "kind": "vulnerable",
+   "stack": "Express + Angular + Sequelize",
+   "files": 965,
+   "scanMs": 8777,
+   "gate": "FAILED",
+   "critical": 176,
+   "high": 22
+  },
+  {
+   "repo": "spring-projects/spring-petclinic",
+   "sha": "500158f",
+   "kind": "clean",
+   "stack": "Java + Spring Boot",
+   "files": 84,
+   "scanMs": 240,
+   "gate": "WARNING",
+   "critical": 0,
+   "high": 8
+  },
+  {
+   "repo": "dotnet-architecture/eShopOnWeb",
+   "sha": "4da8212",
+   "kind": "clean",
+   "stack": "C# + ASP.NET Core",
+   "files": 350,
+   "scanMs": 793,
+   "gate": "WARNING",
+   "critical": 0,
+   "high": 7
+  },
+  {
+   "repo": "rubygems/rubygems.org",
+   "sha": "36e040d",
+   "kind": "clean",
+   "stack": "Ruby on Rails (production service)",
+   "files": 1698,
+   "scanMs": 4487,
+   "gate": "WARNING",
+   "critical": 0,
+   "high": 7
+  },
+  {
+   "repo": "django/djangoproject.com",
+   "sha": "fc7a27e",
+   "kind": "clean",
+   "stack": "Python + Django (production site)",
+   "files": 434,
+   "scanMs": 1799,
+   "gate": "WARNING",
+   "critical": 0,
+   "high": 13
+  },
+  {
+   "repo": "WebGoat/WebGoat",
+   "sha": "3284a8e",
+   "kind": "vulnerable",
+   "stack": "Java + Spring",
+   "files": 635,
+   "scanMs": 2089,
+   "gate": "FAILED",
+   "critical": 16,
+   "high": 13
+  },
+  {
+   "repo": "OWASP/railsgoat",
+   "sha": "f5951f1",
+   "kind": "vulnerable",
+   "stack": "Ruby on Rails",
+   "files": 187,
+   "scanMs": 661,
+   "gate": "FAILED",
+   "critical": 4,
+   "high": 14
+  },
+  {
+   "repo": "digininja/DVWA",
+   "sha": "b496a5d",
+   "kind": "vulnerable",
+   "stack": "PHP",
+   "files": 195,
+   "scanMs": 538,
+   "gate": "FAILED",
+   "critical": 52,
+   "high": 33
+  },
+  {
+   "repo": "adeyosemanputra/pygoat",
+   "sha": "19d17cc",
+   "kind": "vulnerable",
+   "stack": "Python + Django",
+   "files": 217,
+   "scanMs": 698,
+   "gate": "FAILED",
+   "critical": 18,
+   "high": 42
+  },
+  {
+   "repo": "anxolerd/dvpwa",
+   "sha": "a1d8f89",
+   "kind": "vulnerable",
+   "stack": "Python + aiohttp",
+   "files": 30,
+   "scanMs": 256,
+   "gate": "FAILED",
+   "critical": 2,
+   "high": 4
+  }
+ ],
+ "flaws": [
+  {
+   "repo": "OWASP/NodeGoat",
+   "file": "app/routes/contributions.js",
+   "flaw": "Server-side JS injection via eval(req.body.preTax)",
+   "found": true,
+   "blocksGate": true
+  },
+  {
+   "repo": "OWASP/NodeGoat",
+   "file": "app/data/allocations-dao.js",
+   "flaw": "NoSQL injection through $where string",
+   "found": true,
+   "blocksGate": true
+  },
+  {
+   "repo": "OWASP/NodeGoat",
+   "file": "app/routes/index.js",
+   "flaw": "Open redirect via res.redirect(req.query.url)",
+   "found": true,
+   "blocksGate": true
+  },
+  {
+   "repo": "OWASP/NodeGoat",
+   "file": "app/routes/research.js",
+   "flaw": "SSRF via needle.get(url + symbol)",
+   "found": true,
+   "blocksGate": true
+  },
+  {
+   "repo": "OWASP/NodeGoat",
+   "file": "config/env/all.js",
+   "flaw": "Hardcoded session cookie secret",
+   "found": true,
+   "blocksGate": true
+  },
+  {
+   "repo": "appsecco/dvna",
+   "file": "core/appHandler.js",
+   "flaw": "SQL injection by string concatenation in sequelize.query",
+   "found": true,
+   "blocksGate": true
+  },
+  {
+   "repo": "appsecco/dvna",
+   "file": "core/appHandler.js",
+   "flaw": "Command injection: exec('ping -c 2 ' + req.body.address)",
+   "found": true,
+   "blocksGate": true
+  },
+  {
+   "repo": "appsecco/dvna",
+   "file": "core/appHandler.js",
+   "flaw": "Insecure deserialization with node-serialize unserialize",
+   "found": true,
+   "blocksGate": true
+  },
+  {
+   "repo": "appsecco/dvna",
+   "file": "core/appHandler.js",
+   "flaw": "XXE: libxmljs parseXmlString with noent:true",
+   "found": true,
+   "blocksGate": true
+  },
+  {
+   "repo": "appsecco/dvna",
+   "file": "core/appHandler.js",
+   "flaw": "Open redirect via res.redirect(req.query.url)",
+   "found": true,
+   "blocksGate": false
+  },
+  {
+   "repo": "appsecco/dvna",
+   "file": "core/appHandler.js",
+   "flaw": "Code injection via mathjs.eval(req.body.eqn)",
+   "found": true,
+   "blocksGate": true
+  },
+  {
+   "repo": "juice-shop/juice-shop",
+   "file": "routes/login.ts",
+   "flaw": "SQL injection in login query template literal",
+   "found": true,
+   "blocksGate": true
+  },
+  {
+   "repo": "juice-shop/juice-shop",
+   "file": "routes/search.ts",
+   "flaw": "Union SQL injection in product search",
+   "found": true,
+   "blocksGate": true
+  },
+  {
+   "repo": "juice-shop/juice-shop",
+   "file": "lib/insecurity.ts",
+   "flaw": "Hardcoded RSA private key for JWT signing",
+   "found": true,
+   "blocksGate": true
+  },
+  {
+   "repo": "juice-shop/juice-shop",
+   "file": "lib/insecurity.ts",
+   "flaw": "MD5 password hashing",
+   "found": true,
+   "blocksGate": true
+  },
+  {
+   "repo": "juice-shop/juice-shop",
+   "file": "routes/profileImageUrlUpload.ts",
+   "flaw": "SSRF via fetch(user-supplied imageUrl)",
+   "found": true,
+   "blocksGate": true
+  },
+  {
+   "repo": "WebGoat/WebGoat",
+   "file": "src/main/java/org/owasp/webgoat/lessons/sqlinjection/introduction/SqlInjectionLesson5a.java",
+   "flaw": "SQL injection: string-built query passed to Statement.executeQuery",
+   "found": true,
+   "blocksGate": true
+  },
+  {
+   "repo": "WebGoat/WebGoat",
+   "file": "src/main/java/org/owasp/webgoat/lessons/sqlinjection/introduction/SqlInjectionLesson10.java",
+   "flaw": "SQL injection in access_log search",
+   "found": true,
+   "blocksGate": true
+  },
+  {
+   "repo": "WebGoat/WebGoat",
+   "file": "src/main/java/org/owasp/webgoat/lessons/deserialization/InsecureDeserializationTask.java",
+   "flaw": "Java deserialization with ObjectInputStream.readObject on user data",
+   "found": true,
+   "blocksGate": true
+  },
+  {
+   "repo": "WebGoat/WebGoat",
+   "file": "src/main/java/org/owasp/webgoat/lessons/xxe/CommentsCache.java",
+   "flaw": "XXE: XMLInputFactory without disabling external entities",
+   "found": false,
+   "blocksGate": false
+  },
+  {
+   "repo": "OWASP/railsgoat",
+   "file": "app/controllers/users_controller.rb",
+   "flaw": "SQL injection: User.where with interpolated params",
+   "found": true,
+   "blocksGate": true
+  },
+  {
+   "repo": "OWASP/railsgoat",
+   "file": "app/controllers/users_controller.rb",
+   "flaw": "Mass assignment: params.require(:user).permit!",
+   "found": true,
+   "blocksGate": true
+  },
+  {
+   "repo": "OWASP/railsgoat",
+   "file": "app/models/benefits.rb",
+   "flaw": "Command injection: system() with interpolated file name",
+   "found": true,
+   "blocksGate": true
+  },
+  {
+   "repo": "OWASP/railsgoat",
+   "file": "app/controllers/password_resets_controller.rb",
+   "flaw": "Insecure deserialization: Marshal.load(params[:user])",
+   "found": true,
+   "blocksGate": true
+  },
+  {
+   "repo": "OWASP/railsgoat",
+   "file": "app/views/layouts/shared/_header.html.erb",
+   "flaw": "Stored XSS via html_safe on user first name",
+   "found": true,
+   "blocksGate": true
+  },
+  {
+   "repo": "digininja/DVWA",
+   "file": "vulnerabilities/sqli/source/low.php",
+   "flaw": "SQL injection: $id interpolated into query",
+   "found": true,
+   "blocksGate": true
+  },
+  {
+   "repo": "digininja/DVWA",
+   "file": "vulnerabilities/exec/source/low.php",
+   "flaw": "Command injection: shell_exec('ping ' . $target)",
+   "found": true,
+   "blocksGate": true
+  },
+  {
+   "repo": "digininja/DVWA",
+   "file": "vulnerabilities/fi/index.php",
+   "flaw": "File inclusion: include($file) from request",
+   "found": true,
+   "blocksGate": true
+  },
+  {
+   "repo": "digininja/DVWA",
+   "file": "vulnerabilities/xss_r/source/low.php",
+   "flaw": "Reflected XSS: $_GET['name'] echoed into HTML",
+   "found": true,
+   "blocksGate": true
+  },
+  {
+   "repo": "digininja/DVWA",
+   "file": "vulnerabilities/upload/source/low.php",
+   "flaw": "Unrestricted file upload (no type/extension check)",
+   "found": true,
+   "blocksGate": true
+  },
+  {
+   "repo": "adeyosemanputra/pygoat",
+   "file": "introduction/views.py",
+   "flaw": "SQL injection: concatenated query passed to objects.raw",
+   "found": true,
+   "blocksGate": true
+  },
+  {
+   "repo": "adeyosemanputra/pygoat",
+   "file": "introduction/views.py",
+   "flaw": "Insecure deserialization: pickle.loads / yaml.load with yaml.Loader",
+   "found": true,
+   "blocksGate": true
+  },
+  {
+   "repo": "adeyosemanputra/pygoat",
+   "file": "introduction/views.py",
+   "flaw": "Code injection: eval() on request value",
+   "found": true,
+   "blocksGate": true
+  },
+  {
+   "repo": "adeyosemanputra/pygoat",
+   "file": "introduction/views.py",
+   "flaw": "SSRF: requests.get(request.POST[\"url\"])",
+   "found": true,
+   "blocksGate": true
+  },
+  {
+   "repo": "adeyosemanputra/pygoat",
+   "file": "introduction/views.py",
+   "flaw": "MD5 password hashing",
+   "found": true,
+   "blocksGate": true
+  },
+  {
+   "repo": "anxolerd/dvpwa",
+   "file": "sqli/dao/student.py",
+   "flaw": "SQL injection: % string formatting in INSERT",
+   "found": true,
+   "blocksGate": true
+  },
+  {
+   "repo": "anxolerd/dvpwa",
+   "file": "sqli/dao/user.py",
+   "flaw": "MD5 password hashing",
+   "found": true,
+   "blocksGate": true
+  },
+  {
+   "repo": "anxolerd/dvpwa",
+   "file": "sqli/app.py",
+   "flaw": "Template autoescaping disabled (autoescape=False)",
+   "found": true,
+   "blocksGate": true
+  }
+ ]
+}

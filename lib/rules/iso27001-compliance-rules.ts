@@ -4,6 +4,7 @@
  */
 import { Finding } from "@/data/schema";
 import { CodeFile } from "../scanner-engine";
+import { locateMatchLine } from './shared/locate';
 export interface Iso27001ComplianceRuleResult {
     findings: Finding[];
     logs: string[];
@@ -15,13 +16,13 @@ export function evaluateIso27001ComplianceRules(file: CodeFile, lines: string[],
     const logs: string[] = [];
     const lowerPath = file.path.toLowerCase().replace(/\\/g, "/");
     // Skip self-referential catalogs, mocks, and schema definitions
-    if (lowerPath.includes("data/catalogs/") || lowerPath.includes("data/mockdata") || lowerPath.includes("data/workspacefiles") || lowerPath.includes("data/schema") || lowerPath.includes("scratch/") || lowerPath.includes(".agent/") || lowerPath.includes("node_modules/") || lowerPath.endsWith(".d.ts")) {
+    if (lowerPath.includes("node_modules/") || lowerPath.endsWith(".d.ts")) {
         return { findings, logs };
     }
     const ts = new Date().toLocaleTimeString();
     // ISO-01: Missing Cryptographic Key Lifecycle and Revocation Procedure (A.8.24)
     if ((/crypto\.createCipheriv\s*\([\s\S]*?\)/.test(cleanContent) && !/kms|rotate|keyManagement/i.test(cleanContent))) {
-        const matchLineIdx = lines.findIndex(l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('*'));
+        const matchLineIdx = locateMatchLine(lines, [/crypto\.createCipheriv\s*\([\s\S]*?\)/], l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('*'));
         const lineNum = matchLineIdx !== -1 ? matchLineIdx + 1 : 1;
         findings.push({
             id: `iso10801-${Date.now()}-${findingCounter.count++}`,
@@ -45,7 +46,7 @@ export function evaluateIso27001ComplianceRules(file: CodeFile, lines: string[],
     }
     // ISO-02: Privileged Access Rights Granted Without Documented Approval (A.5.18)
     if ((/GRANT\s+ALL\s+PRIVILEGES/i.test(cleanContent))) {
-        const matchLineIdx = lines.findIndex(l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('*'));
+        const matchLineIdx = locateMatchLine(lines, [/GRANT\s+ALL\s+PRIVILEGES/i], l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('*'));
         const lineNum = matchLineIdx !== -1 ? matchLineIdx + 1 : 1;
         findings.push({
             id: `iso10802-${Date.now()}-${findingCounter.count++}`,
@@ -69,7 +70,7 @@ export function evaluateIso27001ComplianceRules(file: CodeFile, lines: string[],
     }
     // ISO-03: Information Deletion and Secure Disposal Verification Failure (A.8.10)
     if ((/DELETE\s+FROM\s+users/i.test(cleanContent) && !/cascade|purge/i.test(cleanContent))) {
-        const matchLineIdx = lines.findIndex(l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('*'));
+        const matchLineIdx = locateMatchLine(lines, [/DELETE\s+FROM\s+users/i], l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('*'));
         const lineNum = matchLineIdx !== -1 ? matchLineIdx + 1 : 1;
         findings.push({
             id: `iso10803-${Date.now()}-${findingCounter.count++}`,
@@ -93,7 +94,7 @@ export function evaluateIso27001ComplianceRules(file: CodeFile, lines: string[],
     }
     // ISO-04: Missing Segregation in Production and Development Environments (A.8.31)
     if (/NODE_ENV\s*===\s*['"]development['"]/i.test(cleanContent) && /(?:prod-db|production\.rds|live-secret)/i.test(cleanContent)) {
-        const matchLineIdx = lines.findIndex(l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('*'));
+        const matchLineIdx = locateMatchLine(lines, [/NODE_ENV\s*===\s*['"]development['"]/i, /(?:prod-db|production\.rds|live-secret)/i], l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('*'));
         const lineNum = matchLineIdx !== -1 ? matchLineIdx + 1 : 1;
         findings.push({
             id: `iso10804-${Date.now()}-${findingCounter.count++}`,
@@ -117,7 +118,7 @@ export function evaluateIso27001ComplianceRules(file: CodeFile, lines: string[],
     }
     // ISO-05: Unmonitored Configuration Changes on Critical Network Perimeters (A.8.9)
     if ((/aws_security_group_rule/i.test(cleanContent))) {
-        const matchLineIdx = lines.findIndex(l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('*'));
+        const matchLineIdx = locateMatchLine(lines, [/aws_security_group_rule/i], l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('*'));
         const lineNum = matchLineIdx !== -1 ? matchLineIdx + 1 : 1;
         findings.push({
             id: `iso10805-${Date.now()}-${findingCounter.count++}`,

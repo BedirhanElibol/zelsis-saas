@@ -34,12 +34,13 @@ export const CicdAutomationView: React.FC<CicdAutomationViewProps> = ({
   const [minScore, setMinScore] = useState(85);
 
   const generateGithubWorkflow = () => {
-    const failFlag =
+    const appUrl = typeof window !== 'undefined' ? window.location.origin : 'https://zelsis-saas.vercel.app';
+    const failCheck =
       failThreshold === 'smart'
-        ? '--fail-on=critical'
+        ? `if [ "$STATUS" = "FAILED" ]; then echo "::error::Zelsis gate FAILED (score $SCORE/100)"; exit 1; fi`
         : failThreshold === 'strict'
-        ? `--fail-on=warning --min-score=${minScore}`
-        : '--fail-on=none';
+        ? `if [ "$STATUS" != "PASSED" ] || [ "$SCORE" -lt ${minScore} ]; then echo "::error::Zelsis gate $STATUS (score $SCORE/100, minimum ${minScore})"; exit 1; fi`
+        : `echo "Advisory mode: gate $STATUS (score $SCORE/100) does not block."`;
 
     return `name: Zelsis Pre-Flight Release Gate
 
@@ -51,45 +52,32 @@ on:
 
 permissions:
   contents: read
-  pull-requests: write
 
 jobs:
-  zelsis-audit:
-    name: Zelsis Deployment Gate
+  zelsis-gate:
+    name: Zelsis Release Gate (${projectName})
     runs-on: ubuntu-latest
     steps:
-      - name: Checkout Code
-        uses: actions/checkout@b4ffde65f46336ab88eb53be808477a3936bae11 # v4.1.1
-
-      - name: Setup Node.js
-        uses: actions/setup-node@60edb5dd545a775178f52524783378180af0d1f8 # v4.0.2
-        with:
-          node-version: 20
-          cache: 'npm'
-
-      - name: Run Zelsis Pre-Flight Gate
+      - name: Run Zelsis gate check
         env:
-          ZELSIS_API_TOKEN: \${{ secrets.ZELSIS_API_TOKEN }}
-          GITHUB_TOKEN: \${{ secrets.GITHUB_TOKEN }}
+          ZELSIS_API_KEY: \${{ secrets.ZELSIS_API_KEY }}
         run: |
-          npx zelsis audit ${failFlag} \\
-            --project="${projectName}" \\
-            --post-pr-comment=true \\
-            --output-report=zelsis-report.json \\
-            --output-sarif=zelsis-report.sarif
+          RESPONSE=$(curl -s -X POST "${appUrl}/api/v1/gate-check" \\
+            -H "Content-Type: application/json" \\
+            -H "x-api-key: $ZELSIS_API_KEY" \\
+            -d '{"repoUrl": "\${{ github.server_url }}/\${{ github.repository }}"}')
+          echo "$RESPONSE" > zelsis-report.json
+          STATUS=$(jq -r '.gateStatus // "ERROR"' zelsis-report.json)
+          SCORE=$(jq -r '.readinessScore // 0' zelsis-report.json)
+          echo "Gate: $STATUS, score: $SCORE/100" >> $GITHUB_STEP_SUMMARY
+          ${failCheck}
 
-      - name: Upload Gate Audit Artifact
+      - name: Upload gate report
         if: always()
-        uses: actions/upload-artifact@b4b15b8c7c6ac21ea08fcf65892d2ee8f75cf882 # v4.4.3
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
         with:
-          name: zelsis-release-scorecard
+          name: zelsis-release-report
           path: zelsis-report.json
-
-      - name: Upload SARIF to GitHub Code Scanning
-        if: always()
-        uses: github/codeql-action/upload-sarif@48ab28a6f5dab2aabab3f02a99993e85f97a3d04 # v3.28.0
-        with:
-          sarif_file: zelsis-report.sarif
 `;
   };
 
@@ -155,7 +143,7 @@ jobs:
             </button>
           </div>
           <div className="grid grid-cols-2 sm:grid-cols-3 gap-3 w-full max-w-lg mt-2">
-            {['GitHub Actions Workflow', 'Policy-as-Code Config', 'CLI Integration', 'PR Gate Comments', 'SARIF Report Upload', 'Zero-Config Setup'].map((feat) => (
+            {['GitHub Actions Workflow', 'Policy-as-Code Config', 'HTTP Gate API', 'Job Summary', 'SARIF Export', 'Zero-Config Setup'].map((feat) => (
               <div key={feat} className="flex items-center gap-2 p-3 rounded-xl bg-[#0A0A0A] border border-white/10 text-left">
                 <ShieldCheck size={13} className="text-emerald-400 shrink-0" />
                 <span className="text-[11px] text-[#A1A1AA] font-mono">{feat}</span>

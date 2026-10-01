@@ -4,6 +4,8 @@ import React, { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { X, Server, Download, Copy, CheckCircle2, GitBranch, Terminal, Shield, FileCode, Check, LucideIcon, Lock } from 'lucide-react';
 import { UserTier } from '@/data/schema';
+
+const GATE_CURL = `curl -s -X POST "https://zelsis-saas.vercel.app/api/v1/gate-check?failOnBlock=true" -H "Content-Type: application/json" -d '{"repoUrl":"https://github.com/OWNER/REPO"}'`;
 import { isCicdIntegrationAllowed } from '@/lib/quota-manager';
 
 interface DeploymentManifestModalProps {
@@ -317,13 +319,13 @@ spec:
                 <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 p-3.5 rounded-xl bg-white/[0.02] border border-white/10 text-xs font-mono">
                   <div className="flex items-center gap-2 text-zinc-300">
                     <Terminal size={14} className="text-zinc-400 shrink-0" />
-                    <span>Instant Terminal Command:</span>
-                    <code className="text-zinc-200 font-bold bg-black/50 px-2 py-0.5 rounded border border-white/10">
-                      npx zelsis-gate --threshold 80
+                    <span>Terminal:</span>
+                    <code className="text-zinc-200 font-bold bg-black/50 px-2 py-0.5 rounded border border-white/10 break-all">
+                      {GATE_CURL}
                     </code>
                   </div>
                   <button
-                    onClick={() => handleCopy('npx zelsis-gate --threshold 80', 'cli')}
+                    onClick={() => handleCopy(GATE_CURL, 'cli')}
                     className="flex items-center gap-1 px-2.5 py-1 rounded bg-white/5 hover:bg-white/10 text-[11px] text-zinc-300 hover:text-white transition-colors cursor-pointer shrink-0"
                   >
                     {copiedType === 'cli' ? <Check size={12} className="text-emerald-400" /> : <Copy size={12} />}

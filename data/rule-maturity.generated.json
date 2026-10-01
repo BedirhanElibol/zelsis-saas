@@ -1,0 +1,776 @@
+{
+ "generatedAt": "2026-10-01",
+ "cleanRepos": 12,
+ "experimental": [
+  {
+   "ruleId": 20,
+   "title": "Vulnerable Dependency or Wildcard Version in package.json",
+   "severity": "HIGH",
+   "cleanRepos": 2,
+   "cleanFindings": 33
+  },
+  {
+   "ruleId": 35,
+   "title": "Path Traversal Vulnerability via User-Controlled File Path",
+   "severity": "HIGH",
+   "cleanRepos": 1,
+   "cleanFindings": 3
+  },
+  {
+   "ruleId": 38,
+   "title": "Insecure Pseudo-Random Number Generator Used in Security Context (Math.random)",
+   "severity": "HIGH",
+   "cleanRepos": 1,
+   "cleanFindings": 1
+  },
+  {
+   "ruleId": 48,
+   "title": "UI-48: Dynamic Variable Injection Missing Fallback",
+   "severity": "HIGH",
+   "cleanRepos": 7,
+   "cleanFindings": 113
+  },
+  {
+   "ruleId": 106,
+   "title": "UI-106: Empty Silent Catch Block",
+   "severity": "HIGH",
+   "cleanRepos": 2,
+   "cleanFindings": 5
+  },
+  {
+   "ruleId": 117,
+   "title": "UI-117: Uncleaned Event Listener Memory Leak",
+   "severity": "HIGH",
+   "cleanRepos": 1,
+   "cleanFindings": 1
+  },
+  {
+   "ruleId": 231,
+   "title": "CLICHE-AI-COMMENT-01: Synthetic LLM Prompt Artifact & Header Injection",
+   "severity": "HIGH",
+   "cleanRepos": 1,
+   "cleanFindings": 1
+  },
+  {
+   "ruleId": 1007,
+   "title": "UI-07: Conversational Chat-Wrapper Lock-In Trap",
+   "severity": "HIGH",
+   "cleanRepos": 3,
+   "cleanFindings": 3
+  },
+  {
+   "ruleId": 1029,
+   "title": "WCAG 2.2 AA: Non-Semantic Clickable Container Missing Keyboard Accessibility",
+   "severity": "HIGH",
+   "cleanRepos": 1,
+   "cleanFindings": 1
+  },
+  {
+   "ruleId": 2008,
+   "title": "Missing Session Revocation / tokenVersion Invalidation on Password Reset",
+   "severity": "HIGH",
+   "cleanRepos": 4,
+   "cleanFindings": 20
+  },
+  {
+   "ruleId": 3004,
+   "title": "Permissive Wildcard CORS (\"*\") Allows Arbitrary Cross-Origin Requests",
+   "severity": "HIGH",
+   "cleanRepos": 1,
+   "cleanFindings": 1
+  },
+  {
+   "ruleId": 3007,
+   "title": "Kubernetes Workload Manifest Missing CPU/Memory Resource Limits (DoS Risk)",
+   "severity": "HIGH",
+   "cleanRepos": 1,
+   "cleanFindings": 2
+  },
+  {
+   "ruleId": 3009,
+   "title": "Serverless Connection Pool Exhaustion Hazard (Prisma Missing Global Singleton)",
+   "severity": "CRITICAL",
+   "cleanRepos": 2,
+   "cleanFindings": 3
+  },
+  {
+   "ruleId": 3013,
+   "title": "Container Compose Definition Missing Read-Only Root Filesystem Guard",
+   "severity": "HIGH",
+   "cleanRepos": 5,
+   "cleanFindings": 7
+  },
+  {
+   "ruleId": 5100,
+   "title": "SEC-SECRET-100: Generic High-Entropy Hex/Base64 API Key",
+   "severity": "CRITICAL",
+   "cleanRepos": 1,
+   "cleanFindings": 1
+  },
+  {
+   "ruleId": 6001,
+   "title": "DB-PERF-01: Prisma / ORM N+1 Query in Loop",
+   "severity": "HIGH",
+   "cleanRepos": 2,
+   "cleanFindings": 28
+  },
+  {
+   "ruleId": 6002,
+   "title": "DB-PERF-02: Missing Index on Foreign Key Columns",
+   "severity": "HIGH",
+   "cleanRepos": 2,
+   "cleanFindings": 2
+  },
+  {
+   "ruleId": 6004,
+   "title": "DB-PERF-04: Unbounded SELECT * Full Table Scan",
+   "severity": "HIGH",
+   "cleanRepos": 1,
+   "cleanFindings": 1
+  },
+  {
+   "ruleId": 6008,
+   "title": "DB-PERF-08: Missing ON DELETE Strategy on Foreign Key Constraints",
+   "severity": "HIGH",
+   "cleanRepos": 4,
+   "cleanFindings": 59
+  },
+  {
+   "ruleId": 6010,
+   "title": "DB-PERF-10: PostgreSQL Public Table Missing Row Level Security (RLS)",
+   "severity": "CRITICAL",
+   "cleanRepos": 1,
+   "cleanFindings": 1
+  },
+  {
+   "ruleId": 6033,
+   "title": "DB-PERF-33: Missing Foreign Key Cascade Delete Lock Warning",
+   "severity": "HIGH",
+   "cleanRepos": 1,
+   "cleanFindings": 1
+  },
+  {
+   "ruleId": 6036,
+   "title": "DB-PERF-36: Prisma include Over-Fetching Nested Graphs",
+   "severity": "HIGH",
+   "cleanRepos": 2,
+   "cleanFindings": 38
+  },
+  {
+   "ruleId": 7001,
+   "title": "SCA: CVE-2024-34351 - Next.js Server Actions Server-Side Request Forgery (SSRF) (next@13.3.2-canary.13)",
+   "severity": "HIGH",
+   "cleanRepos": 2,
+   "cleanFindings": 4
+  },
+  {
+   "ruleId": 7006,
+   "title": "CLOUD-06: Docker Secret Leak via Build ARG or ENV",
+   "severity": "CRITICAL",
+   "cleanRepos": 1,
+   "cleanFindings": 1
+  },
+  {
+   "ruleId": 7011,
+   "title": "CLOUD-11: Kubernetes Pod Missing CPU & Memory Requests/Limits",
+   "severity": "HIGH",
+   "cleanRepos": 1,
+   "cleanFindings": 2
+  },
+  {
+   "ruleId": 7102,
+   "title": "WEB-PERF-02: Unsized Image or Video Element Causing Layout Shift",
+   "severity": "HIGH",
+   "cleanRepos": 5,
+   "cleanFindings": 14
+  },
+  {
+   "ruleId": 7130,
+   "title": "WEB-PERF-30: Missing Compression Middleware for Custom Server Responses",
+   "severity": "HIGH",
+   "cleanRepos": 1,
+   "cleanFindings": 1
+  },
+  {
+   "ruleId": 7204,
+   "title": "API-04: Body Parser Missing Maximum Request Payload Limit",
+   "severity": "HIGH",
+   "cleanRepos": 1,
+   "cleanFindings": 1
+  },
+  {
+   "ruleId": 7222,
+   "title": "API-22: Webhook Receiver Missing Replay Attack Protection (Timestamp Check)",
+   "severity": "HIGH",
+   "cleanRepos": 2,
+   "cleanFindings": 2
+  },
+  {
+   "ruleId": 7301,
+   "title": "SUPPLY-01: Wildcard Package Dependency Version ('*')",
+   "severity": "HIGH",
+   "cleanRepos": 1,
+   "cleanFindings": 12
+  },
+  {
+   "ruleId": 7338,
+   "title": "SUPPLY-38: Public NPM Package Missing 2FA Requirement",
+   "severity": "HIGH",
+   "cleanRepos": 2,
+   "cleanFindings": 4
+  },
+  {
+   "ruleId": 7347,
+   "title": "SUPPLY-47: Missing .npmignore Leading to Secret Exposure in NPM Tarball",
+   "severity": "HIGH",
+   "cleanRepos": 1,
+   "cleanFindings": 1
+  },
+  {
+   "ruleId": 8014,
+   "title": "LLM-SEC-14: Missing Content Moderation on User-Facing AI Generations",
+   "severity": "HIGH",
+   "cleanRepos": 1,
+   "cleanFindings": 2
+  },
+  {
+   "ruleId": 8044,
+   "title": "LLM-SEC-44: Lack of Deterministic Schema Enforcement on JSON Outputs",
+   "severity": "HIGH",
+   "cleanRepos": 1,
+   "cleanFindings": 1
+  },
+  {
+   "ruleId": 8071,
+   "title": "LLM-COST-01: Unbounded Token Generation (Missing max_tokens Guard)",
+   "severity": "HIGH",
+   "cleanRepos": 1,
+   "cleanFindings": 4
+  },
+  {
+   "ruleId": 8072,
+   "title": "LLM-COST-02: Missing Token Budget Rate Limiter on LLM Endpoint",
+   "severity": "HIGH",
+   "cleanRepos": 1,
+   "cleanFindings": 2
+  },
+  {
+   "ruleId": 8073,
+   "title": "LLM-COST-03: Uncached Vector Embedding Loop (Compounding API Cost)",
+   "severity": "HIGH",
+   "cleanRepos": 1,
+   "cleanFindings": 1
+  },
+  {
+   "ruleId": 8102,
+   "title": "ZERO-AUTH-02: Excessive JWT Token Expiration Lifespan (>1 Hour)",
+   "severity": "HIGH",
+   "cleanRepos": 1,
+   "cleanFindings": 1
+  },
+  {
+   "ruleId": 8121,
+   "title": "ZERO-AUTH-21: Unrestricted API Key Scope (Full Account Access by Default)",
+   "severity": "HIGH",
+   "cleanRepos": 1,
+   "cleanFindings": 1
+  },
+  {
+   "ruleId": 8123,
+   "title": "ZERO-AUTH-23: Missing Secure Context Requirement on WebAuthn Credentials",
+   "severity": "HIGH",
+   "cleanRepos": 2,
+   "cleanFindings": 2
+  },
+  {
+   "ruleId": 8133,
+   "title": "ZERO-AUTH-33: Unchecked Client IP Forwarding Header Spoofing",
+   "severity": "HIGH",
+   "cleanRepos": 1,
+   "cleanFindings": 1
+  },
+  {
+   "ruleId": 8143,
+   "title": "ZERO-AUTH-43: Missing Identity Verification on Webhook Receiver Endpoints",
+   "severity": "CRITICAL",
+   "cleanRepos": 1,
+   "cleanFindings": 2
+  },
+  {
+   "ruleId": 8226,
+   "title": "PRIVACY-26: Missing Opt-Out Mechanism for Sale / Sharing of Personal Info",
+   "severity": "HIGH",
+   "cleanRepos": 4,
+   "cleanFindings": 4
+  },
+  {
+   "ruleId": 8435,
+   "title": "CHAOS-35: Unbounded Event Listener Growth on Global Window Object",
+   "severity": "HIGH",
+   "cleanRepos": 1,
+   "cleanFindings": 1
+  },
+  {
+   "ruleId": 8610,
+   "title": "NEXT15-10: Next.js 15 Dynamic APIs (cookies, headers) Accessed Synchronously",
+   "severity": "CRITICAL",
+   "cleanRepos": 2,
+   "cleanFindings": 5
+  },
+  {
+   "ruleId": 8803,
+   "title": "PY-SEC-03: Subprocess Execution with shell=True",
+   "severity": "CRITICAL",
+   "cleanRepos": 1,
+   "cleanFindings": 1
+  },
+  {
+   "ruleId": 8804,
+   "title": "PY-SEC-04: Python SQL Injection via String Interpolation (f-string / format / %)",
+   "severity": "CRITICAL",
+   "cleanRepos": 1,
+   "cleanFindings": 1
+  },
+  {
+   "ruleId": 8805,
+   "title": "PY-SEC-05: Django / Flask DEBUG Mode Enabled in Production Settings",
+   "severity": "HIGH",
+   "cleanRepos": 1,
+   "cleanFindings": 1
+  },
+  {
+   "ruleId": 8809,
+   "title": "PY-SEC-09: Hardcoded Secret Key in Flask / Django Settings",
+   "severity": "CRITICAL",
+   "cleanRepos": 1,
+   "cleanFindings": 1
+  },
+  {
+   "ruleId": 8812,
+   "title": "PY-SEC-12: Weak Cryptographic Hash Algorithm (MD5 / SHA-1)",
+   "severity": "HIGH",
+   "cleanRepos": 1,
+   "cleanFindings": 1
+  },
+  {
+   "ruleId": 8817,
+   "title": "PY-SEC-17: CSRF Protection Disabled (@csrf_exempt / WTF_CSRF_ENABLED = False)",
+   "severity": "HIGH",
+   "cleanRepos": 1,
+   "cleanFindings": 1
+  },
+  {
+   "ruleId": 8824,
+   "title": "PY-SEC-24: Use of Assert Statement for Security or Authorization Checks",
+   "severity": "HIGH",
+   "cleanRepos": 1,
+   "cleanFindings": 1
+  },
+  {
+   "ruleId": 8902,
+   "title": "K8S-02: Container Allowed to Run as Root User",
+   "severity": "HIGH",
+   "cleanRepos": 1,
+   "cleanFindings": 2
+  },
+  {
+   "ruleId": 8903,
+   "title": "K8S-03: Missing CPU and Memory Resource Limits",
+   "severity": "HIGH",
+   "cleanRepos": 1,
+   "cleanFindings": 2
+  },
+  {
+   "ruleId": 8907,
+   "title": "K8S-07: Missing Liveness and Readiness Health Probes",
+   "severity": "HIGH",
+   "cleanRepos": 1,
+   "cleanFindings": 2
+  },
+  {
+   "ruleId": 9101,
+   "title": "TENANT-01: Cross-Tenant Query Missing Tenant ID Filter Clause",
+   "severity": "CRITICAL",
+   "cleanRepos": 2,
+   "cleanFindings": 117
+  },
+  {
+   "ruleId": 9103,
+   "title": "TENANT-03: Missing Tenant Schema Isolation Check on Database Migration",
+   "severity": "HIGH",
+   "cleanRepos": 1,
+   "cleanFindings": 1
+  },
+  {
+   "ruleId": 9404,
+   "title": "EVENT-04: At-Least-Once Duplication Without Idempotent Processing",
+   "severity": "HIGH",
+   "cleanRepos": 1,
+   "cleanFindings": 1
+  },
+  {
+   "ruleId": 10201,
+   "title": "GRPC-01: Missing Per-RPC Client Deadline / Timeout Propagation",
+   "severity": "HIGH",
+   "cleanRepos": 6,
+   "cleanFindings": 21
+  },
+  {
+   "ruleId": 10204,
+   "title": "GRPC-04: Missing Canonical Status Code Error Mapping (Raw Stack Exposure)",
+   "severity": "HIGH",
+   "cleanRepos": 1,
+   "cleanFindings": 1
+  },
+  {
+   "ruleId": 10302,
+   "title": "PG-02: Missing Index on High-Cardinality Foreign Key Columns",
+   "severity": "HIGH",
+   "cleanRepos": 1,
+   "cleanFindings": 3
+  },
+  {
+   "ruleId": 10304,
+   "title": "PG-04: Unbounded Statement Execution Time (Missing statement_timeout)",
+   "severity": "HIGH",
+   "cleanRepos": 1,
+   "cleanFindings": 1
+  },
+  {
+   "ruleId": 10305,
+   "title": "PG-05: Deadlock Risk from Non-Deterministic Lock Acquisition Order",
+   "severity": "HIGH",
+   "cleanRepos": 3,
+   "cleanFindings": 4
+  },
+  {
+   "ruleId": 10405,
+   "title": "WAF-05: Unchecked HTTP Request Body Size Exceeding Edge WAF Inspection Buffer",
+   "severity": "HIGH",
+   "cleanRepos": 1,
+   "cleanFindings": 1
+  },
+  {
+   "ruleId": 10603,
+   "title": "SOC2-03: Missing Automated Dependency Vulnerability Scanning in CI/CD (CC7.1)",
+   "severity": "HIGH",
+   "cleanRepos": 4,
+   "cleanFindings": 5
+  },
+  {
+   "ruleId": 10604,
+   "title": "SOC2-04: Absence of Regular Automated Database Backup Verification (CC5.2)",
+   "severity": "HIGH",
+   "cleanRepos": 1,
+   "cleanFindings": 1
+  },
+  {
+   "ruleId": 10802,
+   "title": "ISO-02: Privileged Access Rights Granted Without Documented Approval (A.5.18)",
+   "severity": "HIGH",
+   "cleanRepos": 2,
+   "cleanFindings": 2
+  },
+  {
+   "ruleId": 10902,
+   "title": "OAUTH-02: Permissive Wildcard Redirect URI in OAuth Client Configuration",
+   "severity": "CRITICAL",
+   "cleanRepos": 3,
+   "cleanFindings": 11
+  },
+  {
+   "ruleId": 11105,
+   "title": "CDN-05: Uncached Dynamic API Responses Missing Cache-Control Revalidation Headers",
+   "severity": "HIGH",
+   "cleanRepos": 1,
+   "cleanFindings": 3
+  },
+  {
+   "ruleId": 11304,
+   "title": "SLS-04: Direct Unpooled Database Connection in Autoscaling Serverless Workers",
+   "severity": "CRITICAL",
+   "cleanRepos": 1,
+   "cleanFindings": 1
+  },
+  {
+   "ruleId": 11402,
+   "title": "GW-02: Missing Token Bucket Rate Limiting on Credential Authentication Routes",
+   "severity": "CRITICAL",
+   "cleanRepos": 4,
+   "cleanFindings": 35
+  },
+  {
+   "ruleId": 11505,
+   "title": "DATA-05: Unencrypted Sensitive Customer PII in Data Warehouse Staging Tables",
+   "severity": "CRITICAL",
+   "cleanRepos": 2,
+   "cleanFindings": 3
+  },
+  {
+   "ruleId": 11604,
+   "title": "AIACT-04: Missing Machine-Readable Watermarking on Synthetic AI Content (Article 50)",
+   "severity": "HIGH",
+   "cleanRepos": 1,
+   "cleanFindings": 2
+  },
+  {
+   "ruleId": 11701,
+   "title": "CRON-01: Distributed Mutex Lock Missing on Periodic Worker",
+   "severity": "HIGH",
+   "cleanRepos": 2,
+   "cleanFindings": 5
+  },
+  {
+   "ruleId": 11702,
+   "title": "CRON-02: Unbounded Job Queue Backlog Without Rate Limiting",
+   "severity": "HIGH",
+   "cleanRepos": 1,
+   "cleanFindings": 1
+  },
+  {
+   "ruleId": 11703,
+   "title": "CRON-03: Missing Dead Letter Queue (DLQ) for Failed Cron Jobs",
+   "severity": "HIGH",
+   "cleanRepos": 1,
+   "cleanFindings": 1
+  },
+  {
+   "ruleId": 11704,
+   "title": "CRON-04: Non-Idempotent Job Handler Causing Duplicate Processing",
+   "severity": "CRITICAL",
+   "cleanRepos": 1,
+   "cleanFindings": 1
+  },
+  {
+   "ruleId": 11801,
+   "title": "DNS-01: DNSSEC Signature Validation Missing on Authoritative Zone",
+   "severity": "HIGH",
+   "cleanRepos": 1,
+   "cleanFindings": 1
+  },
+  {
+   "ruleId": 11802,
+   "title": "DNS-02: Dangling DNS Record Vulnerable to Subdomain Takeover",
+   "severity": "CRITICAL",
+   "cleanRepos": 2,
+   "cleanFindings": 4
+  },
+  {
+   "ruleId": 11803,
+   "title": "DNS-03: Missing CAA (Certification Authority Authorization) Record",
+   "severity": "HIGH",
+   "cleanRepos": 1,
+   "cleanFindings": 1
+  },
+  {
+   "ruleId": 12003,
+   "title": "GRPH-03: Missing Schema Index on High-Cardinality Graph Properties",
+   "severity": "HIGH",
+   "cleanRepos": 5,
+   "cleanFindings": 40
+  },
+  {
+   "ruleId": 12205,
+   "title": "CONTAINER-05: Exposed Docker Daemon Unix Socket Inside Container",
+   "severity": "CRITICAL",
+   "cleanRepos": 1,
+   "cleanFindings": 1
+  },
+  {
+   "ruleId": 12303,
+   "title": "TLS-03: Missing HSTS (HTTP Strict Transport Security) Preload Directive",
+   "severity": "HIGH",
+   "cleanRepos": 1,
+   "cleanFindings": 2
+  },
+  {
+   "ruleId": 12602,
+   "title": "SBOM-02: Unsigned Container Images and Missing Cosign Cryptographic Signatures",
+   "severity": "CRITICAL",
+   "cleanRepos": 2,
+   "cleanFindings": 2
+  },
+  {
+   "ruleId": 12603,
+   "title": "SBOM-03: SLSA Level 3 Provenance Attestation Missing in CI/CD Build Pipeline",
+   "severity": "HIGH",
+   "cleanRepos": 5,
+   "cleanFindings": 8
+  },
+  {
+   "ruleId": 13002,
+   "title": "SEARCH-02: Unindexed Leading Wildcard Search Triggering Full Cluster Scans",
+   "severity": "HIGH",
+   "cleanRepos": 1,
+   "cleanFindings": 1
+  },
+  {
+   "ruleId": 13302,
+   "title": "CRYPTO-02: Missing Automated Master Key Rotation Schedule Exceeding 90 Days",
+   "severity": "HIGH",
+   "cleanRepos": 1,
+   "cleanFindings": 1
+  },
+  {
+   "ruleId": 13305,
+   "title": "CRYPTO-05: Weak Asymmetric Key Strengths (RSA < 3072 bits or ECC < 256 bits)",
+   "severity": "HIGH",
+   "cleanRepos": 1,
+   "cleanFindings": 1
+  },
+  {
+   "ruleId": 13403,
+   "title": "SOX-03: SOX ITGC Audit Trail: Missing Immutable Logging for Financial Transaction Modifications",
+   "severity": "CRITICAL",
+   "cleanRepos": 2,
+   "cleanFindings": 2
+  },
+  {
+   "ruleId": 13502,
+   "title": "VECTOR-02: Embedding Vector Dimension Mismatch at Query Time",
+   "severity": "HIGH",
+   "cleanRepos": 1,
+   "cleanFindings": 4
+  },
+  {
+   "ruleId": 13602,
+   "title": "THREAT-02: MITRE T1059 Command Execution: Unmonitored Interactive Shell Spawning in Web Pods",
+   "severity": "CRITICAL",
+   "cleanRepos": 1,
+   "cleanFindings": 7
+  },
+  {
+   "ruleId": 13802,
+   "title": "ASVS-02: ASVS V3.2 Session Management: Permitting Session Fixation or Insecure Cookie Flags",
+   "severity": "CRITICAL",
+   "cleanRepos": 1,
+   "cleanFindings": 1
+  },
+  {
+   "ruleId": 13803,
+   "title": "ASVS-03: ASVS V4.1 Access Control: Insecure Direct Object References (IDOR) on Tenant APIs",
+   "severity": "CRITICAL",
+   "cleanRepos": 2,
+   "cleanFindings": 5
+  },
+  {
+   "ruleId": 13805,
+   "title": "ASVS-05: ASVS V6.2 Cryptographic Storage: Using Insecure Random Salt or Low Iteration Counts",
+   "severity": "CRITICAL",
+   "cleanRepos": 7,
+   "cleanFindings": 32
+  },
+  {
+   "ruleId": 13902,
+   "title": "FEDRAMP-02: FedRAMP AC-17 Remote Access: Missing FIPS 140-3 Validated Cryptography",
+   "severity": "CRITICAL",
+   "cleanRepos": 1,
+   "cleanFindings": 1
+  },
+  {
+   "ruleId": 14104,
+   "title": "SLSA-04: Mutable Git Tags Used in Release Pipeline Rather Than Commit SHAs",
+   "severity": "HIGH",
+   "cleanRepos": 2,
+   "cleanFindings": 5
+  },
+  {
+   "ruleId": 14303,
+   "title": "APIDEF-03: API3:2023 Broken Object Property Level Authorization: Mass Assignment",
+   "severity": "CRITICAL",
+   "cleanRepos": 1,
+   "cleanFindings": 2
+  },
+  {
+   "ruleId": 14305,
+   "title": "APIDEF-05: API5:2023 Broken Function Level Authorization: Admin Routes Missing Scope Check",
+   "severity": "CRITICAL",
+   "cleanRepos": 1,
+   "cleanFindings": 2
+  },
+  {
+   "ruleId": 14704,
+   "title": "GRPCSEC-04: Unprotected gRPC Server Reflection Enabled in Production",
+   "severity": "HIGH",
+   "cleanRepos": 2,
+   "cleanFindings": 3
+  },
+  {
+   "ruleId": 14901,
+   "title": "GLBA-01: GLBA §314.4(a) Designation of Qualified Information Security Officer",
+   "severity": "CRITICAL",
+   "cleanRepos": 1,
+   "cleanFindings": 1
+  },
+  {
+   "ruleId": 15201,
+   "title": "WASM-EDGE-01: Unbounded WebAssembly Linear Memory Allocation Permitting Edge Worker OOM",
+   "severity": "CRITICAL",
+   "cleanRepos": 3,
+   "cleanFindings": 10
+  },
+  {
+   "ruleId": 15203,
+   "title": "WASM-EDGE-03: Unrestricted WebAssembly Network Socket Binding on Edge Compute Gateways",
+   "severity": "HIGH",
+   "cleanRepos": 1,
+   "cleanFindings": 1
+  },
+  {
+   "ruleId": 16303,
+   "title": "LLM-ORCH-03: Unprotected Agent Inter-Communication Deadlocks in Asynchronous Swarms",
+   "severity": "HIGH",
+   "cleanRepos": 1,
+   "cleanFindings": 1
+  },
+  {
+   "ruleId": 16603,
+   "title": "VEC-OPT-03: Disabled SIMD Vector Acceleration (AVX-512 / ARM NEON) in Vector Distance Compute",
+   "severity": "CRITICAL",
+   "cleanRepos": 1,
+   "cleanFindings": 1
+  },
+  {
+   "ruleId": 17304,
+   "title": "EDGE-AI-OPT-04: Disabled Graph Fusion on ONNX Runtime Multi-Head Attention Subgraphs",
+   "severity": "HIGH",
+   "cleanRepos": 1,
+   "cleanFindings": 2
+  },
+  {
+   "ruleId": 18005,
+   "title": "PHP-SEC-05: Reflected Cross-Site Scripting (XSS) via Direct Echo",
+   "severity": "HIGH",
+   "cleanRepos": 1,
+   "cleanFindings": 3
+  }
+ ],
+ "benchmarkProven": [
+  25,
+  32,
+  33,
+  34,
+  37,
+  41,
+  43,
+  3020,
+  3021,
+  5045,
+  8801,
+  8811,
+  8814,
+  13602,
+  18001,
+  18013,
+  18032,
+  24001,
+  24002,
+  24101,
+  24102,
+  24103,
+  24105,
+  24106,
+  24107,
+  24108
+ ]
+}

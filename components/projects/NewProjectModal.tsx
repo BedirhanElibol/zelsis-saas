@@ -4,6 +4,7 @@ import React, { useState } from 'react';
 import { Project } from '@/data/schema';
 import { X } from 'lucide-react';
 import { isValidGithubUrl } from '@/lib/github-api';
+import { FRAMEWORK_CHOICES, UNDETECTED_FRAMEWORK } from '@/lib/scanner/stack-detect';
 
 interface NewProjectModalProps {
   isOpen: boolean;
@@ -14,7 +15,7 @@ interface NewProjectModalProps {
 export const NewProjectModal: React.FC<NewProjectModalProps> = ({ isOpen, onClose, onAddNewProject }) => {
   const [name, setName] = useState('');
   const [repoUrl, setRepoUrl] = useState('');
-  const [framework, setFramework] = useState<'Next.js/React' | 'Python (Django/FastAPI)' | 'Go Microservices' | 'Mobile (React Native/Flutter)'>('Python (Django/FastAPI)');
+  const [framework, setFramework] = useState<string>(UNDETECTED_FRAMEWORK);
   const [urlError, setUrlError] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
 
@@ -51,7 +52,7 @@ export const NewProjectModal: React.FC<NewProjectModalProps> = ({ isOpen, onClos
       name,
       repoUrl: cleanUrl,
       framework,
-      providers: ['Supabase', 'Vercel'],
+      providers: [],
       lastScanAt: 'Just now',
       readinessScore: 100,
       gateStatus: 'PASSED',
@@ -132,13 +133,12 @@ export const NewProjectModal: React.FC<NewProjectModalProps> = ({ isOpen, onClos
             <select
               id="framework-select"
               value={framework}
-              onChange={(e) => setFramework(e.target.value as any)}
+              onChange={(e) => setFramework(e.target.value)}
               className="w-full px-3.5 py-2.5 rounded-xl bg-[#0A0E1A] border border-white/10 text-xs text-white outline-none focus-visible:ring-1 focus-visible:ring-white/20 focus:border-white/30 cursor-pointer font-mono"
             >
-              <option value="Next.js 15">Next.js 15 (App Router)</option>
-              <option value="Vite + React">Vite + React (SPA)</option>
-              <option value="FastAPI + React">FastAPI + React</option>
-              <option value="SvelteKit">SvelteKit</option>
+              {FRAMEWORK_CHOICES.map((choice) => (
+                <option key={choice} value={choice}>{choice}</option>
+              ))}
             </select>
           </div>
 

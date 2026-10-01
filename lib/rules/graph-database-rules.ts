@@ -4,6 +4,7 @@
  */
 import { Finding } from "@/data/schema";
 import { CodeFile } from "../scanner-engine";
+import { locateMatchLine } from './shared/locate';
 export interface GraphDatabaseRuleResult {
     findings: Finding[];
     logs: string[];
@@ -15,13 +16,13 @@ export function evaluateGraphDatabaseRules(file: CodeFile, lines: string[], clea
     const logs: string[] = [];
     const lowerPath = file.path.toLowerCase().replace(/\\/g, "/");
     // Skip self-referential catalogs, mocks, and schema definitions
-    if (lowerPath.includes("data/catalogs/") || lowerPath.includes("data/mockdata") || lowerPath.includes("data/workspacefiles") || lowerPath.includes("data/schema") || lowerPath.includes("scratch/") || lowerPath.includes(".agent/") || lowerPath.includes("node_modules/") || lowerPath.endsWith(".d.ts")) {
+    if (lowerPath.includes("node_modules/") || lowerPath.endsWith(".d.ts")) {
         return { findings, logs };
     }
     const ts = new Date().toLocaleTimeString();
     // GRPH-01: Unbounded Cypher Traversal Missing Maximum Hop Limit
     if ((/(?:session\.run|neo4j|cypher)/i.test(cleanContent) && /-\[\*\s*\]->/i.test(cleanContent))) {
-        const matchLineIdx = lines.findIndex(l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('#') && !l.trim().startsWith('*'));
+        const matchLineIdx = locateMatchLine(lines, [/(?:session\.run|neo4j|cypher)/i, /-\[\*\s*\]->/i], l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('#') && !l.trim().startsWith('*'));
         const lineNum = matchLineIdx !== -1 ? matchLineIdx + 1 : 1;
         findings.push({
             id: `grph-12001-${Date.now()}-${findingCounter.count++}`,
@@ -45,7 +46,7 @@ export function evaluateGraphDatabaseRules(file: CodeFile, lines: string[], clea
     }
     // GRPH-02: Cypher Query String Concatenation Permitting Injection
     if ((/(?:session\.run|neo4j|cypher)/i.test(cleanContent) && /MATCH\s*\([a-zA-Z0-9_]*:[a-zA-Z0-9_]+/i.test(cleanContent) && /\$\{|\+\s*[a-zA-Z0-9_]+/i.test(cleanContent) && !/\$params|\$props/i.test(cleanContent))) {
-        const matchLineIdx = lines.findIndex(l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('#') && !l.trim().startsWith('*'));
+        const matchLineIdx = locateMatchLine(lines, [/(?:session\.run|neo4j|cypher)/i, /MATCH\s*\([a-zA-Z0-9_]*:[a-zA-Z0-9_]+/i, /\$\{|\+\s*[a-zA-Z0-9_]+/i], l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('#') && !l.trim().startsWith('*'));
         const lineNum = matchLineIdx !== -1 ? matchLineIdx + 1 : 1;
         findings.push({
             id: `grph-12002-${Date.now()}-${findingCounter.count++}`,
@@ -69,7 +70,7 @@ export function evaluateGraphDatabaseRules(file: CodeFile, lines: string[], clea
     }
     // GRPH-03: Missing Schema Index on High-Cardinality Graph Properties
     if ((/createIndex/i.test(cleanContent) && !/CREATE INDEX/i.test(cleanContent))) {
-        const matchLineIdx = lines.findIndex(l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('#') && !l.trim().startsWith('*'));
+        const matchLineIdx = locateMatchLine(lines, [/createIndex/i], l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('#') && !l.trim().startsWith('*'));
         const lineNum = matchLineIdx !== -1 ? matchLineIdx + 1 : 1;
         findings.push({
             id: `grph-12003-${Date.now()}-${findingCounter.count++}`,
@@ -93,7 +94,7 @@ export function evaluateGraphDatabaseRules(file: CodeFile, lines: string[], clea
     }
     // GRPH-04: Supernode Cartesian Explosion in Variable Length Expansions
     if ((/expandPath/i.test(cleanContent) && !/filterSupernodes/i.test(cleanContent))) {
-        const matchLineIdx = lines.findIndex(l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('#') && !l.trim().startsWith('*'));
+        const matchLineIdx = locateMatchLine(lines, [/expandPath/i], l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('#') && !l.trim().startsWith('*'));
         const lineNum = matchLineIdx !== -1 ? matchLineIdx + 1 : 1;
         findings.push({
             id: `grph-12004-${Date.now()}-${findingCounter.count++}`,
@@ -117,7 +118,7 @@ export function evaluateGraphDatabaseRules(file: CodeFile, lines: string[], clea
     }
     // GRPH-05: Unbounded Result Set Missing LIMIT Clause on Graph Query
     if ((/(?:session\.run|neo4j|cypher)/i.test(cleanContent) && /RETURN\s+[a-z]+/i.test(cleanContent) && !/LIMIT\s+\d+/i.test(cleanContent))) {
-        const matchLineIdx = lines.findIndex(l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('#') && !l.trim().startsWith('*'));
+        const matchLineIdx = locateMatchLine(lines, [/(?:session\.run|neo4j|cypher)/i, /RETURN\s+[a-z]+/i], l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('#') && !l.trim().startsWith('*'));
         const lineNum = matchLineIdx !== -1 ? matchLineIdx + 1 : 1;
         findings.push({
             id: `grph-12005-${Date.now()}-${findingCounter.count++}`,

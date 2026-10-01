@@ -4,6 +4,7 @@
  */
 import { Finding } from "@/data/schema";
 import { CodeFile } from "../scanner-engine";
+import { locateMatchLine } from './shared/locate';
 export interface NistSp80053RuleResult {
     findings: Finding[];
     logs: string[];
@@ -15,13 +16,13 @@ export function evaluateNistSp80053Rules(file: CodeFile, lines: string[], cleanC
     const logs: string[] = [];
     const lowerPath = file.path.toLowerCase().replace(/\\/g, "/");
     // Skip self-referential catalogs, mocks, and schema definitions
-    if (lowerPath.includes("data/catalogs/") || lowerPath.includes("data/mockdata") || lowerPath.includes("data/workspacefiles") || lowerPath.includes("data/schema") || lowerPath.includes("scratch/") || lowerPath.includes(".agent/") || lowerPath.includes("node_modules/") || lowerPath.endsWith(".d.ts")) {
+    if (lowerPath.includes("node_modules/") || lowerPath.endsWith(".d.ts")) {
         return { findings, logs };
     }
     const ts = new Date().toLocaleTimeString();
     // NIST-01: NIST AC-2 Account Management Automated Inactivity Deactivation
     if ((/sessionManager/i.test(cleanContent) && !/maxInactivityDays|deactivateInactive/i.test(cleanContent))) {
-        const matchLineIdx = lines.findIndex(l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('#') && !l.trim().startsWith('*'));
+        const matchLineIdx = locateMatchLine(lines, [/sessionManager/i], l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('#') && !l.trim().startsWith('*'));
         const lineNum = matchLineIdx !== -1 ? matchLineIdx + 1 : 1;
         findings.push({
             id: `nist-11901-${Date.now()}-${findingCounter.count++}`,
@@ -45,7 +46,7 @@ export function evaluateNistSp80053Rules(file: CodeFile, lines: string[], cleanC
     }
     // NIST-02: NIST AC-3 Access Enforcement Principle of Least Privilege
     if ((/iamPolicy/i.test(cleanContent) && !/leastPrivilegeEnforced/i.test(cleanContent))) {
-        const matchLineIdx = lines.findIndex(l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('#') && !l.trim().startsWith('*'));
+        const matchLineIdx = locateMatchLine(lines, [/iamPolicy/i], l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('#') && !l.trim().startsWith('*'));
         const lineNum = matchLineIdx !== -1 ? matchLineIdx + 1 : 1;
         findings.push({
             id: `nist-11902-${Date.now()}-${findingCounter.count++}`,
@@ -69,7 +70,7 @@ export function evaluateNistSp80053Rules(file: CodeFile, lines: string[], cleanC
     }
     // NIST-03: NIST AU-2 Event Logging Across All Privileged System Actions
     if ((/adminActionHandler/i.test(cleanContent) && !/emitAuditEvent/i.test(cleanContent))) {
-        const matchLineIdx = lines.findIndex(l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('#') && !l.trim().startsWith('*'));
+        const matchLineIdx = locateMatchLine(lines, [/adminActionHandler/i], l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('#') && !l.trim().startsWith('*'));
         const lineNum = matchLineIdx !== -1 ? matchLineIdx + 1 : 1;
         findings.push({
             id: `nist-11903-${Date.now()}-${findingCounter.count++}`,
@@ -93,7 +94,7 @@ export function evaluateNistSp80053Rules(file: CodeFile, lines: string[], cleanC
     }
     // NIST-04: NIST AU-9 Protection of Audit Information Immutability
     if ((/auditStorage/i.test(cleanContent) && !/wormLock|retentionLock/i.test(cleanContent))) {
-        const matchLineIdx = lines.findIndex(l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('#') && !l.trim().startsWith('*'));
+        const matchLineIdx = locateMatchLine(lines, [/auditStorage/i], l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('#') && !l.trim().startsWith('*'));
         const lineNum = matchLineIdx !== -1 ? matchLineIdx + 1 : 1;
         findings.push({
             id: `nist-11904-${Date.now()}-${findingCounter.count++}`,
@@ -117,7 +118,7 @@ export function evaluateNistSp80053Rules(file: CodeFile, lines: string[], cleanC
     }
     // NIST-05: NIST CM-8 Information System Component Inventory Automation
     if ((/cloudInventory/i.test(cleanContent) && !/autoDiscoverAssets/i.test(cleanContent))) {
-        const matchLineIdx = lines.findIndex(l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('#') && !l.trim().startsWith('*'));
+        const matchLineIdx = locateMatchLine(lines, [/cloudInventory/i], l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('#') && !l.trim().startsWith('*'));
         const lineNum = matchLineIdx !== -1 ? matchLineIdx + 1 : 1;
         findings.push({
             id: `nist-11905-${Date.now()}-${findingCounter.count++}`,

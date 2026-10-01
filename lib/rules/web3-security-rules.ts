@@ -4,6 +4,7 @@
  */
 import { Finding } from "@/data/schema";
 import { CodeFile } from "../scanner-engine";
+import { locateMatchLine } from './shared/locate';
 export interface Web3SecurityRuleResult {
     findings: Finding[];
     logs: string[];
@@ -15,7 +16,7 @@ export function evaluateWeb3SecurityRules(file: CodeFile, lines: string[], clean
     const logs: string[] = [];
     const lowerPath = file.path.toLowerCase().replace(/\\/g, "/");
     // Skip self-referential catalogs, mocks, and non-web3 paths
-    if (lowerPath.includes("data/catalogs/") || lowerPath.includes("data/mockdata") || lowerPath.includes("data/workspacefiles") || lowerPath.includes("data/schema") || lowerPath.includes("scratch/") || lowerPath.includes(".agent/") || lowerPath.includes("node_modules/") || lowerPath.endsWith(".d.ts")) {
+    if (lowerPath.includes("node_modules/") || lowerPath.endsWith(".d.ts")) {
         return { findings, logs };
     }
     const isWeb3 = lowerPath.endsWith(".sol") || lowerPath.endsWith(".vy") || lowerPath.endsWith(".cairo") ||
@@ -25,7 +26,7 @@ export function evaluateWeb3SecurityRules(file: CodeFile, lines: string[], clean
     const ts = new Date().toLocaleTimeString();
     // WEB3-01: Reentrancy Vulnerability (Checks-Effects-Interactions Violation)
     if (/(?:call\.value|call\{value:)[\s\S]*?balances\[/i.test(cleanContent) || (!cleanContent.includes('nonReentrant'))) {
-        const matchLineIdx = lines.findIndex(l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('*'));
+        const matchLineIdx = locateMatchLine(lines, [/(?:call\.value|call\{value:)[\s\S]*?balances\[/i], l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('*'));
         const lineNum = matchLineIdx !== -1 ? matchLineIdx + 1 : 1;
         findings.push({
             id: `web38701-${Date.now()}-${findingCounter.count++}`,
@@ -49,7 +50,7 @@ export function evaluateWeb3SecurityRules(file: CodeFile, lines: string[], clean
     }
     // WEB3-02: Integer Overflow / Underflow in Unchecked Math Block
     if (/unchecked\s*\{[\s\S]*?balances\[[^\]]+\]\s*-=/i.test(cleanContent)) {
-        const matchLineIdx = lines.findIndex(l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('*'));
+        const matchLineIdx = locateMatchLine(lines, [/unchecked\s*\{[\s\S]*?balances\[[^\]]+\]\s*-=/i], l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('*'));
         const lineNum = matchLineIdx !== -1 ? matchLineIdx + 1 : 1;
         findings.push({
             id: `web38702-${Date.now()}-${findingCounter.count++}`,
@@ -73,7 +74,7 @@ export function evaluateWeb3SecurityRules(file: CodeFile, lines: string[], clean
     }
     // WEB3-03: Frontrunning / MEV Sandwich Vulnerability (Zero Slippage Tolerance)
     if (/(?:swapExactTokensForTokens|swapExactETHForTokens)\s*\([^,]+,\s*0\b/i.test(cleanContent)) {
-        const matchLineIdx = lines.findIndex(l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('*'));
+        const matchLineIdx = locateMatchLine(lines, [/(?:swapExactTokensForTokens|swapExactETHForTokens)\s*\([^,]+,\s*0\b/i], l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('*'));
         const lineNum = matchLineIdx !== -1 ? matchLineIdx + 1 : 1;
         findings.push({
             id: `web38703-${Date.now()}-${findingCounter.count++}`,
@@ -97,7 +98,7 @@ export function evaluateWeb3SecurityRules(file: CodeFile, lines: string[], clean
     }
     // WEB3-04: Oracle Spot Price Manipulation (Missing TWAP / Chainlink)
     if (/(?:getReserves\(\)|pair\.balanceOf)[\s\S]*?calculatePrice/i.test(cleanContent)) {
-        const matchLineIdx = lines.findIndex(l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('*'));
+        const matchLineIdx = locateMatchLine(lines, [/(?:getReserves\(\)|pair\.balanceOf)[\s\S]*?calculatePrice/i], l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('*'));
         const lineNum = matchLineIdx !== -1 ? matchLineIdx + 1 : 1;
         findings.push({
             id: `web38704-${Date.now()}-${findingCounter.count++}`,
@@ -121,7 +122,7 @@ export function evaluateWeb3SecurityRules(file: CodeFile, lines: string[], clean
     }
     // WEB3-05: Missing Access Control on Critical Admin Functions
     if (/function\s+(?:withdrawTreasury|pauseContract|mintToken)\s*\([^)]*\)\s*(?:public|external)(?!.*(?:onlyOwner|hasRole))/i.test(cleanContent)) {
-        const matchLineIdx = lines.findIndex(l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('*'));
+        const matchLineIdx = locateMatchLine(lines, [/function\s+(?:withdrawTreasury|pauseContract|mintToken)\s*\([^)]*\)\s*(?:public|external)(?!.*(?:onlyOwner|hasRole))/i], l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('*'));
         const lineNum = matchLineIdx !== -1 ? matchLineIdx + 1 : 1;
         findings.push({
             id: `web38705-${Date.now()}-${findingCounter.count++}`,
@@ -145,7 +146,7 @@ export function evaluateWeb3SecurityRules(file: CodeFile, lines: string[], clean
     }
     // WEB3-06: Signature Replay Attack (Missing EIP-712 Nonce & ChainID)
     if (/ecrecover\s*\(/i.test(cleanContent) && !/nonce|chainid|EIP712/i.test(cleanContent)) {
-        const matchLineIdx = lines.findIndex(l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('*'));
+        const matchLineIdx = locateMatchLine(lines, [/ecrecover\s*\(/i], l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('*'));
         const lineNum = matchLineIdx !== -1 ? matchLineIdx + 1 : 1;
         findings.push({
             id: `web38706-${Date.now()}-${findingCounter.count++}`,
@@ -169,7 +170,7 @@ export function evaluateWeb3SecurityRules(file: CodeFile, lines: string[], clean
     }
     // WEB3-07: Dangerous Delegatecall to Untrusted Target Address
     if (/delegatecall\s*\([\s\S]*?userTarget/i.test(cleanContent)) {
-        const matchLineIdx = lines.findIndex(l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('*'));
+        const matchLineIdx = locateMatchLine(lines, [/delegatecall\s*\([\s\S]*?userTarget/i], l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('*'));
         const lineNum = matchLineIdx !== -1 ? matchLineIdx + 1 : 1;
         findings.push({
             id: `web38707-${Date.now()}-${findingCounter.count++}`,
@@ -193,7 +194,7 @@ export function evaluateWeb3SecurityRules(file: CodeFile, lines: string[], clean
     }
     // WEB3-08: Unprotected Selfdestruct / Suicide Call
     if (/(?:selfdestruct|suicide)\s*\(/i.test(cleanContent) && !/onlyOwner/i.test(cleanContent)) {
-        const matchLineIdx = lines.findIndex(l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('*'));
+        const matchLineIdx = locateMatchLine(lines, [/(?:selfdestruct|suicide)\s*\(/i], l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('*'));
         const lineNum = matchLineIdx !== -1 ? matchLineIdx + 1 : 1;
         findings.push({
             id: `web38708-${Date.now()}-${findingCounter.count++}`,
@@ -217,7 +218,7 @@ export function evaluateWeb3SecurityRules(file: CodeFile, lines: string[], clean
     }
     // WEB3-09: Block Timestamp as Randomness Source
     if (/(?:keccak256|sha256)\s*\([^)]*block\.timestamp[^)]*\)/i.test(cleanContent)) {
-        const matchLineIdx = lines.findIndex(l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('*'));
+        const matchLineIdx = locateMatchLine(lines, [/(?:keccak256|sha256)\s*\([^)]*block\.timestamp[^)]*\)/i], l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('*'));
         const lineNum = matchLineIdx !== -1 ? matchLineIdx + 1 : 1;
         findings.push({
             id: `web38709-${Date.now()}-${findingCounter.count++}`,
@@ -241,7 +242,7 @@ export function evaluateWeb3SecurityRules(file: CodeFile, lines: string[], clean
     }
     // WEB3-10: Unchecked ERC-20 Transfer Return Value
     if (/IERC20\([^)]+\)\.transfer\([^)]+\);/i.test(cleanContent)) {
-        const matchLineIdx = lines.findIndex(l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('*'));
+        const matchLineIdx = locateMatchLine(lines, [/IERC20\([^)]+\)\.transfer\([^)]+\);/i], l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('*'));
         const lineNum = matchLineIdx !== -1 ? matchLineIdx + 1 : 1;
         findings.push({
             id: `web38710-${Date.now()}-${findingCounter.count++}`,

@@ -394,7 +394,7 @@ export async function POST(req: NextRequest) {
       }
     }
 
-    const result = await runStaticCodeScan(filesToScan, targetName);
+    const result = await runStaticCodeScan(filesToScan, targetName, { dependencyAudit: { timeoutMs: 8000 } });
 
     // Auto-dispatch webhook notifications if URLs provided
     if (slackWebhookUrl || discordWebhookUrl) {
