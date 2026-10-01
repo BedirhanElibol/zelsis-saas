@@ -74,7 +74,7 @@ export const ProductCapabilities: React.FC = () => {
       bulletPoints: [
         'Exact line numbers with syntax-highlighted code context',
         'Pre-engineered AI prompts ready for any AI coding assistant',
-        'Direct links to GitHub commit refs and pull request file trees'
+        'Every finding tagged verified or suggestion, so you fix what is proven first'
       ]
     },
     {
@@ -102,21 +102,21 @@ export const ProductCapabilities: React.FC = () => {
     {
       id: 'profiler',
       badge: 'WEB VITALS & INFRASTRUCTURE',
-      title: 'Deep Bundle & Core Web Vitals Profiler',
-      subtitle: 'Identify layout shifts, unoptimized asset weights, and container resource limits.',
+      title: 'Performance, Accessibility & Infrastructure Checks',
+      subtitle: 'Catch the code patterns behind layout shifts, heavy bundles and unbounded containers.',
       description:
-        'Catch client-side performance regressions and cloud resource misconfigurations. Analyze Cumulative Layout Shift (CLS), unoptimized assets, WCAG 2.2 AA keyboard accessibility, and verify Docker CPU/Memory limits before deployment.',
+        'Static checks for the causes of poor Core Web Vitals (images without dimensions, render-blocking scripts, oversized imports), WCAG 2.2 AA accessibility gaps, and Docker or Kubernetes resources left unbounded, before you deploy.',
       image: '/images/bundle_profiler.png',
       alt: 'Zelsis Performance Bundle Profiler and Cloud Resource Analyzer',
       tag: 'PERFORMANCE GAUGE',
       architecturePills: [
-        'Cumulative Layout Shift (CLS)',
-        'Largest Contentful Paint (LCP)',
+        'Layout-Shift Risks',
+        'Render-Blocking Assets',
         'WCAG 2.2 AA Accessibility',
         'Container Resource Quotas'
       ],
       bulletPoints: [
-        'Cumulative Layout Shift (CLS) and Largest Contentful Paint (LCP) checks',
+        'Patterns that cause layout shift (CLS) and slow first paint (LCP)',
         'Detection of unkeyed React iterators and heavy third-party bundle leaks',
         'Docker healthcheck enforcement and memory quota allocation checks'
       ]

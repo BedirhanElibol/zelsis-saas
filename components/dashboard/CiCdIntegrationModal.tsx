@@ -4,6 +4,7 @@ import React, { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { X, GitPullRequest, Copy, Check, Terminal, ExternalLink, ShieldCheck, AlertTriangle, Code, ArrowRight, Lock } from 'lucide-react';
 import { Project, UserTier } from '@/data/schema';
+import { getPublicAppUrl } from '@/lib/app-url';
 import { isCicdIntegrationAllowed } from '@/lib/quota-manager';
 import { ClipboardToastBadge, useClipboardToast } from '../ui/Toast';
 
@@ -38,7 +39,7 @@ export const CiCdIntegrationModal: React.FC<CiCdIntegrationModalProps> = ({
 
   if (!isOpen) return null;
 
-  const appUrl = typeof window !== 'undefined' ? window.location.origin : 'https://zelsis-saas.vercel.app';
+  const appUrl = getPublicAppUrl();
   const targetRepo = project.repoUrl || 'https://github.com/your-org/your-repo';
 
   const githubWorkflowYaml = `name: Zelsis Deployment Release Gate

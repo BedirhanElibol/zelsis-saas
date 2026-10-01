@@ -4,6 +4,7 @@ import React, { useState } from 'react';
 import Image from 'next/image';
 import { Terminal, GitPullRequest, ShieldCheck, Copy, CheckCircle2, Download, Settings2, Sliders, CheckSquare, AlertTriangle, Lock, ArrowRight, FileCode } from 'lucide-react';
 import { Project, UserTier } from '@/data/schema';
+import { getPublicAppUrl } from '@/lib/app-url';
 import { isCicdViewAllowed } from '@/lib/quota-manager';
 import { exportProjectSarifReport } from '@/lib/report-exporter';
 
@@ -34,7 +35,7 @@ export const CicdAutomationView: React.FC<CicdAutomationViewProps> = ({
   const [minScore, setMinScore] = useState(85);
 
   const generateGithubWorkflow = () => {
-    const appUrl = typeof window !== 'undefined' ? window.location.origin : 'https://zelsis-saas.vercel.app';
+    const appUrl = getPublicAppUrl();
     const failCheck =
       failThreshold === 'smart'
         ? `if [ "$STATUS" = "FAILED" ]; then echo "::error::Zelsis gate FAILED (score $SCORE/100)"; exit 1; fi`

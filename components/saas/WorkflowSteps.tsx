@@ -11,6 +11,7 @@ import {
   Lock, 
   ExternalLink 
 } from 'lucide-react';
+import { getConfiguredAppUrl } from '@/lib/app-url';
 
 export const WorkflowSteps: React.FC = () => {
   const [activeStep, setActiveStep] = useState(0);
@@ -18,18 +19,19 @@ export const WorkflowSteps: React.FC = () => {
   const steps = [
     {
       number: '01',
-      badge: 'INGESTION & PRIVACY',
-      title: 'Target Ingestion & Zero-Retention Memory Stream',
+      badge: 'CONNECT & PRIVACY',
+      title: 'Connect a Repository, Scanned In Memory',
       description:
-        'Connect any public or private GitHub repository, pull request branch, or direct code snippet. Our engine inspects syntax tokens & structural rules in ephemeral serverless memory.',
-      codeSnippet: `// 1. Ingest via CLI, GitHub Action or Web Dashboard
-$ zelsis evaluate --repo github.com/enterprise/payment-gateway
-[INFO] Ephemeral security stream opened. 
-[PRIVACY] Zero-retention enabled: In-memory evaluation only. No code written to disk.`,
+        'Paste a public GitHub repository, or connect private ones with a read-only GitHub token. Files are fetched into worker memory, scanned, and released: we keep the findings, never your source.',
+      codeSnippet: `# From the dashboard, or from any CI runner with one HTTP call
+$ curl -X POST ${getConfiguredAppUrl()}/api/v1/gate-check \\
+    -H "Content-Type: application/json" \\
+    -d '{"repoUrl": "your-org/your-app"}'
+{"gateStatus": "PASSED", "readinessScore": 94, ...}`,
       features: [
-        'Zero-retention architecture (code is never permanently stored)',
-        'Full monorepo & multi-platform support (Web, Cloud, iOS, Android)',
-        'Native GitHub Action & pre-commit hook integration'
+        'Source code is never stored: only findings with short snippets',
+        'Public repositories instantly, private ones with a read-only token',
+        'GitHub Actions, GitLab CI and pre-commit configs generated for you'
       ]
     },
     {
@@ -45,30 +47,27 @@ $ zelsis evaluate --repo github.com/enterprise/payment-gateway
   [PASS] INFRA-02: Container runs as dedicated non-root user .. PASSED
 [SCORE] 94/100 PRODUCTION READINESS ACHIEVED`,
       features: [
-        'OWASP Top 10, CWE-22, SSRF, and RLS vulnerability detection',
-        'WCAG 2.2 AA keyboard accessibility & Core Web Vitals profiling',
-        'Docker root user, Kubernetes QoS, and connection pool defense'
+        'OWASP Top 10, SSRF, injection, leaked secrets and Supabase RLS checks',
+        'Known-vulnerable dependencies looked up in OSV.dev from your lockfiles',
+        'WCAG 2.2 accessibility, Docker and Kubernetes misconfiguration checks'
       ]
     },
     {
       number: '03',
       badge: 'RELEASE CLEARANCE',
-      title: 'Signed Manifest Clearance & 1-Click Fixes',
+      title: 'Gate the Release & Fix in One Click',
       description:
-        'Generate an exportable cryptographic release manifest for SOC 2 readiness/evidence support, and retrieve surgical 1-click AI prompt patches ready for any AI coding assistant.',
-      codeSnippet: `// Cryptographically Signed Deployment Manifest
-{
-  "manifestId": "MANIFEST-PROD-2026-X99",
-  "readinessScore": 94,
-  "gateStatus": "PASSED",
-  "auditChecksum": "sha256-e3b0c44298fc1c149afbf4c8996fb924",
-  "compliance": ["SOC2_READINESS", "ISO27001_A12"],
-  "signature": "SIGNED_BY_ZELSIS_RELEASE_AUTHORITY"
-}`,
+        'Fail the CI job when the gate fails, export the result for change-control records, and copy a ready-made fix prompt for any AI coding assistant.',
+      codeSnippet: `# .github/workflows/zelsis.yml (generated in the dashboard)
+- name: Zelsis release gate
+  run: |
+    STATUS=$(curl -s -X POST "$ZELSIS_URL/api/v1/gate-check" \\
+      -d '{"repoUrl":"\${{ github.repository }}"}' | jq -r .gateStatus)
+    [ "$STATUS" != "FAILED" ] || exit 1`,
       features: [
-        'Exportable release manifest (JSON / CSV) for change control records',
-        'Pre-formatted AI remediation prompts for instant PR fixes',
-        'Embeddable dynamic Markdown badges for repository READMEs'
+        'Export results as PDF, JSON, CSV, SARIF or Markdown',
+        'Fix prompts with file, line and context for each finding',
+        'Live README badge that shows your current gate status'
       ]
     }
   ];

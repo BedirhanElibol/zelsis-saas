@@ -223,7 +223,7 @@ export const ComparisonTable: React.FC = () => {
         {
           name: 'Technical Support Channel',
           description: 'Direct engineering support and issue escalation channel',
-          free: 'Community Forum',
+          free: 'Email Support',
           pro: '24-Hour Priority Email Support',
           enterprise: 'Priority Email & Dedicated Slack Support'
         },
