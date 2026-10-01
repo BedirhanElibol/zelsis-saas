@@ -101,8 +101,8 @@ export const ComparisonTable: React.FC = () => {
           name: 'Monthly Live Scans',
           description: 'Maximum pre-flight audits performed per monthly billing cycle',
           free: '3 Scans / month (Strict Cap)',
-          pro: 'Unlimited Scans (Zero Throttling)',
-          enterprise: 'Unlimited Scans (Dedicated Runners)'
+          pro: 'Unlimited Scans (fair-use rate limits)',
+          enterprise: 'Unlimited Scans (fair-use rate limits)'
         },
         {
           name: 'Repository Scope & Privacy',
@@ -111,13 +111,6 @@ export const ComparisonTable: React.FC = () => {
           pro: 'Unlimited Public & Private Repos',
           enterprise: 'Unlimited Org-Wide & Team Repos'
         },
-        {
-          name: 'Concurrent Analysis Workers',
-          description: 'Simultaneous scanning pipelines',
-          free: '1 Scan at a time (Shared Queue)',
-          pro: '5 Concurrent Scans (Priority Pool)',
-          enterprise: 'Unlimited Parallel Workers (High Priority)'
-        }
       ]
     },
     {
@@ -140,16 +133,16 @@ export const ComparisonTable: React.FC = () => {
         {
           name: 'Repository Size Scalability',
           description: 'Analysis support for large multi-package and monorepo codebases',
-          free: 'Standard Buffer (Small Repos)',
-          pro: 'Yielded Event Loop (1,000+ Files, No OOM)',
-          enterprise: 'Monorepo & Multi-Package Project Analysis'
+          free: 'Same engine on every plan',
+          pro: 'Same engine on every plan',
+          enterprise: 'Same engine on every plan'
         },
         {
-          name: 'Zero-Code Retention Privacy',
-          description: 'In-memory execution model ensuring intellectual property safety',
-          free: 'Ephemeral RAM (Never Stored)',
-          pro: 'Ephemeral RAM (Zero Code Retention)',
-          enterprise: 'Ephemeral RAM (Zero-Retention Privacy)'
+          name: 'Source Code Retention',
+          description: 'Repositories are scanned in memory; only findings are saved',
+          free: 'Source not stored; findings keep short snippets',
+          pro: 'Source not stored; findings keep short snippets',
+          enterprise: 'Source not stored; findings keep short snippets'
         }
       ]
     },
@@ -161,40 +154,33 @@ export const ComparisonTable: React.FC = () => {
           description: 'Visual before/after line-by-line code replacement for every detected flaw',
           free: 'Line Numbers only (No Diffs)',
           pro: 'Interactive Unified Git Diffs',
-          enterprise: 'Multi-File Unified Git Diffs'
+          enterprise: 'Interactive Unified Git Diffs'
         },
         {
           name: 'Context-Engineered AI Prompts',
           description: 'Tailored prompts with CVE context for any AI coding assistant',
           free: '1 Lifetime Trial Prompt',
           pro: 'Unlimited 1-Click Fix Prompts',
-          enterprise: 'Unlimited Fix Prompts + PR Diffs'
+          enterprise: 'Unlimited 1-Click Fix Prompts'
         },
-        {
-          name: 'Automated PR Gate Checks',
-          description: 'Automated remediation pull request guidance and CI status verification',
-          free: false,
-          pro: '1-Click PR Fix Diffs',
-          enterprise: 'Custom Webhook PR Merge Checks'
-        }
       ]
     },
     {
       title: 'CI/CD & Production Gates',
       items: [
         {
-          name: 'Automated PR Gate Enforcement',
-          description: 'Blocks production deployment and fails merge checks on security policy breach',
-          free: 'Manual Web Dashboard only',
-          pro: 'GitHub Actions & Webhook Release Gate',
-          enterprise: 'GitHub Actions, GitLab CI & Webhooks'
+          name: 'CI Release Gate',
+          description: 'HTTP gate API that fails the CI job when the gate fails (GitHub Actions, GitLab CI or any runner)',
+          free: 'Dashboard scans only',
+          pro: 'Gate API + generated CI workflows',
+          enterprise: 'Gate API + generated CI workflows'
         },
         {
-          name: 'Policy Profile Configuration',
-          description: 'Custom severity thresholds for blocking releases (Critical / High / Medium)',
-          free: 'Default Strict Presets',
-          pro: 'Custom Severity Thresholds & Rulesets',
-          enterprise: 'Org-Wide Enforced Compliance Profiles'
+          name: 'Policy-as-Code (.zelsisrc.json)',
+          description: 'Ignore rules or paths, turn off pillars, choose smart / strict / advisory gating with a minimum score',
+          free: 'Included',
+          pro: 'Included',
+          enterprise: 'Included'
         }
       ]
     },
@@ -202,18 +188,18 @@ export const ComparisonTable: React.FC = () => {
       title: 'Executive Compliance & Reports',
       items: [
         {
-          name: 'Cryptographic PDF Certificate',
-          description: 'Tamper-proof signed verification PDF proving pre-flight compliance for stakeholders',
+          name: 'PDF Readiness Report',
+          description: 'Downloadable PDF of the gate result, score and findings for stakeholders',
           free: false,
-          pro: 'Instant Signed PDF Certificate',
-          enterprise: 'Branded Certificate & Executive Pack'
+          pro: 'PDF Report Export',
+          enterprise: 'PDF Report Export'
         },
         {
           name: 'Issue Tracker Export',
           description: 'Direct export to team tracking systems (Jira, Linear, GitHub Issues)',
           free: 'Manual Markdown Copy',
           pro: '1-Click Jira & Linear Markdown',
-          enterprise: 'Two-Way Jira, GitHub & Slack Sync'
+          enterprise: '1-Click Jira & Linear Markdown'
         },
         {
           name: 'Audit History Retention',

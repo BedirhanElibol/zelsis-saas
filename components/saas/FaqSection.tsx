@@ -16,27 +16,27 @@ export const FaqSection: React.FC = () => {
     {
       question: 'Do you store or train AI models on our proprietary source code?',
       answer:
-        'Never. Zelsis operates on a strict zero-retention architecture. Your repository payload is streamed directly into ephemeral worker memory, parsed via syntax and structural pattern tokens, and immediately released. We never write your code to disk, never save repositories into databases, and never use customer data for AI model training.'
+        'No. Repository files are fetched into worker memory, scanned with pattern-based rules, and released when the scan ends. We do not save repositories; we save the findings, which include a short snippet of each flagged line so you can review it. Customer code is never used to train AI models.'
     },
     {
       question: 'Does Zelsis work with private GitHub repositories?',
       answer:
-        'Yes. You can connect private GitHub repositories using your authenticated GitHub token or by running our localized CLI. Because scans execute in-memory, your confidential intellectual property remains strictly within your authorized team perimeter.'
+        'Yes. Provide a GitHub token with read access to the repository. The token is used only to fetch files for the scan, and the files are scanned in memory.'
     },
     {
       question: 'How does Zelsis integrate into our existing CI/CD pipelines?',
       answer:
-        'Zelsis can be invoked via automated webhooks, CLI pre-commit hooks, or GitHub Actions. It outputs deterministic exit codes and signed JSON/CSV release manifests. You can enforce a minimum release threshold (e.g. 90/100 readiness score) to block pull request merges containing critical vulnerabilities.'
+        'Call the gate API from any CI runner (GitHub Actions, GitLab CI, Bitbucket, CircleCI). With failOnBlock=true it returns HTTP 422 when the gate fails, so the job fails. The dashboard generates ready-to-use workflows, and a .zelsisrc.json in your repository can require a minimum readiness score.'
     },
     {
       question: 'How are the release gate and security rules maintained and updated?',
       answer:
-        'Our rule inventory is continuously synchronized with the latest industry benchmarks, including OWASP Top 10 (2025/2026), OWASP API Security, Django, FastAPI, Go, and React best practices, WCAG 2.2 AA accessibility guidelines, and Kubernetes/Docker CIS benchmarks.'
+        'Every rule change is measured against a pinned benchmark of intentionally vulnerable apps and maintained production projects in several languages. Rules that misfire on clean code become experimental and stop affecting the gate, and a CRITICAL finding can fail a release only when its rule has test fixtures, caught a documented flaw, or was reviewed as a true positive. Results are published in the benchmark section.'
     },
     {
       question: 'Can we configure custom severity levels or disable irrelevant rules?',
       answer:
-        'Yes. Pro and Enterprise subscribers have full access to our Rule Configurator. You can toggle specific rules on or off, adjust severity thresholds (CRITICAL, HIGH, MEDIUM, LOW), and configure tailored notification channels (Slack / Discord) per repository.'
+        'Yes, on every plan. Add a .zelsisrc.json (or .zelsisignore) to your repository to ignore rules or paths, turn off whole pillars, and choose smart, strict or advisory gating with a minimum score. The dashboard rule configurator can generate the file for you.'
     },
     {
       question: 'What is your refund policy and subscription cancellation model?',
