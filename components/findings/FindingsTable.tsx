@@ -21,8 +21,11 @@ interface FindingsTableProps {
   onOpenCheckout?: (plan?: 'Pro' | 'Enterprise') => void;
 }
 
+/** Findings from rules without evidence (unproven) or proven noisy (experimental): shown on request as suggestions. */
+const isAdvisoryFinding = (f: Finding | null | undefined) => f?.maturity === 'experimental' || f?.maturity === 'unproven';
+
 export const FindingsTable: React.FC<FindingsTableProps> = ({
-  findings,
+  findings: allFindings,
   onInspectFinding,
   onTriggerScan,
   onLoadDemoFindings,
@@ -38,6 +41,11 @@ export const FindingsTable: React.FC<FindingsTableProps> = ({
   const [hasDiffOnly, setHasDiffOnly] = useState<boolean>(false);
   const [isBulkOpen, setIsBulkOpen] = useState(false);
   const [expandedCardIds, setExpandedCardIds] = useState<Set<string>>(new Set());
+  const [showAdvisory, setShowAdvisory] = useState(false);
+
+  // Default view: findings from verified rules only. Everything below (counts, tabs, bulk fix) uses this list.
+  const advisoryCount = (Array.isArray(allFindings) ? allFindings : []).filter(isAdvisoryFinding).length;
+  const findings = (Array.isArray(allFindings) ? allFindings : []).filter((f) => showAdvisory || !isAdvisoryFinding(f));
 
   const {
     showToast,
@@ -329,6 +337,26 @@ export const FindingsTable: React.FC<FindingsTableProps> = ({
           <span>Has 1-Click Code Patch ({findings.filter(f => Boolean(f.diffPatch || f.remediationPrompt)).length})</span>
         </button>
       </div>
+
+      {advisoryCount > 0 && (
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 px-3 py-2.5 rounded-lg border border-white/10 bg-[#0E0E10] text-xs">
+          <span className="text-[#A1A1AA] leading-relaxed">
+            {showAdvisory ? (
+              <>Showing all findings, including <span className="text-white font-semibold">{advisoryCount} suggestions</span> from rules we have not yet proven precise. Suggestions never fail the gate and cost at most 10 score points together.</>
+            ) : (
+              <>Showing findings from <span className="text-white font-semibold">verified rules</span> only. {advisoryCount} lower-confidence suggestion{advisoryCount === 1 ? ' is' : 's are'} hidden.</>
+            )}
+          </span>
+          <button
+            type="button"
+            onClick={() => setShowAdvisory((v) => !v)}
+            aria-pressed={showAdvisory}
+            className="shrink-0 px-2.5 py-1 rounded-md border border-white/15 text-white hover:bg-white/5 font-semibold cursor-pointer transition-colors"
+          >
+            {showAdvisory ? 'Hide suggestions' : `Show ${advisoryCount} suggestion${advisoryCount === 1 ? '' : 's'}`}
+          </button>
+        </div>
+      )}
 
       {/* Header & Controls */}
       <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
