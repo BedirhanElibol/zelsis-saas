@@ -4,6 +4,8 @@ import { checkRateLimit, createRateLimitResponse } from '@/lib/rate-limiter';
 import { createClient } from '@supabase/supabase-js';
 import { isPlatformAdminEmail } from '@/lib/subscription-utils';
 
+import { getEffectiveSupabaseUrl, getEffectiveSupabaseAnonKey, getEffectiveSupabaseServiceRoleKey, getSupabaseAdmin } from '@/lib/supabase-admin';
+
 // Verified subscriber registry & platform administrator list
 const VERIFIED_SUBSCRIBER_EMAILS = new Set(
   (process.env.VERIFIED_SUBSCRIBERS || process.env.ADMIN_EMAILS || '')
@@ -14,7 +16,7 @@ const VERIFIED_SUBSCRIBER_EMAILS = new Set(
 
 export async function POST(req: NextRequest) {
   const rateLimit = await checkRateLimit(req, {
-    maxRequests: 30,
+    maxRequests: 120,
     windowSeconds: 60,
     prefix: 'subscription-sync'
   });
@@ -31,9 +33,9 @@ export async function POST(req: NextRequest) {
     );
   }
 
-  const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
-  const anonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
-  const serviceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
+  const supabaseUrl = getEffectiveSupabaseUrl();
+  const anonKey = getEffectiveSupabaseAnonKey();
+  const serviceRoleKey = getEffectiveSupabaseServiceRoleKey();
   const polarAccessToken = process.env.POLAR_ACCESS_TOKEN;
 
   if (!supabaseUrl || !anonKey) {

@@ -26,7 +26,9 @@ export const CSP_DIRECTIVES = {
     'blob:',
     'https://avatars.githubusercontent.com',
     'https://raw.githubusercontent.com',
-    'https://images.unsplash.com'
+    'https://images.unsplash.com',
+    'https://lh3.googleusercontent.com',
+    'https://*.googleusercontent.com'
   ],
   'font-src': [
     "'self'",

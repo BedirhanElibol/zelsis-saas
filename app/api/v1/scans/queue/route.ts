@@ -5,6 +5,7 @@ import { logger } from '@/lib/logger';
 import { isValidGithubUrl, parseGithubUrl } from '@/lib/github-api';
 import { isValidWebUrl } from '@/lib/website-scanner';
 import { getInternalBaseUrl, getInternalSecret } from '@/lib/internal-auth';
+import { getEffectiveSupabaseUrl, getEffectiveSupabaseAnonKey, getEffectiveSupabaseServiceRoleKey, getSupabaseAdmin } from '@/lib/supabase-admin';
 import { z } from 'zod';
 
 export const dynamic = 'force-dynamic';
@@ -65,9 +66,9 @@ export async function POST(req: NextRequest) {
 
     // 3. User Authentication & Authorization
     const authHeader = req.headers.get('authorization')?.replace(/^Bearer\s+/i, '');
-    const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || '';
-    const anonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || '';
-    const serviceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
+    const supabaseUrl = getEffectiveSupabaseUrl();
+    const anonKey = getEffectiveSupabaseAnonKey();
+    const serviceRoleKey = getEffectiveSupabaseServiceRoleKey();
 
     let authenticatedUserId: string | null = null;
     let userTier: 'Free' | 'Pro' | 'Enterprise' = 'Free';
@@ -94,7 +95,7 @@ export async function POST(req: NextRequest) {
     // 4. Quota Gate Verification
     if (serviceRoleKey) {
       try {
-        const adminClient = createClient(supabaseUrl, serviceRoleKey, { auth: { persistSession: false } });
+        const adminClient = getSupabaseAdmin();
         const { data: sub } = await adminClient
           .from('subscriptions')
           .select('plan_tier, monthly_scan_quota, scans_used_this_month, current_period_end')
@@ -138,7 +139,7 @@ export async function POST(req: NextRequest) {
     // 6. Create Job Record in Database
     let jobId: string | null = null;
     if (serviceRoleKey && supabaseUrl) {
-      const adminClient = createClient(supabaseUrl, serviceRoleKey, { auth: { persistSession: false } });
+      const adminClient = getSupabaseAdmin();
 
       const { data: insertedJob, error: insertErr } = await adminClient
         .from('scan_jobs')

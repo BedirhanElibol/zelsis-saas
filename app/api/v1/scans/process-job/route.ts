@@ -11,6 +11,7 @@ import { checkRateLimit, createRateLimitResponse } from '@/lib/rate-limiter';
 import { hasFixPromptAccess, isPlatformAdminEmail, resolveServerPlanTier } from '@/lib/subscription-utils';
 import { redactScanResultFixes } from '@/lib/fix-gate';
 import { isValidInternalSecret } from '@/lib/internal-auth';
+import { getSupabaseAdmin } from '@/lib/supabase-admin';
 
 export const maxDuration = 30;
 export const revalidate = 3600;
@@ -40,9 +41,6 @@ export async function POST(req: NextRequest) {
     );
   }
 
-  const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || '';
-  const serviceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
-
   let body: any = {};
   try {
     body = await req.json();
@@ -65,9 +63,7 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: 'Missing jobId or repoUrl' }, { status: 400 });
   }
 
-  const adminClient = (supabaseUrl && serviceRoleKey)
-    ? createClient(supabaseUrl, serviceRoleKey, { auth: { persistSession: false } })
-    : null;
+  const adminClient = getSupabaseAdmin();
 
   // SEC-02 Authority Invariant: If database connection is active, derive target parameters
   // strictly from verified scan_jobs record to prevent worker request tampering.

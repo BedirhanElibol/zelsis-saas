@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import crypto from 'crypto';
 import { createClient } from '@supabase/supabase-js';
 import { logger } from '@/lib/logger';
+import { getEffectiveSupabaseUrl, getEffectiveSupabaseAnonKey, getEffectiveSupabaseServiceRoleKey, getSupabaseAdmin } from '@/lib/supabase-admin';
 
 export const dynamic = 'force-dynamic';
 
@@ -20,8 +21,8 @@ export async function GET(req: NextRequest, { params }: RouteParams) {
       );
     }
 
-    const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || '';
-    const serviceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
+    const supabaseUrl = getEffectiveSupabaseUrl();
+    const serviceRoleKey = getEffectiveSupabaseServiceRoleKey();
 
     if (!supabaseUrl || !serviceRoleKey) {
       return NextResponse.json(
@@ -30,9 +31,7 @@ export async function GET(req: NextRequest, { params }: RouteParams) {
       );
     }
 
-    const adminClient = createClient(supabaseUrl, serviceRoleKey, {
-      auth: { persistSession: false }
-    });
+    const adminClient = getSupabaseAdmin();
 
     const { data: job, error: jobErr } = await adminClient
       .from('scan_jobs')
@@ -58,7 +57,7 @@ export async function GET(req: NextRequest, { params }: RouteParams) {
     // BOLA/IDOR Defense: Validate caller access rights if job is bound to a tenant
     if (job.user_id) {
       const authHeader = req.headers.get('authorization')?.replace(/^Bearer\s+/i, '');
-      const anonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || '';
+      const anonKey = getEffectiveSupabaseAnonKey();
 
       let callerUserId: string | null = null;
       let isCallerAdmin = false;
