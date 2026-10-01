@@ -149,8 +149,17 @@ function DashboardContent() {
 
   // Direct repo URL scan trigger (e.g. from Landing Hero or URL query params)
   useEffect(() => {
-    const repoParam = searchParams.get('repo');
-    const scanParam = searchParams.get('scan');
+    // Wait for a verified session; the OAuth round-trip drops query params, so fall back to the stored repo
+    if (authStatus !== 'authenticated') return;
+    let pendingRepo: string | null = null;
+    try {
+      pendingRepo = sessionStorage.getItem('zelsis_pending_repo');
+      sessionStorage.removeItem('zelsis_pending_repo');
+    } catch {
+      pendingRepo = null;
+    }
+    const repoParam = searchParams.get('repo') || pendingRepo;
+    const scanParam = searchParams.get('scan') || (pendingRepo ? 'true' : null);
     if (!repoParam || hasProcessedRepoRef.current) return;
     hasProcessedRepoRef.current = true;
 
@@ -196,7 +205,7 @@ function DashboardContent() {
       cleanUrl.searchParams.delete('scan');
       window.history.replaceState({}, '', cleanUrl.toString());
     }
-  }, [searchParams, projects]);
+  }, [searchParams, projects, authStatus]);
 
   const handleOpenCheckoutModal = (requestedPlan?: 'Pro' | 'Enterprise') => {
     if (requestedPlan) {
