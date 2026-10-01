@@ -4,6 +4,7 @@
  */
 import { Finding } from "@/data/schema";
 import { CodeFile } from "../scanner-engine";
+import { locateMatchLine } from './shared/locate';
 export interface ContainerSecurityRuleResult {
     findings: Finding[];
     logs: string[];
@@ -21,7 +22,7 @@ export function evaluateContainerSecurityRules(file: CodeFile, lines: string[], 
     const ts = new Date().toLocaleTimeString();
     // CONTAINER-01: Privileged Container Execution with Full Host Access
     if ((/securityContext/i.test(cleanContent) && /privileged:\s*true/i.test(cleanContent) && !/unprivilegedSandbox/i.test(cleanContent))) {
-        const matchLineIdx = lines.findIndex(l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('#') && !l.trim().startsWith('*'));
+        const matchLineIdx = locateMatchLine(lines, [/securityContext/i, /privileged:\s*true/i], l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('#') && !l.trim().startsWith('*'));
         const lineNum = matchLineIdx !== -1 ? matchLineIdx + 1 : 1;
         findings.push({
             id: `container12201-${Date.now()}-${findingCounter.count++}`,
@@ -45,7 +46,7 @@ export function evaluateContainerSecurityRules(file: CodeFile, lines: string[], 
     }
     // CONTAINER-02: Root User Execution in Container Runtime Image
     if ((/USER\s+root/i.test(cleanContent) && !/USER\s+1000/i.test(cleanContent))) {
-        const matchLineIdx = lines.findIndex(l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('#') && !l.trim().startsWith('*'));
+        const matchLineIdx = locateMatchLine(lines, [/USER\s+root/i], l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('#') && !l.trim().startsWith('*'));
         const lineNum = matchLineIdx !== -1 ? matchLineIdx + 1 : 1;
         findings.push({
             id: `container12202-${Date.now()}-${findingCounter.count++}`,
@@ -69,7 +70,7 @@ export function evaluateContainerSecurityRules(file: CodeFile, lines: string[], 
     }
     // CONTAINER-03: Writable Root Filesystem Allowing Malicious Binary Droppers
     if ((/securityContext/i.test(cleanContent) && /readOnlyRootFilesystem:\s*false/i.test(cleanContent) && !/readOnlyRootFilesystem:\s*true/i.test(cleanContent))) {
-        const matchLineIdx = lines.findIndex(l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('#') && !l.trim().startsWith('*'));
+        const matchLineIdx = locateMatchLine(lines, [/securityContext/i, /readOnlyRootFilesystem:\s*false/i], l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('#') && !l.trim().startsWith('*'));
         const lineNum = matchLineIdx !== -1 ? matchLineIdx + 1 : 1;
         findings.push({
             id: `container12203-${Date.now()}-${findingCounter.count++}`,
@@ -93,7 +94,7 @@ export function evaluateContainerSecurityRules(file: CodeFile, lines: string[], 
     }
     // CONTAINER-04: Host Network Namespace Sharing Permitting Network Sniffing
     if ((/hostNetwork:\s*true/i.test(cleanContent) && !/cniNetwork/i.test(cleanContent))) {
-        const matchLineIdx = lines.findIndex(l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('#') && !l.trim().startsWith('*'));
+        const matchLineIdx = locateMatchLine(lines, [/hostNetwork:\s*true/i], l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('#') && !l.trim().startsWith('*'));
         const lineNum = matchLineIdx !== -1 ? matchLineIdx + 1 : 1;
         findings.push({
             id: `container12204-${Date.now()}-${findingCounter.count++}`,
@@ -117,7 +118,7 @@ export function evaluateContainerSecurityRules(file: CodeFile, lines: string[], 
     }
     // CONTAINER-05: Exposed Docker Daemon Unix Socket Inside Container
     if ((/\/var\/run\/docker\.sock/i.test(cleanContent) && !/isolatedDockerDaemon/i.test(cleanContent))) {
-        const matchLineIdx = lines.findIndex(l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('#') && !l.trim().startsWith('*'));
+        const matchLineIdx = locateMatchLine(lines, [/\/var\/run\/docker\.sock/i], l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('#') && !l.trim().startsWith('*'));
         const lineNum = matchLineIdx !== -1 ? matchLineIdx + 1 : 1;
         findings.push({
             id: `container12205-${Date.now()}-${findingCounter.count++}`,

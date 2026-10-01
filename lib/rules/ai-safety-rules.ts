@@ -4,6 +4,7 @@
  */
 import { Finding } from '@/data/schema';
 import { CodeFile } from '../scanner-engine';
+import { locateMatchLine } from './shared/locate';
 export interface AiSafetyRuleResult {
     findings: Finding[];
     logs: string[];
@@ -21,7 +22,7 @@ export function evaluateAiSafetyRules(file: CodeFile, lines: string[], cleanCont
     const ts = new Date().toLocaleTimeString();
     // LLM-SEC-01: Indirect Prompt Injection via External Document Ingestion
     if (/(?:extractText|parsePdf|fetchExternalDoc)/i.test(cleanContent) && /(?:openai|anthropic)[\s\S]*?create/i.test(cleanContent) && !/<(?:untrusted_input|document|external_source)>/i.test(cleanContent) && !/sanitize|escape/i.test(cleanContent)) {
-        const matchLineIdx = lines.findIndex(l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('*') && (/llm-sec-01|indirect/i.test(l) || lines.indexOf(l) === 0));
+        const matchLineIdx = locateMatchLine(lines, [/(?:extractText|parsePdf|fetchExternalDoc)/i, /(?:openai|anthropic)[\s\S]*?create/i], l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('*'));
         const lineNum = matchLineIdx !== -1 ? matchLineIdx + 1 : 1;
         findings.push({
             id: `llmsec01-${Date.now()}-${findingCounter.count++}`,
@@ -46,7 +47,7 @@ export function evaluateAiSafetyRules(file: CodeFile, lines: string[], cleanCont
     }
     // LLM-SEC-02: System Prompt Extraction & Intellectual Property Leakage
     if (/system:\s*["\'][^"\']{50,}["\']/i.test(cleanContent) && !/never\s+reveal|do\s+not\s+(?:share|disclose|leak)\s+(?:this\s+)?system\s+prompt/i.test(cleanContent) && !/test|spec|mock/i.test(lowerPath)) {
-        const matchLineIdx = lines.findIndex(l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('*') && (/llm-sec-02|system/i.test(l) || lines.indexOf(l) === 0));
+        const matchLineIdx = locateMatchLine(lines, [/system:\s*["\'][^"\']{50,}["\']/i], l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('*'));
         const lineNum = matchLineIdx !== -1 ? matchLineIdx + 1 : 1;
         findings.push({
             id: `llmsec02-${Date.now()}-${findingCounter.count++}`,
@@ -71,7 +72,7 @@ export function evaluateAiSafetyRules(file: CodeFile, lines: string[], cleanCont
     }
     // LLM-SEC-03: Autonomous Tool Execution without Human-in-the-Loop (HITL)
     if (/(?:function|tool)\s*:\s*["\'](?:deleteDatabase|transferFunds|executeTrade|purgeAll)["\']/i.test(cleanContent) && !/requireUserConfirmation|hitlConfirmation|isConfirmed/i.test(cleanContent)) {
-        const matchLineIdx = lines.findIndex(l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('*') && (/llm-sec-03|autonomous/i.test(l) || lines.indexOf(l) === 0));
+        const matchLineIdx = locateMatchLine(lines, [/(?:function|tool)\s*:\s*["\'](?:deleteDatabase|transferFunds|executeTrade|purgeAll)["\']/i], l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('*'));
         const lineNum = matchLineIdx !== -1 ? matchLineIdx + 1 : 1;
         findings.push({
             id: `llmsec03-${Date.now()}-${findingCounter.count++}`,
@@ -96,7 +97,7 @@ export function evaluateAiSafetyRules(file: CodeFile, lines: string[], cleanCont
     }
     // LLM-SEC-04: Unsanitized LLM Output Rendered as Raw HTML / Stored XSS
     if (/(?:dangerouslySetInnerHTML\s*=\s*\{\s*__html:\s*(?:completion|llmOutput|response\.text|message\.content))/i.test(cleanContent) && !/DOMPurify\.sanitize/i.test(cleanContent)) {
-        const matchLineIdx = lines.findIndex(l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('*') && (/llm-sec-04|unsanitized/i.test(l) || lines.indexOf(l) === 0));
+        const matchLineIdx = locateMatchLine(lines, [/(?:dangerouslySetInnerHTML\s*=\s*\{\s*__html:\s*(?:completion|llmOutput|response\.text|message\.content))/i], l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('*'));
         const lineNum = matchLineIdx !== -1 ? matchLineIdx + 1 : 1;
         findings.push({
             id: `llmsec04-${Date.now()}-${findingCounter.count++}`,
@@ -121,7 +122,7 @@ export function evaluateAiSafetyRules(file: CodeFile, lines: string[], cleanCont
     }
     // LLM-SEC-05: Vector Database SQL / Filter Injection in Semantic Search
     if (/(?:pinecone|weaviate|qdrant)\.[a-zA-Z0-9_]+\.query\s*\(\s*\{[\s\S]*?filter:\s*`[^`]*\$\{[^}]+\}/i.test(cleanContent)) {
-        const matchLineIdx = lines.findIndex(l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('*') && (/llm-sec-05|vector/i.test(l) || lines.indexOf(l) === 0));
+        const matchLineIdx = locateMatchLine(lines, [/(?:pinecone|weaviate|qdrant)\.[a-zA-Z0-9_]+\.query\s*\(\s*\{[\s\S]*?filter:\s*`[^`]*\$\{[^}]+\}/i], l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('*'));
         const lineNum = matchLineIdx !== -1 ? matchLineIdx + 1 : 1;
         findings.push({
             id: `llmsec05-${Date.now()}-${findingCounter.count++}`,
@@ -146,7 +147,7 @@ export function evaluateAiSafetyRules(file: CodeFile, lines: string[], cleanCont
     }
     // LLM-SEC-06: Unbounded Agentic Recursion & Infinite Planning Loops
     if (/while\s*\(\s*(?:true|!isDone|hasMoreSteps)\s*\)[\s\S]*?await\s+(?:callAgent|executeStep|invokeModel)\s*\(/i.test(cleanContent) && !/maxIterations|loopCount\s*>=/i.test(cleanContent)) {
-        const matchLineIdx = lines.findIndex(l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('*') && (/llm-sec-06|unbounded/i.test(l) || lines.indexOf(l) === 0));
+        const matchLineIdx = locateMatchLine(lines, [/while\s*\(\s*(?:true|!isDone|hasMoreSteps)\s*\)[\s\S]*?await\s+(?:callAgent|executeStep|invokeModel)\s*\(/i], l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('*'));
         const lineNum = matchLineIdx !== -1 ? matchLineIdx + 1 : 1;
         findings.push({
             id: `llmsec06-${Date.now()}-${findingCounter.count++}`,
@@ -196,7 +197,7 @@ export function evaluateAiSafetyRules(file: CodeFile, lines: string[], cleanCont
     }
     // LLM-SEC-08: Insecure Deserialization of ML Weights (Pickle / PyTorch)
     if (/(?:pickle\.load|torch\.load)\s*\([^)]*\)/i.test(cleanContent) && !/weights_only\s*=\s*True/i.test(cleanContent) && /\.py$/i.test(file.path)) {
-        const matchLineIdx = lines.findIndex(l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('*') && (/llm-sec-08|insecure/i.test(l) || lines.indexOf(l) === 0));
+        const matchLineIdx = locateMatchLine(lines, [/(?:pickle\.load|torch\.load)\s*\([^)]*\)/i], l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('*'));
         const lineNum = matchLineIdx !== -1 ? matchLineIdx + 1 : 1;
         findings.push({
             id: `llmsec08-${Date.now()}-${findingCounter.count++}`,
@@ -221,7 +222,7 @@ export function evaluateAiSafetyRules(file: CodeFile, lines: string[], cleanCont
     }
     // LLM-SEC-09: Over-Reliance on LLM Verification without Deterministic Checks
     if (/(?:isAuthorized|hasPermission)\s*=\s*await\s+(?:askLlm|evalWithAi)\s*\(/i.test(cleanContent) && !/deterministic|rbac|checkRole/i.test(cleanContent)) {
-        const matchLineIdx = lines.findIndex(l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('*') && (/llm-sec-09|over-reliance/i.test(l) || lines.indexOf(l) === 0));
+        const matchLineIdx = locateMatchLine(lines, [/(?:isAuthorized|hasPermission)\s*=\s*await\s+(?:askLlm|evalWithAi)\s*\(/i], l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('*'));
         const lineNum = matchLineIdx !== -1 ? matchLineIdx + 1 : 1;
         findings.push({
             id: `llmsec09-${Date.now()}-${findingCounter.count++}`,
@@ -246,7 +247,7 @@ export function evaluateAiSafetyRules(file: CodeFile, lines: string[], cleanCont
     }
     // LLM-SEC-10: Unrestricted Model Fine-Tuning Hyperparameter Override
     if (/app\/api\/.*(?:fine-tune|train)/i.test(file.path) && /req\.(?:json|body)[\s\S]*?learning_rate/i.test(cleanContent) && !/Math\.min|clamp|validateBounds/i.test(cleanContent)) {
-        const matchLineIdx = lines.findIndex(l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('*') && (/llm-sec-10|unrestricted/i.test(l) || lines.indexOf(l) === 0));
+        const matchLineIdx = locateMatchLine(lines, [/req\.(?:json|body)[\s\S]*?learning_rate/i], l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('*'));
         const lineNum = matchLineIdx !== -1 ? matchLineIdx + 1 : 1;
         findings.push({
             id: `llmsec10-${Date.now()}-${findingCounter.count++}`,
@@ -271,7 +272,7 @@ export function evaluateAiSafetyRules(file: CodeFile, lines: string[], cleanCont
     }
     // LLM-SEC-11: Cross-Tenant Vector Retrieval Leakage in Multi-Tenant RAG
     if (/(?:pgvector|pineconeIndex|weaviateClient)\.[a-zA-Z0-9_]+\.query\s*\(/i.test(cleanContent) && !/tenant_id|tenantId|organization_id|orgId/i.test(cleanContent) && !/test|spec|mock/i.test(lowerPath)) {
-        const matchLineIdx = lines.findIndex(l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('*') && (/llm-sec-11|cross-tenant/i.test(l) || lines.indexOf(l) === 0));
+        const matchLineIdx = locateMatchLine(lines, [/(?:pgvector|pineconeIndex|weaviateClient)\.[a-zA-Z0-9_]+\.query\s*\(/i], l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('*'));
         const lineNum = matchLineIdx !== -1 ? matchLineIdx + 1 : 1;
         findings.push({
             id: `llmsec11-${Date.now()}-${findingCounter.count++}`,
@@ -346,7 +347,7 @@ export function evaluateAiSafetyRules(file: CodeFile, lines: string[], cleanCont
     }
     // LLM-SEC-14: Missing Content Moderation on User-Facing AI Generations
     if (/createChatStream|streamText/i.test(cleanContent) && !/moderation|flagged|safetyCheck/i.test(cleanContent)) {
-        const matchLineIdx = lines.findIndex(l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('*') && (/llm-sec-14|missing/i.test(l) || lines.indexOf(l) === 0));
+        const matchLineIdx = locateMatchLine(lines, [/createChatStream|streamText/i], l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('*'));
         const lineNum = matchLineIdx !== -1 ? matchLineIdx + 1 : 1;
         findings.push({
             id: `llmsec14-${Date.now()}-${findingCounter.count++}`,
@@ -371,7 +372,7 @@ export function evaluateAiSafetyRules(file: CodeFile, lines: string[], cleanCont
     }
     // LLM-SEC-15: Unbounded LLM Output Buffer in Server-Side Rendering
     if (/let\s+fullResponse\s*=\s*["\']["\'];[\s\S]*?for\s+await\s*\(\s*const\s+chunk\s+of\s+stream\s*\)[\s\S]*?fullResponse\s*\+=/i.test(cleanContent) && /return\s+new\s+Response\s*\(\s*fullResponse\s*\)/i.test(cleanContent)) {
-        const matchLineIdx = lines.findIndex(l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('*') && (/llm-sec-15|unbounded/i.test(l) || lines.indexOf(l) === 0));
+        const matchLineIdx = locateMatchLine(lines, [/let\s+fullResponse\s*=\s*["\']["\'];[\s\S]*?for\s+await\s*\(\s*const\s+chunk\s+of\s+stream\s*\)[\s\S]*?fullResponse\s*\+=/i, /return\s+new\s+Response\s*\(\s*fullResponse\s*\)/i], l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('*'));
         const lineNum = matchLineIdx !== -1 ? matchLineIdx + 1 : 1;
         findings.push({
             id: `llmsec15-${Date.now()}-${findingCounter.count++}`,
@@ -396,7 +397,7 @@ export function evaluateAiSafetyRules(file: CodeFile, lines: string[], cleanCont
     }
     // LLM-SEC-16: Unvalidated Tool Function Arguments in Agent Frameworks
     if (/executeTool\s*\(\s*(?:toolName|name)\s*,\s*(?:args|parameters)\s*\)[\s\S]*?JSON\.parse\s*\(/i.test(cleanContent) && !/\.safeParse|\.parse/i.test(cleanContent) && !/zod|yup/i.test(cleanContent)) {
-        const matchLineIdx = lines.findIndex(l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('*') && (/llm-sec-16|unvalidated/i.test(l) || lines.indexOf(l) === 0));
+        const matchLineIdx = locateMatchLine(lines, [/executeTool\s*\(\s*(?:toolName|name)\s*,\s*(?:args|parameters)\s*\)[\s\S]*?JSON\.parse\s*\(/i], l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('*'));
         const lineNum = matchLineIdx !== -1 ? matchLineIdx + 1 : 1;
         findings.push({
             id: `llmsec16-${Date.now()}-${findingCounter.count++}`,
@@ -421,7 +422,7 @@ export function evaluateAiSafetyRules(file: CodeFile, lines: string[], cleanCont
     }
     // LLM-SEC-17: Hardcoded Model Provider API Keys in Client-Side Bundles
     if (/(?:NEXT_PUBLIC_OPENAI_API_KEY|NEXT_PUBLIC_ANTHROPIC_API_KEY)\s*=/i.test(cleanContent)) {
-        const matchLineIdx = lines.findIndex(l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('*') && (/llm-sec-17|hardcoded/i.test(l) || lines.indexOf(l) === 0));
+        const matchLineIdx = locateMatchLine(lines, [/(?:NEXT_PUBLIC_OPENAI_API_KEY|NEXT_PUBLIC_ANTHROPIC_API_KEY)\s*=/i], l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('*'));
         const lineNum = matchLineIdx !== -1 ? matchLineIdx + 1 : 1;
         findings.push({
             id: `llmsec17-${Date.now()}-${findingCounter.count++}`,
@@ -446,7 +447,7 @@ export function evaluateAiSafetyRules(file: CodeFile, lines: string[], cleanCont
     }
     // LLM-SEC-18: Lack of Hallucination Verification on High-Stakes Numerical Claims
     if (/generateFinancialReport|calculateTaxReturn/i.test(cleanContent) && !/reconcile|verifySum|assertMath/i.test(cleanContent)) {
-        const matchLineIdx = lines.findIndex(l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('*') && (/llm-sec-18|lack/i.test(l) || lines.indexOf(l) === 0));
+        const matchLineIdx = locateMatchLine(lines, [/generateFinancialReport|calculateTaxReturn/i], l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('*'));
         const lineNum = matchLineIdx !== -1 ? matchLineIdx + 1 : 1;
         findings.push({
             id: `llmsec18-${Date.now()}-${findingCounter.count++}`,
@@ -471,7 +472,7 @@ export function evaluateAiSafetyRules(file: CodeFile, lines: string[], cleanCont
     }
     // LLM-SEC-19: Unrestricted File System Access in Code-Interpreter Tools
     if (/codeInterpreter|execCodeTool/i.test(cleanContent) && /child_process\.(?:exec|spawn)\s*\(/i.test(cleanContent) && !/isolate|sandbox|docker|gvisor/i.test(cleanContent)) {
-        const matchLineIdx = lines.findIndex(l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('*') && (/llm-sec-19|unrestricted/i.test(l) || lines.indexOf(l) === 0));
+        const matchLineIdx = locateMatchLine(lines, [/codeInterpreter|execCodeTool/i, /child_process\.(?:exec|spawn)\s*\(/i], l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('*'));
         const lineNum = matchLineIdx !== -1 ? matchLineIdx + 1 : 1;
         findings.push({
             id: `llmsec19-${Date.now()}-${findingCounter.count++}`,
@@ -496,7 +497,7 @@ export function evaluateAiSafetyRules(file: CodeFile, lines: string[], cleanCont
     }
     // LLM-SEC-20: Missing Differential Privacy in RAG Ingestion Pipeline
     if (/ingestCustomerChatLogs|embedSupportTickets/i.test(cleanContent) && !/redactPii|scrubPii|presidio/i.test(cleanContent)) {
-        const matchLineIdx = lines.findIndex(l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('*') && (/llm-sec-20|missing/i.test(l) || lines.indexOf(l) === 0));
+        const matchLineIdx = locateMatchLine(lines, [/ingestCustomerChatLogs|embedSupportTickets/i], l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('*'));
         const lineNum = matchLineIdx !== -1 ? matchLineIdx + 1 : 1;
         findings.push({
             id: `llmsec20-${Date.now()}-${findingCounter.count++}`,
@@ -521,7 +522,7 @@ export function evaluateAiSafetyRules(file: CodeFile, lines: string[], cleanCont
     }
     // LLM-SEC-21: Unconstrained Context Window Token Flood (Denial of Service)
     if (/app\/api\/.*(?:chat|completion)/i.test(file.path) && /req\.(?:json|body)/i.test(cleanContent) && !/max_tokens|maxTokens/i.test(cleanContent)) {
-        const matchLineIdx = lines.findIndex(l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('*') && (/llm-sec-21|unconstrained/i.test(l) || lines.indexOf(l) === 0));
+        const matchLineIdx = locateMatchLine(lines, [/req\.(?:json|body)/i], l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('*'));
         const lineNum = matchLineIdx !== -1 ? matchLineIdx + 1 : 1;
         findings.push({
             id: `llmsec21-${Date.now()}-${findingCounter.count++}`,
@@ -571,7 +572,7 @@ export function evaluateAiSafetyRules(file: CodeFile, lines: string[], cleanCont
     }
     // LLM-SEC-23: Unchecked Fallback to Less Capable or Deprecated Model
     if (/catch\s*\([^)]*\)\s*\{[\s\S]*?model:\s*["\'](?:gpt-3\.5-turbo|text-davinci-003|claude-1)["\']/i.test(cleanContent) && !/logDegradation|notifyFallback/i.test(cleanContent)) {
-        const matchLineIdx = lines.findIndex(l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('*') && (/llm-sec-23|unchecked/i.test(l) || lines.indexOf(l) === 0));
+        const matchLineIdx = locateMatchLine(lines, [/catch\s*\([^)]*\)\s*\{[\s\S]*?model:\s*["\'](?:gpt-3\.5-turbo|text-davinci-003|claude-1)["\']/i], l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('*'));
         const lineNum = matchLineIdx !== -1 ? matchLineIdx + 1 : 1;
         findings.push({
             id: `llmsec23-${Date.now()}-${findingCounter.count++}`,
@@ -596,7 +597,7 @@ export function evaluateAiSafetyRules(file: CodeFile, lines: string[], cleanCont
     }
     // LLM-SEC-24: Insecure Prompt Template String Interpolation (Prompt Injection)
     if (/messages:\s*\[[\s\S]*?content:\s*`[^`]*\$\{req\.body\.[a-zA-Z0-9_]+\}[^`]*`/i.test(cleanContent) && !/sanitize|escapePrompt/i.test(cleanContent)) {
-        const matchLineIdx = lines.findIndex(l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('*') && (/llm-sec-24|insecure/i.test(l) || lines.indexOf(l) === 0));
+        const matchLineIdx = locateMatchLine(lines, [/messages:\s*\[[\s\S]*?content:\s*`[^`]*\$\{req\.body\.[a-zA-Z0-9_]+\}[^`]*`/i], l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('*'));
         const lineNum = matchLineIdx !== -1 ? matchLineIdx + 1 : 1;
         findings.push({
             id: `llmsec24-${Date.now()}-${findingCounter.count++}`,
@@ -621,7 +622,7 @@ export function evaluateAiSafetyRules(file: CodeFile, lines: string[], cleanCont
     }
     // LLM-SEC-25: Poisoned Embedding Generation via Unsanitized Unicode Characters
     if (/embedText|generateEmbedding/i.test(cleanContent) && !/normalize\s*\(\s*["\']NFKC["\']\s*\)/i.test(cleanContent)) {
-        const matchLineIdx = lines.findIndex(l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('*') && (/llm-sec-25|poisoned/i.test(l) || lines.indexOf(l) === 0));
+        const matchLineIdx = locateMatchLine(lines, [/embedText|generateEmbedding/i], l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('*'));
         const lineNum = matchLineIdx !== -1 ? matchLineIdx + 1 : 1;
         findings.push({
             id: `llmsec25-${Date.now()}-${findingCounter.count++}`,
@@ -646,7 +647,7 @@ export function evaluateAiSafetyRules(file: CodeFile, lines: string[], cleanCont
     }
     // LLM-SEC-26: Missing Egress Traffic Control on AI Agent Execution Nodes
     if (/agentWorker|agentRunner/i.test(cleanContent) && !/allowedDomains|networkPolicy/i.test(cleanContent)) {
-        const matchLineIdx = lines.findIndex(l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('*') && (/llm-sec-26|missing/i.test(l) || lines.indexOf(l) === 0));
+        const matchLineIdx = locateMatchLine(lines, [/agentWorker|agentRunner/i], l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('*'));
         const lineNum = matchLineIdx !== -1 ? matchLineIdx + 1 : 1;
         findings.push({
             id: `llmsec26-${Date.now()}-${findingCounter.count++}`,
@@ -671,7 +672,7 @@ export function evaluateAiSafetyRules(file: CodeFile, lines: string[], cleanCont
     }
     // LLM-SEC-27: Unverified Third-Party Plugin Manifests in Agent Ecosystems
     if (/fetchPluginManifest|loadAgentPlugin/i.test(cleanContent) && /http:\/\//i.test(cleanContent) && !/sha256|verifySignature/i.test(cleanContent)) {
-        const matchLineIdx = lines.findIndex(l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('*') && (/llm-sec-27|unverified/i.test(l) || lines.indexOf(l) === 0));
+        const matchLineIdx = locateMatchLine(lines, [/fetchPluginManifest|loadAgentPlugin/i, /http:\/\//i], l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('*'));
         const lineNum = matchLineIdx !== -1 ? matchLineIdx + 1 : 1;
         findings.push({
             id: `llmsec27-${Date.now()}-${findingCounter.count++}`,
@@ -696,7 +697,7 @@ export function evaluateAiSafetyRules(file: CodeFile, lines: string[], cleanCont
     }
     // LLM-SEC-28: Prompt Smuggling via Chunk Boundary Exploitation in RAG
     if (/assembleChunks|joinContextChunks/i.test(cleanContent) && !/scanInjection|moderateContext/i.test(cleanContent)) {
-        const matchLineIdx = lines.findIndex(l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('*') && (/llm-sec-28|prompt/i.test(l) || lines.indexOf(l) === 0));
+        const matchLineIdx = locateMatchLine(lines, [/assembleChunks|joinContextChunks/i], l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('*'));
         const lineNum = matchLineIdx !== -1 ? matchLineIdx + 1 : 1;
         findings.push({
             id: `llmsec28-${Date.now()}-${findingCounter.count++}`,
@@ -721,7 +722,7 @@ export function evaluateAiSafetyRules(file: CodeFile, lines: string[], cleanCont
     }
     // LLM-SEC-29: Lack of User Attribution on AI-Generated Modifications
     if (/applyAiPatch|commitAiChanges/i.test(cleanContent) && !/author|committer|attribution/i.test(cleanContent)) {
-        const matchLineIdx = lines.findIndex(l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('*') && (/llm-sec-29|lack/i.test(l) || lines.indexOf(l) === 0));
+        const matchLineIdx = locateMatchLine(lines, [/applyAiPatch|commitAiChanges/i], l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('*'));
         const lineNum = matchLineIdx !== -1 ? matchLineIdx + 1 : 1;
         findings.push({
             id: `llmsec29-${Date.now()}-${findingCounter.count++}`,
@@ -746,7 +747,7 @@ export function evaluateAiSafetyRules(file: CodeFile, lines: string[], cleanCont
     }
     // LLM-SEC-30: Unchecked Self-Modification in Autonomous Coding Agents
     if (/codingAgent|fileEditorTool/i.test(cleanContent) && !/readOnly|protectedFiles/i.test(cleanContent)) {
-        const matchLineIdx = lines.findIndex(l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('*') && (/llm-sec-30|unchecked/i.test(l) || lines.indexOf(l) === 0));
+        const matchLineIdx = locateMatchLine(lines, [/codingAgent|fileEditorTool/i], l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('*'));
         const lineNum = matchLineIdx !== -1 ? matchLineIdx + 1 : 1;
         findings.push({
             id: `llmsec30-${Date.now()}-${findingCounter.count++}`,
@@ -771,7 +772,7 @@ export function evaluateAiSafetyRules(file: CodeFile, lines: string[], cleanCont
     }
     // LLM-SEC-31: Insecure Memory Persistence in Conversational AI Sessions
     if (/redisClient\.set\s*\(\s*["\']chat_history_/i.test(cleanContent) && !/encrypt|aes|cipher/i.test(cleanContent)) {
-        const matchLineIdx = lines.findIndex(l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('*') && (/llm-sec-31|insecure/i.test(l) || lines.indexOf(l) === 0));
+        const matchLineIdx = locateMatchLine(lines, [/redisClient\.set\s*\(\s*["\']chat_history_/i], l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('*'));
         const lineNum = matchLineIdx !== -1 ? matchLineIdx + 1 : 1;
         findings.push({
             id: `llmsec31-${Date.now()}-${findingCounter.count++}`,
@@ -796,7 +797,7 @@ export function evaluateAiSafetyRules(file: CodeFile, lines: string[], cleanCont
     }
     // LLM-SEC-32: Lack of Multi-Modal Payload Scanning (Adversarial Images/Audio)
     if (/visionModel\.chat|model\.generateContent\s*\([\s\S]*?inlineData/i.test(cleanContent) && !/scanQr|ocrInjectionCheck/i.test(cleanContent)) {
-        const matchLineIdx = lines.findIndex(l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('*') && (/llm-sec-32|lack/i.test(l) || lines.indexOf(l) === 0));
+        const matchLineIdx = locateMatchLine(lines, [/visionModel\.chat|model\.generateContent\s*\([\s\S]*?inlineData/i], l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('*'));
         const lineNum = matchLineIdx !== -1 ? matchLineIdx + 1 : 1;
         findings.push({
             id: `llmsec32-${Date.now()}-${findingCounter.count++}`,
@@ -821,7 +822,7 @@ export function evaluateAiSafetyRules(file: CodeFile, lines: string[], cleanCont
     }
     // LLM-SEC-33: Model Cache Poisoning via Unauthenticated Semantic Cache
     if (/semanticCache\.get|cache\.match/i.test(cleanContent) && !/tenantId|userId/i.test(cleanContent)) {
-        const matchLineIdx = lines.findIndex(l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('*') && (/llm-sec-33|model/i.test(l) || lines.indexOf(l) === 0));
+        const matchLineIdx = locateMatchLine(lines, [/semanticCache\.get|cache\.match/i], l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('*'));
         const lineNum = matchLineIdx !== -1 ? matchLineIdx + 1 : 1;
         findings.push({
             id: `llmsec33-${Date.now()}-${findingCounter.count++}`,
@@ -846,7 +847,7 @@ export function evaluateAiSafetyRules(file: CodeFile, lines: string[], cleanCont
     }
     // LLM-SEC-34: Unbounded Parallel LLM Tool Calling (Fan-Out Amplification)
     if (/tool_calls\.map\s*\([\s\S]*?Promise\.all\s*\(/i.test(cleanContent) && !/p-limit|pLimit|concurrency/i.test(cleanContent)) {
-        const matchLineIdx = lines.findIndex(l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('*') && (/llm-sec-34|unbounded/i.test(l) || lines.indexOf(l) === 0));
+        const matchLineIdx = locateMatchLine(lines, [/tool_calls\.map\s*\([\s\S]*?Promise\.all\s*\(/i], l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('*'));
         const lineNum = matchLineIdx !== -1 ? matchLineIdx + 1 : 1;
         findings.push({
             id: `llmsec34-${Date.now()}-${findingCounter.count++}`,
@@ -871,7 +872,7 @@ export function evaluateAiSafetyRules(file: CodeFile, lines: string[], cleanCont
     }
     // LLM-SEC-35: Unsanitized Regex Compilation from LLM Structured Output
     if (/new\s+RegExp\s*\(\s*(?:llmOutput|toolResult|aiGeneratedPattern)\s*\)/i.test(cleanContent) && !/safe-regex|isSafeRegex/i.test(cleanContent)) {
-        const matchLineIdx = lines.findIndex(l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('*') && (/llm-sec-35|unsanitized/i.test(l) || lines.indexOf(l) === 0));
+        const matchLineIdx = locateMatchLine(lines, [/new\s+RegExp\s*\(\s*(?:llmOutput|toolResult|aiGeneratedPattern)\s*\)/i], l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('*'));
         const lineNum = matchLineIdx !== -1 ? matchLineIdx + 1 : 1;
         findings.push({
             id: `llmsec35-${Date.now()}-${findingCounter.count++}`,
@@ -896,7 +897,7 @@ export function evaluateAiSafetyRules(file: CodeFile, lines: string[], cleanCont
     }
     // LLM-SEC-36: Unchecked Recursive Agent Spawning (Fork Bomb Hazard)
     if (/spawnSubagent|invokeSubagent/i.test(cleanContent) && !/maxDepth|depth\s*<=/i.test(cleanContent)) {
-        const matchLineIdx = lines.findIndex(l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('*') && (/llm-sec-36|unchecked/i.test(l) || lines.indexOf(l) === 0));
+        const matchLineIdx = locateMatchLine(lines, [/spawnSubagent|invokeSubagent/i], l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('*'));
         const lineNum = matchLineIdx !== -1 ? matchLineIdx + 1 : 1;
         findings.push({
             id: `llmsec36-${Date.now()}-${findingCounter.count++}`,
@@ -921,7 +922,7 @@ export function evaluateAiSafetyRules(file: CodeFile, lines: string[], cleanCont
     }
     // LLM-SEC-37: Missing Guardrail Verification on Code Refactoring Output
     if (/mergeAiRefactoredCode/i.test(cleanContent) && !/runTests|npm test/i.test(cleanContent)) {
-        const matchLineIdx = lines.findIndex(l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('*') && (/llm-sec-37|missing/i.test(l) || lines.indexOf(l) === 0));
+        const matchLineIdx = locateMatchLine(lines, [/mergeAiRefactoredCode/i], l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('*'));
         const lineNum = matchLineIdx !== -1 ? matchLineIdx + 1 : 1;
         findings.push({
             id: `llmsec37-${Date.now()}-${findingCounter.count++}`,
@@ -946,7 +947,7 @@ export function evaluateAiSafetyRules(file: CodeFile, lines: string[], cleanCont
     }
     // LLM-SEC-38: Direct Database Connection Strings in Agent Tool Environment
     if (/defineAgentTools|registerTools/i.test(cleanContent) && /DATABASE_URL|postgres:\/\/|mysql:\/\//i.test(cleanContent)) {
-        const matchLineIdx = lines.findIndex(l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('*') && (/llm-sec-38|direct/i.test(l) || lines.indexOf(l) === 0));
+        const matchLineIdx = locateMatchLine(lines, [/defineAgentTools|registerTools/i, /DATABASE_URL|postgres:\/\/|mysql:\/\//i], l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('*'));
         const lineNum = matchLineIdx !== -1 ? matchLineIdx + 1 : 1;
         findings.push({
             id: `llmsec38-${Date.now()}-${findingCounter.count++}`,
@@ -971,7 +972,7 @@ export function evaluateAiSafetyRules(file: CodeFile, lines: string[], cleanCont
     }
     // LLM-SEC-39: Unverified Markdown Hyperlink Rendering in AI Chat UI
     if (/<ReactMarkdown[\s\S]*?components\s*=\s*\{(?![^}]*rel:\s*["\']noopener)/i.test(cleanContent)) {
-        const matchLineIdx = lines.findIndex(l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('*') && (/llm-sec-39|unverified/i.test(l) || lines.indexOf(l) === 0));
+        const matchLineIdx = locateMatchLine(lines, [/<ReactMarkdown[\s\S]*?components\s*=\s*\{(?![^}]*rel:\s*["\']noopener)/i], l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('*'));
         const lineNum = matchLineIdx !== -1 ? matchLineIdx + 1 : 1;
         findings.push({
             id: `llmsec39-${Date.now()}-${findingCounter.count++}`,
@@ -996,7 +997,7 @@ export function evaluateAiSafetyRules(file: CodeFile, lines: string[], cleanCont
     }
     // LLM-SEC-40: Missing Differential Token Budgeting Across Subscription Tiers
     if (/model:\s*["\'](?:o1|o1-preview|claude-3-opus)["\']/i.test(cleanContent) && !/isPro|isEnterprise|tier\s*===/i.test(cleanContent)) {
-        const matchLineIdx = lines.findIndex(l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('*') && (/llm-sec-40|missing/i.test(l) || lines.indexOf(l) === 0));
+        const matchLineIdx = locateMatchLine(lines, [/model:\s*["\'](?:o1|o1-preview|claude-3-opus)["\']/i], l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('*'));
         const lineNum = matchLineIdx !== -1 ? matchLineIdx + 1 : 1;
         findings.push({
             id: `llmsec40-${Date.now()}-${findingCounter.count++}`,
@@ -1046,7 +1047,7 @@ export function evaluateAiSafetyRules(file: CodeFile, lines: string[], cleanCont
     }
     // LLM-SEC-42: Insecure LLM Streaming Connection Without Heartbeat
     if (!file.path.includes('live-deployment/bundle-') && /new\s+ReadableStream\s*\(\{[\s\S]*?pull\s*\(/i.test(cleanContent) && !/req\.signal\.addEventListener\s*\(\s*["\']abort["\']/i.test(cleanContent)) {
-        const matchLineIdx = lines.findIndex(l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('*') && (/llm-sec-42|insecure/i.test(l) || lines.indexOf(l) === 0));
+        const matchLineIdx = locateMatchLine(lines, [/new\s+ReadableStream\s*\(\{[\s\S]*?pull\s*\(/i], l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('*'));
         const lineNum = matchLineIdx !== -1 ? matchLineIdx + 1 : 1;
         findings.push({
             id: `llmsec42-${Date.now()}-${findingCounter.count++}`,
@@ -1071,7 +1072,7 @@ export function evaluateAiSafetyRules(file: CodeFile, lines: string[], cleanCont
     }
     // LLM-SEC-43: Unchecked Automated Email or Slack Dispatch by AI Agents
     if (/agentDispatchEmail|sendAutonomousSlack/i.test(cleanContent) && !/reviewQueue|isApproved/i.test(cleanContent)) {
-        const matchLineIdx = lines.findIndex(l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('*') && (/llm-sec-43|unchecked/i.test(l) || lines.indexOf(l) === 0));
+        const matchLineIdx = locateMatchLine(lines, [/agentDispatchEmail|sendAutonomousSlack/i], l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('*'));
         const lineNum = matchLineIdx !== -1 ? matchLineIdx + 1 : 1;
         findings.push({
             id: `llmsec43-${Date.now()}-${findingCounter.count++}`,
@@ -1096,7 +1097,7 @@ export function evaluateAiSafetyRules(file: CodeFile, lines: string[], cleanCont
     }
     // LLM-SEC-44: Lack of Deterministic Schema Enforcement on JSON Outputs
     if (/JSON\.parse\s*\(\s*(?:completion|text|rawJson)\s*\)/i.test(cleanContent) && !/zod|schema\.parse/i.test(cleanContent)) {
-        const matchLineIdx = lines.findIndex(l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('*') && (/llm-sec-44|lack/i.test(l) || lines.indexOf(l) === 0));
+        const matchLineIdx = locateMatchLine(lines, [/JSON\.parse\s*\(\s*(?:completion|text|rawJson)\s*\)/i], l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('*'));
         const lineNum = matchLineIdx !== -1 ? matchLineIdx + 1 : 1;
         findings.push({
             id: `llmsec44-${Date.now()}-${findingCounter.count++}`,
@@ -1146,7 +1147,7 @@ export function evaluateAiSafetyRules(file: CodeFile, lines: string[], cleanCont
     }
     // LLM-SEC-46: Unencrypted Ephemeral Scratchpad Files in Agent Containers
     if (/fs\.writeFileSync\s*\(\s*["\']\/tmp\/agent_/i.test(cleanContent) && !/encrypt|tmpfs/i.test(cleanContent)) {
-        const matchLineIdx = lines.findIndex(l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('*') && (/llm-sec-46|unencrypted/i.test(l) || lines.indexOf(l) === 0));
+        const matchLineIdx = locateMatchLine(lines, [/fs\.writeFileSync\s*\(\s*["\']\/tmp\/agent_/i], l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('*'));
         const lineNum = matchLineIdx !== -1 ? matchLineIdx + 1 : 1;
         findings.push({
             id: `llmsec46-${Date.now()}-${findingCounter.count++}`,
@@ -1171,7 +1172,7 @@ export function evaluateAiSafetyRules(file: CodeFile, lines: string[], cleanCont
     }
     // LLM-SEC-47: Unconstrained Search Depth in Web-Browsing AI Agents
     if (/crawlWebTool|browsePageTool/i.test(cleanContent) && !/maxDepth|maxHops/i.test(cleanContent)) {
-        const matchLineIdx = lines.findIndex(l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('*') && (/llm-sec-47|unconstrained/i.test(l) || lines.indexOf(l) === 0));
+        const matchLineIdx = locateMatchLine(lines, [/crawlWebTool|browsePageTool/i], l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('*'));
         const lineNum = matchLineIdx !== -1 ? matchLineIdx + 1 : 1;
         findings.push({
             id: `llmsec47-${Date.now()}-${findingCounter.count++}`,
@@ -1196,7 +1197,7 @@ export function evaluateAiSafetyRules(file: CodeFile, lines: string[], cleanCont
     }
     // LLM-SEC-48: Missing Token Truncation Warning on Large Document Summarization
     if (/slice\s*\(\s*0\s*,\s*(?:4000|8000|16000)\s*\)/i.test(cleanContent) && !/warning|truncated/i.test(cleanContent)) {
-        const matchLineIdx = lines.findIndex(l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('*') && (/llm-sec-48|missing/i.test(l) || lines.indexOf(l) === 0));
+        const matchLineIdx = locateMatchLine(lines, [/slice\s*\(\s*0\s*,\s*(?:4000|8000|16000)\s*\)/i], l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('*'));
         const lineNum = matchLineIdx !== -1 ? matchLineIdx + 1 : 1;
         findings.push({
             id: `llmsec48-${Date.now()}-${findingCounter.count++}`,
@@ -1221,7 +1222,7 @@ export function evaluateAiSafetyRules(file: CodeFile, lines: string[], cleanCont
     }
     // LLM-SEC-49: Lack of Seed Determinism in Critical Regulatory Calculations
     if (/runComplianceAuditModel|evaluateRegulatoryRisk/i.test(cleanContent) && /temperature:\s*(?:0\.[3-9]|1\.)/i.test(cleanContent)) {
-        const matchLineIdx = lines.findIndex(l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('*') && (/llm-sec-49|lack/i.test(l) || lines.indexOf(l) === 0));
+        const matchLineIdx = locateMatchLine(lines, [/runComplianceAuditModel|evaluateRegulatoryRisk/i, /temperature:\s*(?:0\.[3-9]|1\.)/i], l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('*'));
         const lineNum = matchLineIdx !== -1 ? matchLineIdx + 1 : 1;
         findings.push({
             id: `llmsec49-${Date.now()}-${findingCounter.count++}`,
@@ -1271,7 +1272,7 @@ export function evaluateAiSafetyRules(file: CodeFile, lines: string[], cleanCont
     }
     // LLM-SEC-51: Missing Fallback for Cloud Model Outages (Circuit Breaker)
     if (/callPrimaryLlmProvider/i.test(cleanContent) && !/circuitBreaker|fallbackProvider/i.test(cleanContent)) {
-        const matchLineIdx = lines.findIndex(l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('*') && (/llm-sec-51|missing/i.test(l) || lines.indexOf(l) === 0));
+        const matchLineIdx = locateMatchLine(lines, [/callPrimaryLlmProvider/i], l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('*'));
         const lineNum = matchLineIdx !== -1 ? matchLineIdx + 1 : 1;
         findings.push({
             id: `llmsec51-${Date.now()}-${findingCounter.count++}`,
@@ -1321,7 +1322,7 @@ export function evaluateAiSafetyRules(file: CodeFile, lines: string[], cleanCont
     }
     // LLM-SEC-53: Prompt Leakage via Error Stack Traces and Verbose 500 Responses
     if (/catch\s*\(\s*err\s*\)\s*\{[\s\S]*?NextResponse\.json\s*\(\s*\{[\s\S]*?(?:prompt|systemPrompt|messages):/i.test(cleanContent)) {
-        const matchLineIdx = lines.findIndex(l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('*') && (/llm-sec-53|prompt/i.test(l) || lines.indexOf(l) === 0));
+        const matchLineIdx = locateMatchLine(lines, [/catch\s*\(\s*err\s*\)\s*\{[\s\S]*?NextResponse\.json\s*\(\s*\{[\s\S]*?(?:prompt|systemPrompt|messages):/i], l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('*'));
         const lineNum = matchLineIdx !== -1 ? matchLineIdx + 1 : 1;
         findings.push({
             id: `llmsec53-${Date.now()}-${findingCounter.count++}`,
@@ -1346,7 +1347,7 @@ export function evaluateAiSafetyRules(file: CodeFile, lines: string[], cleanCont
     }
     // LLM-SEC-54: Unchecked Recursive Summarization Drifts (Telephone Effect)
     if (/summarizeRecursive|chainSummarize/i.test(cleanContent) && !/cosineSimilarity|driftCheck/i.test(cleanContent)) {
-        const matchLineIdx = lines.findIndex(l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('*') && (/llm-sec-54|unchecked/i.test(l) || lines.indexOf(l) === 0));
+        const matchLineIdx = locateMatchLine(lines, [/summarizeRecursive|chainSummarize/i], l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('*'));
         const lineNum = matchLineIdx !== -1 ? matchLineIdx + 1 : 1;
         findings.push({
             id: `llmsec54-${Date.now()}-${findingCounter.count++}`,
@@ -1371,7 +1372,7 @@ export function evaluateAiSafetyRules(file: CodeFile, lines: string[], cleanCont
     }
     // LLM-SEC-55: Missing Cost Budget Alerts on Enterprise LLM API Keys
     if (/llmClientConfig|aiProviderSetup/i.test(cleanContent) && !/budgetAlert|costLimit/i.test(cleanContent)) {
-        const matchLineIdx = lines.findIndex(l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('*') && (/llm-sec-55|missing/i.test(l) || lines.indexOf(l) === 0));
+        const matchLineIdx = locateMatchLine(lines, [/llmClientConfig|aiProviderSetup/i], l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('*'));
         const lineNum = matchLineIdx !== -1 ? matchLineIdx + 1 : 1;
         findings.push({
             id: `llmsec55-${Date.now()}-${findingCounter.count++}`,
@@ -1396,7 +1397,7 @@ export function evaluateAiSafetyRules(file: CodeFile, lines: string[], cleanCont
     }
     // LLM-SEC-56: Insecure Dynamic Model Selection via User Input
     if (/model:\s*req\.(?:body|json)\.model\b/i.test(cleanContent) && !/ALLOWED_MODELS|validModels|whitelist/i.test(cleanContent)) {
-        const matchLineIdx = lines.findIndex(l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('*') && (/llm-sec-56|insecure/i.test(l) || lines.indexOf(l) === 0));
+        const matchLineIdx = locateMatchLine(lines, [/model:\s*req\.(?:body|json)\.model\b/i], l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('*'));
         const lineNum = matchLineIdx !== -1 ? matchLineIdx + 1 : 1;
         findings.push({
             id: `llmsec56-${Date.now()}-${findingCounter.count++}`,
@@ -1421,7 +1422,7 @@ export function evaluateAiSafetyRules(file: CodeFile, lines: string[], cleanCont
     }
     // LLM-SEC-57: Uncontrolled Autonomous File Renaming or Workspace Reorganization
     if (/fs\.(?:rename|rmdir|rmSync)\s*\([\s\S]*?agentInput/i.test(cleanContent) && !/requireConfirmation/i.test(cleanContent)) {
-        const matchLineIdx = lines.findIndex(l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('*') && (/llm-sec-57|uncontrolled/i.test(l) || lines.indexOf(l) === 0));
+        const matchLineIdx = locateMatchLine(lines, [/fs\.(?:rename|rmdir|rmSync)\s*\([\s\S]*?agentInput/i], l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('*'));
         const lineNum = matchLineIdx !== -1 ? matchLineIdx + 1 : 1;
         findings.push({
             id: `llmsec57-${Date.now()}-${findingCounter.count++}`,
@@ -1446,7 +1447,7 @@ export function evaluateAiSafetyRules(file: CodeFile, lines: string[], cleanCont
     }
     // LLM-SEC-58: Missing LLM System Prompt Versioning in Version Control
     if (/db\.(?:system_prompts|prompts)\.update\s*\(/i.test(cleanContent) && !/auditLog|gitRevision/i.test(cleanContent)) {
-        const matchLineIdx = lines.findIndex(l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('*') && (/llm-sec-58|missing/i.test(l) || lines.indexOf(l) === 0));
+        const matchLineIdx = locateMatchLine(lines, [/db\.(?:system_prompts|prompts)\.update\s*\(/i], l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('*'));
         const lineNum = matchLineIdx !== -1 ? matchLineIdx + 1 : 1;
         findings.push({
             id: `llmsec58-${Date.now()}-${findingCounter.count++}`,
@@ -1471,7 +1472,7 @@ export function evaluateAiSafetyRules(file: CodeFile, lines: string[], cleanCont
     }
     // LLM-SEC-59: Lack of Grounding Metadata in RAG Search Results
     if (/formatRagResponse/i.test(cleanContent) && !/citations|sources|references/i.test(cleanContent)) {
-        const matchLineIdx = lines.findIndex(l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('*') && (/llm-sec-59|lack/i.test(l) || lines.indexOf(l) === 0));
+        const matchLineIdx = locateMatchLine(lines, [/formatRagResponse/i], l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('*'));
         const lineNum = matchLineIdx !== -1 ? matchLineIdx + 1 : 1;
         findings.push({
             id: `llmsec59-${Date.now()}-${findingCounter.count++}`,
@@ -1496,7 +1497,7 @@ export function evaluateAiSafetyRules(file: CodeFile, lines: string[], cleanCont
     }
     // LLM-SEC-60: Unchecked High-Frequency Polling of AI Job Status Endpoints
     if (/setInterval\s*\(\s*(?:async\s*)?\(\s*\)\s*=>\s*\{[\s\S]*?fetch\s*\(\s*["\']\/api\/ai\/status["\']\s*\)[\s\S]*?,\s*(?:100|200|300|400|500)\s*\)/i.test(cleanContent)) {
-        const matchLineIdx = lines.findIndex(l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('*') && (/llm-sec-60|unchecked/i.test(l) || lines.indexOf(l) === 0));
+        const matchLineIdx = locateMatchLine(lines, [/setInterval\s*\(\s*(?:async\s*)?\(\s*\)\s*=>\s*\{[\s\S]*?fetch\s*\(\s*["\']\/api\/ai\/status["\']\s*\)[\s\S]*?,\s*(?:100|200|300|400|500)\s*\)/i], l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('*'));
         const lineNum = matchLineIdx !== -1 ? matchLineIdx + 1 : 1;
         findings.push({
             id: `llmsec60-${Date.now()}-${findingCounter.count++}`,

@@ -4,6 +4,7 @@
  */
 import { Finding } from "@/data/schema";
 import { CodeFile } from "../scanner-engine";
+import { locateMatchLine } from './shared/locate';
 export interface QuantitativeRiskRuleResult {
     findings: Finding[];
     logs: string[];
@@ -21,7 +22,7 @@ export function evaluateQuantitativeRiskRules(file: CodeFile, lines: string[], c
     const ts = new Date().toLocaleTimeString();
     // QUANT-RISK-01: Value at Risk (VaR) Historical Simulation Time Horizon Misconfiguration
     if (((/risk_model|var_calc|quantitative/i.test(lowerPath) || /calculateHistoricalVaR|varHorizonDays/i.test(cleanContent)) && !/minVarObservationDays\s*=\s*250/i.test(cleanContent))) {
-        const matchLineIdx = lines.findIndex(l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('#') && !l.trim().startsWith('*'));
+        const matchLineIdx = locateMatchLine(lines, [/calculateHistoricalVaR|varHorizonDays/i], l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('#') && !l.trim().startsWith('*'));
         const lineNum = matchLineIdx !== -1 ? matchLineIdx + 1 : 1;
         findings.push({
             id: `quantrisk16201-${Date.now()}-${findingCounter.count++}`,
@@ -45,7 +46,7 @@ export function evaluateQuantitativeRiskRules(file: CodeFile, lines: string[], c
     }
     // QUANT-RISK-02: Missing Stressed Value at Risk (sVaR) Calibration Against Historical Crises
     if (((/risk_engine|frtb_compliance|var_stress/i.test(lowerPath) || /computeStressedVaR|sVarCalib/i.test(cleanContent)) && !/historicalCrisisPeriodWindow/i.test(cleanContent))) {
-        const matchLineIdx = lines.findIndex(l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('#') && !l.trim().startsWith('*'));
+        const matchLineIdx = locateMatchLine(lines, [/computeStressedVaR|sVarCalib/i], l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('#') && !l.trim().startsWith('*'));
         const lineNum = matchLineIdx !== -1 ? matchLineIdx + 1 : 1;
         findings.push({
             id: `quantrisk16202-${Date.now()}-${findingCounter.count++}`,
@@ -69,7 +70,7 @@ export function evaluateQuantitativeRiskRules(file: CodeFile, lines: string[], c
     }
     // QUANT-RISK-03: Expected Shortfall (ES) Tail Risk Computation Inadequacy on Trading Books
     if (((/expected_shortfall|tail_risk/i.test(lowerPath) || /calculateExpectedShortfall|tailLossES/i.test(cleanContent)) && !/esConfidenceInterval\s*=\s*0\.975/i.test(cleanContent))) {
-        const matchLineIdx = lines.findIndex(l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('#') && !l.trim().startsWith('*'));
+        const matchLineIdx = locateMatchLine(lines, [/calculateExpectedShortfall|tailLossES/i], l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('#') && !l.trim().startsWith('*'));
         const lineNum = matchLineIdx !== -1 ? matchLineIdx + 1 : 1;
         findings.push({
             id: `quantrisk16203-${Date.now()}-${findingCounter.count++}`,
@@ -93,7 +94,7 @@ export function evaluateQuantitativeRiskRules(file: CodeFile, lines: string[], c
     }
     // QUANT-RISK-04: Unhedged High-Frequency Algorithmic Trading Greeks Exposure Limits
     if (((/algo_trading|greeks_risk|hft_hedging/i.test(lowerPath) || /portfolioDelta|portfolioVega/i.test(cleanContent)) && !/enforceGreeksCircuitBreaker/i.test(cleanContent))) {
-        const matchLineIdx = lines.findIndex(l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('#') && !l.trim().startsWith('*'));
+        const matchLineIdx = locateMatchLine(lines, [/portfolioDelta|portfolioVega/i], l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('#') && !l.trim().startsWith('*'));
         const lineNum = matchLineIdx !== -1 ? matchLineIdx + 1 : 1;
         findings.push({
             id: `quantrisk16204-${Date.now()}-${findingCounter.count++}`,
@@ -117,7 +118,7 @@ export function evaluateQuantitativeRiskRules(file: CodeFile, lines: string[], c
     }
     // QUANT-RISK-05: Failure to Conduct P&L Attribution (PLA) Tests on Trading Desks
     if (((/pnl_attribution|desk_audit/i.test(lowerPath) || /spearmanCorrelation|kolmogorovSmirnov/i.test(cleanContent)) && !/validateDeskPnlAttribution/i.test(cleanContent))) {
-        const matchLineIdx = lines.findIndex(l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('#') && !l.trim().startsWith('*'));
+        const matchLineIdx = locateMatchLine(lines, [/spearmanCorrelation|kolmogorovSmirnov/i], l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('#') && !l.trim().startsWith('*'));
         const lineNum = matchLineIdx !== -1 ? matchLineIdx + 1 : 1;
         findings.push({
             id: `quantrisk16205-${Date.now()}-${findingCounter.count++}`,

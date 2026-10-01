@@ -4,6 +4,7 @@
  */
 import { Finding } from "@/data/schema";
 import { CodeFile } from "../scanner-engine";
+import { locateMatchLine } from './shared/locate';
 export interface CicdSupplyChainRuleResult {
     findings: Finding[];
     logs: string[];
@@ -108,7 +109,7 @@ export function evaluateCicdSupplyChainRules(file: CodeFile, lines: string[], cl
     }
     // CICD-SEC-04: Overprivileged GITHUB_TOKEN Permissions (permissions: write-all)
     if (/permissions\s*:\s*write-all/i.test(cleanContent)) {
-        const matchLineIdx = lines.findIndex(l => !l.trim().startsWith('#'));
+        const matchLineIdx = locateMatchLine(lines, [/permissions\s*:\s*write-all/i], l => !l.trim().startsWith('#'));
         const lineNum = matchLineIdx !== -1 ? matchLineIdx + 1 : 1;
         findings.push({
             id: `cicdsec9504-${Date.now()}-${findingCounter.count++}`,
@@ -132,7 +133,7 @@ export function evaluateCicdSupplyChainRules(file: CodeFile, lines: string[], cl
     }
     // CICD-SEC-05: Exposed Secret Tokens in Build Log Outputs
     if ((/run\s*:[\s\S]*?echo\s+["']?\$\{\{\s*secrets\./i.test(cleanContent))) {
-        const matchLineIdx = lines.findIndex(l => !l.trim().startsWith('#'));
+        const matchLineIdx = locateMatchLine(lines, [/run\s*:[\s\S]*?echo\s+["']?\$\{\{\s*secrets\./i], l => !l.trim().startsWith('#'));
         const lineNum = matchLineIdx !== -1 ? matchLineIdx + 1 : 1;
         findings.push({
             id: `cicdsec9505-${Date.now()}-${findingCounter.count++}`,

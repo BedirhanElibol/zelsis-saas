@@ -4,6 +4,7 @@
  */
 import { Finding } from "@/data/schema";
 import { CodeFile } from "../scanner-engine";
+import { locateMatchLine } from './shared/locate';
 export interface HipaaSecurityRuleResult {
     findings: Finding[];
     logs: string[];
@@ -21,7 +22,7 @@ export function evaluateHipaaSecurityRules(file: CodeFile, lines: string[], clea
     const ts = new Date().toLocaleTimeString();
     // HIPAASEC-01: HIPAA §164.312(a)(1) Access Control: Missing Unique User Identification
     if (((/healthcare_auth/i.test(lowerPath) || /healthcare/i.test(cleanContent)) && !/uniqueUserIdentifier/i.test(cleanContent))) {
-        const matchLineIdx = lines.findIndex(l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('#') && !l.trim().startsWith('*'));
+        const matchLineIdx = locateMatchLine(lines, [/healthcare/i], l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('#') && !l.trim().startsWith('*'));
         const lineNum = matchLineIdx !== -1 ? matchLineIdx + 1 : 1;
         findings.push({
             id: `hipaasec14401-${Date.now()}-${findingCounter.count++}`,
@@ -45,7 +46,7 @@ export function evaluateHipaaSecurityRules(file: CodeFile, lines: string[], clea
     }
     // HIPAASEC-02: HIPAA §164.312(a)(2)(iii) Automatic Logoff on Inactive Clinical Workstations
     if (((/session_timeout/i.test(lowerPath) || /sessionTimeout/i.test(cleanContent)) && !/maxInactiveTimeout/i.test(cleanContent))) {
-        const matchLineIdx = lines.findIndex(l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('#') && !l.trim().startsWith('*'));
+        const matchLineIdx = locateMatchLine(lines, [/sessionTimeout/i], l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('#') && !l.trim().startsWith('*'));
         const lineNum = matchLineIdx !== -1 ? matchLineIdx + 1 : 1;
         findings.push({
             id: `hipaasec14402-${Date.now()}-${findingCounter.count++}`,
@@ -69,7 +70,7 @@ export function evaluateHipaaSecurityRules(file: CodeFile, lines: string[], clea
     }
     // HIPAASEC-03: HIPAA §164.312(a)(2)(iv) Encryption and Decryption of ePHI Stored at Rest
     if (((/patient_records|ehr_db/i.test(lowerPath) || /patient_records|ehr_db/i.test(cleanContent)) && !/aes256Gcm/i.test(cleanContent))) {
-        const matchLineIdx = lines.findIndex(l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('#') && !l.trim().startsWith('*'));
+        const matchLineIdx = locateMatchLine(lines, [/patient_records|ehr_db/i], l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('#') && !l.trim().startsWith('*'));
         const lineNum = matchLineIdx !== -1 ? matchLineIdx + 1 : 1;
         findings.push({
             id: `hipaasec14403-${Date.now()}-${findingCounter.count++}`,
@@ -93,7 +94,7 @@ export function evaluateHipaaSecurityRules(file: CodeFile, lines: string[], clea
     }
     // HIPAASEC-04: HIPAA §164.312(b) Audit Controls: Missing Immutable Logs for Medical Records
     if (((/medical_record/i.test(lowerPath) || /medicalRecord/i.test(cleanContent)) && !/immutableAuditTrail/i.test(cleanContent))) {
-        const matchLineIdx = lines.findIndex(l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('#') && !l.trim().startsWith('*'));
+        const matchLineIdx = locateMatchLine(lines, [/medicalRecord/i], l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('#') && !l.trim().startsWith('*'));
         const lineNum = matchLineIdx !== -1 ? matchLineIdx + 1 : 1;
         findings.push({
             id: `hipaasec14404-${Date.now()}-${findingCounter.count++}`,
@@ -117,7 +118,7 @@ export function evaluateHipaaSecurityRules(file: CodeFile, lines: string[], clea
     }
     // HIPAASEC-05: HIPAA §164.312(c)(1) Data Integrity: Electronic Transmission Tampering Detection
     if (((/patient_telemetry/i.test(lowerPath) || /patientTelemetry/i.test(cleanContent)) && !/hmacSignature/i.test(cleanContent))) {
-        const matchLineIdx = lines.findIndex(l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('#') && !l.trim().startsWith('*'));
+        const matchLineIdx = locateMatchLine(lines, [/patientTelemetry/i], l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('#') && !l.trim().startsWith('*'));
         const lineNum = matchLineIdx !== -1 ? matchLineIdx + 1 : 1;
         findings.push({
             id: `hipaasec14405-${Date.now()}-${findingCounter.count++}`,

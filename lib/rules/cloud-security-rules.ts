@@ -4,6 +4,7 @@
  */
 import { Finding } from "@/data/schema";
 import { CodeFile } from "../scanner-engine";
+import { locateMatchLine } from './shared/locate';
 export interface CloudSecurityRuleResult {
     findings: Finding[];
     logs: string[];
@@ -25,7 +26,7 @@ export function evaluateCloudSecurityRules(file: CodeFile, lines: string[], clea
     const ts = new Date().toLocaleTimeString();
     // CLOUD-SEC-01: Publicly Accessible S3 Bucket / Blob Container
     if ((/acl\s*=\s*['"]public-read['"]/i.test(cleanContent) && cleanContent.includes('aws_s3_bucket'))) {
-        const matchLineIdx = lines.findIndex(l => !l.trim().startsWith('//') && !l.trim().startsWith('#'));
+        const matchLineIdx = locateMatchLine(lines, [/acl\s*=\s*['"]public-read['"]/i], l => !l.trim().startsWith('//') && !l.trim().startsWith('#'));
         const lineNum = matchLineIdx !== -1 ? matchLineIdx + 1 : 1;
         findings.push({
             id: `cloudsec9201-${Date.now()}-${findingCounter.count++}`,
@@ -49,7 +50,7 @@ export function evaluateCloudSecurityRules(file: CodeFile, lines: string[], clea
     }
     // CLOUD-SEC-02: Overprivileged IAM Wildcard Action (*)
     if ((/"Action"\s*:\s*"\*"[\s\S]*?"Resource"\s*:\s*"\*"/i.test(cleanContent) && cleanContent.includes('Effect'))) {
-        const matchLineIdx = lines.findIndex(l => !l.trim().startsWith('//') && !l.trim().startsWith('#'));
+        const matchLineIdx = locateMatchLine(lines, [/"Action"\s*:\s*"\*"[\s\S]*?"Resource"\s*:\s*"\*"/i], l => !l.trim().startsWith('//') && !l.trim().startsWith('#'));
         const lineNum = matchLineIdx !== -1 ? matchLineIdx + 1 : 1;
         findings.push({
             id: `cloudsec9202-${Date.now()}-${findingCounter.count++}`,
@@ -73,7 +74,7 @@ export function evaluateCloudSecurityRules(file: CodeFile, lines: string[], clea
     }
     // CLOUD-SEC-03: Unencrypted Cloud Storage Volumes at Rest (EBS / Managed Disk)
     if ((/resource\s+["']aws_ebs_volume["']/i.test(cleanContent) && /encrypted\s*=\s*false/i.test(cleanContent))) {
-        const matchLineIdx = lines.findIndex(l => !l.trim().startsWith('//') && !l.trim().startsWith('#'));
+        const matchLineIdx = locateMatchLine(lines, [/resource\s+["']aws_ebs_volume["']/i, /encrypted\s*=\s*false/i], l => !l.trim().startsWith('//') && !l.trim().startsWith('#'));
         const lineNum = matchLineIdx !== -1 ? matchLineIdx + 1 : 1;
         findings.push({
             id: `cloudsec9203-${Date.now()}-${findingCounter.count++}`,
@@ -97,7 +98,7 @@ export function evaluateCloudSecurityRules(file: CodeFile, lines: string[], clea
     }
     // CLOUD-SEC-04: Security Group Ingress Open to 0.0.0.0/0 on Management Ports
     if ((/cidr_blocks\s*=\s*\[\s*['"]0\.0\.0\.0\/0['"]\s*\]/i.test(cleanContent) && /(?:from_port\s*=\s*22|from_port\s*=\s*3389)/i.test(cleanContent))) {
-        const matchLineIdx = lines.findIndex(l => !l.trim().startsWith('//') && !l.trim().startsWith('#'));
+        const matchLineIdx = locateMatchLine(lines, [/cidr_blocks\s*=\s*\[\s*['"]0\.0\.0\.0\/0['"]\s*\]/i, /(?:from_port\s*=\s*22|from_port\s*=\s*3389)/i], l => !l.trim().startsWith('//') && !l.trim().startsWith('#'));
         const lineNum = matchLineIdx !== -1 ? matchLineIdx + 1 : 1;
         findings.push({
             id: `cloudsec9204-${Date.now()}-${findingCounter.count++}`,
@@ -121,7 +122,7 @@ export function evaluateCloudSecurityRules(file: CodeFile, lines: string[], clea
     }
     // CLOUD-SEC-05: Multi-Cloud Audit Logging / CloudTrail Disabled
     if ((/resource\s+["']aws_cloudtrail["']/i.test(cleanContent) && /enable_logging\s*=\s*false/i.test(cleanContent))) {
-        const matchLineIdx = lines.findIndex(l => !l.trim().startsWith('//') && !l.trim().startsWith('#'));
+        const matchLineIdx = locateMatchLine(lines, [/resource\s+["']aws_cloudtrail["']/i, /enable_logging\s*=\s*false/i], l => !l.trim().startsWith('//') && !l.trim().startsWith('#'));
         const lineNum = matchLineIdx !== -1 ? matchLineIdx + 1 : 1;
         findings.push({
             id: `cloudsec9205-${Date.now()}-${findingCounter.count++}`,

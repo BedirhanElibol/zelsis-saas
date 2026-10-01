@@ -4,6 +4,7 @@
  */
 import { Finding } from "@/data/schema";
 import { CodeFile } from "../scanner-engine";
+import { locateMatchLine } from './shared/locate';
 export interface CacheRedisRuleResult {
     findings: Finding[];
     logs: string[];
@@ -25,7 +26,7 @@ export function evaluateCacheRedisRules(file: CodeFile, lines: string[], cleanCo
     const ts = new Date().toLocaleTimeString();
     // CACHE-01: Cache Stampede (Thundering Herd) via Unsynchronized Cache Misses
     if ((/redis\.get\s*\([\s\S]*?\)/.test(cleanContent) && !/lock|mutex|redlock/i.test(cleanContent))) {
-        const matchLineIdx = lines.findIndex(l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('*'));
+        const matchLineIdx = locateMatchLine(lines, [/redis\.get\s*\([\s\S]*?\)/], l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('*'));
         const lineNum = matchLineIdx !== -1 ? matchLineIdx + 1 : 1;
         findings.push({
             id: `cache10701-${Date.now()}-${findingCounter.count++}`,
@@ -49,7 +50,7 @@ export function evaluateCacheRedisRules(file: CodeFile, lines: string[], cleanCo
     }
     // CACHE-02: Unbounded Cache Keys Lacking TTL Expiration (OOM Crash)
     if ((/redis\.(?:set|setex|hset)\s*\([\s\S]*?\)/.test(cleanContent) && !/ex|ttl|expire/i.test(cleanContent))) {
-        const matchLineIdx = lines.findIndex(l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('*'));
+        const matchLineIdx = locateMatchLine(lines, [/redis\.(?:set|setex|hset)\s*\([\s\S]*?\)/], l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('*'));
         const lineNum = matchLineIdx !== -1 ? matchLineIdx + 1 : 1;
         findings.push({
             id: `cache10702-${Date.now()}-${findingCounter.count++}`,
@@ -73,7 +74,7 @@ export function evaluateCacheRedisRules(file: CodeFile, lines: string[], cleanCo
     }
     // CACHE-03: Unauthenticated Redis Port Bound to Public Network Interfaces (0.0.0.0)
     if ((/bind\s+0\.0\.0\.0/.test(cleanContent) && !/requirepass/i.test(cleanContent))) {
-        const matchLineIdx = lines.findIndex(l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('*'));
+        const matchLineIdx = locateMatchLine(lines, [/bind\s+0\.0\.0\.0/], l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('*'));
         const lineNum = matchLineIdx !== -1 ? matchLineIdx + 1 : 1;
         findings.push({
             id: `cache10703-${Date.now()}-${findingCounter.count++}`,
@@ -97,7 +98,7 @@ export function evaluateCacheRedisRules(file: CodeFile, lines: string[], cleanCo
     }
     // CACHE-04: Unsafe Lua Script Execution Susceptible to Injection or Infinite Loops
     if ((/redis\.eval\s*\(\s*`[\s\S]*?\$\{/.test(cleanContent))) {
-        const matchLineIdx = lines.findIndex(l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('*'));
+        const matchLineIdx = locateMatchLine(lines, [/redis\.eval\s*\(\s*`[\s\S]*?\$\{/], l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('*'));
         const lineNum = matchLineIdx !== -1 ? matchLineIdx + 1 : 1;
         findings.push({
             id: `cache10704-${Date.now()}-${findingCounter.count++}`,

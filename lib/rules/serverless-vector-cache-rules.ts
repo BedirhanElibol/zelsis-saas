@@ -4,6 +4,7 @@
  */
 import { Finding } from "@/data/schema";
 import { CodeFile } from "../scanner-engine";
+import { locateMatchLine } from './shared/locate';
 export interface ServerlessVectorCacheRuleResult {
     findings: Finding[];
     logs: string[];
@@ -21,7 +22,7 @@ export function evaluateServerlessVectorCacheRules(file: CodeFile, lines: string
     const ts = new Date().toLocaleTimeString();
     // VEC-CACHE-01: Missing Semantic Cache Invalidation on Underlying Document / Corpus Updates
     if (((/semantic_cache|vector_cache|cache_evict/i.test(lowerPath) || /semanticCacheStore|evictVectorKey/i.test(cleanContent)) && !/subscribeCorpusUpdateWebhook/i.test(cleanContent))) {
-        const matchLineIdx = lines.findIndex(l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('#') && !l.trim().startsWith('*'));
+        const matchLineIdx = locateMatchLine(lines, [/semanticCacheStore|evictVectorKey/i], l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('#') && !l.trim().startsWith('*'));
         const lineNum = matchLineIdx !== -1 ? matchLineIdx + 1 : 1;
         findings.push({
             id: `veccache17601-${Date.now()}-${findingCounter.count++}`,
@@ -45,7 +46,7 @@ export function evaluateServerlessVectorCacheRules(file: CodeFile, lines: string
     }
     // VEC-CACHE-02: Suboptimal Cosine Similarity Threshold Causing Irrelevant Semantic Cache Hits
     if (((/similarity_gate|cosine_cache|hit_threshold/i.test(lowerPath) || /cosineSimilarityMatch|semanticHitThreshold/i.test(cleanContent)) && !/semanticThresholdMin092/i.test(cleanContent))) {
-        const matchLineIdx = lines.findIndex(l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('#') && !l.trim().startsWith('*'));
+        const matchLineIdx = locateMatchLine(lines, [/cosineSimilarityMatch|semanticHitThreshold/i], l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('#') && !l.trim().startsWith('*'));
         const lineNum = matchLineIdx !== -1 ? matchLineIdx + 1 : 1;
         findings.push({
             id: `veccache17602-${Date.now()}-${findingCounter.count++}`,
@@ -69,7 +70,7 @@ export function evaluateServerlessVectorCacheRules(file: CodeFile, lines: string
     }
     // VEC-CACHE-03: Lack of Cross-Encoder Reranking Verification on Marginal Semantic Cache Hits
     if (((/cross_encoder|cache_rerank|marginal_hit/i.test(lowerPath) || /rerankCacheCandidate|crossEncoderVerify/i.test(cleanContent)) && !/verifyCrossEncoderAlignment/i.test(cleanContent))) {
-        const matchLineIdx = lines.findIndex(l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('#') && !l.trim().startsWith('*'));
+        const matchLineIdx = locateMatchLine(lines, [/rerankCacheCandidate|crossEncoderVerify/i], l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('#') && !l.trim().startsWith('*'));
         const lineNum = matchLineIdx !== -1 ? matchLineIdx + 1 : 1;
         findings.push({
             id: `veccache17603-${Date.now()}-${findingCounter.count++}`,
@@ -93,7 +94,7 @@ export function evaluateServerlessVectorCacheRules(file: CodeFile, lines: string
     }
     // VEC-CACHE-04: Unbounded RAM Bloat on Edge Vector Cache Due to Missing Tiered Storage Policies
     if (((/cache_memory|lfu_eviction|tiered_storage/i.test(lowerPath) || /lfuEvictionPolicy|edgeRamBuffer/i.test(cleanContent)) && !/tieredStorageLfuEviction/i.test(cleanContent))) {
-        const matchLineIdx = lines.findIndex(l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('#') && !l.trim().startsWith('*'));
+        const matchLineIdx = locateMatchLine(lines, [/lfuEvictionPolicy|edgeRamBuffer/i], l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('#') && !l.trim().startsWith('*'));
         const lineNum = matchLineIdx !== -1 ? matchLineIdx + 1 : 1;
         findings.push({
             id: `veccache17604-${Date.now()}-${findingCounter.count++}`,
@@ -117,7 +118,7 @@ export function evaluateServerlessVectorCacheRules(file: CodeFile, lines: string
     }
     // VEC-CACHE-05: Unindexed Query Vector Ingestion Causing O(N) Cache Search Latency
     if (((/inmemory_hnsw|cache_index|query_ann/i.test(lowerPath) || /inMemoryHnswLookup|indexCachedQueries/i.test(cleanContent)) && !/inMemoryHnswCacheIndexed/i.test(cleanContent))) {
-        const matchLineIdx = lines.findIndex(l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('#') && !l.trim().startsWith('*'));
+        const matchLineIdx = locateMatchLine(lines, [/inMemoryHnswLookup|indexCachedQueries/i], l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('#') && !l.trim().startsWith('*'));
         const lineNum = matchLineIdx !== -1 ? matchLineIdx + 1 : 1;
         findings.push({
             id: `veccache17605-${Date.now()}-${findingCounter.count++}`,

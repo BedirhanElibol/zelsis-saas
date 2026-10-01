@@ -4,6 +4,7 @@
  */
 import { Finding } from "@/data/schema";
 import { CodeFile } from "../scanner-engine";
+import { locateMatchLine } from './shared/locate';
 export interface ModernFullstackRuleResult {
     findings: Finding[];
     logs: string[];
@@ -47,7 +48,7 @@ export function evaluateModernFullstackRules(file: CodeFile, lines: string[], cl
     }
     // NEXT15-02: Client Component Props Exposing Server Secrets
     if (cleanContent.includes('use client') && /(?:rawDbUser|dbCredentials|serviceRoleKey|adminSecret)/i.test(cleanContent) && !lowerPath.includes('test') && !lowerPath.includes('mock')) {
-        const matchLineIdx = lines.findIndex(l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('*'));
+        const matchLineIdx = locateMatchLine(lines, [/(?:rawDbUser|dbCredentials|serviceRoleKey|adminSecret)/i], l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('*'));
         const lineNum = matchLineIdx !== -1 ? matchLineIdx + 1 : 1;
         findings.push({
             id: `next15_8602-${Date.now()}-${findingCounter.count++}`,
@@ -97,7 +98,7 @@ export function evaluateModernFullstackRules(file: CodeFile, lines: string[], cl
     }
     // NEXT15-04: Uncached Dynamic Route Render Explosion (force-dynamic)
     if (/export\s+const\s+dynamic\s*=\s*['"]force-dynamic['"]/i.test(cleanContent) && !lowerPath.includes('app/api') && !cleanContent.includes('api/')) {
-        const matchLineIdx = lines.findIndex(l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('*'));
+        const matchLineIdx = locateMatchLine(lines, [/export\s+const\s+dynamic\s*=\s*['"]force-dynamic['"]/i], l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('*'));
         const lineNum = matchLineIdx !== -1 ? matchLineIdx + 1 : 1;
         findings.push({
             id: `next15_8604-${Date.now()}-${findingCounter.count++}`,
@@ -122,7 +123,7 @@ export function evaluateModernFullstackRules(file: CodeFile, lines: string[], cl
     }
     // NEXT15-05: Edge Middleware Header Injection via URL Parameters
     if (lowerPath.includes('middleware') && /headers\.set\s*\([^,]+,\s*req\.nextUrl\.searchParams\.get/i.test(cleanContent) && !/sanitize/i.test(cleanContent)) {
-        const matchLineIdx = lines.findIndex(l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('*'));
+        const matchLineIdx = locateMatchLine(lines, [/headers\.set\s*\([^,]+,\s*req\.nextUrl\.searchParams\.get/i], l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('*'));
         const lineNum = matchLineIdx !== -1 ? matchLineIdx + 1 : 1;
         findings.push({
             id: `next15_8605-${Date.now()}-${findingCounter.count++}`,
@@ -147,7 +148,7 @@ export function evaluateModernFullstackRules(file: CodeFile, lines: string[], cl
     }
     // NEXT15-06: Unbounded revalidateTag Invocations Allowing Cache Flush DoS
     if (/revalidateTag\s*\(/i.test(cleanContent) && !/verifyToken|secret|auth|session|isAdmin|hasRole/i.test(cleanContent)) {
-        const matchLineIdx = lines.findIndex(l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('*'));
+        const matchLineIdx = locateMatchLine(lines, [/revalidateTag\s*\(/i], l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('*'));
         const lineNum = matchLineIdx !== -1 ? matchLineIdx + 1 : 1;
         findings.push({
             id: `next15_8606-${Date.now()}-${findingCounter.count++}`,
@@ -172,7 +173,7 @@ export function evaluateModernFullstackRules(file: CodeFile, lines: string[], cl
     }
     // NEXT15-07: Mutating Server Action Triggered via Link Navigation (GET)
     if (/<Link[^>]*href=['"][^'"]*(?:delete|cancel|purge|remove)[^'"]*['"]/i.test(cleanContent) && !cleanContent.includes('LinkWrapperSafe')) {
-        const matchLineIdx = lines.findIndex(l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('*'));
+        const matchLineIdx = locateMatchLine(lines, [/<Link[^>]*href=['"][^'"]*(?:delete|cancel|purge|remove)[^'"]*['"]/i], l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('*'));
         const lineNum = matchLineIdx !== -1 ? matchLineIdx + 1 : 1;
         findings.push({
             id: `next15_8607-${Date.now()}-${findingCounter.count++}`,
@@ -248,7 +249,7 @@ export function evaluateModernFullstackRules(file: CodeFile, lines: string[], cl
     }
     // NEXT15-10: Next.js 15 Dynamic APIs (cookies, headers) Accessed Synchronously
     if (/const\s+[a-zA-Z0-9_]+\s*=\s*(?:cookies|headers)\s*\(\s*\)/i.test(cleanContent) && !/await\s+(?:cookies|headers)/i.test(cleanContent) && !lowerPath.includes('test')) {
-        const matchLineIdx = lines.findIndex(l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('*'));
+        const matchLineIdx = locateMatchLine(lines, [/const\s+[a-zA-Z0-9_]+\s*=\s*(?:cookies|headers)\s*\(\s*\)/i], l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('*'));
         const lineNum = matchLineIdx !== -1 ? matchLineIdx + 1 : 1;
         findings.push({
             id: `next15_8610-${Date.now()}-${findingCounter.count++}`,

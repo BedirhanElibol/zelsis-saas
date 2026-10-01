@@ -4,6 +4,7 @@
  */
 import { Finding } from "@/data/schema";
 import { CodeFile } from "../scanner-engine";
+import { locateMatchLine } from './shared/locate';
 export interface DataPipelineRuleResult {
     findings: Finding[];
     logs: string[];
@@ -21,7 +22,7 @@ export function evaluateDataPipelineRules(file: CodeFile, lines: string[], clean
     const ts = new Date().toLocaleTimeString();
     // DATA-01: Full Table Unpartitioned Scan in High-Volume Data Lake (Spark / DuckDB)
     if ((/spark\.read\.(?:parquet|delta)/i.test(cleanContent) && !/filter|where/i.test(cleanContent))) {
-        const matchLineIdx = lines.findIndex(l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('#') && !l.trim().startsWith('*'));
+        const matchLineIdx = locateMatchLine(lines, [/spark\.read\.(?:parquet|delta)/i], l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('#') && !l.trim().startsWith('*'));
         const lineNum = matchLineIdx !== -1 ? matchLineIdx + 1 : 1;
         findings.push({
             id: `data11501-${Date.now()}-${findingCounter.count++}`,
@@ -45,7 +46,7 @@ export function evaluateDataPipelineRules(file: CodeFile, lines: string[], clean
     }
     // DATA-02: Uncompressed Raw CSV / JSON Stored in Production Data Lake
     if ((/(?:\.write\.csv|\.write\.json)/i.test(cleanContent))) {
-        const matchLineIdx = lines.findIndex(l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('#') && !l.trim().startsWith('*'));
+        const matchLineIdx = locateMatchLine(lines, [/(?:\.write\.csv|\.write\.json)/i], l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('#') && !l.trim().startsWith('*'));
         const lineNum = matchLineIdx !== -1 ? matchLineIdx + 1 : 1;
         findings.push({
             id: `data11502-${Date.now()}-${findingCounter.count++}`,
@@ -69,7 +70,7 @@ export function evaluateDataPipelineRules(file: CodeFile, lines: string[], clean
     }
     // DATA-03: Missing Data Contract Schema Drift Validation (Silent Pipeline Corruption)
     if ((/df\.transform|pipeline\.run/i.test(cleanContent) && !/expect_|schema_validate/i.test(cleanContent))) {
-        const matchLineIdx = lines.findIndex(l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('#') && !l.trim().startsWith('*'));
+        const matchLineIdx = locateMatchLine(lines, [/df\.transform|pipeline\.run/i], l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('#') && !l.trim().startsWith('*'));
         const lineNum = matchLineIdx !== -1 ? matchLineIdx + 1 : 1;
         findings.push({
             id: `data11503-${Date.now()}-${findingCounter.count++}`,
@@ -93,7 +94,7 @@ export function evaluateDataPipelineRules(file: CodeFile, lines: string[], clean
     }
     // DATA-04: Non-Idempotent Batch Transformation Pipeline (Duplicate Record Injection)
     if ((/INSERT\s+INTO\s+[a-zA-Z0-9_]+\s*SELECT/i.test(cleanContent) && !/MERGE\s+INTO|ON\s+CONFLICT/i.test(cleanContent))) {
-        const matchLineIdx = lines.findIndex(l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('#') && !l.trim().startsWith('*'));
+        const matchLineIdx = locateMatchLine(lines, [/INSERT\s+INTO\s+[a-zA-Z0-9_]+\s*SELECT/i], l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('#') && !l.trim().startsWith('*'));
         const lineNum = matchLineIdx !== -1 ? matchLineIdx + 1 : 1;
         findings.push({
             id: `data11504-${Date.now()}-${findingCounter.count++}`,
@@ -117,7 +118,7 @@ export function evaluateDataPipelineRules(file: CodeFile, lines: string[], clean
     }
     // DATA-05: Unencrypted Sensitive Customer PII in Data Warehouse Staging Tables
     if ((/(?:email|phone|ssn|tax_id)\s+VARCHAR/i.test(cleanContent) && !/masking|sha256/i.test(cleanContent))) {
-        const matchLineIdx = lines.findIndex(l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('#') && !l.trim().startsWith('*'));
+        const matchLineIdx = locateMatchLine(lines, [/(?:email|phone|ssn|tax_id)\s+VARCHAR/i], l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('#') && !l.trim().startsWith('*'));
         const lineNum = matchLineIdx !== -1 ? matchLineIdx + 1 : 1;
         findings.push({
             id: `data11505-${Date.now()}-${findingCounter.count++}`,

@@ -4,6 +4,7 @@
  */
 import { Finding } from "@/data/schema";
 import { CodeFile } from "../scanner-engine";
+import { locateMatchLine } from './shared/locate';
 export interface VectorIndexOptimizationRuleResult {
     findings: Finding[];
     logs: string[];
@@ -21,7 +22,7 @@ export function evaluateVectorIndexOptimizationRules(file: CodeFile, lines: stri
     const ts = new Date().toLocaleTimeString();
     // VEC-OPT-01: Unoptimized Full-Precision Floating Point (FP32) Vectors Causing RAM Exhaustion
     if (((/vector_schema|qdrant_config|milvus_index/i.test(lowerPath) || /vector_config|index_type.*hnsw/i.test(cleanContent)) && !/quantization_config|scalar_quantization|product_quantization/i.test(cleanContent))) {
-        const matchLineIdx = lines.findIndex(l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('#') && !l.trim().startsWith('*'));
+        const matchLineIdx = locateMatchLine(lines, [/vector_config|index_type.*hnsw/i], l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('#') && !l.trim().startsWith('*'));
         const lineNum = matchLineIdx !== -1 ? matchLineIdx + 1 : 1;
         findings.push({
             id: `vecopt16601-${Date.now()}-${findingCounter.count++}`,
@@ -45,7 +46,7 @@ export function evaluateVectorIndexOptimizationRules(file: CodeFile, lines: stri
     }
     // VEC-OPT-02: Suboptimal HNSW M and efConstruction Hyperparameters Causing Slow Indexing
     if (((/hnsw_params|indexing_speed/i.test(lowerPath) || /ef_construction|hnsw_m/i.test(cleanContent)) && !/ef_construction\s*:\s*(128|150|200)/i.test(cleanContent))) {
-        const matchLineIdx = lines.findIndex(l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('#') && !l.trim().startsWith('*'));
+        const matchLineIdx = locateMatchLine(lines, [/ef_construction|hnsw_m/i], l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('#') && !l.trim().startsWith('*'));
         const lineNum = matchLineIdx !== -1 ? matchLineIdx + 1 : 1;
         findings.push({
             id: `vecopt16602-${Date.now()}-${findingCounter.count++}`,
@@ -69,7 +70,7 @@ export function evaluateVectorIndexOptimizationRules(file: CodeFile, lines: stri
     }
     // VEC-OPT-03: Disabled SIMD Vector Acceleration (AVX-512 / ARM NEON) in Vector Distance Compute
     if (((/vector_compute|simd_opt|distance_calc/i.test(lowerPath) || /cosineDistance|dotProduct/i.test(cleanContent)) && !/enableAvx512OrNeonSimd/i.test(cleanContent))) {
-        const matchLineIdx = lines.findIndex(l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('#') && !l.trim().startsWith('*'));
+        const matchLineIdx = locateMatchLine(lines, [/cosineDistance|dotProduct/i], l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('#') && !l.trim().startsWith('*'));
         const lineNum = matchLineIdx !== -1 ? matchLineIdx + 1 : 1;
         findings.push({
             id: `vecopt16603-${Date.now()}-${findingCounter.count++}`,
@@ -93,7 +94,7 @@ export function evaluateVectorIndexOptimizationRules(file: CodeFile, lines: stri
     }
     // VEC-OPT-04: Missing Inverted File Index (IVF) Cluster Centroid Recalibration on Data Drift
     if (((/ivf_index|cluster_centroids|drift_monitor/i.test(lowerPath) || /trainIvfIndex|recalibrateCentroids/i.test(cleanContent)) && !/scheduleIvfCentroidRetraining/i.test(cleanContent))) {
-        const matchLineIdx = lines.findIndex(l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('#') && !l.trim().startsWith('*'));
+        const matchLineIdx = locateMatchLine(lines, [/trainIvfIndex|recalibrateCentroids/i], l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('#') && !l.trim().startsWith('*'));
         const lineNum = matchLineIdx !== -1 ? matchLineIdx + 1 : 1;
         findings.push({
             id: `vecopt16604-${Date.now()}-${findingCounter.count++}`,
@@ -117,7 +118,7 @@ export function evaluateVectorIndexOptimizationRules(file: CodeFile, lines: stri
     }
     // VEC-OPT-05: Unindexed Metadata Filtering Causing Post-Filter Vector Search Latency Explosions
     if (((/payload_index|metadata_filter|qdrant_filter/i.test(lowerPath) || /create_payload_index|filterPayload/i.test(cleanContent)) && !/enforcePayloadIndexOnFilterKeys/i.test(cleanContent))) {
-        const matchLineIdx = lines.findIndex(l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('#') && !l.trim().startsWith('*'));
+        const matchLineIdx = locateMatchLine(lines, [/create_payload_index|filterPayload/i], l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('#') && !l.trim().startsWith('*'));
         const lineNum = matchLineIdx !== -1 ? matchLineIdx + 1 : 1;
         findings.push({
             id: `vecopt16605-${Date.now()}-${findingCounter.count++}`,

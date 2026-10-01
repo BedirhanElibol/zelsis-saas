@@ -4,6 +4,7 @@
  */
 import { Finding } from "@/data/schema";
 import { CodeFile } from "../scanner-engine";
+import { locateMatchLine } from './shared/locate';
 export interface TimeSeriesDbRuleResult {
     findings: Finding[];
     logs: string[];
@@ -21,7 +22,7 @@ export function evaluateTimeSeriesDbRules(file: CodeFile, lines: string[], clean
     const ts = new Date().toLocaleTimeString();
     // TSDB-01: Unindexed Timestamp Column Triggering Full Table Scans in Metric Queries
     if ((/create\s*table.*ENGINE\s*=\s*MergeTree/i.test(cleanContent) && !/ORDER BY/i.test(cleanContent))) {
-        const matchLineIdx = lines.findIndex(l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('#') && !l.trim().startsWith('*'));
+        const matchLineIdx = locateMatchLine(lines, [/create\s*table.*ENGINE\s*=\s*MergeTree/i], l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('#') && !l.trim().startsWith('*'));
         const lineNum = matchLineIdx !== -1 ? matchLineIdx + 1 : 1;
         findings.push({
             id: `tsdb14001-${Date.now()}-${findingCounter.count++}`,
@@ -69,7 +70,7 @@ export function evaluateTimeSeriesDbRules(file: CodeFile, lines: string[], clean
     }
     // TSDB-03: High-Cardinality Tag Explosion Exhausting TSDB Inverted Index Memory
     if ((/recordMetric|emitEvent/i.test(cleanContent) && !/sanitizeMetricTags/i.test(cleanContent))) {
-        const matchLineIdx = lines.findIndex(l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('#') && !l.trim().startsWith('*'));
+        const matchLineIdx = locateMatchLine(lines, [/recordMetric|emitEvent/i], l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('#') && !l.trim().startsWith('*'));
         const lineNum = matchLineIdx !== -1 ? matchLineIdx + 1 : 1;
         findings.push({
             id: `tsdb14003-${Date.now()}-${findingCounter.count++}`,
@@ -93,7 +94,7 @@ export function evaluateTimeSeriesDbRules(file: CodeFile, lines: string[], clean
     }
     // TSDB-04: Small-Batch Micro-Insertions Causing Excessive Columnar File Fragmentation
     if (((/writeTelemetry/i.test(lowerPath) || /writeTelemetry/i.test(cleanContent)) && !/batchBuffer/i.test(cleanContent))) {
-        const matchLineIdx = lines.findIndex(l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('#') && !l.trim().startsWith('*'));
+        const matchLineIdx = locateMatchLine(lines, [/writeTelemetry/i], l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('#') && !l.trim().startsWith('*'));
         const lineNum = matchLineIdx !== -1 ? matchLineIdx + 1 : 1;
         findings.push({
             id: `tsdb14004-${Date.now()}-${findingCounter.count++}`,
@@ -117,7 +118,7 @@ export function evaluateTimeSeriesDbRules(file: CodeFile, lines: string[], clean
     }
     // TSDB-05: Uncompressed Historical Columnar Storage Consuming Excessive Disk Space
     if ((/column_definition/i.test(cleanContent) && !/CODEC\(ZSTD\)|Gorilla/i.test(cleanContent))) {
-        const matchLineIdx = lines.findIndex(l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('#') && !l.trim().startsWith('*'));
+        const matchLineIdx = locateMatchLine(lines, [/column_definition/i], l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('#') && !l.trim().startsWith('*'));
         const lineNum = matchLineIdx !== -1 ? matchLineIdx + 1 : 1;
         findings.push({
             id: `tsdb14005-${Date.now()}-${findingCounter.count++}`,

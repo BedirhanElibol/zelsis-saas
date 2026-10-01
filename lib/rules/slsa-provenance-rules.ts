@@ -4,6 +4,7 @@
  */
 import { Finding } from "@/data/schema";
 import { CodeFile } from "../scanner-engine";
+import { locateMatchLine } from './shared/locate';
 export interface SlsaProvenanceRuleResult {
     findings: Finding[];
     logs: string[];
@@ -69,7 +70,7 @@ export function evaluateSlsaProvenanceRules(file: CodeFile, lines: string[], cle
     }
     // SLSA-03: Non-Hermetic Build Process Fetching Unpinned Remote Dependencies
     if ((/build_step/i.test(cleanContent) && !/hermetic_sandbox/i.test(cleanContent))) {
-        const matchLineIdx = lines.findIndex(l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('#') && !l.trim().startsWith('*'));
+        const matchLineIdx = locateMatchLine(lines, [/build_step/i], l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('#') && !l.trim().startsWith('*'));
         const lineNum = matchLineIdx !== -1 ? matchLineIdx + 1 : 1;
         findings.push({
             id: `slsa14103-${Date.now()}-${findingCounter.count++}`,

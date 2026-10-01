@@ -4,6 +4,7 @@
  */
 import { Finding } from "@/data/schema";
 import { CodeFile } from "../scanner-engine";
+import { locateMatchLine } from './shared/locate';
 export interface SoxComplianceRuleResult {
     findings: Finding[];
     logs: string[];
@@ -45,7 +46,7 @@ export function evaluateSoxComplianceRules(file: CodeFile, lines: string[], clea
     }
     // SOX-02: SOX ITGC Segregation of Duties (SoD): Developers Possessing Production DB Write Access
     if (((/sox/i.test(lowerPath) || /sox/i.test(cleanContent)) && !/restrictWriteAccess/i.test(cleanContent))) {
-        const matchLineIdx = lines.findIndex(l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('#') && !l.trim().startsWith('*'));
+        const matchLineIdx = locateMatchLine(lines, [/sox/i], l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('#') && !l.trim().startsWith('*'));
         const lineNum = matchLineIdx !== -1 ? matchLineIdx + 1 : 1;
         findings.push({
             id: `sox13402-${Date.now()}-${findingCounter.count++}`,
@@ -69,7 +70,7 @@ export function evaluateSoxComplianceRules(file: CodeFile, lines: string[], clea
     }
     // SOX-03: SOX ITGC Audit Trail: Missing Immutable Logging for Financial Transaction Modifications
     if ((/ledger|journal/i.test(cleanContent) && !/immutableAuditLog/i.test(cleanContent))) {
-        const matchLineIdx = lines.findIndex(l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('#') && !l.trim().startsWith('*'));
+        const matchLineIdx = locateMatchLine(lines, [/ledger|journal/i], l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('#') && !l.trim().startsWith('*'));
         const lineNum = matchLineIdx !== -1 ? matchLineIdx + 1 : 1;
         findings.push({
             id: `sox13403-${Date.now()}-${findingCounter.count++}`,

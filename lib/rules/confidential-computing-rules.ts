@@ -4,6 +4,7 @@
  */
 import { Finding } from "@/data/schema";
 import { CodeFile } from "../scanner-engine";
+import { locateMatchLine } from './shared/locate';
 export interface ConfidentialComputingRuleResult {
     findings: Finding[];
     logs: string[];
@@ -21,7 +22,7 @@ export function evaluateConfidentialComputingRules(file: CodeFile, lines: string
     const ts = new Date().toLocaleTimeString();
     // CONF-COMPUTE-01: Missing Cryptographic Remote Attestation Verification Before Enclave Provisioning
     if (((/enclave_init|sev_snp|sgx_attestation/i.test(lowerPath) || /verifyQuote|sevSnpAttestation/i.test(cleanContent)) && !/verifyHardwareRemoteAttestation/i.test(cleanContent))) {
-        const matchLineIdx = lines.findIndex(l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('#') && !l.trim().startsWith('*'));
+        const matchLineIdx = locateMatchLine(lines, [/verifyQuote|sevSnpAttestation/i], l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('#') && !l.trim().startsWith('*'));
         const lineNum = matchLineIdx !== -1 ? matchLineIdx + 1 : 1;
         findings.push({
             id: `confcompute16401-${Date.now()}-${findingCounter.count++}`,
@@ -45,7 +46,7 @@ export function evaluateConfidentialComputingRules(file: CodeFile, lines: string
     }
     // CONF-COMPUTE-02: Unencrypted Shared Memory Data Transfer Between Host and Confidential Enclave
     if (((/enclave_bridge|shm_channel|host_enclave/i.test(lowerPath) || /sharedMemoryBuffer|enclaveHostChannel/i.test(cleanContent)) && !/encryptEnclaveChannel/i.test(cleanContent))) {
-        const matchLineIdx = lines.findIndex(l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('#') && !l.trim().startsWith('*'));
+        const matchLineIdx = locateMatchLine(lines, [/sharedMemoryBuffer|enclaveHostChannel/i], l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('#') && !l.trim().startsWith('*'));
         const lineNum = matchLineIdx !== -1 ? matchLineIdx + 1 : 1;
         findings.push({
             id: `confcompute16402-${Date.now()}-${findingCounter.count++}`,
@@ -69,7 +70,7 @@ export function evaluateConfidentialComputingRules(file: CodeFile, lines: string
     }
     // CONF-COMPUTE-03: Vulnerability to Controlled Channel and Page Fault Side-Channel Attacks in Enclaves
     if (((/sidechannel|constant_time|enclave_algo/i.test(lowerPath) || /enclaveCryptoRoutine/i.test(cleanContent)) && !/constantTimeSelect|addressMasking/i.test(cleanContent))) {
-        const matchLineIdx = lines.findIndex(l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('#') && !l.trim().startsWith('*'));
+        const matchLineIdx = locateMatchLine(lines, [/enclaveCryptoRoutine/i], l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('#') && !l.trim().startsWith('*'));
         const lineNum = matchLineIdx !== -1 ? matchLineIdx + 1 : 1;
         findings.push({
             id: `confcompute16403-${Date.now()}-${findingCounter.count++}`,
@@ -93,7 +94,7 @@ export function evaluateConfidentialComputingRules(file: CodeFile, lines: string
     }
     // CONF-COMPUTE-04: Use of Outdated CPU Microcode or Deprecated Security Version Numbers (SVN)
     if (((/tcb_policy|hardware_svn/i.test(lowerPath) || /checkTcbLevel|cpuSvnRequirement/i.test(cleanContent)) && !/minHardwareTcbSvnLevel/i.test(cleanContent))) {
-        const matchLineIdx = lines.findIndex(l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('#') && !l.trim().startsWith('*'));
+        const matchLineIdx = locateMatchLine(lines, [/checkTcbLevel|cpuSvnRequirement/i], l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('#') && !l.trim().startsWith('*'));
         const lineNum = matchLineIdx !== -1 ? matchLineIdx + 1 : 1;
         findings.push({
             id: `confcompute16404-${Date.now()}-${findingCounter.count++}`,
@@ -117,7 +118,7 @@ export function evaluateConfidentialComputingRules(file: CodeFile, lines: string
     }
     // CONF-COMPUTE-05: Unsigned or Tampered Enclave Application Binary Images in Enclave Launch Policy
     if (((/enclave_manifest|mrenclave|launch_policy/i.test(lowerPath) || /enclaveMeasurementHash|mrenclaveDigest/i.test(cleanContent)) && !/verifyEnclaveMeasurementSignature/i.test(cleanContent))) {
-        const matchLineIdx = lines.findIndex(l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('#') && !l.trim().startsWith('*'));
+        const matchLineIdx = locateMatchLine(lines, [/enclaveMeasurementHash|mrenclaveDigest/i], l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('#') && !l.trim().startsWith('*'));
         const lineNum = matchLineIdx !== -1 ? matchLineIdx + 1 : 1;
         findings.push({
             id: `confcompute16405-${Date.now()}-${findingCounter.count++}`,

@@ -4,6 +4,7 @@
  */
 import { Finding } from "@/data/schema";
 import { CodeFile } from "../scanner-engine";
+import { locateMatchLine } from './shared/locate';
 export interface MultiAgentOrchestrationRuleResult {
     findings: Finding[];
     logs: string[];
@@ -21,7 +22,7 @@ export function evaluateMultiAgentOrchestrationRules(file: CodeFile, lines: stri
     const ts = new Date().toLocaleTimeString();
     // LLM-ORCH-01: Unbounded Cyclic Execution Loops in Multi-Agent Graph Workflows
     if (((/agent_graph|langgraph|workflow_state/i.test(lowerPath) || /StateGraph|createAgentGraph/i.test(cleanContent)) && !/maxRecursionLimit|maxSteps/i.test(cleanContent))) {
-        const matchLineIdx = lines.findIndex(l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('#') && !l.trim().startsWith('*'));
+        const matchLineIdx = locateMatchLine(lines, [/StateGraph|createAgentGraph/i], l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('#') && !l.trim().startsWith('*'));
         const lineNum = matchLineIdx !== -1 ? matchLineIdx + 1 : 1;
         findings.push({
             id: `llmorch16301-${Date.now()}-${findingCounter.count++}`,
@@ -45,7 +46,7 @@ export function evaluateMultiAgentOrchestrationRules(file: CodeFile, lines: stri
     }
     // LLM-ORCH-02: Missing Deterministic State Checkpointing in Multi-Agent Workflow Engines
     if (((/checkpoint|state_machine|durable_run/i.test(lowerPath) || /MemorySaver|SqliteSaver|PostgresSaver/i.test(cleanContent)) && !/checkpointer:\s*(new\s+)?(PostgresSaver|SqliteSaver)/i.test(cleanContent))) {
-        const matchLineIdx = lines.findIndex(l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('#') && !l.trim().startsWith('*'));
+        const matchLineIdx = locateMatchLine(lines, [/MemorySaver|SqliteSaver|PostgresSaver/i], l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('#') && !l.trim().startsWith('*'));
         const lineNum = matchLineIdx !== -1 ? matchLineIdx + 1 : 1;
         findings.push({
             id: `llmorch16302-${Date.now()}-${findingCounter.count++}`,
@@ -69,7 +70,7 @@ export function evaluateMultiAgentOrchestrationRules(file: CodeFile, lines: stri
     }
     // LLM-ORCH-03: Unprotected Agent Inter-Communication Deadlocks in Asynchronous Swarms
     if (((/swarm_mesh|agent_channel|async_router/i.test(lowerPath) || /broadcastChannel|agentSwarmRouter/i.test(cleanContent)) && !/interAgentMessageTimeoutMs/i.test(cleanContent))) {
-        const matchLineIdx = lines.findIndex(l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('#') && !l.trim().startsWith('*'));
+        const matchLineIdx = locateMatchLine(lines, [/broadcastChannel|agentSwarmRouter/i], l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('#') && !l.trim().startsWith('*'));
         const lineNum = matchLineIdx !== -1 ? matchLineIdx + 1 : 1;
         findings.push({
             id: `llmorch16303-${Date.now()}-${findingCounter.count++}`,
@@ -93,7 +94,7 @@ export function evaluateMultiAgentOrchestrationRules(file: CodeFile, lines: stri
     }
     // LLM-ORCH-04: Lack of Idempotency Tokens on Tool Execution Dispatches from Autonomous Agents
     if (((/tool_dispatch|agent_executor|action_runner/i.test(lowerPath) || /dispatchToolCall|executeAgentTool/i.test(cleanContent)) && !/toolExecutionIdempotencyKey/i.test(cleanContent))) {
-        const matchLineIdx = lines.findIndex(l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('#') && !l.trim().startsWith('*'));
+        const matchLineIdx = locateMatchLine(lines, [/dispatchToolCall|executeAgentTool/i], l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('#') && !l.trim().startsWith('*'));
         const lineNum = matchLineIdx !== -1 ? matchLineIdx + 1 : 1;
         findings.push({
             id: `llmorch16304-${Date.now()}-${findingCounter.count++}`,
@@ -117,7 +118,7 @@ export function evaluateMultiAgentOrchestrationRules(file: CodeFile, lines: stri
     }
     // LLM-ORCH-05: Missing Backpressure and Throttling on Fan-Out Subagent Dynamic Spawning
     if (((/subagent_spawn|agent_pool|concurrency/i.test(lowerPath) || /spawnSubagent|parallelAgentGroup/i.test(cleanContent)) && !/maxConcurrentAgents|agentSemaphore/i.test(cleanContent))) {
-        const matchLineIdx = lines.findIndex(l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('#') && !l.trim().startsWith('*'));
+        const matchLineIdx = locateMatchLine(lines, [/spawnSubagent|parallelAgentGroup/i], l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('#') && !l.trim().startsWith('*'));
         const lineNum = matchLineIdx !== -1 ? matchLineIdx + 1 : 1;
         findings.push({
             id: `llmorch16305-${Date.now()}-${findingCounter.count++}`,

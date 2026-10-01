@@ -4,6 +4,7 @@
  */
 import { Finding } from "@/data/schema";
 import { CodeFile } from "../scanner-engine";
+import { locateMatchLine } from './shared/locate';
 export interface EdgeCdnRuleResult {
     findings: Finding[];
     logs: string[];
@@ -21,7 +22,7 @@ export function evaluateEdgeCdnRules(file: CodeFile, lines: string[], cleanConte
     const ts = new Date().toLocaleTimeString();
     // CDN-01: Missing Stale-While-Revalidate and Immutable Directives on Static Bundles
     if ((/next\.config/i.test(lowerPath) || /static/i.test(lowerPath)) && /Cache-Control/i.test(cleanContent) && !/immutable/i.test(cleanContent)) {
-        const matchLineIdx = lines.findIndex(l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('*'));
+        const matchLineIdx = locateMatchLine(lines, [/Cache-Control/i], l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('*'));
         const lineNum = matchLineIdx !== -1 ? matchLineIdx + 1 : 1;
         findings.push({
             id: `cdn11101-${Date.now()}-${findingCounter.count++}`,
@@ -45,7 +46,7 @@ export function evaluateEdgeCdnRules(file: CodeFile, lines: string[], cleanConte
     }
     // CDN-02: Uncompressed Static Asset Delivery (Missing Brotli / Zstandard Compression)
     if ((/nextConfig\s*=\s*\{[\s\S]*?\}/.test(cleanContent) && cleanContent.includes('compress: false'))) {
-        const matchLineIdx = lines.findIndex(l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('*'));
+        const matchLineIdx = locateMatchLine(lines, [/nextConfig\s*=\s*\{[\s\S]*?\}/], l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('*'));
         const lineNum = matchLineIdx !== -1 ? matchLineIdx + 1 : 1;
         findings.push({
             id: `cdn11102-${Date.now()}-${findingCounter.count++}`,
@@ -69,7 +70,7 @@ export function evaluateEdgeCdnRules(file: CodeFile, lines: string[], cleanConte
     }
     // CDN-03: Missing Access-Control-Max-Age Preflight Caching Header on Cross-Origin APIs
     if (!file.path.includes('live-deployment/security-headers.json') && (/Access-Control-Allow-Origin/i.test(cleanContent) && !/Access-Control-Max-Age/i.test(cleanContent))) {
-        const matchLineIdx = lines.findIndex(l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('*'));
+        const matchLineIdx = locateMatchLine(lines, [/Access-Control-Allow-Origin/i], l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('*'));
         const lineNum = matchLineIdx !== -1 ? matchLineIdx + 1 : 1;
         findings.push({
             id: `cdn11103-${Date.now()}-${findingCounter.count++}`,
@@ -117,7 +118,7 @@ export function evaluateEdgeCdnRules(file: CodeFile, lines: string[], cleanConte
     }
     // CDN-05: Uncached Dynamic API Responses Missing Cache-Control Revalidation Headers
     if (/app\/api\//i.test(lowerPath) && /export\s+async\s+function\s+GET/i.test(cleanContent) && !/Cache-Control/i.test(cleanContent)) {
-        const matchLineIdx = lines.findIndex(l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('*'));
+        const matchLineIdx = locateMatchLine(lines, [/export\s+async\s+function\s+GET/i], l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('*'));
         const lineNum = matchLineIdx !== -1 ? matchLineIdx + 1 : 1;
         findings.push({
             id: `cdn11105-${Date.now()}-${findingCounter.count++}`,

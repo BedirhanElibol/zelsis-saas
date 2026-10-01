@@ -4,6 +4,7 @@
  */
 import { Finding } from "@/data/schema";
 import { CodeFile } from "../scanner-engine";
+import { locateMatchLine } from './shared/locate';
 export interface CspmCloudPostureRuleResult {
     findings: Finding[];
     logs: string[];
@@ -24,7 +25,7 @@ export function evaluateCspmCloudPostureRules(file: CodeFile, lines: string[], c
     const ts = new Date().toLocaleTimeString();
     // CSPM-01: Unrestricted Cloud Storage Bucket Public Read/Write Access
     if ((/aws_s3_bucket|google_storage_bucket/i.test(cleanContent) && !/block_public_acls/i.test(cleanContent))) {
-        const matchLineIdx = lines.findIndex(l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('#') && !l.trim().startsWith('*'));
+        const matchLineIdx = locateMatchLine(lines, [/aws_s3_bucket|google_storage_bucket/i], l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('#') && !l.trim().startsWith('*'));
         const lineNum = matchLineIdx !== -1 ? matchLineIdx + 1 : 1;
         findings.push({
             id: `cspm14801-${Date.now()}-${findingCounter.count++}`,
@@ -48,7 +49,7 @@ export function evaluateCspmCloudPostureRules(file: CodeFile, lines: string[], c
     }
     // CSPM-02: Overprivileged Cloud IAM Roles with Wildcard Actions (*:*)
     if ((/"Action"\s*:\s*"\*"/i.test(cleanContent))) {
-        const matchLineIdx = lines.findIndex(l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('#') && !l.trim().startsWith('*'));
+        const matchLineIdx = locateMatchLine(lines, [/"Action"\s*:\s*"\*"/i], l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('#') && !l.trim().startsWith('*'));
         const lineNum = matchLineIdx !== -1 ? matchLineIdx + 1 : 1;
         findings.push({
             id: `cspm14802-${Date.now()}-${findingCounter.count++}`,
@@ -96,7 +97,7 @@ export function evaluateCspmCloudPostureRules(file: CodeFile, lines: string[], c
     }
     // CSPM-04: Cloud Security Group Permitting Inbound SSH/RDP from 0.0.0.0/0
     if (((/security_group|ingress|sg/i.test(lowerPath) || /security_group|ingress/i.test(cleanContent)) && cleanContent.includes('port22OpenToInternet') && /0\.0\.0\.0\/0/i.test(cleanContent))) {
-        const matchLineIdx = lines.findIndex(l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('#') && !l.trim().startsWith('*'));
+        const matchLineIdx = locateMatchLine(lines, [/security_group|ingress/i, /0\.0\.0\.0\/0/i], l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('#') && !l.trim().startsWith('*'));
         const lineNum = matchLineIdx !== -1 ? matchLineIdx + 1 : 1;
         findings.push({
             id: `cspm14804-${Date.now()}-${findingCounter.count++}`,
@@ -120,7 +121,7 @@ export function evaluateCspmCloudPostureRules(file: CodeFile, lines: string[], c
     }
     // CSPM-05: Cloud Audit Trails (CloudTrail / Audit Logs) Disabled in Region
     if (((/aws_cloudtrail|audit_logs/i.test(lowerPath) || /aws_cloudtrail|audit_logs/i.test(cleanContent)) && !/is_multi_region_trail\s*=\s*true/i.test(cleanContent))) {
-        const matchLineIdx = lines.findIndex(l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('#') && !l.trim().startsWith('*'));
+        const matchLineIdx = locateMatchLine(lines, [/aws_cloudtrail|audit_logs/i], l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('#') && !l.trim().startsWith('*'));
         const lineNum = matchLineIdx !== -1 ? matchLineIdx + 1 : 1;
         findings.push({
             id: `cspm14805-${Date.now()}-${findingCounter.count++}`,

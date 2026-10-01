@@ -4,6 +4,7 @@
  */
 import { Finding } from "@/data/schema";
 import { CodeFile } from "../scanner-engine";
+import { locateMatchLine } from './shared/locate';
 export interface LinuxKernelSecurityRuleResult {
     findings: Finding[];
     logs: string[];
@@ -49,7 +50,7 @@ export function evaluateLinuxKernelSecurityRules(file: CodeFile, lines: string[]
     }
     // KERN-SEC-02: Missing Seccomp BPF Syscall Filtering on High-Privilege Worker Daemons
     if (((/seccomp|security_profile/i.test(lowerPath) || /seccompProfile/i.test(cleanContent)) && !/type:\s*RuntimeDefault|Localhost/i.test(cleanContent))) {
-        const matchLineIdx = lines.findIndex(l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('#') && !l.trim().startsWith('*'));
+        const matchLineIdx = locateMatchLine(lines, [/seccompProfile/i], l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('#') && !l.trim().startsWith('*'));
         const lineNum = matchLineIdx !== -1 ? matchLineIdx + 1 : 1;
         findings.push({
             id: `kernsec15702-${Date.now()}-${findingCounter.count++}`,
@@ -73,7 +74,7 @@ export function evaluateLinuxKernelSecurityRules(file: CodeFile, lines: string[]
     }
     // KERN-SEC-03: Unrestricted Unprivileged User Namespaces Permitting Local Privilege Escalation
     if (((/sysctl|kernel_tuning/i.test(lowerPath) || /max_user_namespaces/i.test(cleanContent)) && !/max_user_namespaces\s*=\s*0/i.test(cleanContent))) {
-        const matchLineIdx = lines.findIndex(l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('#') && !l.trim().startsWith('*'));
+        const matchLineIdx = locateMatchLine(lines, [/max_user_namespaces/i], l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('#') && !l.trim().startsWith('*'));
         const lineNum = matchLineIdx !== -1 ? matchLineIdx + 1 : 1;
         findings.push({
             id: `kernsec15703-${Date.now()}-${findingCounter.count++}`,
@@ -97,7 +98,7 @@ export function evaluateLinuxKernelSecurityRules(file: CodeFile, lines: string[]
     }
     // KERN-SEC-04: Kernel eBPF JIT Hardening Disabled Allowing Speculative Execution Leakage
     if (((/sysctl|ebpf_config/i.test(lowerPath) || /bpf_jit_harden/i.test(cleanContent)) && !/bpf_jit_harden\s*=\s*2/i.test(cleanContent))) {
-        const matchLineIdx = lines.findIndex(l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('#') && !l.trim().startsWith('*'));
+        const matchLineIdx = locateMatchLine(lines, [/bpf_jit_harden/i], l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('#') && !l.trim().startsWith('*'));
         const lineNum = matchLineIdx !== -1 ? matchLineIdx + 1 : 1;
         findings.push({
             id: `kernsec15704-${Date.now()}-${findingCounter.count++}`,
@@ -121,7 +122,7 @@ export function evaluateLinuxKernelSecurityRules(file: CodeFile, lines: string[]
     }
     // KERN-SEC-05: Kernel Page Table Isolation (KPTI) Disabled in Boot Parameters
     if (((/grub|boot_params/i.test(lowerPath) || /kpti|pti=/i.test(cleanContent)) && !/pti=on/i.test(cleanContent))) {
-        const matchLineIdx = lines.findIndex(l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('#') && !l.trim().startsWith('*'));
+        const matchLineIdx = locateMatchLine(lines, [/kpti|pti=/i], l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('#') && !l.trim().startsWith('*'));
         const lineNum = matchLineIdx !== -1 ? matchLineIdx + 1 : 1;
         findings.push({
             id: `kernsec15705-${Date.now()}-${findingCounter.count++}`,

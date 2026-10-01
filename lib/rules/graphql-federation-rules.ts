@@ -4,6 +4,7 @@
  */
 import { Finding } from "@/data/schema";
 import { CodeFile } from "../scanner-engine";
+import { locateMatchLine } from './shared/locate';
 export interface GraphqlFederationRuleResult {
     findings: Finding[];
     logs: string[];
@@ -26,7 +27,7 @@ export function evaluateGraphqlFederationRules(file: CodeFile, lines: string[], 
     const ts = new Date().toLocaleTimeString();
     // FED-01: Unbounded Subgraph Query Depth in Federated Gateway
     if ((/router|supergraph/i.test(cleanContent) && !/max_depth|queryDepth/i.test(cleanContent))) {
-        const matchLineIdx = lines.findIndex(l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('#') && !l.trim().startsWith('*'));
+        const matchLineIdx = locateMatchLine(lines, [/router|supergraph/i], l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('#') && !l.trim().startsWith('*'));
         const lineNum = matchLineIdx !== -1 ? matchLineIdx + 1 : 1;
         findings.push({
             id: `fed13701-${Date.now()}-${findingCounter.count++}`,
@@ -50,7 +51,7 @@ export function evaluateGraphqlFederationRules(file: CodeFile, lines: string[], 
     }
     // FED-02: Missing Entity Resolver Batching Causing N+1 Subgraph Storms
     if ((/resolveReference|@key/i.test(cleanContent) && !/DataLoader|batchFetch/i.test(cleanContent))) {
-        const matchLineIdx = lines.findIndex(l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('#') && !l.trim().startsWith('*'));
+        const matchLineIdx = locateMatchLine(lines, [/resolveReference|@key/i], l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('#') && !l.trim().startsWith('*'));
         const lineNum = matchLineIdx !== -1 ? matchLineIdx + 1 : 1;
         findings.push({
             id: `fed13702-${Date.now()}-${findingCounter.count++}`,
@@ -74,7 +75,7 @@ export function evaluateGraphqlFederationRules(file: CodeFile, lines: string[], 
     }
     // FED-03: Unprotected Subgraph Introspection in Production
     if ((/(?:"introspection"|introspection)\s*:\s*true/i.test(cleanContent))) {
-        const matchLineIdx = lines.findIndex(l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('#') && !l.trim().startsWith('*'));
+        const matchLineIdx = locateMatchLine(lines, [/(?:"introspection"|introspection)\s*:\s*true/i], l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('#') && !l.trim().startsWith('*'));
         const lineNum = matchLineIdx !== -1 ? matchLineIdx + 1 : 1;
         findings.push({
             id: `fed13703-${Date.now()}-${findingCounter.count++}`,
@@ -122,7 +123,7 @@ export function evaluateGraphqlFederationRules(file: CodeFile, lines: string[], 
     }
     // FED-05: Missing Subgraph Authentication Header Propagation
     if ((/subgraph_endpoint/i.test(cleanContent) && !/Authorization|mTLS/i.test(cleanContent))) {
-        const matchLineIdx = lines.findIndex(l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('#') && !l.trim().startsWith('*'));
+        const matchLineIdx = locateMatchLine(lines, [/subgraph_endpoint/i], l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('#') && !l.trim().startsWith('*'));
         const lineNum = matchLineIdx !== -1 ? matchLineIdx + 1 : 1;
         findings.push({
             id: `fed13705-${Date.now()}-${findingCounter.count++}`,

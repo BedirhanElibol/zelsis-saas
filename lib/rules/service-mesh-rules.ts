@@ -4,6 +4,7 @@
  */
 import { Finding } from "@/data/schema";
 import { CodeFile } from "../scanner-engine";
+import { locateMatchLine } from './shared/locate';
 export interface ServiceMeshRuleResult {
     findings: Finding[];
     logs: string[];
@@ -21,7 +22,7 @@ export function evaluateServiceMeshRules(file: CodeFile, lines: string[], cleanC
     const ts = new Date().toLocaleTimeString();
     // MESH-01: Permissive mTLS Mode in Service Mesh Ingress (Missing STRICT Mode)
     if ((/PeerAuthentication/i.test(cleanContent) && !/mode:\s*STRICT/i.test(cleanContent))) {
-        const matchLineIdx = lines.findIndex(l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('#') && !l.trim().startsWith('*'));
+        const matchLineIdx = locateMatchLine(lines, [/PeerAuthentication/i], l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('#') && !l.trim().startsWith('*'));
         const lineNum = matchLineIdx !== -1 ? matchLineIdx + 1 : 1;
         findings.push({
             id: `mesh11201-${Date.now()}-${findingCounter.count++}`,
@@ -45,7 +46,7 @@ export function evaluateServiceMeshRules(file: CodeFile, lines: string[], cleanC
     }
     // MESH-02: Missing Sidecar Container Resource Limits (Envoy Proxy OOMKilled)
     if ((/sidecar\.istio\.io\/inject/i.test(cleanContent) && !/proxy\.istio\.io\/config/i.test(cleanContent))) {
-        const matchLineIdx = lines.findIndex(l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('#') && !l.trim().startsWith('*'));
+        const matchLineIdx = locateMatchLine(lines, [/sidecar\.istio\.io\/inject/i], l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('#') && !l.trim().startsWith('*'));
         const lineNum = matchLineIdx !== -1 ? matchLineIdx + 1 : 1;
         findings.push({
             id: `mesh11202-${Date.now()}-${findingCounter.count++}`,
@@ -69,7 +70,7 @@ export function evaluateServiceMeshRules(file: CodeFile, lines: string[], cleanC
     }
     // MESH-03: Missing Circuit Breaker Trip Thresholds (Consecutive 5xx Errors)
     if ((/DestinationRule/i.test(cleanContent) && !/consecutive5xxErrors|outlierDetection/i.test(cleanContent))) {
-        const matchLineIdx = lines.findIndex(l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('#') && !l.trim().startsWith('*'));
+        const matchLineIdx = locateMatchLine(lines, [/DestinationRule/i], l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('#') && !l.trim().startsWith('*'));
         const lineNum = matchLineIdx !== -1 ? matchLineIdx + 1 : 1;
         findings.push({
             id: `mesh11203-${Date.now()}-${findingCounter.count++}`,
@@ -93,7 +94,7 @@ export function evaluateServiceMeshRules(file: CodeFile, lines: string[], cleanC
     }
     // MESH-04: Active Fault Injection Delay / Abort Remaining in Production
     if ((/VirtualService/i.test(cleanContent) && /fault\.(?:delay|abort)/i.test(cleanContent))) {
-        const matchLineIdx = lines.findIndex(l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('#') && !l.trim().startsWith('*'));
+        const matchLineIdx = locateMatchLine(lines, [/VirtualService/i, /fault\.(?:delay|abort)/i], l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('#') && !l.trim().startsWith('*'));
         const lineNum = matchLineIdx !== -1 ? matchLineIdx + 1 : 1;
         findings.push({
             id: `mesh11204-${Date.now()}-${findingCounter.count++}`,

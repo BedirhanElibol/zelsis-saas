@@ -4,6 +4,7 @@
  */
 import { Finding } from "@/data/schema";
 import { CodeFile } from "../scanner-engine";
+import { locateMatchLine } from './shared/locate';
 export interface AiAgentEthicsGovernanceRuleResult {
     findings: Finding[];
     logs: string[];
@@ -21,7 +22,7 @@ export function evaluateAiAgentEthicsGovernanceRules(file: CodeFile, lines: stri
     const ts = new Date().toLocaleTimeString();
     // AI-ETHICS-01: Absence of Deceptive Intent and Strategic Sycophancy Detection in Agent Output
     if (((/agent_intent|sycophancy_check|agent_trace/i.test(lowerPath) || /evaluateAgentIntent|sycophancyScore/i.test(cleanContent)) && !/detectStrategicSycophancyAndDeception/i.test(cleanContent))) {
-        const matchLineIdx = lines.findIndex(l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('#') && !l.trim().startsWith('*'));
+        const matchLineIdx = locateMatchLine(lines, [/evaluateAgentIntent|sycophancyScore/i], l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('#') && !l.trim().startsWith('*'));
         const lineNum = matchLineIdx !== -1 ? matchLineIdx + 1 : 1;
         findings.push({
             id: `aiethics16901-${Date.now()}-${findingCounter.count++}`,
@@ -45,7 +46,7 @@ export function evaluateAiAgentEthicsGovernanceRules(file: CodeFile, lines: stri
     }
     // AI-ETHICS-02: Violation of Human Agency and Autonomous Action Reversibility (IEEE 7000)
     if (((/agent_action|state_mutation|human_agency/i.test(lowerPath) || /commitAgentAction|mutateAppState/i.test(cleanContent)) && !/enforceHumanOverrideAndRollback/i.test(cleanContent))) {
-        const matchLineIdx = lines.findIndex(l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('#') && !l.trim().startsWith('*'));
+        const matchLineIdx = locateMatchLine(lines, [/commitAgentAction|mutateAppState/i], l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('#') && !l.trim().startsWith('*'));
         const lineNum = matchLineIdx !== -1 ? matchLineIdx + 1 : 1;
         findings.push({
             id: `aiethics16902-${Date.now()}-${findingCounter.count++}`,
@@ -69,7 +70,7 @@ export function evaluateAiAgentEthicsGovernanceRules(file: CodeFile, lines: stri
     }
     // AI-ETHICS-03: Unmonitored Disparate Impact and Demographic Bias in Algorithmic Scoring
     if (((/fairness_audit|demographic_parity|equalized_odds/i.test(lowerPath) || /disparateImpactRatio|protectedAttributeOdds/i.test(cleanContent)) && !/auditAlgorithmicDemographicParity/i.test(cleanContent))) {
-        const matchLineIdx = lines.findIndex(l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('#') && !l.trim().startsWith('*'));
+        const matchLineIdx = locateMatchLine(lines, [/disparateImpactRatio|protectedAttributeOdds/i], l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('#') && !l.trim().startsWith('*'));
         const lineNum = matchLineIdx !== -1 ? matchLineIdx + 1 : 1;
         findings.push({
             id: `aiethics16903-${Date.now()}-${findingCounter.count++}`,
@@ -93,7 +94,7 @@ export function evaluateAiAgentEthicsGovernanceRules(file: CodeFile, lines: stri
     }
     // AI-ETHICS-04: Lack of Explainable Multi-Hop Reasoning Chains on High-Stakes Agent Decisions
     if (((/explainability|decision_provenance|agent_justification/i.test(lowerPath) || /decisionProvenanceGraph|counterfactualRationale/i.test(cleanContent)) && !/generateVerifiableProvenanceChain/i.test(cleanContent))) {
-        const matchLineIdx = lines.findIndex(l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('#') && !l.trim().startsWith('*'));
+        const matchLineIdx = locateMatchLine(lines, [/decisionProvenanceGraph|counterfactualRationale/i], l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('#') && !l.trim().startsWith('*'));
         const lineNum = matchLineIdx !== -1 ? matchLineIdx + 1 : 1;
         findings.push({
             id: `aiethics16904-${Date.now()}-${findingCounter.count++}`,
@@ -117,7 +118,7 @@ export function evaluateAiAgentEthicsGovernanceRules(file: CodeFile, lines: stri
     }
     // AI-ETHICS-05: Uncalibrated Overconfidence and Epistemic Uncertainty Masking in Agent Output
     if (((/epistemic_uncertainty|confidence_bounds|probabilistic/i.test(lowerPath) || /confidenceIntervalRange|epistemicUncertaintyScore/i.test(cleanContent)) && !/calibrateEpistemicUncertaintyBounds/i.test(cleanContent))) {
-        const matchLineIdx = lines.findIndex(l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('#') && !l.trim().startsWith('*'));
+        const matchLineIdx = locateMatchLine(lines, [/confidenceIntervalRange|epistemicUncertaintyScore/i], l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('#') && !l.trim().startsWith('*'));
         const lineNum = matchLineIdx !== -1 ? matchLineIdx + 1 : 1;
         findings.push({
             id: `aiethics16905-${Date.now()}-${findingCounter.count++}`,

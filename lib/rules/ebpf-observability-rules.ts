@@ -4,6 +4,7 @@
  */
 import { Finding } from "@/data/schema";
 import { CodeFile } from "../scanner-engine";
+import { locateMatchLine } from './shared/locate';
 export interface EbpfObservabilityRuleResult {
     findings: Finding[];
     logs: string[];
@@ -21,7 +22,7 @@ export function evaluateEbpfObservabilityRules(file: CodeFile, lines: string[], 
     const ts = new Date().toLocaleTimeString();
     // EBPF-01: Unbounded eBPF Ring Buffer Allocation Causing Kernel OOM
     if ((/ring_buffer|perf_buffer/i.test(cleanContent) && !/max_entries|buffer_size/i.test(cleanContent))) {
-        const matchLineIdx = lines.findIndex(l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('#') && !l.trim().startsWith('*'));
+        const matchLineIdx = locateMatchLine(lines, [/ring_buffer|perf_buffer/i], l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('#') && !l.trim().startsWith('*'));
         const lineNum = matchLineIdx !== -1 ? matchLineIdx + 1 : 1;
         findings.push({
             id: `ebpf14201-${Date.now()}-${findingCounter.count++}`,
@@ -45,7 +46,7 @@ export function evaluateEbpfObservabilityRules(file: CodeFile, lines: string[], 
     }
     // EBPF-02: Insecure BPF Syscall Permissions Permitting Unprivileged Loading
     if ((/unprivileged_bpf_disabled/i.test(cleanContent) && cleanContent.includes('unprivileged_bpf_disabled = 0'))) {
-        const matchLineIdx = lines.findIndex(l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('#') && !l.trim().startsWith('*'));
+        const matchLineIdx = locateMatchLine(lines, [/unprivileged_bpf_disabled/i], l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('#') && !l.trim().startsWith('*'));
         const lineNum = matchLineIdx !== -1 ? matchLineIdx + 1 : 1;
         findings.push({
             id: `ebpf14202-${Date.now()}-${findingCounter.count++}`,
@@ -93,7 +94,7 @@ export function evaluateEbpfObservabilityRules(file: CodeFile, lines: string[], 
     }
     // EBPF-04: Unfiltered eBPF XDP Packet Ingestion Triggering CPU Saturation
     if ((/xdp_pass/i.test(cleanContent) && !/xdp_drop|rateLimit/i.test(cleanContent))) {
-        const matchLineIdx = lines.findIndex(l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('#') && !l.trim().startsWith('*'));
+        const matchLineIdx = locateMatchLine(lines, [/xdp_pass/i], l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('#') && !l.trim().startsWith('*'));
         const lineNum = matchLineIdx !== -1 ? matchLineIdx + 1 : 1;
         findings.push({
             id: `ebpf14204-${Date.now()}-${findingCounter.count++}`,
@@ -117,7 +118,7 @@ export function evaluateEbpfObservabilityRules(file: CodeFile, lines: string[], 
     }
     // EBPF-05: Missing Cilium NetworkPolicy L7 Protocol Path Enforcement
     if ((/CiliumNetworkPolicy/i.test(cleanContent) && !/rules:\s*-/i.test(cleanContent))) {
-        const matchLineIdx = lines.findIndex(l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('#') && !l.trim().startsWith('*'));
+        const matchLineIdx = locateMatchLine(lines, [/CiliumNetworkPolicy/i], l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('#') && !l.trim().startsWith('*'));
         const lineNum = matchLineIdx !== -1 ? matchLineIdx + 1 : 1;
         findings.push({
             id: `ebpf14205-${Date.now()}-${findingCounter.count++}`,

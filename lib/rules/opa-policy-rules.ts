@@ -4,6 +4,7 @@
  */
 import { Finding } from "@/data/schema";
 import { CodeFile } from "../scanner-engine";
+import { locateMatchLine } from './shared/locate';
 export interface OpaPolicyRuleResult {
     findings: Finding[];
     logs: string[];
@@ -26,7 +27,7 @@ export function evaluateOpaPolicyRules(file: CodeFile, lines: string[], cleanCon
     const ts = new Date().toLocaleTimeString();
     // OPA-01: Rego Policy Infinite Recursion and Execution Timeout
     if ((/rego|policy/i.test(cleanContent) && !/evaluationTimeout|timeoutSeconds/i.test(cleanContent))) {
-        const matchLineIdx = lines.findIndex(l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('#') && !l.trim().startsWith('*'));
+        const matchLineIdx = locateMatchLine(lines, [/rego|policy/i], l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('#') && !l.trim().startsWith('*'));
         const lineNum = matchLineIdx !== -1 ? matchLineIdx + 1 : 1;
         findings.push({
             id: `opa13201-${Date.now()}-${findingCounter.count++}`,
@@ -50,7 +51,7 @@ export function evaluateOpaPolicyRules(file: CodeFile, lines: string[], cleanCon
     }
     // OPA-02: Admission Webhook Fail-Open Misconfiguration in Production
     if ((/ValidatingWebhookConfiguration/i.test(cleanContent) && cleanContent.includes('failurePolicy: Ignore'))) {
-        const matchLineIdx = lines.findIndex(l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('#') && !l.trim().startsWith('*'));
+        const matchLineIdx = locateMatchLine(lines, [/ValidatingWebhookConfiguration/i], l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('#') && !l.trim().startsWith('*'));
         const lineNum = matchLineIdx !== -1 ? matchLineIdx + 1 : 1;
         findings.push({
             id: `opa13202-${Date.now()}-${findingCounter.count++}`,
@@ -74,7 +75,7 @@ export function evaluateOpaPolicyRules(file: CodeFile, lines: string[], cleanCon
     }
     // OPA-03: Uncached External HTTP Requests Inside Rego Evaluation Loop
     if ((/http\.send/i.test(cleanContent) && !/cache_duration/i.test(cleanContent))) {
-        const matchLineIdx = lines.findIndex(l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('#') && !l.trim().startsWith('*'));
+        const matchLineIdx = locateMatchLine(lines, [/http\.send/i], l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('#') && !l.trim().startsWith('*'));
         const lineNum = matchLineIdx !== -1 ? matchLineIdx + 1 : 1;
         findings.push({
             id: `opa13203-${Date.now()}-${findingCounter.count++}`,
@@ -98,7 +99,7 @@ export function evaluateOpaPolicyRules(file: CodeFile, lines: string[], cleanCon
     }
     // OPA-04: Unrestricted Container Linux Capabilities (SYS_ADMIN) Admission
     if ((/capabilities/i.test(cleanContent) && !/dropAllCapabilities/i.test(cleanContent))) {
-        const matchLineIdx = lines.findIndex(l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('#') && !l.trim().startsWith('*'));
+        const matchLineIdx = locateMatchLine(lines, [/capabilities/i], l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('#') && !l.trim().startsWith('*'));
         const lineNum = matchLineIdx !== -1 ? matchLineIdx + 1 : 1;
         findings.push({
             id: `opa13204-${Date.now()}-${findingCounter.count++}`,
@@ -122,7 +123,7 @@ export function evaluateOpaPolicyRules(file: CodeFile, lines: string[], cleanCon
     }
     // OPA-05: Host Network and Host PID Namespace Sharing Policy Bypass
     if ((/hostNetwork:\s*true/i.test(cleanContent) && !/denyHostNetwork/i.test(cleanContent))) {
-        const matchLineIdx = lines.findIndex(l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('#') && !l.trim().startsWith('*'));
+        const matchLineIdx = locateMatchLine(lines, [/hostNetwork:\s*true/i], l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('#') && !l.trim().startsWith('*'));
         const lineNum = matchLineIdx !== -1 ? matchLineIdx + 1 : 1;
         findings.push({
             id: `opa13205-${Date.now()}-${findingCounter.count++}`,

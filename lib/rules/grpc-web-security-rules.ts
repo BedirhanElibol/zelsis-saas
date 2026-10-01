@@ -4,6 +4,7 @@
  */
 import { Finding } from "@/data/schema";
 import { CodeFile } from "../scanner-engine";
+import { locateMatchLine } from './shared/locate';
 export interface GrpcWebSecurityRuleResult {
     findings: Finding[];
     logs: string[];
@@ -21,7 +22,7 @@ export function evaluateGrpcWebSecurityRules(file: CodeFile, lines: string[], cl
     const ts = new Date().toLocaleTimeString();
     // GRPCSEC-01: Insecure Plaintext gRPC Channel Instantiation in Production
     if ((/createChannel|grpc\.insecure/i.test(cleanContent) && !/ChannelCredentials\.createSsl/i.test(cleanContent))) {
-        const matchLineIdx = lines.findIndex(l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('#') && !l.trim().startsWith('*'));
+        const matchLineIdx = locateMatchLine(lines, [/createChannel|grpc\.insecure/i], l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('#') && !l.trim().startsWith('*'));
         const lineNum = matchLineIdx !== -1 ? matchLineIdx + 1 : 1;
         findings.push({
             id: `grpcsec14701-${Date.now()}-${findingCounter.count++}`,
@@ -45,7 +46,7 @@ export function evaluateGrpcWebSecurityRules(file: CodeFile, lines: string[], cl
     }
     // GRPCSEC-02: Missing HTTP/2 Flow Control and Stream Window Limits
     if ((/http2_settings|initial_window_size/i.test(cleanContent) && !/max_concurrent_streams/i.test(cleanContent))) {
-        const matchLineIdx = lines.findIndex(l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('#') && !l.trim().startsWith('*'));
+        const matchLineIdx = locateMatchLine(lines, [/http2_settings|initial_window_size/i], l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('#') && !l.trim().startsWith('*'));
         const lineNum = matchLineIdx !== -1 ? matchLineIdx + 1 : 1;
         findings.push({
             id: `grpcsec14702-${Date.now()}-${findingCounter.count++}`,
@@ -69,7 +70,7 @@ export function evaluateGrpcWebSecurityRules(file: CodeFile, lines: string[], cl
     }
     // GRPCSEC-03: Unbounded gRPC Inbound Message Size Permitting Memory Exhaustion
     if ((/max_receive_message_length/i.test(cleanContent))) {
-        const matchLineIdx = lines.findIndex(l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('#') && !l.trim().startsWith('*'));
+        const matchLineIdx = locateMatchLine(lines, [/max_receive_message_length/i], l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('#') && !l.trim().startsWith('*'));
         const lineNum = matchLineIdx !== -1 ? matchLineIdx + 1 : 1;
         findings.push({
             id: `grpcsec14703-${Date.now()}-${findingCounter.count++}`,
@@ -93,7 +94,7 @@ export function evaluateGrpcWebSecurityRules(file: CodeFile, lines: string[], cl
     }
     // GRPCSEC-04: Unprotected gRPC Server Reflection Enabled in Production
     if ((/(?:reflection|enableReflection)/i.test(cleanContent) && !/disableInProduction/i.test(cleanContent))) {
-        const matchLineIdx = lines.findIndex(l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('#') && !l.trim().startsWith('*'));
+        const matchLineIdx = locateMatchLine(lines, [/(?:reflection|enableReflection)/i], l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('#') && !l.trim().startsWith('*'));
         const lineNum = matchLineIdx !== -1 ? matchLineIdx + 1 : 1;
         findings.push({
             id: `grpcsec14704-${Date.now()}-${findingCounter.count++}`,
@@ -117,7 +118,7 @@ export function evaluateGrpcWebSecurityRules(file: CodeFile, lines: string[], cl
     }
     // GRPCSEC-05: Missing Protobuf Payload Schema Validation Rules
     if ((/rpcHandler|serviceImpl/i.test(cleanContent) && !/validateRequest/i.test(cleanContent))) {
-        const matchLineIdx = lines.findIndex(l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('#') && !l.trim().startsWith('*'));
+        const matchLineIdx = locateMatchLine(lines, [/rpcHandler|serviceImpl/i], l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('#') && !l.trim().startsWith('*'));
         const lineNum = matchLineIdx !== -1 ? matchLineIdx + 1 : 1;
         findings.push({
             id: `grpcsec14705-${Date.now()}-${findingCounter.count++}`,

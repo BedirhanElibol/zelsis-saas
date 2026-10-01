@@ -4,6 +4,7 @@
  */
 import { Finding } from "@/data/schema";
 import { CodeFile } from "../scanner-engine";
+import { locateMatchLine } from './shared/locate';
 export interface OauthOidcRuleResult {
     findings: Finding[];
     logs: string[];
@@ -21,7 +22,7 @@ export function evaluateOauthOidcRules(file: CodeFile, lines: string[], cleanCon
     const ts = new Date().toLocaleTimeString();
     // OAUTH-01: Missing PKCE (Proof Key for Code Exchange) on Authorization Code Flow
     if ((/response_type=code/i.test(cleanContent) && !/code_challenge/i.test(cleanContent))) {
-        const matchLineIdx = lines.findIndex(l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('*'));
+        const matchLineIdx = locateMatchLine(lines, [/response_type=code/i], l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('*'));
         const lineNum = matchLineIdx !== -1 ? matchLineIdx + 1 : 1;
         findings.push({
             id: `oauth10901-${Date.now()}-${findingCounter.count++}`,
@@ -45,7 +46,7 @@ export function evaluateOauthOidcRules(file: CodeFile, lines: string[], cleanCon
     }
     // OAUTH-02: Permissive Wildcard Redirect URI in OAuth Client Configuration
     if ((/redirect_uri/i.test(cleanContent))) {
-        const matchLineIdx = lines.findIndex(l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('*'));
+        const matchLineIdx = locateMatchLine(lines, [/redirect_uri/i], l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('*'));
         const lineNum = matchLineIdx !== -1 ? matchLineIdx + 1 : 1;
         findings.push({
             id: `oauth10902-${Date.now()}-${findingCounter.count++}`,
@@ -69,7 +70,7 @@ export function evaluateOauthOidcRules(file: CodeFile, lines: string[], cleanCon
     }
     // OAUTH-03: Missing Cryptographic State / Nonce Parameter on Social Auth Handshake
     if ((/passport\.authenticate\s*\([\s\S]*?\)/.test(cleanContent) && !/state:\s*true|stateParameter/i.test(cleanContent))) {
-        const matchLineIdx = lines.findIndex(l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('*'));
+        const matchLineIdx = locateMatchLine(lines, [/passport\.authenticate\s*\([\s\S]*?\)/], l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('*'));
         const lineNum = matchLineIdx !== -1 ? matchLineIdx + 1 : 1;
         findings.push({
             id: `oauth10903-${Date.now()}-${findingCounter.count++}`,
@@ -93,7 +94,7 @@ export function evaluateOauthOidcRules(file: CodeFile, lines: string[], cleanCon
     }
     // OAUTH-04: JWT Algorithm Confusion Vulnerability (Accepting 'none' Algorithm)
     if ((/jwt\.verify\s*\([\s\S]*?\)/.test(cleanContent) && !/algorithms\s*:\s*\[/i.test(cleanContent))) {
-        const matchLineIdx = lines.findIndex(l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('*'));
+        const matchLineIdx = locateMatchLine(lines, [/jwt\.verify\s*\([\s\S]*?\)/], l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('*'));
         const lineNum = matchLineIdx !== -1 ? matchLineIdx + 1 : 1;
         findings.push({
             id: `oauth10904-${Date.now()}-${findingCounter.count++}`,
@@ -117,7 +118,7 @@ export function evaluateOauthOidcRules(file: CodeFile, lines: string[], cleanCon
     }
     // OAUTH-05: Use of Deprecated Resource Owner Password Credentials (ROPC) Grant
     if ((/grant_type\s*=\s*['"]password['"]/i.test(cleanContent))) {
-        const matchLineIdx = lines.findIndex(l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('*'));
+        const matchLineIdx = locateMatchLine(lines, [/grant_type\s*=\s*['"]password['"]/i], l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('*'));
         const lineNum = matchLineIdx !== -1 ? matchLineIdx + 1 : 1;
         findings.push({
             id: `oauth10905-${Date.now()}-${findingCounter.count++}`,

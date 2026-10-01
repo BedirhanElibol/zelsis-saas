@@ -4,6 +4,7 @@
  */
 import { Finding } from "@/data/schema";
 import { CodeFile } from "../scanner-engine";
+import { locateMatchLine } from './shared/locate';
 export interface ZeroTrustNetworkRuleResult {
     findings: Finding[];
     logs: string[];
@@ -45,7 +46,7 @@ export function evaluateZeroTrustNetworkRules(file: CodeFile, lines: string[], c
     }
     // SDP-02: Split-Tunneling Configuration Permitting DNS Request Leakage
     if ((/wireguard|wg0/i.test(cleanContent) && !/DNS\s*=/i.test(cleanContent))) {
-        const matchLineIdx = lines.findIndex(l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('#') && !l.trim().startsWith('*'));
+        const matchLineIdx = locateMatchLine(lines, [/wireguard|wg0/i], l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('#') && !l.trim().startsWith('*'));
         const lineNum = matchLineIdx !== -1 ? matchLineIdx + 1 : 1;
         findings.push({
             id: `sdp13102-${Date.now()}-${findingCounter.count++}`,
@@ -69,7 +70,7 @@ export function evaluateZeroTrustNetworkRules(file: CodeFile, lines: string[], c
     }
     // SDP-03: Inbound Perimeter Firewall Ports Open to Public Internet
     if ((/security_group|firewall/i.test(cleanContent) && /0\.0\.0\.0\/0/i.test(cleanContent))) {
-        const matchLineIdx = lines.findIndex(l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('#') && !l.trim().startsWith('*'));
+        const matchLineIdx = locateMatchLine(lines, [/security_group|firewall/i, /0\.0\.0\.0\/0/i], l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('#') && !l.trim().startsWith('*'));
         const lineNum = matchLineIdx !== -1 ? matchLineIdx + 1 : 1;
         findings.push({
             id: `sdp13103-${Date.now()}-${findingCounter.count++}`,
@@ -93,7 +94,7 @@ export function evaluateZeroTrustNetworkRules(file: CodeFile, lines: string[], c
     }
     // SDP-04: Missing Context-Aware Device Posture Check on Tunnel Access
     if ((/sdpGateway/i.test(cleanContent) && !/verifyDevicePosture/i.test(cleanContent))) {
-        const matchLineIdx = lines.findIndex(l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('#') && !l.trim().startsWith('*'));
+        const matchLineIdx = locateMatchLine(lines, [/sdpGateway/i], l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('#') && !l.trim().startsWith('*'));
         const lineNum = matchLineIdx !== -1 ? matchLineIdx + 1 : 1;
         findings.push({
             id: `sdp13104-${Date.now()}-${findingCounter.count++}`,
@@ -117,7 +118,7 @@ export function evaluateZeroTrustNetworkRules(file: CodeFile, lines: string[], c
     }
     // SDP-05: Hardcoded WireGuard Private Key in Infrastructure Repositories
     if ((/PrivateKey\s*=\s*[A-Za-z0-9+/]{43}=/i.test(cleanContent))) {
-        const matchLineIdx = lines.findIndex(l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('#') && !l.trim().startsWith('*'));
+        const matchLineIdx = locateMatchLine(lines, [/PrivateKey\s*=\s*[A-Za-z0-9+/]{43}=/i], l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('#') && !l.trim().startsWith('*'));
         const lineNum = matchLineIdx !== -1 ? matchLineIdx + 1 : 1;
         findings.push({
             id: `sdp13105-${Date.now()}-${findingCounter.count++}`,

@@ -5,6 +5,7 @@
 import { Finding } from "@/data/schema";
 import { CodeFile } from "../scanner-engine";
 import { AUTH_GUARD } from "./shared/stack-signals";
+import { locateMatchLine } from './shared/locate';
 export interface TenantIsolationRuleResult {
     findings: Finding[];
     logs: string[];
@@ -22,7 +23,7 @@ export function evaluateTenantIsolationRules(file: CodeFile, lines: string[], cl
     const ts = new Date().toLocaleTimeString();
     // TENANT-01: Cross-Tenant Query Missing Tenant ID Filter Clause
     if ((/(?:findMany|findFirst|select)\s*\([\s\S]*?where\s*:\s*\{\s*id\s*:/i.test(cleanContent) && !/tenant_id|tenantId|orgId|organizationId/i.test(cleanContent))) {
-        const matchLineIdx = lines.findIndex(l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('*'));
+        const matchLineIdx = locateMatchLine(lines, [/(?:findMany|findFirst|select)\s*\([\s\S]*?where\s*:\s*\{\s*id\s*:/i], l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('*'));
         const lineNum = matchLineIdx !== -1 ? matchLineIdx + 1 : 1;
         findings.push({
             id: `tenant9101-${Date.now()}-${findingCounter.count++}`,
@@ -46,7 +47,7 @@ export function evaluateTenantIsolationRules(file: CodeFile, lines: string[], cl
     }
     // TENANT-02: Tenant Context Leaked Across Async Execution Store
     if ((/let\s+currentTenant\s*:\s*any/i.test(cleanContent))) {
-        const matchLineIdx = lines.findIndex(l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('*'));
+        const matchLineIdx = locateMatchLine(lines, [/let\s+currentTenant\s*:\s*any/i], l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('*'));
         const lineNum = matchLineIdx !== -1 ? matchLineIdx + 1 : 1;
         findings.push({
             id: `tenant9102-${Date.now()}-${findingCounter.count++}`,
@@ -70,7 +71,7 @@ export function evaluateTenantIsolationRules(file: CodeFile, lines: string[], cl
     }
     // TENANT-03: Missing Tenant Schema Isolation Check on Database Migration
     if ((/SET\s+search_path\s*=/i.test(cleanContent) && !/\bpublic\b/i.test(cleanContent))) {
-        const matchLineIdx = lines.findIndex(l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('*'));
+        const matchLineIdx = locateMatchLine(lines, [/SET\s+search_path\s*=/i], l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('*'));
         const lineNum = matchLineIdx !== -1 ? matchLineIdx + 1 : 1;
         findings.push({
             id: `tenant9103-${Date.now()}-${findingCounter.count++}`,
@@ -94,7 +95,7 @@ export function evaluateTenantIsolationRules(file: CodeFile, lines: string[], cl
     }
     // TENANT-04: Tenant S3 Storage Prefix Path Traversal Leakage
     if ((/s3\.upload\s*\([\s\S]*?Key\s*:\s*req\.body\.filename/i.test(cleanContent))) {
-        const matchLineIdx = lines.findIndex(l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('*'));
+        const matchLineIdx = locateMatchLine(lines, [/s3\.upload\s*\([\s\S]*?Key\s*:\s*req\.body\.filename/i], l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('*'));
         const lineNum = matchLineIdx !== -1 ? matchLineIdx + 1 : 1;
         findings.push({
             id: `tenant9104-${Date.now()}-${findingCounter.count++}`,
@@ -118,7 +119,7 @@ export function evaluateTenantIsolationRules(file: CodeFile, lines: string[], cl
     }
     // TENANT-05: Tenant Quota Bypass on Asynchronous Background Worker
     if ((/queue\.add\s*\([^)]*(?:tenantId|orgId)/i.test(cleanContent) && !/rateLimit|concurrency/i.test(cleanContent))) {
-        const matchLineIdx = lines.findIndex(l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('*'));
+        const matchLineIdx = locateMatchLine(lines, [/queue\.add\s*\([^)]*(?:tenantId|orgId)/i], l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('*'));
         const lineNum = matchLineIdx !== -1 ? matchLineIdx + 1 : 1;
         findings.push({
             id: `tenant9105-${Date.now()}-${findingCounter.count++}`,

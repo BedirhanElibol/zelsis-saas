@@ -4,6 +4,7 @@
  */
 import { Finding } from "@/data/schema";
 import { CodeFile } from "../scanner-engine";
+import { locateMatchLine } from './shared/locate';
 export interface GeoDistributedDbRuleResult {
     findings: Finding[];
     logs: string[];
@@ -24,7 +25,7 @@ export function evaluateGeoDistributedDbRules(file: CodeFile, lines: string[], c
     const ts = new Date().toLocaleTimeString();
     // GEODIST-01: Unpartitioned Multi-Region Tables Triggering Cross-WAN Latency Spikes
     if ((/CREATE TABLE/i.test(cleanContent) && !/REGIONAL BY ROW|PARTITION BY/i.test(cleanContent))) {
-        const matchLineIdx = lines.findIndex(l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('#') && !l.trim().startsWith('*'));
+        const matchLineIdx = locateMatchLine(lines, [/CREATE TABLE/i], l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('#') && !l.trim().startsWith('*'));
         const lineNum = matchLineIdx !== -1 ? matchLineIdx + 1 : 1;
         findings.push({
             id: `geodist15001-${Date.now()}-${findingCounter.count++}`,
@@ -48,7 +49,7 @@ export function evaluateGeoDistributedDbRules(file: CodeFile, lines: string[], c
     }
     // GEODIST-02: Single Failure Domain: Replicas Concentrated in a Single Region
     if (((/cluster_topology/i.test(lowerPath) || /cluster_topology/i.test(cleanContent)) && !/multiRegionReplication/i.test(cleanContent))) {
-        const matchLineIdx = lines.findIndex(l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('#') && !l.trim().startsWith('*'));
+        const matchLineIdx = locateMatchLine(lines, [/cluster_topology/i], l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('#') && !l.trim().startsWith('*'));
         const lineNum = matchLineIdx !== -1 ? matchLineIdx + 1 : 1;
         findings.push({
             id: `geodist15002-${Date.now()}-${findingCounter.count++}`,
@@ -72,7 +73,7 @@ export function evaluateGeoDistributedDbRules(file: CodeFile, lines: string[], c
     }
     // GEODIST-03: Cross-Region Distributed Deadlocks on High-Contention Transactions
     if ((/executeTransaction/i.test(cleanContent) && !/sortKeysBeforeUpdate/i.test(cleanContent))) {
-        const matchLineIdx = lines.findIndex(l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('#') && !l.trim().startsWith('*'));
+        const matchLineIdx = locateMatchLine(lines, [/executeTransaction/i], l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('#') && !l.trim().startsWith('*'));
         const lineNum = matchLineIdx !== -1 ? matchLineIdx + 1 : 1;
         findings.push({
             id: `geodist15003-${Date.now()}-${findingCounter.count++}`,
@@ -96,7 +97,7 @@ export function evaluateGeoDistributedDbRules(file: CodeFile, lines: string[], c
     }
     // GEODIST-04: Unbounded Multi-Region CDC Streams Causing Network Buffer Bloat
     if ((/changefeed|cdcStream/i.test(cleanContent) && !/buffer_size_limit/i.test(cleanContent))) {
-        const matchLineIdx = lines.findIndex(l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('#') && !l.trim().startsWith('*'));
+        const matchLineIdx = locateMatchLine(lines, [/changefeed|cdcStream/i], l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('#') && !l.trim().startsWith('*'));
         const lineNum = matchLineIdx !== -1 ? matchLineIdx + 1 : 1;
         findings.push({
             id: `geodist15004-${Date.now()}-${findingCounter.count++}`,
@@ -120,7 +121,7 @@ export function evaluateGeoDistributedDbRules(file: CodeFile, lines: string[], c
     }
     // GEODIST-05: Missing Mutual TLS Node-to-Node Inter-Region Cluster Encryption
     if (((/node_interconnect/i.test(lowerPath) || /node_interconnect/i.test(cleanContent)) && !/requireMtls/i.test(cleanContent))) {
-        const matchLineIdx = lines.findIndex(l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('#') && !l.trim().startsWith('*'));
+        const matchLineIdx = locateMatchLine(lines, [/node_interconnect/i], l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('#') && !l.trim().startsWith('*'));
         const lineNum = matchLineIdx !== -1 ? matchLineIdx + 1 : 1;
         findings.push({
             id: `geodist15005-${Date.now()}-${findingCounter.count++}`,

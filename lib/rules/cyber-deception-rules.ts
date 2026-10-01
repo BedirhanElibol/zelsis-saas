@@ -4,6 +4,7 @@
  */
 import { Finding } from "@/data/schema";
 import { CodeFile } from "../scanner-engine";
+import { locateMatchLine } from './shared/locate';
 export interface CyberDeceptionRuleResult {
     findings: Finding[];
     logs: string[];
@@ -45,7 +46,7 @@ export function evaluateCyberDeceptionRules(file: CodeFile, lines: string[], cle
     }
     // DECEPTION-02: Unmonitored Decoy Database Tables (Honeytables) in Production Schema
     if (((/honeytable|decoy_table/i.test(lowerPath) || /honeytable|decoy_table/i.test(cleanContent)) && !/alertOnDecoyAccess/i.test(cleanContent))) {
-        const matchLineIdx = lines.findIndex(l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('#') && !l.trim().startsWith('*'));
+        const matchLineIdx = locateMatchLine(lines, [/honeytable|decoy_table/i], l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('#') && !l.trim().startsWith('*'));
         const lineNum = matchLineIdx !== -1 ? matchLineIdx + 1 : 1;
         findings.push({
             id: `deception15102-${Date.now()}-${findingCounter.count++}`,

@@ -4,6 +4,7 @@
  */
 import { Finding } from "@/data/schema";
 import { CodeFile } from "../scanner-engine";
+import { locateMatchLine } from './shared/locate';
 export interface EventStreamingRuleResult {
     findings: Finding[];
     logs: string[];
@@ -21,7 +22,7 @@ export function evaluateEventStreamingRules(file: CodeFile, lines: string[], cle
     const ts = new Date().toLocaleTimeString();
     // EVENT-01: Unbounded Kafka Consumer Lag Without Backpressure
     if ((/max\.poll\.records\s*=\s*(?:[5-9]\d{3}|[1-9]\d{4,})/i.test(cleanContent) && cleanContent.includes('kafka'))) {
-        const matchLineIdx = lines.findIndex(l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('#'));
+        const matchLineIdx = locateMatchLine(lines, [/max\.poll\.records\s*=\s*(?:[5-9]\d{3}|[1-9]\d{4,})/i], l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('#'));
         const lineNum = matchLineIdx !== -1 ? matchLineIdx + 1 : 1;
         findings.push({
             id: `event9401-${Date.now()}-${findingCounter.count++}`,
@@ -45,7 +46,7 @@ export function evaluateEventStreamingRules(file: CodeFile, lines: string[], cle
     }
     // EVENT-02: Missing Dead Letter Queue (DLQ) on Stream Consumer
     if ((/(?:consumer|kafka|rabbitmq|sqs)\.(?:subscribe|consume|onMessage)/i.test(cleanContent) && !/dlq|deadLetter|retryQueue/i.test(cleanContent))) {
-        const matchLineIdx = lines.findIndex(l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('#'));
+        const matchLineIdx = locateMatchLine(lines, [/(?:consumer|kafka|rabbitmq|sqs)\.(?:subscribe|consume|onMessage)/i], l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('#'));
         const lineNum = matchLineIdx !== -1 ? matchLineIdx + 1 : 1;
         findings.push({
             id: `event9402-${Date.now()}-${findingCounter.count++}`,
@@ -69,7 +70,7 @@ export function evaluateEventStreamingRules(file: CodeFile, lines: string[], cle
     }
     // EVENT-03: Plaintext Event Broker Transport (Missing SASL / TLS)
     if ((/KAFKA_SECURITY_PROTOCOL\s*=\s*PLAINTEXT/i.test(cleanContent) && cleanContent.includes('production'))) {
-        const matchLineIdx = lines.findIndex(l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('#'));
+        const matchLineIdx = locateMatchLine(lines, [/KAFKA_SECURITY_PROTOCOL\s*=\s*PLAINTEXT/i], l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('#'));
         const lineNum = matchLineIdx !== -1 ? matchLineIdx + 1 : 1;
         findings.push({
             id: `event9403-${Date.now()}-${findingCounter.count++}`,
@@ -93,7 +94,7 @@ export function evaluateEventStreamingRules(file: CodeFile, lines: string[], cle
     }
     // EVENT-04: At-Least-Once Duplication Without Idempotent Processing
     if ((/(?:processEvent|handleMessage)/i.test(cleanContent) && !/idempotency|dedup|processedEventId/i.test(cleanContent))) {
-        const matchLineIdx = lines.findIndex(l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('#'));
+        const matchLineIdx = locateMatchLine(lines, [/(?:processEvent|handleMessage)/i], l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('#'));
         const lineNum = matchLineIdx !== -1 ? matchLineIdx + 1 : 1;
         findings.push({
             id: `event9404-${Date.now()}-${findingCounter.count++}`,
@@ -117,7 +118,7 @@ export function evaluateEventStreamingRules(file: CodeFile, lines: string[], cle
     }
     // EVENT-05: Unpartitioned Hotspotting (Null Message Partition Key)
     if ((/producer\.send\s*\([\s\S]*?messages\s*:\s*\[\s*\{\s*value\s*:/i.test(cleanContent) && !/key\s*:/i.test(cleanContent))) {
-        const matchLineIdx = lines.findIndex(l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('#'));
+        const matchLineIdx = locateMatchLine(lines, [/producer\.send\s*\([\s\S]*?messages\s*:\s*\[\s*\{\s*value\s*:/i], l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('#'));
         const lineNum = matchLineIdx !== -1 ? matchLineIdx + 1 : 1;
         findings.push({
             id: `event9405-${Date.now()}-${findingCounter.count++}`,

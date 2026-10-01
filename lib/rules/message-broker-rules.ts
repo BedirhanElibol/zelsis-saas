@@ -4,6 +4,7 @@
  */
 import { Finding } from "@/data/schema";
 import { CodeFile } from "../scanner-engine";
+import { locateMatchLine } from './shared/locate';
 export interface MessageBrokerRuleResult {
     findings: Finding[];
     logs: string[];
@@ -21,7 +22,7 @@ export function evaluateMessageBrokerRules(file: CodeFile, lines: string[], clea
     const ts = new Date().toLocaleTimeString();
     // MQ-01: Missing Dead-Letter Exchange (DLX) for Unprocessable Messages
     if ((/assertQueue\(/i.test(cleanContent) && !/deadLetterExchange|x-dead-letter/i.test(cleanContent))) {
-        const matchLineIdx = lines.findIndex(l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('#') && !l.trim().startsWith('*'));
+        const matchLineIdx = locateMatchLine(lines, [/assertQueue\(/i], l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('#') && !l.trim().startsWith('*'));
         const lineNum = matchLineIdx !== -1 ? matchLineIdx + 1 : 1;
         findings.push({
             id: `mq12501-${Date.now()}-${findingCounter.count++}`,
@@ -45,7 +46,7 @@ export function evaluateMessageBrokerRules(file: CodeFile, lines: string[], clea
     }
     // MQ-02: Unbounded Prefetch Count Causing Consumer Starvation and Crash
     if ((/channel\.prefetch\(\s*0\s*\)/i.test(cleanContent))) {
-        const matchLineIdx = lines.findIndex(l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('#') && !l.trim().startsWith('*'));
+        const matchLineIdx = locateMatchLine(lines, [/channel\.prefetch\(\s*0\s*\)/i], l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('#') && !l.trim().startsWith('*'));
         const lineNum = matchLineIdx !== -1 ? matchLineIdx + 1 : 1;
         findings.push({
             id: `mq12502-${Date.now()}-${findingCounter.count++}`,
@@ -69,7 +70,7 @@ export function evaluateMessageBrokerRules(file: CodeFile, lines: string[], clea
     }
     // MQ-03: Unsafe Message Deserialization Permitting Arbitrary Object Injection
     if ((/channel\.consume/i.test(cleanContent) && !/validateMessageSchema/i.test(cleanContent))) {
-        const matchLineIdx = lines.findIndex(l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('#') && !l.trim().startsWith('*'));
+        const matchLineIdx = locateMatchLine(lines, [/channel\.consume/i], l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('#') && !l.trim().startsWith('*'));
         const lineNum = matchLineIdx !== -1 ? matchLineIdx + 1 : 1;
         findings.push({
             id: `mq12503-${Date.now()}-${findingCounter.count++}`,
@@ -93,7 +94,7 @@ export function evaluateMessageBrokerRules(file: CodeFile, lines: string[], clea
     }
     // MQ-04: Missing Publisher Confirms / Acknowledgments Leading to Data Loss
     if ((/createConfirmChannel/i.test(cleanContent) && !/waitForConfirms/i.test(cleanContent))) {
-        const matchLineIdx = lines.findIndex(l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('#') && !l.trim().startsWith('*'));
+        const matchLineIdx = locateMatchLine(lines, [/createConfirmChannel/i], l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('#') && !l.trim().startsWith('*'));
         const lineNum = matchLineIdx !== -1 ? matchLineIdx + 1 : 1;
         findings.push({
             id: `mq12504-${Date.now()}-${findingCounter.count++}`,
@@ -117,7 +118,7 @@ export function evaluateMessageBrokerRules(file: CodeFile, lines: string[], clea
     }
     // MQ-05: Ephemeral Non-Durable Queues Used for Critical Business Events
     if ((/assertQueue/i.test(cleanContent) && cleanContent.includes('durable:\s*false'))) {
-        const matchLineIdx = lines.findIndex(l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('#') && !l.trim().startsWith('*'));
+        const matchLineIdx = locateMatchLine(lines, [/assertQueue/i], l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('#') && !l.trim().startsWith('*'));
         const lineNum = matchLineIdx !== -1 ? matchLineIdx + 1 : 1;
         findings.push({
             id: `mq12505-${Date.now()}-${findingCounter.count++}`,

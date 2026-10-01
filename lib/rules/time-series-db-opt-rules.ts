@@ -4,6 +4,7 @@
  */
 import { Finding } from "@/data/schema";
 import { CodeFile } from "../scanner-engine";
+import { locateMatchLine } from './shared/locate';
 export interface TimeSeriesDbOptRuleResult {
     findings: Finding[];
     logs: string[];
@@ -21,7 +22,7 @@ export function evaluateTimeSeriesDbOptRules(file: CodeFile, lines: string[], cl
     const ts = new Date().toLocaleTimeString();
     // TSDB-OPT-01: TimescaleDB Hypertable Chunk Interval Sizing Exceeding In-Memory RAM Working Set
     if (((/hypertable|timescale_schema/i.test(lowerPath) || /create_hypertable/i.test(cleanContent)) && !/chunk_time_interval/i.test(cleanContent))) {
-        const matchLineIdx = lines.findIndex(l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('#') && !l.trim().startsWith('*'));
+        const matchLineIdx = locateMatchLine(lines, [/create_hypertable/i], l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('#') && !l.trim().startsWith('*'));
         const lineNum = matchLineIdx !== -1 ? matchLineIdx + 1 : 1;
         findings.push({
             id: `tsdbopt15901-${Date.now()}-${findingCounter.count++}`,
@@ -45,7 +46,7 @@ export function evaluateTimeSeriesDbOptRules(file: CodeFile, lines: string[], cl
     }
     // TSDB-OPT-02: ClickHouse MergeTree Missing Partition Granularity Causing Shard Thread Starvation
     if (((/clickhouse_ddl|mergetree/i.test(lowerPath) || /ENGINE\s*=\s*MergeTree/i.test(cleanContent)) && !/PARTITION BY/i.test(cleanContent))) {
-        const matchLineIdx = lines.findIndex(l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('#') && !l.trim().startsWith('*'));
+        const matchLineIdx = locateMatchLine(lines, [/ENGINE\s*=\s*MergeTree/i], l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('#') && !l.trim().startsWith('*'));
         const lineNum = matchLineIdx !== -1 ? matchLineIdx + 1 : 1;
         findings.push({
             id: `tsdbopt15902-${Date.now()}-${findingCounter.count++}`,
@@ -69,7 +70,7 @@ export function evaluateTimeSeriesDbOptRules(file: CodeFile, lines: string[], cl
     }
     // TSDB-OPT-03: Missing Columnar DoubleDelta or Gorilla Compression Codecs on Numeric Metric Series
     if (((/timeseries_schema|column_codecs/i.test(lowerPath) || /CODEC\(/i.test(cleanContent)) && !/DoubleDelta|Gorilla/i.test(cleanContent))) {
-        const matchLineIdx = lines.findIndex(l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('#') && !l.trim().startsWith('*'));
+        const matchLineIdx = locateMatchLine(lines, [/CODEC\(/i], l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('#') && !l.trim().startsWith('*'));
         const lineNum = matchLineIdx !== -1 ? matchLineIdx + 1 : 1;
         findings.push({
             id: `tsdbopt15903-${Date.now()}-${findingCounter.count++}`,
@@ -93,7 +94,7 @@ export function evaluateTimeSeriesDbOptRules(file: CodeFile, lines: string[], cl
     }
     // TSDB-OPT-04: Unscheduled Continuous Aggregates Causing Real-Time Metric Query CPU Spikes
     if (((/continuous_aggs|rollup_views/i.test(lowerPath) || /continuous_aggregate/i.test(cleanContent)) && !/add_continuous_aggregate_policy/i.test(cleanContent))) {
-        const matchLineIdx = lines.findIndex(l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('#') && !l.trim().startsWith('*'));
+        const matchLineIdx = locateMatchLine(lines, [/continuous_aggregate/i], l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('#') && !l.trim().startsWith('*'));
         const lineNum = matchLineIdx !== -1 ? matchLineIdx + 1 : 1;
         findings.push({
             id: `tsdbopt15904-${Date.now()}-${findingCounter.count++}`,
@@ -117,7 +118,7 @@ export function evaluateTimeSeriesDbOptRules(file: CodeFile, lines: string[], cl
     }
     // TSDB-OPT-05: Missing Automated Data Retention Policy on Raw High-Frequency Metric Partitions
     if (((/retention_policy|metric_cleanup/i.test(lowerPath) || /drop_chunks/i.test(cleanContent)) && !/add_retention_policy/i.test(cleanContent))) {
-        const matchLineIdx = lines.findIndex(l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('#') && !l.trim().startsWith('*'));
+        const matchLineIdx = locateMatchLine(lines, [/drop_chunks/i], l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('#') && !l.trim().startsWith('*'));
         const lineNum = matchLineIdx !== -1 ? matchLineIdx + 1 : 1;
         findings.push({
             id: `tsdbopt15905-${Date.now()}-${findingCounter.count++}`,

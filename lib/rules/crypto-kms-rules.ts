@@ -4,6 +4,7 @@
  */
 import { Finding } from "@/data/schema";
 import { CodeFile } from "../scanner-engine";
+import { locateMatchLine } from './shared/locate';
 export interface CryptoKmsRuleResult {
     findings: Finding[];
     logs: string[];
@@ -21,7 +22,7 @@ export function evaluateCryptoKmsRules(file: CodeFile, lines: string[], cleanCon
     const ts = new Date().toLocaleTimeString();
     // CRYPTO-01: Hardcoded Cryptographic Keys and Static Salts in Source Code
     if (/(?:aesKey|secretKey)\s*[:=]\s*["'][a-zA-Z0-9+/=_-]{16,}["']/i.test(cleanContent) && !/process\.env/i.test(cleanContent)) {
-        const matchLineIdx = lines.findIndex(l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('#') && !l.trim().startsWith('*'));
+        const matchLineIdx = locateMatchLine(lines, [/(?:aesKey|secretKey)\s*[:=]\s*["'][a-zA-Z0-9+/=_-]{16,}["']/i], l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('#') && !l.trim().startsWith('*'));
         const lineNum = matchLineIdx !== -1 ? matchLineIdx + 1 : 1;
         findings.push({
             id: `crypto13301-${Date.now()}-${findingCounter.count++}`,
@@ -45,7 +46,7 @@ export function evaluateCryptoKmsRules(file: CodeFile, lines: string[], cleanCon
     }
     // CRYPTO-02: Missing Automated Master Key Rotation Schedule Exceeding 90 Days
     if ((/kmsKey/i.test(cleanContent) && !/enableKeyRotation/i.test(cleanContent))) {
-        const matchLineIdx = lines.findIndex(l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('#') && !l.trim().startsWith('*'));
+        const matchLineIdx = locateMatchLine(lines, [/kmsKey/i], l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('#') && !l.trim().startsWith('*'));
         const lineNum = matchLineIdx !== -1 ? matchLineIdx + 1 : 1;
         findings.push({
             id: `crypto13302-${Date.now()}-${findingCounter.count++}`,
@@ -69,7 +70,7 @@ export function evaluateCryptoKmsRules(file: CodeFile, lines: string[], cleanCon
     }
     // CRYPTO-03: Insecure Legacy Cipher Modes Permitted (AES-ECB / Unauthenticated CBC)
     if ((/(?:aes-128-ecb|aes-256-ecb)/i.test(cleanContent))) {
-        const matchLineIdx = lines.findIndex(l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('#') && !l.trim().startsWith('*'));
+        const matchLineIdx = locateMatchLine(lines, [/(?:aes-128-ecb|aes-256-ecb)/i], l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('#') && !l.trim().startsWith('*'));
         const lineNum = matchLineIdx !== -1 ? matchLineIdx + 1 : 1;
         findings.push({
             id: `crypto13303-${Date.now()}-${findingCounter.count++}`,
@@ -93,7 +94,7 @@ export function evaluateCryptoKmsRules(file: CodeFile, lines: string[], cleanCon
     }
     // CRYPTO-04: Cryptographic Nonce Reuse in Galois/Counter Mode (GCM) Encryption
     if ((/createCipheriv.*gcm/i.test(cleanContent) && !/randomBytes/i.test(cleanContent))) {
-        const matchLineIdx = lines.findIndex(l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('#') && !l.trim().startsWith('*'));
+        const matchLineIdx = locateMatchLine(lines, [/createCipheriv.*gcm/i], l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('#') && !l.trim().startsWith('*'));
         const lineNum = matchLineIdx !== -1 ? matchLineIdx + 1 : 1;
         findings.push({
             id: `crypto13304-${Date.now()}-${findingCounter.count++}`,
@@ -117,7 +118,7 @@ export function evaluateCryptoKmsRules(file: CodeFile, lines: string[], cleanCon
     }
     // CRYPTO-05: Weak Asymmetric Key Strengths (RSA < 3072 bits or ECC < 256 bits)
     if ((/generateKeyPair.*rsa/i.test(cleanContent))) {
-        const matchLineIdx = lines.findIndex(l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('#') && !l.trim().startsWith('*'));
+        const matchLineIdx = locateMatchLine(lines, [/generateKeyPair.*rsa/i], l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('#') && !l.trim().startsWith('*'));
         const lineNum = matchLineIdx !== -1 ? matchLineIdx + 1 : 1;
         findings.push({
             id: `crypto13305-${Date.now()}-${findingCounter.count++}`,

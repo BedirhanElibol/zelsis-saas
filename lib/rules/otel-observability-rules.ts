@@ -4,6 +4,7 @@
  */
 import { Finding } from "@/data/schema";
 import { CodeFile } from "../scanner-engine";
+import { locateMatchLine } from './shared/locate';
 export interface OtelObservabilityRuleResult {
     findings: Finding[];
     logs: string[];
@@ -21,7 +22,7 @@ export function evaluateOtelObservabilityRules(file: CodeFile, lines: string[], 
     const ts = new Date().toLocaleTimeString();
     // OTEL-01: Missing Distributed Trace Context Propagation (traceparent)
     if ((/axios\.post\s*\([\s\S]*?\)/i.test(cleanContent) && !/traceparent|propagation/i.test(cleanContent))) {
-        const matchLineIdx = lines.findIndex(l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('#'));
+        const matchLineIdx = locateMatchLine(lines, [/axios\.post\s*\([\s\S]*?\)/i], l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('#'));
         const lineNum = matchLineIdx !== -1 ? matchLineIdx + 1 : 1;
         findings.push({
             id: `otel9901-${Date.now()}-${findingCounter.count++}`,
@@ -45,7 +46,7 @@ export function evaluateOtelObservabilityRules(file: CodeFile, lines: string[], 
     }
     // OTEL-02: High-Cardinality Metric Label Explosion (UUID / Timestamp as Tag)
     if ((/counter\.add\s*\([\s\S]*?\{\s*(?:userId|traceId|timestamp)\s*:/i.test(cleanContent))) {
-        const matchLineIdx = lines.findIndex(l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('#'));
+        const matchLineIdx = locateMatchLine(lines, [/counter\.add\s*\([\s\S]*?\{\s*(?:userId|traceId|timestamp)\s*:/i], l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('#'));
         const lineNum = matchLineIdx !== -1 ? matchLineIdx + 1 : 1;
         findings.push({
             id: `otel9902-${Date.now()}-${findingCounter.count++}`,
@@ -69,7 +70,7 @@ export function evaluateOtelObservabilityRules(file: CodeFile, lines: string[], 
     }
     // OTEL-03: Missing Health Check Liveness and Readiness Probe Endpoints
     if ((/express\(\)|FastAPI\(\)|createApp\(\)/.test(cleanContent) && !/health|liveness|readiness/i.test(cleanContent))) {
-        const matchLineIdx = lines.findIndex(l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('#'));
+        const matchLineIdx = locateMatchLine(lines, [/express\(\)|FastAPI\(\)|createApp\(\)/], l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('#'));
         const lineNum = matchLineIdx !== -1 ? matchLineIdx + 1 : 1;
         findings.push({
             id: `otel9903-${Date.now()}-${findingCounter.count++}`,
@@ -93,7 +94,7 @@ export function evaluateOtelObservabilityRules(file: CodeFile, lines: string[], 
     }
     // OTEL-04: Uncaught Error Missing OpenTelemetry Exception Recording
     if ((/catch\s*\(\s*([a-zA-Z0-9_]+)\s*\)\s*\{/i.test(cleanContent) && /tracer\.startSpan/i.test(cleanContent) && !/span\.recordException/i.test(cleanContent))) {
-        const matchLineIdx = lines.findIndex(l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('#'));
+        const matchLineIdx = locateMatchLine(lines, [/catch\s*\(\s*([a-zA-Z0-9_]+)\s*\)\s*\{/i, /tracer\.startSpan/i], l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('#'));
         const lineNum = matchLineIdx !== -1 ? matchLineIdx + 1 : 1;
         findings.push({
             id: `otel9904-${Date.now()}-${findingCounter.count++}`,
@@ -117,7 +118,7 @@ export function evaluateOtelObservabilityRules(file: CodeFile, lines: string[], 
     }
     // OTEL-05: Unbounded Telemetry Exporter Buffer (Missing Drop / Batching Policy)
     if ((/BatchSpanProcessor\(\s*[^)]*maxQueueSize:\s*(?:Infinity|\d{6,})/i.test(cleanContent))) {
-        const matchLineIdx = lines.findIndex(l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('#'));
+        const matchLineIdx = locateMatchLine(lines, [/BatchSpanProcessor\(\s*[^)]*maxQueueSize:\s*(?:Infinity|\d{6,})/i], l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('#'));
         const lineNum = matchLineIdx !== -1 ? matchLineIdx + 1 : 1;
         findings.push({
             id: `otel9905-${Date.now()}-${findingCounter.count++}`,

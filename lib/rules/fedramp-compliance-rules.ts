@@ -4,6 +4,7 @@
  */
 import { Finding } from "@/data/schema";
 import { CodeFile } from "../scanner-engine";
+import { locateMatchLine } from './shared/locate';
 export interface FedrampComplianceRuleResult {
     findings: Finding[];
     logs: string[];
@@ -45,7 +46,7 @@ export function evaluateFedrampComplianceRules(file: CodeFile, lines: string[], 
     }
     // FEDRAMP-02: FedRAMP AC-17 Remote Access: Missing FIPS 140-3 Validated Cryptography
     if ((/vpn_config|bastion/i.test(cleanContent) && !/fipsMode/i.test(cleanContent))) {
-        const matchLineIdx = lines.findIndex(l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('#') && !l.trim().startsWith('*'));
+        const matchLineIdx = locateMatchLine(lines, [/vpn_config|bastion/i], l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('#') && !l.trim().startsWith('*'));
         const lineNum = matchLineIdx !== -1 ? matchLineIdx + 1 : 1;
         findings.push({
             id: `fedramp13902-${Date.now()}-${findingCounter.count++}`,
@@ -69,7 +70,7 @@ export function evaluateFedrampComplianceRules(file: CodeFile, lines: string[], 
     }
     // FEDRAMP-03: FedRAMP AU-6 Audit Review: Centralized Immutable SIEM Streaming Delay
     if ((/audit_forwarder/i.test(cleanContent) && !/siemStreamBuffer/i.test(cleanContent))) {
-        const matchLineIdx = lines.findIndex(l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('#') && !l.trim().startsWith('*'));
+        const matchLineIdx = locateMatchLine(lines, [/audit_forwarder/i], l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('#') && !l.trim().startsWith('*'));
         const lineNum = matchLineIdx !== -1 ? matchLineIdx + 1 : 1;
         findings.push({
             id: `fedramp13903-${Date.now()}-${findingCounter.count++}`,

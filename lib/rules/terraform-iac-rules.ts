@@ -4,6 +4,7 @@
  */
 import { Finding } from "@/data/schema";
 import { CodeFile } from "../scanner-engine";
+import { locateMatchLine } from './shared/locate';
 export interface TerraformIacRuleResult {
     findings: Finding[];
     logs: string[];
@@ -21,7 +22,7 @@ export function evaluateTerraformIacRules(file: CodeFile, lines: string[], clean
     const ts = new Date().toLocaleTimeString();
     // TF-01: Unencrypted Cloud State Backend (Missing SSE on S3 / GCS State Bucket)
     if ((/backend\s+['"]s3['"]/i.test(cleanContent) && !/encrypt\s*=\s*true|kms_key_id/i.test(cleanContent))) {
-        const matchLineIdx = lines.findIndex(l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('#') && !l.trim().startsWith('*'));
+        const matchLineIdx = locateMatchLine(lines, [/backend\s+['"]s3['"]/i], l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('#') && !l.trim().startsWith('*'));
         const lineNum = matchLineIdx !== -1 ? matchLineIdx + 1 : 1;
         findings.push({
             id: `tf11001-${Date.now()}-${findingCounter.count++}`,
@@ -45,7 +46,7 @@ export function evaluateTerraformIacRules(file: CodeFile, lines: string[], clean
     }
     // TF-02: Missing State Locking on Distributed Terraform Backend (DynamoDB Table)
     if ((/backend\s+['"]s3['"]/i.test(cleanContent) && !/dynamodb_table/i.test(cleanContent))) {
-        const matchLineIdx = lines.findIndex(l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('#') && !l.trim().startsWith('*'));
+        const matchLineIdx = locateMatchLine(lines, [/backend\s+['"]s3['"]/i], l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('#') && !l.trim().startsWith('*'));
         const lineNum = matchLineIdx !== -1 ? matchLineIdx + 1 : 1;
         findings.push({
             id: `tf11002-${Date.now()}-${findingCounter.count++}`,
@@ -69,7 +70,7 @@ export function evaluateTerraformIacRules(file: CodeFile, lines: string[], clean
     }
     // TF-03: Security Group Ingress Open to the World on Administrative Ports (0.0.0.0/0)
     if ((/from_port\s*=\s*22/i.test(cleanContent))) {
-        const matchLineIdx = lines.findIndex(l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('#') && !l.trim().startsWith('*'));
+        const matchLineIdx = locateMatchLine(lines, [/from_port\s*=\s*22/i], l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('#') && !l.trim().startsWith('*'));
         const lineNum = matchLineIdx !== -1 ? matchLineIdx + 1 : 1;
         findings.push({
             id: `tf11003-${Date.now()}-${findingCounter.count++}`,
@@ -93,7 +94,7 @@ export function evaluateTerraformIacRules(file: CodeFile, lines: string[], clean
     }
     // TF-04: Hardcoded Cloud Provider Access Keys in Terraform Files
     if ((/provider\s+['"]aws['"][\s\S]*?access_key\s*=\s*['"][A-Z0-9]{16,}['"]/i.test(cleanContent))) {
-        const matchLineIdx = lines.findIndex(l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('#') && !l.trim().startsWith('*'));
+        const matchLineIdx = locateMatchLine(lines, [/provider\s+['"]aws['"][\s\S]*?access_key\s*=\s*['"][A-Z0-9]{16,}['"]/i], l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('#') && !l.trim().startsWith('*'));
         const lineNum = matchLineIdx !== -1 ? matchLineIdx + 1 : 1;
         findings.push({
             id: `tf11004-${Date.now()}-${findingCounter.count++}`,
@@ -117,7 +118,7 @@ export function evaluateTerraformIacRules(file: CodeFile, lines: string[], clean
     }
     // TF-05: Unversioned Terraform Provider / Module References (Floating Dependencies)
     if ((/module\s+['"][a-zA-Z0-9_-]+['"][\s\S]*?source\s*=\s*['"][^'"]+['"]/i.test(cleanContent) && !/version|ref=/i.test(cleanContent))) {
-        const matchLineIdx = lines.findIndex(l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('#') && !l.trim().startsWith('*'));
+        const matchLineIdx = locateMatchLine(lines, [/module\s+['"][a-zA-Z0-9_-]+['"][\s\S]*?source\s*=\s*['"][^'"]+['"]/i], l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('#') && !l.trim().startsWith('*'));
         const lineNum = matchLineIdx !== -1 ? matchLineIdx + 1 : 1;
         findings.push({
             id: `tf11005-${Date.now()}-${findingCounter.count++}`,

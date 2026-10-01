@@ -4,6 +4,7 @@
  */
 import { Finding } from "@/data/schema";
 import { CodeFile } from "../scanner-engine";
+import { locateMatchLine } from './shared/locate';
 export interface WasmEdgeRuntimeRuleResult {
     findings: Finding[];
     logs: string[];
@@ -21,7 +22,7 @@ export function evaluateWasmEdgeRuntimeRules(file: CodeFile, lines: string[], cl
     const ts = new Date().toLocaleTimeString();
     // WASM-EDGE-01: Unbounded WebAssembly Linear Memory Allocation Permitting Edge Worker OOM
     if (((/wasm|worker|fastly/i.test(lowerPath) || /wasm|WebAssembly/i.test(cleanContent)) && !/maximum_memory_pages/i.test(cleanContent))) {
-        const matchLineIdx = lines.findIndex(l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('#') && !l.trim().startsWith('*'));
+        const matchLineIdx = locateMatchLine(lines, [/wasm|WebAssembly/i], l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('#') && !l.trim().startsWith('*'));
         const lineNum = matchLineIdx !== -1 ? matchLineIdx + 1 : 1;
         findings.push({
             id: `wasmedge15201-${Date.now()}-${findingCounter.count++}`,
@@ -45,7 +46,7 @@ export function evaluateWasmEdgeRuntimeRules(file: CodeFile, lines: string[], cl
     }
     // WASM-EDGE-02: Missing Host Function Sandboxing and Capability-Based Security Barriers in Wasm Runtime
     if (((/wasi|wasm_host/i.test(lowerPath) || /wasi|HostFunction/i.test(cleanContent)) && !/capabilitySandbox/i.test(cleanContent))) {
-        const matchLineIdx = lines.findIndex(l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('#') && !l.trim().startsWith('*'));
+        const matchLineIdx = locateMatchLine(lines, [/wasi|HostFunction/i], l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('#') && !l.trim().startsWith('*'));
         const lineNum = matchLineIdx !== -1 ? matchLineIdx + 1 : 1;
         findings.push({
             id: `wasmedge15202-${Date.now()}-${findingCounter.count++}`,
@@ -69,7 +70,7 @@ export function evaluateWasmEdgeRuntimeRules(file: CodeFile, lines: string[], cl
     }
     // WASM-EDGE-03: Unrestricted WebAssembly Network Socket Binding on Edge Compute Gateways
     if (((/wasm_edge|edge_compute/i.test(lowerPath) || /wasm/i.test(cleanContent)) && !/enforceReverseProxyOnly/i.test(cleanContent))) {
-        const matchLineIdx = lines.findIndex(l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('#') && !l.trim().startsWith('*'));
+        const matchLineIdx = locateMatchLine(lines, [/wasm/i], l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('#') && !l.trim().startsWith('*'));
         const lineNum = matchLineIdx !== -1 ? matchLineIdx + 1 : 1;
         findings.push({
             id: `wasmedge15203-${Date.now()}-${findingCounter.count++}`,
@@ -93,7 +94,7 @@ export function evaluateWasmEdgeRuntimeRules(file: CodeFile, lines: string[], cl
     }
     // WASM-EDGE-04: Unsanitized Wasm SIMD Instructions Executing on Untrusted Multi-Tenant Edge Nodes
     if (((/wasm_simd|worker_runtime/i.test(lowerPath) || /simd/i.test(cleanContent)) && !/verifySimdInstructions/i.test(cleanContent))) {
-        const matchLineIdx = lines.findIndex(l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('#') && !l.trim().startsWith('*'));
+        const matchLineIdx = locateMatchLine(lines, [/simd/i], l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('#') && !l.trim().startsWith('*'));
         const lineNum = matchLineIdx !== -1 ? matchLineIdx + 1 : 1;
         findings.push({
             id: `wasmedge15204-${Date.now()}-${findingCounter.count++}`,
@@ -117,7 +118,7 @@ export function evaluateWasmEdgeRuntimeRules(file: CodeFile, lines: string[], cl
     }
     // WASM-EDGE-05: Unchecked SharedArrayBuffer Usage in Edge Wasm Modules Vulnerable to Spectre Side-Channels
     if (((/wasm_threads|shared_mem/i.test(lowerPath) || /SharedArrayBuffer/i.test(cleanContent)) && !/crossOriginIsolated/i.test(cleanContent))) {
-        const matchLineIdx = lines.findIndex(l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('#') && !l.trim().startsWith('*'));
+        const matchLineIdx = locateMatchLine(lines, [/SharedArrayBuffer/i], l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('#') && !l.trim().startsWith('*'));
         const lineNum = matchLineIdx !== -1 ? matchLineIdx + 1 : 1;
         findings.push({
             id: `wasmedge15205-${Date.now()}-${findingCounter.count++}`,

@@ -4,6 +4,7 @@
  */
 import { Finding } from "@/data/schema";
 import { CodeFile } from "../scanner-engine";
+import { locateMatchLine } from './shared/locate';
 export interface SiemAuditLoggingRuleResult {
     findings: Finding[];
     logs: string[];
@@ -22,7 +23,7 @@ export function evaluateSiemAuditLoggingRules(file: CodeFile, lines: string[], c
     // AUDIT-01: Plaintext Credentials or PII Leaked in Application Logs
     // Files using @/lib/logger automatically redact sensitive tokens, passwords, and PII.
     if (/console\.(?:log|warn|info|debug)\s*\([^)]*(?:password|secret|apiKey|bearerToken)[^)]*\)/i.test(cleanContent) && !/logger\./i.test(cleanContent) && !/sanitizeLog/i.test(cleanContent)) {
-        const matchLineIdx = lines.findIndex(l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('#') && !l.trim().startsWith('*'));
+        const matchLineIdx = locateMatchLine(lines, [/console\.(?:log|warn|info|debug)\s*\([^)]*(?:password|secret|apiKey|bearerToken)[^)]*\)/i], l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('#') && !l.trim().startsWith('*'));
         const lineNum = matchLineIdx !== -1 ? matchLineIdx + 1 : 1;
         findings.push({
             id: `audit-12101-${Date.now()}-${findingCounter.count++}`,
@@ -46,7 +47,7 @@ export function evaluateSiemAuditLoggingRules(file: CodeFile, lines: string[], c
     }
     // AUDIT-02: Missing RFC 5424 Structured JSON Format for SIEM Ingestion
     if ((/console\.log\("[^"]+"\s*\+/i.test(cleanContent) && !/structuredJsonLogger/i.test(cleanContent))) {
-        const matchLineIdx = lines.findIndex(l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('#') && !l.trim().startsWith('*'));
+        const matchLineIdx = locateMatchLine(lines, [/console\.log\("[^"]+"\s*\+/i], l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('#') && !l.trim().startsWith('*'));
         const lineNum = matchLineIdx !== -1 ? matchLineIdx + 1 : 1;
         findings.push({
             id: `audit-12102-${Date.now()}-${findingCounter.count++}`,
@@ -70,7 +71,7 @@ export function evaluateSiemAuditLoggingRules(file: CodeFile, lines: string[], c
     }
     // AUDIT-03: Audit Log Sink Missing Out-of-Band Network Isolation
     if ((/syslogTarget/i.test(cleanContent) && !/tlsEnabled:\s*true/i.test(cleanContent))) {
-        const matchLineIdx = lines.findIndex(l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('#') && !l.trim().startsWith('*'));
+        const matchLineIdx = locateMatchLine(lines, [/syslogTarget/i], l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('#') && !l.trim().startsWith('*'));
         const lineNum = matchLineIdx !== -1 ? matchLineIdx + 1 : 1;
         findings.push({
             id: `audit-12103-${Date.now()}-${findingCounter.count++}`,
@@ -94,7 +95,7 @@ export function evaluateSiemAuditLoggingRules(file: CodeFile, lines: string[], c
     }
     // AUDIT-04: Missing Nonce or Cryptographic Signature on Critical Audit Events
     if ((/auditRecord/i.test(cleanContent) && !/sha256Signature|hashChain/i.test(cleanContent))) {
-        const matchLineIdx = lines.findIndex(l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('#') && !l.trim().startsWith('*'));
+        const matchLineIdx = locateMatchLine(lines, [/auditRecord/i], l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('#') && !l.trim().startsWith('*'));
         const lineNum = matchLineIdx !== -1 ? matchLineIdx + 1 : 1;
         findings.push({
             id: `audit-12104-${Date.now()}-${findingCounter.count++}`,
@@ -118,7 +119,7 @@ export function evaluateSiemAuditLoggingRules(file: CodeFile, lines: string[], c
     }
     // AUDIT-05: Silent Log Drop on Buffer Full Without Alerting Mechanism
     if ((/logBuffer/i.test(cleanContent) && !/backpressure|diskSpill/i.test(cleanContent))) {
-        const matchLineIdx = lines.findIndex(l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('#') && !l.trim().startsWith('*'));
+        const matchLineIdx = locateMatchLine(lines, [/logBuffer/i], l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('#') && !l.trim().startsWith('*'));
         const lineNum = matchLineIdx !== -1 ? matchLineIdx + 1 : 1;
         findings.push({
             id: `audit-12105-${Date.now()}-${findingCounter.count++}`,

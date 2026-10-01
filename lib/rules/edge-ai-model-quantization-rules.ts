@@ -4,6 +4,7 @@
  */
 import { Finding } from "@/data/schema";
 import { CodeFile } from "../scanner-engine";
+import { locateMatchLine } from './shared/locate';
 export interface EdgeAiModelQuantizationRuleResult {
     findings: Finding[];
     logs: string[];
@@ -21,7 +22,7 @@ export function evaluateEdgeAiModelQuantizationRules(file: CodeFile, lines: stri
     const ts = new Date().toLocaleTimeString();
     // EDGE-AI-OPT-01: Unquantized Activation Outliers Inducing Severe INT4 Quantization Precision Drop
     if (((/quantize_awq|smoothquant|int4_weights/i.test(lowerPath) || /awqQuantizeWeights|scaleActivationOutliers/i.test(cleanContent)) && !/applyAwqChannelScaling/i.test(cleanContent))) {
-        const matchLineIdx = lines.findIndex(l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('#') && !l.trim().startsWith('*'));
+        const matchLineIdx = locateMatchLine(lines, [/awqQuantizeWeights|scaleActivationOutliers/i], l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('#') && !l.trim().startsWith('*'));
         const lineNum = matchLineIdx !== -1 ? matchLineIdx + 1 : 1;
         findings.push({
             id: `edgeaiopt17301-${Date.now()}-${findingCounter.count++}`,
@@ -45,7 +46,7 @@ export function evaluateEdgeAiModelQuantizationRules(file: CodeFile, lines: stri
     }
     // EDGE-AI-OPT-02: Suboptimal TensorRT Engine Execution Plan Selection on Heterogeneous NPUs
     if (((/tensorrt_engine|trt_builder|npu_profile/i.test(lowerPath) || /buildTrtEngine|createOptimizationProfile/i.test(cleanContent)) && !/exhaustiveProfileSweepEnabled/i.test(cleanContent))) {
-        const matchLineIdx = lines.findIndex(l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('#') && !l.trim().startsWith('*'));
+        const matchLineIdx = locateMatchLine(lines, [/buildTrtEngine|createOptimizationProfile/i], l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('#') && !l.trim().startsWith('*'));
         const lineNum = matchLineIdx !== -1 ? matchLineIdx + 1 : 1;
         findings.push({
             id: `edgeaiopt17302-${Date.now()}-${findingCounter.count++}`,
@@ -69,7 +70,7 @@ export function evaluateEdgeAiModelQuantizationRules(file: CodeFile, lines: stri
     }
     // EDGE-AI-OPT-03: Missing KV Cache 8-Bit Quantization (FP8/INT8) on Long-Context Edge Transformers
     if (((/kv_cache|attention_cache|transformer_mem/i.test(lowerPath) || /allocateKvCache|pagedKvAttention/i.test(cleanContent)) && !/quantizeKvCacheFp8OrInt8/i.test(cleanContent))) {
-        const matchLineIdx = lines.findIndex(l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('#') && !l.trim().startsWith('*'));
+        const matchLineIdx = locateMatchLine(lines, [/allocateKvCache|pagedKvAttention/i], l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('#') && !l.trim().startsWith('*'));
         const lineNum = matchLineIdx !== -1 ? matchLineIdx + 1 : 1;
         findings.push({
             id: `edgeaiopt17303-${Date.now()}-${findingCounter.count++}`,
@@ -93,7 +94,7 @@ export function evaluateEdgeAiModelQuantizationRules(file: CodeFile, lines: stri
     }
     // EDGE-AI-OPT-04: Disabled Graph Fusion on ONNX Runtime Multi-Head Attention Subgraphs
     if (((/onnx_session|ort_inference|graph_opt/i.test(lowerPath) || /SessionOptions|GraphOptimizationLevel/i.test(cleanContent)) && !/ORT_ENABLE_ALL/i.test(cleanContent))) {
-        const matchLineIdx = lines.findIndex(l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('#') && !l.trim().startsWith('*'));
+        const matchLineIdx = locateMatchLine(lines, [/SessionOptions|GraphOptimizationLevel/i], l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('#') && !l.trim().startsWith('*'));
         const lineNum = matchLineIdx !== -1 ? matchLineIdx + 1 : 1;
         findings.push({
             id: `edgeaiopt17304-${Date.now()}-${findingCounter.count++}`,
@@ -117,7 +118,7 @@ export function evaluateEdgeAiModelQuantizationRules(file: CodeFile, lines: stri
     }
     // EDGE-AI-OPT-05: Uncalibrated Quantization Scales on Post-Training INT8 Calibration Datasets
     if (((/post_training_quant|int8_calibrator|quant_scale/i.test(lowerPath) || /IInt8Calibrator|klDivergenceCalibration/i.test(cleanContent)) && !/calibrateRepresentativeDataset/i.test(cleanContent))) {
-        const matchLineIdx = lines.findIndex(l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('#') && !l.trim().startsWith('*'));
+        const matchLineIdx = locateMatchLine(lines, [/IInt8Calibrator|klDivergenceCalibration/i], l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('#') && !l.trim().startsWith('*'));
         const lineNum = matchLineIdx !== -1 ? matchLineIdx + 1 : 1;
         findings.push({
             id: `edgeaiopt17305-${Date.now()}-${findingCounter.count++}`,

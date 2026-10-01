@@ -4,6 +4,7 @@
  */
 import { Finding } from '@/data/schema';
 import { CodeFile } from '../scanner-engine';
+import { locateMatchLine } from './shared/locate';
 export interface ChaosResilienceRuleResult {
     findings: Finding[];
     logs: string[];
@@ -21,7 +22,7 @@ export function evaluateChaosResilienceRules(file: CodeFile, lines: string[], cl
     const ts = new Date().toLocaleTimeString();
     // CHAOS-01: Downstream HTTP Fetch Missing Timeout Signal (AbortSignal)
     if (/fetch\s*\(\s*url\s*\)/i.test(cleanContent) && !/AbortSignal\.timeout|signal/i.test(cleanContent)) {
-        const matchLineIdx = lines.findIndex(l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('*') && (/chaos-01|downstream/i.test(l) || lines.indexOf(l) === 0));
+        const matchLineIdx = locateMatchLine(lines, [/fetch\s*\(\s*url\s*\)/i], l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('*'));
         const lineNum = matchLineIdx !== -1 ? matchLineIdx + 1 : 1;
         findings.push({
             id: `chaos01-${Date.now()}-${findingCounter.count++}`,
@@ -46,7 +47,7 @@ export function evaluateChaosResilienceRules(file: CodeFile, lines: string[], cl
     }
     // CHAOS-02: Unbounded Retry Loop Without Exponential Backoff and Jitter
     if (/while\s*\(\s*retries\s*<\s*maxRetries\s*\)[\s\S]*?await\s+sleep\s*\(\s*1000\s*\)/i.test(cleanContent) && !/Math\.random|backoff/i.test(cleanContent)) {
-        const matchLineIdx = lines.findIndex(l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('*') && (/chaos-02|unbounded/i.test(l) || lines.indexOf(l) === 0));
+        const matchLineIdx = locateMatchLine(lines, [/while\s*\(\s*retries\s*<\s*maxRetries\s*\)[\s\S]*?await\s+sleep\s*\(\s*1000\s*\)/i], l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('*'));
         const lineNum = matchLineIdx !== -1 ? matchLineIdx + 1 : 1;
         findings.push({
             id: `chaos02-${Date.now()}-${findingCounter.count++}`,
@@ -71,7 +72,7 @@ export function evaluateChaosResilienceRules(file: CodeFile, lines: string[], cl
     }
     // CHAOS-03: Missing Circuit Breaker Pattern on External Third-Party APIs
     if (/invokePaymentGatewayDirect/i.test(cleanContent) && !/circuitBreaker|breaker\.fire/i.test(cleanContent)) {
-        const matchLineIdx = lines.findIndex(l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('*') && (/chaos-03|missing/i.test(l) || lines.indexOf(l) === 0));
+        const matchLineIdx = locateMatchLine(lines, [/invokePaymentGatewayDirect/i], l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('*'));
         const lineNum = matchLineIdx !== -1 ? matchLineIdx + 1 : 1;
         findings.push({
             id: `chaos03-${Date.now()}-${findingCounter.count++}`,
@@ -96,7 +97,7 @@ export function evaluateChaosResilienceRules(file: CodeFile, lines: string[], cl
     }
     // CHAOS-04: Database Connection Pool Starvation (Missing Max Limit / Timeout)
     if (/new\s+Pool\s*\(\s*\{(?![^}]*max\s*:)/i.test(cleanContent) && !/test|mock|spec/i.test(lowerPath)) {
-        const matchLineIdx = lines.findIndex(l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('*') && (/chaos-04|database/i.test(l) || lines.indexOf(l) === 0));
+        const matchLineIdx = locateMatchLine(lines, [/new\s+Pool\s*\(\s*\{(?![^}]*max\s*:)/i], l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('*'));
         const lineNum = matchLineIdx !== -1 ? matchLineIdx + 1 : 1;
         findings.push({
             id: `chaos04-${Date.now()}-${findingCounter.count++}`,
@@ -121,7 +122,7 @@ export function evaluateChaosResilienceRules(file: CodeFile, lines: string[], cl
     }
     // CHAOS-05: Missing Dead Letter Queue (DLQ) on Async Background Processing
     if (/new\s+Queue\s*\(\s*["\'][^"\']+["\']\s*,\s*\{(?![^}]*defaultJobOptions)/i.test(cleanContent)) {
-        const matchLineIdx = lines.findIndex(l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('*') && (/chaos-05|missing/i.test(l) || lines.indexOf(l) === 0));
+        const matchLineIdx = locateMatchLine(lines, [/new\s+Queue\s*\(\s*["\'][^"\']+["\']\s*,\s*\{(?![^}]*defaultJobOptions)/i], l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('*'));
         const lineNum = matchLineIdx !== -1 ? matchLineIdx + 1 : 1;
         findings.push({
             id: `chaos05-${Date.now()}-${findingCounter.count++}`,
@@ -146,7 +147,7 @@ export function evaluateChaosResilienceRules(file: CodeFile, lines: string[], cl
     }
     // CHAOS-06: Process Missing Graceful Shutdown Handlers (SIGTERM / SIGINT)
     if (/server\.listen\s*\(/i.test(cleanContent) && !/process\.on\s*\(\s*["\']SIGTERM["\']/i.test(cleanContent)) {
-        const matchLineIdx = lines.findIndex(l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('*') && (/chaos-06|process/i.test(l) || lines.indexOf(l) === 0));
+        const matchLineIdx = locateMatchLine(lines, [/server\.listen\s*\(/i], l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('*'));
         const lineNum = matchLineIdx !== -1 ? matchLineIdx + 1 : 1;
         findings.push({
             id: `chaos06-${Date.now()}-${findingCounter.count++}`,
@@ -171,7 +172,7 @@ export function evaluateChaosResilienceRules(file: CodeFile, lines: string[], cl
     }
     // CHAOS-07: Health Check Endpoint Tightly Coupled to Slow Downstream Dependencies
     if (/app\/api\/healthz\/route\.(?:ts|js)$/i.test(file.path) && /await\s+db\.query\s*\(/i.test(cleanContent)) {
-        const matchLineIdx = lines.findIndex(l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('*') && (/chaos-07|health/i.test(l) || lines.indexOf(l) === 0));
+        const matchLineIdx = locateMatchLine(lines, [/await\s+db\.query\s*\(/i], l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('*'));
         const lineNum = matchLineIdx !== -1 ? matchLineIdx + 1 : 1;
         findings.push({
             id: `chaos07-${Date.now()}-${findingCounter.count++}`,
@@ -196,7 +197,7 @@ export function evaluateChaosResilienceRules(file: CodeFile, lines: string[], cl
     }
     // CHAOS-08: Bulkhead Isolation Missing Between Critical and Background Tasks
     if (/generateHeavyPdfReportSync/i.test(cleanContent) && !/worker_threads|queue/i.test(cleanContent)) {
-        const matchLineIdx = lines.findIndex(l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('*') && (/chaos-08|bulkhead/i.test(l) || lines.indexOf(l) === 0));
+        const matchLineIdx = locateMatchLine(lines, [/generateHeavyPdfReportSync/i], l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('*'));
         const lineNum = matchLineIdx !== -1 ? matchLineIdx + 1 : 1;
         findings.push({
             id: `chaos08-${Date.now()}-${findingCounter.count++}`,
@@ -221,7 +222,7 @@ export function evaluateChaosResilienceRules(file: CodeFile, lines: string[], cl
     }
     // CHAOS-09: DNS TTL Caching Misconfiguration Preventing Fast Failover
     if (/aws_route53_record\b/i.test(cleanContent) && /ttl\s*=\s*(?:86400|172800)\b/i.test(cleanContent)) {
-        const matchLineIdx = lines.findIndex(l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('*') && (/chaos-09|dns/i.test(l) || lines.indexOf(l) === 0));
+        const matchLineIdx = locateMatchLine(lines, [/aws_route53_record\b/i, /ttl\s*=\s*(?:86400|172800)\b/i], l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('*'));
         const lineNum = matchLineIdx !== -1 ? matchLineIdx + 1 : 1;
         findings.push({
             id: `chaos09-${Date.now()}-${findingCounter.count++}`,
@@ -246,7 +247,7 @@ export function evaluateChaosResilienceRules(file: CodeFile, lines: string[], cl
     }
     // CHAOS-10: Missing Fallback Cache on Transient External Service Failure
     if (/fetchExternalWeatherFeed/i.test(cleanContent) && !/getStaleCache|fallback/i.test(cleanContent)) {
-        const matchLineIdx = lines.findIndex(l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('*') && (/chaos-10|missing/i.test(l) || lines.indexOf(l) === 0));
+        const matchLineIdx = locateMatchLine(lines, [/fetchExternalWeatherFeed/i], l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('*'));
         const lineNum = matchLineIdx !== -1 ? matchLineIdx + 1 : 1;
         findings.push({
             id: `chaos10-${Date.now()}-${findingCounter.count++}`,
@@ -271,7 +272,7 @@ export function evaluateChaosResilienceRules(file: CodeFile, lines: string[], cl
     }
     // CHAOS-11: Unconstrained Thread Pool / Worker Concurrency in CPU-Bound Work
     if (/items\.map\s*\([\s\S]*?new\s+Worker\s*\(/i.test(cleanContent) && !/p-limit|pLimit|concurrency/i.test(cleanContent)) {
-        const matchLineIdx = lines.findIndex(l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('*') && (/chaos-11|unconstrained/i.test(l) || lines.indexOf(l) === 0));
+        const matchLineIdx = locateMatchLine(lines, [/items\.map\s*\([\s\S]*?new\s+Worker\s*\(/i], l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('*'));
         const lineNum = matchLineIdx !== -1 ? matchLineIdx + 1 : 1;
         findings.push({
             id: `chaos11-${Date.now()}-${findingCounter.count++}`,
@@ -321,7 +322,7 @@ export function evaluateChaosResilienceRules(file: CodeFile, lines: string[], cl
     }
     // CHAOS-13: Lack of Backpressure Handling in Streaming Data Pipelines
     if (/dest\.write\s*\(\s*chunk\s*\)/i.test(cleanContent) && !/pause|drain/i.test(cleanContent)) {
-        const matchLineIdx = lines.findIndex(l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('*') && (/chaos-13|lack/i.test(l) || lines.indexOf(l) === 0));
+        const matchLineIdx = locateMatchLine(lines, [/dest\.write\s*\(\s*chunk\s*\)/i], l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('*'));
         const lineNum = matchLineIdx !== -1 ? matchLineIdx + 1 : 1;
         findings.push({
             id: `chaos13-${Date.now()}-${findingCounter.count++}`,
@@ -371,7 +372,7 @@ export function evaluateChaosResilienceRules(file: CodeFile, lines: string[], cl
     }
     // CHAOS-15: Cascading Failure via Synchronous Cross-Service Dependency Chains
     if (/orderServiceHandler/i.test(cleanContent) && !/queue|messageBus/i.test(cleanContent)) {
-        const matchLineIdx = lines.findIndex(l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('*') && (/chaos-15|cascading/i.test(l) || lines.indexOf(l) === 0));
+        const matchLineIdx = locateMatchLine(lines, [/orderServiceHandler/i], l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('*'));
         const lineNum = matchLineIdx !== -1 ? matchLineIdx + 1 : 1;
         findings.push({
             id: `chaos15-${Date.now()}-${findingCounter.count++}`,
@@ -396,7 +397,7 @@ export function evaluateChaosResilienceRules(file: CodeFile, lines: string[], cl
     }
     // CHAOS-16: Unbounded In-Memory Cache Growth (Missing LRU Eviction)
     if (/const\s+cache\s*:\s*Record<[^>]+>\s*=\s*\{\};/i.test(cleanContent)) {
-        const matchLineIdx = lines.findIndex(l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('*') && (/chaos-16|unbounded/i.test(l) || lines.indexOf(l) === 0));
+        const matchLineIdx = locateMatchLine(lines, [/const\s+cache\s*:\s*Record<[^>]+>\s*=\s*\{\};/i], l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('*'));
         const lineNum = matchLineIdx !== -1 ? matchLineIdx + 1 : 1;
         findings.push({
             id: `chaos16-${Date.now()}-${findingCounter.count++}`,
@@ -421,7 +422,7 @@ export function evaluateChaosResilienceRules(file: CodeFile, lines: string[], cl
     }
     // CHAOS-17: Missing Jitter on Scheduled Cron Job Execution
     if (/cron\.schedule\s*\(\s*["\']0\s+0\s+\*\s+\*\s+\*["\']/i.test(cleanContent) && !/Math\.random/i.test(cleanContent)) {
-        const matchLineIdx = lines.findIndex(l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('*') && (/chaos-17|missing/i.test(l) || lines.indexOf(l) === 0));
+        const matchLineIdx = locateMatchLine(lines, [/cron\.schedule\s*\(\s*["\']0\s+0\s+\*\s+\*\s+\*["\']/i], l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('*'));
         const lineNum = matchLineIdx !== -1 ? matchLineIdx + 1 : 1;
         findings.push({
             id: `chaos17-${Date.now()}-${findingCounter.count++}`,
@@ -446,7 +447,7 @@ export function evaluateChaosResilienceRules(file: CodeFile, lines: string[], cl
     }
     // CHAOS-18: Single Point of Failure (SPOF) Without Multi-AZ Redundancy
     if (/aws_db_instance\b/i.test(cleanContent) && /multi_az\s*=\s*false/i.test(cleanContent)) {
-        const matchLineIdx = lines.findIndex(l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('*') && (/chaos-18|single/i.test(l) || lines.indexOf(l) === 0));
+        const matchLineIdx = locateMatchLine(lines, [/aws_db_instance\b/i, /multi_az\s*=\s*false/i], l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('*'));
         const lineNum = matchLineIdx !== -1 ? matchLineIdx + 1 : 1;
         findings.push({
             id: `chaos18-${Date.now()}-${findingCounter.count++}`,
@@ -471,7 +472,7 @@ export function evaluateChaosResilienceRules(file: CodeFile, lines: string[], cl
     }
     // CHAOS-19: Missing Failure Recovery in WebSocket Disconnection Scenarios
     if (/ws\.onclose\s*=\s*\(\s*\)\s*=>\s*\{(?![^}]*setTimeout)/i.test(cleanContent)) {
-        const matchLineIdx = lines.findIndex(l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('*') && (/chaos-19|missing/i.test(l) || lines.indexOf(l) === 0));
+        const matchLineIdx = locateMatchLine(lines, [/ws\.onclose\s*=\s*\(\s*\)\s*=>\s*\{(?![^}]*setTimeout)/i], l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('*'));
         const lineNum = matchLineIdx !== -1 ? matchLineIdx + 1 : 1;
         findings.push({
             id: `chaos19-${Date.now()}-${findingCounter.count++}`,
@@ -496,7 +497,7 @@ export function evaluateChaosResilienceRules(file: CodeFile, lines: string[], cl
     }
     // CHAOS-20: Uncaught Promise Rejections Terminating Node.js Process
     if (/mainServerEntry/i.test(cleanContent) && !/unhandledRejection/i.test(cleanContent)) {
-        const matchLineIdx = lines.findIndex(l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('*') && (/chaos-20|uncaught/i.test(l) || lines.indexOf(l) === 0));
+        const matchLineIdx = locateMatchLine(lines, [/mainServerEntry/i], l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('*'));
         const lineNum = matchLineIdx !== -1 ? matchLineIdx + 1 : 1;
         findings.push({
             id: `chaos20-${Date.now()}-${findingCounter.count++}`,
@@ -521,7 +522,7 @@ export function evaluateChaosResilienceRules(file: CodeFile, lines: string[], cl
     }
     // CHAOS-21: Missing Fallback for Third-Party Font or Script Outages
     if (/@import\s+url\([^)]*fonts\.googleapis\.com[^)]*\);/i.test(cleanContent) && !/font-display/i.test(cleanContent)) {
-        const matchLineIdx = lines.findIndex(l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('*') && (/chaos-21|missing/i.test(l) || lines.indexOf(l) === 0));
+        const matchLineIdx = locateMatchLine(lines, [/@import\s+url\([^)]*fonts\.googleapis\.com[^)]*\);/i], l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('*'));
         const lineNum = matchLineIdx !== -1 ? matchLineIdx + 1 : 1;
         findings.push({
             id: `chaos21-${Date.now()}-${findingCounter.count++}`,
@@ -546,7 +547,7 @@ export function evaluateChaosResilienceRules(file: CodeFile, lines: string[], cl
     }
     // CHAOS-22: Lack of Database Read/Write Split Under High Load
     if (/new\s+Pool\s*\(\s*\{[\s\S]*?MASTER_DB_URL/i.test(cleanContent) && !/readPool|replica/i.test(cleanContent)) {
-        const matchLineIdx = lines.findIndex(l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('*') && (/chaos-22|lack/i.test(l) || lines.indexOf(l) === 0));
+        const matchLineIdx = locateMatchLine(lines, [/new\s+Pool\s*\(\s*\{[\s\S]*?MASTER_DB_URL/i], l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('*'));
         const lineNum = matchLineIdx !== -1 ? matchLineIdx + 1 : 1;
         findings.push({
             id: `chaos22-${Date.now()}-${findingCounter.count++}`,
@@ -571,7 +572,7 @@ export function evaluateChaosResilienceRules(file: CodeFile, lines: string[], cl
     }
     // CHAOS-23: Missing Rate Limit Shedding on Backend Worker Queues
     if (/new\s+Worker\s*\(\s*["\']api-tasks["\']\s*,\s*handler\s*,\s*\{(?![^}]*limiter:)/i.test(cleanContent)) {
-        const matchLineIdx = lines.findIndex(l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('*') && (/chaos-23|missing/i.test(l) || lines.indexOf(l) === 0));
+        const matchLineIdx = locateMatchLine(lines, [/new\s+Worker\s*\(\s*["\']api-tasks["\']\s*,\s*handler\s*,\s*\{(?![^}]*limiter:)/i], l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('*'));
         const lineNum = matchLineIdx !== -1 ? matchLineIdx + 1 : 1;
         findings.push({
             id: `chaos23-${Date.now()}-${findingCounter.count++}`,
@@ -596,7 +597,7 @@ export function evaluateChaosResilienceRules(file: CodeFile, lines: string[], cl
     }
     // CHAOS-24: Insecure Memory Leak from Uncleaned Event Emitter Listeners
     if (/req\.on\s*\(\s*["\']data["\']/i.test(cleanContent) && !/removeListener|off/i.test(cleanContent)) {
-        const matchLineIdx = lines.findIndex(l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('*') && (/chaos-24|insecure/i.test(l) || lines.indexOf(l) === 0));
+        const matchLineIdx = locateMatchLine(lines, [/req\.on\s*\(\s*["\']data["\']/i], l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('*'));
         const lineNum = matchLineIdx !== -1 ? matchLineIdx + 1 : 1;
         findings.push({
             id: `chaos24-${Date.now()}-${findingCounter.count++}`,
@@ -621,7 +622,7 @@ export function evaluateChaosResilienceRules(file: CodeFile, lines: string[], cl
     }
     // CHAOS-25: Missing Graceful Degradation on Search Engine Service Outage
     if (/executeProductSearch/i.test(cleanContent) && !/dbFallbackSearch|fallback/i.test(cleanContent)) {
-        const matchLineIdx = lines.findIndex(l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('*') && (/chaos-25|missing/i.test(l) || lines.indexOf(l) === 0));
+        const matchLineIdx = locateMatchLine(lines, [/executeProductSearch/i], l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('*'));
         const lineNum = matchLineIdx !== -1 ? matchLineIdx + 1 : 1;
         findings.push({
             id: `chaos25-${Date.now()}-${findingCounter.count++}`,
@@ -696,7 +697,7 @@ export function evaluateChaosResilienceRules(file: CodeFile, lines: string[], cl
     }
     // CHAOS-28: Unconstrained Log Ingestion Flooding Disk / Logging Storage
     if (/logger\.ts$/i.test(file.path) && /level:\s*["\']debug["\']/i.test(cleanContent)) {
-        const matchLineIdx = lines.findIndex(l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('*') && (/chaos-28|unconstrained/i.test(l) || lines.indexOf(l) === 0));
+        const matchLineIdx = locateMatchLine(lines, [/level:\s*["\']debug["\']/i], l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('*'));
         const lineNum = matchLineIdx !== -1 ? matchLineIdx + 1 : 1;
         findings.push({
             id: `chaos28-${Date.now()}-${findingCounter.count++}`,
@@ -721,7 +722,7 @@ export function evaluateChaosResilienceRules(file: CodeFile, lines: string[], cl
     }
     // CHAOS-29: Missing Health Check Grace Period on Container Startup
     if (/kind:\s*Pod\b/i.test(cleanContent) && /readinessProbe:\s*\{[^}]*initialDelaySeconds:\s*0/i.test(cleanContent)) {
-        const matchLineIdx = lines.findIndex(l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('*') && (/chaos-29|missing/i.test(l) || lines.indexOf(l) === 0));
+        const matchLineIdx = locateMatchLine(lines, [/kind:\s*Pod\b/i, /readinessProbe:\s*\{[^}]*initialDelaySeconds:\s*0/i], l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('*'));
         const lineNum = matchLineIdx !== -1 ? matchLineIdx + 1 : 1;
         findings.push({
             id: `chaos29-${Date.now()}-${findingCounter.count++}`,
@@ -771,7 +772,7 @@ export function evaluateChaosResilienceRules(file: CodeFile, lines: string[], cl
     }
     // CHAOS-31: Unbounded Webhook Notification Queue Size
     if (/outboundWebhookQueue/i.test(cleanContent) && !/maxSize|capacity/i.test(cleanContent)) {
-        const matchLineIdx = lines.findIndex(l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('*') && (/chaos-31|unbounded/i.test(l) || lines.indexOf(l) === 0));
+        const matchLineIdx = locateMatchLine(lines, [/outboundWebhookQueue/i], l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('*'));
         const lineNum = matchLineIdx !== -1 ? matchLineIdx + 1 : 1;
         findings.push({
             id: `chaos31-${Date.now()}-${findingCounter.count++}`,
@@ -821,7 +822,7 @@ export function evaluateChaosResilienceRules(file: CodeFile, lines: string[], cl
     }
     // CHAOS-33: Insecure Fast-Fail Bypass Causing Silent Data Corruption
     if (/catch\s*\(\s*dbWriteError\s*\)\s*\{[\s\S]*?return\s+\{\s*success:\s*true\s*\};/i.test(cleanContent)) {
-        const matchLineIdx = lines.findIndex(l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('*') && (/chaos-33|insecure/i.test(l) || lines.indexOf(l) === 0));
+        const matchLineIdx = locateMatchLine(lines, [/catch\s*\(\s*dbWriteError\s*\)\s*\{[\s\S]*?return\s+\{\s*success:\s*true\s*\};/i], l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('*'));
         const lineNum = matchLineIdx !== -1 ? matchLineIdx + 1 : 1;
         findings.push({
             id: `chaos33-${Date.now()}-${findingCounter.count++}`,
@@ -846,7 +847,7 @@ export function evaluateChaosResilienceRules(file: CodeFile, lines: string[], cl
     }
     // CHAOS-34: Missing Cross-Region Database Read Replica Failover
     if (/dbClusterInfrastructure/i.test(cleanContent) && !/replicate_source_db/i.test(cleanContent)) {
-        const matchLineIdx = lines.findIndex(l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('*') && (/chaos-34|missing/i.test(l) || lines.indexOf(l) === 0));
+        const matchLineIdx = locateMatchLine(lines, [/dbClusterInfrastructure/i], l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('*'));
         const lineNum = matchLineIdx !== -1 ? matchLineIdx + 1 : 1;
         findings.push({
             id: `chaos34-${Date.now()}-${findingCounter.count++}`,
@@ -871,7 +872,7 @@ export function evaluateChaosResilienceRules(file: CodeFile, lines: string[], cl
     }
     // CHAOS-35: Unbounded Event Listener Growth on Global Window Object
     if (/window\.addEventListener\s*\(\s*["\']resize["\']/i.test(cleanContent) && !/removeEventListener/i.test(cleanContent)) {
-        const matchLineIdx = lines.findIndex(l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('*') && (/chaos-35|unbounded/i.test(l) || lines.indexOf(l) === 0));
+        const matchLineIdx = locateMatchLine(lines, [/window\.addEventListener\s*\(\s*["\']resize["\']/i], l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('*'));
         const lineNum = matchLineIdx !== -1 ? matchLineIdx + 1 : 1;
         findings.push({
             id: `chaos35-${Date.now()}-${findingCounter.count++}`,
@@ -896,7 +897,7 @@ export function evaluateChaosResilienceRules(file: CodeFile, lines: string[], cl
     }
     // CHAOS-36: Missing Heartbeat Mechanism in Distributed Lock Manager
     if (/redlock\.acquire\s*\(/i.test(cleanContent) && !/startAutoRenewal|heartbeat/i.test(cleanContent)) {
-        const matchLineIdx = lines.findIndex(l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('*') && (/chaos-36|missing/i.test(l) || lines.indexOf(l) === 0));
+        const matchLineIdx = locateMatchLine(lines, [/redlock\.acquire\s*\(/i], l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('*'));
         const lineNum = matchLineIdx !== -1 ? matchLineIdx + 1 : 1;
         findings.push({
             id: `chaos36-${Date.now()}-${findingCounter.count++}`,
@@ -921,7 +922,7 @@ export function evaluateChaosResilienceRules(file: CodeFile, lines: string[], cl
     }
     // CHAOS-37: Unmonitored File Descriptor Exhaustion in High-Volume APIs
     if (/highVolumeSocketServer/i.test(cleanContent) && !/getFdCount|maxFiles/i.test(cleanContent)) {
-        const matchLineIdx = lines.findIndex(l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('*') && (/chaos-37|unmonitored/i.test(l) || lines.indexOf(l) === 0));
+        const matchLineIdx = locateMatchLine(lines, [/highVolumeSocketServer/i], l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('*'));
         const lineNum = matchLineIdx !== -1 ? matchLineIdx + 1 : 1;
         findings.push({
             id: `chaos37-${Date.now()}-${findingCounter.count++}`,
@@ -946,7 +947,7 @@ export function evaluateChaosResilienceRules(file: CodeFile, lines: string[], cl
     }
     // CHAOS-38: Missing Backoff on Database Connection Reconnection
     if (/client\.on\s*\(\s*["\']error["\']\s*,\s*\(\s*\)\s*=>\s*\{[\s\S]*?client\.connect\s*\(\s*\);/i.test(cleanContent)) {
-        const matchLineIdx = lines.findIndex(l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('*') && (/chaos-38|missing/i.test(l) || lines.indexOf(l) === 0));
+        const matchLineIdx = locateMatchLine(lines, [/client\.on\s*\(\s*["\']error["\']\s*,\s*\(\s*\)\s*=>\s*\{[\s\S]*?client\.connect\s*\(\s*\);/i], l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('*'));
         const lineNum = matchLineIdx !== -1 ? matchLineIdx + 1 : 1;
         findings.push({
             id: `chaos38-${Date.now()}-${findingCounter.count++}`,
@@ -971,7 +972,7 @@ export function evaluateChaosResilienceRules(file: CodeFile, lines: string[], cl
     }
     // CHAOS-39: Lack of Client-Side Cache Busting on Critical Static Assets
     if (/webpackConfig/i.test(cleanContent) && /filename:\s*["\']\[name\]\.js["\']/i.test(cleanContent)) {
-        const matchLineIdx = lines.findIndex(l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('*') && (/chaos-39|lack/i.test(l) || lines.indexOf(l) === 0));
+        const matchLineIdx = locateMatchLine(lines, [/webpackConfig/i, /filename:\s*["\']\[name\]\.js["\']/i], l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('*'));
         const lineNum = matchLineIdx !== -1 ? matchLineIdx + 1 : 1;
         findings.push({
             id: `chaos39-${Date.now()}-${findingCounter.count++}`,
@@ -996,7 +997,7 @@ export function evaluateChaosResilienceRules(file: CodeFile, lines: string[], cl
     }
     // CHAOS-40: Missing Downstream HTTP Response Size Limit
     if (/fetchExternalBlob/i.test(cleanContent) && !/content-length|maxSize/i.test(cleanContent)) {
-        const matchLineIdx = lines.findIndex(l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('*') && (/chaos-40|missing/i.test(l) || lines.indexOf(l) === 0));
+        const matchLineIdx = locateMatchLine(lines, [/fetchExternalBlob/i], l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('*'));
         const lineNum = matchLineIdx !== -1 ? matchLineIdx + 1 : 1;
         findings.push({
             id: `chaos40-${Date.now()}-${findingCounter.count++}`,
@@ -1046,7 +1047,7 @@ export function evaluateChaosResilienceRules(file: CodeFile, lines: string[], cl
     }
     // CHAOS-42: Unchecked Local Storage Exhaustion in Client Applications
     if (/localStorage\.setItem\s*\(\s*["\']big_dataset["\']/i.test(cleanContent) && !/try\s*\{/i.test(cleanContent)) {
-        const matchLineIdx = lines.findIndex(l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('*') && (/chaos-42|unchecked/i.test(l) || lines.indexOf(l) === 0));
+        const matchLineIdx = locateMatchLine(lines, [/localStorage\.setItem\s*\(\s*["\']big_dataset["\']/i], l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('*'));
         const lineNum = matchLineIdx !== -1 ? matchLineIdx + 1 : 1;
         findings.push({
             id: `chaos42-${Date.now()}-${findingCounter.count++}`,
@@ -1071,7 +1072,7 @@ export function evaluateChaosResilienceRules(file: CodeFile, lines: string[], cl
     }
     // CHAOS-43: Missing Automated Database Failover Health Check Drill
     if (/chaosDrills/i.test(cleanContent) && !/rebootDBInstance/i.test(cleanContent)) {
-        const matchLineIdx = lines.findIndex(l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('*') && (/chaos-43|missing/i.test(l) || lines.indexOf(l) === 0));
+        const matchLineIdx = locateMatchLine(lines, [/chaosDrills/i], l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('*'));
         const lineNum = matchLineIdx !== -1 ? matchLineIdx + 1 : 1;
         findings.push({
             id: `chaos43-${Date.now()}-${findingCounter.count++}`,
@@ -1096,7 +1097,7 @@ export function evaluateChaosResilienceRules(file: CodeFile, lines: string[], cl
     }
     // CHAOS-44: Unthrottled Recursive DOM Tree Traversal
     if (/function\s+traverseAllDomNodes\s*\(/i.test(cleanContent) && !/requestIdleCallback/i.test(cleanContent)) {
-        const matchLineIdx = lines.findIndex(l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('*') && (/chaos-44|unthrottled/i.test(l) || lines.indexOf(l) === 0));
+        const matchLineIdx = locateMatchLine(lines, [/function\s+traverseAllDomNodes\s*\(/i], l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('*'));
         const lineNum = matchLineIdx !== -1 ? matchLineIdx + 1 : 1;
         findings.push({
             id: `chaos44-${Date.now()}-${findingCounter.count++}`,
@@ -1121,7 +1122,7 @@ export function evaluateChaosResilienceRules(file: CodeFile, lines: string[], cl
     }
     // CHAOS-45: Missing Thread-Safe Locking in Concurrent File System Writes
     if (/fs\.promises\.writeFile\s*\(\s*sharedFilePath/i.test(cleanContent) && !/rename/i.test(cleanContent)) {
-        const matchLineIdx = lines.findIndex(l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('*') && (/chaos-45|missing/i.test(l) || lines.indexOf(l) === 0));
+        const matchLineIdx = locateMatchLine(lines, [/fs\.promises\.writeFile\s*\(\s*sharedFilePath/i], l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('*'));
         const lineNum = matchLineIdx !== -1 ? matchLineIdx + 1 : 1;
         findings.push({
             id: `chaos45-${Date.now()}-${findingCounter.count++}`,
@@ -1171,7 +1172,7 @@ export function evaluateChaosResilienceRules(file: CodeFile, lines: string[], cl
     }
     // CHAOS-47: Missing Automatic Memory Dump on Heap Limit Warning
     if (/package\.json$/i.test(file.path) && /--max-old-space-size/i.test(cleanContent) && !/heapsnapshot-near-heap-limit/i.test(cleanContent)) {
-        const matchLineIdx = lines.findIndex(l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('*') && (/chaos-47|missing/i.test(l) || lines.indexOf(l) === 0));
+        const matchLineIdx = locateMatchLine(lines, [/--max-old-space-size/i], l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('*'));
         const lineNum = matchLineIdx !== -1 ? matchLineIdx + 1 : 1;
         findings.push({
             id: `chaos47-${Date.now()}-${findingCounter.count++}`,
@@ -1196,7 +1197,7 @@ export function evaluateChaosResilienceRules(file: CodeFile, lines: string[], cl
     }
     // CHAOS-48: Unbounded WebSocket Message Buffer Size on Client
     if (/offlineWebSocketQueue\.push/i.test(cleanContent) && !/maxQueueSize|length\s*>=/i.test(cleanContent)) {
-        const matchLineIdx = lines.findIndex(l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('*') && (/chaos-48|unbounded/i.test(l) || lines.indexOf(l) === 0));
+        const matchLineIdx = locateMatchLine(lines, [/offlineWebSocketQueue\.push/i], l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('*'));
         const lineNum = matchLineIdx !== -1 ? matchLineIdx + 1 : 1;
         findings.push({
             id: `chaos48-${Date.now()}-${findingCounter.count++}`,

@@ -4,6 +4,7 @@
  */
 import { Finding } from "@/data/schema";
 import { CodeFile } from "../scanner-engine";
+import { locateMatchLine } from './shared/locate';
 export interface RaspAntiTamperRuleResult {
     findings: Finding[];
     logs: string[];
@@ -21,7 +22,7 @@ export function evaluateRaspAntiTamperRules(file: CodeFile, lines: string[], cle
     const ts = new Date().toLocaleTimeString();
     // RASP-01: Missing Runtime Application Self-Protection (RASP) Execution Hooks
     if ((/dynamicExecution/i.test(cleanContent) && !/raspGuard/i.test(cleanContent))) {
-        const matchLineIdx = lines.findIndex(l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('#') && !l.trim().startsWith('*'));
+        const matchLineIdx = locateMatchLine(lines, [/dynamicExecution/i], l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('#') && !l.trim().startsWith('*'));
         const lineNum = matchLineIdx !== -1 ? matchLineIdx + 1 : 1;
         findings.push({
             id: `rasp14601-${Date.now()}-${findingCounter.count++}`,
@@ -45,7 +46,7 @@ export function evaluateRaspAntiTamperRules(file: CodeFile, lines: string[], cle
     }
     // RASP-02: Unauthorized Debugger Attachment Permitted in Production Runtime
     if ((/debuggerDetection/i.test(cleanContent) && !/terminateOnDebugger/i.test(cleanContent))) {
-        const matchLineIdx = lines.findIndex(l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('#') && !l.trim().startsWith('*'));
+        const matchLineIdx = locateMatchLine(lines, [/debuggerDetection/i], l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('#') && !l.trim().startsWith('*'));
         const lineNum = matchLineIdx !== -1 ? matchLineIdx + 1 : 1;
         findings.push({
             id: `rasp14602-${Date.now()}-${findingCounter.count++}`,
@@ -69,7 +70,7 @@ export function evaluateRaspAntiTamperRules(file: CodeFile, lines: string[], cle
     }
     // RASP-03: Prototype Pollution Exploitation: Unfrozen Core Object Prototypes
     if ((/initializeRuntime/i.test(cleanContent) && !/Object\.freeze/i.test(cleanContent))) {
-        const matchLineIdx = lines.findIndex(l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('#') && !l.trim().startsWith('*'));
+        const matchLineIdx = locateMatchLine(lines, [/initializeRuntime/i], l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('#') && !l.trim().startsWith('*'));
         const lineNum = matchLineIdx !== -1 ? matchLineIdx + 1 : 1;
         findings.push({
             id: `rasp14603-${Date.now()}-${findingCounter.count++}`,
@@ -93,7 +94,7 @@ export function evaluateRaspAntiTamperRules(file: CodeFile, lines: string[], cle
     }
     // RASP-04: Dynamic Memory Tampering: Insecure Memory Allocations in Native Addons
     if ((/(?:binding\.gyp|CMakeLists\.txt)/i.test(cleanContent) && !/-fstack-protector/i.test(cleanContent))) {
-        const matchLineIdx = lines.findIndex(l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('#') && !l.trim().startsWith('*'));
+        const matchLineIdx = locateMatchLine(lines, [/(?:binding\.gyp|CMakeLists\.txt)/i], l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('#') && !l.trim().startsWith('*'));
         const lineNum = matchLineIdx !== -1 ? matchLineIdx + 1 : 1;
         findings.push({
             id: `rasp14604-${Date.now()}-${findingCounter.count++}`,
@@ -117,7 +118,7 @@ export function evaluateRaspAntiTamperRules(file: CodeFile, lines: string[], cle
     }
     // RASP-05: Unchecked Buffer Offsets Across Foreign Function Interface (FFI)
     if ((/ffiBridge|nativeCall/i.test(cleanContent) && !/validateBufferBounds/i.test(cleanContent))) {
-        const matchLineIdx = lines.findIndex(l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('#') && !l.trim().startsWith('*'));
+        const matchLineIdx = locateMatchLine(lines, [/ffiBridge|nativeCall/i], l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('#') && !l.trim().startsWith('*'));
         const lineNum = matchLineIdx !== -1 ? matchLineIdx + 1 : 1;
         findings.push({
             id: `rasp14605-${Date.now()}-${findingCounter.count++}`,

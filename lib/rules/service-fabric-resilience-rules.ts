@@ -4,6 +4,7 @@
  */
 import { Finding } from "@/data/schema";
 import { CodeFile } from "../scanner-engine";
+import { locateMatchLine } from './shared/locate';
 export interface ServiceFabricResilienceRuleResult {
     findings: Finding[];
     logs: string[];
@@ -21,7 +22,7 @@ export function evaluateServiceFabricResilienceRules(file: CodeFile, lines: stri
     const ts = new Date().toLocaleTimeString();
     // FABRIC-01: Multipath TCP (MPTCP) Connection Migration Failures Across Redundant Edge Uplinks
     if (((/mptcp_config|edge_network/i.test(lowerPath) || /mptcp_enabled/i.test(cleanContent)) && !/mptcp_path_manager/i.test(cleanContent))) {
-        const matchLineIdx = lines.findIndex(l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('#') && !l.trim().startsWith('*'));
+        const matchLineIdx = locateMatchLine(lines, [/mptcp_enabled/i], l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('#') && !l.trim().startsWith('*'));
         const lineNum = matchLineIdx !== -1 ? matchLineIdx + 1 : 1;
         findings.push({
             id: `fabric16101-${Date.now()}-${findingCounter.count++}`,
@@ -45,7 +46,7 @@ export function evaluateServiceFabricResilienceRules(file: CodeFile, lines: stri
     }
     // FABRIC-02: Anycast BGP Route Flapping Inducing Rapid Cross-Region TCP Session Resets
     if (((/bgp_anycast|edge_routing/i.test(lowerPath) || /bgp_community/i.test(cleanContent)) && !/bgp_flap_damping/i.test(cleanContent))) {
-        const matchLineIdx = lines.findIndex(l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('#') && !l.trim().startsWith('*'));
+        const matchLineIdx = locateMatchLine(lines, [/bgp_community/i], l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('#') && !l.trim().startsWith('*'));
         const lineNum = matchLineIdx !== -1 ? matchLineIdx + 1 : 1;
         findings.push({
             id: `fabric16102-${Date.now()}-${findingCounter.count++}`,
@@ -69,7 +70,7 @@ export function evaluateServiceFabricResilienceRules(file: CodeFile, lines: stri
     }
     // FABRIC-03: Inadequate Edge Service Fabric L7 Health Probing Triggering Blackhole Traffic Sinks
     if (((/health_prober|edge_gateway/i.test(lowerPath) || /syntheticHealthCheck/i.test(cleanContent)) && !/fastFailoverThreshold/i.test(cleanContent))) {
-        const matchLineIdx = lines.findIndex(l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('#') && !l.trim().startsWith('*'));
+        const matchLineIdx = locateMatchLine(lines, [/syntheticHealthCheck/i], l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('#') && !l.trim().startsWith('*'));
         const lineNum = matchLineIdx !== -1 ? matchLineIdx + 1 : 1;
         findings.push({
             id: `fabric16103-${Date.now()}-${findingCounter.count++}`,
@@ -93,7 +94,7 @@ export function evaluateServiceFabricResilienceRules(file: CodeFile, lines: stri
     }
     // FABRIC-04: QUIC / HTTP/3 Connection Migration Token Reuse and Replay Attack Vulnerability
     if (((/quic_config|http3_gateway/i.test(lowerPath) || /connectionMigrationToken/i.test(cleanContent)) && !/singleUseMigrationTokens/i.test(cleanContent))) {
-        const matchLineIdx = lines.findIndex(l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('#') && !l.trim().startsWith('*'));
+        const matchLineIdx = locateMatchLine(lines, [/connectionMigrationToken/i], l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('#') && !l.trim().startsWith('*'));
         const lineNum = matchLineIdx !== -1 ? matchLineIdx + 1 : 1;
         findings.push({
             id: `fabric16104-${Date.now()}-${findingCounter.count++}`,
@@ -117,7 +118,7 @@ export function evaluateServiceFabricResilienceRules(file: CodeFile, lines: stri
     }
     // FABRIC-05: Unbounded Gossip Protocol Convergence Latency in Multi-Cluster Service Meshes
     if (((/cluster_mesh|gossip_protocol/i.test(lowerPath) || /memberlistConfig|serfCluster/i.test(cleanContent)) && !/gossipProbeInterval/i.test(cleanContent))) {
-        const matchLineIdx = lines.findIndex(l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('#') && !l.trim().startsWith('*'));
+        const matchLineIdx = locateMatchLine(lines, [/memberlistConfig|serfCluster/i], l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('#') && !l.trim().startsWith('*'));
         const lineNum = matchLineIdx !== -1 ? matchLineIdx + 1 : 1;
         findings.push({
             id: `fabric16105-${Date.now()}-${findingCounter.count++}`,

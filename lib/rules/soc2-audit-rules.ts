@@ -4,6 +4,7 @@
  */
 import { Finding } from "@/data/schema";
 import { CodeFile } from "../scanner-engine";
+import { locateMatchLine } from './shared/locate';
 export interface Soc2AuditRuleResult {
     findings: Finding[];
     logs: string[];
@@ -21,7 +22,7 @@ export function evaluateSoc2AuditRules(file: CodeFile, lines: string[], cleanCon
     const ts = new Date().toLocaleTimeString();
     // SOC2-01: Missing Multi-Factor Authentication (MFA) on Admin Routes (CC6.1)
     if (cleanContent.includes('soc2MissingMfaEnforcementOnAdminRoute') || (/\/api\/admin\//i.test(cleanContent) && !/mfa|totp|twoFactor/i.test(cleanContent))) {
-        const matchLineIdx = lines.findIndex(l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('*'));
+        const matchLineIdx = locateMatchLine(lines, [/\/api\/admin\//i], l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('*'));
         const lineNum = matchLineIdx !== -1 ? matchLineIdx + 1 : 1;
         findings.push({
             id: `soc210601-${Date.now()}-${findingCounter.count++}`,
@@ -45,7 +46,7 @@ export function evaluateSoc2AuditRules(file: CodeFile, lines: string[], cleanCon
     }
     // SOC2-02: Mutable Audit Log Storage Lacking Cryptographic Tamper Resistance (CC6.8)
     if (cleanContent.includes('soc2MutableAuditLogStorage') || (/INSERT\s+INTO\s+audit_logs/i.test(cleanContent) && !/immutable|append_only|checksum/i.test(cleanContent))) {
-        const matchLineIdx = lines.findIndex(l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('*'));
+        const matchLineIdx = locateMatchLine(lines, [/INSERT\s+INTO\s+audit_logs/i], l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('*'));
         const lineNum = matchLineIdx !== -1 ? matchLineIdx + 1 : 1;
         findings.push({
             id: `soc210602-${Date.now()}-${findingCounter.count++}`,
@@ -69,7 +70,7 @@ export function evaluateSoc2AuditRules(file: CodeFile, lines: string[], cleanCon
     }
     // SOC2-03: Missing Automated Dependency Vulnerability Scanning in CI/CD (CC7.1)
     if (cleanContent.includes('soc2MissingCiCdVulnerabilityScanGate') || (/steps:\s*[\s\S]*?deploy/i.test(cleanContent) && !/audit|snyk|trivy|scan/i.test(cleanContent))) {
-        const matchLineIdx = lines.findIndex(l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('*'));
+        const matchLineIdx = locateMatchLine(lines, [/steps:\s*[\s\S]*?deploy/i], l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('*'));
         const lineNum = matchLineIdx !== -1 ? matchLineIdx + 1 : 1;
         findings.push({
             id: `soc210603-${Date.now()}-${findingCounter.count++}`,
@@ -93,7 +94,7 @@ export function evaluateSoc2AuditRules(file: CodeFile, lines: string[], cleanCon
     }
     // SOC2-04: Absence of Regular Automated Database Backup Verification (CC5.2)
     if (cleanContent.includes('soc2MissingBackupRestoreVerificationDrill') || (/backup_cron|pg_dump/i.test(cleanContent) && !/restore_test|recovery_drill/i.test(cleanContent))) {
-        const matchLineIdx = lines.findIndex(l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('*'));
+        const matchLineIdx = locateMatchLine(lines, [/backup_cron|pg_dump/i], l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('*'));
         const lineNum = matchLineIdx !== -1 ? matchLineIdx + 1 : 1;
         findings.push({
             id: `soc210604-${Date.now()}-${findingCounter.count++}`,
@@ -117,7 +118,7 @@ export function evaluateSoc2AuditRules(file: CodeFile, lines: string[], cleanCon
     }
     // SOC2-05: Unencrypted Sensitive Data in Persistent Cloud Object Storage (CC6.7)
     if (cleanContent.includes('soc2UnencryptedObjectStorageBucket') || (/aws_s3_bucket\s*['"][a-zA-Z0-9_]+['"]/i.test(cleanContent) && !/server_side_encryption|kms/i.test(cleanContent))) {
-        const matchLineIdx = lines.findIndex(l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('*'));
+        const matchLineIdx = locateMatchLine(lines, [/aws_s3_bucket\s*['"][a-zA-Z0-9_]+['"]/i], l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('*'));
         const lineNum = matchLineIdx !== -1 ? matchLineIdx + 1 : 1;
         findings.push({
             id: `soc210605-${Date.now()}-${findingCounter.count++}`,

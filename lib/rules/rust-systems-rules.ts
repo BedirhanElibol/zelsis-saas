@@ -4,6 +4,7 @@
  */
 import { Finding } from "@/data/schema";
 import { CodeFile } from "../scanner-engine";
+import { locateMatchLine } from './shared/locate';
 export interface RustSystemsRuleResult {
     findings: Finding[];
     logs: string[];
@@ -24,7 +25,7 @@ export function evaluateRustSystemsRules(file: CodeFile, lines: string[], cleanC
     const ts = new Date().toLocaleTimeString();
     // RUST-01: Unsound Unsafe Block Missing Safety Invariant Comment
     if ((/unsafe\s*\{[\s\S]*?\}/i.test(cleanContent) && !cleanContent.includes('SAFETY:'))) {
-        const matchLineIdx = lines.findIndex(l => !l.trim().startsWith('//') && !l.trim().startsWith('/*') && !l.trim().startsWith('*'));
+        const matchLineIdx = locateMatchLine(lines, [/unsafe\s*\{[\s\S]*?\}/i], l => !l.trim().startsWith('//') && !l.trim().startsWith('/*') && !l.trim().startsWith('*'));
         const lineNum = matchLineIdx !== -1 ? matchLineIdx + 1 : 1;
         findings.push({
             id: `rust9601-${Date.now()}-${findingCounter.count++}`,
@@ -48,7 +49,7 @@ export function evaluateRustSystemsRules(file: CodeFile, lines: string[], cleanC
     }
     // RUST-02: Blocking Synchronous I/O Inside Tokio Async Function
     if ((/async\s+fn\s+[a-zA-Z0-9_]+\s*\([\s\S]*?std::thread::sleep/i.test(cleanContent))) {
-        const matchLineIdx = lines.findIndex(l => !l.trim().startsWith('//') && !l.trim().startsWith('/*') && !l.trim().startsWith('*'));
+        const matchLineIdx = locateMatchLine(lines, [/async\s+fn\s+[a-zA-Z0-9_]+\s*\([\s\S]*?std::thread::sleep/i], l => !l.trim().startsWith('//') && !l.trim().startsWith('/*') && !l.trim().startsWith('*'));
         const lineNum = matchLineIdx !== -1 ? matchLineIdx + 1 : 1;
         findings.push({
             id: `rust9602-${Date.now()}-${findingCounter.count++}`,
@@ -72,7 +73,7 @@ export function evaluateRustSystemsRules(file: CodeFile, lines: string[], cleanC
     }
     // RUST-03: Unbounded Tokio MPSC Channel Without Flow Control
     if ((/tokio::sync::mpsc::unbounded_channel/i.test(cleanContent))) {
-        const matchLineIdx = lines.findIndex(l => !l.trim().startsWith('//') && !l.trim().startsWith('/*') && !l.trim().startsWith('*'));
+        const matchLineIdx = locateMatchLine(lines, [/tokio::sync::mpsc::unbounded_channel/i], l => !l.trim().startsWith('//') && !l.trim().startsWith('/*') && !l.trim().startsWith('*'));
         const lineNum = matchLineIdx !== -1 ? matchLineIdx + 1 : 1;
         findings.push({
             id: `rust9603-${Date.now()}-${findingCounter.count++}`,
@@ -96,7 +97,7 @@ export function evaluateRustSystemsRules(file: CodeFile, lines: string[], cleanC
     }
     // RUST-04: Panic in Drop Trait Implementation (Process Abort)
     if ((/impl(?:<[^>]*>)?\s+Drop\s+for[\s\S]*?fn\s+drop[\s\S]*?(?:panic!|\.unwrap\(\)|\.expect\()/i.test(cleanContent))) {
-        const matchLineIdx = lines.findIndex(l => !l.trim().startsWith('//') && !l.trim().startsWith('/*') && !l.trim().startsWith('*'));
+        const matchLineIdx = locateMatchLine(lines, [/impl(?:<[^>]*>)?\s+Drop\s+for[\s\S]*?fn\s+drop[\s\S]*?(?:panic!|\.unwrap\(\)|\.expect\()/i], l => !l.trim().startsWith('//') && !l.trim().startsWith('/*') && !l.trim().startsWith('*'));
         const lineNum = matchLineIdx !== -1 ? matchLineIdx + 1 : 1;
         findings.push({
             id: `rust9604-${Date.now()}-${findingCounter.count++}`,

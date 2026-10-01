@@ -4,6 +4,7 @@
  */
 import { Finding } from "@/data/schema";
 import { CodeFile } from "../scanner-engine";
+import { locateMatchLine } from './shared/locate';
 export interface CronSchedulerRuleResult {
     findings: Finding[];
     logs: string[];
@@ -21,7 +22,7 @@ export function evaluateCronSchedulerRules(file: CodeFile, lines: string[], clea
     const ts = new Date().toLocaleTimeString();
     // CRON-01: Distributed Mutex Lock Missing on Periodic Worker
     if ((/setInterval\(/i.test(cleanContent) && !/redlock|pg_try_advisory_lock/i.test(cleanContent))) {
-        const matchLineIdx = lines.findIndex(l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('#') && !l.trim().startsWith('*'));
+        const matchLineIdx = locateMatchLine(lines, [/setInterval\(/i], l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('#') && !l.trim().startsWith('*'));
         const lineNum = matchLineIdx !== -1 ? matchLineIdx + 1 : 1;
         findings.push({
             id: `cron-11701-${Date.now()}-${findingCounter.count++}`,
@@ -45,7 +46,7 @@ export function evaluateCronSchedulerRules(file: CodeFile, lines: string[], clea
     }
     // CRON-02: Unbounded Job Queue Backlog Without Rate Limiting
     if ((/new Queue\(/i.test(cleanContent) && !/rateLimiter|limiter/i.test(cleanContent))) {
-        const matchLineIdx = lines.findIndex(l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('#') && !l.trim().startsWith('*'));
+        const matchLineIdx = locateMatchLine(lines, [/new Queue\(/i], l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('#') && !l.trim().startsWith('*'));
         const lineNum = matchLineIdx !== -1 ? matchLineIdx + 1 : 1;
         findings.push({
             id: `cron-11702-${Date.now()}-${findingCounter.count++}`,
@@ -69,7 +70,7 @@ export function evaluateCronSchedulerRules(file: CodeFile, lines: string[], clea
     }
     // CRON-03: Missing Dead Letter Queue (DLQ) for Failed Cron Jobs
     if ((/(?:QueueOptions|new Queue)/i.test(cleanContent) && !/(?:deadLetter|dead_letter|\bdlq\b)/i.test(cleanContent))) {
-        const matchLineIdx = lines.findIndex(l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('#') && !l.trim().startsWith('*'));
+        const matchLineIdx = locateMatchLine(lines, [/(?:QueueOptions|new Queue)/i], l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('#') && !l.trim().startsWith('*'));
         const lineNum = matchLineIdx !== -1 ? matchLineIdx + 1 : 1;
         findings.push({
             id: `cron-11703-${Date.now()}-${findingCounter.count++}`,
@@ -93,7 +94,7 @@ export function evaluateCronSchedulerRules(file: CodeFile, lines: string[], clea
     }
     // CRON-04: Non-Idempotent Job Handler Causing Duplicate Processing
     if ((/processJob\(/i.test(cleanContent) && !/idempotencyKey|dedup/i.test(cleanContent))) {
-        const matchLineIdx = lines.findIndex(l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('#') && !l.trim().startsWith('*'));
+        const matchLineIdx = locateMatchLine(lines, [/processJob\(/i], l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('#') && !l.trim().startsWith('*'));
         const lineNum = matchLineIdx !== -1 ? matchLineIdx + 1 : 1;
         findings.push({
             id: `cron-11704-${Date.now()}-${findingCounter.count++}`,
@@ -117,7 +118,7 @@ export function evaluateCronSchedulerRules(file: CodeFile, lines: string[], clea
     }
     // CRON-05: Missing Exponential Backoff on Worker Transient Failures
     if ((/backoff/i.test(cleanContent) && !/exponential/i.test(cleanContent))) {
-        const matchLineIdx = lines.findIndex(l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('#') && !l.trim().startsWith('*'));
+        const matchLineIdx = locateMatchLine(lines, [/backoff/i], l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('#') && !l.trim().startsWith('*'));
         const lineNum = matchLineIdx !== -1 ? matchLineIdx + 1 : 1;
         findings.push({
             id: `cron-11705-${Date.now()}-${findingCounter.count++}`,

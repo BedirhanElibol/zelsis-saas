@@ -4,6 +4,7 @@
  */
 import { Finding } from "@/data/schema";
 import { CodeFile } from "../scanner-engine";
+import { locateMatchLine } from './shared/locate';
 export interface MessageQueueOptRuleResult {
     findings: Finding[];
     logs: string[];
@@ -21,7 +22,7 @@ export function evaluateMessageQueueOptRules(file: CodeFile, lines: string[], cl
     const ts = new Date().toLocaleTimeString();
     // MQOPT-01: Unbounded Message Queue Depth Triggering Broker Disk Paging
     if ((/createQueue|assertQueue/i.test(cleanContent) && !/max-length/i.test(cleanContent))) {
-        const matchLineIdx = lines.findIndex(l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('#') && !l.trim().startsWith('*'));
+        const matchLineIdx = locateMatchLine(lines, [/createQueue|assertQueue/i], l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('#') && !l.trim().startsWith('*'));
         const lineNum = matchLineIdx !== -1 ? matchLineIdx + 1 : 1;
         findings.push({
             id: `mqopt14501-${Date.now()}-${findingCounter.count++}`,
@@ -45,7 +46,7 @@ export function evaluateMessageQueueOptRules(file: CodeFile, lines: string[], cl
     }
     // MQOPT-02: Missing Consumer Acknowledgment Timeout Guardrail on Worker Queues
     if ((/consumeQueue/i.test(cleanContent) && !/consumer_timeout/i.test(cleanContent))) {
-        const matchLineIdx = lines.findIndex(l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('#') && !l.trim().startsWith('*'));
+        const matchLineIdx = locateMatchLine(lines, [/consumeQueue/i], l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('#') && !l.trim().startsWith('*'));
         const lineNum = matchLineIdx !== -1 ? matchLineIdx + 1 : 1;
         findings.push({
             id: `mqopt14502-${Date.now()}-${findingCounter.count++}`,
@@ -69,7 +70,7 @@ export function evaluateMessageQueueOptRules(file: CodeFile, lines: string[], cl
     }
     // MQOPT-03: Default Guest Credentials Enabled on Message Broker Management UI
     if ((/(?:default_user|default_pass)\s*=\s*guest/i.test(cleanContent))) {
-        const matchLineIdx = lines.findIndex(l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('#') && !l.trim().startsWith('*'));
+        const matchLineIdx = locateMatchLine(lines, [/(?:default_user|default_pass)\s*=\s*guest/i], l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('#') && !l.trim().startsWith('*'));
         const lineNum = matchLineIdx !== -1 ? matchLineIdx + 1 : 1;
         findings.push({
             id: `mqopt14503-${Date.now()}-${findingCounter.count++}`,
@@ -93,7 +94,7 @@ export function evaluateMessageQueueOptRules(file: CodeFile, lines: string[], cl
     }
     // MQOPT-04: Unroutable Message Dead-Letter Exchange (DLX) Configuration Missing
     if ((/queueOptions/i.test(cleanContent) && !/x-dead-letter-exchange/i.test(cleanContent))) {
-        const matchLineIdx = lines.findIndex(l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('#') && !l.trim().startsWith('*'));
+        const matchLineIdx = locateMatchLine(lines, [/queueOptions/i], l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('#') && !l.trim().startsWith('*'));
         const lineNum = matchLineIdx !== -1 ? matchLineIdx + 1 : 1;
         findings.push({
             id: `mqopt14504-${Date.now()}-${findingCounter.count++}`,
@@ -117,7 +118,7 @@ export function evaluateMessageQueueOptRules(file: CodeFile, lines: string[], cl
     }
     // MQOPT-05: Uncompressed High-Payload Message Publishing Causing Network Saturation
     if ((/publishMessage/i.test(cleanContent) && !/compressPayload/i.test(cleanContent))) {
-        const matchLineIdx = lines.findIndex(l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('#') && !l.trim().startsWith('*'));
+        const matchLineIdx = locateMatchLine(lines, [/publishMessage/i], l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('#') && !l.trim().startsWith('*'));
         const lineNum = matchLineIdx !== -1 ? matchLineIdx + 1 : 1;
         findings.push({
             id: `mqopt14505-${Date.now()}-${findingCounter.count++}`,

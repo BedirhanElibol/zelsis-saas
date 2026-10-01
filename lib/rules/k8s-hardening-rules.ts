@@ -4,6 +4,7 @@
  */
 import { Finding } from "@/data/schema";
 import { CodeFile } from "../scanner-engine";
+import { locateMatchLine } from './shared/locate';
 export interface K8sHardeningRuleResult {
     findings: Finding[];
     logs: string[];
@@ -25,7 +26,7 @@ export function evaluateK8sHardeningRules(file: CodeFile, lines: string[], clean
     const ts = new Date().toLocaleTimeString();
     // K8S-01: Privileged Container Execution (privileged: true)
     if (/privileged\s*:\s*true/i.test(cleanContent)) {
-        const matchLineIdx = lines.findIndex(l => !l.trim().startsWith('#'));
+        const matchLineIdx = locateMatchLine(lines, [/privileged\s*:\s*true/i], l => !l.trim().startsWith('#'));
         const lineNum = matchLineIdx !== -1 ? matchLineIdx + 1 : 1;
         findings.push({
             id: `k8s8901-${Date.now()}-${findingCounter.count++}`,
@@ -49,7 +50,7 @@ export function evaluateK8sHardeningRules(file: CodeFile, lines: string[], clean
     }
     // K8S-02: Container Allowed to Run as Root User
     if (/runAsUser\s*:\s*0\b/i.test(cleanContent) || (cleanContent.includes('kind: Deployment'))) {
-        const matchLineIdx = lines.findIndex(l => !l.trim().startsWith('#'));
+        const matchLineIdx = locateMatchLine(lines, [/runAsUser\s*:\s*0\b/i], l => !l.trim().startsWith('#'));
         const lineNum = matchLineIdx !== -1 ? matchLineIdx + 1 : 1;
         findings.push({
             id: `k8s8902-${Date.now()}-${findingCounter.count++}`,
@@ -73,7 +74,7 @@ export function evaluateK8sHardeningRules(file: CodeFile, lines: string[], clean
     }
     // K8S-03: Missing CPU and Memory Resource Limits
     if (/containers\s*:/i.test(cleanContent) && !/limits\s*:[\s\S]*?cpu/i.test(cleanContent)) {
-        const matchLineIdx = lines.findIndex(l => !l.trim().startsWith('#'));
+        const matchLineIdx = locateMatchLine(lines, [/containers\s*:/i], l => !l.trim().startsWith('#'));
         const lineNum = matchLineIdx !== -1 ? matchLineIdx + 1 : 1;
         findings.push({
             id: `k8s8903-${Date.now()}-${findingCounter.count++}`,
@@ -97,7 +98,7 @@ export function evaluateK8sHardeningRules(file: CodeFile, lines: string[], clean
     }
     // K8S-04: Dangerous Host Path Volume Mount (/ or /etc or /var/run)
     if (/hostPath\s*:[\s\S]*?path\s*:\s*['"]?(?:\/|\/etc|\/var\/run\/docker\.sock)['"]?/i.test(cleanContent)) {
-        const matchLineIdx = lines.findIndex(l => !l.trim().startsWith('#'));
+        const matchLineIdx = locateMatchLine(lines, [/hostPath\s*:[\s\S]*?path\s*:\s*['"]?(?:\/|\/etc|\/var\/run\/docker\.sock)['"]?/i], l => !l.trim().startsWith('#'));
         const lineNum = matchLineIdx !== -1 ? matchLineIdx + 1 : 1;
         findings.push({
             id: `k8s8904-${Date.now()}-${findingCounter.count++}`,
@@ -145,7 +146,7 @@ export function evaluateK8sHardeningRules(file: CodeFile, lines: string[], clean
     }
     // K8S-06: Missing Pod Disruption Budget (PDB) on Critical Deployments
     if ((/kind:\s*Deployment/i.test(cleanContent) && /replicas:\s*[2-9]/i.test(cleanContent) && !/PodDisruptionBudget/i.test(cleanContent))) {
-        const matchLineIdx = lines.findIndex(l => !l.trim().startsWith('#'));
+        const matchLineIdx = locateMatchLine(lines, [/kind:\s*Deployment/i, /replicas:\s*[2-9]/i], l => !l.trim().startsWith('#'));
         const lineNum = matchLineIdx !== -1 ? matchLineIdx + 1 : 1;
         findings.push({
             id: `k8s8906-${Date.now()}-${findingCounter.count++}`,
@@ -193,7 +194,7 @@ export function evaluateK8sHardeningRules(file: CodeFile, lines: string[], clean
     }
     // K8S-08: Writable Root Filesystem (readOnlyRootFilesystem: false)
     if (/readOnlyRootFilesystem\s*:\s*false/i.test(cleanContent)) {
-        const matchLineIdx = lines.findIndex(l => !l.trim().startsWith('#'));
+        const matchLineIdx = locateMatchLine(lines, [/readOnlyRootFilesystem\s*:\s*false/i], l => !l.trim().startsWith('#'));
         const lineNum = matchLineIdx !== -1 ? matchLineIdx + 1 : 1;
         findings.push({
             id: `k8s8908-${Date.now()}-${findingCounter.count++}`,
@@ -217,7 +218,7 @@ export function evaluateK8sHardeningRules(file: CodeFile, lines: string[], clean
     }
     // K8S-09: Container Insecure Capability Allocation (ALL or CAP_SYS_ADMIN)
     if (/(?:CAP_SYS_ADMIN|add\s*:\s*\[\s*['"]ALL['"])/i.test(cleanContent)) {
-        const matchLineIdx = lines.findIndex(l => !l.trim().startsWith('#'));
+        const matchLineIdx = locateMatchLine(lines, [/(?:CAP_SYS_ADMIN|add\s*:\s*\[\s*['"]ALL['"])/i], l => !l.trim().startsWith('#'));
         const lineNum = matchLineIdx !== -1 ? matchLineIdx + 1 : 1;
         findings.push({
             id: `k8s8909-${Date.now()}-${findingCounter.count++}`,
@@ -241,7 +242,7 @@ export function evaluateK8sHardeningRules(file: CodeFile, lines: string[], clean
     }
     // K8S-10: Missing NetworkPolicy for Workload Ingress / Egress Isolation
     if ((/kind:\s*Namespace/i.test(cleanContent) && !/NetworkPolicy/i.test(cleanContent))) {
-        const matchLineIdx = lines.findIndex(l => !l.trim().startsWith('#'));
+        const matchLineIdx = locateMatchLine(lines, [/kind:\s*Namespace/i], l => !l.trim().startsWith('#'));
         const lineNum = matchLineIdx !== -1 ? matchLineIdx + 1 : 1;
         findings.push({
             id: `k8s8910-${Date.now()}-${findingCounter.count++}`,

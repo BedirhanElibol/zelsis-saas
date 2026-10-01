@@ -4,6 +4,7 @@
  */
 import { Finding } from "@/data/schema";
 import { CodeFile } from "../scanner-engine";
+import { locateMatchLine } from './shared/locate';
 export interface FederatedLearningRuleResult {
     findings: Finding[];
     logs: string[];
@@ -21,7 +22,7 @@ export function evaluateFederatedLearningRules(file: CodeFile, lines: string[], 
     const ts = new Date().toLocaleTimeString();
     // FED-LEARN-01: Absence of Differential Privacy Noise Injection on Local Model Gradient Updates
     if (((/gradient_upload|dp_mechanism|federated_client/i.test(lowerPath) || /uploadLocalGradients|addGaussianNoise/i.test(cleanContent)) && !/injectDifferentialPrivacyNoise/i.test(cleanContent))) {
-        const matchLineIdx = lines.findIndex(l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('#') && !l.trim().startsWith('*'));
+        const matchLineIdx = locateMatchLine(lines, [/uploadLocalGradients|addGaussianNoise/i], l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('#') && !l.trim().startsWith('*'));
         const lineNum = matchLineIdx !== -1 ? matchLineIdx + 1 : 1;
         findings.push({
             id: `fedlearn16501-${Date.now()}-${findingCounter.count++}`,
@@ -45,7 +46,7 @@ export function evaluateFederatedLearningRules(file: CodeFile, lines: string[], 
     }
     // FED-LEARN-02: Vulnerability to Model Inversion and Training Data Reconstruction from Gradients
     if (((/secure_aggregation|smpc_masking|homomorphic/i.test(lowerPath) || /aggregateClientTensors|maskLocalUpdate/i.test(cleanContent)) && !/secureMultipartyAggregation/i.test(cleanContent))) {
-        const matchLineIdx = lines.findIndex(l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('#') && !l.trim().startsWith('*'));
+        const matchLineIdx = locateMatchLine(lines, [/aggregateClientTensors|maskLocalUpdate/i], l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('#') && !l.trim().startsWith('*'));
         const lineNum = matchLineIdx !== -1 ? matchLineIdx + 1 : 1;
         findings.push({
             id: `fedlearn16502-${Date.now()}-${findingCounter.count++}`,
@@ -69,7 +70,7 @@ export function evaluateFederatedLearningRules(file: CodeFile, lines: string[], 
     }
     // FED-LEARN-03: Lack of Sybil and Poisoning Defense on Malicious Federated Client Nodes
     if (((/fed_aggregation|fedavg|byzantine_filter/i.test(lowerPath) || /federatedAveraging|krumAggregate/i.test(cleanContent)) && !/byzantineRobustMedian|krumFiltering/i.test(cleanContent))) {
-        const matchLineIdx = lines.findIndex(l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('#') && !l.trim().startsWith('*'));
+        const matchLineIdx = locateMatchLine(lines, [/federatedAveraging|krumAggregate/i], l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('#') && !l.trim().startsWith('*'));
         const lineNum = matchLineIdx !== -1 ? matchLineIdx + 1 : 1;
         findings.push({
             id: `fedlearn16503-${Date.now()}-${findingCounter.count++}`,
@@ -93,7 +94,7 @@ export function evaluateFederatedLearningRules(file: CodeFile, lines: string[], 
     }
     // FED-LEARN-04: Unbounded Client Update Norms Permitting Backdoor Trigger Injection
     if (((/gradient_norm|clipping_bound/i.test(lowerPath) || /clipGradientNorm|l2NormThreshold/i.test(cleanContent)) && !/clipGradientsL2Norm/i.test(cleanContent))) {
-        const matchLineIdx = lines.findIndex(l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('#') && !l.trim().startsWith('*'));
+        const matchLineIdx = locateMatchLine(lines, [/clipGradientNorm|l2NormThreshold/i], l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('#') && !l.trim().startsWith('*'));
         const lineNum = matchLineIdx !== -1 ? matchLineIdx + 1 : 1;
         findings.push({
             id: `fedlearn16504-${Date.now()}-${findingCounter.count++}`,
@@ -117,7 +118,7 @@ export function evaluateFederatedLearningRules(file: CodeFile, lines: string[], 
     }
     // FED-LEARN-05: Missing Cryptographic Verification of Client Participation Eligibility
     if (((/client_enrollment|federated_auth/i.test(lowerPath) || /authenticateFederatedClient|zkProofVerify/i.test(cleanContent)) && !/verifyClientTlsAndEligibility/i.test(cleanContent))) {
-        const matchLineIdx = lines.findIndex(l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('#') && !l.trim().startsWith('*'));
+        const matchLineIdx = locateMatchLine(lines, [/authenticateFederatedClient|zkProofVerify/i], l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('#') && !l.trim().startsWith('*'));
         const lineNum = matchLineIdx !== -1 ? matchLineIdx + 1 : 1;
         findings.push({
             id: `fedlearn16505-${Date.now()}-${findingCounter.count++}`,

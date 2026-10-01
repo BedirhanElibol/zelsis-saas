@@ -4,6 +4,7 @@
  */
 import { Finding } from "@/data/schema";
 import { CodeFile } from "../scanner-engine";
+import { locateMatchLine } from './shared/locate';
 export interface MobileSecurityRuleResult {
     findings: Finding[];
     logs: string[];
@@ -25,7 +26,7 @@ export function evaluateMobileSecurityRules(file: CodeFile, lines: string[], cle
     const ts = new Date().toLocaleTimeString();
     // MOB-SEC-01: Insecure Local Data Storage in Cleartext SharedPreferences
     if ((/getSharedPreferences\s*\([\s\S]*?MODE_PRIVATE/i.test(cleanContent) && cleanContent.includes('authToken'))) {
-        const matchLineIdx = lines.findIndex(l => !l.trim().startsWith('//') && !l.trim().startsWith('<!--') && !l.trim().startsWith('*'));
+        const matchLineIdx = locateMatchLine(lines, [/getSharedPreferences\s*\([\s\S]*?MODE_PRIVATE/i], l => !l.trim().startsWith('//') && !l.trim().startsWith('<!--') && !l.trim().startsWith('*'));
         const lineNum = matchLineIdx !== -1 ? matchLineIdx + 1 : 1;
         findings.push({
             id: `mobsec9301-${Date.now()}-${findingCounter.count++}`,
@@ -49,7 +50,7 @@ export function evaluateMobileSecurityRules(file: CodeFile, lines: string[], cle
     }
     // MOB-SEC-02: Hardcoded API Keys or OAuth Secrets in Mobile App Bundle
     if ((/static\s+let\s+clientSecret\s*=\s*['"][a-zA-Z0-9_-]{20,}['"]/i.test(cleanContent))) {
-        const matchLineIdx = lines.findIndex(l => !l.trim().startsWith('//') && !l.trim().startsWith('<!--') && !l.trim().startsWith('*'));
+        const matchLineIdx = locateMatchLine(lines, [/static\s+let\s+clientSecret\s*=\s*['"][a-zA-Z0-9_-]{20,}['"]/i], l => !l.trim().startsWith('//') && !l.trim().startsWith('<!--') && !l.trim().startsWith('*'));
         const lineNum = matchLineIdx !== -1 ? matchLineIdx + 1 : 1;
         findings.push({
             id: `mobsec9302-${Date.now()}-${findingCounter.count++}`,
@@ -73,7 +74,7 @@ export function evaluateMobileSecurityRules(file: CodeFile, lines: string[], cle
     }
     // MOB-SEC-03: Cleartext HTTP Traffic Permitted in Mobile Manifest
     if ((/android:usesCleartextTraffic\s*=\s*['"]true['"]/i.test(cleanContent)) || (/NSAllowsArbitraryLoads[\s\S]*?<true\/>/i.test(cleanContent))) {
-        const matchLineIdx = lines.findIndex(l => !l.trim().startsWith('//') && !l.trim().startsWith('<!--') && !l.trim().startsWith('*'));
+        const matchLineIdx = locateMatchLine(lines, [/android:usesCleartextTraffic\s*=\s*['"]true['"]/i, /NSAllowsArbitraryLoads[\s\S]*?<true\/>/i], l => !l.trim().startsWith('//') && !l.trim().startsWith('<!--') && !l.trim().startsWith('*'));
         const lineNum = matchLineIdx !== -1 ? matchLineIdx + 1 : 1;
         findings.push({
             id: `mobsec9303-${Date.now()}-${findingCounter.count++}`,
@@ -97,7 +98,7 @@ export function evaluateMobileSecurityRules(file: CodeFile, lines: string[], cle
     }
     // MOB-SEC-04: Missing SSL / TLS Certificate Pinning on Critical Endpoints
     if ((/(?:URLSession|OkHttpClient|Dio)\b/.test(cleanContent) && !/certificatePinner|pinnedCertificates|ServerTrustPolicy/i.test(cleanContent))) {
-        const matchLineIdx = lines.findIndex(l => !l.trim().startsWith('//') && !l.trim().startsWith('<!--') && !l.trim().startsWith('*'));
+        const matchLineIdx = locateMatchLine(lines, [/(?:URLSession|OkHttpClient|Dio)\b/], l => !l.trim().startsWith('//') && !l.trim().startsWith('<!--') && !l.trim().startsWith('*'));
         const lineNum = matchLineIdx !== -1 ? matchLineIdx + 1 : 1;
         findings.push({
             id: `mobsec9304-${Date.now()}-${findingCounter.count++}`,
@@ -121,7 +122,7 @@ export function evaluateMobileSecurityRules(file: CodeFile, lines: string[], cle
     }
     // MOB-SEC-05: Exported Android Component Lacking Permission Guard
     if ((/android:exported\s*=\s*['"]true['"]/i.test(cleanContent) && !/android:permission/i.test(cleanContent) && cleanContent.includes('<activity'))) {
-        const matchLineIdx = lines.findIndex(l => !l.trim().startsWith('//') && !l.trim().startsWith('<!--') && !l.trim().startsWith('*'));
+        const matchLineIdx = locateMatchLine(lines, [/android:exported\s*=\s*['"]true['"]/i], l => !l.trim().startsWith('//') && !l.trim().startsWith('<!--') && !l.trim().startsWith('*'));
         const lineNum = matchLineIdx !== -1 ? matchLineIdx + 1 : 1;
         findings.push({
             id: `mobsec9305-${Date.now()}-${findingCounter.count++}`,

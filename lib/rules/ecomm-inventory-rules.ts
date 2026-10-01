@@ -4,6 +4,7 @@
  */
 import { Finding } from "@/data/schema";
 import { CodeFile } from "../scanner-engine";
+import { locateMatchLine } from './shared/locate';
 export interface EcommInventoryRuleResult {
     findings: Finding[];
     logs: string[];
@@ -21,7 +22,7 @@ export function evaluateEcommInventoryRules(file: CodeFile, lines: string[], cle
     const ts = new Date().toLocaleTimeString();
     // ECOMM-01: Inventory Overselling Race Condition (Missing Row-Level Lock)
     if ((/stock\s*=\s*stock\s*-\s*1/i.test(cleanContent) && !/FOR\s+UPDATE|atomic/i.test(cleanContent))) {
-        const matchLineIdx = lines.findIndex(l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('*'));
+        const matchLineIdx = locateMatchLine(lines, [/stock\s*=\s*stock\s*-\s*1/i], l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('*'));
         const lineNum = matchLineIdx !== -1 ? matchLineIdx + 1 : 1;
         findings.push({
             id: `ecomm10101-${Date.now()}-${findingCounter.count++}`,
@@ -45,7 +46,7 @@ export function evaluateEcommInventoryRules(file: CodeFile, lines: string[], cle
     }
     // ECOMM-02: Client-Supplied Price / Discount Tampering Vulnerability
     if ((/total\s*\+?=\s*(?:req\.body|item)\.price/i.test(cleanContent))) {
-        const matchLineIdx = lines.findIndex(l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('*'));
+        const matchLineIdx = locateMatchLine(lines, [/total\s*\+?=\s*(?:req\.body|item)\.price/i], l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('*'));
         const lineNum = matchLineIdx !== -1 ? matchLineIdx + 1 : 1;
         findings.push({
             id: `ecomm10102-${Date.now()}-${findingCounter.count++}`,
@@ -69,7 +70,7 @@ export function evaluateEcommInventoryRules(file: CodeFile, lines: string[], cle
     }
     // ECOMM-03: Coupon Code Re-entrancy / Parallel Redemption Exploit
     if ((/applyCoupon|redeemDiscount/i.test(cleanContent) && !/transaction|forUpdate|lock|mutex/i.test(cleanContent))) {
-        const matchLineIdx = lines.findIndex(l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('*'));
+        const matchLineIdx = locateMatchLine(lines, [/applyCoupon|redeemDiscount/i], l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('*'));
         const lineNum = matchLineIdx !== -1 ? matchLineIdx + 1 : 1;
         findings.push({
             id: `ecomm10103-${Date.now()}-${findingCounter.count++}`,
@@ -93,7 +94,7 @@ export function evaluateEcommInventoryRules(file: CodeFile, lines: string[], cle
     }
     // ECOMM-04: Negative Quantity Shopping Cart Exploit (Price Inversion)
     if ((/quantity\s*:\s*(?:req\.body|body)\.quantity/.test(cleanContent) && !/quantity\s*>\s*0|Math\.max/i.test(cleanContent))) {
-        const matchLineIdx = lines.findIndex(l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('*'));
+        const matchLineIdx = locateMatchLine(lines, [/quantity\s*:\s*(?:req\.body|body)\.quantity/], l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('*'));
         const lineNum = matchLineIdx !== -1 ? matchLineIdx + 1 : 1;
         findings.push({
             id: `ecomm10104-${Date.now()}-${findingCounter.count++}`,
@@ -117,7 +118,7 @@ export function evaluateEcommInventoryRules(file: CodeFile, lines: string[], cle
     }
     // ECOMM-05: Shopping Cart Session Hijacking via Predictable Cart ID
     if ((/cartId\s*=\s*(?:Date\.now\(\)|Math\.random\(\))/.test(cleanContent))) {
-        const matchLineIdx = lines.findIndex(l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('*'));
+        const matchLineIdx = locateMatchLine(lines, [/cartId\s*=\s*(?:Date\.now\(\)|Math\.random\(\))/], l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('*'));
         const lineNum = matchLineIdx !== -1 ? matchLineIdx + 1 : 1;
         findings.push({
             id: `ecomm10105-${Date.now()}-${findingCounter.count++}`,

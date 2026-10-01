@@ -4,6 +4,7 @@
  */
 import { Finding } from "@/data/schema";
 import { CodeFile } from "../scanner-engine";
+import { locateMatchLine } from './shared/locate';
 export interface OwaspAsvsRuleResult {
     findings: Finding[];
     logs: string[];
@@ -21,7 +22,7 @@ export function evaluateOwaspAsvsRules(file: CodeFile, lines: string[], cleanCon
     const ts = new Date().toLocaleTimeString();
     // ASVS-01: ASVS V2.1 Password Security: Permitting Weak Passwords or Failing Breached Checks
     if (((/passwordValidator/i.test(lowerPath) || /passwordValidator/i.test(cleanContent)) && !/haveIBeenPwned/i.test(cleanContent))) {
-        const matchLineIdx = lines.findIndex(l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('#') && !l.trim().startsWith('*'));
+        const matchLineIdx = locateMatchLine(lines, [/passwordValidator/i], l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('#') && !l.trim().startsWith('*'));
         const lineNum = matchLineIdx !== -1 ? matchLineIdx + 1 : 1;
         findings.push({
             id: `asvs13801-${Date.now()}-${findingCounter.count++}`,
@@ -45,7 +46,7 @@ export function evaluateOwaspAsvsRules(file: CodeFile, lines: string[], cleanCon
     }
     // ASVS-02: ASVS V3.2 Session Management: Permitting Session Fixation or Insecure Cookie Flags
     if ((/(?:setHeader\(\s*["']set-cookie["']|cookies\(\)\.set|response\.cookies\.set)\s*\(/i.test(cleanContent) && !/HttpOnly/i.test(cleanContent))) {
-        const matchLineIdx = lines.findIndex(l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('#') && !l.trim().startsWith('*'));
+        const matchLineIdx = locateMatchLine(lines, [/(?:setHeader\(\s*["']set-cookie["']|cookies\(\)\.set|response\.cookies\.set)\s*\(/i], l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('#') && !l.trim().startsWith('*'));
         const lineNum = matchLineIdx !== -1 ? matchLineIdx + 1 : 1;
         findings.push({
             id: `asvs13802-${Date.now()}-${findingCounter.count++}`,
@@ -69,7 +70,7 @@ export function evaluateOwaspAsvsRules(file: CodeFile, lines: string[], cleanCon
     }
     // ASVS-03: ASVS V4.1 Access Control: Insecure Direct Object References (IDOR) on Tenant APIs
     if ((/lookupRecord|findById/i.test(cleanContent) && !/where.*tenant_id/i.test(cleanContent))) {
-        const matchLineIdx = lines.findIndex(l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('#') && !l.trim().startsWith('*'));
+        const matchLineIdx = locateMatchLine(lines, [/lookupRecord|findById/i], l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('#') && !l.trim().startsWith('*'));
         const lineNum = matchLineIdx !== -1 ? matchLineIdx + 1 : 1;
         findings.push({
             id: `asvs13803-${Date.now()}-${findingCounter.count++}`,
@@ -93,7 +94,7 @@ export function evaluateOwaspAsvsRules(file: CodeFile, lines: string[], cleanCon
     }
     // ASVS-04: ASVS V5.1 Input Validation: Missing Canonicalization Before Parsing
     if ((/sanitizeInput/i.test(cleanContent) && !/normalize\('NFKC'\)/i.test(cleanContent))) {
-        const matchLineIdx = lines.findIndex(l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('#') && !l.trim().startsWith('*'));
+        const matchLineIdx = locateMatchLine(lines, [/sanitizeInput/i], l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('#') && !l.trim().startsWith('*'));
         const lineNum = matchLineIdx !== -1 ? matchLineIdx + 1 : 1;
         findings.push({
             id: `asvs13804-${Date.now()}-${findingCounter.count++}`,
@@ -117,7 +118,7 @@ export function evaluateOwaspAsvsRules(file: CodeFile, lines: string[], cleanCon
     }
     // ASVS-05: ASVS V6.2 Cryptographic Storage: Using Insecure Random Salt or Low Iteration Counts
     if ((/pbkdf2|bcrypt/i.test(cleanContent))) {
-        const matchLineIdx = lines.findIndex(l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('#') && !l.trim().startsWith('*'));
+        const matchLineIdx = locateMatchLine(lines, [/pbkdf2|bcrypt/i], l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('#') && !l.trim().startsWith('*'));
         const lineNum = matchLineIdx !== -1 ? matchLineIdx + 1 : 1;
         findings.push({
             id: `asvs13805-${Date.now()}-${findingCounter.count++}`,

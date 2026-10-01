@@ -4,6 +4,7 @@
  */
 import { Finding } from "@/data/schema";
 import { CodeFile } from "../scanner-engine";
+import { locateMatchLine } from './shared/locate';
 export interface VectorDbRuleResult {
     findings: Finding[];
     logs: string[];
@@ -25,7 +26,7 @@ export function evaluateVectorDbRules(file: CodeFile, lines: string[], cleanCont
     const ts = new Date().toLocaleTimeString();
     // VECTOR-01: Unindexed Vector Column Triggering Exhaustive Flat KNN Scans
     if ((/createCollection|create_index/i.test(cleanContent) && !/HNSW|IVF_FLAT/i.test(cleanContent))) {
-        const matchLineIdx = lines.findIndex(l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('#') && !l.trim().startsWith('*'));
+        const matchLineIdx = locateMatchLine(lines, [/createCollection|create_index/i], l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('#') && !l.trim().startsWith('*'));
         const lineNum = matchLineIdx !== -1 ? matchLineIdx + 1 : 1;
         findings.push({
             id: `vector13501-${Date.now()}-${findingCounter.count++}`,
@@ -49,7 +50,7 @@ export function evaluateVectorDbRules(file: CodeFile, lines: string[], cleanCont
     }
     // VECTOR-02: Embedding Vector Dimension Mismatch at Query Time
     if ((/searchVector|similaritySearch/i.test(cleanContent) && !/assertDimension/i.test(cleanContent))) {
-        const matchLineIdx = lines.findIndex(l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('#') && !l.trim().startsWith('*'));
+        const matchLineIdx = locateMatchLine(lines, [/searchVector|similaritySearch/i], l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('#') && !l.trim().startsWith('*'));
         const lineNum = matchLineIdx !== -1 ? matchLineIdx + 1 : 1;
         findings.push({
             id: `vector13502-${Date.now()}-${findingCounter.count++}`,
@@ -73,7 +74,7 @@ export function evaluateVectorDbRules(file: CodeFile, lines: string[], cleanCont
     }
     // VECTOR-03: Unbounded Similarity Query Limit (top_k > 1000) Causing Memory Exhaustion
     if ((/top_k:\s*\d{4,}/i.test(cleanContent) && !/maxTopK/i.test(cleanContent))) {
-        const matchLineIdx = lines.findIndex(l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('#') && !l.trim().startsWith('*'));
+        const matchLineIdx = locateMatchLine(lines, [/top_k:\s*\d{4,}/i], l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('#') && !l.trim().startsWith('*'));
         const lineNum = matchLineIdx !== -1 ? matchLineIdx + 1 : 1;
         findings.push({
             id: `vector13503-${Date.now()}-${findingCounter.count++}`,
@@ -97,7 +98,7 @@ export function evaluateVectorDbRules(file: CodeFile, lines: string[], cleanCont
     }
     // VECTOR-04: HNSW Index Parameters M and efConstruction Suboptimally Tuned
     if ((/index_params/i.test(cleanContent) && !/efConstruction/i.test(cleanContent))) {
-        const matchLineIdx = lines.findIndex(l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('#') && !l.trim().startsWith('*'));
+        const matchLineIdx = locateMatchLine(lines, [/index_params/i], l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('#') && !l.trim().startsWith('*'));
         const lineNum = matchLineIdx !== -1 ? matchLineIdx + 1 : 1;
         findings.push({
             id: `vector13504-${Date.now()}-${findingCounter.count++}`,
@@ -121,7 +122,7 @@ export function evaluateVectorDbRules(file: CodeFile, lines: string[], cleanCont
     }
     // VECTOR-05: Missing Inverted Index on Vector Metadata Filter Fields
     if ((/vectorFilter|searchParams/i.test(cleanContent) && !/createPayloadIndex/i.test(cleanContent))) {
-        const matchLineIdx = lines.findIndex(l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('#') && !l.trim().startsWith('*'));
+        const matchLineIdx = locateMatchLine(lines, [/vectorFilter|searchParams/i], l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('#') && !l.trim().startsWith('*'));
         const lineNum = matchLineIdx !== -1 ? matchLineIdx + 1 : 1;
         findings.push({
             id: `vector13505-${Date.now()}-${findingCounter.count++}`,

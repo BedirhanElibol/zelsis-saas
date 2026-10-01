@@ -4,6 +4,7 @@
  */
 import { Finding } from '@/data/schema';
 import { CodeFile } from '../scanner-engine';
+import { locateMatchLine } from './shared/locate';
 export interface WebVitalsRuleResult {
     findings: Finding[];
     logs: string[];
@@ -21,7 +22,7 @@ export function evaluateWebVitalsRules(file: CodeFile, lines: string[], cleanCon
     const ts = new Date().toLocaleTimeString();
     // WEB-PERF-01: Above-The-Fold Hero Image Missing Priority Attribute
     if (/(?:Hero|Banner|AboveFold)[\s\S]{0,300}<Image\b(?![^>]*\bpriority\b)[^>]*>/i.test(cleanContent) && /\.(?:tsx|jsx)$/i.test(file.path)) {
-        const matchLineIdx = lines.findIndex(l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('*') && (/web-perf-01|above-the-fold/i.test(l) || lines.indexOf(l) === 0));
+        const matchLineIdx = locateMatchLine(lines, [/(?:Hero|Banner|AboveFold)[\s\S]{0,300}<Image\b(?![^>]*\bpriority\b)[^>]*>/i], l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('*'));
         const lineNum = matchLineIdx !== -1 ? matchLineIdx + 1 : 1;
         findings.push({
             id: `webperf01-${Date.now()}-${findingCounter.count++}`,
@@ -46,7 +47,7 @@ export function evaluateWebVitalsRules(file: CodeFile, lines: string[], cleanCon
     }
     // WEB-PERF-02: Unsized Image or Video Element Causing Layout Shift
     if (/<(?:img|video)\b(?![^>]*(?:width|height|aspect-ratio|w-|h-))[^>]*>/i.test(cleanContent) && /\.(?:html|tsx|jsx)$/i.test(file.path) && !/avatar|icon|logo|profile/i.test(lowerPath)) {
-        const matchLineIdx = lines.findIndex(l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('*') && (/web-perf-02|unsized/i.test(l) || lines.indexOf(l) === 0));
+        const matchLineIdx = locateMatchLine(lines, [/<(?:img|video)\b(?![^>]*(?:width|height|aspect-ratio|w-|h-))[^>]*>/i], l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('*'));
         const lineNum = matchLineIdx !== -1 ? matchLineIdx + 1 : 1;
         findings.push({
             id: `webperf02-${Date.now()}-${findingCounter.count++}`,
@@ -71,7 +72,7 @@ export function evaluateWebVitalsRules(file: CodeFile, lines: string[], cleanCon
     }
     // WEB-PERF-03: Synchronous Third-Party Script Tag Blocking Render
     if (/<script\b(?![^>]*(?:async|defer|type=["\']module["\']))[^>]*src=["\']https?:\/\/(?!localhost)[^"\']*["\'][^>]*>/i.test(cleanContent) && /\.(?:html|tsx|jsx)$/i.test(file.path)) {
-        const matchLineIdx = lines.findIndex(l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('*') && (/web-perf-03|synchronous/i.test(l) || lines.indexOf(l) === 0));
+        const matchLineIdx = locateMatchLine(lines, [/<script\b(?![^>]*(?:async|defer|type=["\']module["\']))[^>]*src=["\']https?:\/\/(?!localhost)[^"\']*["\'][^>]*>/i], l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('*'));
         const lineNum = matchLineIdx !== -1 ? matchLineIdx + 1 : 1;
         findings.push({
             id: `webperf03-${Date.now()}-${findingCounter.count++}`,
@@ -96,7 +97,7 @@ export function evaluateWebVitalsRules(file: CodeFile, lines: string[], cleanCon
     }
     // WEB-PERF-04: Non-Passive Touch or Wheel Event Listener
     if (/addEventListener\(\s*[\'"](?:touchstart|touchmove|wheel)[\'"]\s*,\s*[^,)]+\)(?!\s*,\s*\{\s*passive:\s*true)/i.test(cleanContent)) {
-        const matchLineIdx = lines.findIndex(l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('*') && (/web-perf-04|non-passive/i.test(l) || lines.indexOf(l) === 0));
+        const matchLineIdx = locateMatchLine(lines, [/addEventListener\(\s*[\'"](?:touchstart|touchmove|wheel)[\'"]\s*,\s*[^,)]+\)(?!\s*,\s*\{\s*passive:\s*true)/i], l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('*'));
         const lineNum = matchLineIdx !== -1 ? matchLineIdx + 1 : 1;
         findings.push({
             id: `webperf04-${Date.now()}-${findingCounter.count++}`,
@@ -121,7 +122,7 @@ export function evaluateWebVitalsRules(file: CodeFile, lines: string[], cleanCon
     }
     // WEB-PERF-05: Uncompressed Legacy Font Format (.ttf / .otf) in Bundle
     if (/@font-face\s*\{[^}]*url\([^)]+\.(?:ttf|otf)[\'"]?\)(?![^}]*url\([^)]+\.woff2)/i.test(cleanContent)) {
-        const matchLineIdx = lines.findIndex(l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('*') && (/web-perf-05|uncompressed/i.test(l) || lines.indexOf(l) === 0));
+        const matchLineIdx = locateMatchLine(lines, [/@font-face\s*\{[^}]*url\([^)]+\.(?:ttf|otf)[\'"]?\)(?![^}]*url\([^)]+\.woff2)/i], l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('*'));
         const lineNum = matchLineIdx !== -1 ? matchLineIdx + 1 : 1;
         findings.push({
             id: `webperf05-${Date.now()}-${findingCounter.count++}`,
@@ -146,7 +147,7 @@ export function evaluateWebVitalsRules(file: CodeFile, lines: string[], cleanCon
     }
     // WEB-PERF-06: CSS @import Directive in Render-Critical Stylesheet
     if (/@import\s+(?:url\([\'"][^\'"]+[\'"]\)|[\'"][^\'"]+[\'"])\s*;/i.test(cleanContent) && !/globals\.css|tailwind/i.test(lowerPath) && /\.(?:css|scss)$/i.test(file.path)) {
-        const matchLineIdx = lines.findIndex(l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('*') && (/web-perf-06|css/i.test(l) || lines.indexOf(l) === 0));
+        const matchLineIdx = locateMatchLine(lines, [/@import\s+(?:url\([\'"][^\'"]+[\'"]\)|[\'"][^\'"]+[\'"])\s*;/i], l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('*'));
         const lineNum = matchLineIdx !== -1 ? matchLineIdx + 1 : 1;
         findings.push({
             id: `webperf06-${Date.now()}-${findingCounter.count++}`,
@@ -171,7 +172,7 @@ export function evaluateWebVitalsRules(file: CodeFile, lines: string[], cleanCon
     }
     // WEB-PERF-07: Excessive DOM Node Tree Depth (>32 Levels)
     if (/(?:<div[^>]*>\s*){33,}/i.test(cleanContent) && /\.(?:tsx|jsx|html)$/i.test(file.path)) {
-        const matchLineIdx = lines.findIndex(l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('*') && (/web-perf-07|excessive/i.test(l) || lines.indexOf(l) === 0));
+        const matchLineIdx = locateMatchLine(lines, [/(?:<div[^>]*>\s*){33,}/i], l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('*'));
         const lineNum = matchLineIdx !== -1 ? matchLineIdx + 1 : 1;
         findings.push({
             id: `webperf07-${Date.now()}-${findingCounter.count++}`,
@@ -196,7 +197,7 @@ export function evaluateWebVitalsRules(file: CodeFile, lines: string[], cleanCon
     }
     // WEB-PERF-08: Unmemoized Heavy Computation in Component Render Body
     if (/\bconst\s+[a-zA-Z0-9_]+\s*=\s*[a-zA-Z0-9_]+\.(?:filter|map|reduce)\([^)]*\)\.(?:sort|filter)\([^)]*\);(?![^}]*useMemo)/i.test(cleanContent) && /\.(?:tsx|jsx)$/i.test(file.path)) {
-        const matchLineIdx = lines.findIndex(l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('*') && (/web-perf-08|unmemoized/i.test(l) || lines.indexOf(l) === 0));
+        const matchLineIdx = locateMatchLine(lines, [/\bconst\s+[a-zA-Z0-9_]+\s*=\s*[a-zA-Z0-9_]+\.(?:filter|map|reduce)\([^)]*\)\.(?:sort|filter)\([^)]*\);(?![^}]*useMemo)/i], l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('*'));
         const lineNum = matchLineIdx !== -1 ? matchLineIdx + 1 : 1;
         findings.push({
             id: `webperf08-${Date.now()}-${findingCounter.count++}`,
@@ -221,7 +222,7 @@ export function evaluateWebVitalsRules(file: CodeFile, lines: string[], cleanCon
     }
     // WEB-PERF-09: Unthrottled Window Scroll or Resize Event Handler
     if (/window\.addEventListener\(\s*[\'"](?:scroll|resize)[\'"]\s*,\s*\(\s*\)\s*=>\s*\{[^}]*setState/i.test(cleanContent) && !/throttle|debounce|requestAnimationFrame/i.test(cleanContent)) {
-        const matchLineIdx = lines.findIndex(l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('*') && (/web-perf-09|unthrottled/i.test(l) || lines.indexOf(l) === 0));
+        const matchLineIdx = locateMatchLine(lines, [/window\.addEventListener\(\s*[\'"](?:scroll|resize)[\'"]\s*,\s*\(\s*\)\s*=>\s*\{[^}]*setState/i], l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('*'));
         const lineNum = matchLineIdx !== -1 ? matchLineIdx + 1 : 1;
         findings.push({
             id: `webperf09-${Date.now()}-${findingCounter.count++}`,
@@ -246,7 +247,7 @@ export function evaluateWebVitalsRules(file: CodeFile, lines: string[], cleanCon
     }
     // WEB-PERF-10: Unoptimized SVG with Embedded Raster Base64 Data
     if (/<svg\b[^>]*>[\s\S]*?data:image\/(?:png|jpeg|webp);base64,[a-zA-Z0-9+/=]{2000,}[\s\S]*?<\/svg>/i.test(cleanContent)) {
-        const matchLineIdx = lines.findIndex(l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('*') && (/web-perf-10|unoptimized/i.test(l) || lines.indexOf(l) === 0));
+        const matchLineIdx = locateMatchLine(lines, [/<svg\b[^>]*>[\s\S]*?data:image\/(?:png|jpeg|webp);base64,[a-zA-Z0-9+/=]{2000,}[\s\S]*?<\/svg>/i], l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('*'));
         const lineNum = matchLineIdx !== -1 ? matchLineIdx + 1 : 1;
         findings.push({
             id: `webperf10-${Date.now()}-${findingCounter.count++}`,
@@ -271,7 +272,7 @@ export function evaluateWebVitalsRules(file: CodeFile, lines: string[], cleanCon
     }
     // WEB-PERF-11: Missing Preconnect for Critical External CDNs
     if (/<link[^>]+href=[\'"]https:\/\/(?:fonts\.googleapis\.com|cdn\.jsdelivr\.net)[^\'"]*[\'"][^>]*>/i.test(cleanContent) && !/rel=[\'"]preconnect[\'"]/i.test(cleanContent) && /\.(?:html|tsx|jsx)$/i.test(file.path)) {
-        const matchLineIdx = lines.findIndex(l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('*') && (/web-perf-11|missing/i.test(l) || lines.indexOf(l) === 0));
+        const matchLineIdx = locateMatchLine(lines, [/<link[^>]+href=[\'"]https:\/\/(?:fonts\.googleapis\.com|cdn\.jsdelivr\.net)[^\'"]*[\'"][^>]*>/i], l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('*'));
         const lineNum = matchLineIdx !== -1 ? matchLineIdx + 1 : 1;
         findings.push({
             id: `webperf11-${Date.now()}-${findingCounter.count++}`,
@@ -296,7 +297,7 @@ export function evaluateWebVitalsRules(file: CodeFile, lines: string[], cleanCon
     }
     // WEB-PERF-12: Client Component Wrapping Entire Page Tree
     if (/^[\'"]use client[\'"]/m.test(cleanContent) && /app\/.*page\.tsx$/i.test(file.path) && /export\s+default\s+function/i.test(cleanContent) && /deoptServerComponent|heavyClientPageTree/i.test(cleanContent)) {
-        const matchLineIdx = lines.findIndex(l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('*') && (/web-perf-12|client/i.test(l) || lines.indexOf(l) === 0));
+        const matchLineIdx = locateMatchLine(lines, [/^[\'"]use client[\'"]/m, /export\s+default\s+function/i, /deoptServerComponent|heavyClientPageTree/i], l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('*'));
         const lineNum = matchLineIdx !== -1 ? matchLineIdx + 1 : 1;
         findings.push({
             id: `webperf12-${Date.now()}-${findingCounter.count++}`,
@@ -321,7 +322,7 @@ export function evaluateWebVitalsRules(file: CodeFile, lines: string[], cleanCon
     }
     // WEB-PERF-13: Dynamic Import Missing for Below-The-Fold Modal
     if (/import\s+[a-zA-Z0-9_]+Modal\s+from\s+[\'"][^\'"]+[\'"]/i.test(cleanContent) && !/dynamic\(/i.test(cleanContent) && /HeavyModal|ReportGeneratorModal|PenTestModal/i.test(cleanContent)) {
-        const matchLineIdx = lines.findIndex(l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('*') && (/web-perf-13|dynamic/i.test(l) || lines.indexOf(l) === 0));
+        const matchLineIdx = locateMatchLine(lines, [/import\s+[a-zA-Z0-9_]+Modal\s+from\s+[\'"][^\'"]+[\'"]/i, /HeavyModal|ReportGeneratorModal|PenTestModal/i], l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('*'));
         const lineNum = matchLineIdx !== -1 ? matchLineIdx + 1 : 1;
         findings.push({
             id: `webperf13-${Date.now()}-${findingCounter.count++}`,
@@ -346,7 +347,7 @@ export function evaluateWebVitalsRules(file: CodeFile, lines: string[], cleanCon
     }
     // WEB-PERF-14: Missing Content-Visibility on Long Off-Screen Lists
     if (/\.long-list|\.infinite-feed/i.test(cleanContent) && !/content-visibility:\s*auto/i.test(cleanContent) && /\.(?:css|scss)$/i.test(file.path)) {
-        const matchLineIdx = lines.findIndex(l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('*') && (/web-perf-14|missing/i.test(l) || lines.indexOf(l) === 0));
+        const matchLineIdx = locateMatchLine(lines, [/\.long-list|\.infinite-feed/i], l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('*'));
         const lineNum = matchLineIdx !== -1 ? matchLineIdx + 1 : 1;
         findings.push({
             id: `webperf14-${Date.now()}-${findingCounter.count++}`,
@@ -371,7 +372,7 @@ export function evaluateWebVitalsRules(file: CodeFile, lines: string[], cleanCon
     }
     // WEB-PERF-15: Forced Synchronous Layout Shift (Layout Thrashing)
     if (/for\s*\([^)]+\)\s*\{[^}]*\.style\.[a-zA-Z]+\s*=[^}]*\.offsetHeight/i.test(cleanContent)) {
-        const matchLineIdx = lines.findIndex(l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('*') && (/web-perf-15|forced/i.test(l) || lines.indexOf(l) === 0));
+        const matchLineIdx = locateMatchLine(lines, [/for\s*\([^)]+\)\s*\{[^}]*\.style\.[a-zA-Z]+\s*=[^}]*\.offsetHeight/i], l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('*'));
         const lineNum = matchLineIdx !== -1 ? matchLineIdx + 1 : 1;
         findings.push({
             id: `webperf15-${Date.now()}-${findingCounter.count++}`,
@@ -396,7 +397,7 @@ export function evaluateWebVitalsRules(file: CodeFile, lines: string[], cleanCon
     }
     // WEB-PERF-16: Infinite Scroll Missing Virtualization / Windowing
     if (/items\.(?:length|>)\s*(?:100|500)[\s\S]*?\.map\s*\([^)]*\)\s*=>/i.test(cleanContent) && /infinite|scroll/i.test(cleanContent) && !/useVirtualizer|react-window/i.test(cleanContent)) {
-        const matchLineIdx = lines.findIndex(l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('*') && (/web-perf-16|infinite/i.test(l) || lines.indexOf(l) === 0));
+        const matchLineIdx = locateMatchLine(lines, [/items\.(?:length|>)\s*(?:100|500)[\s\S]*?\.map\s*\([^)]*\)\s*=>/i, /infinite|scroll/i], l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('*'));
         const lineNum = matchLineIdx !== -1 ? matchLineIdx + 1 : 1;
         findings.push({
             id: `webperf16-${Date.now()}-${findingCounter.count++}`,
@@ -421,7 +422,7 @@ export function evaluateWebVitalsRules(file: CodeFile, lines: string[], cleanCon
     }
     // WEB-PERF-17: Heavy Barrel File Import Inflating Bundle Size
     if (/import\s+\{[^}]{120,}\}\s+from\s+[\'"](?:@tabler\/icons|lodash-es|rxjs)[\'"]/i.test(cleanContent)) {
-        const matchLineIdx = lines.findIndex(l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('*') && (/web-perf-17|heavy/i.test(l) || lines.indexOf(l) === 0));
+        const matchLineIdx = locateMatchLine(lines, [/import\s+\{[^}]{120,}\}\s+from\s+[\'"](?:@tabler\/icons|lodash-es|rxjs)[\'"]/i], l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('*'));
         const lineNum = matchLineIdx !== -1 ? matchLineIdx + 1 : 1;
         findings.push({
             id: `webperf17-${Date.now()}-${findingCounter.count++}`,
@@ -446,7 +447,7 @@ export function evaluateWebVitalsRules(file: CodeFile, lines: string[], cleanCon
     }
     // WEB-PERF-18: Animated CSS Properties Triggering Layout Reflow
     if (/transition:\s*(?:top|left|width|height|margin)\s+[0-9.]+s/i.test(cleanContent) && /\.(?:css|scss)$/i.test(file.path)) {
-        const matchLineIdx = lines.findIndex(l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('*') && (/web-perf-18|animated/i.test(l) || lines.indexOf(l) === 0));
+        const matchLineIdx = locateMatchLine(lines, [/transition:\s*(?:top|left|width|height|margin)\s+[0-9.]+s/i], l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('*'));
         const lineNum = matchLineIdx !== -1 ? matchLineIdx + 1 : 1;
         findings.push({
             id: `webperf18-${Date.now()}-${findingCounter.count++}`,
@@ -471,7 +472,7 @@ export function evaluateWebVitalsRules(file: CodeFile, lines: string[], cleanCon
     }
     // WEB-PERF-19: Missing will-change Optimization on Frequent Transitions
     if (/@keyframes\s+slideIn|@keyframes\s+drawer/i.test(cleanContent) && !/will-change/i.test(cleanContent) && /\.(?:css|scss)$/i.test(file.path)) {
-        const matchLineIdx = lines.findIndex(l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('*') && (/web-perf-19|missing/i.test(l) || lines.indexOf(l) === 0));
+        const matchLineIdx = locateMatchLine(lines, [/@keyframes\s+slideIn|@keyframes\s+drawer/i], l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('*'));
         const lineNum = matchLineIdx !== -1 ? matchLineIdx + 1 : 1;
         findings.push({
             id: `webperf19-${Date.now()}-${findingCounter.count++}`,
@@ -496,7 +497,7 @@ export function evaluateWebVitalsRules(file: CodeFile, lines: string[], cleanCon
     }
     // WEB-PERF-20: Unoptimized Animated GIF Asset in Production
     if (/<img\b[^>]*src=["\'][^"\']+\.gif["\'][^>]*>/i.test(cleanContent) && /\.(?:tsx|jsx|html)$/i.test(file.path)) {
-        const matchLineIdx = lines.findIndex(l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('*') && (/web-perf-20|unoptimized/i.test(l) || lines.indexOf(l) === 0));
+        const matchLineIdx = locateMatchLine(lines, [/<img\b[^>]*src=["\'][^"\']+\.gif["\'][^>]*>/i], l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('*'));
         const lineNum = matchLineIdx !== -1 ? matchLineIdx + 1 : 1;
         findings.push({
             id: `webperf20-${Date.now()}-${findingCounter.count++}`,
@@ -521,7 +522,7 @@ export function evaluateWebVitalsRules(file: CodeFile, lines: string[], cleanCon
     }
     // WEB-PERF-21: Uncontrolled LocalStorage Hydration Waterfall
     if (/useLayoutEffect\s*\(\s*\(\s*\)\s*=>\s*\{[^}]*localStorage\.getItem/i.test(cleanContent)) {
-        const matchLineIdx = lines.findIndex(l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('*') && (/web-perf-21|uncontrolled/i.test(l) || lines.indexOf(l) === 0));
+        const matchLineIdx = locateMatchLine(lines, [/useLayoutEffect\s*\(\s*\(\s*\)\s*=>\s*\{[^}]*localStorage\.getItem/i], l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('*'));
         const lineNum = matchLineIdx !== -1 ? matchLineIdx + 1 : 1;
         findings.push({
             id: `webperf21-${Date.now()}-${findingCounter.count++}`,
@@ -546,7 +547,7 @@ export function evaluateWebVitalsRules(file: CodeFile, lines: string[], cleanCon
     }
     // WEB-PERF-22: Massive JSON Payload Inlined into HTML Page Source
     if (/export\s+async\s+function\s+getServerSideProps[\s\S]*?return\s*\{\s*props:\s*\{[^}]*allRecords:\s*[a-zA-Z0-9_]+/i.test(cleanContent) && !/slice|select/i.test(cleanContent)) {
-        const matchLineIdx = lines.findIndex(l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('*') && (/web-perf-22|massive/i.test(l) || lines.indexOf(l) === 0));
+        const matchLineIdx = locateMatchLine(lines, [/export\s+async\s+function\s+getServerSideProps[\s\S]*?return\s*\{\s*props:\s*\{[^}]*allRecords:\s*[a-zA-Z0-9_]+/i], l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('*'));
         const lineNum = matchLineIdx !== -1 ? matchLineIdx + 1 : 1;
         findings.push({
             id: `webperf22-${Date.now()}-${findingCounter.count++}`,
@@ -571,7 +572,7 @@ export function evaluateWebVitalsRules(file: CodeFile, lines: string[], cleanCon
     }
     // WEB-PERF-23: CSS Filter Blur on Continuous Scrolling Container
     if (/backdrop-filter:\s*blur\(\s*(?:[2-9]\d|\d{3,})px\s*\)/i.test(cleanContent) && /overflow-y:\s*scroll/i.test(cleanContent) && /\.(?:css|scss)$/i.test(file.path)) {
-        const matchLineIdx = lines.findIndex(l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('*') && (/web-perf-23|css/i.test(l) || lines.indexOf(l) === 0));
+        const matchLineIdx = locateMatchLine(lines, [/backdrop-filter:\s*blur\(\s*(?:[2-9]\d|\d{3,})px\s*\)/i, /overflow-y:\s*scroll/i], l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('*'));
         const lineNum = matchLineIdx !== -1 ? matchLineIdx + 1 : 1;
         findings.push({
             id: `webperf23-${Date.now()}-${findingCounter.count++}`,
@@ -596,7 +597,7 @@ export function evaluateWebVitalsRules(file: CodeFile, lines: string[], cleanCon
     }
     // WEB-PERF-24: Uncached Client API Fetch Missing SWR / React Query
     if (/useEffect\s*\(\s*\(\s*\)\s*=>\s*\{[^}]*fetch\([^)]+\)\.then\([^}]*setState/i.test(cleanContent) && !/useSWR|useQuery|cache/i.test(cleanContent) && /\.(?:tsx|jsx)$/i.test(file.path)) {
-        const matchLineIdx = lines.findIndex(l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('*') && (/web-perf-24|uncached/i.test(l) || lines.indexOf(l) === 0));
+        const matchLineIdx = locateMatchLine(lines, [/useEffect\s*\(\s*\(\s*\)\s*=>\s*\{[^}]*fetch\([^)]+\)\.then\([^}]*setState/i], l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('*'));
         const lineNum = matchLineIdx !== -1 ? matchLineIdx + 1 : 1;
         findings.push({
             id: `webperf24-${Date.now()}-${findingCounter.count++}`,
@@ -621,7 +622,7 @@ export function evaluateWebVitalsRules(file: CodeFile, lines: string[], cleanCon
     }
     // WEB-PERF-25: Missing Image Format Modernization (WebP / AVIF)
     if (/next\.config\.(?:m?js|ts)$/i.test(file.path) && /images:\s*\{(?![^}]*formats)/i.test(cleanContent)) {
-        const matchLineIdx = lines.findIndex(l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('*') && (/web-perf-25|missing/i.test(l) || lines.indexOf(l) === 0));
+        const matchLineIdx = locateMatchLine(lines, [/images:\s*\{(?![^}]*formats)/i], l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('*'));
         const lineNum = matchLineIdx !== -1 ? matchLineIdx + 1 : 1;
         findings.push({
             id: `webperf25-${Date.now()}-${findingCounter.count++}`,
@@ -646,7 +647,7 @@ export function evaluateWebVitalsRules(file: CodeFile, lines: string[], cleanCon
     }
     // WEB-PERF-26: Unbounded React State Array Concatenation
     if (/set(?:Logs|Events|Telemetry|Messages)\s*\(\s*prev\s*=>\s*\[\s*\.\.\.prev\s*,\s*[a-zA-Z0-9_]+\s*\]\s*\)/i.test(cleanContent) && !/slice/i.test(cleanContent)) {
-        const matchLineIdx = lines.findIndex(l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('*') && (/web-perf-26|unbounded/i.test(l) || lines.indexOf(l) === 0));
+        const matchLineIdx = locateMatchLine(lines, [/set(?:Logs|Events|Telemetry|Messages)\s*\(\s*prev\s*=>\s*\[\s*\.\.\.prev\s*,\s*[a-zA-Z0-9_]+\s*\]\s*\)/i], l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('*'));
         const lineNum = matchLineIdx !== -1 ? matchLineIdx + 1 : 1;
         findings.push({
             id: `webperf26-${Date.now()}-${findingCounter.count++}`,
@@ -671,7 +672,7 @@ export function evaluateWebVitalsRules(file: CodeFile, lines: string[], cleanCon
     }
     // WEB-PERF-27: Missing Resource Hints for Critical Navigation Routes
     if (/<Link\b[^>]*prefetch=\{false\}[^>]*href=["\'](?:\/dashboard|\/app|\/login)["\']/i.test(cleanContent)) {
-        const matchLineIdx = lines.findIndex(l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('*') && (/web-perf-27|missing/i.test(l) || lines.indexOf(l) === 0));
+        const matchLineIdx = locateMatchLine(lines, [/<Link\b[^>]*prefetch=\{false\}[^>]*href=["\'](?:\/dashboard|\/app|\/login)["\']/i], l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('*'));
         const lineNum = matchLineIdx !== -1 ? matchLineIdx + 1 : 1;
         findings.push({
             id: `webperf27-${Date.now()}-${findingCounter.count++}`,
@@ -696,7 +697,7 @@ export function evaluateWebVitalsRules(file: CodeFile, lines: string[], cleanCon
     }
     // WEB-PERF-28: Render-Blocking Custom Web Font Declaration
     if (/@font-face\s*\{[^}]*font-display:\s*block/i.test(cleanContent) && /\.(?:css|scss)$/i.test(file.path)) {
-        const matchLineIdx = lines.findIndex(l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('*') && (/web-perf-28|render-blocking/i.test(l) || lines.indexOf(l) === 0));
+        const matchLineIdx = locateMatchLine(lines, [/@font-face\s*\{[^}]*font-display:\s*block/i], l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('*'));
         const lineNum = matchLineIdx !== -1 ? matchLineIdx + 1 : 1;
         findings.push({
             id: `webperf28-${Date.now()}-${findingCounter.count++}`,
@@ -721,7 +722,7 @@ export function evaluateWebVitalsRules(file: CodeFile, lines: string[], cleanCon
     }
     // WEB-PERF-29: Synchronous LocalStorage Read in Event Loop Hot Path
     if (/(?:onMouseMove|onScroll|onPointerMove)\s*=\s*\{[^}]*localStorage\.getItem/i.test(cleanContent)) {
-        const matchLineIdx = lines.findIndex(l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('*') && (/web-perf-29|synchronous/i.test(l) || lines.indexOf(l) === 0));
+        const matchLineIdx = locateMatchLine(lines, [/(?:onMouseMove|onScroll|onPointerMove)\s*=\s*\{[^}]*localStorage\.getItem/i], l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('*'));
         const lineNum = matchLineIdx !== -1 ? matchLineIdx + 1 : 1;
         findings.push({
             id: `webperf29-${Date.now()}-${findingCounter.count++}`,
@@ -746,7 +747,7 @@ export function evaluateWebVitalsRules(file: CodeFile, lines: string[], cleanCon
     }
     // WEB-PERF-30: Missing Compression Middleware for Custom Server Responses
     if (/const\s+app\s*=\s*express\(\)/i.test(cleanContent) && !/compression\(/i.test(cleanContent)) {
-        const matchLineIdx = lines.findIndex(l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('*') && (/web-perf-30|missing/i.test(l) || lines.indexOf(l) === 0));
+        const matchLineIdx = locateMatchLine(lines, [/const\s+app\s*=\s*express\(\)/i], l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('*'));
         const lineNum = matchLineIdx !== -1 ? matchLineIdx + 1 : 1;
         findings.push({
             id: `webperf30-${Date.now()}-${findingCounter.count++}`,
@@ -771,7 +772,7 @@ export function evaluateWebVitalsRules(file: CodeFile, lines: string[], cleanCon
     }
     // WEB-PERF-31: Unaborted Fetch Request on Component Unmount
     if (/useEffect\s*\(\s*\(\s*\)\s*=>\s*\{[^}]*fetch\([^)]+\)[^}]*\}\s*,\s*\[\]\s*\)/i.test(cleanContent) && !/AbortController|signal|return/i.test(cleanContent)) {
-        const matchLineIdx = lines.findIndex(l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('*') && (/web-perf-31|unaborted/i.test(l) || lines.indexOf(l) === 0));
+        const matchLineIdx = locateMatchLine(lines, [/useEffect\s*\(\s*\(\s*\)\s*=>\s*\{[^}]*fetch\([^)]+\)[^}]*\}\s*,\s*\[\]\s*\)/i], l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('*'));
         const lineNum = matchLineIdx !== -1 ? matchLineIdx + 1 : 1;
         findings.push({
             id: `webperf31-${Date.now()}-${findingCounter.count++}`,
@@ -796,7 +797,7 @@ export function evaluateWebVitalsRules(file: CodeFile, lines: string[], cleanCon
     }
     // WEB-PERF-32: High-Resolution Image Rendered in Small Avatar Thumbnail
     if (/<img\b[^>]*src=["\'][^"\']+\.(?:png|jpg|jpeg)["\'][^>]*className=["\'][^"\']*\bw-(?:4|6|8)\b[^"\']*["\'][^>]*>/i.test(cleanContent) && /original|raw|full/i.test(cleanContent)) {
-        const matchLineIdx = lines.findIndex(l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('*') && (/web-perf-32|high-resolution/i.test(l) || lines.indexOf(l) === 0));
+        const matchLineIdx = locateMatchLine(lines, [/<img\b[^>]*src=["\'][^"\']+\.(?:png|jpg|jpeg)["\'][^>]*className=["\'][^"\']*\bw-(?:4|6|8)\b[^"\']*["\'][^>]*>/i, /original|raw|full/i], l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('*'));
         const lineNum = matchLineIdx !== -1 ? matchLineIdx + 1 : 1;
         findings.push({
             id: `webperf32-${Date.now()}-${findingCounter.count++}`,
@@ -821,7 +822,7 @@ export function evaluateWebVitalsRules(file: CodeFile, lines: string[], cleanCon
     }
     // WEB-PERF-33: Synchronous JSON.parse on Multi-Megabyte Payloads
     if (/JSON\.parse\s*\(\s*[a-zA-Z0-9_]+\s*\)/i.test(cleanContent) && /largePayload|megaBytePayload|rawHeavyData/i.test(cleanContent)) {
-        const matchLineIdx = lines.findIndex(l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('*') && (/web-perf-33|synchronous/i.test(l) || lines.indexOf(l) === 0));
+        const matchLineIdx = locateMatchLine(lines, [/JSON\.parse\s*\(\s*[a-zA-Z0-9_]+\s*\)/i, /largePayload|megaBytePayload|rawHeavyData/i], l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('*'));
         const lineNum = matchLineIdx !== -1 ? matchLineIdx + 1 : 1;
         findings.push({
             id: `webperf33-${Date.now()}-${findingCounter.count++}`,
@@ -846,7 +847,7 @@ export function evaluateWebVitalsRules(file: CodeFile, lines: string[], cleanCon
     }
     // WEB-PERF-34: DOM Node Polling via setInterval Instead of Observers
     if (/setInterval\s*\(\s*\(\s*\)\s*=>\s*\{[^}]*document\.(?:getElementById|querySelector)/i.test(cleanContent) && !/MutationObserver/i.test(cleanContent)) {
-        const matchLineIdx = lines.findIndex(l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('*') && (/web-perf-34|dom/i.test(l) || lines.indexOf(l) === 0));
+        const matchLineIdx = locateMatchLine(lines, [/setInterval\s*\(\s*\(\s*\)\s*=>\s*\{[^}]*document\.(?:getElementById|querySelector)/i], l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('*'));
         const lineNum = matchLineIdx !== -1 ? matchLineIdx + 1 : 1;
         findings.push({
             id: `webperf34-${Date.now()}-${findingCounter.count++}`,
@@ -871,7 +872,7 @@ export function evaluateWebVitalsRules(file: CodeFile, lines: string[], cleanCon
     }
     // WEB-PERF-35: Unkeyed React List Elements Forcing Full DOM Rebuild
     if (/\.map\s*\(\s*\([a-zA-Z0-9_]+,\s*index\)\s*=>\s*<[A-Z][a-zA-Z0-9_]*\s+key=\{index\}/i.test(cleanContent) && /\.(?:tsx|jsx)$/i.test(file.path)) {
-        const matchLineIdx = lines.findIndex(l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('*') && (/web-perf-35|unkeyed/i.test(l) || lines.indexOf(l) === 0));
+        const matchLineIdx = locateMatchLine(lines, [/\.map\s*\(\s*\([a-zA-Z0-9_]+,\s*index\)\s*=>\s*<[A-Z][a-zA-Z0-9_]*\s+key=\{index\}/i], l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('*'));
         const lineNum = matchLineIdx !== -1 ? matchLineIdx + 1 : 1;
         findings.push({
             id: `webperf35-${Date.now()}-${findingCounter.count++}`,
@@ -896,7 +897,7 @@ export function evaluateWebVitalsRules(file: CodeFile, lines: string[], cleanCon
     }
     // WEB-PERF-36: Missing Link rel='dns-prefetch' on Asset Domains
     if (/<link[^>]+href=[\'"]https:\/\/[a-z0-9.-]+\.cdn\.net[^\'"]*[\'"][^>]*>/i.test(cleanContent) && !/dns-prefetch|preconnect/i.test(cleanContent) && /\.(?:html|tsx|jsx)$/i.test(file.path)) {
-        const matchLineIdx = lines.findIndex(l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('*') && (/web-perf-36|missing/i.test(l) || lines.indexOf(l) === 0));
+        const matchLineIdx = locateMatchLine(lines, [/<link[^>]+href=[\'"]https:\/\/[a-z0-9.-]+\.cdn\.net[^\'"]*[\'"][^>]*>/i], l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('*'));
         const lineNum = matchLineIdx !== -1 ? matchLineIdx + 1 : 1;
         findings.push({
             id: `webperf36-${Date.now()}-${findingCounter.count++}`,
@@ -921,7 +922,7 @@ export function evaluateWebVitalsRules(file: CodeFile, lines: string[], cleanCon
     }
     // WEB-PERF-37: Unoptimized React Context Splitting Causing Cascade Renders
     if (/createContext\s*\(\s*\{[^}]*cursorPosition[^}]*userProfile/i.test(cleanContent)) {
-        const matchLineIdx = lines.findIndex(l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('*') && (/web-perf-37|unoptimized/i.test(l) || lines.indexOf(l) === 0));
+        const matchLineIdx = locateMatchLine(lines, [/createContext\s*\(\s*\{[^}]*cursorPosition[^}]*userProfile/i], l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('*'));
         const lineNum = matchLineIdx !== -1 ? matchLineIdx + 1 : 1;
         findings.push({
             id: `webperf37-${Date.now()}-${findingCounter.count++}`,
@@ -946,7 +947,7 @@ export function evaluateWebVitalsRules(file: CodeFile, lines: string[], cleanCon
     }
     // WEB-PERF-38: Missing HTML Lang Attribute Delaying Accessibility Tree
     if (/<html\b(?![^>]*\blang=)[^>]*>/i.test(cleanContent) && /\.(?:html|tsx|jsx)$/i.test(file.path)) {
-        const matchLineIdx = lines.findIndex(l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('*') && (/web-perf-38|missing/i.test(l) || lines.indexOf(l) === 0));
+        const matchLineIdx = locateMatchLine(lines, [/<html\b(?![^>]*\blang=)[^>]*>/i], l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('*'));
         const lineNum = matchLineIdx !== -1 ? matchLineIdx + 1 : 1;
         findings.push({
             id: `webperf38-${Date.now()}-${findingCounter.count++}`,
@@ -971,7 +972,7 @@ export function evaluateWebVitalsRules(file: CodeFile, lines: string[], cleanCon
     }
     // WEB-PERF-39: Unused CSS Class Bloat in Production Bundle
     if (/tailwind\.config\.(?:js|ts|mjs)$/i.test(file.path) && /content:\s*\[\s*\]/i.test(cleanContent)) {
-        const matchLineIdx = lines.findIndex(l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('*') && (/web-perf-39|unused/i.test(l) || lines.indexOf(l) === 0));
+        const matchLineIdx = locateMatchLine(lines, [/content:\s*\[\s*\]/i], l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('*'));
         const lineNum = matchLineIdx !== -1 ? matchLineIdx + 1 : 1;
         findings.push({
             id: `webperf39-${Date.now()}-${findingCounter.count++}`,
@@ -996,7 +997,7 @@ export function evaluateWebVitalsRules(file: CodeFile, lines: string[], cleanCon
     }
     // WEB-PERF-40: Missing Stale-While-Revalidate on Server-Rendered Assets
     if (/headers\.set\s*\(\s*[\'"]Cache-Control[\'"]\s*,\s*[\'"][^\'"]*max-age=\d+[\'"]\s*\)/i.test(cleanContent) && !/stale-while-revalidate/i.test(cleanContent)) {
-        const matchLineIdx = lines.findIndex(l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('*') && (/web-perf-40|missing/i.test(l) || lines.indexOf(l) === 0));
+        const matchLineIdx = locateMatchLine(lines, [/headers\.set\s*\(\s*[\'"]Cache-Control[\'"]\s*,\s*[\'"][^\'"]*max-age=\d+[\'"]\s*\)/i], l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('*'));
         const lineNum = matchLineIdx !== -1 ? matchLineIdx + 1 : 1;
         findings.push({
             id: `webperf40-${Date.now()}-${findingCounter.count++}`,
@@ -1021,7 +1022,7 @@ export function evaluateWebVitalsRules(file: CodeFile, lines: string[], cleanCon
     }
     // WEB-PERF-41: Heavy Lottie Animation Running Continuously Off-Screen
     if (/<Lottie\b[^>]*autoplay=\{true\}[^>]*loop=\{true\}[^>]*>/i.test(cleanContent) && !/IntersectionObserver|useInView/i.test(cleanContent)) {
-        const matchLineIdx = lines.findIndex(l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('*') && (/web-perf-41|heavy/i.test(l) || lines.indexOf(l) === 0));
+        const matchLineIdx = locateMatchLine(lines, [/<Lottie\b[^>]*autoplay=\{true\}[^>]*loop=\{true\}[^>]*>/i], l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('*'));
         const lineNum = matchLineIdx !== -1 ? matchLineIdx + 1 : 1;
         findings.push({
             id: `webperf41-${Date.now()}-${findingCounter.count++}`,
@@ -1046,7 +1047,7 @@ export function evaluateWebVitalsRules(file: CodeFile, lines: string[], cleanCon
     }
     // WEB-PERF-42: Document Title Mutation Inside Render Phase
     if (/\bdocument\.title\s*=/i.test(cleanContent) && !/useEffect|useLayoutEffect/i.test(cleanContent) && /\.(?:tsx|jsx)$/i.test(file.path)) {
-        const matchLineIdx = lines.findIndex(l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('*') && (/web-perf-42|document/i.test(l) || lines.indexOf(l) === 0));
+        const matchLineIdx = locateMatchLine(lines, [/\bdocument\.title\s*=/i], l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('*'));
         const lineNum = matchLineIdx !== -1 ? matchLineIdx + 1 : 1;
         findings.push({
             id: `webperf42-${Date.now()}-${findingCounter.count++}`,
@@ -1071,7 +1072,7 @@ export function evaluateWebVitalsRules(file: CodeFile, lines: string[], cleanCon
     }
     // WEB-PERF-43: Missing Early Hints (HTTP 103) on Critical Assets
     if (/earlyHints:\s*false/i.test(cleanContent)) {
-        const matchLineIdx = lines.findIndex(l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('*') && (/web-perf-43|missing/i.test(l) || lines.indexOf(l) === 0));
+        const matchLineIdx = locateMatchLine(lines, [/earlyHints:\s*false/i], l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('*'));
         const lineNum = matchLineIdx !== -1 ? matchLineIdx + 1 : 1;
         findings.push({
             id: `webperf43-${Date.now()}-${findingCounter.count++}`,
@@ -1121,7 +1122,7 @@ export function evaluateWebVitalsRules(file: CodeFile, lines: string[], cleanCon
     }
     // WEB-PERF-45: Missing Favicon and Icon Dimensions in Manifest
     if (/manifest\.(?:json|webmanifest)$/i.test(file.path) && /"icons":\s*\[(?![^\]]*"sizes")/i.test(cleanContent)) {
-        const matchLineIdx = lines.findIndex(l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('*') && (/web-perf-45|missing/i.test(l) || lines.indexOf(l) === 0));
+        const matchLineIdx = locateMatchLine(lines, [/"icons":\s*\[(?![^\]]*"sizes")/i], l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('*'));
         const lineNum = matchLineIdx !== -1 ? matchLineIdx + 1 : 1;
         findings.push({
             id: `webperf45-${Date.now()}-${findingCounter.count++}`,
@@ -1146,7 +1147,7 @@ export function evaluateWebVitalsRules(file: CodeFile, lines: string[], cleanCon
     }
     // WEB-PERF-46: Excessive Cookie Size (>4KB) Sent on Every Request
     if (/cookies\(\)\.set\s*\(\s*[\'"][^\'"]+[\'"]\s*,\s*JSON\.stringify\([^)]+\)\s*\)/i.test(cleanContent) && /fullUserData|entireState/i.test(cleanContent)) {
-        const matchLineIdx = lines.findIndex(l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('*') && (/web-perf-46|excessive/i.test(l) || lines.indexOf(l) === 0));
+        const matchLineIdx = locateMatchLine(lines, [/cookies\(\)\.set\s*\(\s*[\'"][^\'"]+[\'"]\s*,\s*JSON\.stringify\([^)]+\)\s*\)/i, /fullUserData|entireState/i], l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('*'));
         const lineNum = matchLineIdx !== -1 ? matchLineIdx + 1 : 1;
         findings.push({
             id: `webperf46-${Date.now()}-${findingCounter.count++}`,
@@ -1171,7 +1172,7 @@ export function evaluateWebVitalsRules(file: CodeFile, lines: string[], cleanCon
     }
     // WEB-PERF-47: Unnecessary Third-Party CSS Framework Import
     if (/(?:import\s+[\'"]bootstrap\/dist\/css|import\s+[\'"]bulma\/css)/i.test(cleanContent) && /tailwindcss/i.test(cleanContent)) {
-        const matchLineIdx = lines.findIndex(l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('*') && (/web-perf-47|unnecessary/i.test(l) || lines.indexOf(l) === 0));
+        const matchLineIdx = locateMatchLine(lines, [/(?:import\s+[\'"]bootstrap\/dist\/css|import\s+[\'"]bulma\/css)/i, /tailwindcss/i], l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('*'));
         const lineNum = matchLineIdx !== -1 ? matchLineIdx + 1 : 1;
         findings.push({
             id: `webperf47-${Date.now()}-${findingCounter.count++}`,
@@ -1196,7 +1197,7 @@ export function evaluateWebVitalsRules(file: CodeFile, lines: string[], cleanCon
     }
     // WEB-PERF-48: Synchronous File Reader in Client File Upload
     if (/new\s+FileReader\(\)[\s\S]*?readAsDataURL\s*\(\s*[a-zA-Z0-9_]+\s*\)/i.test(cleanContent) && /largeFile|heavyFile/i.test(cleanContent)) {
-        const matchLineIdx = lines.findIndex(l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('*') && (/web-perf-48|synchronous/i.test(l) || lines.indexOf(l) === 0));
+        const matchLineIdx = locateMatchLine(lines, [/new\s+FileReader\(\)[\s\S]*?readAsDataURL\s*\(\s*[a-zA-Z0-9_]+\s*\)/i, /largeFile|heavyFile/i], l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('*'));
         const lineNum = matchLineIdx !== -1 ? matchLineIdx + 1 : 1;
         findings.push({
             id: `webperf48-${Date.now()}-${findingCounter.count++}`,
@@ -1221,7 +1222,7 @@ export function evaluateWebVitalsRules(file: CodeFile, lines: string[], cleanCon
     }
     // WEB-PERF-49: Missing Server-Timing Header for Latency Profiling
     if (/(?:app\/api|pages\/api)/i.test(lowerPath) && /export\s+async\s+function\s+(?:GET|POST)/i.test(cleanContent) && /timingBenchmark/i.test(cleanContent) && !/Server-Timing/i.test(cleanContent)) {
-        const matchLineIdx = lines.findIndex(l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('*') && (/web-perf-49|missing/i.test(l) || lines.indexOf(l) === 0));
+        const matchLineIdx = locateMatchLine(lines, [/export\s+async\s+function\s+(?:GET|POST)/i, /timingBenchmark/i], l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('*'));
         const lineNum = matchLineIdx !== -1 ? matchLineIdx + 1 : 1;
         findings.push({
             id: `webperf49-${Date.now()}-${findingCounter.count++}`,
@@ -1246,7 +1247,7 @@ export function evaluateWebVitalsRules(file: CodeFile, lines: string[], cleanCon
     }
     // WEB-PERF-50: Cumulative Layout Shift Caused by Dynamic Cookie Banner
     if (/(?:CookieBanner|StickyAnnouncement)/i.test(cleanContent) && /className=["\'][^"\']*\babsolute\s+top-0\b[^"\']*["\']/i.test(cleanContent)) {
-        const matchLineIdx = lines.findIndex(l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('*') && (/web-perf-50|cumulative/i.test(l) || lines.indexOf(l) === 0));
+        const matchLineIdx = locateMatchLine(lines, [/(?:CookieBanner|StickyAnnouncement)/i, /className=["\'][^"\']*\babsolute\s+top-0\b[^"\']*["\']/i], l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('*'));
         const lineNum = matchLineIdx !== -1 ? matchLineIdx + 1 : 1;
         findings.push({
             id: `webperf50-${Date.now()}-${findingCounter.count++}`,

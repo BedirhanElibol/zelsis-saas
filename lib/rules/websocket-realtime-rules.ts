@@ -4,6 +4,7 @@
  */
 import { Finding } from "@/data/schema";
 import { CodeFile } from "../scanner-engine";
+import { locateMatchLine } from './shared/locate';
 export interface WebsocketRealtimeRuleResult {
     findings: Finding[];
     logs: string[];
@@ -21,7 +22,7 @@ export function evaluateWebsocketRealtimeRules(file: CodeFile, lines: string[], 
     const ts = new Date().toLocaleTimeString();
     // WS-01: Missing WebSocket Heartbeat Ping/Pong Health Interval
     if ((/new\s+WebSocketServer\s*\([\s\S]*?\)/.test(cleanContent) && !/ping|pong|heartbeat/i.test(cleanContent))) {
-        const matchLineIdx = lines.findIndex(l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('*'));
+        const matchLineIdx = locateMatchLine(lines, [/new\s+WebSocketServer\s*\([\s\S]*?\)/], l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('*'));
         const lineNum = matchLineIdx !== -1 ? matchLineIdx + 1 : 1;
         findings.push({
             id: `ws10501-${Date.now()}-${findingCounter.count++}`,
@@ -45,7 +46,7 @@ export function evaluateWebsocketRealtimeRules(file: CodeFile, lines: string[], 
     }
     // WS-02: Missing Authentication Handshake Guard on WebSocket Upgrade
     if ((/server\.on\s*\(\s*['"]upgrade['"]/i.test(cleanContent) && !/jwt|token|verify|session/i.test(cleanContent))) {
-        const matchLineIdx = lines.findIndex(l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('*'));
+        const matchLineIdx = locateMatchLine(lines, [/server\.on\s*\(\s*['"]upgrade['"]/i], l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('*'));
         const lineNum = matchLineIdx !== -1 ? matchLineIdx + 1 : 1;
         findings.push({
             id: `ws10502-${Date.now()}-${findingCounter.count++}`,
@@ -69,7 +70,7 @@ export function evaluateWebsocketRealtimeRules(file: CodeFile, lines: string[], 
     }
     // WS-03: Cross-Site WebSocket Hijacking (CSWSH) via Unvalidated Origin
     if ((/server\.on\s*\(\s*['"]upgrade['"]/i.test(cleanContent) && !/origin|allowedOrigins/i.test(cleanContent))) {
-        const matchLineIdx = lines.findIndex(l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('*'));
+        const matchLineIdx = locateMatchLine(lines, [/server\.on\s*\(\s*['"]upgrade['"]/i], l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('*'));
         const lineNum = matchLineIdx !== -1 ? matchLineIdx + 1 : 1;
         findings.push({
             id: `ws10503-${Date.now()}-${findingCounter.count++}`,
@@ -93,7 +94,7 @@ export function evaluateWebsocketRealtimeRules(file: CodeFile, lines: string[], 
     }
     // WS-04: Unbounded Broadcast Memory Buffering (Missing Backpressure)
     if ((/socket\.send\s*\([\s\S]*?\)/.test(cleanContent) && !/bufferedAmount|drain/i.test(cleanContent))) {
-        const matchLineIdx = lines.findIndex(l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('*'));
+        const matchLineIdx = locateMatchLine(lines, [/socket\.send\s*\([\s\S]*?\)/], l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('*'));
         const lineNum = matchLineIdx !== -1 ? matchLineIdx + 1 : 1;
         findings.push({
             id: `ws10504-${Date.now()}-${findingCounter.count++}`,
@@ -117,7 +118,7 @@ export function evaluateWebsocketRealtimeRules(file: CodeFile, lines: string[], 
     }
     // WS-05: Socket Reconnection Storm Flooding Backend Gateways
     if ((/socket\.onclose\s*=/i.test(cleanContent) && !/random|jitter|backoff/i.test(cleanContent))) {
-        const matchLineIdx = lines.findIndex(l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('*'));
+        const matchLineIdx = locateMatchLine(lines, [/socket\.onclose\s*=/i], l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('*'));
         const lineNum = matchLineIdx !== -1 ? matchLineIdx + 1 : 1;
         findings.push({
             id: `ws10505-${Date.now()}-${findingCounter.count++}`,

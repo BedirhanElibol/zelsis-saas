@@ -4,6 +4,7 @@
  */
 import { Finding } from "@/data/schema";
 import { CodeFile } from "../scanner-engine";
+import { locateMatchLine } from './shared/locate';
 export interface ThreatDetectionRuleResult {
     findings: Finding[];
     logs: string[];
@@ -21,7 +22,7 @@ export function evaluateThreatDetectionRules(file: CodeFile, lines: string[], cl
     const ts = new Date().toLocaleTimeString();
     // THREAT-01: MITRE T1078 Valid Accounts: Missing Detection on Impossible Travel Anomalies
     if ((/loginHandler|authService/i.test(cleanContent) && !/checkGeoVelocity/i.test(cleanContent))) {
-        const matchLineIdx = lines.findIndex(l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('#') && !l.trim().startsWith('*'));
+        const matchLineIdx = locateMatchLine(lines, [/loginHandler|authService/i], l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('#') && !l.trim().startsWith('*'));
         const lineNum = matchLineIdx !== -1 ? matchLineIdx + 1 : 1;
         findings.push({
             id: `threat13601-${Date.now()}-${findingCounter.count++}`,
@@ -71,7 +72,7 @@ export function evaluateThreatDetectionRules(file: CodeFile, lines: string[], cl
     }
     // THREAT-03: MITRE T1562 Impair Defenses: Security Daemon Process Tampering or Disablement
     if ((/agentHeartbeat/i.test(cleanContent) && !/alertMissingHeartbeat/i.test(cleanContent))) {
-        const matchLineIdx = lines.findIndex(l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('#') && !l.trim().startsWith('*'));
+        const matchLineIdx = locateMatchLine(lines, [/agentHeartbeat/i], l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('#') && !l.trim().startsWith('*'));
         const lineNum = matchLineIdx !== -1 ? matchLineIdx + 1 : 1;
         findings.push({
             id: `threat13603-${Date.now()}-${findingCounter.count++}`,
@@ -95,7 +96,7 @@ export function evaluateThreatDetectionRules(file: CodeFile, lines: string[], cl
     }
     // THREAT-04: MITRE T1003 OS Credential Dumping: Unauthorized Reading of Host Credential Files
     if ((/etc\/shadow|LSASS/i.test(cleanContent))) {
-        const matchLineIdx = lines.findIndex(l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('#') && !l.trim().startsWith('*'));
+        const matchLineIdx = locateMatchLine(lines, [/etc\/shadow|LSASS/i], l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('#') && !l.trim().startsWith('*'));
         const lineNum = matchLineIdx !== -1 ? matchLineIdx + 1 : 1;
         findings.push({
             id: `threat13604-${Date.now()}-${findingCounter.count++}`,
@@ -119,7 +120,7 @@ export function evaluateThreatDetectionRules(file: CodeFile, lines: string[], cl
     }
     // THREAT-05: Canary Token Triggering: Unmonitored Honeytoken or Fake Credential Traversal
     if ((/honeytoken|canaryKey/i.test(cleanContent) && !/notifySocWebhook/i.test(cleanContent))) {
-        const matchLineIdx = lines.findIndex(l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('#') && !l.trim().startsWith('*'));
+        const matchLineIdx = locateMatchLine(lines, [/honeytoken|canaryKey/i], l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('#') && !l.trim().startsWith('*'));
         const lineNum = matchLineIdx !== -1 ? matchLineIdx + 1 : 1;
         findings.push({
             id: `threat13605-${Date.now()}-${findingCounter.count++}`,

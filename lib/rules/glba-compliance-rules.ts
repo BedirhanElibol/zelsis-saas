@@ -4,6 +4,7 @@
  */
 import { Finding } from "@/data/schema";
 import { CodeFile } from "../scanner-engine";
+import { locateMatchLine } from './shared/locate';
 export interface GlbaComplianceRuleResult {
     findings: Finding[];
     logs: string[];
@@ -69,7 +70,7 @@ export function evaluateGlbaComplianceRules(file: CodeFile, lines: string[], cle
     }
     // GLBA-03: GLBA §314.4(c)(1) Access Controls: Overprivileged Access to Customer NPI
     if (((/financial_crm/i.test(lowerPath) || /financial_crm/i.test(cleanContent)) && !/restrictNpiAccess/i.test(cleanContent))) {
-        const matchLineIdx = lines.findIndex(l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('#') && !l.trim().startsWith('*'));
+        const matchLineIdx = locateMatchLine(lines, [/financial_crm/i], l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('#') && !l.trim().startsWith('*'));
         const lineNum = matchLineIdx !== -1 ? matchLineIdx + 1 : 1;
         findings.push({
             id: `glba14903-${Date.now()}-${findingCounter.count++}`,
@@ -117,7 +118,7 @@ export function evaluateGlbaComplianceRules(file: CodeFile, lines: string[], cle
     }
     // GLBA-05: GLBA §314.4(c)(3) Encryption: Unencrypted Customer Financial Data at Rest and Transit
     if (((/customer_financial/i.test(lowerPath) || /customer_financial/i.test(cleanContent)) && !/aes256Gcm/i.test(cleanContent))) {
-        const matchLineIdx = lines.findIndex(l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('#') && !l.trim().startsWith('*'));
+        const matchLineIdx = locateMatchLine(lines, [/customer_financial/i], l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('#') && !l.trim().startsWith('*'));
         const lineNum = matchLineIdx !== -1 ? matchLineIdx + 1 : 1;
         findings.push({
             id: `glba14905-${Date.now()}-${findingCounter.count++}`,

@@ -4,6 +4,7 @@
  */
 import { Finding } from "@/data/schema";
 import { CodeFile } from "../scanner-engine";
+import { locateMatchLine } from './shared/locate';
 export interface ThreatIntelligenceRuleResult {
     findings: Finding[];
     logs: string[];
@@ -21,7 +22,7 @@ export function evaluateThreatIntelligenceRules(file: CodeFile, lines: string[],
     const ts = new Date().toLocaleTimeString();
     // CTI-01: Unvalidated Cyber Threat Intelligence (CTI) Feed Ingestion Permitting Malicious Rule Poisoning
     if (((/threat_intel|taxii_client/i.test(lowerPath) || /taxiiFeed|stixParser/i.test(cleanContent)) && !/verifyFeedSignature/i.test(cleanContent))) {
-        const matchLineIdx = lines.findIndex(l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('#') && !l.trim().startsWith('*'));
+        const matchLineIdx = locateMatchLine(lines, [/taxiiFeed|stixParser/i], l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('#') && !l.trim().startsWith('*'));
         const lineNum = matchLineIdx !== -1 ? matchLineIdx + 1 : 1;
         findings.push({
             id: `cti15601-${Date.now()}-${findingCounter.count++}`,
@@ -45,7 +46,7 @@ export function evaluateThreatIntelligenceRules(file: CodeFile, lines: string[],
     }
     // CTI-02: Missing STIX 2.1 & TAXII 2.1 Automated Threat Indicator Expiration and TTL Governance
     if (((/ioc_database|blocklist_rules/i.test(lowerPath) || /stixIndicator|iocStore/i.test(cleanContent)) && !/iocTtlDays/i.test(cleanContent))) {
-        const matchLineIdx = lines.findIndex(l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('#') && !l.trim().startsWith('*'));
+        const matchLineIdx = locateMatchLine(lines, [/stixIndicator|iocStore/i], l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('#') && !l.trim().startsWith('*'));
         const lineNum = matchLineIdx !== -1 ? matchLineIdx + 1 : 1;
         findings.push({
             id: `cti15602-${Date.now()}-${findingCounter.count++}`,
@@ -69,7 +70,7 @@ export function evaluateThreatIntelligenceRules(file: CodeFile, lines: string[],
     }
     // CTI-03: Lack of Automated Threat Feed Confidence Scoring Leading to Critical Benign Asset Blacklisting
     if (((/threat_scoring|ioc_filtering/i.test(lowerPath) || /confidenceThreshold/i.test(cleanContent)) && !/minConfidenceScore/i.test(cleanContent))) {
-        const matchLineIdx = lines.findIndex(l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('#') && !l.trim().startsWith('*'));
+        const matchLineIdx = locateMatchLine(lines, [/confidenceThreshold/i], l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('#') && !l.trim().startsWith('*'));
         const lineNum = matchLineIdx !== -1 ? matchLineIdx + 1 : 1;
         findings.push({
             id: `cti15603-${Date.now()}-${findingCounter.count++}`,
@@ -93,7 +94,7 @@ export function evaluateThreatIntelligenceRules(file: CodeFile, lines: string[],
     }
     // CTI-04: Missing MISP Security Incident Event Synchronization on Perimeter Edge Firewalls
     if (((/misp_integration|firewall_sync/i.test(lowerPath) || /mispEvent/i.test(cleanContent)) && !/syncMispToFirewall/i.test(cleanContent))) {
-        const matchLineIdx = lines.findIndex(l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('#') && !l.trim().startsWith('*'));
+        const matchLineIdx = locateMatchLine(lines, [/mispEvent/i], l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('#') && !l.trim().startsWith('*'));
         const lineNum = matchLineIdx !== -1 ? matchLineIdx + 1 : 1;
         findings.push({
             id: `cti15604-${Date.now()}-${findingCounter.count++}`,
@@ -117,7 +118,7 @@ export function evaluateThreatIntelligenceRules(file: CodeFile, lines: string[],
     }
     // CTI-05: Unverified IoC (Indicator of Compromise) Matching Running Without IP/Domain Reputation Scoring
     if (((/ioc_matcher|perimeter_alert/i.test(lowerPath) || /iocMatcher/i.test(cleanContent)) && !/enrichWithReputation/i.test(cleanContent))) {
-        const matchLineIdx = lines.findIndex(l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('#') && !l.trim().startsWith('*'));
+        const matchLineIdx = locateMatchLine(lines, [/iocMatcher/i], l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('#') && !l.trim().startsWith('*'));
         const lineNum = matchLineIdx !== -1 ? matchLineIdx + 1 : 1;
         findings.push({
             id: `cti15605-${Date.now()}-${findingCounter.count++}`,

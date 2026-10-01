@@ -4,6 +4,7 @@
  */
 import { Finding } from "@/data/schema";
 import { CodeFile } from "../scanner-engine";
+import { locateMatchLine } from './shared/locate';
 export interface ApiGatewayRuleResult {
     findings: Finding[];
     logs: string[];
@@ -25,7 +26,7 @@ export function evaluateApiGatewayRules(file: CodeFile, lines: string[], cleanCo
     const ts = new Date().toLocaleTimeString();
     // GW-01: Unauthenticated Gateway Route Fallthrough (Missing Catch-All Rejection)
     if ((/router\.(?:use|all)\s*\([\s\S]*?\)/.test(cleanContent) && !/notFound|reject|deny/i.test(cleanContent))) {
-        const matchLineIdx = lines.findIndex(l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('*'));
+        const matchLineIdx = locateMatchLine(lines, [/router\.(?:use|all)\s*\([\s\S]*?\)/], l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('*'));
         const lineNum = matchLineIdx !== -1 ? matchLineIdx + 1 : 1;
         findings.push({
             id: `gw11401-${Date.now()}-${findingCounter.count++}`,
@@ -49,7 +50,7 @@ export function evaluateApiGatewayRules(file: CodeFile, lines: string[], cleanCo
     }
     // GW-02: Missing Token Bucket Rate Limiting on Credential Authentication Routes
     if ((/(?:\/login|\/auth|\/signin)/i.test(cleanContent) && !/rateLimit|ratelimiter/i.test(cleanContent))) {
-        const matchLineIdx = lines.findIndex(l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('*'));
+        const matchLineIdx = locateMatchLine(lines, [/(?:\/login|\/auth|\/signin)/i], l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('*'));
         const lineNum = matchLineIdx !== -1 ? matchLineIdx + 1 : 1;
         findings.push({
             id: `gw11402-${Date.now()}-${findingCounter.count++}`,
@@ -73,7 +74,7 @@ export function evaluateApiGatewayRules(file: CodeFile, lines: string[], cleanCo
     }
     // GW-03: HTTP Request Smuggling Vulnerability (Ambiguous Transfer-Encoding / Content-Length)
     if ((/headers\[['"]transfer-encoding['"]\]/i.test(cleanContent) && /headers\[['"]content-length['"]\]/i.test(cleanContent))) {
-        const matchLineIdx = lines.findIndex(l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('*'));
+        const matchLineIdx = locateMatchLine(lines, [/headers\[['"]transfer-encoding['"]\]/i, /headers\[['"]content-length['"]\]/i], l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('*'));
         const lineNum = matchLineIdx !== -1 ? matchLineIdx + 1 : 1;
         findings.push({
             id: `gw11403-${Date.now()}-${findingCounter.count++}`,
@@ -97,7 +98,7 @@ export function evaluateApiGatewayRules(file: CodeFile, lines: string[], cleanCo
     }
     // GW-04: Oversized Header Buffer Parsing Attack (HTTP 431 Vulnerability)
     if ((/maxHeaderSize\s*:\s*(?:Infinity|0)/.test(cleanContent))) {
-        const matchLineIdx = lines.findIndex(l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('*'));
+        const matchLineIdx = locateMatchLine(lines, [/maxHeaderSize\s*:\s*(?:Infinity|0)/], l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('*'));
         const lineNum = matchLineIdx !== -1 ? matchLineIdx + 1 : 1;
         findings.push({
             id: `gw11404-${Date.now()}-${findingCounter.count++}`,
@@ -121,7 +122,7 @@ export function evaluateApiGatewayRules(file: CodeFile, lines: string[], cleanCo
     }
     // GW-05: Missing API Deprecation and Sunset Announcement Headers
     if ((/\/api\/v1\//i.test(cleanContent) && !/sunset|deprecation/i.test(cleanContent))) {
-        const matchLineIdx = lines.findIndex(l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('*'));
+        const matchLineIdx = locateMatchLine(lines, [/\/api\/v1\//i], l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('*'));
         const lineNum = matchLineIdx !== -1 ? matchLineIdx + 1 : 1;
         findings.push({
             id: `gw11405-${Date.now()}-${findingCounter.count++}`,

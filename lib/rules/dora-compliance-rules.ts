@@ -4,6 +4,7 @@
  */
 import { Finding } from "@/data/schema";
 import { CodeFile } from "../scanner-engine";
+import { locateMatchLine } from './shared/locate';
 export interface DoraComplianceRuleResult {
     findings: Finding[];
     logs: string[];
@@ -21,7 +22,7 @@ export function evaluateDoraComplianceRules(file: CodeFile, lines: string[], cle
     const ts = new Date().toLocaleTimeString();
     // DORA-01: DORA Art. 6 ICT Risk Management Framework Missing Business Continuity Policy
     if (((/financialcore/i.test(lowerPath) || /financialCore/i.test(cleanContent)) && !/businessContinuityPolicy/i.test(cleanContent))) {
-        const matchLineIdx = lines.findIndex(l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('#') && !l.trim().startsWith('*'));
+        const matchLineIdx = locateMatchLine(lines, [/financialCore/i], l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('#') && !l.trim().startsWith('*'));
         const lineNum = matchLineIdx !== -1 ? matchLineIdx + 1 : 1;
         findings.push({
             id: `dora12401-${Date.now()}-${findingCounter.count++}`,
@@ -45,7 +46,7 @@ export function evaluateDoraComplianceRules(file: CodeFile, lines: string[], cle
     }
     // DORA-02: DORA Art. 9 Automated Anomaly Detection and ICT Network Monitoring
     if (((/paymentnetwork/i.test(lowerPath) || /paymentNetwork/i.test(cleanContent)) && !/automatedAnomalyDetection/i.test(cleanContent))) {
-        const matchLineIdx = lines.findIndex(l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('#') && !l.trim().startsWith('*'));
+        const matchLineIdx = locateMatchLine(lines, [/paymentNetwork/i], l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('#') && !l.trim().startsWith('*'));
         const lineNum = matchLineIdx !== -1 ? matchLineIdx + 1 : 1;
         findings.push({
             id: `dora12402-${Date.now()}-${findingCounter.count++}`,
@@ -69,7 +70,7 @@ export function evaluateDoraComplianceRules(file: CodeFile, lines: string[], cle
     }
     // DORA-03: DORA Art. 19 Major ICT-Related Incident Reporting Standard Operating Procedure
     if (((/incidentworkflow/i.test(lowerPath) || /incidentWorkflow/i.test(cleanContent)) && !/doraIncidentReportHandler/i.test(cleanContent))) {
-        const matchLineIdx = lines.findIndex(l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('#') && !l.trim().startsWith('*'));
+        const matchLineIdx = locateMatchLine(lines, [/incidentWorkflow/i], l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('#') && !l.trim().startsWith('*'));
         const lineNum = matchLineIdx !== -1 ? matchLineIdx + 1 : 1;
         findings.push({
             id: `dora12403-${Date.now()}-${findingCounter.count++}`,
@@ -93,7 +94,7 @@ export function evaluateDoraComplianceRules(file: CodeFile, lines: string[], cle
     }
     // DORA-04: DORA Art. 26 Threat-Led Penetration Testing (TLPT) Frequency Violation
     if ((/securityTestingSchedule/i.test(cleanContent) && !/threatLedPenTesting/i.test(cleanContent))) {
-        const matchLineIdx = lines.findIndex(l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('#') && !l.trim().startsWith('*'));
+        const matchLineIdx = locateMatchLine(lines, [/securityTestingSchedule/i], l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('#') && !l.trim().startsWith('*'));
         const lineNum = matchLineIdx !== -1 ? matchLineIdx + 1 : 1;
         findings.push({
             id: `dora12404-${Date.now()}-${findingCounter.count++}`,
@@ -117,7 +118,7 @@ export function evaluateDoraComplianceRules(file: CodeFile, lines: string[], cle
     }
     // DORA-05: DORA Art. 30 Mandatory Exit Strategy for Critical ICT Third Parties
     if ((/cloudVendorContract/i.test(cleanContent) && !/documentedExitStrategy/i.test(cleanContent))) {
-        const matchLineIdx = lines.findIndex(l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('#') && !l.trim().startsWith('*'));
+        const matchLineIdx = locateMatchLine(lines, [/cloudVendorContract/i], l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('#') && !l.trim().startsWith('*'));
         const lineNum = matchLineIdx !== -1 ? matchLineIdx + 1 : 1;
         findings.push({
             id: `dora12405-${Date.now()}-${findingCounter.count++}`,

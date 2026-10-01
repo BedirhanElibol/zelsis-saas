@@ -4,6 +4,7 @@
  */
 import { Finding } from '@/data/schema';
 import { CodeFile } from '../scanner-engine';
+import { locateMatchLine } from './shared/locate';
 export interface CloudNativeRuleResult {
     findings: Finding[];
     logs: string[];
@@ -21,7 +22,7 @@ export function evaluateCloudNativeRules(file: CodeFile, lines: string[], cleanC
     const ts = new Date().toLocaleTimeString();
     // CLOUD-01: Synchronous Serverless Function Timeout Exceeding 30s
     if (/export\s+const\s+maxDuration\s*=\s*(?:[4-9]\d|\d{3,})/i.test(cleanContent) && !/cron|background|queue/i.test(lowerPath)) {
-        const matchLineIdx = lines.findIndex(l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('*') && (/cloud-01|synchronous/i.test(l) || lines.indexOf(l) === 0));
+        const matchLineIdx = locateMatchLine(lines, [/export\s+const\s+maxDuration\s*=\s*(?:[4-9]\d|\d{3,})/i], l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('*'));
         const lineNum = matchLineIdx !== -1 ? matchLineIdx + 1 : 1;
         findings.push({
             id: `cloud01-${Date.now()}-${findingCounter.count++}`,
@@ -46,7 +47,7 @@ export function evaluateCloudNativeRules(file: CodeFile, lines: string[], cleanC
     }
     // CLOUD-02: Serverless Lambda Memory Starvation (<256MB)
     if (/(?:memorySize|memory_size)\s*:\s*(?:128|64)\b/i.test(cleanContent)) {
-        const matchLineIdx = lines.findIndex(l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('*') && (/cloud-02|serverless/i.test(l) || lines.indexOf(l) === 0));
+        const matchLineIdx = locateMatchLine(lines, [/(?:memorySize|memory_size)\s*:\s*(?:128|64)\b/i], l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('*'));
         const lineNum = matchLineIdx !== -1 ? matchLineIdx + 1 : 1;
         findings.push({
             id: `cloud02-${Date.now()}-${findingCounter.count++}`,
@@ -71,7 +72,7 @@ export function evaluateCloudNativeRules(file: CodeFile, lines: string[], cleanC
     }
     // CLOUD-03: Serverless Over-Provisioned Memory Waste (>4096MB)
     if (/(?:memorySize|memory_size)\s*:\s*(?:[5-9]\d{3,}|\d{5,})\b/i.test(cleanContent) && !/ml|render|video/i.test(lowerPath)) {
-        const matchLineIdx = lines.findIndex(l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('*') && (/cloud-03|serverless/i.test(l) || lines.indexOf(l) === 0));
+        const matchLineIdx = locateMatchLine(lines, [/(?:memorySize|memory_size)\s*:\s*(?:[5-9]\d{3,}|\d{5,})\b/i], l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('*'));
         const lineNum = matchLineIdx !== -1 ? matchLineIdx + 1 : 1;
         findings.push({
             id: `cloud03-${Date.now()}-${findingCounter.count++}`,
@@ -121,7 +122,7 @@ export function evaluateCloudNativeRules(file: CodeFile, lines: string[], cleanC
     }
     // CLOUD-05: Docker Base Image Using Mutable 'latest' Tag
     if (file.path.toLowerCase().endsWith("dockerfile") && /FROM\s+[a-zA-Z0-9_./-]+:latest\b/i.test(cleanContent)) {
-        const matchLineIdx = lines.findIndex(l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('*') && (/cloud-05|docker/i.test(l) || lines.indexOf(l) === 0));
+        const matchLineIdx = locateMatchLine(lines, [/FROM\s+[a-zA-Z0-9_./-]+:latest\b/i], l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('*'));
         const lineNum = matchLineIdx !== -1 ? matchLineIdx + 1 : 1;
         findings.push({
             id: `cloud05-${Date.now()}-${findingCounter.count++}`,
@@ -146,7 +147,7 @@ export function evaluateCloudNativeRules(file: CodeFile, lines: string[], cleanC
     }
     // CLOUD-06: Docker Secret Leak via Build ARG or ENV
     if (file.path.toLowerCase().endsWith("dockerfile") && /(?:ARG|ENV)\s+[a-zA-Z0-9_-]*(?:KEY|SECRET|PASSWORD|TOKEN)\s*=/i.test(cleanContent)) {
-        const matchLineIdx = lines.findIndex(l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('*') && (/cloud-06|docker/i.test(l) || lines.indexOf(l) === 0));
+        const matchLineIdx = locateMatchLine(lines, [/(?:ARG|ENV)\s+[a-zA-Z0-9_-]*(?:KEY|SECRET|PASSWORD|TOKEN)\s*=/i], l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('*'));
         const lineNum = matchLineIdx !== -1 ? matchLineIdx + 1 : 1;
         findings.push({
             id: `cloud06-${Date.now()}-${findingCounter.count++}`,
@@ -171,7 +172,7 @@ export function evaluateCloudNativeRules(file: CodeFile, lines: string[], cleanC
     }
     // CLOUD-07: Missing Multi-Stage Build in Production Dockerfile
     if (file.path.toLowerCase().endsWith("dockerfile") && !/AS\s+(?:builder|runner|runtime)/i.test(cleanContent) && /npm\s+run\s+build/i.test(cleanContent)) {
-        const matchLineIdx = lines.findIndex(l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('*') && (/cloud-07|missing/i.test(l) || lines.indexOf(l) === 0));
+        const matchLineIdx = locateMatchLine(lines, [/npm\s+run\s+build/i], l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('*'));
         const lineNum = matchLineIdx !== -1 ? matchLineIdx + 1 : 1;
         findings.push({
             id: `cloud07-${Date.now()}-${findingCounter.count++}`,
@@ -196,7 +197,7 @@ export function evaluateCloudNativeRules(file: CodeFile, lines: string[], cleanC
     }
     // CLOUD-08: S3 / Object Storage Bucket Public ACL Exposure
     if (/(?:AWS::S3::Bucket|aws_s3_bucket)\b/i.test(cleanContent) && !/BlockPublicAcls\s*:\s*true|block_public_acls\s*=\s*true/i.test(cleanContent)) {
-        const matchLineIdx = lines.findIndex(l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('*') && (/cloud-08|s3/i.test(l) || lines.indexOf(l) === 0));
+        const matchLineIdx = locateMatchLine(lines, [/(?:AWS::S3::Bucket|aws_s3_bucket)\b/i], l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('*'));
         const lineNum = matchLineIdx !== -1 ? matchLineIdx + 1 : 1;
         findings.push({
             id: `cloud08-${Date.now()}-${findingCounter.count++}`,
@@ -221,7 +222,7 @@ export function evaluateCloudNativeRules(file: CodeFile, lines: string[], cleanC
     }
     // CLOUD-09: Object Storage Missing Server-Side Encryption (SSE)
     if (/(?:AWS::S3::Bucket|aws_s3_bucket)\b/i.test(cleanContent) && !/ServerSideEncryption|server_side_encryption/i.test(cleanContent)) {
-        const matchLineIdx = lines.findIndex(l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('*') && (/cloud-09|object/i.test(l) || lines.indexOf(l) === 0));
+        const matchLineIdx = locateMatchLine(lines, [/(?:AWS::S3::Bucket|aws_s3_bucket)\b/i], l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('*'));
         const lineNum = matchLineIdx !== -1 ? matchLineIdx + 1 : 1;
         findings.push({
             id: `cloud09-${Date.now()}-${findingCounter.count++}`,
@@ -246,7 +247,7 @@ export function evaluateCloudNativeRules(file: CodeFile, lines: string[], cleanC
     }
     // CLOUD-10: Missing Lifecycle Expiration on Temporary Storage
     if (/(?:AWS::S3::Bucket|aws_s3_bucket)\b/i.test(cleanContent) && /temp|staging|tmp|cache/i.test(cleanContent) && !/LifecycleConfiguration|lifecycle_rule/i.test(cleanContent)) {
-        const matchLineIdx = lines.findIndex(l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('*') && (/cloud-10|missing/i.test(l) || lines.indexOf(l) === 0));
+        const matchLineIdx = locateMatchLine(lines, [/(?:AWS::S3::Bucket|aws_s3_bucket)\b/i, /temp|staging|tmp|cache/i], l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('*'));
         const lineNum = matchLineIdx !== -1 ? matchLineIdx + 1 : 1;
         findings.push({
             id: `cloud10-${Date.now()}-${findingCounter.count++}`,
@@ -271,7 +272,7 @@ export function evaluateCloudNativeRules(file: CodeFile, lines: string[], cleanC
     }
     // CLOUD-11: Kubernetes Pod Missing CPU & Memory Requests/Limits
     if (/(?:apiVersion:\s*apps\/v1|kind:\s*Deployment)/i.test(cleanContent) && !/resources:\s*[\s\S]*?(?:limits|requests)/i.test(cleanContent) && /\.(?:ya?ml)$/i.test(file.path)) {
-        const matchLineIdx = lines.findIndex(l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('*') && (/cloud-11|kubernetes/i.test(l) || lines.indexOf(l) === 0));
+        const matchLineIdx = locateMatchLine(lines, [/(?:apiVersion:\s*apps\/v1|kind:\s*Deployment)/i], l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('*'));
         const lineNum = matchLineIdx !== -1 ? matchLineIdx + 1 : 1;
         findings.push({
             id: `cloud11-${Date.now()}-${findingCounter.count++}`,
@@ -296,7 +297,7 @@ export function evaluateCloudNativeRules(file: CodeFile, lines: string[], cleanC
     }
     // CLOUD-12: Kubernetes Pod Missing Liveness and Readiness Probes
     if (/(?:kind:\s*Deployment|kind:\s*StatefulSet)/i.test(cleanContent) && (!/livenessProbe/i.test(cleanContent) || !/readinessProbe/i.test(cleanContent)) && /\.(?:ya?ml)$/i.test(file.path)) {
-        const matchLineIdx = lines.findIndex(l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('*') && (/cloud-12|kubernetes/i.test(l) || lines.indexOf(l) === 0));
+        const matchLineIdx = locateMatchLine(lines, [/(?:kind:\s*Deployment|kind:\s*StatefulSet)/i], l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('*'));
         const lineNum = matchLineIdx !== -1 ? matchLineIdx + 1 : 1;
         findings.push({
             id: `cloud12-${Date.now()}-${findingCounter.count++}`,
@@ -321,7 +322,7 @@ export function evaluateCloudNativeRules(file: CodeFile, lines: string[], cleanC
     }
     // CLOUD-13: Kubernetes Pod Running with Privileged SecurityContext
     if (/(?:privileged:\s*true|allowPrivilegeEscalation:\s*true)/i.test(cleanContent) && /\.(?:ya?ml)$/i.test(file.path)) {
-        const matchLineIdx = lines.findIndex(l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('*') && (/cloud-13|kubernetes/i.test(l) || lines.indexOf(l) === 0));
+        const matchLineIdx = locateMatchLine(lines, [/(?:privileged:\s*true|allowPrivilegeEscalation:\s*true)/i], l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('*'));
         const lineNum = matchLineIdx !== -1 ? matchLineIdx + 1 : 1;
         findings.push({
             id: `cloud13-${Date.now()}-${findingCounter.count++}`,
@@ -346,7 +347,7 @@ export function evaluateCloudNativeRules(file: CodeFile, lines: string[], cleanC
     }
     // CLOUD-14: Missing NetworkPolicy Restricting Pod Egress
     if (/(?:kind:\s*Namespace)/i.test(cleanContent) && !/kind:\s*NetworkPolicy/i.test(cleanContent) && /\.(?:ya?ml)$/i.test(file.path)) {
-        const matchLineIdx = lines.findIndex(l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('*') && (/cloud-14|missing/i.test(l) || lines.indexOf(l) === 0));
+        const matchLineIdx = locateMatchLine(lines, [/(?:kind:\s*Namespace)/i], l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('*'));
         const lineNum = matchLineIdx !== -1 ? matchLineIdx + 1 : 1;
         findings.push({
             id: `cloud14-${Date.now()}-${findingCounter.count++}`,
@@ -371,7 +372,7 @@ export function evaluateCloudNativeRules(file: CodeFile, lines: string[], cleanC
     }
     // CLOUD-15: Lambda Cold Start Heavy Module Initialization
     if (/(?:export\s+(?:default\s+)?(?:async\s+)?function\s+handler|export\s+const\s+handler\s*=\s*(?:async\s*)?\()[\s\S]*?new\s+(?:PrismaClient|S3Client|DynamoDBClient)\s*\(/i.test(cleanContent)) {
-        const matchLineIdx = lines.findIndex(l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('*') && (/cloud-15|lambda/i.test(l) || lines.indexOf(l) === 0));
+        const matchLineIdx = locateMatchLine(lines, [/(?:export\s+(?:default\s+)?(?:async\s+)?function\s+handler|export\s+const\s+handler\s*=\s*(?:async\s*)?\()[\s\S]*?new\s+(?:PrismaClient|S3Client|DynamoDBClient)\s*\(/i], l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('*'));
         const lineNum = matchLineIdx !== -1 ? matchLineIdx + 1 : 1;
         findings.push({
             id: `cloud15-${Date.now()}-${findingCounter.count++}`,
@@ -396,7 +397,7 @@ export function evaluateCloudNativeRules(file: CodeFile, lines: string[], cleanC
     }
     // CLOUD-16: Unbounded Dead Letter Queue (DLQ) Absence on Async Lambdas
     if (/(?:AWS::Lambda::Function|aws_lambda_function)\b/i.test(cleanContent) && /EventSourceMapping/i.test(cleanContent) && !/DeadLetterConfig|dead_letter_config/i.test(cleanContent)) {
-        const matchLineIdx = lines.findIndex(l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('*') && (/cloud-16|unbounded/i.test(l) || lines.indexOf(l) === 0));
+        const matchLineIdx = locateMatchLine(lines, [/(?:AWS::Lambda::Function|aws_lambda_function)\b/i, /EventSourceMapping/i], l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('*'));
         const lineNum = matchLineIdx !== -1 ? matchLineIdx + 1 : 1;
         findings.push({
             id: `cloud16-${Date.now()}-${findingCounter.count++}`,
@@ -421,7 +422,7 @@ export function evaluateCloudNativeRules(file: CodeFile, lines: string[], cleanC
     }
     // CLOUD-17: Missing Exponential Backoff on Cloud SDK Invocations
     if (/(?:new\s+S3Client|new\s+DynamoDBClient|new\s+SESClient)\s*\(\s*\{(?![^}]*maxAttempts)/i.test(cleanContent)) {
-        const matchLineIdx = lines.findIndex(l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('*') && (/cloud-17|missing/i.test(l) || lines.indexOf(l) === 0));
+        const matchLineIdx = locateMatchLine(lines, [/(?:new\s+S3Client|new\s+DynamoDBClient|new\s+SESClient)\s*\(\s*\{(?![^}]*maxAttempts)/i], l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('*'));
         const lineNum = matchLineIdx !== -1 ? matchLineIdx + 1 : 1;
         findings.push({
             id: `cloud17-${Date.now()}-${findingCounter.count++}`,
@@ -446,7 +447,7 @@ export function evaluateCloudNativeRules(file: CodeFile, lines: string[], cleanC
     }
     // CLOUD-18: Hardcoded Cloud Provider Endpoint or Region
     if (/(?:region\s*:\s*[\'"](?:us-east-1|eu-west-1|us-west-2)[\'"]|endpoint\s*:\s*[\'"]https:\/\/[a-z0-9.-]+\.amazonaws\.com[\'"])/i.test(cleanContent) && !/\.env/i.test(file.path) && !/test|spec|mock/i.test(lowerPath)) {
-        const matchLineIdx = lines.findIndex(l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('*') && (/cloud-18|hardcoded/i.test(l) || lines.indexOf(l) === 0));
+        const matchLineIdx = locateMatchLine(lines, [/(?:region\s*:\s*[\'"](?:us-east-1|eu-west-1|us-west-2)[\'"]|endpoint\s*:\s*[\'"]https:\/\/[a-z0-9.-]+\.amazonaws\.com[\'"])/i], l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('*'));
         const lineNum = matchLineIdx !== -1 ? matchLineIdx + 1 : 1;
         findings.push({
             id: `cloud18-${Date.now()}-${findingCounter.count++}`,
@@ -471,7 +472,7 @@ export function evaluateCloudNativeRules(file: CodeFile, lines: string[], cleanC
     }
     // CLOUD-19: Serverless Function Exceeding Bundle Size Limit (>50MB)
     if (/(?:serverExternalPackages|outputFileTracingExcludes)/i.test(cleanContent) && /bundle\s*>\s*50/i.test(cleanContent)) {
-        const matchLineIdx = lines.findIndex(l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('*') && (/cloud-19|serverless/i.test(l) || lines.indexOf(l) === 0));
+        const matchLineIdx = locateMatchLine(lines, [/(?:serverExternalPackages|outputFileTracingExcludes)/i, /bundle\s*>\s*50/i], l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('*'));
         const lineNum = matchLineIdx !== -1 ? matchLineIdx + 1 : 1;
         findings.push({
             id: `cloud19-${Date.now()}-${findingCounter.count++}`,
@@ -496,7 +497,7 @@ export function evaluateCloudNativeRules(file: CodeFile, lines: string[], cleanC
     }
     // CLOUD-20: CloudFormation / CDK Wildcard IAM Action (Action: '*')
     if (/(?:Action\s*:\s*[\'"]\*[\'"]|actions\s*=\s*\[[\'"]\*[\'"]\]|Action\s*:\s*\[[\'"]\*[\'"]\])/i.test(cleanContent) && !lowerPath.includes("test")) {
-        const matchLineIdx = lines.findIndex(l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('*') && (/cloud-20|cloudformation/i.test(l) || lines.indexOf(l) === 0));
+        const matchLineIdx = locateMatchLine(lines, [/(?:Action\s*:\s*[\'"]\*[\'"]|actions\s*=\s*\[[\'"]\*[\'"]\]|Action\s*:\s*\[[\'"]\*[\'"]\])/i], l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('*'));
         const lineNum = matchLineIdx !== -1 ? matchLineIdx + 1 : 1;
         findings.push({
             id: `cloud20-${Date.now()}-${findingCounter.count++}`,
@@ -521,7 +522,7 @@ export function evaluateCloudNativeRules(file: CodeFile, lines: string[], cleanC
     }
     // CLOUD-21: CloudFormation / CDK Wildcard IAM Resource (Resource: '*')
     if (/(?:Resource\s*:\s*[\'"]\*[\'"]|resources\s*=\s*\[[\'"]\*[\'"]\]|Resource\s*:\s*\[[\'"]\*[\'"]\])/i.test(cleanContent) && /Allow/i.test(cleanContent) && !lowerPath.includes("test")) {
-        const matchLineIdx = lines.findIndex(l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('*') && (/cloud-21|cloudformation/i.test(l) || lines.indexOf(l) === 0));
+        const matchLineIdx = locateMatchLine(lines, [/(?:Resource\s*:\s*[\'"]\*[\'"]|resources\s*=\s*\[[\'"]\*[\'"]\]|Resource\s*:\s*\[[\'"]\*[\'"]\])/i, /Allow/i], l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('*'));
         const lineNum = matchLineIdx !== -1 ? matchLineIdx + 1 : 1;
         findings.push({
             id: `cloud21-${Date.now()}-${findingCounter.count++}`,
@@ -546,7 +547,7 @@ export function evaluateCloudNativeRules(file: CodeFile, lines: string[], cleanC
     }
     // CLOUD-22: Missing Serverless Connection Pooling (RDS Proxy / PgBouncer)
     if (/(?:AWS::RDS::DBInstance|aws_db_instance)\b/i.test(cleanContent) && !/RDS::DBProxy|aws_db_proxy/i.test(cleanContent) && /serverless|lambda/i.test(cleanContent)) {
-        const matchLineIdx = lines.findIndex(l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('*') && (/cloud-22|missing/i.test(l) || lines.indexOf(l) === 0));
+        const matchLineIdx = locateMatchLine(lines, [/(?:AWS::RDS::DBInstance|aws_db_instance)\b/i, /serverless|lambda/i], l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('*'));
         const lineNum = matchLineIdx !== -1 ? matchLineIdx + 1 : 1;
         findings.push({
             id: `cloud22-${Date.now()}-${findingCounter.count++}`,
@@ -571,7 +572,7 @@ export function evaluateCloudNativeRules(file: CodeFile, lines: string[], cleanC
     }
     // CLOUD-23: Edge Runtime Function Invoking Node.js Native Modules
     if (/export\s+const\s+runtime\s*=\s*[\'"]edge[\'"]/i.test(cleanContent) && /from\s+[\'"](?:fs|child_process|dns|cluster)[\'"]/i.test(cleanContent)) {
-        const matchLineIdx = lines.findIndex(l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('*') && (/cloud-23|edge/i.test(l) || lines.indexOf(l) === 0));
+        const matchLineIdx = locateMatchLine(lines, [/export\s+const\s+runtime\s*=\s*[\'"]edge[\'"]/i, /from\s+[\'"](?:fs|child_process|dns|cluster)[\'"]/i], l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('*'));
         const lineNum = matchLineIdx !== -1 ? matchLineIdx + 1 : 1;
         findings.push({
             id: `cloud23-${Date.now()}-${findingCounter.count++}`,
@@ -596,7 +597,7 @@ export function evaluateCloudNativeRules(file: CodeFile, lines: string[], cleanC
     }
     // CLOUD-24: Serverless Route Missing Cache-Control on Edge CDN
     if (/(?:app\/api|pages\/api)/i.test(lowerPath) && /export\s+async\s+function\s+GET/i.test(cleanContent) && /public|assets|catalog|products/i.test(lowerPath) && !/Cache-Control/i.test(cleanContent)) {
-        const matchLineIdx = lines.findIndex(l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('*') && (/cloud-24|serverless/i.test(l) || lines.indexOf(l) === 0));
+        const matchLineIdx = locateMatchLine(lines, [/export\s+async\s+function\s+GET/i], l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('*'));
         const lineNum = matchLineIdx !== -1 ? matchLineIdx + 1 : 1;
         findings.push({
             id: `cloud24-${Date.now()}-${findingCounter.count++}`,
@@ -621,7 +622,7 @@ export function evaluateCloudNativeRules(file: CodeFile, lines: string[], cleanC
     }
     // CLOUD-25: Missing AWS WAF Web ACL on Production CloudFront Distribution
     if (/(?:AWS::CloudFront::Distribution|aws_cloudfront_distribution)\b/i.test(cleanContent) && !/webAclId|web_acl_id/i.test(cleanContent)) {
-        const matchLineIdx = lines.findIndex(l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('*') && (/cloud-25|missing/i.test(l) || lines.indexOf(l) === 0));
+        const matchLineIdx = locateMatchLine(lines, [/(?:AWS::CloudFront::Distribution|aws_cloudfront_distribution)\b/i], l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('*'));
         const lineNum = matchLineIdx !== -1 ? matchLineIdx + 1 : 1;
         findings.push({
             id: `cloud25-${Date.now()}-${findingCounter.count++}`,
@@ -646,7 +647,7 @@ export function evaluateCloudNativeRules(file: CodeFile, lines: string[], cleanC
     }
     // CLOUD-26: CloudFront Missing Enforced HTTPS Redirection
     if (/(?:AWS::CloudFront::Distribution|aws_cloudfront_distribution)\b/i.test(cleanContent) && /viewerProtocolPolicy\s*:\s*[\'"]allow-all[\'"]|viewer_protocol_policy\s*=\s*[\'"]allow-all[\'"]/i.test(cleanContent)) {
-        const matchLineIdx = lines.findIndex(l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('*') && (/cloud-26|cloudfront/i.test(l) || lines.indexOf(l) === 0));
+        const matchLineIdx = locateMatchLine(lines, [/(?:AWS::CloudFront::Distribution|aws_cloudfront_distribution)\b/i, /viewerProtocolPolicy\s*:\s*[\'"]allow-all[\'"]|viewer_protocol_policy\s*=\s*[\'"]allow-all[\'"]/i], l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('*'));
         const lineNum = matchLineIdx !== -1 ? matchLineIdx + 1 : 1;
         findings.push({
             id: `cloud26-${Date.now()}-${findingCounter.count++}`,
@@ -671,7 +672,7 @@ export function evaluateCloudNativeRules(file: CodeFile, lines: string[], cleanC
     }
     // CLOUD-27: CloudFront Insecure Legacy TLS Protocol Version (<TLSv1.2)
     if (/(?:AWS::CloudFront::Distribution|aws_cloudfront_distribution)\b/i.test(cleanContent) && /minimumProtocolVersion\s*:\s*[\'"](?:TLSv1|TLSv1_2016)[\'"]/i.test(cleanContent)) {
-        const matchLineIdx = lines.findIndex(l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('*') && (/cloud-27|cloudfront/i.test(l) || lines.indexOf(l) === 0));
+        const matchLineIdx = locateMatchLine(lines, [/(?:AWS::CloudFront::Distribution|aws_cloudfront_distribution)\b/i, /minimumProtocolVersion\s*:\s*[\'"](?:TLSv1|TLSv1_2016)[\'"]/i], l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('*'));
         const lineNum = matchLineIdx !== -1 ? matchLineIdx + 1 : 1;
         findings.push({
             id: `cloud27-${Date.now()}-${findingCounter.count++}`,
@@ -696,7 +697,7 @@ export function evaluateCloudNativeRules(file: CodeFile, lines: string[], cleanC
     }
     // CLOUD-28: Unencrypted CloudWatch / Sentry Log Stream
     if (/(?:AWS::Logs::LogGroup|aws_cloudwatch_log_group)\b/i.test(cleanContent) && !/kmsKeyId|kms_key_id/i.test(cleanContent)) {
-        const matchLineIdx = lines.findIndex(l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('*') && (/cloud-28|unencrypted/i.test(l) || lines.indexOf(l) === 0));
+        const matchLineIdx = locateMatchLine(lines, [/(?:AWS::Logs::LogGroup|aws_cloudwatch_log_group)\b/i], l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('*'));
         const lineNum = matchLineIdx !== -1 ? matchLineIdx + 1 : 1;
         findings.push({
             id: `cloud28-${Date.now()}-${findingCounter.count++}`,
@@ -721,7 +722,7 @@ export function evaluateCloudNativeRules(file: CodeFile, lines: string[], cleanC
     }
     // CLOUD-29: Indefinite CloudWatch Log Retention Period
     if (/(?:AWS::Logs::LogGroup|aws_cloudwatch_log_group)\b/i.test(cleanContent) && !/retentionInDays|retention_in_days/i.test(cleanContent)) {
-        const matchLineIdx = lines.findIndex(l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('*') && (/cloud-29|indefinite/i.test(l) || lines.indexOf(l) === 0));
+        const matchLineIdx = locateMatchLine(lines, [/(?:AWS::Logs::LogGroup|aws_cloudwatch_log_group)\b/i], l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('*'));
         const lineNum = matchLineIdx !== -1 ? matchLineIdx + 1 : 1;
         findings.push({
             id: `cloud29-${Date.now()}-${findingCounter.count++}`,
@@ -746,7 +747,7 @@ export function evaluateCloudNativeRules(file: CodeFile, lines: string[], cleanC
     }
     // CLOUD-30: Terraform / OpenTofu Plaintext Secret in Output
     if (/\.tf$/i.test(file.path) && /output\s+["\'][a-zA-Z0-9_-]*(?:password|secret|key|token)["\']\s*\{(?![^}]*sensitive\s*=\s*true)/i.test(cleanContent)) {
-        const matchLineIdx = lines.findIndex(l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('*') && (/cloud-30|terraform/i.test(l) || lines.indexOf(l) === 0));
+        const matchLineIdx = locateMatchLine(lines, [/output\s+["\'][a-zA-Z0-9_-]*(?:password|secret|key|token)["\']\s*\{(?![^}]*sensitive\s*=\s*true)/i], l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('*'));
         const lineNum = matchLineIdx !== -1 ? matchLineIdx + 1 : 1;
         findings.push({
             id: `cloud30-${Date.now()}-${findingCounter.count++}`,
@@ -771,7 +772,7 @@ export function evaluateCloudNativeRules(file: CodeFile, lines: string[], cleanC
     }
     // CLOUD-31: Terraform State Backend Missing Encryption at Rest
     if (/\.tf$/i.test(file.path) && /backend\s+["\']s3["\']\s*\{(?![^}]*encrypt\s*=\s*true)/i.test(cleanContent)) {
-        const matchLineIdx = lines.findIndex(l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('*') && (/cloud-31|terraform/i.test(l) || lines.indexOf(l) === 0));
+        const matchLineIdx = locateMatchLine(lines, [/backend\s+["\']s3["\']\s*\{(?![^}]*encrypt\s*=\s*true)/i], l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('*'));
         const lineNum = matchLineIdx !== -1 ? matchLineIdx + 1 : 1;
         findings.push({
             id: `cloud31-${Date.now()}-${findingCounter.count++}`,
@@ -796,7 +797,7 @@ export function evaluateCloudNativeRules(file: CodeFile, lines: string[], cleanC
     }
     // CLOUD-32: Docker HEALTHCHECK Directive Omitted in Production
     if (file.path.toLowerCase().endsWith("dockerfile") && /EXPOSE\s+\d+/i.test(cleanContent) && !/HEALTHCHECK/i.test(cleanContent)) {
-        const matchLineIdx = lines.findIndex(l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('*') && (/cloud-32|docker/i.test(l) || lines.indexOf(l) === 0));
+        const matchLineIdx = locateMatchLine(lines, [/EXPOSE\s+\d+/i], l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('*'));
         const lineNum = matchLineIdx !== -1 ? matchLineIdx + 1 : 1;
         findings.push({
             id: `cloud32-${Date.now()}-${findingCounter.count++}`,
@@ -821,7 +822,7 @@ export function evaluateCloudNativeRules(file: CodeFile, lines: string[], cleanC
     }
     // CLOUD-33: Kubernetes Ingress Missing TLS Termination Certificate
     if (/(?:kind:\s*Ingress)/i.test(cleanContent) && !/tls:\s*[\s\S]*?secretName/i.test(cleanContent) && /\.(?:ya?ml)$/i.test(file.path)) {
-        const matchLineIdx = lines.findIndex(l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('*') && (/cloud-33|kubernetes/i.test(l) || lines.indexOf(l) === 0));
+        const matchLineIdx = locateMatchLine(lines, [/(?:kind:\s*Ingress)/i], l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('*'));
         const lineNum = matchLineIdx !== -1 ? matchLineIdx + 1 : 1;
         findings.push({
             id: `cloud33-${Date.now()}-${findingCounter.count++}`,
@@ -846,7 +847,7 @@ export function evaluateCloudNativeRules(file: CodeFile, lines: string[], cleanC
     }
     // CLOUD-34: AWS Lambda Provisioned Concurrency Missing Auto-Scaling
     if (/(?:provisionedConcurrentExecutions|provisioned_concurrent_executions)\s*:\s*\d+/i.test(cleanContent) && !/ScalableTarget|scalable_target/i.test(cleanContent)) {
-        const matchLineIdx = lines.findIndex(l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('*') && (/cloud-34|aws/i.test(l) || lines.indexOf(l) === 0));
+        const matchLineIdx = locateMatchLine(lines, [/(?:provisionedConcurrentExecutions|provisioned_concurrent_executions)\s*:\s*\d+/i], l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('*'));
         const lineNum = matchLineIdx !== -1 ? matchLineIdx + 1 : 1;
         findings.push({
             id: `cloud34-${Date.now()}-${findingCounter.count++}`,
@@ -871,7 +872,7 @@ export function evaluateCloudNativeRules(file: CodeFile, lines: string[], cleanC
     }
     // CLOUD-35: Serverless WebSocket Connection State Leaks
     if (/\$connect\b/i.test(cleanContent) && /connectionId/i.test(cleanContent) && !/redis|dynamodb|database|table/i.test(cleanContent) && !/mock/i.test(lowerPath)) {
-        const matchLineIdx = lines.findIndex(l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('*') && (/cloud-35|serverless/i.test(l) || lines.indexOf(l) === 0));
+        const matchLineIdx = locateMatchLine(lines, [/\$connect\b/i, /connectionId/i], l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('*'));
         const lineNum = matchLineIdx !== -1 ? matchLineIdx + 1 : 1;
         findings.push({
             id: `cloud35-${Date.now()}-${findingCounter.count++}`,
@@ -896,7 +897,7 @@ export function evaluateCloudNativeRules(file: CodeFile, lines: string[], cleanC
     }
     // CLOUD-36: Missing CloudTrail Multi-Region Audit Logging
     if (/(?:AWS::CloudTrail::Trail|aws_cloudtrail)\b/i.test(cleanContent) && /isMultiRegionTrail\s*:\s*false|is_multi_region_trail\s*=\s*false/i.test(cleanContent)) {
-        const matchLineIdx = lines.findIndex(l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('*') && (/cloud-36|missing/i.test(l) || lines.indexOf(l) === 0));
+        const matchLineIdx = locateMatchLine(lines, [/(?:AWS::CloudTrail::Trail|aws_cloudtrail)\b/i, /isMultiRegionTrail\s*:\s*false|is_multi_region_trail\s*=\s*false/i], l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('*'));
         const lineNum = matchLineIdx !== -1 ? matchLineIdx + 1 : 1;
         findings.push({
             id: `cloud36-${Date.now()}-${findingCounter.count++}`,
@@ -921,7 +922,7 @@ export function evaluateCloudNativeRules(file: CodeFile, lines: string[], cleanC
     }
     // CLOUD-37: ECR Container Image Repository Vulnerability Scan Disabled
     if (/(?:AWS::ECR::Repository|aws_ecr_repository)\b/i.test(cleanContent) && !/scanOnPush\s*:\s*true|scan_on_push\s*=\s*true/i.test(cleanContent)) {
-        const matchLineIdx = lines.findIndex(l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('*') && (/cloud-37|ecr/i.test(l) || lines.indexOf(l) === 0));
+        const matchLineIdx = locateMatchLine(lines, [/(?:AWS::ECR::Repository|aws_ecr_repository)\b/i], l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('*'));
         const lineNum = matchLineIdx !== -1 ? matchLineIdx + 1 : 1;
         findings.push({
             id: `cloud37-${Date.now()}-${findingCounter.count++}`,
@@ -946,7 +947,7 @@ export function evaluateCloudNativeRules(file: CodeFile, lines: string[], cleanC
     }
     // CLOUD-38: ECR Container Repository Tag Mutability Enabled
     if (/(?:AWS::ECR::Repository|aws_ecr_repository)\b/i.test(cleanContent) && /imageTagMutability\s*:\s*[\'"]MUTABLE[\'"]|image_tag_mutability\s*=\s*[\'"]MUTABLE[\'"]/i.test(cleanContent)) {
-        const matchLineIdx = lines.findIndex(l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('*') && (/cloud-38|ecr/i.test(l) || lines.indexOf(l) === 0));
+        const matchLineIdx = locateMatchLine(lines, [/(?:AWS::ECR::Repository|aws_ecr_repository)\b/i, /imageTagMutability\s*:\s*[\'"]MUTABLE[\'"]|image_tag_mutability\s*=\s*[\'"]MUTABLE[\'"]/i], l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('*'));
         const lineNum = matchLineIdx !== -1 ? matchLineIdx + 1 : 1;
         findings.push({
             id: `cloud38-${Date.now()}-${findingCounter.count++}`,
@@ -971,7 +972,7 @@ export function evaluateCloudNativeRules(file: CodeFile, lines: string[], cleanC
     }
     // CLOUD-39: Missing VPC Flow Logs on Production Subnets
     if (/(?:AWS::EC2::VPC|aws_vpc)\b/i.test(cleanContent) && !/FlowLog|flow_log/i.test(cleanContent)) {
-        const matchLineIdx = lines.findIndex(l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('*') && (/cloud-39|missing/i.test(l) || lines.indexOf(l) === 0));
+        const matchLineIdx = locateMatchLine(lines, [/(?:AWS::EC2::VPC|aws_vpc)\b/i], l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('*'));
         const lineNum = matchLineIdx !== -1 ? matchLineIdx + 1 : 1;
         findings.push({
             id: `cloud39-${Date.now()}-${findingCounter.count++}`,
@@ -996,7 +997,7 @@ export function evaluateCloudNativeRules(file: CodeFile, lines: string[], cleanC
     }
     // CLOUD-40: Security Group Permissive Inbound Ingress (0.0.0.0/0)
     if (/(?:AWS::EC2::SecurityGroup|aws_security_group)\b/i.test(cleanContent) && /cidrIp\s*:\s*[\'"]0\.0\.0\.0\/0[\'"]|cidr_blocks\s*=\s*\[[\'"]0\.0\.0\.0\/0[\'"]\]/i.test(cleanContent) && /(?:22|3389|5432|3306|27017|6379)\b/i.test(cleanContent)) {
-        const matchLineIdx = lines.findIndex(l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('*') && (/cloud-40|security/i.test(l) || lines.indexOf(l) === 0));
+        const matchLineIdx = locateMatchLine(lines, [/(?:AWS::EC2::SecurityGroup|aws_security_group)\b/i, /cidrIp\s*:\s*[\'"]0\.0\.0\.0\/0[\'"]|cidr_blocks\s*=\s*\[[\'"]0\.0\.0\.0\/0[\'"]\]/i, /(?:22|3389|5432|3306|27017|6379)\b/i], l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('*'));
         const lineNum = matchLineIdx !== -1 ? matchLineIdx + 1 : 1;
         findings.push({
             id: `cloud40-${Date.now()}-${findingCounter.count++}`,
@@ -1021,7 +1022,7 @@ export function evaluateCloudNativeRules(file: CodeFile, lines: string[], cleanC
     }
     // CLOUD-41: Missing AWS KMS Key Automatic Rotation
     if (/(?:AWS::KMS::Key|aws_kms_key)\b/i.test(cleanContent) && /enableKeyRotation\s*:\s*false|enable_key_rotation\s*=\s*false/i.test(cleanContent)) {
-        const matchLineIdx = lines.findIndex(l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('*') && (/cloud-41|missing/i.test(l) || lines.indexOf(l) === 0));
+        const matchLineIdx = locateMatchLine(lines, [/(?:AWS::KMS::Key|aws_kms_key)\b/i, /enableKeyRotation\s*:\s*false|enable_key_rotation\s*=\s*false/i], l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('*'));
         const lineNum = matchLineIdx !== -1 ? matchLineIdx + 1 : 1;
         findings.push({
             id: `cloud41-${Date.now()}-${findingCounter.count++}`,
@@ -1046,7 +1047,7 @@ export function evaluateCloudNativeRules(file: CodeFile, lines: string[], cleanC
     }
     // CLOUD-42: Lambda Function Invocation URL Missing AuthType
     if (/(?:AWS::Lambda::Url|aws_lambda_function_url)\b/i.test(cleanContent) && /authType\s*:\s*[\'"]NONE[\'"]|authorization_type\s*=\s*[\'"]NONE[\'"]/i.test(cleanContent)) {
-        const matchLineIdx = lines.findIndex(l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('*') && (/cloud-42|lambda/i.test(l) || lines.indexOf(l) === 0));
+        const matchLineIdx = locateMatchLine(lines, [/(?:AWS::Lambda::Url|aws_lambda_function_url)\b/i, /authType\s*:\s*[\'"]NONE[\'"]|authorization_type\s*=\s*[\'"]NONE[\'"]/i], l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('*'));
         const lineNum = matchLineIdx !== -1 ? matchLineIdx + 1 : 1;
         findings.push({
             id: `cloud42-${Date.now()}-${findingCounter.count++}`,
@@ -1071,7 +1072,7 @@ export function evaluateCloudNativeRules(file: CodeFile, lines: string[], cleanC
     }
     // CLOUD-43: Redis / ElastiCache Cluster Missing In-Transit Encryption
     if (/(?:AWS::ElastiCache::ReplicationGroup|aws_elasticache_replication_group)\b/i.test(cleanContent) && /transitEncryptionEnabled\s*:\s*false|transit_encryption_enabled\s*=\s*false/i.test(cleanContent)) {
-        const matchLineIdx = lines.findIndex(l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('*') && (/cloud-43|redis/i.test(l) || lines.indexOf(l) === 0));
+        const matchLineIdx = locateMatchLine(lines, [/(?:AWS::ElastiCache::ReplicationGroup|aws_elasticache_replication_group)\b/i, /transitEncryptionEnabled\s*:\s*false|transit_encryption_enabled\s*=\s*false/i], l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('*'));
         const lineNum = matchLineIdx !== -1 ? matchLineIdx + 1 : 1;
         findings.push({
             id: `cloud43-${Date.now()}-${findingCounter.count++}`,
@@ -1096,7 +1097,7 @@ export function evaluateCloudNativeRules(file: CodeFile, lines: string[], cleanC
     }
     // CLOUD-44: Redis / ElastiCache Missing Auth Token Requirement
     if (/(?:AWS::ElastiCache::ReplicationGroup|aws_elasticache_replication_group)\b/i.test(cleanContent) && !/authToken|auth_token/i.test(cleanContent)) {
-        const matchLineIdx = lines.findIndex(l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('*') && (/cloud-44|redis/i.test(l) || lines.indexOf(l) === 0));
+        const matchLineIdx = locateMatchLine(lines, [/(?:AWS::ElastiCache::ReplicationGroup|aws_elasticache_replication_group)\b/i], l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('*'));
         const lineNum = matchLineIdx !== -1 ? matchLineIdx + 1 : 1;
         findings.push({
             id: `cloud44-${Date.now()}-${findingCounter.count++}`,
@@ -1121,7 +1122,7 @@ export function evaluateCloudNativeRules(file: CodeFile, lines: string[], cleanC
     }
     // CLOUD-45: Lambda Event Source Mapping Missing Batch Window
     if (/(?:AWS::Lambda::EventSourceMapping|aws_lambda_event_source_mapping)\b/i.test(cleanContent) && /maximumBatchingWindowInSeconds\s*:\s*0|batch_window\s*=\s*0/i.test(cleanContent)) {
-        const matchLineIdx = lines.findIndex(l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('*') && (/cloud-45|lambda/i.test(l) || lines.indexOf(l) === 0));
+        const matchLineIdx = locateMatchLine(lines, [/(?:AWS::Lambda::EventSourceMapping|aws_lambda_event_source_mapping)\b/i, /maximumBatchingWindowInSeconds\s*:\s*0|batch_window\s*=\s*0/i], l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('*'));
         const lineNum = matchLineIdx !== -1 ? matchLineIdx + 1 : 1;
         findings.push({
             id: `cloud45-${Date.now()}-${findingCounter.count++}`,
@@ -1146,7 +1147,7 @@ export function evaluateCloudNativeRules(file: CodeFile, lines: string[], cleanC
     }
     // CLOUD-46: Serverless Edge Middleware Performing Heavy DB Queries
     if (/(?:middleware\.ts|middleware\.js)$/i.test(file.path) && /(?:prisma\.[a-zA-Z0-9_]+\.(?:find|query)|sequelize\.|typeorm|mongoose\.)/i.test(cleanContent)) {
-        const matchLineIdx = lines.findIndex(l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('*') && (/cloud-46|serverless/i.test(l) || lines.indexOf(l) === 0));
+        const matchLineIdx = locateMatchLine(lines, [/(?:prisma\.[a-zA-Z0-9_]+\.(?:find|query)|sequelize\.|typeorm|mongoose\.)/i], l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('*'));
         const lineNum = matchLineIdx !== -1 ? matchLineIdx + 1 : 1;
         findings.push({
             id: `cloud46-${Date.now()}-${findingCounter.count++}`,
@@ -1171,7 +1172,7 @@ export function evaluateCloudNativeRules(file: CodeFile, lines: string[], cleanC
     }
     // CLOUD-47: Missing CloudFront Origin Shield on Cross-Region Traffic
     if (/(?:AWS::CloudFront::Distribution|aws_cloudfront_distribution)\b/i.test(cleanContent) && /multi-region|cross-region/i.test(cleanContent) && !/originShield|origin_shield/i.test(cleanContent)) {
-        const matchLineIdx = lines.findIndex(l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('*') && (/cloud-47|missing/i.test(l) || lines.indexOf(l) === 0));
+        const matchLineIdx = locateMatchLine(lines, [/(?:AWS::CloudFront::Distribution|aws_cloudfront_distribution)\b/i, /multi-region|cross-region/i], l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('*'));
         const lineNum = matchLineIdx !== -1 ? matchLineIdx + 1 : 1;
         findings.push({
             id: `cloud47-${Date.now()}-${findingCounter.count++}`,
@@ -1196,7 +1197,7 @@ export function evaluateCloudNativeRules(file: CodeFile, lines: string[], cleanC
     }
     // CLOUD-48: AWS SQS Missing Server-Side Encryption (KmsMasterKeyId)
     if (/(?:AWS::SQS::Queue|aws_sqs_queue)\b/i.test(cleanContent) && !/kmsMasterKeyId|kms_master_key_id|sqsManagedSseEnabled/i.test(cleanContent)) {
-        const matchLineIdx = lines.findIndex(l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('*') && (/cloud-48|aws/i.test(l) || lines.indexOf(l) === 0));
+        const matchLineIdx = locateMatchLine(lines, [/(?:AWS::SQS::Queue|aws_sqs_queue)\b/i], l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('*'));
         const lineNum = matchLineIdx !== -1 ? matchLineIdx + 1 : 1;
         findings.push({
             id: `cloud48-${Date.now()}-${findingCounter.count++}`,
@@ -1221,7 +1222,7 @@ export function evaluateCloudNativeRules(file: CodeFile, lines: string[], cleanC
     }
     // CLOUD-49: Kubernetes Service Account Automatic Token Mounting
     if (/(?:kind:\s*Pod|kind:\s*ServiceAccount)/i.test(cleanContent) && /automountServiceAccountToken\s*:\s*true/i.test(cleanContent) && /\.(?:ya?ml)$/i.test(file.path)) {
-        const matchLineIdx = lines.findIndex(l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('*') && (/cloud-49|kubernetes/i.test(l) || lines.indexOf(l) === 0));
+        const matchLineIdx = locateMatchLine(lines, [/(?:kind:\s*Pod|kind:\s*ServiceAccount)/i, /automountServiceAccountToken\s*:\s*true/i], l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('*'));
         const lineNum = matchLineIdx !== -1 ? matchLineIdx + 1 : 1;
         findings.push({
             id: `cloud49-${Date.now()}-${findingCounter.count++}`,
@@ -1246,7 +1247,7 @@ export function evaluateCloudNativeRules(file: CodeFile, lines: string[], cleanC
     }
     // CLOUD-50: Serverless Environment Variable Value Exceeding 4KB Limit
     if (/\.env/i.test(file.path) && /^[A-Z0-9_]+=.{{4096,}}$/m.test(cleanContent)) {
-        const matchLineIdx = lines.findIndex(l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('*') && (/cloud-50|serverless/i.test(l) || lines.indexOf(l) === 0));
+        const matchLineIdx = locateMatchLine(lines, [/^[A-Z0-9_]+=.{{4096,}}$/m], l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('*'));
         const lineNum = matchLineIdx !== -1 ? matchLineIdx + 1 : 1;
         findings.push({
             id: `cloud50-${Date.now()}-${findingCounter.count++}`,

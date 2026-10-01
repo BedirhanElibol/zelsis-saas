@@ -4,6 +4,7 @@
  */
 import { Finding } from "@/data/schema";
 import { CodeFile } from "../scanner-engine";
+import { locateMatchLine } from './shared/locate';
 export interface OwaspApiSecurityRuleResult {
     findings: Finding[];
     logs: string[];
@@ -25,7 +26,7 @@ export function evaluateOwaspApiSecurityRules(file: CodeFile, lines: string[], c
     const ts = new Date().toLocaleTimeString();
     // APIDEF-01: API1:2023 Broken Object Level Authorization (BOLA): Insecure Record Lookup
     if ((/lookupResource|getItem/i.test(cleanContent) && !/verifyOwnership/i.test(cleanContent))) {
-        const matchLineIdx = lines.findIndex(l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('#') && !l.trim().startsWith('*'));
+        const matchLineIdx = locateMatchLine(lines, [/lookupResource|getItem/i], l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('#') && !l.trim().startsWith('*'));
         const lineNum = matchLineIdx !== -1 ? matchLineIdx + 1 : 1;
         findings.push({
             id: `apidef14301-${Date.now()}-${findingCounter.count++}`,
@@ -49,7 +50,7 @@ export function evaluateOwaspApiSecurityRules(file: CodeFile, lines: string[], c
     }
     // APIDEF-02: API2:2023 Broken Authentication: Insecure Token Invalidation on Logout
     if ((/logoutHandler/i.test(cleanContent) && !/blacklistToken/i.test(cleanContent))) {
-        const matchLineIdx = lines.findIndex(l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('#') && !l.trim().startsWith('*'));
+        const matchLineIdx = locateMatchLine(lines, [/logoutHandler/i], l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('#') && !l.trim().startsWith('*'));
         const lineNum = matchLineIdx !== -1 ? matchLineIdx + 1 : 1;
         findings.push({
             id: `apidef14302-${Date.now()}-${findingCounter.count++}`,
@@ -73,7 +74,7 @@ export function evaluateOwaspApiSecurityRules(file: CodeFile, lines: string[], c
     }
     // APIDEF-03: API3:2023 Broken Object Property Level Authorization: Mass Assignment
     if ((/updateProfile|saveUser/i.test(cleanContent) && !/pickAllowedFields/i.test(cleanContent))) {
-        const matchLineIdx = lines.findIndex(l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('#') && !l.trim().startsWith('*'));
+        const matchLineIdx = locateMatchLine(lines, [/updateProfile|saveUser/i], l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('#') && !l.trim().startsWith('*'));
         const lineNum = matchLineIdx !== -1 ? matchLineIdx + 1 : 1;
         findings.push({
             id: `apidef14303-${Date.now()}-${findingCounter.count++}`,
@@ -97,7 +98,7 @@ export function evaluateOwaspApiSecurityRules(file: CodeFile, lines: string[], c
     }
     // APIDEF-04: API4:2023 Unrestricted Resource Consumption: Missing Client Rate Limits
     if ((/exportData|heavySearch/i.test(cleanContent) && !/checkRateLimit/i.test(cleanContent))) {
-        const matchLineIdx = lines.findIndex(l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('#') && !l.trim().startsWith('*'));
+        const matchLineIdx = locateMatchLine(lines, [/exportData|heavySearch/i], l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('#') && !l.trim().startsWith('*'));
         const lineNum = matchLineIdx !== -1 ? matchLineIdx + 1 : 1;
         findings.push({
             id: `apidef14304-${Date.now()}-${findingCounter.count++}`,
@@ -121,7 +122,7 @@ export function evaluateOwaspApiSecurityRules(file: CodeFile, lines: string[], c
     }
     // APIDEF-05: API5:2023 Broken Function Level Authorization: Admin Routes Missing Scope Check
     if ((/adminRouter|manageTenant/i.test(cleanContent) && !/requireRole/i.test(cleanContent))) {
-        const matchLineIdx = lines.findIndex(l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('#') && !l.trim().startsWith('*'));
+        const matchLineIdx = locateMatchLine(lines, [/adminRouter|manageTenant/i], l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('#') && !l.trim().startsWith('*'));
         const lineNum = matchLineIdx !== -1 ? matchLineIdx + 1 : 1;
         findings.push({
             id: `apidef14305-${Date.now()}-${findingCounter.count++}`,
