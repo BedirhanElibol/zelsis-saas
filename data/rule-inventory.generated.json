@@ -1,8 +1,8 @@
 {
  "summary": {
-  "implementedRules": 1485,
-  "testedRules": 196,
-  "preciseLocationRules": 1364,
+  "implementedRules": 1492,
+  "testedRules": 203,
+  "preciseLocationRules": 1371,
   "catalogEntries": 1922,
   "catalogOnlyNotImplemented": 770,
   "catalogPlaceholderMetadata": 1810
@@ -15626,6 +15626,76 @@
    "title": "${dep.name}@${dep.version} has ${list.length} known vulnerabilit${list.length === 1 ? ",
    "severity": "UNKNOWN",
    "source": "lib/scanner/osv.ts",
+   "preciseLocation": true,
+   "tested": true,
+   "inCatalog": false
+  },
+  {
+   "ruleId": 27001,
+   "code": "LIVE-01",
+   "title": "Environment file publicly downloadable (${envFiles.map((f) => f.path).join(",
+   "severity": "CRITICAL",
+   "source": "lib/scanner/live-checks.ts",
+   "preciseLocation": true,
+   "tested": true,
+   "inCatalog": false
+  },
+  {
+   "ruleId": 27002,
+   "code": "LIVE-02",
+   "title": "Git repository metadata publicly downloadable (${gitFiles.map((f) => f.path).join(",
+   "severity": "HIGH",
+   "source": "lib/scanner/live-checks.ts",
+   "preciseLocation": true,
+   "tested": true,
+   "inCatalog": false
+  },
+  {
+   "ruleId": 27003,
+   "code": "LIVE-03",
+   "title": "Site is served over plain HTTP only (no HTTPS on port 443)",
+   "severity": "HIGH",
+   "source": "lib/scanner/live-checks.ts",
+   "preciseLocation": true,
+   "tested": true,
+   "inCatalog": false
+  },
+  {
+   "ruleId": 27004,
+   "code": "LIVE-04",
+   "title": "TLS certificate is not trusted (${probe.tls.authorizationError || ",
+   "severity": "CRITICAL",
+   "source": "lib/scanner/live-checks.ts",
+   "preciseLocation": true,
+   "tested": true,
+   "inCatalog": false
+  },
+  {
+   "ruleId": 27005,
+   "code": "LIVE-05",
+   "title": "TLS certificate expires in ${daysLeft} day${daysLeft === 1 ? ",
+   "severity": "UNKNOWN",
+   "source": "lib/scanner/live-checks.ts",
+   "preciseLocation": true,
+   "tested": true,
+   "inCatalog": false
+  },
+  {
+   "ruleId": 27006,
+   "code": "LIVE-06",
+   "title": "HTTP requests are not redirected to HTTPS",
+   "severity": "MEDIUM",
+   "source": "lib/scanner/live-checks.ts",
+   "preciseLocation": true,
+   "tested": true,
+   "inCatalog": false
+  },
+  {
+   "ruleId": 27007,
+   "code": "LIVE-07",
+   "title": "Session cookie set without ${[...new Set(probe.insecureCookies.flatMap((c) => c.missing))].join(",
+   "severity": "MEDIUM",
+   "source": "lib/scanner/live-checks.ts",
    "preciseLocation": true,
    "tested": true,
    "inCatalog": false

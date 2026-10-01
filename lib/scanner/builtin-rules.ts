@@ -1,6 +1,7 @@
 import type { Finding } from '@/data/schema';
 import type { CodeFile } from './types';
 import { evaluateSecurityRules } from '../rules/security-rules';
+import { buildLiveFindings } from './live-checks';
 
 export interface BuiltinRuleContext {
   file: CodeFile;
@@ -280,6 +281,14 @@ export function evaluateBuiltinRules(ctx: BuiltinRuleContext): void {
           falsePositive: false
         });
         logs.push(`[${new Date().toLocaleTimeString()}] [MEDIUM] SEC-WEB-04 Missing X-Content-Type-Options: nosniff`);
+      }
+
+      // LIVE-01..07: exposed .env/.git, TLS, HTTP redirect, cookie flags (lib/scanner/live-checks.ts)
+      if (headerData.liveProbe) {
+        for (const lf of buildLiveFindings(headerData.liveProbe)) {
+          addFinding(lf);
+          logs.push(`[${new Date().toLocaleTimeString()}] [${lf.severity}] ${lf.title}`);
+        }
       }
     } catch (parseErr) {
       // Not valid JSON, skip header analysis

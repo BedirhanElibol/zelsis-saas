@@ -33,7 +33,8 @@ const read = (p: string) => readFileSync(join(root, p), 'utf8');
 const ruleSources = [
   ...readdirSync(join(root, 'lib/rules')).filter((f) => f.endsWith('.ts')).map((f) => `lib/rules/${f}`),
   'lib/scanner/builtin-rules.ts',
-  'lib/scanner/osv.ts'
+  'lib/scanner/osv.ts',
+  'lib/scanner/live-checks.ts'
 ];
 
 /** Rule IDs exercised by fixtures (new harness + legacy suite). */
@@ -42,7 +43,7 @@ function testedRuleIds(): Set<number> {
   const add = (text: string, re: RegExp) => {
     for (const m of text.matchAll(re)) for (const n of m[1].match(/\d+/g) ?? []) ids.add(Number(n));
   };
-  for (const p of ['tests/rules/cases.ts', 'tests/rules/variants.ts', 'tests/rules/stack-matrix.ts', 'tests/unit/osv.test.ts', 'tests/rules/secret-samples.generated.ts']) {
+  for (const p of ['tests/rules/cases.ts', 'tests/rules/variants.ts', 'tests/rules/stack-matrix.ts', 'tests/unit/osv.test.ts', 'tests/unit/live-checks.test.ts', 'tests/rules/secret-samples.generated.ts']) {
     const t = read(p);
     add(t, /ruleIds:\s*\[([^\]]*)\]/g);
     add(t, /rules:\s*\[([^\]]*)\]/g);

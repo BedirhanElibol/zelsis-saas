@@ -1,6 +1,7 @@
 import { CodeFile } from './scanner-engine';
 
 import { validateSafeTargetUrl, safeFetch } from '@/lib/ssrf-guard';
+import { probeLiveSite, type LiveProbeResult } from '@/lib/scanner/live-checks';
 
 export interface WebsiteAuditData {
   url: string;
@@ -11,6 +12,7 @@ export interface WebsiteAuditData {
   securityHeadersMissing: string[];
   discoveredButtonsCount: number;
   crawledPagesCount: number;
+  liveProbe?: LiveProbeResult;
   isCloudflareChallenge?: boolean;
   error?: 'CLOUDFLARE_BOT_PROTECTION' | string;
 }
@@ -43,6 +45,7 @@ export async function fetchWebsiteAuditData(siteUrl: string, signal?: AbortSigna
   let htmlText = '';
   let statusCode = 200;
   let headers: Record<string, string> = {};
+  let setCookies: string[] = [];
   let usedProxy = false;
 
   // 1. Internal First-Party Hardened Proxy Attempt (Browser environment)
@@ -80,6 +83,7 @@ export async function fetchWebsiteAuditData(siteUrl: string, signal?: AbortSigna
       res.headers.forEach((val, key) => {
         headers[key.toLowerCase()] = val;
       });
+      setCookies = typeof res.headers.getSetCookie === 'function' ? res.headers.getSetCookie() : [];
 
       htmlText = await res.text();
     } catch (directErr) {
@@ -141,8 +145,9 @@ export async function fetchWebsiteAuditData(siteUrl: string, signal?: AbortSigna
   // Check Missing Security Headers
   const securityHeadersMissing: string[] = [];
   if (!headers['content-security-policy']) securityHeadersMissing.push('Content-Security-Policy');
-  const hsts = headers['strict-transport-security'];
-  if (!hsts || !hsts.toLowerCase().includes('preload')) securityHeadersMissing.push('Strict-Transport-Security (HSTS)');
+  // preload is optional; only an absent header or max-age=0 leaves HTTPS downgradable
+  const hstsMaxAge = Number((headers['strict-transport-security'] || '').match(/max-age\s*=\s*"?(\d+)/i)?.[1] ?? 0);
+  if (hstsMaxAge <= 0) securityHeadersMissing.push('Strict-Transport-Security (HSTS)');
   if (!headers['x-frame-options']) securityHeadersMissing.push('X-Frame-Options');
   if (!headers['x-content-type-options']) securityHeadersMissing.push('X-Content-Type-Options');
 
@@ -172,6 +177,14 @@ export async function fetchWebsiteAuditData(siteUrl: string, signal?: AbortSigna
   }
 
   const subpagesToCrawl = Array.from(subpageUrls).slice(0, 8);
+
+  // Server-only probes (.env/.git exposure, TLS, HTTP redirect, cookies); browser runs cannot open raw TLS sockets
+  const liveProbePromise = typeof window === 'undefined'
+    ? probeLiveSite(formattedUrl, setCookies).catch((err) => {
+        console.warn(`Live probes failed for ${formattedUrl}:`, err?.message || err);
+        return undefined;
+      })
+    : Promise.resolve(undefined);
 
   const isHealthy = statusCode >= 200 && statusCode < 400;
   const linkStatusText = statusCode === 200 ? '200 OK (Healthy Target)' : statusCode === 404 ? '404 Not Found (Broken Link)' : statusCode >= 500 ? `HTTP ${statusCode} Server Error (Dead Endpoint)` : `HTTP ${statusCode} Response`;
@@ -273,12 +286,19 @@ export async function fetchWebsiteAuditData(siteUrl: string, signal?: AbortSigna
     }
   }
 
+  const liveProbe = await liveProbePromise;
+  if (liveProbe) {
+    const headerFile = files.find((f) => f.path === 'live-deployment/security-headers.json');
+    if (headerFile) headerFile.content = JSON.stringify({ ...JSON.parse(headerFile.content), liveProbe }, null, 2);
+  }
+
   return {
     url: formattedUrl,
     statusCode,
     headers,
     title,
     files,
+    liveProbe,
     securityHeadersMissing,
     discoveredButtonsCount,
     crawledPagesCount: subpagesToCrawl.length + 1
