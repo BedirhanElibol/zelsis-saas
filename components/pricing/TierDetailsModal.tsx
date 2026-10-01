@@ -3,7 +3,7 @@
 import React from 'react';
 import { X, Check, Lock, Shield, ArrowRight, Zap, ExternalLink } from 'lucide-react';
 import { UserTier } from '@/data/schema';
-import { RULES_CATALOG } from '@/data/mockData';
+import { formatCount, RULE_COUNTS } from '@/lib/rule-status';
 
 interface TierDetailsModalProps {
   isOpen: boolean;
@@ -41,8 +41,8 @@ export const TierDetailsModal: React.FC<TierDetailsModalProps> = ({
     {
       category: 'Rule Engine & Analysis Depth',
       items: [
-        { label: 'Security & Bug Inventory', free: '20 Core OWASP Rules', pro: `${RULES_CATALOG.length}+ Verified Production Rules`, enterprise: 'All Rules + Custom Company Rules' },
-        { label: 'Secret Detection & RLS', free: 'Basic Surface Check', pro: 'Deep Static & Vault Analysis', enterprise: 'Deep Static + Custom Token Patterns' },
+        { label: 'Security & Bug Inventory', free: `All ${formatCount(RULE_COUNTS.gating)} active rules`, pro: `All ${formatCount(RULE_COUNTS.gating)} active rules`, enterprise: `All ${formatCount(RULE_COUNTS.gating)} active rules` },
+        { label: 'Secret Detection & RLS', free: 'Same rules on every plan', pro: 'Same rules on every plan', enterprise: 'Same rules on every plan' },
         { label: '1,000+ File Repositories', free: 'Standard Buffer', pro: 'Cooperative Event Loop Yielding', enterprise: 'Monorepo & Multi-Package Analysis' }
       ]
     },

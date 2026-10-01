@@ -22,6 +22,12 @@ const project = (over: Partial<Project>): Project => ({
 });
 
 describe('withRecalculatedFindings', () => {
+  it('does not count experimental findings, matching the scanner', () => {
+    const p = withRecalculatedFindings(project({}), [finding({ id: 'x', severity: 'CRITICAL', maturity: 'experimental' })]);
+    assert.equal(p.criticalCount, 0);
+    assert.equal(p.gateStatus, 'PASSED');
+  });
+
   it('counts only OPEN findings and recomputes gate and score', () => {
     const p = withRecalculatedFindings(project({}), [
       finding({ id: 'a', severity: 'CRITICAL', status: 'RESOLVED' }),

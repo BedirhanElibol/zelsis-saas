@@ -1,0 +1,252 @@
+{
+ "generatedAt": "2026-10-01",
+ "summary": {
+  "cleanRepos": 8,
+  "cleanReposGateFailed": 2,
+  "cleanHighCriticalFindings": 717,
+  "cleanGatingHighCriticalFindings": 80,
+  "documentedFlaws": 16,
+  "documentedFlawsDetected": 16,
+  "recall": 1,
+  "documentedFlawsBlockingGate": 15,
+  "rulesFiringOnClean": 171,
+  "experimentalRules": 79
+ },
+ "repos": [
+  {
+   "repo": "vercel/nextjs-subscription-payments",
+   "sha": "bdd0813",
+   "kind": "clean",
+   "stack": "Next.js + Supabase + Stripe",
+   "files": 67,
+   "scanMs": 474,
+   "gate": "WARNING",
+   "critical": 0,
+   "high": 3
+  },
+  {
+   "repo": "shadcn-ui/taxonomy",
+   "sha": "298a885",
+   "kind": "clean",
+   "stack": "Next.js + Prisma + Stripe + NextAuth",
+   "files": 140,
+   "scanMs": 410,
+   "gate": "WARNING",
+   "critical": 0,
+   "high": 1
+  },
+  {
+   "repo": "fastapi/full-stack-fastapi-template",
+   "sha": "cb740b6",
+   "kind": "clean",
+   "stack": "FastAPI + React",
+   "files": 204,
+   "scanMs": 674,
+   "gate": "WARNING",
+   "critical": 0,
+   "high": 2
+  },
+  {
+   "repo": "gothinkster/node-express-realworld-example-app",
+   "sha": "30b68e1",
+   "kind": "clean",
+   "stack": "Express + Prisma",
+   "files": 58,
+   "scanMs": 113,
+   "gate": "FAILED",
+   "critical": 2,
+   "high": 2
+  },
+  {
+   "repo": "gothinkster/golang-gin-realworld-example-app",
+   "sha": "626c372",
+   "kind": "clean",
+   "stack": "Go + Gin",
+   "files": 27,
+   "scanMs": 176,
+   "gate": "WARNING",
+   "critical": 0,
+   "high": 2
+  },
+  {
+   "repo": "laravel/laravel",
+   "sha": "06d016a",
+   "kind": "clean",
+   "stack": "Laravel",
+   "files": 39,
+   "scanMs": 114,
+   "gate": "PASSED",
+   "critical": 0,
+   "high": 0
+  },
+  {
+   "repo": "documenso/documenso",
+   "sha": "8a41a3b",
+   "kind": "clean",
+   "stack": "Remix/React Router + Prisma + tRPC (production SaaS)",
+   "files": 2481,
+   "scanMs": 11284,
+   "gate": "WARNING",
+   "critical": 0,
+   "high": 57
+  },
+  {
+   "repo": "supabase/supabase-js",
+   "sha": "a684cf9",
+   "kind": "clean",
+   "stack": "TypeScript SDK",
+   "files": 471,
+   "scanMs": 2518,
+   "gate": "FAILED",
+   "critical": 10,
+   "high": 1
+  },
+  {
+   "repo": "OWASP/NodeGoat",
+   "sha": "c5cb68a",
+   "kind": "vulnerable",
+   "stack": "Express + MongoDB",
+   "files": 87,
+   "scanMs": 276,
+   "gate": "FAILED",
+   "critical": 5,
+   "high": 5
+  },
+  {
+   "repo": "appsecco/dvna",
+   "sha": "9ba473a",
+   "kind": "vulnerable",
+   "stack": "Express + Sequelize",
+   "files": 21,
+   "scanMs": 42,
+   "gate": "FAILED",
+   "critical": 4,
+   "high": 4
+  },
+  {
+   "repo": "juice-shop/juice-shop",
+   "sha": "1618a61",
+   "kind": "vulnerable",
+   "stack": "Express + Angular + Sequelize",
+   "files": 958,
+   "scanMs": 8896,
+   "gate": "FAILED",
+   "critical": 176,
+   "high": 22
+  }
+ ],
+ "flaws": [
+  {
+   "repo": "OWASP/NodeGoat",
+   "file": "app/routes/contributions.js",
+   "flaw": "Server-side JS injection via eval(req.body.preTax)",
+   "found": true,
+   "blocksGate": true
+  },
+  {
+   "repo": "OWASP/NodeGoat",
+   "file": "app/data/allocations-dao.js",
+   "flaw": "NoSQL injection through $where string",
+   "found": true,
+   "blocksGate": true
+  },
+  {
+   "repo": "OWASP/NodeGoat",
+   "file": "app/routes/index.js",
+   "flaw": "Open redirect via res.redirect(req.query.url)",
+   "found": true,
+   "blocksGate": true
+  },
+  {
+   "repo": "OWASP/NodeGoat",
+   "file": "app/routes/research.js",
+   "flaw": "SSRF via needle.get(url + symbol)",
+   "found": true,
+   "blocksGate": true
+  },
+  {
+   "repo": "OWASP/NodeGoat",
+   "file": "config/env/all.js",
+   "flaw": "Hardcoded session cookie secret",
+   "found": true,
+   "blocksGate": true
+  },
+  {
+   "repo": "appsecco/dvna",
+   "file": "core/appHandler.js",
+   "flaw": "SQL injection by string concatenation in sequelize.query",
+   "found": true,
+   "blocksGate": true
+  },
+  {
+   "repo": "appsecco/dvna",
+   "file": "core/appHandler.js",
+   "flaw": "Command injection: exec('ping -c 2 ' + req.body.address)",
+   "found": true,
+   "blocksGate": true
+  },
+  {
+   "repo": "appsecco/dvna",
+   "file": "core/appHandler.js",
+   "flaw": "Insecure deserialization with node-serialize unserialize",
+   "found": true,
+   "blocksGate": true
+  },
+  {
+   "repo": "appsecco/dvna",
+   "file": "core/appHandler.js",
+   "flaw": "XXE: libxmljs parseXmlString with noent:true",
+   "found": true,
+   "blocksGate": true
+  },
+  {
+   "repo": "appsecco/dvna",
+   "file": "core/appHandler.js",
+   "flaw": "Open redirect via res.redirect(req.query.url)",
+   "found": true,
+   "blocksGate": false
+  },
+  {
+   "repo": "appsecco/dvna",
+   "file": "core/appHandler.js",
+   "flaw": "Code injection via mathjs.eval(req.body.eqn)",
+   "found": true,
+   "blocksGate": true
+  },
+  {
+   "repo": "juice-shop/juice-shop",
+   "file": "routes/login.ts",
+   "flaw": "SQL injection in login query template literal",
+   "found": true,
+   "blocksGate": true
+  },
+  {
+   "repo": "juice-shop/juice-shop",
+   "file": "routes/search.ts",
+   "flaw": "Union SQL injection in product search",
+   "found": true,
+   "blocksGate": true
+  },
+  {
+   "repo": "juice-shop/juice-shop",
+   "file": "lib/insecurity.ts",
+   "flaw": "Hardcoded RSA private key for JWT signing",
+   "found": true,
+   "blocksGate": true
+  },
+  {
+   "repo": "juice-shop/juice-shop",
+   "file": "lib/insecurity.ts",
+   "flaw": "MD5 password hashing",
+   "found": true,
+   "blocksGate": true
+  },
+  {
+   "repo": "juice-shop/juice-shop",
+   "file": "routes/profileImageUrlUpload.ts",
+   "flaw": "SSRF via fetch(user-supplied imageUrl)",
+   "found": true,
+   "blocksGate": true
+  }
+ ]
+}

@@ -1,5 +1,5 @@
 import type { Finding, Project } from '@/data/schema';
-import { calculateGateStatus, calculateReadinessScore } from '@/lib/scanner/scoring';
+import { calculateGateStatus, calculateReadinessScore, gatingFindings } from '@/lib/scanner/scoring';
 import { UNDETECTED_FRAMEWORK } from '@/lib/scanner/stack-detect';
 
 const LOCAL_AUDIT_PROJECT_IDS = new Set(['proj-zelsis-self', 'proj-shipguard-self']);
@@ -9,7 +9,9 @@ export const isLocalAuditProject = (p: Pick<Project, 'id' | 'repoUrl'>): boolean
 
 /** Returns the project with its findings replaced and gate, score and open counts recomputed. */
 export function withRecalculatedFindings(proj: Project, findings: Finding[]): Project {
-  const openCount = (match: (f: Finding) => boolean) => findings.filter((f) => f.status === 'OPEN' && match(f)).length;
+  // Same basis as the scanner: open findings from gating (non-experimental) rules
+  const gating = gatingFindings(findings);
+  const openCount = (match: (f: Finding) => boolean) => gating.filter(match).length;
   return {
     ...proj,
     findings,

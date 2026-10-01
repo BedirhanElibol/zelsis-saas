@@ -15,6 +15,8 @@ export interface ScanResult {
   uiClicheCount: number;
   /** Open findings from experimental rules (not counted in score, gate or severity counts). */
   experimentalCount?: number;
+  /** Wall-clock scan duration in ms (engine only; the dashboard replaces it with end-to-end time). */
+  durationMs?: number;
   findings: Finding[];
   logs: string[];
   summary?: string;

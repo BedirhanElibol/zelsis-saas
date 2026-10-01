@@ -450,7 +450,7 @@ function DashboardContent() {
                     criticalCount: result.criticalCount,
                     highCount: result.highCount,
                     mediumCount: result.mediumCount,
-                    duration: '3.4s',
+                    duration: typeof result.durationMs === 'number' ? `${(result.durationMs / 1000).toFixed(1)}s` : 'n/a',
                     triggeredBy: 'Manual Dashboard Audit'
                   };
                   const updatedProject: Project = {

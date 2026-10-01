@@ -4,7 +4,7 @@ import React, { useState, useEffect } from 'react';
 import { Check, X, Shield, ArrowRight, Lock, ExternalLink, Zap } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import { AuthModal, UserProfile } from '@/components/auth/AuthModal';
-import { RULES_CATALOG } from '@/data/mockData';
+import { formatCount, RULE_COUNTS } from '@/lib/rule-status';
 
 interface ComparisonItem {
   name: string;
@@ -126,16 +126,16 @@ export const ComparisonTable: React.FC = () => {
         {
           name: 'Static & Pattern-Based Rule Inventory',
           description: 'Coverage of security vulnerabilities, misconfigurations, and anti-patterns',
-          free: '20 Baseline Static Rules',
-          pro: `${RULES_CATALOG.length}+ Verified Production Rules`,
-          enterprise: 'Verified Rules + Custom Org Rulesets'
+          free: `All ${formatCount(RULE_COUNTS.gating)} active rules`,
+          pro: `All ${formatCount(RULE_COUNTS.gating)} active rules`,
+          enterprise: `All ${formatCount(RULE_COUNTS.gating)} active rules`
         },
         {
           name: 'Secret & API Key Leak Detection',
           description: 'Scanning engine for hardcoded tokens, AWS keys, and private credentials',
-          free: 'Surface Regex Pattern Check',
-          pro: 'Deep Pattern & Lexical Tracing',
-          enterprise: 'Deep Static + Custom Secret Entropy Patterns'
+          free: 'Same secret rules on every plan',
+          pro: 'Same secret rules on every plan',
+          enterprise: 'Same secret rules on every plan'
         },
         {
           name: 'Repository Size Scalability',

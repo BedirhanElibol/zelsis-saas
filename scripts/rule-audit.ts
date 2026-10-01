@@ -10,6 +10,8 @@ import { join } from 'path';
 
 const root = join(__dirname, '..');
 const OUT = join(root, 'data/rule-inventory.generated.json');
+/** Compact form for the UI bundle: counts plus the implemented rule IDs / codes. */
+const SUMMARY_OUT = join(root, 'data/rule-summary.generated.json');
 
 export interface RuleRecord {
   ruleId: number;
@@ -108,17 +110,37 @@ export function auditRules() {
   };
 }
 
+export function summaryJson(audit: ReturnType<typeof auditRules>): string {
+  const maturity = JSON.parse(readFileSync(join(root, 'data/rule-maturity.generated.json'), 'utf8')) as { experimental: { ruleId: number }[] };
+  const experimental = new Set(maturity.experimental.map((r) => r.ruleId));
+  const implemented = audit.rules.length;
+  const experimentalCount = audit.rules.filter((r) => experimental.has(r.ruleId)).length;
+  return JSON.stringify({
+    counts: {
+      implemented,
+      gating: implemented - experimentalCount,
+      experimental: experimentalCount,
+      fixtureTested: audit.summary.testedRules,
+      catalogPlanned: audit.summary.catalogOnlyNotImplemented
+    },
+    ids: audit.rules.map((r) => r.ruleId),
+    codes: audit.rules.map((r) => r.code).filter((c) => !c.startsWith('RULE-'))
+  }) + '\n';
+}
+
 if (require.main === module) {
   const json = JSON.stringify(auditRules(), null, 1) + '\n';
   if (process.argv.includes('--check')) {
     const current = existsSync(OUT) ? readFileSync(OUT, 'utf8') : '';
-    if (current !== json) {
+    const currentSummary = existsSync(SUMMARY_OUT) ? readFileSync(SUMMARY_OUT, 'utf8') : '';
+    if (current !== json || currentSummary !== summaryJson(JSON.parse(json))) {
       console.error('data/rule-inventory.generated.json is stale: run `npx tsx scripts/rule-audit.ts`');
       process.exit(1);
     }
     console.log('rule inventory up to date');
   } else {
     writeFileSync(OUT, json);
+    writeFileSync(SUMMARY_OUT, summaryJson(JSON.parse(json)));
     console.log(JSON.parse(json).summary);
   }
 }

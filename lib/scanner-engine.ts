@@ -21,11 +21,12 @@ export { calculateGateStatus, calculateReadinessScore, gatingFindings } from './
 export { detectAppStack, UNDETECTED_FRAMEWORK } from './scanner/stack-detect';
 
 /**
- * Real Static AST & Pattern Analysis Engine
+ * Static pattern-analysis engine (regex and heuristic rules, no full AST / data-flow analysis)
  * Scans provided source files against Security Rules and VibePolish & AI Anti-Pattern rules.
  * Implements cooperative streaming via yieldToMain() to prevent UI freeze on 1,000+ files.
  */
 export async function runStaticCodeScan(files: CodeFile[], repoName: string = 'Target Repository'): Promise<ScanResult> {
+  const scanStartedAt = Date.now();
   const findings: Finding[] = [];
   const logs: string[] = [];
 
@@ -44,7 +45,7 @@ export async function runStaticCodeScan(files: CodeFile[], repoName: string = 'T
   const detectedApp = detectAppStack(files);
   const repoContext = buildRepoContext(files);
 
-  logs.push(`[${new Date().toLocaleTimeString()}] [INFO] Initializing Zelsis High-Performance Static Pattern & AST Heuristics Engine v3.5...`);
+  logs.push(`[${new Date().toLocaleTimeString()}] [INFO] Zelsis static pattern scan started (${RULE_ENGINES.length} rule modules plus built-in rules).`);
   logs.push(`[${new Date().toLocaleTimeString()}] [TARGET] Repository: ${repoName}`);
 
   if (detectedStack.databases.length > 0 || detectedStack.orms.length > 0) {
@@ -197,12 +198,7 @@ export async function runStaticCodeScan(files: CodeFile[], repoName: string = 'T
 
     let cleanContent = stripComments(rawContent);
 
-    logs.push(`[${new Date().toLocaleTimeString()}] [INSPECT] [File ${fileIndex}/${validFiles.length}] Inspecting ${file.path} (${lines.length} lines)...`);
-    logs.push(`[${new Date().toLocaleTimeString()}]   ├─ [LEXICAL] Syntax inspection: Parsing Syntax Tokens, Cleaned Comment Strips & Heuristic Graphs...`);
-    logs.push(`[${new Date().toLocaleTimeString()}]   ├─ [SECURITY] OWASP clearance: Verifying OWASP Security & Secret Token Isolation Controls...`);
-    logs.push(`[${new Date().toLocaleTimeString()}]   ├─ [COMPLIANCE] Regulatory clearance: Auditing Privacy, Consent, ePrivacy & PCI-DSS Pre-Flight Gate...`);
-    logs.push(`[${new Date().toLocaleTimeString()}]   ├─ [DESIGN] Design token audit: Auditing UI/UX Design System & Micro-Interaction Rules...`);
-    logs.push(`[${new Date().toLocaleTimeString()}]   └─ [PATTERNS] Anti-pattern audit: Checking AI Web Design Anti-Patterns & Component Trees...`);
+    logs.push(`[${new Date().toLocaleTimeString()}] [INSPECT] [File ${fileIndex}/${validFiles.length}] ${file.path} (${lines.length} lines)${isTestFixture ? ' · test/fixture file: secret rules only' : ''}`);
 
     // Built-in rules (lib/scanner/builtin-rules.ts)
     const builtinCounter = { count: findingCounter };
@@ -222,7 +218,7 @@ export async function runStaticCodeScan(files: CodeFile[], repoName: string = 'T
 
     const fileFindingsCount = findings.length - startFindingsCount;
     if (fileFindingsCount === 0) {
-      logs.push(`[${new Date().toLocaleTimeString()}]   [PASS] ${file.path}: Passed security, compliance & UX quality gates cleanly (0 issues).`);
+      logs.push(`[${new Date().toLocaleTimeString()}]   [PASS] ${file.path}: no findings.`);
     } else {
       logs.push(`[${new Date().toLocaleTimeString()}]   [WARN] ${file.path}: Detected ${fileFindingsCount} open finding(s)!`);
     }
@@ -241,7 +237,7 @@ export async function runStaticCodeScan(files: CodeFile[], repoName: string = 'T
   }
 
   logs.push(`[${new Date().toLocaleTimeString()}] --------------------------------------------------`);
-  logs.push(`[${new Date().toLocaleTimeString()}] [SUMMARY] Deep audit complete: Processed ${targetFiles.length} files. Total findings detected: ${findings.length}.`);
+  logs.push(`[${new Date().toLocaleTimeString()}] [SUMMARY] Scan complete: ${targetFiles.length} files, ${findings.length} findings (${findings.filter((f) => f.maturity === 'experimental').length} from experimental rules, not counted toward the gate).`);
   if (testFixtureSkips > 0) {
     logs.push(`[${new Date().toLocaleTimeString()}] [INFO] ${testFixtureSkips} non-secret finding(s) in test/fixture files were not counted (test code does not ship).`);
   }
@@ -291,6 +287,7 @@ export async function runStaticCodeScan(files: CodeFile[], repoName: string = 'T
     lowCount,
     uiClicheCount,
     experimentalCount,
+    durationMs: Date.now() - scanStartedAt,
     findings,
     logs,
     summary,

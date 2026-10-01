@@ -114,5 +114,12 @@ interface RuleStats { ruleId: number; title: string; severity: string; cleanRepo
 
   mkdirSync(join(root, 'docs/benchmark'), { recursive: true });
   writeFileSync(join(root, 'docs/benchmark/results.json'), JSON.stringify(out, null, 1) + '\n');
+  // Compact, UI-facing copy: the landing page shows exactly these measured numbers
+  writeFileSync(join(root, 'data/benchmark-summary.generated.json'), JSON.stringify({
+    generatedAt: out.generatedAt,
+    summary: out.summary,
+    repos: repoResults.map((r) => ({ repo: r.repo, sha: String(r.sha).slice(0, 7), kind: r.kind, stack: r.stack, files: r.files, scanMs: r.scanMs, gate: r.gate, critical: r.critical, high: r.high })),
+    flaws: recall.map((r) => ({ repo: r.repo, file: r.file, flaw: r.flaw, found: r.found, blocksGate: r.blocksGate }))
+  }, null, 1) + '\n');
   console.log(out.summary);
 })();
