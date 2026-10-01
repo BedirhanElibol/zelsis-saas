@@ -645,31 +645,6 @@ export function evaluatePrivacyComplianceRules(file: CodeFile, lines: string[], 
         });
         logs.push(`[${ts}] ⚖️ HIGH: PRIVACY-25 finding in ${file.path}:${lineNum}`);
     }
-    // PRIVACY-26: Missing Opt-Out Mechanism for Sale / Sharing of Personal Info
-    if (/Footer\.tsx$/i.test(file.path) && !/Do Not Sell/i.test(cleanContent)) {
-        const matchLineIdx = lines.findIndex(l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('*') && (/privacy-26|missing/i.test(l) || lines.indexOf(l) === 0));
-        const lineNum = matchLineIdx !== -1 ? matchLineIdx + 1 : 1;
-        findings.push({
-            id: `privacy26-${Date.now()}-${findingCounter.count++}`,
-            ruleId: 8226,
-            type: 'LEGAL_COMPLIANCE',
-            title: "PRIVACY-26: Missing Opt-Out Mechanism for Sale / Sharing of Personal Info",
-            severity: 'HIGH',
-            category: "Consumer Rights",
-            filePath: file.path,
-            lineRange: `L${lineNum}`,
-            snippet: lines[matchLineIdx] || "<detected PRIVACY-26 pattern>",
-            reproductionSteps: [
-                `Scanned source code in ${file.path}:${lineNum}.`,
-                "Detected Missing Opt-Out Mechanism for Sale / Sharing of Personal Info: Statutory fines up to $7,500 per intentional violation under CCPA/CPRA"
-            ],
-            remediationPrompt: "Include a conspicuous 'Do Not Sell or Share My Personal Information' link in the footer for California visitors.",
-            status: 'OPEN',
-            owner: 'Security & Release Engineering',
-            falsePositive: false
-        });
-        logs.push(`[${ts}] ⚖️ HIGH: PRIVACY-26 finding in ${file.path}:${lineNum}`);
-    }
     // PRIVACY-27: Unredacted Customer Financial Identifiers in Invoices and Receipts
     if (/renderInvoicePdf/i.test(cleanContent) && !/maskAccount|slice\(-4\)/i.test(cleanContent)) {
         const matchLineIdx = locateMatchLine(lines, [/renderInvoicePdf/i], l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('*'));

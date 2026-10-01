@@ -94,30 +94,6 @@ export function evaluateWafEdgeRules(file: CodeFile, lines: string[], cleanConte
         });
         logs.push(`[${ts}] [WAF AUDIT] Found WAF-03: Direct Cloud Origin IP Exposure Bypassing WAF Inspection at ${file.path}:${lineNum}`);
     }
-    // WAF-04: Permissive Geo-Blocking on Privileged Administration Portals
-    if ((/\/admin\b/i.test(cleanContent) && !/country|geo|vpn|ipAllowlist/i.test(cleanContent))) {
-        const matchLineIdx = locateMatchLine(lines, [/\/admin\b/i], l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('*'));
-        const lineNum = matchLineIdx !== -1 ? matchLineIdx + 1 : 1;
-        findings.push({
-            id: `waf10404-${Date.now()}-${findingCounter.count++}`,
-            ruleId: 10404,
-            type: 'SECURITY',
-            title: "WAF-04: Permissive Geo-Blocking on Privileged Administration Portals",
-            severity: "MEDIUM",
-            category: "Access Perimeter",
-            filePath: file.path,
-            lineRange: `L${lineNum}`,
-            snippet: lines[matchLineIdx] || 'WAF edge configuration',
-            reproductionSteps: [
-                `Audited edge configuration in ${file.path}:${lineNum}.`,
-                'Detected WAF security violation matching WAF-04.'
-            ],
-            remediationPrompt: "Add Cloudflare WAF rule restricting /admin routes to trusted corporate ASN and country codes.",
-            status: 'OPEN',
-            falsePositive: false
-        });
-        logs.push(`[${ts}] [WAF AUDIT] Found WAF-04: Permissive Geo-Blocking on Privileged Administration Portals at ${file.path}:${lineNum}`);
-    }
     // WAF-05: Unchecked HTTP Request Body Size Exceeding Edge WAF Inspection Buffer
     if ((/bodyParser|maxBodySize/i.test(cleanContent))) {
         const matchLineIdx = locateMatchLine(lines, [/bodyParser|maxBodySize/i], l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('*'));

@@ -368,13 +368,16 @@ export function evaluateBuiltinRules(ctx: BuiltinRuleContext): void {
   // VibePolish UI-04: Absence of Empty State Component Fallback (Frontend components only, excluding persistent layout chrome)
   const isFrontendComponent = file.path.endsWith('.tsx') || file.path.endsWith('.jsx');
   const isStructuralChrome = /layout\.[tj]sx$|header\.[tj]sx$|nav\.[tj]sx$|navbar\.[tj]sx$|footer\.[tj]sx$|sidebar\.[tj]sx$/i.test(file.path);
-  if (isFrontendComponent && !isStructuralChrome && file.content.includes('.map(') && !file.content.includes('.length === 0') && !file.content.includes('EmptyState') && !file.content.includes('no data') && !file.content.includes('isEmpty')) {
+  // Only lists of loaded data can be empty: mapping a static array of nav items or features cannot
+  const loadsData = /\b(?:await\s|useQuery|useSWR|useSuspenseQuery|useInfiniteQuery|fetch\(|prisma\.|supabase\s*\.from|\.select\()/.test(file.content);
+  const handlesEmpty = /\.length\s*(?:===?\s*0|!==?\s*0|>\s*0|\?|&&)|!\s*[\w.?]+\.length\b|EmptyState|EmptyPlaceholder|isEmpty|no data|No \w+ (?:found|yet)/i.test(file.content);
+  if (isFrontendComponent && !isStructuralChrome && loadsData && file.content.includes('.map(') && !handlesEmpty) {
     addFinding({
       id: `real-find-${Date.now()}-${findingCounter++}`,
       ruleId: 1004,
       type: 'VIBEPOLISH',
       title: 'UI-04: Absence of Empty State Component Fallback',
-      severity: 'MEDIUM',
+      severity: 'LOW',
       category: 'Layout & Onboarding',
       filePath: file.path,
       lineRange: 'L1-L50',

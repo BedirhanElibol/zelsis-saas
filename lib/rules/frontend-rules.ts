@@ -34,7 +34,11 @@ export function evaluateFrontendRules(file: CodeFile, lines: string[], cleanCont
     const outlineNoneViolation = hasOutlineNone && !hasFocusRing;
     // Detect unlabelled interactive inputs: <input>, <textarea>, <select>
     // Handle JSX arrow functions like onChange={(e) => ...} by matching up to /> or (?<!=)>
-    const inputTags = cleanContent.match(/<(?:input|textarea|select)\b[\s\S]*?(?:\/>|<\/(?:input|textarea|select)>|(?<!=)>)/gi) || [];
+    // Native lowercase elements only (<Input> components are checked where they render <input>); inputs
+    // nested in a <label> are labelled implicitly; {...props} spreads may carry id / aria-label.
+    const withoutWrappedLabels = cleanContent.replace(/<label\b[^>]*>[\s\S]*?<\/label>/g, '');
+    const inputTags = (withoutWrappedLabels.match(/<(?:input|textarea|select)\b[\s\S]*?(?:\/>|<\/(?:input|textarea|select)>|(?<!=)>)/g) || [])
+        .filter((tag) => !/\{\s*\.\.\./.test(tag));
     let unlabelledInputFound = false;
     let unlabelledInputSnippet = '';
     let inputMatchLineIdx = -1;

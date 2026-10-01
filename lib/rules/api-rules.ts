@@ -55,7 +55,7 @@ export function evaluateApiRules(file: CodeFile, lines: string[], cleanContent: 
             ruleId: 7202,
             type: 'SECURITY',
             title: "API-02: Unversioned Public REST API Route Handler",
-            severity: 'MEDIUM',
+            severity: 'LOW',
             category: "API Versioning",
             filePath: file.path,
             lineRange: `L${lineNum}`,
@@ -280,7 +280,7 @@ export function evaluateApiRules(file: CodeFile, lines: string[], cleanContent: 
             ruleId: 7211,
             type: 'SECURITY',
             title: "API-11: Missing Content-Type Validation on POST/PUT Endpoints",
-            severity: 'MEDIUM',
+            severity: 'LOW',
             category: "Input Validation",
             filePath: file.path,
             lineRange: `L${lineNum}`,
@@ -433,7 +433,7 @@ export function evaluateApiRules(file: CodeFile, lines: string[], cleanContent: 
             ruleId: 7217,
             type: 'SECURITY',
             title: "API-17: Missing If-Match Header for Optimistic Concurrency Control",
-            severity: 'MEDIUM',
+            severity: 'LOW',
             category: "Concurrency & Race Conditions",
             filePath: file.path,
             lineRange: `L${lineNum}`,
@@ -550,7 +550,9 @@ export function evaluateApiRules(file: CodeFile, lines: string[], cleanContent: 
         logs.push(`[${ts}] 🌐 API-21: Leaking Stack Traces in 500 Server Error Responses detected (${file.path}:${lineNum})`);
     }
     // API-22: Webhook Receiver Missing Replay Attack Protection (Timestamp Check)
-    if (/webhook/i.test(lowerPath) && /export\s+async\s+function\s+POST/i.test(cleanContent) && /signature/i.test(cleanContent) && !/timestamp|webhook-timestamp/i.test(cleanContent)) {
+    // Stripe constructEvent, Svix, Standard Webhooks and Polar validateEvent reject stale timestamps themselves
+    const verifiesTimestampInSdk = /constructEvent(?:Async)?\s*\(|from\s+['"]svix['"]|standardwebhooks|validateEvent\s*\(|verifyWebhook\s*\(/i.test(cleanContent);
+    if (/webhook/i.test(lowerPath) && /export\s+async\s+function\s+POST/i.test(cleanContent) && /signature/i.test(cleanContent) && !/timestamp|webhook-timestamp/i.test(cleanContent) && !verifiesTimestampInSdk) {
         const matchLineIdx = locateMatchLine(lines, [/export\s+async\s+function\s+POST/i, /signature/i], l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('*'));
         const lineNum = matchLineIdx !== -1 ? matchLineIdx + 1 : 1;
         findings.push({

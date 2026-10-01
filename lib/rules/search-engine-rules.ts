@@ -117,8 +117,10 @@ export function evaluateSearchEngineRules(file: CodeFile, lines: string[], clean
         logs.push(`[${ts}] [SEARCH AUDIT] Found SEARCH-04: Fielddata Memory Leakage on High-Cardinality Analyzed Text at ${file.path}:${lineNum}`);
     }
     // SEARCH-05: Unmanaged Elasticsearch Index Lifecycle Management (ILM)
-    if ((/createIndex/i.test(cleanContent) && !/lifecycle/i.test(cleanContent))) {
-        const matchLineIdx = locateMatchLine(lines, [/createIndex/i], l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('#') && !l.trim().startsWith('*'));
+    // Elasticsearch / OpenSearch clients only: SQL "CREATE INDEX" in migrations is not an ILM concern
+    const usesSearchClient = /@elastic\/elasticsearch|@opensearch-project|indices\.create\s*\(/.test(cleanContent);
+    if ((usesSearchClient && /createIndex|indices\.create/.test(cleanContent) && !/lifecycle/i.test(cleanContent))) {
+        const matchLineIdx = locateMatchLine(lines, [/createIndex|indices\.create/], l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('#') && !l.trim().startsWith('*'));
         const lineNum = matchLineIdx !== -1 ? matchLineIdx + 1 : 1;
         findings.push({
             id: `search13005-${Date.now()}-${findingCounter.count++}`,

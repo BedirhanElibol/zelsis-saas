@@ -16,8 +16,10 @@ export function evaluateSecurityRules(file: CodeFile, lines: string[], cleanCont
     const ts = new Date().toLocaleTimeString();
     const lowerPath = file.path.toLowerCase();
     // Rule 1: Exposed Stripe/OpenAI API Keys (SEC-01)
-    if (cleanContent.includes('sk_live_') || cleanContent.includes('sk-proj-') || /api[_-]?key\s*=\s*["']sk-[a-zA-Z0-9_-]{20,}/i.test(cleanContent)) {
-        const matchLineIdx = lines.findIndex(l => !l.trim().startsWith('//') && !l.trim().startsWith('*') && (l.includes('sk_live_') || l.includes('sk-proj-') || /sk-[a-zA-Z0-9_-]{20,}/i.test(l)));
+    // An actual key body, not the prefix alone: docs and env templates write `sk_live_...` as a placeholder
+    const LIVE_KEY = /sk_live_[a-zA-Z0-9]{16,}|sk-proj-[a-zA-Z0-9_-]{20,}/;
+    if (LIVE_KEY.test(cleanContent) || /api[_-]?key\s*=\s*["']sk-[a-zA-Z0-9_-]{20,}/i.test(cleanContent)) {
+        const matchLineIdx = lines.findIndex(l => !l.trim().startsWith('//') && !l.trim().startsWith('*') && (LIVE_KEY.test(l) || /sk-[a-zA-Z0-9_-]{20,}/i.test(l)));
         const lineNum = matchLineIdx !== -1 ? matchLineIdx + 1 : 1;
         const snippet = lines.slice(Math.max(0, lineNum - 2), Math.min(lines.length, lineNum + 2)).join('\n');
         findings.push({

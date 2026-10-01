@@ -197,7 +197,8 @@ export function evaluateComplianceRules(file: CodeFile, lines: string[], cleanCo
     const isFormFile = /(?:form|newsletter|waitlist|subscribe|contact|lead|signup|register)/i.test(lowerPath) ||
         /<form\b[^>]*>/i.test(cleanContent);
     // Login/Sign-in forms do not require consent checkboxes since consent was granted at signup (F-38)
-    const isLoginForm = /(?:login|sign-in|signin|session|authenticate)/i.test(lowerPath) ||
+    // Same for forms of existing users: password reset, email / name / account settings
+    const isLoginForm = /(?:login|sign-in|signin|session|authenticate|forgot|reset|password|account|settings|profile|update)/i.test(lowerPath) ||
         (/(?:sign\s*in|log\s*in)/i.test(cleanContent) && !/(?:sign\s*up|register|create\s*account|new\s*account|subscribe|waitlist|newsletter)/i.test(cleanContent));
     const hasEmailInput = /<input[^>]+(?:type|name)\s*=\s*["'](?:email|tel)["']/i.test(cleanContent);
     const hasConsentNotice = /(?:privacy\s*policy|terms\s*of\s*service|terms\s*&\s*conditions|agree\s*to\s*(?:our|the)|consent|gdpr|data\s*processing)/i.test(cleanContent);

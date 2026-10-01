@@ -477,6 +477,18 @@ export const RULE_CASES: RuleCase[] = [
     ignores: f('app/api/upload/route.ts', "export async function POST(req: Request) {\n  const session = await auth();\n  const body = await req.json();\n  await s3.send(new PutObjectCommand({ Bucket: 'uploads', Key: `${session.user.id}/${randomUUID()}`, Body: body.data }));\n  return new Response('ok');\n}\n")
   },
   {
+    ruleIds: [1],
+    name: 'Live Stripe key in docs vs a `sk_live_...` placeholder',
+    detects: f('content/docs/deploy.mdx', `Set STRIPE_SECRET_KEY=${FAKE_STRIPE_LIVE} in Vercel.\n`),
+    ignores: f('content/docs/deployment.mdx', '| `STRIPE_SECRET_KEY` | Live key (`sk_live_...`) |\n')
+  },
+  {
+    ruleIds: [12101],
+    name: 'Secret value logged vs a log message that names a secret',
+    detects: f('lib/db/setup.ts', "export function setup(secretKey: string) {\n  console.log('Using key', secretKey);\n}\n"),
+    ignores: f('lib/db/setup.ts', "export function setup(secretKey: string) {\n  console.log('Step 3: Getting Stripe Secret Key');\n  return secretKey.length;\n}\n")
+  },
+  {
     ruleIds: [27101],
     name: 'Server fetches a URL taken from the request body (SSRF)',
     detects: f('app/api/preview/route.ts', "export async function POST(req: Request) {\n  const session = await auth();\n  const { url } = await req.json();\n  const res = await fetch(url);\n  return new Response(await res.text());\n}\n"),

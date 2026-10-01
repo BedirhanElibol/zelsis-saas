@@ -198,7 +198,9 @@ export function evaluateModernFullstackRules(file: CodeFile, lines: string[], cl
     }
     // NEXT15-09: React 19 useActionState Missing Double-Submit Guard
     const isReactFormComponent = (file.path.endsWith('.tsx') || file.path.endsWith('.jsx')) && isNextApp && /<form\b/i.test(cleanContent);
-    if (isReactFormComponent && /<button[^>]*type=['"]submit['"][^>]*>/i.test(cleanContent) && !/disabled\s*(?:=|\s|>)/i.test(cleanContent)) {
+    // Pending state (useFormStatus / useActionState / form libraries / loading props) also blocks a double submit
+    const hasSubmitGuard = /disabled\s*(?:=|\s|>)|useFormStatus|\bpending\b|isPending|isSubmitting|\bloading\s*=|isLoading/i.test(cleanContent);
+    if (isReactFormComponent && /<button[^>]*type=['"]submit['"][^>]*>/i.test(cleanContent) && !hasSubmitGuard) {
         const matchLineIdx = lines.findIndex(l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('*') && /<button[^>]*type=['"]submit['"]/i.test(l));
         const lineNum = matchLineIdx !== -1 ? matchLineIdx + 1 : 1;
         findings.push({
@@ -206,7 +208,7 @@ export function evaluateModernFullstackRules(file: CodeFile, lines: string[], cl
             ruleId: 8609,
             type: 'INFRA_DATABASE',
             title: "NEXT15-09: React 19 useActionState Missing Double-Submit Guard",
-            severity: 'MEDIUM',
+            severity: 'LOW',
             category: "UI State Hygiene",
             filePath: file.path,
             lineRange: `L${lineNum}`,

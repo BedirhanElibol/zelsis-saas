@@ -22,8 +22,17 @@ export function evaluateSiemAuditLoggingRules(file: CodeFile, lines: string[], c
     const ts = new Date().toLocaleTimeString();
     // AUDIT-01: Plaintext Credentials or PII Leaked in Application Logs
     // Files using @/lib/logger automatically redact sensitive tokens, passwords, and PII.
-    if (/console\.(?:log|warn|info|debug)\s*\([^)]*(?:password|secret|apiKey|bearerToken)[^)]*\)/i.test(cleanContent) && !/logger\./i.test(cleanContent) && !/sanitizeLog/i.test(cleanContent)) {
-        const matchLineIdx = locateMatchLine(lines, [/console\.(?:log|warn|info|debug)\s*\([^)]*(?:password|secret|apiKey|bearerToken)[^)]*\)/i], l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('#') && !l.trim().startsWith('*'));
+    // Only values count: console.log('Getting Stripe Secret Key') logs a fixed string, not a secret.
+    const LOG_CALL = /console\.(?:log|warn|info|debug)\s*\(([^)]*)\)/gi;
+    const SENSITIVE_VALUE = /(?:password|secret|apiKey|bearerToken)/i;
+    const logsSensitiveValue = (code: string) => [...code.matchAll(LOG_CALL)].some((m) => {
+        const args = m[1]
+            .replace(/`([^`]*)`/g, (_t, inner: string) => (inner.match(/\$\{[^}]*\}/g) || []).join(' '))
+            .replace(/'[^'\n]*'|"[^"\n]*"/g, '""');
+        return SENSITIVE_VALUE.test(args);
+    });
+    if (logsSensitiveValue(cleanContent) && !/logger\./i.test(cleanContent) && !/sanitizeLog/i.test(cleanContent)) {
+        const matchLineIdx = lines.findIndex(l => !/^\s*(?:\/\/|--|#|\*)/.test(l) && logsSensitiveValue(l));
         const lineNum = matchLineIdx !== -1 ? matchLineIdx + 1 : 1;
         findings.push({
             id: `audit-12101-${Date.now()}-${findingCounter.count++}`,
