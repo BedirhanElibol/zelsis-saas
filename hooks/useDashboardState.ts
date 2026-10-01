@@ -1,27 +1,15 @@
 import { useState, useEffect } from 'react';
-import { Project, Finding, PlanUsageQuota, UserTier } from '@/data/schema';
+import { Project, Finding } from '@/data/schema';
 import { MOCK_PROJECTS } from '@/data/mockData';
-import { calculateReadinessScore, calculateGateStatus } from '@/lib/scanner-engine';
+import { findUpdatedProject, isLocalAuditProject, normalizeProject, serializeProjectsForStorage, updateMatchingFindings } from '@/lib/dashboard/project-state';
+import { useScanQuota } from '@/hooks/dashboard/useScanQuota';
 import { UserProfile } from '@/components/auth/AuthModal';
-import { supabaseSignIn, supabaseSignUp, supabaseResetPassword, supabaseSignOut, resolveVerifiedSession, fetchCloudProjects, getSupabase, mapSupabaseUserToProfile, syncUserProfileToSupabase, isPlatformAdminEmail } from '@/lib/supabase';
-import { purgeZelsisStorage, safeSetStorageItem } from '@/lib/storage';
-import { getActiveUserAuth } from '@/lib/supabase-client';
+import { supabaseSignIn, supabaseSignUp, supabaseSignOut, resolveVerifiedSession, fetchCloudProjects, getSupabase, mapSupabaseUserToProfile, syncUserProfileToSupabase, isPlatformAdminEmail } from '@/lib/supabase';
+import { safeSetStorageItem } from '@/lib/storage';
 import { canAccessLocalAudit } from '@/lib/env-config';
 import { isFounderGrantExpiry } from '@/lib/subscription-utils';
 import { verifyLicenseKey, generateLicenseKey } from '@/lib/stripe-checkout';
 import { useSearchParams } from 'next/navigation';
-import {
-  FREE_SCAN_LIMIT,
-  loadUserQuota,
-  saveUserQuota,
-  consumeScanQuota,
-  consumeAiPromptQuota,
-  checkScanQuota,
-  checkAiPromptQuota,
-  checkProjectQuota,
-  isPrivateRepoAllowed,
-  isPdfExportAllowed
-} from '@/lib/quota-manager';
 
 const VALID_NAVS = [
   'dashboard', 'projects', 'scans', 'security', 'compliance',
@@ -60,169 +48,7 @@ export function useDashboardState() {
     authParam === 'signup' ? 'signup' : 'signin'
   );
   const [isCheckoutOpen, setIsCheckoutOpen] = useState<boolean>(false);
-  const [quota, setQuota] = useState<PlanUsageQuota>(() => {
-    return loadUserQuota((user?.tier as UserTier) || 'Free');
-  });
-
-  // Authoritative server quota synchronization
-  useEffect(() => {
-    let isCancelled = false;
-
-    async function fetchAuthoritativeQuota() {
-      try {
-        const { accessToken } = await getActiveUserAuth();
-        const headers: Record<string, string> = {};
-        if (accessToken) {
-          headers['Authorization'] = `Bearer ${accessToken}`;
-        }
-
-        const res = await fetch('/api/v1/quota', { headers });
-        if (res.ok && !isCancelled) {
-          const data = await res.json();
-          const isPlatformAdmin = isPlatformAdminEmail(user?.email);
-          const isFree = !isPlatformAdmin && data.tier === 'Free';
-          setQuota((prev) => {
-            // For unauthenticated users, preserve local quota count and do not let server wipe it to 0
-            const authoritativeScansUsed = isPlatformAdmin
-              ? 0
-              : data.status === 'unauthenticated'
-                ? prev.scansUsed
-                : (data.scansUsed ?? prev.scansUsed);
-
-            const updated: PlanUsageQuota = {
-              ...prev,
-              scansUsed: authoritativeScansUsed,
-              scansLimit: isFree ? (data.scansLimit ?? FREE_SCAN_LIMIT) : Infinity,
-              billingCycleReset: data.billingCycleReset || prev.billingCycleReset
-            };
-            saveUserQuota(updated);
-            return updated;
-          });
-        }
-      } catch (err) {
-        // Fallback gracefully to cached localStorage quota
-        void err;
-      }
-    }
-
-    fetchAuthoritativeQuota();
-    return () => {
-      isCancelled = true;
-    };
-  }, [user?.email, user?.tier]);
-
-  const recordScanUsage = () => {
-    setQuota((prev) => {
-      const updated = consumeScanQuota(prev, (user?.tier as UserTier) || 'Free');
-      return updated;
-    });
-  };
-
-  const requestScanAuthorization = async (scanDetails: {
-    projectId?: string;
-    projectName?: string;
-    repoUrl: string;
-    framework?: string;
-  }): Promise<{ allowed: boolean; reason?: string; scanId?: string; projectId?: string }> => {
-    try {
-      const { accessToken } = await getActiveUserAuth();
-      const headers: Record<string, string> = {
-        'Content-Type': 'application/json'
-      };
-      if (accessToken) {
-        headers['Authorization'] = `Bearer ${accessToken}`;
-      }
-
-      const res = await fetch('/api/v1/quota', {
-        method: 'POST',
-        headers,
-        body: JSON.stringify({
-          action: 'consume_scan',
-          projectId: scanDetails.projectId,
-          projectName: scanDetails.projectName,
-          repoUrl: scanDetails.repoUrl,
-          framework: scanDetails.framework
-        })
-      });
-
-      const data = await res.json();
-      if (res.status === 401) {
-        setAuthStatus('unauthenticated');
-        return { allowed: false, reason: data.error || 'Please sign in to run audits.' };
-      }
-      if (!res.ok || !data.allowed) {
-        return {
-          allowed: false,
-          reason: data.error || 'Scan limit reached. Please upgrade to Pro.'
-        };
-      }
-
-      setQuota((prev) => {
-        const updated: PlanUsageQuota = {
-          ...prev,
-          scansUsed: data.scansUsed ?? (prev.scansUsed + 1),
-          scansLimit: data.scansLimit === 'Unlimited' ? Infinity : (data.scansLimit ?? prev.scansLimit)
-        };
-        saveUserQuota(updated);
-        return updated;
-      });
-
-      return {
-        allowed: true,
-        scanId: data.scanId,
-        projectId: data.projectId
-      };
-    } catch (err) {
-      void err;
-      const localCheck = checkScanQuota(quota, (user?.tier as UserTier) || 'Free');
-      if (!localCheck.allowed) {
-        return { allowed: false, reason: localCheck.reason };
-      }
-      setQuota((prev) => consumeScanQuota(prev, (user?.tier as UserTier) || 'Free'));
-      return { allowed: true };
-    }
-  };
-
-  const completeScanTelemetry = async (details: {
-    scanId?: string;
-    projectId?: string;
-    readinessScore: number;
-    gateStatus: 'PASSED' | 'FAILED' | 'WARNING';
-    criticalCount: number;
-    highCount: number;
-    mediumCount: number;
-    lowCount: number;
-    uiClicheCount: number;
-    scanDurationMs: number;
-  }) => {
-    try {
-      const { accessToken } = await getActiveUserAuth();
-      const headers: Record<string, string> = {
-        'Content-Type': 'application/json'
-      };
-      if (accessToken) {
-        headers['Authorization'] = `Bearer ${accessToken}`;
-      }
-
-      await fetch('/api/v1/quota', {
-        method: 'POST',
-        headers,
-        body: JSON.stringify({
-          action: 'complete_scan',
-          ...details
-        })
-      });
-    } catch {
-      // Non-blocking telemetry
-    }
-  };
-
-  const recordAiPromptUsage = () => {
-    setQuota((prev) => {
-      const updated = consumeAiPromptQuota(prev, (user?.tier as UserTier) || 'Free');
-      return updated;
-    });
-  };
+  const { quota, setQuota, recordScanUsage, requestScanAuthorization, completeScanTelemetry, recordAiPromptUsage } = useScanQuota(user, setAuthStatus);
 
   useEffect(() => {
     const nav = searchParams.get('nav');
@@ -1036,54 +862,19 @@ export function useDashboardState() {
   }, []);
 
   const persistProjectsList = (updated: Project[]) => {
-    try {
-      const sanitized = canAccessLocalAudit()
-        ? updated
-        : updated.filter((p) => p.repoUrl !== 'local' && p.id !== 'proj-zelsis-self' && p.id !== 'proj-shipguard-self');
-      const lightweight = sanitized.map((p) => {
-        const { githubToken, ...safeProject } = p;
-        return {
-          ...safeProject,
-          findings: (p.findings ?? []).slice(0, 60).map((f) => ({
-            ...f,
-            snippet: typeof f.snippet === 'string' && f.snippet.length > 150 ? f.snippet.slice(0, 150) + '...' : f.snippet,
-            reproductionSteps: Array.isArray(f.reproductionSteps) ? f.reproductionSteps.slice(0, 1) : []
-          }))
-        };
-      });
-      safeSetStorageItem('zelsis_projects', JSON.stringify(lightweight), selectedProject.id);
-
+    const writeProjects = (payload: string) => {
+      safeSetStorageItem('zelsis_projects', payload, selectedProject.id);
       if (user?.isLoggedIn && user?.email) {
         const userProjectsKey = `zelsis_user_projects_${(user.email || '').toLowerCase().trim()}`;
-        safeSetStorageItem(userProjectsKey, JSON.stringify(lightweight), selectedProject.id);
+        safeSetStorageItem(userProjectsKey, payload, selectedProject.id);
       }
+    };
+    try {
+      writeProjects(serializeProjectsForStorage(updated, canAccessLocalAudit(), false));
     } catch (primaryQuotaErr) {
       void primaryQuotaErr;
       try {
-        const sanitized = canAccessLocalAudit()
-          ? updated
-          : updated.filter((p) => p.repoUrl !== 'local' && p.id !== 'proj-zelsis-self' && p.id !== 'proj-shipguard-self');
-        const ultraCompact = sanitized.map((p) => {
-          const { githubToken, ...safeProject } = p;
-          return {
-            ...safeProject,
-            findings: (p.findings ?? []).slice(0, 20).map((f) => ({
-              id: f.id,
-              ruleId: f.ruleId,
-              type: f.type,
-              title: f.title,
-              severity: f.severity,
-              filePath: f.filePath,
-              status: f.status
-            }))
-          };
-        });
-        safeSetStorageItem('zelsis_projects', JSON.stringify(ultraCompact), selectedProject.id);
-
-        if (user?.isLoggedIn && user?.email) {
-          const userProjectsKey = `zelsis_user_projects_${(user.email || '').toLowerCase().trim()}`;
-          safeSetStorageItem(userProjectsKey, JSON.stringify(ultraCompact), selectedProject.id);
-        }
+        writeProjects(serializeProjectsForStorage(updated, canAccessLocalAudit(), true));
       } catch (fallbackQuotaErr) {
         console.warn('[Zelsis Storage] Silent localStorage quota limit handled gracefully:', fallbackQuotaErr);
       }
@@ -1096,35 +887,12 @@ export function useDashboardState() {
       safeSetStorageItem('zelsis_selected_project_id', MOCK_PROJECTS[0].id);
       return;
     }
-    if (!canAccessLocalAudit() && (p.repoUrl === 'local' || p.id === 'proj-zelsis-self' || p.id === 'proj-shipguard-self')) {
+    if (!canAccessLocalAudit() && isLocalAuditProject(p)) {
       setSelectedProject(MOCK_PROJECTS[0]);
       safeSetStorageItem('zelsis_selected_project_id', MOCK_PROJECTS[0].id);
       return;
     }
-    const cleanRepoUrl = typeof p.repoUrl === 'string' && p.repoUrl.trim() && p.repoUrl !== 'undefined'
-      ? p.repoUrl.trim()
-      : MOCK_PROJECTS[0].repoUrl;
-    const cleanName = typeof p.name === 'string' && p.name.trim() && p.name !== 'undefined'
-      ? p.name.trim()
-      : (cleanRepoUrl ? cleanRepoUrl.split('/').pop() || 'Target Repository' : MOCK_PROJECTS[0].name);
-
-    const safeP: Project = {
-      ...p,
-      id: p.id || `proj-${Date.now()}`,
-      name: cleanName,
-      repoUrl: cleanRepoUrl,
-      framework: p.framework || 'Next.js 15',
-      providers: Array.isArray(p.providers) ? p.providers : ['GitHub Action', 'Vercel'],
-      lastScanAt: p.lastScanAt || 'Never audited',
-      readinessScore: typeof p.readinessScore === 'number' ? p.readinessScore : 100,
-      gateStatus: p.gateStatus || 'PASSED',
-      criticalCount: typeof p.criticalCount === 'number' ? p.criticalCount : 0,
-      highCount: typeof p.highCount === 'number' ? p.highCount : 0,
-      mediumCount: typeof p.mediumCount === 'number' ? p.mediumCount : 0,
-      lowCount: typeof p.lowCount === 'number' ? p.lowCount : 0,
-      uiClicheCount: typeof p.uiClicheCount === 'number' ? p.uiClicheCount : 0,
-      findings: Array.isArray(p.findings) ? p.findings : [],
-    };
+    const safeP = normalizeProject(p, MOCK_PROJECTS[0]);
     setSelectedProject(safeP);
     safeSetStorageItem('zelsis_selected_project_id', safeP.id);
   };
@@ -1147,49 +915,14 @@ export function useDashboardState() {
 
   const handleToggleResolveFinding = (findingId: string) => {
     setProjects((prevProjects) => {
-      let newlyUpdatedSelectedProj: Project | null = null;
-      const updatedList = prevProjects.map((proj) => {
-        const hasFinding = (proj.findings ?? []).some((f) => f.id === findingId);
-        if (!hasFinding) return proj;
-
-        const updatedFindings = (proj.findings ?? []).map((f) => {
-          if (f.id === findingId) {
-            const nextStatus: Finding['status'] = f.status === 'RESOLVED' ? 'OPEN' : 'RESOLVED';
-            return { ...f, status: nextStatus };
-          }
-          return f;
-        });
-
-        const openCritical = updatedFindings.filter((f) => f.status === 'OPEN' && f.severity === 'CRITICAL').length;
-        const openHigh = updatedFindings.filter((f) => f.status === 'OPEN' && f.severity === 'HIGH').length;
-        const openMedium = updatedFindings.filter((f) => f.status === 'OPEN' && f.severity === 'MEDIUM').length;
-        const openLow = updatedFindings.filter((f) => f.status === 'OPEN' && f.severity === 'LOW').length;
-        const openUiCliches = updatedFindings.filter((f) => f.status === 'OPEN' && f.type === 'VIBEPOLISH').length;
-
-        const nextGate: Project['gateStatus'] = calculateGateStatus(updatedFindings);
-        const nextScore = calculateReadinessScore(updatedFindings);
-
-        const updatedProj: Project = {
-          ...proj,
-          findings: updatedFindings,
-          gateStatus: nextGate,
-          readinessScore: nextScore,
-          criticalCount: openCritical,
-          highCount: openHigh,
-          mediumCount: openMedium,
-          lowCount: openLow,
-          uiClicheCount: openUiCliches,
-        };
-
-        if (proj.id === selectedProject.id) {
-          newlyUpdatedSelectedProj = updatedProj;
-        }
-
-        return updatedProj;
-      });
-
-      if (newlyUpdatedSelectedProj) {
-        setSelectedProject(newlyUpdatedSelectedProj);
+      const updatedList = updateMatchingFindings(
+        prevProjects,
+        (f) => f.id === findingId,
+        (f) => ({ ...f, status: (f.status === 'RESOLVED' ? 'OPEN' : 'RESOLVED') as Finding['status'] })
+      );
+      const updatedSelected = findUpdatedProject(prevProjects, updatedList, selectedProject.id);
+      if (updatedSelected) {
+        setSelectedProject(updatedSelected);
       }
       persistProjectsList(updatedList);
       return updatedList;
@@ -1202,53 +935,14 @@ export function useDashboardState() {
    */
   const handleMarkFalsePositive = (findingId: string) => {
     setProjects((prevProjects) => {
-      let newlyUpdatedSelectedProj: Project | null = null;
-      const updatedList = prevProjects.map((proj) => {
-        const hasFinding = (proj.findings ?? []).some((f) => f.id === findingId);
-        if (!hasFinding) return proj;
-
-        const updatedFindings = (proj.findings ?? []).map((f) => {
-          if (f.id === findingId) {
-            const isCurrentlyFp = Boolean(f.falsePositive);
-            return {
-              ...f,
-              falsePositive: !isCurrentlyFp,
-              status: (!isCurrentlyFp ? 'ACCEPTED_RISK' : 'OPEN') as Finding['status']
-            };
-          }
-          return f;
-        });
-
-        const openCritical = updatedFindings.filter((f) => f.status === 'OPEN' && f.severity === 'CRITICAL').length;
-        const openHigh = updatedFindings.filter((f) => f.status === 'OPEN' && f.severity === 'HIGH').length;
-        const openMedium = updatedFindings.filter((f) => f.status === 'OPEN' && f.severity === 'MEDIUM').length;
-        const openLow = updatedFindings.filter((f) => f.status === 'OPEN' && f.severity === 'LOW').length;
-        const openUiCliches = updatedFindings.filter((f) => f.status === 'OPEN' && f.type === 'VIBEPOLISH').length;
-
-        const nextGate: Project['gateStatus'] = calculateGateStatus(updatedFindings);
-        const nextScore = calculateReadinessScore(updatedFindings);
-
-        const updatedProj: Project = {
-          ...proj,
-          findings: updatedFindings,
-          gateStatus: nextGate,
-          readinessScore: nextScore,
-          criticalCount: openCritical,
-          highCount: openHigh,
-          mediumCount: openMedium,
-          lowCount: openLow,
-          uiClicheCount: openUiCliches,
-        };
-
-        if (proj.id === selectedProject.id) {
-          newlyUpdatedSelectedProj = updatedProj;
-        }
-
-        return updatedProj;
-      });
-
-      if (newlyUpdatedSelectedProj) {
-        setSelectedProject(newlyUpdatedSelectedProj);
+      const updatedList = updateMatchingFindings(
+        prevProjects,
+        (f) => f.id === findingId,
+        (f) => ({ ...f, falsePositive: !f.falsePositive, status: (f.falsePositive ? 'OPEN' : 'ACCEPTED_RISK') as Finding['status'] })
+      );
+      const updatedSelected = findUpdatedProject(prevProjects, updatedList, selectedProject.id);
+      if (updatedSelected) {
+        setSelectedProject(updatedSelected);
       }
       persistProjectsList(updatedList);
       return updatedList;
@@ -1260,51 +954,14 @@ export function useDashboardState() {
    */
   const handleIgnoreRule = (ruleId: number) => {
     setProjects((prevProjects) => {
-      let newlyUpdatedSelectedProj: Project | null = null;
-      const updatedList = prevProjects.map((proj) => {
-        const hasRule = (proj.findings ?? []).some((f) => f.ruleId === ruleId);
-        if (!hasRule) return proj;
-
-        const updatedFindings = (proj.findings ?? []).map((f) => {
-          if (f.ruleId === ruleId) {
-            return {
-              ...f,
-              status: 'ACCEPTED_RISK' as Finding['status']
-            };
-          }
-          return f;
-        });
-
-        const openCritical = updatedFindings.filter((f) => f.status === 'OPEN' && f.severity === 'CRITICAL').length;
-        const openHigh = updatedFindings.filter((f) => f.status === 'OPEN' && f.severity === 'HIGH').length;
-        const openMedium = updatedFindings.filter((f) => f.status === 'OPEN' && f.severity === 'MEDIUM').length;
-        const openLow = updatedFindings.filter((f) => f.status === 'OPEN' && f.severity === 'LOW').length;
-        const openUiCliches = updatedFindings.filter((f) => f.status === 'OPEN' && f.type === 'VIBEPOLISH').length;
-
-        const nextGate: Project['gateStatus'] = calculateGateStatus(updatedFindings);
-        const nextScore = calculateReadinessScore(updatedFindings);
-
-        const updatedProj: Project = {
-          ...proj,
-          findings: updatedFindings,
-          gateStatus: nextGate,
-          readinessScore: nextScore,
-          criticalCount: openCritical,
-          highCount: openHigh,
-          mediumCount: openMedium,
-          lowCount: openLow,
-          uiClicheCount: openUiCliches,
-        };
-
-        if (proj.id === selectedProject.id) {
-          newlyUpdatedSelectedProj = updatedProj;
-        }
-
-        return updatedProj;
-      });
-
-      if (newlyUpdatedSelectedProj) {
-        setSelectedProject(newlyUpdatedSelectedProj);
+      const updatedList = updateMatchingFindings(
+        prevProjects,
+        (f) => f.ruleId === ruleId,
+        (f) => ({ ...f, status: 'ACCEPTED_RISK' as Finding['status'] })
+      );
+      const updatedSelected = findUpdatedProject(prevProjects, updatedList, selectedProject.id);
+      if (updatedSelected) {
+        setSelectedProject(updatedSelected);
       }
       persistProjectsList(updatedList);
       return updatedList;
