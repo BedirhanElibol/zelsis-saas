@@ -4,7 +4,8 @@ import type { CodeFile, ScanResult } from './scanner/types';
 import { isSecretRuleId, isTestFixturePath, stripComments, yieldToMain } from './scanner/text';
 import { parseZelsisIgnore } from './scanner/ignore-parser';
 import { parseZelsisRc } from './scanner/rc-config';
-import { calculateGateStatus, calculateReadinessScore } from './scanner/scoring';
+import { calculateGateStatus, calculateReadinessScore, gatingFindings } from './scanner/scoring';
+import { isExperimentalRule } from './scanner/rule-maturity';
 import { RULE_ENGINES } from './scanner/rule-engines';
 import { evaluateBuiltinRules } from './scanner/builtin-rules';
 import { detectProjectDatabases } from './rules/multi-database-rules';
@@ -16,7 +17,7 @@ export type { ZelsisRcConfig } from './scanner/rc-config';
 export { isSecretRuleId, isTestFixturePath, stripComments, yieldToMain } from './scanner/text';
 export { parseZelsisIgnore, parseShipguardIgnore } from './scanner/ignore-parser';
 export { parseZelsisRc } from './scanner/rc-config';
-export { calculateGateStatus, calculateReadinessScore } from './scanner/scoring';
+export { calculateGateStatus, calculateReadinessScore, gatingFindings } from './scanner/scoring';
 export { detectAppStack, UNDETECTED_FRAMEWORK } from './scanner/stack-detect';
 
 /**
@@ -180,7 +181,7 @@ export async function runStaticCodeScan(files: CodeFile[], repoName: string = 'T
       if (isDuplicate) {
         return;
       }
-      findings.push(f);
+      findings.push(isExperimentalRule(f.ruleId) ? { ...f, maturity: 'experimental' } : f);
     };
 
     // 0. AI Comment, Prompt Artifact & Boilerplate Inspector (Runs on raw unstripped content)
@@ -245,7 +246,9 @@ export async function runStaticCodeScan(files: CodeFile[], repoName: string = 'T
     logs.push(`[${new Date().toLocaleTimeString()}] [INFO] ${testFixtureSkips} non-secret finding(s) in test/fixture files were not counted (test code does not ship).`);
   }
 
-  const openFindings = findings.filter(f => f.status === 'OPEN');
+  // Counts, score and gate only use findings from rules proven precise; experimental ones are reported separately
+  const openFindings = gatingFindings(findings);
+  const experimentalCount = findings.filter((f) => f.status === 'OPEN' && f.maturity === 'experimental').length;
   const criticalCount = openFindings.filter(f => f.severity === 'CRITICAL').length;
   const highCount = openFindings.filter(f => f.severity === 'HIGH').length;
   const mediumCount = openFindings.filter(f => f.severity === 'MEDIUM').length;
@@ -287,6 +290,7 @@ export async function runStaticCodeScan(files: CodeFile[], repoName: string = 'T
     mediumCount,
     lowCount,
     uiClicheCount,
+    experimentalCount,
     findings,
     logs,
     summary,

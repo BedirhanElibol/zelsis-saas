@@ -1,0 +1,16 @@
+{
+  "note": "Pinned open-source repositories used to measure Zelsis rules. 'clean' = mature, maintained apps (HIGH/CRITICAL findings there are reviewed as likely false positives). 'vulnerable' = intentionally vulnerable apps with documented flaws (expected findings measure recall).",
+  "repos": [
+    { "name": "vercel/nextjs-subscription-payments", "sha": "bdd0813206e47e6b218d42f15a7976c8a0d3c3eb", "kind": "clean", "stack": "Next.js + Supabase + Stripe" },
+    { "name": "shadcn-ui/taxonomy", "sha": "298a8857c7128a0d121e7f699dfd729f23b3966d", "kind": "clean", "stack": "Next.js + Prisma + Stripe + NextAuth" },
+    { "name": "fastapi/full-stack-fastapi-template", "sha": "cb740b656d7a0a6c5e12c7bf8e50343ec94ee9c7", "kind": "clean", "stack": "FastAPI + React" },
+    { "name": "gothinkster/node-express-realworld-example-app", "sha": "30b68e1e881462b2f4164ea09ab4c4f5699c7b0b", "kind": "clean", "stack": "Express + Prisma" },
+    { "name": "gothinkster/golang-gin-realworld-example-app", "sha": "626c372d259472148d93303f74aa9b9a1cdcef24", "kind": "clean", "stack": "Go + Gin" },
+    { "name": "laravel/laravel", "sha": "06d016a364a37430eec9cbc52209adce3d7667ce", "kind": "clean", "stack": "Laravel" },
+    { "name": "documenso/documenso", "sha": "8a41a3bf618d9e46e2e1c0f437aa0488d91b85de", "kind": "clean", "stack": "Remix/React Router + Prisma + tRPC (production SaaS)" },
+    { "name": "supabase/supabase-js", "sha": "a684cf97b67fd71670bab5030fe88b219f2c09fe", "kind": "clean", "stack": "TypeScript SDK" },
+    { "name": "OWASP/NodeGoat", "sha": "c5cb68a7084e4ae7dcc60e6a98768720a81841e8", "kind": "vulnerable", "stack": "Express + MongoDB" },
+    { "name": "appsecco/dvna", "sha": "9ba473add536f66ac9007966acb2a775dd31277a", "kind": "vulnerable", "stack": "Express + Sequelize" },
+    { "name": "juice-shop/juice-shop", "sha": "1618a611b173b4bf114028e6e02549950606e29d", "kind": "vulnerable", "stack": "Express + Angular + Sequelize" }
+  ]
+}

@@ -11,7 +11,9 @@
     "test": "npm run test:suite && npm run test:unit",
     "test:suite": "tsx tests/test_suite.ts",
     "test:unit": "tsx --test --test-reporter=spec \"tests/unit/*.test.ts\" \"tests/rules/*.test.ts\"",
-    "test:e2e": "playwright test"
+    "test:e2e": "playwright test",
+    "audit:rules": "tsx scripts/rule-audit.ts",
+    "benchmark": "tsx scripts/benchmark/run.ts"
   },
   "dependencies": {
     "@number-flow/react": "^0.5.5",

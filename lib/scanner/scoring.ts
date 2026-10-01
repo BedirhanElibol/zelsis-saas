@@ -1,7 +1,11 @@
 import type { Finding } from '@/data/schema';
 
+/** Findings that count toward score and gate: open, and from rules proven precise. */
+export const gatingFindings = (findings: Finding[]): Finding[] =>
+  findings.filter((f) => f.status === 'OPEN' && f.maturity !== 'experimental');
+
 export function calculateReadinessScore(findings: Finding[]): number {
-  const openFindings = findings.filter((f) => f.status === 'OPEN');
+  const openFindings = gatingFindings(findings);
   // Separate core security/infra/legal blockers from cosmetic polish/UI items (F-38)
   const securityFindings = openFindings.filter(
     (f) => f.type === 'SECURITY' || f.type === 'INFRA_DATABASE' || f.type === 'LEGAL_COMPLIANCE'
@@ -39,7 +43,7 @@ export function calculateReadinessScore(findings: Finding[]): number {
 }
 
 export function calculateGateStatus(findings: Finding[]): 'PASSED' | 'WARNING' | 'FAILED' {
-  const openFindings = findings.filter((f) => f.status === 'OPEN');
+  const openFindings = gatingFindings(findings);
   // Gate status is strictly a security, infrastructure & legal release gate (F-38).
   // Pure cosmetic, accessibility suggestions, and vibe polish rules do NOT fail or warn-block the gate.
   const securityFindings = openFindings.filter(

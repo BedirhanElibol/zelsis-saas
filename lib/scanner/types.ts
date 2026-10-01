@@ -13,6 +13,8 @@ export interface ScanResult {
   mediumCount: number;
   lowCount: number;
   uiClicheCount: number;
+  /** Open findings from experimental rules (not counted in score, gate or severity counts). */
+  experimentalCount?: number;
   findings: Finding[];
   logs: string[];
   summary?: string;

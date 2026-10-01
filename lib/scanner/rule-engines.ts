@@ -112,6 +112,7 @@ import { evaluatePhpLaravelRules } from '../rules/php-laravel-rules';
 import { evaluateJavaSpringRules } from '../rules/java-spring-rules';
 import { evaluateDotnetCsharpRules } from '../rules/dotnet-csharp-rules';
 import { evaluateSaasCoreRules } from '../rules/saas-core-rules';
+import { evaluateJsCoreSecurityRules } from '../rules/js-core-security-rules';
 
 export type RuleEngine = (
   file: CodeFile,
@@ -376,4 +377,6 @@ export const RULE_ENGINES: ReadonlyArray<{ evaluate: RuleEngine; scanRawContent?
   { evaluate: evaluateDotnetCsharpRules },
   // SaaS core risks: tenant RLS, billing, auth trust, cron, prompt injection (SAAS-01 to 08, Rule IDs 23001-23008)
   { evaluate: evaluateSaasCoreRules },
+  // Node.js core injection: unsafe deserialization, XXE (JS-SEC-01 to 02, Rule IDs 24001-24002)
+  { evaluate: evaluateJsCoreSecurityRules },
 ];

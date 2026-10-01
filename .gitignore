@@ -63,3 +63,6 @@ walkthrough.md
 # Playwright
 /playwright-report/
 /test-results/
+
+# Benchmark corpus clones
+/.cache/
