@@ -117,7 +117,7 @@ export function evaluateGoMicroservicesRules(file: CodeFile, lines: string[], cl
             ruleId: 9003,
             type: 'INFRA_DATABASE',
             title: "GO-03: Missing Response Body Close (Leaking TCP Sockets)",
-            severity: "HIGH",
+            severity: "MEDIUM",
             category: "Resource Leakage",
             filePath: file.path,
             lineRange: `L${lineNum}`,
@@ -131,33 +131,6 @@ export function evaluateGoMicroservicesRules(file: CodeFile, lines: string[], cl
             falsePositive: false
         });
         logs.push(`[${ts}] [GO AUDIT] Found GO-03: Missing Response Body Close (Leaking TCP Sockets) at ${file.path}:${lineNum}`);
-    }
-    // GO-04: Default HTTP Client Without Timeout (http.DefaultClient)
-    const reg_9004 = /http\.DefaultClient|http\.Get\s*\(/i;
-    if (reg_9004.test(cleanContent)) {
-        const linePattern = /http\.DefaultClient|http\.Get/i;
-        const matchLineIdx = lines.findIndex(l => !l.trim().startsWith('//') && linePattern.test(l));
-        const lineNum = matchLineIdx !== -1 ? matchLineIdx + 1 : 1;
-        const rawSnippet = matchLineIdx !== -1 ? lines[matchLineIdx].trim() : lines.find(l => !l.trim().startsWith('//'))?.trim() || "Default HTTP Client Without Timeout (http.DefaultClient)";
-        findings.push({
-            id: `go9004-${Date.now()}-${findingCounter.count++}`,
-            ruleId: 9004,
-            type: 'INFRA_DATABASE',
-            title: "GO-04: Default HTTP Client Without Timeout (http.DefaultClient)",
-            severity: "HIGH",
-            category: "Availability",
-            filePath: file.path,
-            lineRange: `L${lineNum}`,
-            snippet: rawSnippet,
-            reproductionSteps: [
-                `Audited Go source in ${file.path}:${lineNum}.`,
-                "Detected microservice resilience/security violation: Using http.DefaultClient or http.Get() with zero timeout causes goroutines to hang indefinitely on stalled connections."
-            ],
-            remediationPrompt: "Replace http.DefaultClient with custom client configured with a 10-second timeout.",
-            status: 'OPEN',
-            falsePositive: false
-        });
-        logs.push(`[${ts}] [GO AUDIT] Found GO-04: Default HTTP Client Without Timeout (http.DefaultClient) at ${file.path}:${lineNum}`);
     }
     // GO-05: Data Race on Shared Map Without Mutex or sync.Map
     const idx_9005 = (() => {
@@ -193,7 +166,7 @@ export function evaluateGoMicroservicesRules(file: CodeFile, lines: string[], cl
             ruleId: 9005,
             type: 'INFRA_DATABASE',
             title: "GO-05: Data Race on Shared Map Without Mutex or sync.Map",
-            severity: "CRITICAL",
+            severity: "HIGH",
             category: "Thread Safety",
             filePath: file.path,
             lineRange: `L${lineNum}`,
@@ -380,33 +353,6 @@ export function evaluateGoMicroservicesRules(file: CodeFile, lines: string[], cl
         });
         logs.push(`[${ts}] [GO AUDIT] Found GO-11: Critical I/O Error Ignored on Defer Close / Remove Operations at ${file.path}:${lineNum}`);
     }
-    // GO-12: Goroutine Leak on Unbuffered Channel Send Without Cancellation
-    const reg_9012 = /go\s+func\s*\([^)]*\)\s*\{[\s\S]*?[a-zA-Z0-9_]+\s*<-\s*[a-zA-Z0-9_]+[\s\S]*?\}(?!\s*select)/i;
-    if (reg_9012.test(cleanContent)) {
-        const linePattern = /<-\s*[a-zA-Z0-9_]+/i;
-        const matchLineIdx = lines.findIndex(l => !l.trim().startsWith('//') && linePattern.test(l));
-        const lineNum = matchLineIdx !== -1 ? matchLineIdx + 1 : 1;
-        const rawSnippet = matchLineIdx !== -1 ? lines[matchLineIdx].trim() : lines.find(l => !l.trim().startsWith('//'))?.trim() || "Goroutine Leak on Unbuffered Channel Send Without Cancellation";
-        findings.push({
-            id: `go9012-${Date.now()}-${findingCounter.count++}`,
-            ruleId: 9012,
-            type: 'INFRA_DATABASE',
-            title: "GO-12: Goroutine Leak on Unbuffered Channel Send Without Cancellation",
-            severity: "HIGH",
-            category: "Concurrency Resilience",
-            filePath: file.path,
-            lineRange: `L${lineNum}`,
-            snippet: rawSnippet,
-            reproductionSteps: [
-                `Audited Go source in ${file.path}:${lineNum}.`,
-                "Detected microservice resilience/security violation: Sending to unbuffered channels inside goroutines without a select case <-ctx.Done() branch permanently leaks goroutines."
-            ],
-            remediationPrompt: "Add select block with case <-ctx.Done() when sending to channels in goroutines.",
-            status: 'OPEN',
-            falsePositive: false
-        });
-        logs.push(`[${ts}] [GO AUDIT] Found GO-12: Goroutine Leak on Unbuffered Channel Send Without Cancellation at ${file.path}:${lineNum}`);
-    }
     // GO-13: Server-Side Request Forgery (SSRF) via Dynamic HTTP Call
     const idx_9013 = (() => {
         const tainted = goRequestVars(lines);
@@ -454,7 +400,7 @@ export function evaluateGoMicroservicesRules(file: CodeFile, lines: string[], cl
             ruleId: 9014,
             type: 'INFRA_DATABASE',
             title: "GO-14: Unbounded Request Body Read (DoS Memory Exhaustion)",
-            severity: "HIGH",
+            severity: "MEDIUM",
             category: "Denial of Service",
             filePath: file.path,
             lineRange: `L${lineNum}`,
@@ -549,7 +495,7 @@ export function evaluateGoMicroservicesRules(file: CodeFile, lines: string[], cl
             ruleId: 9017,
             type: 'INFRA_DATABASE',
             title: "GO-17: CORS Permissive Wildcard with AllowCredentials in Gin / Echo / Chi",
-            severity: "HIGH",
+            severity: "MEDIUM",
             category: "Cross-Origin Security",
             filePath: file.path,
             lineRange: `L${lineNum}`,
@@ -575,7 +521,7 @@ export function evaluateGoMicroservicesRules(file: CodeFile, lines: string[], cl
             ruleId: 9018,
             type: 'INFRA_DATABASE',
             title: "GO-18: Gin Framework Running in Debug Mode in Production",
-            severity: "HIGH",
+            severity: "LOW",
             category: "Information Disclosure",
             filePath: file.path,
             lineRange: `L${lineNum}`,
@@ -638,7 +584,7 @@ export function evaluateGoMicroservicesRules(file: CodeFile, lines: string[], cl
             ruleId: 9020,
             type: 'INFRA_DATABASE',
             title: "GO-20: Missing Read/Write Timeout on http.Server (Slowloris DoS)",
-            severity: "HIGH",
+            severity: "MEDIUM",
             category: "Availability",
             filePath: file.path,
             lineRange: `L${lineNum}`,
@@ -761,33 +707,6 @@ export function evaluateGoMicroservicesRules(file: CodeFile, lines: string[], cl
         });
         logs.push(`[${ts}] [GO AUDIT] Found GO-24: Archive Path Traversal (Zip Slip / Tar Slip in Go) at ${file.path}:${lineNum}`);
     }
-    // GO-25: XML External Entity (XXE) via Insecure Go XML Parser
-    const reg_9025 = /decoder\.Entity\s*=[\s\S]*?xml\.NewDecoder/i;
-    if (reg_9025.test(cleanContent)) {
-        const linePattern = /decoder\.Entity/i;
-        const matchLineIdx = lines.findIndex(l => !l.trim().startsWith('//') && linePattern.test(l));
-        const lineNum = matchLineIdx !== -1 ? matchLineIdx + 1 : 1;
-        const rawSnippet = matchLineIdx !== -1 ? lines[matchLineIdx].trim() : lines.find(l => !l.trim().startsWith('//'))?.trim() || "XML External Entity (XXE) via Insecure Go XML Parser";
-        findings.push({
-            id: `go9025-${Date.now()}-${findingCounter.count++}`,
-            ruleId: 9025,
-            type: 'INFRA_DATABASE',
-            title: "GO-25: XML External Entity (XXE) via Insecure Go XML Parser",
-            severity: "HIGH",
-            category: "XML Entity Injection",
-            filePath: file.path,
-            lineRange: `L${lineNum}`,
-            snippet: rawSnippet,
-            reproductionSteps: [
-                `Audited Go source in ${file.path}:${lineNum}.`,
-                "Detected microservice resilience/security violation: Parsing untrusted XML documents using xml.Decoder with custom entity resolution enabled can allow XXE file disclosure."
-            ],
-            remediationPrompt: "Avoid setting Entity table with external resource resolvers on xml.Decoder.",
-            status: 'OPEN',
-            falsePositive: false
-        });
-        logs.push(`[${ts}] [GO AUDIT] Found GO-25: XML External Entity (XXE) via Insecure Go XML Parser at ${file.path}:${lineNum}`);
-    }
     // GO-26: Unhandled Goroutine Panic Crashing Process (Missing recover)
     const reg_9026 = /go\s+func\s*\([^)]*\)\s*\{(?!.*recover\s*\(\s*\))/i;
     if (reg_9026.test(cleanContent)) {
@@ -842,36 +761,9 @@ export function evaluateGoMicroservicesRules(file: CodeFile, lines: string[], cl
         });
         logs.push(`[${ts}] [GO AUDIT] Found GO-27: Nil Pointer Dereference on Unchecked Error Return at ${file.path}:${lineNum}`);
     }
-    // GO-28: Missing CSRF Middleware in Web Handlers
-    const reg_9028 = /(?:http\.HandleFunc|r\.POST|r\.PUT)\s*\([^{]*\{[\s\S]*?r\.ParseForm\(\)(?!.*csrf)/i;
-    if (reg_9028.test(cleanContent)) {
-        const linePattern = /r\.ParseForm/i;
-        const matchLineIdx = lines.findIndex(l => !l.trim().startsWith('//') && linePattern.test(l));
-        const lineNum = matchLineIdx !== -1 ? matchLineIdx + 1 : 1;
-        const rawSnippet = matchLineIdx !== -1 ? lines[matchLineIdx].trim() : lines.find(l => !l.trim().startsWith('//'))?.trim() || "Missing CSRF Middleware in Web Handlers";
-        findings.push({
-            id: `go9028-${Date.now()}-${findingCounter.count++}`,
-            ruleId: 9028,
-            type: 'INFRA_DATABASE',
-            title: "GO-28: Missing CSRF Middleware in Web Handlers",
-            severity: "HIGH",
-            category: "Broken Authentication",
-            filePath: file.path,
-            lineRange: `L${lineNum}`,
-            snippet: rawSnippet,
-            reproductionSteps: [
-                `Audited Go source in ${file.path}:${lineNum}.`,
-                "Detected microservice resilience/security violation: Serving HTML form state changes without CSRF protection tokens enables cross-site request forgery."
-            ],
-            remediationPrompt: "Attach CSRF middleware to router endpoints handling form mutations.",
-            status: 'OPEN',
-            falsePositive: false
-        });
-        logs.push(`[${ts}] [GO AUDIT] Found GO-28: Missing CSRF Middleware in Web Handlers at ${file.path}:${lineNum}`);
-    }
     // GO-29: Sensitive Information Leak via Insecure Log Output in Go
     const idx_9029 = goFindLine(lines, /\blog\.(?:Print|Printf|Println|Fatal|Fatalf|Fatalln|Panic|Panicf)\s*\(/, (l) => {
-        const args = /log\.\w+\s*\((.*)$/.exec(l.replace(/"(?:[^"\\]|\\.)*"|`[^`]*`/g, '""'));
+        const args = /log\.\w+\s*\((.*)/.exec(l.replace(/"(?:[^"\\]|\\.)*"|`[^`]*`/g, '""'));
         return !!args && /(?<!len\()(?:^|[^\w.])(?:\w+\.)*\w*(?:password|passwd|secret|token|apikey|api_key)\b(?!\s*\()/i.test(args[1]);
     });
     if (idx_9029 !== -1) {
@@ -883,7 +775,7 @@ export function evaluateGoMicroservicesRules(file: CodeFile, lines: string[], cl
             ruleId: 9029,
             type: 'INFRA_DATABASE',
             title: "GO-29: Sensitive Information Leak via Insecure Log Output in Go",
-            severity: "HIGH",
+            severity: "MEDIUM",
             category: "Information Disclosure",
             filePath: file.path,
             lineRange: `L${lineNum}`,
@@ -924,33 +816,6 @@ export function evaluateGoMicroservicesRules(file: CodeFile, lines: string[], cl
             falsePositive: false
         });
         logs.push(`[${ts}] [GO AUDIT] Found GO-30: GORM Unscoped Query Disabling Soft-Delete Protection at ${file.path}:${lineNum}`);
-    }
-    // GO-31: Unbounded Goroutine Spawning in HTTP Handler (Worker Pool Missing)
-    const reg_9031 = /func\s+[a-zA-Z0-9_]*Handler\s*\([^)]*\)[\s\S]*?go\s+[a-zA-Z0-9_]+\s*\(/i;
-    if (reg_9031.test(cleanContent)) {
-        const linePattern = /go\s+[a-zA-Z0-9_]+\s*\(/i;
-        const matchLineIdx = lines.findIndex(l => !l.trim().startsWith('//') && linePattern.test(l));
-        const lineNum = matchLineIdx !== -1 ? matchLineIdx + 1 : 1;
-        const rawSnippet = matchLineIdx !== -1 ? lines[matchLineIdx].trim() : lines.find(l => !l.trim().startsWith('//'))?.trim() || "Unbounded Goroutine Spawning in HTTP Handler (Worker Pool Missing)";
-        findings.push({
-            id: `go9031-${Date.now()}-${findingCounter.count++}`,
-            ruleId: 9031,
-            type: 'INFRA_DATABASE',
-            title: "GO-31: Unbounded Goroutine Spawning in HTTP Handler (Worker Pool Missing)",
-            severity: "HIGH",
-            category: "Denial of Service",
-            filePath: file.path,
-            lineRange: `L${lineNum}`,
-            snippet: rawSnippet,
-            reproductionSteps: [
-                `Audited Go source in ${file.path}:${lineNum}.`,
-                "Detected microservice resilience/security violation: Spawning unmetered goroutines for each HTTP request allows attackers to trigger memory exhaustion and OOM crashes."
-            ],
-            remediationPrompt: "Offload requests to a worker pool with a maximum concurrency limit.",
-            status: 'OPEN',
-            falsePositive: false
-        });
-        logs.push(`[${ts}] [GO AUDIT] Found GO-31: Unbounded Goroutine Spawning in HTTP Handler (Worker Pool Missing) at ${file.path}:${lineNum}`);
     }
     // GO-32: Insecure Cookie Configuration Missing HttpOnly or Secure Flag
     const reg_9032 = /&http\.Cookie\s*\{[\s\S]*?(?:HttpOnly\s*:\s*false|Secure\s*:\s*false)/i;
@@ -1056,7 +921,7 @@ export function evaluateGoMicroservicesRules(file: CodeFile, lines: string[], cl
             ruleId: 9035,
             type: 'INFRA_DATABASE',
             title: "GO-35: Cgo Memory Leak or Missing C.free Call",
-            severity: "HIGH",
+            severity: "MEDIUM",
             category: "Memory Safety",
             filePath: file.path,
             lineRange: `L${lineNum}`,
@@ -1168,7 +1033,7 @@ export function evaluateGoMicroservicesRules(file: CodeFile, lines: string[], cl
             ruleId: 9039,
             type: 'INFRA_DATABASE',
             title: "GO-39: Insecure gRPC Connection via grpc.WithInsecure()",
-            severity: "HIGH",
+            severity: "MEDIUM",
             category: "Transport Security",
             filePath: file.path,
             lineRange: `L${lineNum}`,
@@ -1327,7 +1192,7 @@ export function evaluateGoMicroservicesRules(file: CodeFile, lines: string[], cl
             ruleId: 9045,
             type: 'INFRA_DATABASE',
             title: "GO-45: Unsafe Deserialization via Gob Decoder on Untrusted Data",
-            severity: "HIGH",
+            severity: "MEDIUM",
             category: "Insecure Deserialization",
             filePath: file.path,
             lineRange: `L${lineNum}`,
@@ -1367,60 +1232,6 @@ export function evaluateGoMicroservicesRules(file: CodeFile, lines: string[], cl
             falsePositive: false
         });
         logs.push(`[${ts}] [GO AUDIT] Found GO-46: Deprecated TLS Minimum Version (TLS 1.0 / TLS 1.1) at ${file.path}:${lineNum}`);
-    }
-    // GO-47: Insecure Redis Connection Without Password Authentication
-    const reg_9047 = /&redis\.Options\s*\{[\s\S]*?Password\s*:\s*["']["']/i;
-    if (reg_9047.test(cleanContent)) {
-        const linePattern = /&redis\.Options/i;
-        const matchLineIdx = lines.findIndex(l => !l.trim().startsWith('//') && linePattern.test(l));
-        const lineNum = matchLineIdx !== -1 ? matchLineIdx + 1 : 1;
-        const rawSnippet = matchLineIdx !== -1 ? lines[matchLineIdx].trim() : lines.find(l => !l.trim().startsWith('//'))?.trim() || "Insecure Redis Connection Without Password Authentication";
-        findings.push({
-            id: `go9047-${Date.now()}-${findingCounter.count++}`,
-            ruleId: 9047,
-            type: 'INFRA_DATABASE',
-            title: "GO-47: Insecure Redis Connection Without Password Authentication",
-            severity: "HIGH",
-            category: "Broken Authentication",
-            filePath: file.path,
-            lineRange: `L${lineNum}`,
-            snippet: rawSnippet,
-            reproductionSteps: [
-                `Audited Go source in ${file.path}:${lineNum}.`,
-                "Detected microservice resilience/security violation: Connecting to Redis servers with empty password authentication allows unauthenticated access if port is exposed."
-            ],
-            remediationPrompt: "Supply a non-empty Password from environment variables in redis.Options.",
-            status: 'OPEN',
-            falsePositive: false
-        });
-        logs.push(`[${ts}] [GO AUDIT] Found GO-47: Insecure Redis Connection Without Password Authentication at ${file.path}:${lineNum}`);
-    }
-    // GO-48: Missing Authorization Check on Admin Handler in Go
-    const reg_9048 = /func\s+[a-zA-Z0-9_]*Admin[a-zA-Z0-9_]*Handler\s*\([^)]*\)[\s\S]*?(?!.*is_admin|.*isAdmin|.*role)/i;
-    if (reg_9048.test(cleanContent)) {
-        const linePattern = /func\s+[a-zA-Z0-9_]*Admin/i;
-        const matchLineIdx = lines.findIndex(l => !l.trim().startsWith('//') && linePattern.test(l));
-        const lineNum = matchLineIdx !== -1 ? matchLineIdx + 1 : 1;
-        const rawSnippet = matchLineIdx !== -1 ? lines[matchLineIdx].trim() : lines.find(l => !l.trim().startsWith('//'))?.trim() || "Missing Authorization Check on Admin Handler in Go";
-        findings.push({
-            id: `go9048-${Date.now()}-${findingCounter.count++}`,
-            ruleId: 9048,
-            type: 'INFRA_DATABASE',
-            title: "GO-48: Missing Authorization Check on Admin Handler in Go",
-            severity: "HIGH",
-            category: "Broken Access Control",
-            filePath: file.path,
-            lineRange: `L${lineNum}`,
-            snippet: rawSnippet,
-            reproductionSteps: [
-                `Audited Go source in ${file.path}:${lineNum}.`,
-                "Detected microservice resilience/security violation: Admin route handlers without session role verification allow standard users to perform privileged administrative actions."
-            ],
-            remediationPrompt: "Add role validation check or admin middleware to handler.",
-            status: 'OPEN',
-            falsePositive: false
-        });
-        logs.push(`[${ts}] [GO AUDIT] Found GO-48: Missing Authorization Check on Admin Handler in Go at ${file.path}:${lineNum}`);
     }
     // GO-49: Unbuffered Channel Deadlock Risk in Single Goroutine Flow
     const reg_9049 = /ch\s*:=\s*make\(chan\s+[a-zA-Z0-9_]+\)[\s\S]{1,40}?ch\s*<-/i;
@@ -1579,7 +1390,7 @@ function goRequestVars(lines: string[]): Set<string> {
     for (let pass = 0; pass < 3; pass++) {
         for (const l of lines) {
             if (!goIsCode(l)) continue;
-            const m = /^\s*(?:var\s+)?(\w+)(?:\s*,\s*\w+)?\s*(?:\w+\s*)?:?=\s*(.+)$/.exec(l);
+            const m = /^\s*(?:var\s+)?(\w+)(?:\s*,\s*\w+)?\s*(?:\w+\s*)?:?=\s*(.+)/.exec(l);
             if (m && m[1] !== '_' && !names.has(m[1]) && goTainted(m[2], names)) names.add(m[1]);
         }
     }

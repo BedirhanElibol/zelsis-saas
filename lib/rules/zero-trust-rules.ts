@@ -34,31 +34,6 @@ export function evaluateZeroTrustRules(file: CodeFile, lines: string[], cleanCon
         return { findings, logs };
     }
     const ts = new Date().toLocaleTimeString();
-    // ZERO-AUTH-01: Missing Mutual TLS (mTLS) in Service-to-Service Communication
-    if (/internalServiceFetch|callPaymentGatewayInternal/i.test(cleanContent) && /http:\/\/(?:10\.|192\.168\.|service-)/i.test(cleanContent) && !/https:\/\/|cert|agent: httpsAgent/i.test(cleanContent)) {
-        const matchLineIdx = locateMatchLine(lines, [/internalServiceFetch|callPaymentGatewayInternal/i, /http:\/\/(?:10\.|192\.168\.|service-)/i], l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('*'));
-        const lineNum = matchLineIdx !== -1 ? matchLineIdx + 1 : 1;
-        findings.push({
-            id: `zeroauth01-${Date.now()}-${findingCounter.count++}`,
-            ruleId: 8101,
-            type: 'SECURITY',
-            title: "ZERO-AUTH-01: Missing Mutual TLS (mTLS) in Service-to-Service Communication",
-            severity: 'HIGH',
-            category: "Network Security",
-            filePath: file.path,
-            lineRange: `L${lineNum}`,
-            snippet: lines[matchLineIdx] || "<detected ZERO-AUTH-01 pattern>",
-            reproductionSteps: [
-                `Scanned source code in ${file.path}:${lineNum}.`,
-                "Detected Missing Mutual TLS (mTLS) in Service-to-Service Communication: Internal microservices communicating over plaintext HTTP or standard TLS without bidirectional client certificate validation."
-            ],
-            remediationPrompt: "Enable strict mTLS on all inter-service endpoints with client certificate verification.",
-            status: 'OPEN',
-            owner: 'Security & Release Engineering',
-            falsePositive: false
-        });
-        logs.push(`[${ts}] 🛡️ HIGH: ZERO-AUTH-01 finding in ${file.path}:${lineNum}`);
-    }
     // ZERO-AUTH-02: Excessive JWT Token Expiration Lifespan (>1 Hour)
     if (/jwt\.sign\s*\([\s\S]*?expiresIn:\s*["\'](?:[2-9]\d{1,}d|[1-9]\d{2,}d|[2-9]\d{1,}h|[1-9]\d{2,}h|30d|60d|90d|365d)["\']/i.test(cleanContent)) {
         const matchLineIdx = locateMatchLine(lines, [/jwt\.sign\s*\([\s\S]*?expiresIn:\s*["\'](?:[2-9]\d{1,}d|[1-9]\d{2,}d|[2-9]\d{1,}h|[1-9]\d{2,}h|30d|60d|90d|365d)["\']/i], l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('*'));
@@ -93,7 +68,7 @@ export function evaluateZeroTrustRules(file: CodeFile, lines: string[], cleanCon
             ruleId: 8103,
             type: 'SECURITY',
             title: "ZERO-AUTH-03: Cryptographic Timing Attack in Token & Signature Verification",
-            severity: 'HIGH',
+            severity: 'MEDIUM',
             category: "Cryptographic Failures",
             filePath: file.path,
             lineRange: `L${lineNum}`,
@@ -158,81 +133,6 @@ export function evaluateZeroTrustRules(file: CodeFile, lines: string[], cleanCon
             falsePositive: false
         });
         logs.push(`[${ts}] 🛡️ HIGH: ZERO-AUTH-05 finding in ${file.path}:${lineNum}`);
-    }
-    // ZERO-AUTH-06: Missing Refresh Token Rotation and Replay Detection
-    if (/handleRefreshTokenReuse/i.test(cleanContent) && !/revokeTokenFamily|deleteMany/i.test(cleanContent)) {
-        const matchLineIdx = locateMatchLine(lines, [/handleRefreshTokenReuse/i], l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('*'));
-        const lineNum = matchLineIdx !== -1 ? matchLineIdx + 1 : 1;
-        findings.push({
-            id: `zeroauth06-${Date.now()}-${findingCounter.count++}`,
-            ruleId: 8106,
-            type: 'SECURITY',
-            title: "ZERO-AUTH-06: Missing Refresh Token Rotation and Replay Detection",
-            severity: 'HIGH',
-            category: "Session Security",
-            filePath: file.path,
-            lineRange: `L${lineNum}`,
-            snippet: lines[matchLineIdx] || "<detected ZERO-AUTH-06 pattern>",
-            reproductionSteps: [
-                `Scanned source code in ${file.path}:${lineNum}.`,
-                "Detected Missing Refresh Token Rotation and Replay Detection: Reusing refresh tokens without invalidating previous tokens or failing to revoke token families upon reuse detection."
-            ],
-            remediationPrompt: "Implement refresh token rotation and immediately revoke the token family if an old token is reused.",
-            status: 'OPEN',
-            owner: 'Security & Release Engineering',
-            falsePositive: false
-        });
-        logs.push(`[${ts}] 🛡️ HIGH: ZERO-AUTH-06 finding in ${file.path}:${lineNum}`);
-    }
-    // ZERO-AUTH-07: Plaintext API Secret Keys Stored in Database
-    if (/(?:prisma\.[a-zA-Z0-9_]+\.create|db\.insert)\s*\(\s*\{[\s\S]*?apiKey:\s*rawKey\b/i.test(cleanContent) && !/sha256|hashApiKey|bcrypt/i.test(cleanContent)) {
-        const matchLineIdx = locateMatchLine(lines, [/(?:prisma\.[a-zA-Z0-9_]+\.create|db\.insert)\s*\(\s*\{[\s\S]*?apiKey:\s*rawKey\b/i], l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('*'));
-        const lineNum = matchLineIdx !== -1 ? matchLineIdx + 1 : 1;
-        findings.push({
-            id: `zeroauth07-${Date.now()}-${findingCounter.count++}`,
-            ruleId: 8107,
-            type: 'SECURITY',
-            title: "ZERO-AUTH-07: Plaintext API Secret Keys Stored in Database",
-            severity: 'CRITICAL',
-            category: "Credential Storage",
-            filePath: file.path,
-            lineRange: `L${lineNum}`,
-            snippet: lines[matchLineIdx] || "<detected ZERO-AUTH-07 pattern>",
-            reproductionSteps: [
-                `Scanned source code in ${file.path}:${lineNum}.`,
-                "Detected Plaintext API Secret Keys Stored in Database: Storing user API tokens or webhook secrets in plaintext database columns without one-way hashing."
-            ],
-            remediationPrompt: "Hash API keys with SHA-256 before saving to the database, displaying raw keys only once upon generation.",
-            status: 'OPEN',
-            owner: 'Security & Release Engineering',
-            falsePositive: false
-        });
-        logs.push(`[${ts}] 🛡️ CRITICAL: ZERO-AUTH-07 finding in ${file.path}:${lineNum}`);
-    }
-    // ZERO-AUTH-08: Lack of Step-Up Multi-Factor Authentication for Sensitive Actions
-    if (/app\/api\/(?:v\d+\/)?user\/(?:disable-mfa|change-password|delete-account)\/route\.(?:ts|js)$/i.test(file.path) && !/verifyPassword|verifyTotp|stepUpAuth/i.test(cleanContent)) {
-        const matchLineIdx = lines.findIndex(l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('*') && (/zero-auth-08|lack/i.test(l) || lines.indexOf(l) === 0));
-        const lineNum = matchLineIdx !== -1 ? matchLineIdx + 1 : 1;
-        findings.push({
-            id: `zeroauth08-${Date.now()}-${findingCounter.count++}`,
-            ruleId: 8108,
-            type: 'SECURITY',
-            title: "ZERO-AUTH-08: Lack of Step-Up Multi-Factor Authentication for Sensitive Actions",
-            severity: 'HIGH',
-            category: "Authentication",
-            filePath: file.path,
-            lineRange: `L${lineNum}`,
-            snippet: lines[matchLineIdx] || "<detected ZERO-AUTH-08 pattern>",
-            reproductionSteps: [
-                `Scanned source code in ${file.path}:${lineNum}.`,
-                "Detected Lack of Step-Up Multi-Factor Authentication for Sensitive Actions: Allowing destructive actions (password change, 2FA disable, billing modifications) without re-authenticating user."
-            ],
-            remediationPrompt: "Require recent password confirmation or 2FA token verification before allowing critical account changes.",
-            status: 'OPEN',
-            owner: 'Security & Release Engineering',
-            falsePositive: false
-        });
-        logs.push(`[${ts}] 🛡️ HIGH: ZERO-AUTH-08 finding in ${file.path}:${lineNum}`);
     }
     // ZERO-AUTH-09: Session Fixation Vulnerability on Login State Transition
     if (!lowerPath.endsWith('.tsx') && !lowerPath.endsWith('.jsx') && (/handleLoginSuccess/i.test(cleanContent) || (SESSION_LOGIN_ASSIGN.test(cleanContent) && PASSWORD_CHECK.test(cleanContent))) && !/regenerateSession|destroyOldSession|session\.regenerate\s*\(/i.test(cleanContent)) {
@@ -343,7 +243,7 @@ export function evaluateZeroTrustRules(file: CodeFile, lines: string[], cleanCon
             ruleId: 8113,
             type: 'SECURITY',
             title: "ZERO-AUTH-13: Permissive CORS Credentials with Wildcard Origins",
-            severity: 'CRITICAL',
+            severity: 'MEDIUM',
             category: "Network & CORS",
             filePath: file.path,
             lineRange: `L${lineNum}`,
@@ -358,81 +258,6 @@ export function evaluateZeroTrustRules(file: CodeFile, lines: string[], cleanCon
             falsePositive: false
         });
         logs.push(`[${ts}] 🛡️ CRITICAL: ZERO-AUTH-13 finding in ${file.path}:${lineNum}`);
-    }
-    // ZERO-AUTH-14: Missing Replay Attack Prevention (Nonce / Timestamp) on Webhooks
-    if (/verifyWebhookSignature/i.test(cleanContent) && !/timestamp|tolerance|Math\.abs\s*\(\s*Date\.now/i.test(cleanContent)) {
-        const matchLineIdx = locateMatchLine(lines, [/verifyWebhookSignature/i], l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('*'));
-        const lineNum = matchLineIdx !== -1 ? matchLineIdx + 1 : 1;
-        findings.push({
-            id: `zeroauth14-${Date.now()}-${findingCounter.count++}`,
-            ruleId: 8114,
-            type: 'SECURITY',
-            title: "ZERO-AUTH-14: Missing Replay Attack Prevention (Nonce / Timestamp) on Webhooks",
-            severity: 'HIGH',
-            category: "Integrity",
-            filePath: file.path,
-            lineRange: `L${lineNum}`,
-            snippet: lines[matchLineIdx] || "<detected ZERO-AUTH-14 pattern>",
-            reproductionSteps: [
-                `Scanned source code in ${file.path}:${lineNum}.`,
-                "Detected Missing Replay Attack Prevention (Nonce / Timestamp) on Webhooks: Validating webhook signatures without verifying timestamp freshness (e.g. timestamp within 5 minutes)."
-            ],
-            remediationPrompt: "Validate webhook timestamp headers and reject requests older than 5 minutes to prevent replay attacks.",
-            status: 'OPEN',
-            owner: 'Security & Release Engineering',
-            falsePositive: false
-        });
-        logs.push(`[${ts}] 🛡️ HIGH: ZERO-AUTH-14 finding in ${file.path}:${lineNum}`);
-    }
-    // ZERO-AUTH-15: Over-Scoped Microservice Service Account IAM Permissions
-    if (/GRANT\s+ALL\s+PRIVILEGES\s+ON\s+ALL\s+TABLES\s+TO\s+(?:svc_|microservice_)/i.test(cleanContent)) {
-        const matchLineIdx = locateMatchLine(lines, [/GRANT\s+ALL\s+PRIVILEGES\s+ON\s+ALL\s+TABLES\s+TO\s+(?:svc_|microservice_)/i], l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('*'));
-        const lineNum = matchLineIdx !== -1 ? matchLineIdx + 1 : 1;
-        findings.push({
-            id: `zeroauth15-${Date.now()}-${findingCounter.count++}`,
-            ruleId: 8115,
-            type: 'SECURITY',
-            title: "ZERO-AUTH-15: Over-Scoped Microservice Service Account IAM Permissions",
-            severity: 'HIGH',
-            category: "Least Privilege",
-            filePath: file.path,
-            lineRange: `L${lineNum}`,
-            snippet: lines[matchLineIdx] || "<detected ZERO-AUTH-15 pattern>",
-            reproductionSteps: [
-                `Scanned source code in ${file.path}:${lineNum}.`,
-                "Detected Over-Scoped Microservice Service Account IAM Permissions: Granting microservices full administrator or wildcard database permissions rather than table-scoped access."
-            ],
-            remediationPrompt: "Scope microservice database credentials to only the specific tables required for their function.",
-            status: 'OPEN',
-            owner: 'Security & Release Engineering',
-            falsePositive: false
-        });
-        logs.push(`[${ts}] 🛡️ HIGH: ZERO-AUTH-15 finding in ${file.path}:${lineNum}`);
-    }
-    // ZERO-AUTH-16: Lack of Automated Revocation on Password Reset
-    if (/executePasswordReset/i.test(cleanContent) && !/tokenVersion|token_version|revokeSessions/i.test(cleanContent)) {
-        const matchLineIdx = locateMatchLine(lines, [/executePasswordReset/i], l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('*'));
-        const lineNum = matchLineIdx !== -1 ? matchLineIdx + 1 : 1;
-        findings.push({
-            id: `zeroauth16-${Date.now()}-${findingCounter.count++}`,
-            ruleId: 8116,
-            type: 'SECURITY',
-            title: "ZERO-AUTH-16: Lack of Automated Revocation on Password Reset",
-            severity: 'HIGH',
-            category: "Session Management",
-            filePath: file.path,
-            lineRange: `L${lineNum}`,
-            snippet: lines[matchLineIdx] || "<detected ZERO-AUTH-16 pattern>",
-            reproductionSteps: [
-                `Scanned source code in ${file.path}:${lineNum}.`,
-                "Detected Lack of Automated Revocation on Password Reset: Failing to terminate all active sessions and invalidate outstanding JWTs when a user resets their password."
-            ],
-            remediationPrompt: "Increment user token version or purge active session tokens upon successful password reset.",
-            status: 'OPEN',
-            owner: 'Security & Release Engineering',
-            falsePositive: false
-        });
-        logs.push(`[${ts}] 🛡️ HIGH: ZERO-AUTH-16 finding in ${file.path}:${lineNum}`);
     }
     // ZERO-AUTH-17: Weak Default Password Policy in User Registration
     if (/password:\s*z\.string\(\)\.min\s*\(\s*[1-5]\s*\)/i.test(cleanContent) && !/test|mock|spec/i.test(lowerPath)) {
@@ -468,7 +293,7 @@ export function evaluateZeroTrustRules(file: CodeFile, lines: string[], cleanCon
             ruleId: 8118,
             type: 'SECURITY',
             title: "ZERO-AUTH-18: Missing Cross-Site Request Forgery (CSRF) Protection on Cookie-Based Auth",
-            severity: 'HIGH',
+            severity: 'MEDIUM',
             category: "Session Security",
             filePath: file.path,
             lineRange: `L${lineNum}`,
@@ -484,31 +309,6 @@ export function evaluateZeroTrustRules(file: CodeFile, lines: string[], cleanCon
         });
         logs.push(`[${ts}] 🛡️ HIGH: ZERO-AUTH-18 finding in ${file.path}:${lineNum}`);
     }
-    // ZERO-AUTH-19: Unverified Email Verification Tokens (Missing Expiration / Reusable)
-    if (/verifyMagicLinkToken/i.test(cleanContent) && !/deleteToken|isUsed|markedUsed/i.test(cleanContent)) {
-        const matchLineIdx = locateMatchLine(lines, [/verifyMagicLinkToken/i], l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('*'));
-        const lineNum = matchLineIdx !== -1 ? matchLineIdx + 1 : 1;
-        findings.push({
-            id: `zeroauth19-${Date.now()}-${findingCounter.count++}`,
-            ruleId: 8119,
-            type: 'SECURITY',
-            title: "ZERO-AUTH-19: Unverified Email Verification Tokens (Missing Expiration / Reusable)",
-            severity: 'HIGH',
-            category: "Account Lifecycle",
-            filePath: file.path,
-            lineRange: `L${lineNum}`,
-            snippet: lines[matchLineIdx] || "<detected ZERO-AUTH-19 pattern>",
-            reproductionSteps: [
-                `Scanned source code in ${file.path}:${lineNum}.`,
-                "Detected Unverified Email Verification Tokens (Missing Expiration / Reusable): Email confirmation or magic link tokens lacking short expiration (<15 min) or single-use consumption flags."
-            ],
-            remediationPrompt: "Set a 15-minute expiration on magic link and email verification tokens, and invalidate upon first use.",
-            status: 'OPEN',
-            owner: 'Security & Release Engineering',
-            falsePositive: false
-        });
-        logs.push(`[${ts}] 🛡️ HIGH: ZERO-AUTH-19 finding in ${file.path}:${lineNum}`);
-    }
     // ZERO-AUTH-20: Missing OAuth State Parameter (CSRF in OAuth Flow)
     if (/const\s+\w+\s*=\s*`https:\/\/[^`]*\/oauth2?\/(?:v\d+\/)?authorize\?[^`]*client_id=[^`]*`/i.test(cleanContent) && !/state=/i.test(cleanContent)) {
         const matchLineIdx = locateMatchLine(lines, [/const\s+\w+\s*=\s*`https:\/\/[^`]*\/oauth2?\/(?:v\d+\/)?authorize\?[^`]*client_id=[^`]*`/i], l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('*'));
@@ -518,7 +318,7 @@ export function evaluateZeroTrustRules(file: CodeFile, lines: string[], cleanCon
             ruleId: 8120,
             type: 'SECURITY',
             title: "ZERO-AUTH-20: Missing OAuth State Parameter (CSRF in OAuth Flow)",
-            severity: 'CRITICAL',
+            severity: 'HIGH',
             category: "OAuth & OIDC",
             filePath: file.path,
             lineRange: `L${lineNum}`,
@@ -659,31 +459,6 @@ export function evaluateZeroTrustRules(file: CodeFile, lines: string[], cleanCon
         });
         logs.push(`[${ts}] 🛡️ MEDIUM: ZERO-AUTH-25 finding in ${file.path}:${lineNum}`);
     }
-    // ZERO-AUTH-26: Default Admin Credentials in Database Seed Scripts
-    if (/seed\.(?:ts|js|sql)$/i.test(file.path) && /password:\s*["\'](?:admin|admin123|password|root|123456)["\']/i.test(cleanContent)) {
-        const matchLineIdx = locateMatchLine(lines, [/password:\s*["\'](?:admin|admin123|password|root|123456)["\']/i], l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('*'));
-        const lineNum = matchLineIdx !== -1 ? matchLineIdx + 1 : 1;
-        findings.push({
-            id: `zeroauth26-${Date.now()}-${findingCounter.count++}`,
-            ruleId: 8126,
-            type: 'SECURITY',
-            title: "ZERO-AUTH-26: Default Admin Credentials in Database Seed Scripts",
-            severity: 'HIGH',
-            category: "Credential Security",
-            filePath: file.path,
-            lineRange: `L${lineNum}`,
-            snippet: lines[matchLineIdx] || "<detected ZERO-AUTH-26 pattern>",
-            reproductionSteps: [
-                `Scanned source code in ${file.path}:${lineNum}.`,
-                "Detected Default Admin Credentials in Database Seed Scripts: Database seeds populating default accounts with predictable credentials (admin / admin123, password)."
-            ],
-            remediationPrompt: "Remove hardcoded credentials from database seed files; generate cryptographically random initial passwords.",
-            status: 'OPEN',
-            owner: 'Security & Release Engineering',
-            falsePositive: false
-        });
-        logs.push(`[${ts}] 🛡️ HIGH: ZERO-AUTH-26 finding in ${file.path}:${lineNum}`);
-    }
     // ZERO-AUTH-27: Missing Certificate Pinning on High-Risk External API Calls
     if (/callCoreBankingApi|connectPciProvider/i.test(cleanContent) && !/checkServerIdentity|fingerprint/i.test(cleanContent)) {
         const matchLineIdx = locateMatchLine(lines, [/callCoreBankingApi|connectPciProvider/i], l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('*'));
@@ -708,31 +483,6 @@ export function evaluateZeroTrustRules(file: CodeFile, lines: string[], cleanCon
             falsePositive: false
         });
         logs.push(`[${ts}] 🛡️ MEDIUM: ZERO-AUTH-27 finding in ${file.path}:${lineNum}`);
-    }
-    // ZERO-AUTH-28: Unencrypted Session Storage in Distributed Cache (Redis)
-    if (/redisStore\s*=\s*new\s+RedisStore\s*\(\{[\s\S]*?tls:\s*false/i.test(cleanContent)) {
-        const matchLineIdx = locateMatchLine(lines, [/redisStore\s*=\s*new\s+RedisStore\s*\(\{[\s\S]*?tls:\s*false/i], l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('*'));
-        const lineNum = matchLineIdx !== -1 ? matchLineIdx + 1 : 1;
-        findings.push({
-            id: `zeroauth28-${Date.now()}-${findingCounter.count++}`,
-            ruleId: 8128,
-            type: 'SECURITY',
-            title: "ZERO-AUTH-28: Unencrypted Session Storage in Distributed Cache (Redis)",
-            severity: 'HIGH',
-            category: "Data at Rest",
-            filePath: file.path,
-            lineRange: `L${lineNum}`,
-            snippet: lines[matchLineIdx] || "<detected ZERO-AUTH-28 pattern>",
-            reproductionSteps: [
-                `Scanned source code in ${file.path}:${lineNum}.`,
-                "Detected Unencrypted Session Storage in Distributed Cache (Redis): Storing user session payloads in Redis without encryption or TLS in transit."
-            ],
-            remediationPrompt: "Enable TLS for Redis connections and encrypt sensitive session state before caching.",
-            status: 'OPEN',
-            owner: 'Security & Release Engineering',
-            falsePositive: false
-        });
-        logs.push(`[${ts}] 🛡️ HIGH: ZERO-AUTH-28 finding in ${file.path}:${lineNum}`);
     }
     // ZERO-AUTH-29: Missing Account Lockout after Consecutive Authentication Failures
     if (/handleFailedLoginAttempt/i.test(cleanContent) && !/failedAttempts|isLocked/i.test(cleanContent)) {
@@ -759,31 +509,6 @@ export function evaluateZeroTrustRules(file: CodeFile, lines: string[], cleanCon
         });
         logs.push(`[${ts}] 🛡️ MEDIUM: ZERO-AUTH-29 finding in ${file.path}:${lineNum}`);
     }
-    // ZERO-AUTH-30: Lack of Scope Validation on Service-to-Service JWTs
-    if (/verifyInterServiceToken/i.test(cleanContent) && !/audience|aud/i.test(cleanContent)) {
-        const matchLineIdx = locateMatchLine(lines, [/verifyInterServiceToken/i], l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('*'));
-        const lineNum = matchLineIdx !== -1 ? matchLineIdx + 1 : 1;
-        findings.push({
-            id: `zeroauth30-${Date.now()}-${findingCounter.count++}`,
-            ruleId: 8130,
-            type: 'SECURITY',
-            title: "ZERO-AUTH-30: Lack of Scope Validation on Service-to-Service JWTs",
-            severity: 'HIGH',
-            category: "Microservices Security",
-            filePath: file.path,
-            lineRange: `L${lineNum}`,
-            snippet: lines[matchLineIdx] || "<detected ZERO-AUTH-30 pattern>",
-            reproductionSteps: [
-                `Scanned source code in ${file.path}:${lineNum}.`,
-                "Detected Lack of Scope Validation on Service-to-Service JWTs: Accepting internal service JWTs without verifying that the caller token contains the specific required audience (aud)."
-            ],
-            remediationPrompt: "Validate audience (aud) and issuer (iss) claims on all inter-service JWT tokens.",
-            status: 'OPEN',
-            owner: 'Security & Release Engineering',
-            falsePositive: false
-        });
-        logs.push(`[${ts}] 🛡️ HIGH: ZERO-AUTH-30 finding in ${file.path}:${lineNum}`);
-    }
     // ZERO-AUTH-31: Insecure JWT Storage in Browser LocalStorage
     if (/localStorage\.setItem\s*\(\s*["\'](?:jwt|token|access_token|authToken)["\']\s*,\s*[a-zA-Z0-9_]+\s*\)/i.test(cleanContent) && !/test|mock|spec/i.test(lowerPath)) {
         const matchLineIdx = locateMatchLine(lines, [/localStorage\.setItem\s*\(\s*["\'](?:jwt|token|access_token|authToken)["\']\s*,\s*[a-zA-Z0-9_]+\s*\)/i], l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('*'));
@@ -793,7 +518,7 @@ export function evaluateZeroTrustRules(file: CodeFile, lines: string[], cleanCon
             ruleId: 8131,
             type: 'SECURITY',
             title: "ZERO-AUTH-31: Insecure JWT Storage in Browser LocalStorage",
-            severity: 'HIGH',
+            severity: 'MEDIUM',
             category: "Client Storage",
             filePath: file.path,
             lineRange: `L${lineNum}`,
@@ -858,131 +583,6 @@ export function evaluateZeroTrustRules(file: CodeFile, lines: string[], cleanCon
             falsePositive: false
         });
         logs.push(`[${ts}] 🛡️ HIGH: ZERO-AUTH-33 finding in ${file.path}:${lineNum}`);
-    }
-    // ZERO-AUTH-34: Missing Strict Algorithm Verification in JWT Decoder
-    if (/jwt\.verify\s*\(\s*[a-zA-Z0-9_]+\s*,\s*[a-zA-Z0-9_]+\s*\)/i.test(cleanContent) && !/algorithms/i.test(cleanContent)) {
-        const matchLineIdx = locateMatchLine(lines, [/jwt\.verify\s*\(\s*[a-zA-Z0-9_]+\s*,\s*[a-zA-Z0-9_]+\s*\)/i], l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('*'));
-        const lineNum = matchLineIdx !== -1 ? matchLineIdx + 1 : 1;
-        findings.push({
-            id: `zeroauth34-${Date.now()}-${findingCounter.count++}`,
-            ruleId: 8134,
-            type: 'SECURITY',
-            title: "ZERO-AUTH-34: Missing Strict Algorithm Verification in JWT Decoder",
-            severity: 'CRITICAL',
-            category: "Cryptographic Security",
-            filePath: file.path,
-            lineRange: `L${lineNum}`,
-            snippet: lines[matchLineIdx] || "<detected ZERO-AUTH-34 pattern>",
-            reproductionSteps: [
-                `Scanned source code in ${file.path}:${lineNum}.`,
-                "Detected Missing Strict Algorithm Verification in JWT Decoder: Calling jwt.verify() without specifying an explicit algorithms array (allowing 'none' or HMAC confusion)."
-            ],
-            remediationPrompt: "Specify explicit algorithms whitelist in jwt.verify options to prevent algorithm confusion attacks.",
-            status: 'OPEN',
-            owner: 'Security & Release Engineering',
-            falsePositive: false
-        });
-        logs.push(`[${ts}] 🛡️ CRITICAL: ZERO-AUTH-34 finding in ${file.path}:${lineNum}`);
-    }
-    // ZERO-AUTH-35: Lack of Mutual Authentication on WebSocket Handshake
-    if (/new\s+WebSocketServer\s*\(\{[\s\S]*?verifyClient:\s*(?:undefined|null|false)/i.test(cleanContent)) {
-        const matchLineIdx = locateMatchLine(lines, [/new\s+WebSocketServer\s*\(\{[\s\S]*?verifyClient:\s*(?:undefined|null|false)/i], l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('*'));
-        const lineNum = matchLineIdx !== -1 ? matchLineIdx + 1 : 1;
-        findings.push({
-            id: `zeroauth35-${Date.now()}-${findingCounter.count++}`,
-            ruleId: 8135,
-            type: 'SECURITY',
-            title: "ZERO-AUTH-35: Lack of Mutual Authentication on WebSocket Handshake",
-            severity: 'HIGH',
-            category: "Real-Time Security",
-            filePath: file.path,
-            lineRange: `L${lineNum}`,
-            snippet: lines[matchLineIdx] || "<detected ZERO-AUTH-35 pattern>",
-            reproductionSteps: [
-                `Scanned source code in ${file.path}:${lineNum}.`,
-                "Detected Lack of Mutual Authentication on WebSocket Handshake: Upgrading HTTP connections to WebSockets without verifying authentication tickets or session cookies."
-            ],
-            remediationPrompt: "Verify session tokens or signed tickets during the WebSocket HTTP upgrade handshake.",
-            status: 'OPEN',
-            owner: 'Security & Release Engineering',
-            falsePositive: false
-        });
-        logs.push(`[${ts}] 🛡️ HIGH: ZERO-AUTH-35 finding in ${file.path}:${lineNum}`);
-    }
-    // ZERO-AUTH-36: Unchecked Authorization on Static Asset Storage URLs
-    if (/downloadInvoiceRoute|streamCustomerTaxFile/i.test(cleanContent) && !/getSignedUrl|verifyOwnership/i.test(cleanContent)) {
-        const matchLineIdx = locateMatchLine(lines, [/downloadInvoiceRoute|streamCustomerTaxFile/i], l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('*'));
-        const lineNum = matchLineIdx !== -1 ? matchLineIdx + 1 : 1;
-        findings.push({
-            id: `zeroauth36-${Date.now()}-${findingCounter.count++}`,
-            ruleId: 8136,
-            type: 'SECURITY',
-            title: "ZERO-AUTH-36: Unchecked Authorization on Static Asset Storage URLs",
-            severity: 'HIGH',
-            category: "Object Storage Security",
-            filePath: file.path,
-            lineRange: `L${lineNum}`,
-            snippet: lines[matchLineIdx] || "<detected ZERO-AUTH-36 pattern>",
-            reproductionSteps: [
-                `Scanned source code in ${file.path}:${lineNum}.`,
-                "Detected Unchecked Authorization on Static Asset Storage URLs: Serving private customer invoices, contracts, or exports via permanent, unauthenticated public bucket URLs."
-            ],
-            remediationPrompt: "Generate short-lived presigned URLs (max 15 min) for all private customer document downloads.",
-            status: 'OPEN',
-            owner: 'Security & Release Engineering',
-            falsePositive: false
-        });
-        logs.push(`[${ts}] 🛡️ HIGH: ZERO-AUTH-36 finding in ${file.path}:${lineNum}`);
-    }
-    // ZERO-AUTH-37: Missing Session Invalidation on User Account Deactivation
-    if (/deactivateUserAccount/i.test(cleanContent) && !/purgeSessions|redis\.del/i.test(cleanContent)) {
-        const matchLineIdx = locateMatchLine(lines, [/deactivateUserAccount/i], l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('*'));
-        const lineNum = matchLineIdx !== -1 ? matchLineIdx + 1 : 1;
-        findings.push({
-            id: `zeroauth37-${Date.now()}-${findingCounter.count++}`,
-            ruleId: 8137,
-            type: 'SECURITY',
-            title: "ZERO-AUTH-37: Missing Session Invalidation on User Account Deactivation",
-            severity: 'HIGH',
-            category: "Lifecycle Management",
-            filePath: file.path,
-            lineRange: `L${lineNum}`,
-            snippet: lines[matchLineIdx] || "<detected ZERO-AUTH-37 pattern>",
-            reproductionSteps: [
-                `Scanned source code in ${file.path}:${lineNum}.`,
-                "Detected Missing Session Invalidation on User Account Deactivation: Deactivating or banning a user account without immediately terminating active Redis sessions or revoking tokens."
-            ],
-            remediationPrompt: "Purge active Redis sessions immediately when a user account is suspended, banned, or deleted.",
-            status: 'OPEN',
-            owner: 'Security & Release Engineering',
-            falsePositive: false
-        });
-        logs.push(`[${ts}] 🛡️ HIGH: ZERO-AUTH-37 finding in ${file.path}:${lineNum}`);
-    }
-    // ZERO-AUTH-38: Insecure SSO SAML Assertion Validation (Missing Signature / Recipient Check)
-    if (/parseSamlResponse/i.test(cleanContent) && !/validateSignature|cert/i.test(cleanContent)) {
-        const matchLineIdx = locateMatchLine(lines, [/parseSamlResponse/i], l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('*'));
-        const lineNum = matchLineIdx !== -1 ? matchLineIdx + 1 : 1;
-        findings.push({
-            id: `zeroauth38-${Date.now()}-${findingCounter.count++}`,
-            ruleId: 8138,
-            type: 'SECURITY',
-            title: "ZERO-AUTH-38: Insecure SSO SAML Assertion Validation (Missing Signature / Recipient Check)",
-            severity: 'CRITICAL',
-            category: "Federated Identity",
-            filePath: file.path,
-            lineRange: `L${lineNum}`,
-            snippet: lines[matchLineIdx] || "<detected ZERO-AUTH-38 pattern>",
-            reproductionSteps: [
-                `Scanned source code in ${file.path}:${lineNum}.`,
-                "Detected Insecure SSO SAML Assertion Validation (Missing Signature / Recipient Check): Parsing SAML assertions without validating XML digital signatures, Recipient URL, or AudienceRestriction."
-            ],
-            remediationPrompt: "Enforce cryptographic signature and audience restriction validation on all SAML assertions.",
-            status: 'OPEN',
-            owner: 'Security & Release Engineering',
-            falsePositive: false
-        });
-        logs.push(`[${ts}] 🛡️ CRITICAL: ZERO-AUTH-38 finding in ${file.path}:${lineNum}`);
     }
     // ZERO-AUTH-39: Weak Ephemeral Key Generation for Diffie-Hellman Key Exchange
     if (/crypto\.createDiffieHellman\s*\(\s*(?:512|1024)\s*\)/i.test(cleanContent)) {
@@ -1112,106 +712,6 @@ export function evaluateZeroTrustRules(file: CodeFile, lines: string[], cleanCon
         });
         logs.push(`[${ts}] 🛡️ CRITICAL: ZERO-AUTH-43 finding in ${file.path}:${lineNum}`);
     }
-    // ZERO-AUTH-44: Insecure Cross-Origin Resource Sharing on Private API Subnets
-    if (/app\/api\/internal\/route\.(?:ts|js)$/i.test(file.path) && /Access-Control-Allow-Origin:\s*["\']\*["\']/i.test(cleanContent)) {
-        const matchLineIdx = locateMatchLine(lines, [/Access-Control-Allow-Origin:\s*["\']\*["\']/i], l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('*'));
-        const lineNum = matchLineIdx !== -1 ? matchLineIdx + 1 : 1;
-        findings.push({
-            id: `zeroauth44-${Date.now()}-${findingCounter.count++}`,
-            ruleId: 8144,
-            type: 'SECURITY',
-            title: "ZERO-AUTH-44: Insecure Cross-Origin Resource Sharing on Private API Subnets",
-            severity: 'HIGH',
-            category: "Network Security",
-            filePath: file.path,
-            lineRange: `L${lineNum}`,
-            snippet: lines[matchLineIdx] || "<detected ZERO-AUTH-44 pattern>",
-            reproductionSteps: [
-                `Scanned source code in ${file.path}:${lineNum}.`,
-                "Detected Insecure Cross-Origin Resource Sharing on Private API Subnets: Exposing internal management microservices to browser CORS requests with permissive header configurations."
-            ],
-            remediationPrompt: "Disable CORS headers on private internal microservices intended solely for backend communication.",
-            status: 'OPEN',
-            owner: 'Security & Release Engineering',
-            falsePositive: false
-        });
-        logs.push(`[${ts}] 🛡️ HIGH: ZERO-AUTH-44 finding in ${file.path}:${lineNum}`);
-    }
-    // ZERO-AUTH-45: Missing Proof Key for Code Exchange (PKCE) in Public OAuth Clients
-    if (/new\s+OAuthClient\s*\(\{[\s\S]*?pkce:\s*false/i.test(cleanContent)) {
-        const matchLineIdx = locateMatchLine(lines, [/new\s+OAuthClient\s*\(\{[\s\S]*?pkce:\s*false/i], l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('*'));
-        const lineNum = matchLineIdx !== -1 ? matchLineIdx + 1 : 1;
-        findings.push({
-            id: `zeroauth45-${Date.now()}-${findingCounter.count++}`,
-            ruleId: 8145,
-            type: 'SECURITY',
-            title: "ZERO-AUTH-45: Missing Proof Key for Code Exchange (PKCE) in Public OAuth Clients",
-            severity: 'HIGH',
-            category: "OAuth Security",
-            filePath: file.path,
-            lineRange: `L${lineNum}`,
-            snippet: lines[matchLineIdx] || "<detected ZERO-AUTH-45 pattern>",
-            reproductionSteps: [
-                `Scanned source code in ${file.path}:${lineNum}.`,
-                "Detected Missing Proof Key for Code Exchange (PKCE) in Public OAuth Clients: Single Page Applications (SPAs) or mobile apps executing OAuth authorization code grant without code_verifier / PKCE."
-            ],
-            remediationPrompt: "Enforce PKCE with S256 challenge on all browser and mobile OAuth authorization flows.",
-            status: 'OPEN',
-            owner: 'Security & Release Engineering',
-            falsePositive: false
-        });
-        logs.push(`[${ts}] 🛡️ HIGH: ZERO-AUTH-45 finding in ${file.path}:${lineNum}`);
-    }
-    // ZERO-AUTH-46: Unsalted or Weak Hash Algorithms for Internal Verification Tokens
-    if (/crypto\.createHash\s*\(\s*["\'](?:md5|sha1)["\']\s*\)[\s\S]*?update\s*\(\s*resetToken\s*\)/i.test(cleanContent)) {
-        const matchLineIdx = locateMatchLine(lines, [/crypto\.createHash\s*\(\s*["\'](?:md5|sha1)["\']\s*\)[\s\S]*?update\s*\(\s*resetToken\s*\)/i], l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('*'));
-        const lineNum = matchLineIdx !== -1 ? matchLineIdx + 1 : 1;
-        findings.push({
-            id: `zeroauth46-${Date.now()}-${findingCounter.count++}`,
-            ruleId: 8146,
-            type: 'SECURITY',
-            title: "ZERO-AUTH-46: Unsalted or Weak Hash Algorithms for Internal Verification Tokens",
-            severity: 'HIGH',
-            category: "Cryptographic Security",
-            filePath: file.path,
-            lineRange: `L${lineNum}`,
-            snippet: lines[matchLineIdx] || "<detected ZERO-AUTH-46 pattern>",
-            reproductionSteps: [
-                `Scanned source code in ${file.path}:${lineNum}.`,
-                "Detected Unsalted or Weak Hash Algorithms for Internal Verification Tokens: Hashing password reset or email verification tokens with MD5 or SHA-1 instead of SHA-256."
-            ],
-            remediationPrompt: "Use SHA-256 or SHA-512 with random salts for hashing verification tokens stored in databases.",
-            status: 'OPEN',
-            owner: 'Security & Release Engineering',
-            falsePositive: false
-        });
-        logs.push(`[${ts}] 🛡️ HIGH: ZERO-AUTH-46 finding in ${file.path}:${lineNum}`);
-    }
-    // ZERO-AUTH-47: Missing Tenant Boundary Enforcement in Background Queue Workers
-    if (/processBackgroundJob\s*\(\s*job\s*\)[\s\S]*?db\.[a-zA-Z0-9_]+\.(?:update|delete|find)/i.test(cleanContent) && !/tenant_id|tenantId/i.test(cleanContent)) {
-        const matchLineIdx = locateMatchLine(lines, [/processBackgroundJob\s*\(\s*job\s*\)[\s\S]*?db\.[a-zA-Z0-9_]+\.(?:update|delete|find)/i], l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('*'));
-        const lineNum = matchLineIdx !== -1 ? matchLineIdx + 1 : 1;
-        findings.push({
-            id: `zeroauth47-${Date.now()}-${findingCounter.count++}`,
-            ruleId: 8147,
-            type: 'SECURITY',
-            title: "ZERO-AUTH-47: Missing Tenant Boundary Enforcement in Background Queue Workers",
-            severity: 'CRITICAL',
-            category: "Multi-Tenancy",
-            filePath: file.path,
-            lineRange: `L${lineNum}`,
-            snippet: lines[matchLineIdx] || "<detected ZERO-AUTH-47 pattern>",
-            reproductionSteps: [
-                `Scanned source code in ${file.path}:${lineNum}.`,
-                "Detected Missing Tenant Boundary Enforcement in Background Queue Workers: Background job consumers executing multi-tenant tasks without verifying and scoping tenant context in the worker."
-            ],
-            remediationPrompt: "Bind background worker database queries strictly to the tenant_id encapsulated in the job payload.",
-            status: 'OPEN',
-            owner: 'Security & Release Engineering',
-            falsePositive: false
-        });
-        logs.push(`[${ts}] 🛡️ CRITICAL: ZERO-AUTH-47 finding in ${file.path}:${lineNum}`);
-    }
     // ZERO-AUTH-48: Lack of User-Agent and IP Logging on High-Privilege API Requests
     if (/app\/api\/admin\/.*\/route\.(?:ts|js)$/i.test(file.path) && !/clientIp|userAgent/i.test(cleanContent)) {
         const matchLineIdx = lines.findIndex(l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('*') && (/zero-auth-48|lack/i.test(l) || lines.indexOf(l) === 0));
@@ -1236,31 +736,6 @@ export function evaluateZeroTrustRules(file: CodeFile, lines: string[], cleanCon
             falsePositive: false
         });
         logs.push(`[${ts}] 🛡️ LOW: ZERO-AUTH-48 finding in ${file.path}:${lineNum}`);
-    }
-    // ZERO-AUTH-49: Unverified Password Reset Token Reuse (Missing State Invalidation)
-    if (/applyNewPassword/i.test(cleanContent) && !/markTokenUsed|deleteResetToken/i.test(cleanContent)) {
-        const matchLineIdx = locateMatchLine(lines, [/applyNewPassword/i], l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('*'));
-        const lineNum = matchLineIdx !== -1 ? matchLineIdx + 1 : 1;
-        findings.push({
-            id: `zeroauth49-${Date.now()}-${findingCounter.count++}`,
-            ruleId: 8149,
-            type: 'SECURITY',
-            title: "ZERO-AUTH-49: Unverified Password Reset Token Reuse (Missing State Invalidation)",
-            severity: 'HIGH',
-            category: "Authentication",
-            filePath: file.path,
-            lineRange: `L${lineNum}`,
-            snippet: lines[matchLineIdx] || "<detected ZERO-AUTH-49 pattern>",
-            reproductionSteps: [
-                `Scanned source code in ${file.path}:${lineNum}.`,
-                "Detected Unverified Password Reset Token Reuse (Missing State Invalidation): Allowing a password reset token to be submitted multiple times before its expiration timestamp."
-            ],
-            remediationPrompt: "Invalidate password reset tokens immediately upon successful password change.",
-            status: 'OPEN',
-            owner: 'Security & Release Engineering',
-            falsePositive: false
-        });
-        logs.push(`[${ts}] 🛡️ HIGH: ZERO-AUTH-49 finding in ${file.path}:${lineNum}`);
     }
     // ZERO-AUTH-50: Insecure Ephemeral Token Generation using Math.random()
     if (MATH_RANDOM_TOKEN.test(cleanContent)) {
@@ -1287,31 +762,6 @@ export function evaluateZeroTrustRules(file: CodeFile, lines: string[], cleanCon
         });
         logs.push(`[${ts}] 🛡️ CRITICAL: ZERO-AUTH-50 finding in ${file.path}:${lineNum}`);
     }
-    // ZERO-AUTH-51: Missing Origin Header Verification on Mutating HTTP Requests
-    if (/app\/api\/mutate\/route\.(?:ts|js)$/i.test(file.path) && !/origin|referer/i.test(cleanContent)) {
-        const matchLineIdx = lines.findIndex(l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('*') && (/zero-auth-51|missing/i.test(l) || lines.indexOf(l) === 0));
-        const lineNum = matchLineIdx !== -1 ? matchLineIdx + 1 : 1;
-        findings.push({
-            id: `zeroauth51-${Date.now()}-${findingCounter.count++}`,
-            ruleId: 8151,
-            type: 'SECURITY',
-            title: "ZERO-AUTH-51: Missing Origin Header Verification on Mutating HTTP Requests",
-            severity: 'HIGH',
-            category: "CSRF Protection",
-            filePath: file.path,
-            lineRange: `L${lineNum}`,
-            snippet: lines[matchLineIdx] || "<detected ZERO-AUTH-51 pattern>",
-            reproductionSteps: [
-                `Scanned source code in ${file.path}:${lineNum}.`,
-                "Detected Missing Origin Header Verification on Mutating HTTP Requests: API routes processing state mutations without validating that the Origin or Referer header matches trusted hosts."
-            ],
-            remediationPrompt: "Verify that request Origin or Referer headers match your domain on all mutating API routes.",
-            status: 'OPEN',
-            owner: 'Security & Release Engineering',
-            falsePositive: false
-        });
-        logs.push(`[${ts}] 🛡️ HIGH: ZERO-AUTH-51 finding in ${file.path}:${lineNum}`);
-    }
     // ZERO-AUTH-52: Lack of Service Account Key Expiration & Mandatory Rotation
     if (/aws_iam_access_key\b/i.test(cleanContent) && !/rotation|expires/i.test(cleanContent)) {
         const matchLineIdx = locateMatchLine(lines, [/aws_iam_access_key\b/i], l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('*'));
@@ -1337,31 +787,6 @@ export function evaluateZeroTrustRules(file: CodeFile, lines: string[], cleanCon
         });
         logs.push(`[${ts}] 🛡️ MEDIUM: ZERO-AUTH-52 finding in ${file.path}:${lineNum}`);
     }
-    // ZERO-AUTH-53: Missing Scoped Permissions on CI/CD Deployment Tokens
-    if (/\.github\/workflows\/.*\.ya?ml$/i.test(file.path) && /AWS_ACCESS_KEY_ID:\s*\$\{\{\s*secrets\.ROOT_ACCOUNT_AWS_KEY\s*\}\}/i.test(cleanContent)) {
-        const matchLineIdx = locateMatchLine(lines, [/AWS_ACCESS_KEY_ID:\s*\$\{\{\s*secrets\.ROOT_ACCOUNT_AWS_KEY\s*\}\}/i], l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('*'));
-        const lineNum = matchLineIdx !== -1 ? matchLineIdx + 1 : 1;
-        findings.push({
-            id: `zeroauth53-${Date.now()}-${findingCounter.count++}`,
-            ruleId: 8153,
-            type: 'SECURITY',
-            title: "ZERO-AUTH-53: Missing Scoped Permissions on CI/CD Deployment Tokens",
-            severity: 'HIGH',
-            category: "Supply Chain & CI/CD",
-            filePath: file.path,
-            lineRange: `L${lineNum}`,
-            snippet: lines[matchLineIdx] || "<detected ZERO-AUTH-53 pattern>",
-            reproductionSteps: [
-                `Scanned source code in ${file.path}:${lineNum}.`,
-                "Detected Missing Scoped Permissions on CI/CD Deployment Tokens: Using account-wide administrative tokens in GitHub Actions or GitLab CI instead of repository-scoped tokens."
-            ],
-            remediationPrompt: "Use short-lived OIDC tokens in CI/CD workflows instead of long-lived administrator API keys.",
-            status: 'OPEN',
-            owner: 'Security & Release Engineering',
-            falsePositive: false
-        });
-        logs.push(`[${ts}] 🛡️ HIGH: ZERO-AUTH-53 finding in ${file.path}:${lineNum}`);
-    }
     // ZERO-AUTH-54: Insecure Session Invalidation across Multiple Browser Tabs
     if (/handleClientLogout/i.test(cleanContent) && !/BroadcastChannel|localStorage\.setItem\(["\']logout-event["\']/i.test(cleanContent)) {
         const matchLineIdx = locateMatchLine(lines, [/handleClientLogout/i], l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('*'));
@@ -1386,31 +811,6 @@ export function evaluateZeroTrustRules(file: CodeFile, lines: string[], cleanCon
             falsePositive: false
         });
         logs.push(`[${ts}] 🛡️ LOW: ZERO-AUTH-54 finding in ${file.path}:${lineNum}`);
-    }
-    // ZERO-AUTH-55: Missing Authentication Header Validation on Internal Gateway Proxies
-    if (/gatewayProxyHandler/i.test(cleanContent) && !/verifyToken|authorization/i.test(cleanContent)) {
-        const matchLineIdx = locateMatchLine(lines, [/gatewayProxyHandler/i], l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('*'));
-        const lineNum = matchLineIdx !== -1 ? matchLineIdx + 1 : 1;
-        findings.push({
-            id: `zeroauth55-${Date.now()}-${findingCounter.count++}`,
-            ruleId: 8155,
-            type: 'SECURITY',
-            title: "ZERO-AUTH-55: Missing Authentication Header Validation on Internal Gateway Proxies",
-            severity: 'HIGH',
-            category: "API Gateway",
-            filePath: file.path,
-            lineRange: `L${lineNum}`,
-            snippet: lines[matchLineIdx] || "<detected ZERO-AUTH-55 pattern>",
-            reproductionSteps: [
-                `Scanned source code in ${file.path}:${lineNum}.`,
-                "Detected Missing Authentication Header Validation on Internal Gateway Proxies: Reverse proxy forwarding unauthenticated requests to internal microservices assuming private network safety."
-            ],
-            remediationPrompt: "Enforce token verification at the API gateway before forwarding requests to internal services.",
-            status: 'OPEN',
-            owner: 'Security & Release Engineering',
-            falsePositive: false
-        });
-        logs.push(`[${ts}] 🛡️ HIGH: ZERO-AUTH-55 finding in ${file.path}:${lineNum}`);
     }
     return { findings, logs };
 }

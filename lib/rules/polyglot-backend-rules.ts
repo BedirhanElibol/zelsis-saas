@@ -91,7 +91,7 @@ export function evaluatePolyglotBackendRules(file: CodeFile, lines: string[], cl
         // PHP-03: Command Injection via shell execution
         // Global shell functions only (not $pdo->exec / Foo::system), with request input or an unescaped
         // variable concatenated / interpolated into the command string.
-        const phpCmdRegex = /(?<![\w>:$])(?:exec|shell_exec|system|passthru|proc_open|popen)\s*\(\s*(.*)$/i;
+        const phpCmdRegex = /(?<![\w>:$])(?:exec|shell_exec|system|passthru|proc_open|popen)\s*\(\s*(.*)/i;
         const phpCmdTainted = (arg: string) => !/escapeshell(?:arg|cmd)\s*\(/i.test(arg) &&
             (PHP_REQUEST_SOURCE.test(arg) || /^(?:"[^"]*"|'[^']*')\s*\.\s*\$\w+|^\$\w+\s*\.|^"[^"]*\$\w+/.test(arg));
         const phpCmdIdx = lines.findIndex(l => !l.trim().startsWith('//') && !l.trim().startsWith('#') && !l.trim().startsWith('*') && phpCmdRegex.test(l) && phpCmdTainted((phpCmdRegex.exec(l) as RegExpExecArray)[1]));
@@ -123,11 +123,11 @@ export function evaluatePolyglotBackendRules(file: CodeFile, lines: string[], cl
         // PHP-04: Insecure Deserialization via unserialize()
         // Only request-controlled input (directly or via a variable assigned from it), and not when
         // object instantiation is disabled with ['allowed_classes' => false].
-        const phpUnserializeRegex = /(?<![\w>:$])unserialize\s*\(\s*(.*)$/i;
+        const phpUnserializeRegex = /(?<![\w>:$])unserialize\s*\(\s*(.*)/i;
         const phpRequestVars = new Set<string>();
         for (let pass = 0; pass < 2; pass++) {
             for (const l of lines) {
-                const m = /^\s*\$(\w+)\s*=\s*(.*)$/.exec(l);
+                const m = /^\s*\$(\w+)\s*=\s*(.*)/.exec(l);
                 if (m && (PHP_REQUEST_SOURCE.test(m[2]) || [...m[2].matchAll(/\$(\w+)/g)].some((v) => phpRequestVars.has(v[1])))) phpRequestVars.add(m[1]);
             }
         }

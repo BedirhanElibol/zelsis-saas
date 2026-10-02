@@ -323,11 +323,8 @@ async function runAllTests() {
     }
   ];
   const aiCostScan = await runStaticCodeScan(aiCostFiles, 'AI Cost Test Project');
-  const unboundedTokenFinding = aiCostScan.findings.find(f => f.ruleId === 8071);
-  assert(Boolean(unboundedTokenFinding), 'LLM-COST-01 flags unbounded chat completions without max_tokens');
-
   const uncachedEmbeddingFinding = aiCostScan.findings.find(f => f.ruleId === 8073);
-  assert(Boolean(uncachedEmbeddingFinding), 'LLM-COST-03 flags vector embedding loops without caching');
+  assert(Boolean(uncachedEmbeddingFinding), 'LLM-COST-03 flags one embeddings request per loop item');
 
   // ─── 9. Python SCA CVE Drifts (F-47) ──────────────────────────
   console.log('\n--- 9. Testing Python SCA Dependency Drifts (F-47) ---');

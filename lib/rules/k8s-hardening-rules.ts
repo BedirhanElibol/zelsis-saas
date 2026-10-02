@@ -51,8 +51,10 @@ export function evaluateK8sHardeningRules(file: CodeFile, lines: string[], clean
         logs.push(`[${ts}] [K8S AUDIT] Found K8S-01: Privileged Container Execution (privileged: true) at ${file.path}:${lineNum}`);
     }
     // K8S-02: Container Allowed to Run as Root User
-    if (/runAsUser\s*:\s*0\b/i.test(cleanContent) || (cleanContent.includes('kind: Deployment'))) {
-        const matchLineIdx = locateMatchLine(lines, [/runAsUser\s*:\s*0\b/i], l => !l.trim().startsWith('#'));
+    // Only an explicit `runAsUser: 0` (not every Deployment)
+    const k8s02Line = yamlLine(lines, /^\s*runAsUser\s*:\s*0\s*(?:#.*)?$/);
+    if (k8s02Line !== -1) {
+        const matchLineIdx = k8s02Line;
         const lineNum = matchLineIdx !== -1 ? matchLineIdx + 1 : 1;
         findings.push({
             id: `k8s8902-${Date.now()}-${findingCounter.count++}`,
@@ -139,8 +141,9 @@ export function evaluateK8sHardeningRules(file: CodeFile, lines: string[], clean
         logs.push(`[${ts}] [K8S AUDIT] Found K8S-04: Dangerous Host Path Volume Mount (/ or /etc or /var/run) at ${file.path}:${lineNum}`);
     }
     // K8S-05: AutomountServiceAccountToken Enabled by Default
-    if (cleanContent.includes('automountServiceAccountToken: true')) {
-        const matchLineIdx = lines.findIndex(l => !l.trim().startsWith('#'));
+    const k8s05Line = yamlLine(lines, /^\s*automountServiceAccountToken\s*:\s*true\b/);
+    if (k8s05Line !== -1) {
+        const matchLineIdx = k8s05Line;
         const lineNum = matchLineIdx !== -1 ? matchLineIdx + 1 : 1;
         findings.push({
             id: `k8s8905-${Date.now()}-${findingCounter.count++}`,
@@ -219,7 +222,7 @@ export function evaluateK8sHardeningRules(file: CodeFile, lines: string[], clean
             ruleId: 8908,
             type: 'INFRA_DATABASE',
             title: "K8S-08: Writable Root Filesystem (readOnlyRootFilesystem: false)",
-            severity: "HIGH",
+            severity: 'MEDIUM',
             category: "Runtime Hardening",
             filePath: file.path,
             lineRange: `L${lineNum}`,
@@ -259,30 +262,6 @@ export function evaluateK8sHardeningRules(file: CodeFile, lines: string[], clean
             falsePositive: false
         });
         logs.push(`[${ts}] [K8S AUDIT] Found K8S-09: Container Insecure Capability Allocation (ALL or CAP_SYS_ADMIN) at ${file.path}:${lineNum}`);
-    }
-    // K8S-10: Missing NetworkPolicy for Workload Ingress / Egress Isolation
-    if ((/kind:\s*Namespace/i.test(cleanContent) && !/NetworkPolicy/i.test(cleanContent))) {
-        const matchLineIdx = locateMatchLine(lines, [/kind:\s*Namespace/i], l => !l.trim().startsWith('#'));
-        const lineNum = matchLineIdx !== -1 ? matchLineIdx + 1 : 1;
-        findings.push({
-            id: `k8s8910-${Date.now()}-${findingCounter.count++}`,
-            ruleId: 8910,
-            type: 'INFRA_DATABASE',
-            title: "K8S-10: Missing NetworkPolicy for Workload Ingress / Egress Isolation",
-            severity: "HIGH",
-            category: "Zero Trust Network",
-            filePath: file.path,
-            lineRange: `L${lineNum}`,
-            snippet: lines[matchLineIdx] || 'Kubernetes manifest item',
-            reproductionSteps: [
-                `Audited Kubernetes manifest in ${file.path}:${lineNum}.`,
-                'Detected configuration violation matching K8S-10.'
-            ],
-            remediationPrompt: "Create a NetworkPolicy restricting ingress to authorized service pods only.",
-            status: 'OPEN',
-            falsePositive: false
-        });
-        logs.push(`[${ts}] [K8S AUDIT] Found K8S-10: Missing NetworkPolicy for Workload Ingress / Egress Isolation at ${file.path}:${lineNum}`);
     }
     return { findings, logs };
 }

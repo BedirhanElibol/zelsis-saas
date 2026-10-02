@@ -10,8 +10,13 @@ import { ruleMaturity } from './scanner/rule-maturity';
 /** [kept, dropped] rule pairs that report the same issue (rule packs overlap). */
 const SAME_ISSUE_RULES: ReadonlyArray<readonly [number, number]> = [
   [7004, 3002], // Dockerfile without USER: CLOUD-04 (reviewed true positive) over the infra-pack duplicate
-  [8404, 10303], // DB pool without max size: CHAOS-04 over PG-03
-  [8404, 6013], // ...and over DB-PERF-13 (pool acquisition timeout), same client config line
+  [8404, 6013], // DB pool without max size: CHAOS-04 over DB-PERF-13 (pool acquisition timeout), same client config line
+  [8901, 7013], [8901, 12201], // privileged pod
+  [8321, 12204], // hostNetwork
+  [8301, 11003], [8301, 7040], // SSH open to the world
+  [8329, 8909], // capabilities ALL
+  [26, 8501], [26, 8503], // Apollo server config, same line
+  [28251, 9501], [28251, 7323], [9501, 7323], // pull_request_target running PR-head code
 ];
 import { RULE_ENGINES } from './scanner/rule-engines';
 import { evaluateBuiltinRules } from './scanner/builtin-rules';
@@ -42,6 +47,8 @@ export interface ScanOptions {
    * repository's file; its ignored rules, paths and disabled gates are added to the repository's.
    */
   orgPolicy?: string | null;
+  /** Report every rule that fired, without SAME_ISSUE_RULES dedupe. Rule fixtures use it to prove each rule on its own. */
+  keepDuplicateRules?: boolean;
 }
 
 export async function runStaticCodeScan(files: CodeFile[], repoName: string = 'Target Repository', options: ScanOptions = {}): Promise<ScanResult> {
@@ -316,7 +323,7 @@ export async function runStaticCodeScan(files: CodeFile[], repoName: string = 'T
   }
 
   // Rule packs overlap: when two rules report the same issue in one file, keep the first of the pair
-  for (const [keep, drop] of SAME_ISSUE_RULES) {
+  for (const [keep, drop] of options.keepDuplicateRules ? [] : SAME_ISSUE_RULES) {
     const filesWithKeep = new Set(findings.filter((f) => f.ruleId === keep).map((f) => f.filePath));
     for (let k = findings.length - 1; k >= 0; k--) {
       if (findings[k].ruleId === drop && filesWithKeep.has(findings[k].filePath)) findings.splice(k, 1);

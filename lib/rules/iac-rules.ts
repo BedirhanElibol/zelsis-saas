@@ -103,15 +103,25 @@ export function evaluateIacRules(file: CodeFile, lines: string[], cleanContent: 
         logs.push(`[${ts}] 🏗️ CRITICAL: IAC-03 finding in ${file.path}:${lineNum}`);
     }
     // IAC-04: AWS EBS Storage Volume Missing Default Encryption
-    if (/(?:aws_ebs_volume|root_block_device)\b/i.test(cleanContent) && !/encrypted\s*=\s*true/i.test(cleanContent) && /\.(?:tf|hcl)$/i.test(file.path)) {
-        const matchLineIdx = locateMatchLine(lines, [/(?:aws_ebs_volume|root_block_device)\b/i], l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('*'));
+    // Per aws_ebs_volume / root_block_device / ebs_block_device block without encrypted = true
+    const iac04Line = (() => {
+        if (!isTf) return -1;
+        const disks = [
+            ...hclBlocks(tf, tfResource('aws_ebs_volume')),
+            ...hclBlocks(tf, tfResource('aws_instance|aws_launch_template')).flatMap((i) => hclBlocks(tf, /\b(?:root_block_device|ebs_block_device|ebs)/, i))
+        ];
+        const b = disks.find((d) => !/\bencrypted\s*=\s*true\b/.test(d.body));
+        return b ? hclLine(tf, b) : -1;
+    })();
+    if (iac04Line !== -1) {
+        const matchLineIdx = iac04Line;
         const lineNum = matchLineIdx !== -1 ? matchLineIdx + 1 : 1;
         findings.push({
             id: `iac04-${Date.now()}-${findingCounter.count++}`,
             ruleId: 8304,
             type: 'INFRA_DATABASE',
             title: "IAC-04: AWS EBS Storage Volume Missing Default Encryption",
-            severity: 'HIGH',
+            severity: 'MEDIUM',
             category: "Storage Encryption",
             filePath: file.path,
             lineRange: `L${lineNum}`,
@@ -125,7 +135,7 @@ export function evaluateIacRules(file: CodeFile, lines: string[], cleanContent: 
             owner: 'Security & Release Engineering',
             falsePositive: false
         });
-        logs.push(`[${ts}] 🏗️ HIGH: IAC-04 finding in ${file.path}:${lineNum}`);
+        logs.push(`[${ts}] 🏗️ MEDIUM: IAC-04 finding in ${file.path}:${lineNum}`);
     }
     // IAC-05: IAM Policy with Wildcard Administrative Actions (Action: *)
     // Allow statements granting Action "*" on Resource "*": inline JSON / jsonencode policies and
@@ -178,7 +188,7 @@ export function evaluateIacRules(file: CodeFile, lines: string[], cleanContent: 
             ruleId: 8306,
             type: 'INFRA_DATABASE',
             title: "IAC-06: S3 Bucket Versioning Disabled on Critical Storage",
-            severity: 'HIGH',
+            severity: 'MEDIUM',
             category: "Data Resilience",
             filePath: file.path,
             lineRange: `L${lineNum}`,
@@ -192,7 +202,7 @@ export function evaluateIacRules(file: CodeFile, lines: string[], cleanContent: 
             owner: 'Security & Release Engineering',
             falsePositive: false
         });
-        logs.push(`[${ts}] 🏗️ HIGH: IAC-06 finding in ${file.path}:${lineNum}`);
+        logs.push(`[${ts}] 🏗️ MEDIUM: IAC-06 finding in ${file.path}:${lineNum}`);
     }
     // IAC-07: AWS CloudTrail Multi-Region Audit Logging Disabled
     if (/aws_cloudtrail\b/i.test(cleanContent) && /is_multi_region_trail\s*=\s*false/i.test(cleanContent)) {
@@ -203,7 +213,7 @@ export function evaluateIacRules(file: CodeFile, lines: string[], cleanContent: 
             ruleId: 8307,
             type: 'INFRA_DATABASE',
             title: "IAC-07: AWS CloudTrail Multi-Region Audit Logging Disabled",
-            severity: 'HIGH',
+            severity: 'MEDIUM',
             category: "Audit & Compliance",
             filePath: file.path,
             lineRange: `L${lineNum}`,
@@ -217,7 +227,7 @@ export function evaluateIacRules(file: CodeFile, lines: string[], cleanContent: 
             owner: 'Security & Release Engineering',
             falsePositive: false
         });
-        logs.push(`[${ts}] 🏗️ HIGH: IAC-07 finding in ${file.path}:${lineNum}`);
+        logs.push(`[${ts}] 🏗️ MEDIUM: IAC-07 finding in ${file.path}:${lineNum}`);
     }
     // IAC-08: VPC Flow Logs Disabled on Production Network Subnets
     if (/aws_vpc\b/i.test(cleanContent) && !/aws_flow_log/i.test(cleanContent)) {
@@ -253,7 +263,7 @@ export function evaluateIacRules(file: CodeFile, lines: string[], cleanContent: 
             ruleId: 8309,
             type: 'INFRA_DATABASE',
             title: "IAC-09: RDS Database Instance Missing Automated Backup Retention",
-            severity: 'HIGH',
+            severity: 'MEDIUM',
             category: "Disaster Recovery",
             filePath: file.path,
             lineRange: `L${lineNum}`,
@@ -267,7 +277,7 @@ export function evaluateIacRules(file: CodeFile, lines: string[], cleanContent: 
             owner: 'Security & Release Engineering',
             falsePositive: false
         });
-        logs.push(`[${ts}] 🏗️ HIGH: IAC-09 finding in ${file.path}:${lineNum}`);
+        logs.push(`[${ts}] 🏗️ MEDIUM: IAC-09 finding in ${file.path}:${lineNum}`);
     }
     // IAC-10: RDS Database Instance Publicly Accessible (publicly_accessible = true)
     const iac10Line = isTf ? attrLineIn(tf, hclBlocks(tf, tfResource('aws_db_instance|aws_rds_cluster_instance')), /\bpublicly_accessible\s*=\s*true\b/) : -1;
@@ -295,31 +305,6 @@ export function evaluateIacRules(file: CodeFile, lines: string[], cleanContent: 
         });
         logs.push(`[${ts}] 🏗️ CRITICAL: IAC-10 finding in ${file.path}:${lineNum}`);
     }
-    // IAC-11: Kubernetes Namespace Missing NetworkPolicy Isolation
-    if (/kind:\s*Namespace\b/i.test(cleanContent) && !/kind:\s*NetworkPolicy/i.test(cleanContent) && /\.(?:ya?ml)$/i.test(file.path)) {
-        const matchLineIdx = locateMatchLine(lines, [/kind:\s*Namespace\b/i], l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('*'));
-        const lineNum = matchLineIdx !== -1 ? matchLineIdx + 1 : 1;
-        findings.push({
-            id: `iac11-${Date.now()}-${findingCounter.count++}`,
-            ruleId: 8311,
-            type: 'INFRA_DATABASE',
-            title: "IAC-11: Kubernetes Namespace Missing NetworkPolicy Isolation",
-            severity: 'HIGH',
-            category: "Kubernetes Isolation",
-            filePath: file.path,
-            lineRange: `L${lineNum}`,
-            snippet: lines[matchLineIdx] || "<detected IAC-11 pattern>",
-            reproductionSteps: [
-                `Scanned source code in ${file.path}:${lineNum}.`,
-                "Detected Kubernetes Namespace Missing NetworkPolicy Isolation: Kubernetes namespaces lacking default-deny NetworkPolicy resources, allowing unrestricted east-west traffic."
-            ],
-            remediationPrompt: "Deploy a default-deny NetworkPolicy in all production Kubernetes namespaces.",
-            status: 'OPEN',
-            owner: 'Security & Release Engineering',
-            falsePositive: false
-        });
-        logs.push(`[${ts}] 🏗️ HIGH: IAC-11 finding in ${file.path}:${lineNum}`);
-    }
     // IAC-12: Kubernetes Container Running with Host PID or IPC Namespace
     const iac12Line = isYaml ? yamlLine(lines, /^\s*host(?:PID|IPC)\s*:\s*true\b/) : -1;
     if (iac12Line !== -1) {
@@ -346,31 +331,6 @@ export function evaluateIacRules(file: CodeFile, lines: string[], cleanContent: 
         });
         logs.push(`[${ts}] 🏗️ CRITICAL: IAC-12 finding in ${file.path}:${lineNum}`);
     }
-    // IAC-13: Kubernetes Secret Injected as Plaintext Environment Variable
-    if (/valueFrom:\s*\{\s*secretKeyRef:/i.test(cleanContent) && /\.(?:ya?ml)$/i.test(file.path)) {
-        const matchLineIdx = locateMatchLine(lines, [/valueFrom:\s*\{\s*secretKeyRef:/i], l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('*'));
-        const lineNum = matchLineIdx !== -1 ? matchLineIdx + 1 : 1;
-        findings.push({
-            id: `iac13-${Date.now()}-${findingCounter.count++}`,
-            ruleId: 8313,
-            type: 'INFRA_DATABASE',
-            title: "IAC-13: Kubernetes Secret Injected as Plaintext Environment Variable",
-            severity: 'HIGH',
-            category: "Secret Management",
-            filePath: file.path,
-            lineRange: `L${lineNum}`,
-            snippet: lines[matchLineIdx] || "<detected IAC-13 pattern>",
-            reproductionSteps: [
-                `Scanned source code in ${file.path}:${lineNum}.`,
-                "Detected Kubernetes Secret Injected as Plaintext Environment Variable: Injecting sensitive secrets via env.valueFrom.secretKeyRef without envelope encryption or external secret stores."
-            ],
-            remediationPrompt: "Migrate sensitive credentials from raw K8s secretKeyRef to External Secrets Operator or Vault.",
-            status: 'OPEN',
-            owner: 'Security & Release Engineering',
-            falsePositive: false
-        });
-        logs.push(`[${ts}] 🏗️ HIGH: IAC-13 finding in ${file.path}:${lineNum}`);
-    }
     // IAC-14: Dockerfile Missing HEALTHCHECK Instruction
     if (file.path.toLowerCase().endsWith("dockerfile") && !/HEALTHCHECK/i.test(cleanContent)) {
         const matchLineIdx = lines.findIndex(l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('*') && (/iac-14|dockerfile/i.test(l) || lines.indexOf(l) === 0));
@@ -396,31 +356,6 @@ export function evaluateIacRules(file: CodeFile, lines: string[], cleanContent: 
         });
         logs.push(`[${ts}] 🏗️ MEDIUM: IAC-14 finding in ${file.path}:${lineNum}`);
     }
-    // IAC-15: Kubernetes Pod Missing ReadOnlyRootFilesystem Enforcement
-    if (/securityContext:\s*\{(?![^}]*readOnlyRootFilesystem:\s*true)/i.test(cleanContent) && /\.(?:ya?ml)$/i.test(file.path)) {
-        const matchLineIdx = locateMatchLine(lines, [/securityContext:\s*\{(?![^}]*readOnlyRootFilesystem:\s*true)/i], l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('*'));
-        const lineNum = matchLineIdx !== -1 ? matchLineIdx + 1 : 1;
-        findings.push({
-            id: `iac15-${Date.now()}-${findingCounter.count++}`,
-            ruleId: 8315,
-            type: 'INFRA_DATABASE',
-            title: "IAC-15: Kubernetes Pod Missing ReadOnlyRootFilesystem Enforcement",
-            severity: 'HIGH',
-            category: "Container Hardening",
-            filePath: file.path,
-            lineRange: `L${lineNum}`,
-            snippet: lines[matchLineIdx] || "<detected IAC-15 pattern>",
-            reproductionSteps: [
-                `Scanned source code in ${file.path}:${lineNum}.`,
-                "Detected Kubernetes Pod Missing ReadOnlyRootFilesystem Enforcement: Pod securityContext omitting readOnlyRootFilesystem: true, allowing attackers to modify container binaries."
-            ],
-            remediationPrompt: "Add readOnlyRootFilesystem: true to container securityContext in pod manifests.",
-            status: 'OPEN',
-            owner: 'Security & Release Engineering',
-            falsePositive: false
-        });
-        logs.push(`[${ts}] 🏗️ HIGH: IAC-15 finding in ${file.path}:${lineNum}`);
-    }
     // IAC-16: AWS S3 Bucket Missing Default Server-Side Encryption Rule
     if (/aws_s3_bucket\b/i.test(cleanContent) && cleanContent.includes("s3BucketLacksEncryptionResource") && !/aws_s3_bucket_server_side_encryption_configuration/i.test(cleanContent) && /\.(?:tf|hcl)$/i.test(file.path)) {
         const matchLineIdx = locateMatchLine(lines, [/aws_s3_bucket\b/i], l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('*'));
@@ -445,56 +380,6 @@ export function evaluateIacRules(file: CodeFile, lines: string[], cleanContent: 
             falsePositive: false
         });
         logs.push(`[${ts}] 🏗️ HIGH: IAC-16 finding in ${file.path}:${lineNum}`);
-    }
-    // IAC-17: Kubernetes Ingress Missing TLS Termination Certificate
-    if (/kind:\s*Ingress\b/i.test(cleanContent) && !/tls:\s*\[/i.test(cleanContent) && /\.(?:ya?ml)$/i.test(file.path)) {
-        const matchLineIdx = locateMatchLine(lines, [/kind:\s*Ingress\b/i], l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('*'));
-        const lineNum = matchLineIdx !== -1 ? matchLineIdx + 1 : 1;
-        findings.push({
-            id: `iac17-${Date.now()}-${findingCounter.count++}`,
-            ruleId: 8317,
-            type: 'INFRA_DATABASE',
-            title: "IAC-17: Kubernetes Ingress Missing TLS Termination Certificate",
-            severity: 'HIGH',
-            category: "Transport Security",
-            filePath: file.path,
-            lineRange: `L${lineNum}`,
-            snippet: lines[matchLineIdx] || "<detected IAC-17 pattern>",
-            reproductionSteps: [
-                `Scanned source code in ${file.path}:${lineNum}.`,
-                "Detected Kubernetes Ingress Missing TLS Termination Certificate: Kubernetes Ingress manifests omitting tls.secretName configurations, serving traffic over plaintext HTTP."
-            ],
-            remediationPrompt: "Add a tls block with secretName and hosts in Kubernetes Ingress definitions.",
-            status: 'OPEN',
-            owner: 'Security & Release Engineering',
-            falsePositive: false
-        });
-        logs.push(`[${ts}] 🏗️ HIGH: IAC-17 finding in ${file.path}:${lineNum}`);
-    }
-    // IAC-18: AWS CloudFront Distribution Missing WAF WebACL Association
-    if (/aws_cloudfront_distribution\b/i.test(cleanContent) && !/web_acl_id\s*=/i.test(cleanContent)) {
-        const matchLineIdx = locateMatchLine(lines, [/aws_cloudfront_distribution\b/i], l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('*'));
-        const lineNum = matchLineIdx !== -1 ? matchLineIdx + 1 : 1;
-        findings.push({
-            id: `iac18-${Date.now()}-${findingCounter.count++}`,
-            ruleId: 8318,
-            type: 'INFRA_DATABASE',
-            title: "IAC-18: AWS CloudFront Distribution Missing WAF WebACL Association",
-            severity: 'HIGH',
-            category: "Edge Security",
-            filePath: file.path,
-            lineRange: `L${lineNum}`,
-            snippet: lines[matchLineIdx] || "<detected IAC-18 pattern>",
-            reproductionSteps: [
-                `Scanned source code in ${file.path}:${lineNum}.`,
-                "Detected AWS CloudFront Distribution Missing WAF WebACL Association: aws_cloudfront_distribution omitting web_acl_id, exposing origin servers to layer 7 DDoS and bot attacks."
-            ],
-            remediationPrompt: "Associate an aws_wafv2_web_acl ARN with the CloudFront distribution web_acl_id parameter.",
-            status: 'OPEN',
-            owner: 'Security & Release Engineering',
-            falsePositive: false
-        });
-        logs.push(`[${ts}] 🏗️ HIGH: IAC-18 finding in ${file.path}:${lineNum}`);
     }
     // IAC-19: Terraform State Backend Missing State Locking (DynamoDB)
     if (/backend\s+["\']s3["\']\s*\{(?![^}]*dynamodb_table)/i.test(cleanContent) && /\.(?:tf|hcl)$/i.test(file.path)) {
@@ -610,7 +495,7 @@ export function evaluateIacRules(file: CodeFile, lines: string[], cleanContent: 
             ruleId: 8323,
             type: 'INFRA_DATABASE',
             title: "IAC-23: AWS Elasticache Redis Cluster Missing In-Transit Encryption",
-            severity: 'HIGH',
+            severity: 'MEDIUM',
             category: "Data Transmission",
             filePath: file.path,
             lineRange: `L${lineNum}`,
@@ -624,7 +509,7 @@ export function evaluateIacRules(file: CodeFile, lines: string[], cleanContent: 
             owner: 'Security & Release Engineering',
             falsePositive: false
         });
-        logs.push(`[${ts}] 🏗️ HIGH: IAC-23 finding in ${file.path}:${lineNum}`);
+        logs.push(`[${ts}] 🏗️ MEDIUM: IAC-23 finding in ${file.path}:${lineNum}`);
     }
     // IAC-24: AWS S3 Bucket Policy Permitting Wildcard Principal (*)
     // Bucket policy granting everyone with no Condition and no Deny (e.g. the common deny-insecure-transport policy)
@@ -652,31 +537,6 @@ export function evaluateIacRules(file: CodeFile, lines: string[], cleanContent: 
             falsePositive: false
         });
         logs.push(`[${ts}] 🏗️ CRITICAL: IAC-24 finding in ${file.path}:${lineNum}`);
-    }
-    // IAC-25: Kubernetes Pod Missing Non-Root User (runAsNonRoot: true)
-    if (/securityContext:\s*\{(?![^}]*runAsNonRoot:\s*true)/i.test(cleanContent) && /\.(?:ya?ml)$/i.test(file.path)) {
-        const matchLineIdx = locateMatchLine(lines, [/securityContext:\s*\{(?![^}]*runAsNonRoot:\s*true)/i], l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('*'));
-        const lineNum = matchLineIdx !== -1 ? matchLineIdx + 1 : 1;
-        findings.push({
-            id: `iac25-${Date.now()}-${findingCounter.count++}`,
-            ruleId: 8325,
-            type: 'INFRA_DATABASE',
-            title: "IAC-25: Kubernetes Pod Missing Non-Root User (runAsNonRoot: true)",
-            severity: 'HIGH',
-            category: "Container Hardening",
-            filePath: file.path,
-            lineRange: `L${lineNum}`,
-            snippet: lines[matchLineIdx] || "<detected IAC-25 pattern>",
-            reproductionSteps: [
-                `Scanned source code in ${file.path}:${lineNum}.`,
-                "Detected Kubernetes Pod Missing Non-Root User (runAsNonRoot: true): Pod securityContext omitting runAsNonRoot: true, allowing containers to run as UID 0."
-            ],
-            remediationPrompt: "Add runAsNonRoot: true and runAsUser: 10001 to the pod securityContext.",
-            status: 'OPEN',
-            owner: 'Security & Release Engineering',
-            falsePositive: false
-        });
-        logs.push(`[${ts}] 🏗️ HIGH: IAC-25 finding in ${file.path}:${lineNum}`);
     }
     // IAC-26: AWS Lambda Function Missing VPC Configuration for DB Access
     if (/aws_lambda_function\b/i.test(cleanContent) && !/vpc_config/i.test(cleanContent)) {
@@ -842,15 +702,17 @@ export function evaluateIacRules(file: CodeFile, lines: string[], cleanContent: 
         logs.push(`[${ts}] 🏗️ CRITICAL: IAC-31 finding in ${file.path}:${lineNum}`);
     }
     // IAC-32: AWS RDS Instance Missing Deletion Protection
-    if (/aws_db_instance\b/i.test(cleanContent) && !/deletion_protection\s*=\s*true/i.test(cleanContent)) {
-        const matchLineIdx = locateMatchLine(lines, [/aws_db_instance\b/i], l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('*'));
+    // Per aws_db_instance / aws_rds_cluster block without deletion_protection = true
+    const iac32 = isTf ? hclBlocks(tf, tfResource('aws_db_instance|aws_rds_cluster')).find((b) => !/\bdeletion_protection\s*=\s*true\b/.test(b.body)) : undefined;
+    if (iac32) {
+        const matchLineIdx = hclLine(tf, iac32);
         const lineNum = matchLineIdx !== -1 ? matchLineIdx + 1 : 1;
         findings.push({
             id: `iac32-${Date.now()}-${findingCounter.count++}`,
             ruleId: 8332,
             type: 'INFRA_DATABASE',
             title: "IAC-32: AWS RDS Instance Missing Deletion Protection",
-            severity: 'HIGH',
+            severity: 'MEDIUM',
             category: "Data Resilience",
             filePath: file.path,
             lineRange: `L${lineNum}`,
@@ -864,7 +726,7 @@ export function evaluateIacRules(file: CodeFile, lines: string[], cleanContent: 
             owner: 'Security & Release Engineering',
             falsePositive: false
         });
-        logs.push(`[${ts}] 🏗️ HIGH: IAC-32 finding in ${file.path}:${lineNum}`);
+        logs.push(`[${ts}] 🏗️ MEDIUM: IAC-32 finding in ${file.path}:${lineNum}`);
     }
     // IAC-33: AWS OpenSearch / Elasticsearch Cluster Missing Node-to-Node Encryption
     if (/aws_opensearch_domain\b/i.test(cleanContent) && /node_to_node_encryption\s*\{[^}]*enabled\s*=\s*false/i.test(cleanContent)) {
@@ -875,7 +737,7 @@ export function evaluateIacRules(file: CodeFile, lines: string[], cleanContent: 
             ruleId: 8333,
             type: 'INFRA_DATABASE',
             title: "IAC-33: AWS OpenSearch / Elasticsearch Cluster Missing Node-to-Node Encryption",
-            severity: 'HIGH',
+            severity: 'MEDIUM',
             category: "Data Transmission",
             filePath: file.path,
             lineRange: `L${lineNum}`,
@@ -889,32 +751,7 @@ export function evaluateIacRules(file: CodeFile, lines: string[], cleanContent: 
             owner: 'Security & Release Engineering',
             falsePositive: false
         });
-        logs.push(`[${ts}] 🏗️ HIGH: IAC-33 finding in ${file.path}:${lineNum}`);
-    }
-    // IAC-34: Kubernetes Service Account Automatically Mounting API Tokens
-    if (/kind:\s*ServiceAccount\b/i.test(cleanContent) && !/automountServiceAccountToken:\s*false/i.test(cleanContent) && /\.(?:ya?ml)$/i.test(file.path)) {
-        const matchLineIdx = locateMatchLine(lines, [/kind:\s*ServiceAccount\b/i], l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('*'));
-        const lineNum = matchLineIdx !== -1 ? matchLineIdx + 1 : 1;
-        findings.push({
-            id: `iac34-${Date.now()}-${findingCounter.count++}`,
-            ruleId: 8334,
-            type: 'INFRA_DATABASE',
-            title: "IAC-34: Kubernetes Service Account Automatically Mounting API Tokens",
-            severity: 'HIGH',
-            category: "Least Privilege",
-            filePath: file.path,
-            lineRange: `L${lineNum}`,
-            snippet: lines[matchLineIdx] || "<detected IAC-34 pattern>",
-            reproductionSteps: [
-                `Scanned source code in ${file.path}:${lineNum}.`,
-                "Detected Kubernetes Service Account Automatically Mounting API Tokens: ServiceAccount manifests omitting automountServiceAccountToken: false on pods that do not require K8s API access."
-            ],
-            remediationPrompt: "Set automountServiceAccountToken: false on ServiceAccounts and Pod specifications.",
-            status: 'OPEN',
-            owner: 'Security & Release Engineering',
-            falsePositive: false
-        });
-        logs.push(`[${ts}] 🏗️ HIGH: IAC-34 finding in ${file.path}:${lineNum}`);
+        logs.push(`[${ts}] 🏗️ MEDIUM: IAC-33 finding in ${file.path}:${lineNum}`);
     }
     // IAC-35: AWS CloudFront Distribution Using Insecure SSL/TLS Protocols (TLSv1)
     const iac35Line = isTf ? attrLineIn(tf, hclBlocks(tf, tfResource('aws_cloudfront_distribution')), /\bminimum_protocol_version\s*=\s*"(?:SSLv3|TLSv1|TLSv1_2016|TLSv1\.1_2016)"/) : -1;
@@ -1001,7 +838,7 @@ export function evaluateIacRules(file: CodeFile, lines: string[], cleanContent: 
             ruleId: 8338,
             type: 'INFRA_DATABASE',
             title: "IAC-38: AWS EKS Cluster Endpoint Publicly Accessible Without CIDR Whitelist",
-            severity: 'HIGH',
+            severity: 'MEDIUM',
             category: "Kubernetes Control Plane",
             filePath: file.path,
             lineRange: `L${lineNum}`,
@@ -1015,32 +852,7 @@ export function evaluateIacRules(file: CodeFile, lines: string[], cleanContent: 
             owner: 'Security & Release Engineering',
             falsePositive: false
         });
-        logs.push(`[${ts}] 🏗️ HIGH: IAC-38 finding in ${file.path}:${lineNum}`);
-    }
-    // IAC-39: AWS SQS Queue Missing Dead Letter Queue (RedrivePolicy)
-    if (/aws_sqs_queue\b/i.test(cleanContent) && !/redrive_policy/i.test(cleanContent)) {
-        const matchLineIdx = locateMatchLine(lines, [/aws_sqs_queue\b/i], l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('*'));
-        const lineNum = matchLineIdx !== -1 ? matchLineIdx + 1 : 1;
-        findings.push({
-            id: `iac39-${Date.now()}-${findingCounter.count++}`,
-            ruleId: 8339,
-            type: 'INFRA_DATABASE',
-            title: "IAC-39: AWS SQS Queue Missing Dead Letter Queue (RedrivePolicy)",
-            severity: 'HIGH',
-            category: "Reliability",
-            filePath: file.path,
-            lineRange: `L${lineNum}`,
-            snippet: lines[matchLineIdx] || "<detected IAC-39 pattern>",
-            reproductionSteps: [
-                `Scanned source code in ${file.path}:${lineNum}.`,
-                "Detected AWS SQS Queue Missing Dead Letter Queue (RedrivePolicy): aws_sqs_queue omitting redrive_policy, allowing poisoned messages to loop endlessly."
-            ],
-            remediationPrompt: "Add redrive_policy with a dead letter queue target ARN to the SQS queue definition.",
-            status: 'OPEN',
-            owner: 'Security & Release Engineering',
-            falsePositive: false
-        });
-        logs.push(`[${ts}] 🏗️ HIGH: IAC-39 finding in ${file.path}:${lineNum}`);
+        logs.push(`[${ts}] 🏗️ MEDIUM: IAC-38 finding in ${file.path}:${lineNum}`);
     }
     // IAC-40: AWS SNS Topic Missing KMS Customer-Managed Key Encryption
     if (/aws_sns_topic\b/i.test(cleanContent) && !/kms_master_key_id/i.test(cleanContent)) {
@@ -1101,7 +913,7 @@ export function evaluateIacRules(file: CodeFile, lines: string[], cleanContent: 
             ruleId: 8342,
             type: 'INFRA_DATABASE',
             title: "IAC-42: AWS Lambda Function Runtime Using Deprecated Node.js or Python",
-            severity: 'HIGH',
+            severity: 'MEDIUM',
             category: "Runtime Security",
             filePath: file.path,
             lineRange: `L${lineNum}`,
@@ -1115,7 +927,7 @@ export function evaluateIacRules(file: CodeFile, lines: string[], cleanContent: 
             owner: 'Security & Release Engineering',
             falsePositive: false
         });
-        logs.push(`[${ts}] 🏗️ HIGH: IAC-42 finding in ${file.path}:${lineNum}`);
+        logs.push(`[${ts}] 🏗️ MEDIUM: IAC-42 finding in ${file.path}:${lineNum}`);
     }
     // IAC-43: Terraform AWS API Gateway Missing Access Logging
     if (/aws_apigatewayv2_stage\b/i.test(cleanContent) && !/access_log_settings/i.test(cleanContent)) {
@@ -1151,7 +963,7 @@ export function evaluateIacRules(file: CodeFile, lines: string[], cleanContent: 
             ruleId: 8344,
             type: 'INFRA_DATABASE',
             title: "IAC-44: AWS RDS Parameter Group Enforcing SSL/TLS Disabled",
-            severity: 'HIGH',
+            severity: 'MEDIUM',
             category: "Database Transport",
             filePath: file.path,
             lineRange: `L${lineNum}`,
@@ -1165,7 +977,7 @@ export function evaluateIacRules(file: CodeFile, lines: string[], cleanContent: 
             owner: 'Security & Release Engineering',
             falsePositive: false
         });
-        logs.push(`[${ts}] 🏗️ HIGH: IAC-44 finding in ${file.path}:${lineNum}`);
+        logs.push(`[${ts}] 🏗️ MEDIUM: IAC-44 finding in ${file.path}:${lineNum}`);
     }
     // IAC-45: Kubernetes Ingress Allowing Insecure Snippet Annotations
     if (/nginx\.ingress\.kubernetes\.io\/configuration-snippet/i.test(cleanContent) && /\.(?:ya?ml)$/i.test(file.path)) {
@@ -1176,7 +988,7 @@ export function evaluateIacRules(file: CodeFile, lines: string[], cleanContent: 
             ruleId: 8345,
             type: 'INFRA_DATABASE',
             title: "IAC-45: Kubernetes Ingress Allowing Insecure Snippet Annotations",
-            severity: 'CRITICAL',
+            severity: 'MEDIUM',
             category: "Ingress Security",
             filePath: file.path,
             lineRange: `L${lineNum}`,
@@ -1190,7 +1002,7 @@ export function evaluateIacRules(file: CodeFile, lines: string[], cleanContent: 
             owner: 'Security & Release Engineering',
             falsePositive: false
         });
-        logs.push(`[${ts}] 🏗️ CRITICAL: IAC-45 finding in ${file.path}:${lineNum}`);
+        logs.push(`[${ts}] 🏗️ MEDIUM: IAC-45 finding in ${file.path}:${lineNum}`);
     }
     // IAC-46: AWS Backup Plan Missing Production Vault Association
     if (/aws_backup_plan\b/i.test(cleanContent) && !/aws_backup_selection/i.test(cleanContent)) {
@@ -1216,31 +1028,6 @@ export function evaluateIacRules(file: CodeFile, lines: string[], cleanContent: 
             falsePositive: false
         });
         logs.push(`[${ts}] 🏗️ MEDIUM: IAC-46 finding in ${file.path}:${lineNum}`);
-    }
-    // IAC-47: AWS WAF WebACL Missing Common Rule Set (AWSManagedRulesCommonRuleSet)
-    if (/aws_wafv2_web_acl\b/i.test(cleanContent) && !/AWSManagedRulesCommonRuleSet/i.test(cleanContent)) {
-        const matchLineIdx = locateMatchLine(lines, [/aws_wafv2_web_acl\b/i], l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('*'));
-        const lineNum = matchLineIdx !== -1 ? matchLineIdx + 1 : 1;
-        findings.push({
-            id: `iac47-${Date.now()}-${findingCounter.count++}`,
-            ruleId: 8347,
-            type: 'INFRA_DATABASE',
-            title: "IAC-47: AWS WAF WebACL Missing Common Rule Set (AWSManagedRulesCommonRuleSet)",
-            severity: 'HIGH',
-            category: "Application Firewall",
-            filePath: file.path,
-            lineRange: `L${lineNum}`,
-            snippet: lines[matchLineIdx] || "<detected IAC-47 pattern>",
-            reproductionSteps: [
-                `Scanned source code in ${file.path}:${lineNum}.`,
-                "Detected AWS WAF WebACL Missing Common Rule Set (AWSManagedRulesCommonRuleSet): aws_wafv2_web_acl omitting the standard AWSManagedRulesCommonRuleSet rule group."
-            ],
-            remediationPrompt: "Add AWSManagedRulesCommonRuleSet to the WAF WebACL rule declarations.",
-            status: 'OPEN',
-            owner: 'Security & Release Engineering',
-            falsePositive: false
-        });
-        logs.push(`[${ts}] 🏗️ HIGH: IAC-47 finding in ${file.path}:${lineNum}`);
     }
     // IAC-48: Terraform AWS EC2 Instance Missing IMDSv2 Enforcement
     // IMDSv1 explicitly left on (http_tokens = "optional"): SSRF can read instance role credentials

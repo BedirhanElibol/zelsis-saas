@@ -523,4 +523,684 @@ export const CASES: RuleCase[] = [
       '}'
     ))
   },
+
+  // ─── GraphQL ──────────────────────────────────────────────────────────
+  {
+    ruleIds: [26, 8501, 8503],
+    name: 'Apollo server without depth or complexity limits',
+    detects: f('src/graphql/server.ts', src(
+      "import { ApolloServer } from '@apollo/server';",
+      "import { startStandaloneServer } from '@apollo/server/standalone';",
+      "import { typeDefs } from './schema';",
+      "import { resolvers } from './resolvers';",
+      'const server = new ApolloServer({ typeDefs, resolvers });',
+      'await startStandaloneServer(server, { listen: { port: 4000 } });'
+    )),
+    ignores: f('src/graphql/server.ts', src(
+      "import { ApolloServer } from '@apollo/server';",
+      "import { startStandaloneServer } from '@apollo/server/standalone';",
+      "import depthLimit from 'graphql-depth-limit';",
+      "import { createComplexityLimitRule } from 'graphql-validation-complexity';",
+      "import { typeDefs } from './schema';",
+      "import { resolvers } from './resolvers';",
+      'const server = new ApolloServer({',
+      '  typeDefs,',
+      '  resolvers,',
+      '  validationRules: [depthLimit(8), createComplexityLimitRule(1000)],',
+      '});',
+      'await startStandaloneServer(server, { listen: { port: 4000 } });'
+    ))
+  },
+  {
+    ruleIds: [8502, 8504, 8510],
+    name: 'Apollo server: introspection forced on, unbounded batching, CSRF prevention off',
+    detects: f('src/graphql/server.ts', src(
+      "import { ApolloServer } from '@apollo/server';",
+      "import depthLimit from 'graphql-depth-limit';",
+      'export const server = new ApolloServer({',
+      '  typeDefs,',
+      '  resolvers,',
+      '  introspection: true,',
+      '  allowBatchedHttpRequests: true,',
+      '  csrfPrevention: false,',
+      '  validationRules: [depthLimit(8)],',
+      '});'
+    )),
+    ignores: f('src/graphql/server.ts', src(
+      "import { ApolloServer } from '@apollo/server';",
+      "import depthLimit from 'graphql-depth-limit';",
+      'export const server = new ApolloServer({',
+      '  typeDefs,',
+      '  resolvers,',
+      "  introspection: process.env.NODE_ENV !== 'production',",
+      '  validationRules: [depthLimit(8)],',
+      '});'
+    ))
+  },
+  {
+    ruleIds: [8506],
+    name: 'GraphQL User type exposes passwordHash and stripeCustomerId',
+    detects: f('src/graphql/schema.ts', src(
+      "import { gql } from 'graphql-tag';",
+      'export const typeDefs = gql`',
+      '  type User {',
+      '    id: ID!',
+      '    email: String!',
+      '    passwordHash: String',
+      '    stripeCustomerId: String',
+      '  }',
+      '  type Query { me: User }',
+      '`;'
+    )),
+    ignores: f('src/graphql/schema.ts', src(
+      "import { gql } from 'graphql-tag';",
+      'export const typeDefs = gql`',
+      '  type User {',
+      '    id: ID!',
+      '    email: String!',
+      '    name: String',
+      '  }',
+      '  type Query { me: User }',
+      '`;'
+    ))
+  },
+  {
+    ruleIds: [8509],
+    name: 'code-first list field passes client `first` straight to take',
+    detects: f('src/graphql/fields/posts.ts', src(
+      "import { GraphQLInt, GraphQLList } from 'graphql';",
+      'export const postsField = {',
+      '  type: new GraphQLList(PostType),',
+      '  args: { first: { type: GraphQLInt } },',
+      '  async resolve(_parent: unknown, args: { first?: number }, ctx: Context) {',
+      "    return ctx.prisma.post.findMany({ take: args.first, orderBy: { createdAt: 'desc' } });",
+      '  },',
+      '};'
+    )),
+    ignores: f('src/graphql/fields/posts.ts', src(
+      "import { GraphQLInt, GraphQLList } from 'graphql';",
+      'export const postsField = {',
+      '  type: new GraphQLList(PostType),',
+      '  args: { first: { type: GraphQLInt } },',
+      '  async resolve(_parent: unknown, args: { first?: number }, ctx: Context) {',
+      "    return ctx.prisma.post.findMany({ take: Math.min(args.first ?? 20, 100), orderBy: { createdAt: 'desc' } });",
+      '  },',
+      '};'
+    ))
+  },
+  {
+    ruleIds: [8515],
+    name: 'graphql-upload middleware without file size / count limits',
+    detects: f('src/graphql/server.ts', src(
+      "import express from 'express';",
+      "import { ApolloServer } from '@apollo/server';",
+      "import { expressMiddleware } from '@apollo/server/express4';",
+      "import graphqlUploadExpress from 'graphql-upload/graphqlUploadExpress.mjs';",
+      'const app = express();',
+      'const server = new ApolloServer({ typeDefs, resolvers });',
+      'await server.start();',
+      "app.use('/graphql', graphqlUploadExpress(), express.json(), expressMiddleware(server));"
+    )),
+    ignores: f('src/graphql/server.ts', src(
+      "import express from 'express';",
+      "import { ApolloServer } from '@apollo/server';",
+      "import { expressMiddleware } from '@apollo/server/express4';",
+      "import graphqlUploadExpress from 'graphql-upload/graphqlUploadExpress.mjs';",
+      'const app = express();',
+      'const server = new ApolloServer({ typeDefs, resolvers });',
+      'await server.start();',
+      "app.use('/graphql', graphqlUploadExpress({ maxFileSize: 10_000_000, maxFiles: 5 }), express.json(), expressMiddleware(server));"
+    ))
+  },
+  {
+    ruleIds: [8516],
+    name: 'GraphQL document built by interpolating request input',
+    detects: f('app/api/search/route.ts', src(
+      "import { gql } from 'graphql-request';",
+      'export async function GET(req: Request) {',
+      '  const { searchParams } = new URL(req.url);',
+      '  const document = gql`',
+      '    query {',
+      '      products(filter: "${searchParams.get(\'q\')}") { id name }',
+      '    }',
+      '  `;',
+      '  return Response.json(await shopify.request(document));',
+      '}'
+    )),
+    ignores: f('app/api/search/route.ts', src(
+      "import { gql } from 'graphql-request';",
+      'const SEARCH = gql`',
+      '  query Search($q: String!) {',
+      '    products(filter: $q) { id name }',
+      '  }',
+      '`;',
+      'export async function GET(req: Request) {',
+      "  const term = new URL(req.url).searchParams.get('q') ?? '';",
+      '  return Response.json(await shopify.request(SEARCH, { q: term }));',
+      '}'
+    ))
+  },
+  {
+    ruleIds: [8517],
+    name: 'resolver interpolates args into $queryRawUnsafe',
+    detects: f('src/graphql/resolvers.ts', src(
+      'export const resolvers = {',
+      '  Query: {',
+      '    userByEmail: async (_parent: unknown, args: { email: string }, ctx: Context) => {',
+      '      const rows = await ctx.prisma.$queryRawUnsafe(`SELECT id, email FROM "User" WHERE email = \'${args.email}\'`);',
+      '      return rows[0];',
+      '    },',
+      '  },',
+      '};'
+    )),
+    ignores: f('src/graphql/resolvers.ts', src(
+      'export const resolvers = {',
+      '  Query: {',
+      '    userByEmail: async (_parent: unknown, args: { email: string }, ctx: Context) => {',
+      '      const rows = await ctx.prisma.$queryRaw`SELECT id, email FROM "User" WHERE email = ${args.email}`;',
+      '      return rows[0];',
+      '    },',
+      '  },',
+      '};'
+    ))
+  },
+
+  // ─── Core security rules ──────────────────────────────────────────────
+  {
+    ruleIds: [23],
+    name: 'profile PATCH spreads the raw JSON body into prisma update',
+    detects: f('app/api/profile/route.ts', src(
+      "import { auth } from '@/auth';",
+      "import { prisma } from '@/lib/prisma';",
+      'export async function PATCH(req: Request) {',
+      '  const session = await auth();',
+      "  if (!session?.user) return new Response('Unauthorized', { status: 401 });",
+      '  const body = await req.json();',
+      '  const user = await prisma.user.update({',
+      '    where: { id: session.user.id },',
+      '    data: body,',
+      '  });',
+      '  return Response.json(user);',
+      '}'
+    )),
+    ignores: f('app/api/profile/route.ts', src(
+      "import { auth } from '@/auth';",
+      "import { prisma } from '@/lib/prisma';",
+      "import { profileSchema } from '@/lib/validations';",
+      'export async function PATCH(req: Request) {',
+      '  const session = await auth();',
+      "  if (!session?.user) return new Response('Unauthorized', { status: 401 });",
+      '  const { name, bio } = profileSchema.parse(await req.json());',
+      '  const user = await prisma.user.update({',
+      '    where: { id: session.user.id },',
+      '    data: { name, bio },',
+      '  });',
+      '  return Response.json(user);',
+      '}'
+    ))
+  },
+  {
+    ruleIds: [27],
+    name: 'regex with nested quantifier (star height 2) on user input',
+    detects: f('lib/validation/display-name.ts', src(
+      'const DISPLAY_NAME = /^(\\w+\\s?)*$/;',
+      'export const isValidDisplayName = (value: string) => DISPLAY_NAME.test(value);'
+    )),
+    ignores: f('lib/validation/display-name.ts', src(
+      'const DISPLAY_NAME = /^[\\w ]{1,64}$/;',
+      'const ROLE = /^(admin|member|viewer)+$/;',
+      'export const isValidDisplayName = (value: string) => DISPLAY_NAME.test(value);',
+      'export const isRole = (value: string) => ROLE.test(value);'
+    ))
+  },
+
+  // ─── Next.js App Router ───────────────────────────────────────────────
+  {
+    ruleIds: [8605],
+    name: 'middleware forwards a tenant id taken from the query string',
+    detects: f('middleware.ts', src(
+      "import { NextResponse, type NextRequest } from 'next/server';",
+      'export function middleware(request: NextRequest) {',
+      '  const requestHeaders = new Headers(request.headers);',
+      "  requestHeaders.set('x-tenant-id', request.nextUrl.searchParams.get('tenant') ?? '');",
+      '  return NextResponse.next({ request: { headers: requestHeaders } });',
+      '}'
+    )),
+    ignores: f('middleware.ts', src(
+      "import { NextResponse, type NextRequest } from 'next/server';",
+      'export function middleware(request: NextRequest) {',
+      '  const requestHeaders = new Headers(request.headers);',
+      "  requestHeaders.set('x-tenant-id', tenantFromHost(request.headers.get('host')));",
+      '  return NextResponse.next({ request: { headers: requestHeaders } });',
+      '}'
+    ))
+  },
+  {
+    ruleIds: [8606],
+    name: 'public route handler revalidates any tag it is sent',
+    detects: f('app/api/revalidate/route.ts', src(
+      "import { revalidateTag } from 'next/cache';",
+      "import type { NextRequest } from 'next/server';",
+      'export async function POST(request: NextRequest) {',
+      '  const { tag } = await request.json();',
+      '  revalidateTag(tag);',
+      '  return Response.json({ revalidated: true, now: Date.now() });',
+      '}'
+    )),
+    ignores: f('app/api/revalidate/route.ts', src(
+      "import { revalidateTag } from 'next/cache';",
+      "import type { NextRequest } from 'next/server';",
+      'export async function POST(request: NextRequest) {',
+      "  if (request.headers.get('authorization') !== `Bearer ${process.env.REVALIDATE_SECRET}`) {",
+      "    return new Response('Unauthorized', { status: 401 });",
+      '  }',
+      '  const { tag } = await request.json();',
+      '  revalidateTag(tag);',
+      '  return Response.json({ revalidated: true, now: Date.now() });',
+      '}'
+    ))
+  },
+  {
+    ruleIds: [8607],
+    name: '<Link> pointing at a deleting API route (prefetched as GET)',
+    detects: f('app/projects/[id]/delete-button.tsx', src(
+      "import Link from 'next/link';",
+      'export function DeleteProject({ projectId }: { projectId: string }) {',
+      '  return (',
+      '    <Link href={`/api/projects/${projectId}/delete`} className="text-red-600">',
+      '      Delete project',
+      '    </Link>',
+      '  );',
+      '}'
+    )),
+    ignores: f('app/projects/[id]/delete-button.tsx', src(
+      "import Link from 'next/link';",
+      "import { deleteProject } from './actions';",
+      'export function DeleteProject({ projectId }: { projectId: string }) {',
+      '  return (',
+      '    <form action={deleteProject.bind(null, projectId)}>',
+      '      <button type="submit" className="text-red-600">Delete project</button>',
+      '      <Link href="/settings/delete-account">Delete your whole account instead</Link>',
+      '    </form>',
+      '  );',
+      '}'
+    ))
+  },
+
+  // ─── Supply chain ─────────────────────────────────────────────────────
+  {
+    ruleIds: [7305, 7308, 7319, 7325, 7326],
+    name: 'package.json: branch git dep, typo-squat, http tarball, vulnerable lodash/xml2js',
+    detects: f('package.json', `{
+  "name": "storefront",
+  "private": true,
+  "dependencies": {
+    "@acme/ui-kit": "git+https://github.com/acme/ui-kit.git#main",
+    "mongose": "^5.13.0",
+    "legacy-charts": "http://downloads.example-vendor.com/legacy-charts-1.2.0.tgz",
+    "lodash": "^4.17.15",
+    "xml2js": "^0.4.19",
+    "next": "15.1.0"
+  }
+}
+`),
+    ignores: f('package.json', `{
+  "name": "storefront",
+  "private": true,
+  "dependencies": {
+    "@acme/ui-kit": "git+https://github.com/acme/ui-kit.git#3f2c1a9d8e7b6c5a4f3e2d1c0b9a8f7e6d5c4b3a",
+    "mongoose": "^8.9.0",
+    "legacy-charts": "^1.2.0",
+    "lodash": "^4.17.21",
+    "xml2js": "^0.6.2",
+    "next": "15.1.0"
+  }
+}
+`)
+  },
+  {
+    ruleIds: [7306],
+    name: 'layout loads a CDN script without Subresource Integrity',
+    detects: f('app/layout.tsx', src(
+      'export default function RootLayout({ children }: { children: React.ReactNode }) {',
+      '  return (',
+      '    <html lang="en">',
+      '      <head>',
+      '        <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>',
+      '      </head>',
+      '      <body>{children}</body>',
+      '    </html>',
+      '  );',
+      '}'
+    )),
+    ignores: f('app/layout.tsx', src(
+      'export default function RootLayout({ children }: { children: React.ReactNode }) {',
+      '  return (',
+      '    <html lang="en">',
+      '      <head>',
+      '        <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js" integrity="sha384-9nhczxUqK87bcKHh20fSQcTGD4qq5GhayNYSYWqwBkINBhOfQLg/P5HG5lF1urn4" crossOrigin="anonymous"></script>',
+      '      </head>',
+      '      <body>{children}</body>',
+      '    </html>',
+      '  );',
+      '}'
+    ))
+  },
+  {
+    ruleIds: [7314],
+    name: 'requirements.txt with unpinned packages',
+    detects: f('requirements.txt', 'fastapi\nuvicorn\nsqlalchemy==2.0.30\n'),
+    ignores: f('requirements.txt', 'fastapi==0.115.6\nuvicorn==0.32.1\nsqlalchemy==2.0.30\n')
+  },
+  {
+    ruleIds: [7322, 7329, 7339],
+    name: 'workflow: action on @main, write-all token, curl | bash installer',
+    detects: f('.github/workflows/ci.yml', `name: CI
+on:
+  pull_request:
+permissions: write-all
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@main
+      - run: curl -fsSL https://get.example-tool.dev/install.sh | bash
+      - run: npm ci && npm test
+`),
+    ignores: f('.github/workflows/ci.yml', `name: CI
+on:
+  pull_request:
+permissions:
+  contents: read
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
+      - run: |
+          curl -fsSL -o install.sh https://get.example-tool.dev/install.sh
+          echo "2f6b0e2a9c4d7e1f3a5b8c0d2e4f6a8b1c3d5e7f9a0b2c4d6e8f0a1b3c5d7e9f  install.sh" | sha256sum -c -
+          bash install.sh
+      - run: npm ci && npm test
+`)
+  },
+
+  {
+    ruleIds: [7323],
+    name: 'pull_request_target checks out the PR head and runs its scripts',
+    detects: f('.github/workflows/preview.yml', `name: Preview
+on:
+  pull_request_target:
+    types: [opened, synchronize]
+permissions:
+  contents: read
+  pull-requests: write
+jobs:
+  preview:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
+        with:
+          ref: \${{ github.event.pull_request.head.sha }}
+      - run: npm ci && npm run build
+      - run: npx vercel deploy --token \${{ secrets.VERCEL_TOKEN }}
+`),
+    ignores: f('.github/workflows/preview.yml', `name: Preview
+on:
+  pull_request_target:
+    types: [opened, synchronize]
+permissions:
+  contents: read
+  pull-requests: write
+jobs:
+  label:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
+      - run: node scripts/label-pr.mjs
+`)
+  },
+
+  // ─── OAuth / OIDC ─────────────────────────────────────────────────────
+  {
+    ruleIds: [10903],
+    name: 'passport Google strategy without the OAuth state parameter',
+    detects: f('src/auth/google.ts', src(
+      "import passport from 'passport';",
+      "import { Strategy as GoogleStrategy } from 'passport-google-oauth20';",
+      'passport.use(new GoogleStrategy({',
+      '  clientID: process.env.GOOGLE_CLIENT_ID!,',
+      '  clientSecret: process.env.GOOGLE_CLIENT_SECRET!,',
+      "  callbackURL: '/auth/google/callback',",
+      '}, verifyGoogleUser));',
+      "router.get('/auth/google', passport.authenticate('google', { scope: ['profile', 'email'] }));",
+      "router.get('/auth/google/callback', passport.authenticate('google', { failureRedirect: '/login' }), (req, res) => res.redirect('/'));"
+    )),
+    ignores: f('src/auth/google.ts', src(
+      "import passport from 'passport';",
+      "import { Strategy as GoogleStrategy } from 'passport-google-oauth20';",
+      'passport.use(new GoogleStrategy({',
+      '  clientID: process.env.GOOGLE_CLIENT_ID!,',
+      '  clientSecret: process.env.GOOGLE_CLIENT_SECRET!,',
+      "  callbackURL: '/auth/google/callback',",
+      '  state: true,',
+      '}, verifyGoogleUser));',
+      "router.get('/auth/google', passport.authenticate('google', { scope: ['profile', 'email'] }));",
+      "router.get('/auth/google/callback', passport.authenticate('google', { failureRedirect: '/login' }), (req, res) => res.redirect('/'));"
+    ))
+  },
+  {
+    ruleIds: [10905],
+    name: 'app collects the user password and uses the ROPC grant',
+    detects: f('lib/auth/keycloak.ts', src(
+      'export async function signIn(username: string, password: string) {',
+      '  const res = await fetch(`${process.env.KEYCLOAK_URL}/protocol/openid-connect/token`, {',
+      "    method: 'POST',",
+      "    body: new URLSearchParams({ grant_type: 'password', client_id: 'web', username, password }),",
+      '  });',
+      '  return res.json();',
+      '}'
+    )),
+    ignores: f('lib/auth/keycloak.ts', src(
+      'export async function exchangeCode(code: string, codeVerifier: string) {',
+      '  const res = await fetch(`${process.env.KEYCLOAK_URL}/protocol/openid-connect/token`, {',
+      "    method: 'POST',",
+      "    body: new URLSearchParams({ grant_type: 'authorization_code', client_id: 'web', code, code_verifier: codeVerifier, redirect_uri: REDIRECT_URI }),",
+      '  });',
+      '  return res.json();',
+      '}'
+    ))
+  },
+
+  // ─── Redis ────────────────────────────────────────────────────────────
+  {
+    ruleIds: [10703],
+    name: 'redis.conf binds all interfaces without requirepass',
+    detects: f('config/redis.conf', 'bind 0.0.0.0\nprotected-mode no\nport 6379\n# requirepass foobared\nappendonly yes\ndir /var/lib/redis\n'),
+    ignores: f('config/redis.conf', 'bind 127.0.0.1 -::1\nprotected-mode yes\nport 6379\n# requirepass foobared\nappendonly yes\ndir /var/lib/redis\n')
+  },
+  {
+    ruleIds: [10704],
+    name: 'Lua script assembled with template interpolation',
+    detects: f('lib/rate-limit.ts', src(
+      'export async function hit(key: string, windowSeconds: number) {',
+      "  return redis.eval(`local n = redis.call('INCR', '${key}') if n == 1 then redis.call('EXPIRE', '${key}', ${windowSeconds}) end return n`, 0);",
+      '}'
+    )),
+    ignores: f('lib/rate-limit.ts', src(
+      "const HIT = \"local n = redis.call('INCR', KEYS[1]) if n == 1 then redis.call('EXPIRE', KEYS[1], ARGV[1]) end return n\";",
+      'export async function hit(key: string, windowSeconds: number) {',
+      '  return redis.eval(HIT, 1, key, windowSeconds);',
+      '}'
+    ))
+  },
+  {
+    ruleIds: [27241],
+    name: 'docker-compose publishes Redis with protected mode off and no password',
+    detects: f('docker-compose.yml', `services:
+  redis:
+    image: redis:7-alpine
+    command: redis-server --protected-mode no
+    ports:
+      - "6379:6379"
+`),
+    ignores: f('docker-compose.yml', `services:
+  redis:
+    image: redis:7-alpine
+    command: redis-server --requirepass \${REDIS_PASSWORD}
+    ports:
+      - "127.0.0.1:6379:6379"
+`)
+  },
+
+  // ─── Downgraded (precise, lower impact) ───────────────────────────────
+  {
+    ruleIds: [8113],
+    name: 'CORS headers: credentials allowed with wildcard origin (MEDIUM)',
+    detects: f('app/api/widgets/route.ts', src(
+      'const corsHeaders = {',
+      "  'Access-Control-Allow-Origin': '*',",
+      "  'Access-Control-Allow-Credentials': 'true',",
+      "  'Access-Control-Allow-Methods': 'GET, POST, OPTIONS',",
+      '};',
+      'export async function OPTIONS() {',
+      '  return new Response(null, { headers: corsHeaders });',
+      '}'
+    )),
+    ignores: f('app/api/widgets/route.ts', src(
+      'const corsHeaders = {',
+      "  'Access-Control-Allow-Origin': process.env.APP_URL!,",
+      "  'Access-Control-Allow-Credentials': 'true',",
+      "  'Access-Control-Allow-Methods': 'GET, POST, OPTIONS',",
+      "  Vary: 'Origin',",
+      '};',
+      'export async function OPTIONS() {',
+      '  return new Response(null, { headers: corsHeaders });',
+      '}'
+    ))
+  },
+  {
+    ruleIds: [8131],
+    name: 'access token persisted in localStorage (MEDIUM)',
+    detects: f('lib/api-client.ts', src(
+      'export async function login(email: string, password: string) {',
+      "  const res = await fetch('/api/login', { method: 'POST', body: JSON.stringify({ email, password }) });",
+      '  const { accessToken } = await res.json();',
+      "  localStorage.setItem('token', accessToken);",
+      '}'
+    )),
+    ignores: f('lib/api-client.ts', src(
+      'export async function login(email: string, password: string) {',
+      "  await fetch('/api/login', { method: 'POST', credentials: 'include', body: JSON.stringify({ email, password }) });",
+      '}'
+    ))
+  },
+  {
+    ruleIds: [7203],
+    name: 'API route returns a whole table with findMany() (MEDIUM)',
+    detects: f('app/api/orders/route.ts', src(
+      'export async function GET() {',
+      '  const orders = await prisma.order.findMany();',
+      '  return Response.json(orders);',
+      '}'
+    )),
+    ignores: f('app/api/orders/route.ts', src(
+      'export async function GET(request: Request) {',
+      "  const cursor = new URL(request.url).searchParams.get('cursor') ?? undefined;",
+      '  const orders = await prisma.order.findMany({ take: 50, ...(cursor && { skip: 1, cursor: { id: cursor } }) });',
+      '  return Response.json(orders);',
+      '}'
+    ))
+  },
+  {
+    ruleIds: [7235],
+    name: 'Content-Disposition filename concatenated unencoded (MEDIUM)',
+    detects: f('app/api/files/[id]/route.ts', src(
+      'export async function GET(_req: Request, { params }: { params: Promise<{ id: string }> }) {',
+      '  const file = await getFile((await params).id);',
+      '  const headers = new Headers();',
+      "  headers.set('Content-Disposition', 'attachment; filename=' + file.name);",
+      '  return new Response(file.body, { headers });',
+      '}'
+    )),
+    ignores: f('app/api/files/[id]/route.ts', src(
+      'export async function GET(_req: Request, { params }: { params: Promise<{ id: string }> }) {',
+      '  const file = await getFile((await params).id);',
+      '  const headers = new Headers();',
+      "  headers.set('Content-Disposition', `attachment; filename*=UTF-8''${encodeURIComponent(file.name)}`);",
+      '  return new Response(file.body, { headers });',
+      '}'
+    ))
+  },
+  {
+    ruleIds: [1023],
+    name: 'shipped UI copy contains "As an AI language model" boilerplate (LOW)',
+    detects: f('components/chat/empty-state.tsx', src(
+      'export function EmptyState() {',
+      '  return <p>As an AI language model, I can help you draft emails and summaries.</p>;',
+      '}'
+    )),
+    ignores: f('components/chat/empty-state.tsx', src(
+      'export function EmptyState() {',
+      '  return <p>Ask me to draft an email or summarise a document.</p>;',
+      '}'
+    ))
+  },
+  {
+    ruleIds: [6029],
+    name: 'Supabase realtime subscribes to every change on a table (LOW)',
+    detects: f('components/chat/use-messages.ts', src(
+      'export function subscribeToRoom(roomId: string, onMessage: (m: Message) => void) {',
+      '  return supabase',
+      "    .channel('messages').on('postgres_changes', { event: '*', schema: 'public', table: 'messages' }, (payload) => onMessage(payload.new as Message))",
+      '    .subscribe();',
+      '}'
+    )),
+    ignores: f('components/chat/use-messages.ts', src(
+      'export function subscribeToRoom(roomId: string, onMessage: (m: Message) => void) {',
+      '  return supabase',
+      "    .channel(`room-${roomId}`).on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'messages', filter: `room_id=eq.${roomId}` }, (payload) => onMessage(payload.new as Message))",
+      '    .subscribe();',
+      '}'
+    ))
+  },
+  {
+    ruleIds: [6034],
+    name: 'loads the whole table then sorts in memory (MEDIUM)',
+    detects: f('lib/leaderboard.ts', src(
+      'export async function topPlayers() {',
+      '  const players = await prisma.player.findMany();',
+      '  return players.sort((a, b) => b.score - a.score).slice(0, 10);',
+      '}'
+    )),
+    ignores: f('lib/leaderboard.ts', src(
+      'export async function topPlayers() {',
+      "  return prisma.player.findMany({ orderBy: { score: 'desc' }, take: 10 });",
+      '}'
+    ))
+  },
+
+  // ─── ASVS ─────────────────────────────────────────────────────────────
+  {
+    ruleIds: [13805],
+    name: 'password hashing with a weak work factor (bcrypt cost 8, PBKDF2 1000 iterations)',
+    detects: f('lib/auth/hash.ts', src(
+      "import bcrypt from 'bcryptjs';",
+      "import { pbkdf2Sync, randomBytes } from 'node:crypto';",
+      'export const hashPassword = (password: string) => bcrypt.hash(password, 8);',
+      'export function deriveKey(secret: string) {',
+      '  const salt = randomBytes(16);',
+      "  return pbkdf2Sync(secret, salt, 1000, 32, 'sha256');",
+      '}'
+    )),
+    ignores: f('lib/auth/hash.ts', src(
+      "import bcrypt from 'bcryptjs';",
+      "import { pbkdf2Sync, randomBytes } from 'node:crypto';",
+      'export const hashPassword = (password: string) => bcrypt.hash(password, 12);',
+      'export function deriveKey(secret: string) {',
+      '  const salt = randomBytes(16);',
+      "  return pbkdf2Sync(secret, salt, 600_000, 32, 'sha256');",
+      '}'
+    ))
+  },
 ];

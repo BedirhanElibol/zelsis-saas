@@ -4,7 +4,6 @@
  */
 import { Finding } from "@/data/schema";
 import { CodeFile } from "../scanner-engine";
-import { locateMatchLine } from './shared/locate';
 export interface CicdSupplyChainRuleResult {
     findings: Finding[];
     logs: string[];
@@ -24,8 +23,16 @@ export function evaluateCicdSupplyChainRules(file: CodeFile, lines: string[], cl
         return { findings, logs };
     const ts = new Date().toLocaleTimeString();
     // CICD-SEC-01: Dangerous pull_request_target Workflow with Untrusted Checkout
-    if (cleanContent.includes('pull_request_target') && cleanContent.includes('ref: ${{ github.event.pull_request.head.sha }}')) {
-        const matchLineIdx = lines.findIndex(l => !l.trim().startsWith('#'));
+    // A pull_request_target workflow (runs with secrets and a write token) that checks out the PR's own code
+    // (head sha/ref, github.head_ref or refs/pull/N/merge) and later runs a step, which executes that code
+    const prHeadRef = /^\s*ref\s*:\s*['"]?(?:\$\{\{\s*(?:github\.event\.pull_request\.head\.(?:sha|ref)|github\.head_ref)\s*\}\}|refs\/pull\/\$\{\{[^}]*\}\}\/(?:merge|head))/;
+    const cicd01Line = (() => {
+        if (!lines.some((l) => !l.trim().startsWith('#') && /\bpull_request_target\b/.test(l))) return -1;
+        const refIdx = lines.findIndex((l) => prHeadRef.test(l));
+        return refIdx !== -1 && lines.slice(refIdx + 1).some((l) => /^\s*-?\s*run\s*:/.test(l)) ? refIdx : -1;
+    })();
+    if (cicd01Line !== -1) {
+        const matchLineIdx = cicd01Line;
         const lineNum = matchLineIdx !== -1 ? matchLineIdx + 1 : 1;
         findings.push({
             id: `cicdsec9501-${Date.now()}-${findingCounter.count++}`,
@@ -108,8 +115,9 @@ export function evaluateCicdSupplyChainRules(file: CodeFile, lines: string[], cl
         logs.push(`[${ts}] [CICD SEC] Found CICD-SEC-03: Script Injection via Unescaped GitHub Context Expression at ${file.path}:${lineNum}`);
     }
     // CICD-SEC-04: Overprivileged GITHUB_TOKEN Permissions (permissions: write-all)
-    if (/permissions\s*:\s*write-all/i.test(cleanContent)) {
-        const matchLineIdx = locateMatchLine(lines, [/permissions\s*:\s*write-all/i], l => !l.trim().startsWith('#'));
+    const cicd04Line = lines.findIndex((l) => /^\s*permissions\s*:\s*write-all\b/.test(l));
+    if (cicd04Line !== -1) {
+        const matchLineIdx = cicd04Line;
         const lineNum = matchLineIdx !== -1 ? matchLineIdx + 1 : 1;
         findings.push({
             id: `cicdsec9504-${Date.now()}-${findingCounter.count++}`,
@@ -132,15 +140,18 @@ export function evaluateCicdSupplyChainRules(file: CodeFile, lines: string[], cl
         logs.push(`[${ts}] [CICD SEC] Found CICD-SEC-04: Overprivileged GITHUB_TOKEN Permissions (permissions: write-all) at ${file.path}:${lineNum}`);
     }
     // CICD-SEC-05: Exposed Secret Tokens in Build Log Outputs
-    if ((/run\s*:[\s\S]*?echo\s+["']?\$\{\{\s*secrets\./i.test(cleanContent))) {
-        const matchLineIdx = locateMatchLine(lines, [/run\s*:[\s\S]*?echo\s+["']?\$\{\{\s*secrets\./i], l => !l.trim().startsWith('#'));
+    // `echo ${{ secrets.X }}` printed to the log; piping (`| docker login --password-stdin`) or
+    // redirecting (`> .env`, `>> $GITHUB_ENV`) the value is the normal way to hand it to a tool
+    const cicd05Line = lines.findIndex((l) => !l.trim().startsWith('#') && /\becho\s+(?:-[a-z]+\s+)?["']?[^|>]*\$\{\{\s*secrets\.[\w-]+\s*\}\}[^|>]*$/.test(l));
+    if (cicd05Line !== -1) {
+        const matchLineIdx = cicd05Line;
         const lineNum = matchLineIdx !== -1 ? matchLineIdx + 1 : 1;
         findings.push({
             id: `cicdsec9505-${Date.now()}-${findingCounter.count++}`,
             ruleId: 9505,
             type: 'SECURITY',
             title: "CICD-SEC-05: Exposed Secret Tokens in Build Log Outputs",
-            severity: "CRITICAL",
+            severity: 'LOW',
             category: "Credential Exposure",
             filePath: file.path,
             lineRange: `L${lineNum}`,

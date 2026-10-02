@@ -203,7 +203,7 @@ export function evaluatePythonEnterpriseRules(file: CodeFile, lines: string[], c
             ruleId: 8807,
             type: 'SECURITY',
             title: "PY-SEC-07: Blocking Synchronous I/O Inside FastAPI async def Handler",
-            severity: "HIGH",
+            severity: "MEDIUM",
             category: "Event Loop Starvation",
             filePath: file.path,
             lineRange: `L${lineNum}`,
@@ -276,8 +276,8 @@ export function evaluatePythonEnterpriseRules(file: CodeFile, lines: string[], c
         const tainted = pyRequestVars(lines);
         const jinjaTemplate = /from\s+jinja2\s+import\s+[^\n]*\bTemplate\b/.test(cleanContent);
         const call = jinjaTemplate
-            ? /(?:render_template_string|jinja2\.Template|(?<![\w.])Template|\.from_string)\s*\(\s*(.*)$/
-            : /(?:render_template_string|jinja2\.Template|\.from_string)\s*\(\s*(.*)$/;
+            ? /(?:render_template_string|jinja2\.Template|(?<![\w.])Template|\.from_string)\s*\(\s*(.*)/
+            : /(?:render_template_string|jinja2\.Template|\.from_string)\s*\(\s*(.*)/;
         return pyFindLine(lines, call, (l) => {
             const arg = (call.exec(l) as RegExpExecArray)[1];
             if (/^(?:[rRbB]?[fF]|[fF][rR])['"]/.test(arg) || /^request\./.test(arg)) return true;
@@ -375,7 +375,7 @@ export function evaluatePythonEnterpriseRules(file: CodeFile, lines: string[], c
             ruleId: 8813,
             type: 'SECURITY',
             title: "PY-SEC-13: Insecure Temporary File Creation via tempfile.mktemp()",
-            severity: "HIGH",
+            severity: "MEDIUM",
             category: "Race Condition",
             filePath: file.path,
             lineRange: `L${lineNum}`,
@@ -446,7 +446,7 @@ export function evaluatePythonEnterpriseRules(file: CodeFile, lines: string[], c
     // PY-SEC-16: Path Traversal via Unsanitized File Access
     const idx_8816 = (() => {
         const tainted = pyRequestVars(lines);
-        const sink = /(?<![\w.])(?:open|send_file|io\.open|codecs\.open|aiofiles\.open)\s*\(\s*(.*)$/;
+        const sink = /(?<![\w.])(?:open|send_file|io\.open|codecs\.open|aiofiles\.open)\s*\(\s*(.*)/;
         return pyFindLine(lines, sink, (l) => {
             if (/secure_filename|safe_join/.test(l)) return false;
             const pathArg = (sink.exec(l) as RegExpExecArray)[1].split(/,\s*(?:mode\s*=\s*)?['"][rwabxt+]{1,3}['"]/)[0];
@@ -1068,7 +1068,7 @@ export function evaluatePythonEnterpriseRules(file: CodeFile, lines: string[], c
             ruleId: 8838,
             type: 'SECURITY',
             title: "PY-SEC-38: Insecure FTPLib Usage Without TLS (Plaintext FTP)",
-            severity: "HIGH",
+            severity: "MEDIUM",
             category: "Cleartext Transmission",
             filePath: file.path,
             lineRange: `L${lineNum}`,
@@ -1094,7 +1094,7 @@ export function evaluatePythonEnterpriseRules(file: CodeFile, lines: string[], c
             ruleId: 8839,
             type: 'SECURITY',
             title: "PY-SEC-39: Insecure Telnetlib Usage (Cleartext Management Protocol)",
-            severity: "CRITICAL",
+            severity: "MEDIUM",
             category: "Cleartext Transmission",
             filePath: file.path,
             lineRange: `L${lineNum}`,
@@ -1392,7 +1392,7 @@ export function evaluatePythonEnterpriseRules(file: CodeFile, lines: string[], c
         logs.push(`[${ts}] [PYTHON AUDIT] Found PY-SEC-49: Django SESSION_COOKIE_AGE Overly Permissive (> 30 Days) at ${file.path}:${lineNum}`);
     }
     // PY-SEC-50: Insecure Multiprocessing Manager Without Authentication Key
-    const idx_8850 = pyFindLine(lines, /(?:BaseManager|SyncManager)\s*\([^)]*authkey\s*=\s*b?(?:''|"")/);
+    const idx_8850 = pyFindLine(lines, /\w*Manager\s*\(.*\bauthkey\s*=\s*b?(?:''|"")/, () => /multiprocessing/.test(cleanContent));
     if (idx_8850 !== -1) {
         const matchLineIdx = idx_8850;
         const lineNum = matchLineIdx !== -1 ? matchLineIdx + 1 : 1;

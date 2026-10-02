@@ -527,7 +527,7 @@ export function evaluateBuiltinRules(ctx: BuiltinRuleContext): void {
       ruleId: 1023,
       type: 'VIBEPOLISH',
       title: 'UI-23: Robotic Apology / Refusal Boilerplate',
-      severity: 'HIGH',
+      severity: 'LOW',
       category: 'Model Behavior',
       filePath: file.path,
       lineRange: `L${lineNum}`,
@@ -564,28 +564,6 @@ export function evaluateBuiltinRules(ctx: BuiltinRuleContext): void {
     logs.push(`[${new Date().toLocaleTimeString()}] [RULE] VIBEPOLISH UI-32: Meta-announcement text detected (${file.path}:${lineNum})`);
   }
 
-  // VibePolish UI-39: Missing Structured Schema Validation
-  if (file.content.includes('openai.chat.completions') && !file.content.includes('response_format') && !file.content.includes('zodResponseFormat') && !file.content.includes('pydantic')) {
-    const matchLineIdx = lines.findIndex(l => l.includes('openai.chat.completions'));
-    const lineNum = matchLineIdx !== -1 ? matchLineIdx + 1 : 1;
-    addFinding({
-      id: `real-find-${Date.now()}-${findingCounter++}`,
-      ruleId: 1039,
-      type: 'VIBEPOLISH',
-      title: 'UI-39: Unvalidated Dynamic Outputs (Missing Zod Schema)',
-      severity: 'HIGH',
-      category: 'Output Hygiene',
-      filePath: file.path,
-      lineRange: `L${lineNum}`,
-      snippet: lines[matchLineIdx] || 'await openai.chat.completions.create({ ... });',
-      reproductionSteps: [`Scanned LLM API endpoint in ${file.path}:${lineNum}.`, 'Detected OpenAI completion call without response_format or Zod schema validation.'],
-      remediationPrompt: `Enforce Structured Outputs in ${file.path} using Zod schema and response_format: zodResponseFormat(Schema, "result") to eliminate formatting drift.`,
-      status: 'OPEN',
-      owner: 'Backend Team',
-      falsePositive: false
-    });
-    logs.push(`[${new Date().toLocaleTimeString()}] [RULE] VIBEPOLISH UI-39: Missing Structured Zod schema detected (${file.path}:${lineNum})`);
-  }
 
   // VibePolish UI-41: Monolithic System Prompt Inflation
   if (file.content.includes('system') && file.content.length > 5000 && (file.content.match(/role:\s*['"]system['"]/g) || []).length === 1) {
@@ -640,30 +618,6 @@ export function evaluateBuiltinRules(ctx: BuiltinRuleContext): void {
     logs.push(`[${new Date().toLocaleTimeString()}] [RULE] VIBEPOLISH UI-48: Variable injection missing fallback detected (${file.path}:${lineNum})`);
   }
 
-  // VibePolish UI-57: High Temperature on Deterministic Tasks
-  if (file.content.includes('temperature: 0.9') || file.content.includes('temperature: 0.8') || file.content.includes('temperature: 1')) {
-    if (file.content.includes('json') || file.content.includes('schema') || file.content.includes('code')) {
-      const matchLineIdx = lines.findIndex(l => l.includes('temperature'));
-      const lineNum = matchLineIdx !== -1 ? matchLineIdx + 1 : 1;
-      addFinding({
-        id: `real-find-${Date.now()}-${findingCounter++}`,
-        ruleId: 57,
-        type: 'VIBEPOLISH',
-        title: 'UI-57: Excessive Temperature Setting on Deterministic Task',
-        severity: 'HIGH',
-        category: 'Model Parameters',
-        filePath: file.path,
-        lineRange: `L${lineNum}`,
-        snippet: lines[matchLineIdx] || 'temperature: 0.9',
-        reproductionSteps: [`Scanned model parameters in ${file.path}:${lineNum}.`, 'Detected high temperature (0.8-1.0) on structured code/JSON extraction task.'],
-        remediationPrompt: `Lower temperature in ${file.path} to 0.0 - 0.2 for deterministic code and JSON schema extraction calls.`,
-        status: 'OPEN',
-        owner: 'Backend Team',
-        falsePositive: false
-      });
-      logs.push(`[${new Date().toLocaleTimeString()}] [RULE] VIBEPOLISH UI-57: Excessive temperature parameter detected (${file.path}:${lineNum})`);
-    }
-  }
 
   // VibePolish UI-61: Naive Fixed-Character Chunking
   if (file.content.includes('CharacterTextSplitter') || (file.content.includes('chunkSize') && !file.content.includes('Semantic') && !file.content.includes('Recursive'))) {
@@ -689,53 +643,7 @@ export function evaluateBuiltinRules(ctx: BuiltinRuleContext): void {
   }
 
 
-  // VibePolish UI-76: Context Hallucination Vulnerability
-  if (file.content.includes('context') && file.content.includes('prompt') && !file.content.includes('not found') && !file.content.includes('information not found')) {
-    if (file.content.includes('RAG') || file.content.includes('retrieval') || file.content.includes('vector')) {
-      const matchLineIdx = lines.findIndex(l => l.includes('context'));
-      const lineNum = matchLineIdx !== -1 ? matchLineIdx + 1 : 1;
-      addFinding({
-        id: `real-find-${Date.now()}-${findingCounter++}`,
-        ruleId: 76,
-        type: 'VIBEPOLISH',
-        title: 'UI-76: Missing RAG Hallucination Guardrail',
-        severity: 'HIGH',
-        category: 'RAG Architecture',
-        filePath: file.path,
-        lineRange: `L${lineNum}`,
-        snippet: lines[matchLineIdx] || 'Answer the question based on context: {context}',
-        reproductionSteps: [`Scanned RAG prompt template in ${file.path}:${lineNum}.`, 'Detected RAG prompt template without explicit fallback instruction ("If the context does not contain the answer, state \'Information not found\'").'],
-        remediationPrompt: `Update RAG prompt template in ${file.path}. Add mandatory guardrail: "If the provided context does not contain sufficient information, explicitly respond with 'Information not found' without hallucinating."`,
-        status: 'OPEN',
-        owner: 'Prompt Engineer',
-        falsePositive: false
-      });
-      logs.push(`[${new Date().toLocaleTimeString()}] [RULE] VIBEPOLISH UI-76: Missing RAG guardrail detected (${file.path}:${lineNum})`);
-    }
-  }
 
-  // VibePolish UI-90: Sensitive Data Exposure in Tool Logs
-  if ((file.content.includes('console.log(tool') || file.content.includes('logger.info(args)')) && !file.content.includes('redact') && !file.content.includes('mask')) {
-    const matchLineIdx = lines.findIndex(l => l.includes('console.log') || l.includes('logger.info'));
-    const lineNum = matchLineIdx !== -1 ? matchLineIdx + 1 : 1;
-    addFinding({
-      id: `real-find-${Date.now()}-${findingCounter++}`,
-      ruleId: 90,
-      type: 'VIBEPOLISH',
-      title: 'UI-90: Unredacted Sensitive Data in Tool Logs',
-      severity: 'HIGH',
-      category: 'Security & Approvals',
-      filePath: file.path,
-      lineRange: `L${lineNum}`,
-      snippet: lines[matchLineIdx] || 'console.log("Tool Arguments:", args);',
-      reproductionSteps: [`Scanned logging Statements in ${file.path}:${lineNum}.`, 'Detected unmasked tool argument logging potentially leaking API keys or user PII.'],
-      remediationPrompt: `Add redaction proxy or masking middleware in ${file.path} before logging tool arguments and responses.`,
-      status: 'OPEN',
-      owner: 'Security Lead',
-      falsePositive: false
-    });
-    logs.push(`[${new Date().toLocaleTimeString()}] [HIGH] UI-90 Unredacted sensitive tool log detected (${file.path}:${lineNum})`);
-  }
 
   // VibePolish UI-100: Missing User Request Abort Signal
   if ((file.content.includes('agentRunner') || file.content.includes('executeAgent')) && !file.content.includes('AbortController') && !file.content.includes('signal')) {
@@ -856,28 +764,6 @@ export function evaluateBuiltinRules(ctx: BuiltinRuleContext): void {
     logs.push(`[${new Date().toLocaleTimeString()}] [HIGH] UI-117 Uncleaned event listener detected (${file.path}:${lineNum})`);
   }
 
-  // VibePolish UI-121: Synchronous Non-Streaming LLM Completion
-  if (file.content.includes('chat.completions.create') && !file.content.includes('stream: true') && !file.content.includes('json') && !file.content.includes('response_format')) {
-    const matchLineIdx = lines.findIndex(l => l.includes('chat.completions.create'));
-    const lineNum = matchLineIdx !== -1 ? matchLineIdx + 1 : 1;
-    addFinding({
-      id: `real-find-${Date.now()}-${findingCounter++}`,
-      ruleId: 121,
-      type: 'VIBEPOLISH',
-      title: 'UI-121: Synchronous Non-Streaming LLM Completion (Missing Stream: True)',
-      severity: 'HIGH',
-      category: 'Streaming & Latency',
-      filePath: file.path,
-      lineRange: `L${lineNum}`,
-      snippet: lines[matchLineIdx] || 'await openai.chat.completions.create({ model: "gpt-4o", messages });',
-      reproductionSteps: [`Scanned LLM completion call in ${file.path}:${lineNum}.`, 'Detected synchronous text generation call without stream: true (causes high TTFT latency).'],
-      remediationPrompt: `Enable stream: true and SSE (Server-Sent Events) streaming response in ${file.path} for instant 300ms Time-to-First-Token UI rendering.`,
-      status: 'OPEN',
-      owner: 'Backend Team',
-      falsePositive: false
-    });
-    logs.push(`[${new Date().toLocaleTimeString()}] [RULE] VIBEPOLISH UI-121: Non-streaming synchronous LLM call detected (${file.path}:${lineNum})`);
-  }
 
   // VibePolish UI-134: Unvirtualized Long List DOM Memory Leaks
   if (file.content.includes('messages.map') && !file.content.includes('virtual') && !file.content.includes('useVirtualizer')) {
@@ -902,28 +788,6 @@ export function evaluateBuiltinRules(ctx: BuiltinRuleContext): void {
     logs.push(`[${new Date().toLocaleTimeString()}] [RULE] VIBEPOLISH UI-134: Unvirtualized long list detected (${file.path}:${lineNum})`);
   }
 
-  // VibePolish UI-139: Missing Request Abort Signal Listener
-  if (file.content.includes('StreamingTextResponse') && !file.content.includes('signal') && !file.content.includes('aborted')) {
-    const matchLineIdx = lines.findIndex(l => l.includes('StreamingTextResponse'));
-    const lineNum = matchLineIdx !== -1 ? matchLineIdx + 1 : 1;
-    addFinding({
-      id: `real-find-${Date.now()}-${findingCounter++}`,
-      ruleId: 139,
-      type: 'VIBEPOLISH',
-      title: 'UI-139: Missing Request Cancellation AbortSignal Listener',
-      severity: 'HIGH',
-      category: 'Streaming & Latency',
-      filePath: file.path,
-      lineRange: `L${lineNum}`,
-      snippet: lines[matchLineIdx] || 'return new StreamingTextResponse(stream);',
-      reproductionSteps: [`Scanned streaming route handler in ${file.path}:${lineNum}.`, 'Detected streaming response without request.signal abort listener (backend continues burning tokens if client closes tab).'],
-      remediationPrompt: `Listen to req.signal abort event in ${file.path} to instantly terminate backend model API calls when user closes tab.`,
-      status: 'OPEN',
-      owner: 'Backend Team',
-      falsePositive: false
-    });
-    logs.push(`[${new Date().toLocaleTimeString()}] [RULE] VIBEPOLISH UI-139: Missing request cancellation listener detected (${file.path}:${lineNum})`);
-  }
 
   // VibePolish UI-141: Unbounded Token Usage Waste
   if (file.content.includes('chat.completions.create') && !file.content.includes('max_tokens') && !file.content.includes('maxTokens')) {
@@ -948,28 +812,6 @@ export function evaluateBuiltinRules(ctx: BuiltinRuleContext): void {
     logs.push(`[${new Date().toLocaleTimeString()}] [RULE] VIBEPOLISH UI-141: Unbounded max_tokens parameter detected (${file.path}:${lineNum})`);
   }
 
-  // VibePolish UI-143: Unmonitored Per-User Token Spend
-  if (file.content.includes('/api/generate') && !file.content.includes('usage') && !file.content.includes('quota') && !file.content.includes('deductCredits')) {
-    const matchLineIdx = lines.findIndex(l => l.includes('/api/generate') || l.includes('export async function POST'));
-    const lineNum = matchLineIdx !== -1 ? matchLineIdx + 1 : 1;
-    addFinding({
-      id: `real-find-${Date.now()}-${findingCounter++}`,
-      ruleId: 143,
-      type: 'VIBEPOLISH',
-      title: 'UI-143: Unmonitored Per-User Token Spend & Quota',
-      severity: 'HIGH',
-      category: 'User Quotas & Credits',
-      filePath: file.path,
-      lineRange: `L${lineNum}`,
-      snippet: lines[matchLineIdx] || 'export async function POST(req: Request) { ... }',
-      reproductionSteps: [`Scanned AI endpoint in ${file.path}:${lineNum}.`, 'Detected completion route generating responses without tracking user-level token usage or deducting user credit quota.'],
-      remediationPrompt: `Implement user-level token usage tracking and credit quota deduction in ${file.path} before returning model responses.`,
-      status: 'OPEN',
-      owner: 'Finance & Billing Team',
-      falsePositive: false
-    });
-    logs.push(`[${new Date().toLocaleTimeString()}] [HIGH] UI-143 Unmonitored user token usage detected (${file.path}:${lineNum})`);
-  }
 
   // VibePolish UI-160: Missing Spend Circuit Breaker
   if (file.content.includes('OpenAI(') && !file.content.includes('budget') && !file.content.includes('circuitBreaker') && !file.content.includes('maxMonthlySpend')) {

@@ -11,11 +11,11 @@ export function evaluateRubyRailsRules(file: CodeFile, lines: string[], cleanCon
     // RUBY-SEC-01: YAML.load insecure deserialization
     // Psych 4 (Ruby 3.1+) made YAML.load safe by default, so flag YAML.unsafe_load on anything but a
     // local file, and YAML.load only on request input (exploitable on Ruby < 3.1).
-    const reg_yaml = /\b(?:YAML|Psych)\.(load|unsafe_load)\s*\(\s*(.*)$/;
+    const reg_yaml = /\b(?:YAML|Psych)\.(load|unsafe_load)\s*\(\s*(.*)/;
     const requestInput = /\bparams\[|\bparams\.(?:require|fetch|dig)\b|request\.(?:body|raw_post|params)\b|\bcookies\[/;
     const requestVars = new Set<string>();
     for (const l of lines) {
-        const m = /^\s*(\w+)\s*=\s*(.*)$/.exec(l);
+        const m = /^\s*(\w+)\s*=\s*(.*)/.exec(l);
         if (m && requestInput.test(m[2])) requestVars.add(m[1]);
     }
     const matchLineIdx = lines.findIndex(l => {

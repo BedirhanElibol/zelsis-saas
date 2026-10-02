@@ -292,6 +292,293 @@ const hardenedCtx = `            runAsNonRoot: true
             capabilities:
               drop: ["ALL"]`;
 
+// ---------------------------------------------------------------- GitHub Actions / CDK / CFN / LLM app helpers
+const prTarget = (ref: string) => `name: Preview
+on:
+  pull_request_target:
+    types: [opened, synchronize]
+permissions:
+  contents: read
+  pull-requests: write
+jobs:
+  preview:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${ref}
+      - run: npm ci && npm run build
+        env:
+          VERCEL_TOKEN: \${{ secrets.VERCEL_TOKEN }}
+`;
+
+const cdkStack = (body: string) => `import * as cdk from 'aws-cdk-lib';
+import * as ec2 from 'aws-cdk-lib/aws-ec2';
+import * as iam from 'aws-cdk-lib/aws-iam';
+import * as cloudfront from 'aws-cdk-lib/aws-cloudfront';
+import * as origins from 'aws-cdk-lib/aws-cloudfront-origins';
+import { Construct } from 'constructs';
+
+export class ApiStack extends cdk.Stack {
+  constructor(scope: Construct, id: string, props: ApiStackProps) {
+    super(scope, id, props);
+    const { fn, table, bucket, dbSg, appSg } = props;
+${body}
+  }
+}
+`;
+
+const cfnDistribution = (policy: string, tls: string) => `AWSTemplateFormatVersion: '2010-09-09'
+Resources:
+  SiteDistribution:
+    Type: AWS::CloudFront::Distribution
+    Properties:
+      DistributionConfig:
+        Enabled: true
+        Aliases: [app.example.com]
+        DefaultCacheBehavior:
+          TargetOriginId: site
+          ViewerProtocolPolicy: ${policy}
+          CachePolicyId: 658327ea-f89d-4fab-a63d-7e88639e58f6
+        ViewerCertificate:
+          AcmCertificateArn: !Ref Certificate
+          SslSupportMethod: sni-only
+          MinimumProtocolVersion: ${tls}
+`;
+
+const chatPanel = (render: string) => `'use client';
+import { useChat } from '@ai-sdk/react';
+import { marked } from 'marked';
+import ReactMarkdown from 'react-markdown';
+
+export function ChatPanel() {
+  const { messages, input, handleInputChange, handleSubmit } = useChat({ api: '/api/chat' });
+  return (
+    <div>
+      {messages.map((message) => (
+        <div key={message.id}>
+          ${render}
+        </div>
+      ))}
+      <form onSubmit={handleSubmit}>
+        <input value={input} onChange={handleInputChange} />
+      </form>
+    </div>
+  );
+}
+`;
+
+// ---------------------------------------------------------------- MEDIUM hardening helpers
+const tfBackend = (extra: string) => `
+terraform {
+  required_version = ">= 1.10"
+  backend "s3" {
+    bucket = "acme-terraform-state"
+    key    = "prod/terraform.tfstate"
+    region = "us-east-1"
+${extra}
+  }
+}
+`;
+const cloudtrail = (multiRegion: string) => `
+resource "aws_cloudtrail" "main" {
+  name                          = "org-trail"
+  s3_bucket_name                = aws_s3_bucket.trail.id
+  include_global_service_events = true
+  is_multi_region_trail         = ${multiRegion}
+  enable_log_file_validation    = true
+}
+`;
+const lambdaUrl = (auth: string) => `
+resource "aws_lambda_function_url" "api" {
+  function_name      = aws_lambda_function.api.function_name
+  authorization_type = "${auth}"
+}
+`;
+const redis = (transit: string, auth: string) => `
+resource "aws_elasticache_replication_group" "sessions" {
+  replication_group_id       = "sessions"
+  description                = "session store"
+  engine                     = "redis"
+  node_type                  = "cache.t4g.small"
+  num_cache_clusters         = 2
+  at_rest_encryption_enabled = true
+  transit_encryption_enabled = ${transit}
+${auth}
+}
+`;
+const ebs = (extra: string) => `
+resource "aws_ebs_volume" "uploads" {
+  availability_zone = "us-east-1a"
+  size              = 100
+  type              = "gp3"
+${extra}
+}
+`;
+const versioning = (status: string) => `
+resource "aws_s3_bucket_versioning" "uploads" {
+  bucket = aws_s3_bucket.uploads.id
+  versioning_configuration {
+    status = "${status}"
+  }
+}
+`;
+const rdsOps = (retention: string, protection: string) => `
+resource "aws_db_instance" "main" {
+  identifier              = "app-prod"
+  engine                  = "postgres"
+  instance_class          = "db.t4g.medium"
+  allocated_storage       = 50
+  username                = "app"
+  password                = random_password.db.result
+  storage_encrypted       = true
+  backup_retention_period = ${retention}
+  deletion_protection     = ${protection}
+}
+`;
+const opensearch = (n2n: string) => `
+resource "aws_opensearch_domain" "logs" {
+  domain_name    = "app-logs"
+  engine_version = "OpenSearch_2.13"
+
+  encrypt_at_rest {
+    enabled = true
+  }
+
+  node_to_node_encryption {
+    enabled = ${n2n}
+  }
+}
+`;
+const eks = (cidrs: string) => `
+resource "aws_eks_cluster" "main" {
+  name     = "prod"
+  role_arn = aws_iam_role.eks.arn
+
+  vpc_config {
+    subnet_ids              = aws_subnet.private[*].id
+    endpoint_public_access  = true
+    endpoint_private_access = true
+${cidrs}
+  }
+}
+`;
+const lambdaRuntime = (runtime: string) => `
+resource "aws_lambda_function" "thumbnails" {
+  function_name = "thumbnails"
+  role          = aws_iam_role.lambda.arn
+  handler       = "index.handler"
+  runtime       = "${runtime}"
+  filename      = "dist/thumbnails.zip"
+}
+`;
+const pgParams = (forceSsl: string) => `
+resource "aws_db_parameter_group" "pg16" {
+  name   = "app-pg16"
+  family = "postgres16"
+
+  parameter {
+    name  = "rds.force_ssl"
+    value = "${forceSsl}"
+  }
+}
+`;
+const ingress = (annotation: string) => `apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: web
+  annotations:
+${annotation}
+spec:
+  ingressClassName: nginx
+  tls:
+    - hosts: [app.example.com]
+      secretName: web-tls
+  rules:
+    - host: app.example.com
+      http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: web
+                port:
+                  number: 80
+`;
+const torchLoad = (call: string) => `import torch
+
+from app.ml.model import SentimentNet
+
+
+def load_classifier(checkpoint_path: str) -> SentimentNet:
+    model = SentimentNet()
+    state = ${call}
+    model.load_state_dict(state)
+    model.eval()
+    return model
+`;
+const chatRoute = (modelExpr: string, guard: string) => `import { Router } from 'express';
+import OpenAI from 'openai';
+
+const openai = new OpenAI();
+export const chatRouter = Router();
+
+chatRouter.post('/chat', requireUser, async (req, res) => {
+${guard}  const completion = await openai.chat.completions.create({
+    model: ${modelExpr},
+    max_tokens: 800,
+    messages: req.body.messages,
+  });
+  res.json(completion.choices[0].message);
+});
+`;
+const signupRedirect = (redirect: string) => `'use client';
+import { useRouter } from 'next/navigation';
+import { createClient } from '@/lib/supabase/client';
+
+export function useSignup() {
+  const router = useRouter();
+  return async (email: string, password: string) => {
+    const supabase = createClient();
+    const { error } = await supabase.auth.signUp({ email, password });
+    if (error) return error.message;
+    sessionStorage.setItem('pendingEmail', email);
+    ${redirect}
+  };
+}
+`;
+const posthogInit = (mask: string) => `'use client';
+import posthog from 'posthog-js';
+
+export function initAnalytics() {
+  posthog.init(process.env.NEXT_PUBLIC_POSTHOG_KEY!, {
+    api_host: 'https://eu.i.posthog.com',
+    person_profiles: 'identified_only',
+    session_recording: {
+      maskAllInputs: ${mask},
+    },
+  });
+}
+`;
+const releaseWorkflow = (step: string) => `name: Release
+on:
+  push:
+    tags: ['v*']
+permissions:
+  contents: read
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+${step}
+      - run: npm publish
+`;
+
 export const CASES: RuleCase[] = [
   // ------------------------------------------------------------ security groups
   {
@@ -547,5 +834,274 @@ jobs:
       - uses: actions/checkout@v4
       - run: npm ci && npm test
 `)
+  },
+  {
+    ruleIds: [9501],
+    name: 'pull_request_target workflow checks out and builds the PR head',
+    detects: f('.github/workflows/preview.yml', prTarget('${{ github.event.pull_request.head.sha }}')),
+    ignores: f('.github/workflows/preview.yml', prTarget('${{ github.event.pull_request.base.sha }}'))
+  },
+  // ------------------------------------------------------------ CDK / CloudFormation
+  {
+    ruleIds: [7020],
+    name: 'CDK PolicyStatement grants actions ["*"]',
+    detects: f('infra/lib/api-stack.ts', cdkStack(`    fn.addToRolePolicy(new iam.PolicyStatement({
+      effect: iam.Effect.ALLOW,
+      actions: ['*'],
+      resources: [table.tableArn],
+    }));`)),
+    ignores: f('infra/lib/api-stack.ts', cdkStack(`    fn.addToRolePolicy(new iam.PolicyStatement({
+      effect: iam.Effect.ALLOW,
+      actions: ['dynamodb:GetItem', 'dynamodb:PutItem', 'dynamodb:Query'],
+      resources: [table.tableArn],
+    }));`))
+  },
+  {
+    ruleIds: [7040],
+    name: 'CDK security group opens Postgres to any IPv4 address',
+    detects: f('infra/lib/api-stack.ts', cdkStack(`    dbSg.addIngressRule(ec2.Peer.anyIpv4(), ec2.Port.tcp(5432), 'postgres');`)),
+    ignores: f('infra/lib/api-stack.ts', cdkStack(`    dbSg.addIngressRule(ec2.Peer.securityGroupId(appSg.securityGroupId), ec2.Port.tcp(5432), 'postgres from app');`))
+  },
+  {
+    ruleIds: [7026],
+    name: 'CDK CloudFront distribution serves plain HTTP (ALLOW_ALL)',
+    detects: f('infra/lib/web-stack.ts', cdkStack(`    new cloudfront.Distribution(this, 'Site', {
+      defaultBehavior: {
+        origin: new origins.S3Origin(bucket),
+        viewerProtocolPolicy: cloudfront.ViewerProtocolPolicy.ALLOW_ALL,
+      },
+    });`)),
+    ignores: f('infra/lib/web-stack.ts', cdkStack(`    new cloudfront.Distribution(this, 'Site', {
+      defaultBehavior: {
+        origin: new origins.S3Origin(bucket),
+        viewerProtocolPolicy: cloudfront.ViewerProtocolPolicy.REDIRECT_TO_HTTPS,
+      },
+    });`))
+  },
+  {
+    ruleIds: [7026, 7027],
+    name: 'CloudFormation distribution allows HTTP and TLS 1.0',
+    detects: f('infra/cloudfront.yml', cfnDistribution('allow-all', 'TLSv1')),
+    ignores: f('infra/cloudfront.yml', cfnDistribution('redirect-to-https', 'TLSv1.2_2021'))
+  },
+  // ------------------------------------------------------------ LLM apps
+  {
+    ruleIds: [8004],
+    name: 'Chat UI renders model output as raw HTML via marked()',
+    detects: f('app/chat/chat-panel.tsx', chatPanel('<div className="prose" dangerouslySetInnerHTML={{ __html: marked(message.content) }} />')),
+    ignores: f('app/chat/chat-panel.tsx', chatPanel('<ReactMarkdown className="prose">{message.content}</ReactMarkdown>'))
+  },
+  {
+    ruleIds: [8017],
+    name: 'OpenAI key read from a NEXT_PUBLIC_ env var in browser code',
+    detects: f('lib/openai-client.ts', `import OpenAI from 'openai';
+
+export const openai = new OpenAI({
+  apiKey: process.env.NEXT_PUBLIC_OPENAI_API_KEY,
+  dangerouslyAllowBrowser: true,
+});
+`),
+    ignores: f('lib/openai-client.ts', `import 'server-only';
+import OpenAI from 'openai';
+
+export const openai = new OpenAI({
+  apiKey: process.env.OPENAI_API_KEY,
+});
+`)
+  },
+  // ------------------------------------------------------------ MEDIUM hardening settings (Terraform)
+  {
+    ruleIds: [7030],
+    name: 'Terraform output exposes the database password without sensitive = true',
+    detects: f('infra/outputs.tf', `
+output "db_endpoint" {
+  value = aws_db_instance.main.address
+}
+
+output "db_password" {
+  value = random_password.db.result
+}
+`),
+    ignores: f('infra/outputs.tf', `
+output "db_endpoint" {
+  value = aws_db_instance.main.address
+}
+
+output "db_password" {
+  value     = random_password.db.result
+  sensitive = true
+}
+`)
+  },
+  {
+    ruleIds: [7031, 11001],
+    name: 'S3 state backend without encrypt = true',
+    detects: f('infra/backend.tf', tfBackend('    use_lockfile = true')),
+    ignores: f('infra/backend.tf', tfBackend('    use_lockfile = true\n    encrypt      = true'))
+  },
+  {
+    ruleIds: [11002],
+    name: 'S3 state backend without state locking',
+    detects: f('infra/backend.tf', tfBackend('    encrypt = true')),
+    ignores: f('infra/backend.tf', tfBackend('    encrypt      = true\n    use_lockfile = true'))
+  },
+  {
+    ruleIds: [7036, 8307],
+    name: 'CloudTrail trail limited to a single region',
+    detects: f('infra/audit.tf', cloudtrail('false')),
+    ignores: f('infra/audit.tf', cloudtrail('true'))
+  },
+  {
+    ruleIds: [7037],
+    name: 'ECR repository without scan on push',
+    detects: f('infra/ecr.tf', `
+resource "aws_ecr_repository" "api" {
+  name                 = "acme/api"
+  image_tag_mutability = "IMMUTABLE"
+}
+`),
+    ignores: f('infra/ecr.tf', `
+resource "aws_ecr_repository" "api" {
+  name                 = "acme/api"
+  image_tag_mutability = "IMMUTABLE"
+
+  image_scanning_configuration {
+    scan_on_push = true
+  }
+}
+`)
+  },
+  {
+    ruleIds: [7042],
+    name: 'Lambda function URL with authorization_type NONE',
+    detects: f('infra/lambda.tf', lambdaUrl('NONE')),
+    ignores: f('infra/lambda.tf', lambdaUrl('AWS_IAM'))
+  },
+  {
+    ruleIds: [7043, 8323],
+    name: 'ElastiCache Redis with in-transit encryption disabled',
+    detects: f('infra/redis.tf', redis('false', '  auth_token                 = var.redis_auth_token')),
+    ignores: f('infra/redis.tf', redis('true', '  auth_token                 = var.redis_auth_token'))
+  },
+  {
+    ruleIds: [7044],
+    name: 'ElastiCache Redis without an auth token',
+    detects: f('infra/redis.tf', redis('true', '')),
+    ignores: f('infra/redis.tf', redis('true', '  auth_token                 = var.redis_auth_token'))
+  },
+  {
+    ruleIds: [8304],
+    name: 'EBS volume without encryption',
+    detects: f('infra/volumes.tf', ebs('')),
+    ignores: f('infra/volumes.tf', ebs('  encrypted         = true\n  kms_key_id        = aws_kms_key.ebs.arn'))
+  },
+  {
+    ruleIds: [8306],
+    name: 'S3 bucket versioning explicitly disabled',
+    detects: f('infra/storage.tf', versioning('Disabled')),
+    ignores: f('infra/storage.tf', versioning('Enabled'))
+  },
+  {
+    ruleIds: [8309],
+    name: 'RDS automated backups turned off',
+    detects: f('infra/database.tf', rdsOps('0', 'true')),
+    ignores: f('infra/database.tf', rdsOps('7', 'true'))
+  },
+  {
+    ruleIds: [8332],
+    name: 'RDS instance without deletion protection',
+    detects: f('infra/database.tf', rdsOps('7', 'false')),
+    ignores: f('infra/database.tf', rdsOps('7', 'true'))
+  },
+  {
+    ruleIds: [8333],
+    name: 'OpenSearch domain with node-to-node encryption disabled',
+    detects: f('infra/search.tf', opensearch('false')),
+    ignores: f('infra/search.tf', opensearch('true'))
+  },
+  {
+    ruleIds: [8338],
+    name: 'EKS API endpoint public to the whole internet',
+    detects: f('infra/eks.tf', eks('')),
+    ignores: f('infra/eks.tf', eks('    public_access_cidrs     = ["203.0.113.0/24"]'))
+  },
+  {
+    ruleIds: [8342],
+    name: 'Lambda on an end-of-life Node.js runtime',
+    detects: f('infra/lambda.tf', lambdaRuntime('nodejs16.x')),
+    ignores: f('infra/lambda.tf', lambdaRuntime('nodejs20.x'))
+  },
+  {
+    ruleIds: [8344],
+    name: 'RDS parameter group turns off rds.force_ssl',
+    detects: f('infra/database.tf', pgParams('0')),
+    ignores: f('infra/database.tf', pgParams('1'))
+  },
+  // ------------------------------------------------------------ MEDIUM hardening settings (Kubernetes)
+  {
+    ruleIds: [8345],
+    name: 'ingress-nginx configuration-snippet annotation',
+    detects: f('k8s/ingress.yaml', ingress(`    nginx.ingress.kubernetes.io/configuration-snippet: |
+      more_set_headers "X-Frame-Options: DENY";`)),
+    ignores: f('k8s/ingress.yaml', ingress('    nginx.ingress.kubernetes.io/ssl-redirect: "true"'))
+  },
+  {
+    ruleIds: [8902],
+    name: 'Kubernetes container explicitly runs as UID 0',
+    detects: f('k8s/api-deployment.yaml', deployment(`            runAsUser: 0
+            allowPrivilegeEscalation: false`)),
+    ignores: f('k8s/api-deployment.yaml', deployment(`            runAsUser: 10001
+            runAsNonRoot: true
+            allowPrivilegeEscalation: false`))
+  },
+  {
+    ruleIds: [8905],
+    name: 'Pod spec explicitly mounts the service account token',
+    detects: f('k8s/api-deployment.yaml', deployment(hardenedCtx, `
+      serviceAccountName: api
+      automountServiceAccountToken: true`)),
+    ignores: f('k8s/api-deployment.yaml', deployment(hardenedCtx, `
+      serviceAccountName: api
+      automountServiceAccountToken: false`))
+  },
+  {
+    ruleIds: [8908, 12203],
+    name: 'Kubernetes container with a writable root filesystem',
+    detects: f('k8s/api-deployment.yaml', deployment(`            runAsNonRoot: true
+            readOnlyRootFilesystem: false`)),
+    ignores: f('k8s/api-deployment.yaml', deployment(hardenedCtx))
+  },
+  // ------------------------------------------------------------ MEDIUM / LOW app and CI settings
+  {
+    ruleIds: [8008],
+    name: 'torch.load of a checkpoint without weights_only=True',
+    detects: f('app/ml/classifier.py', torchLoad('torch.load(checkpoint_path, map_location="cpu")')),
+    ignores: f('app/ml/classifier.py', torchLoad('torch.load(checkpoint_path, map_location="cpu", weights_only=True)'))
+  },
+  {
+    ruleIds: [8056],
+    name: 'Client picks the LLM model straight from the request body',
+    detects: f('src/routes/chat.ts', chatRoute('req.body.model', '')),
+    ignores: f('src/routes/chat.ts', chatRoute('model', `  const ALLOWED_MODELS = ['gpt-4o-mini', 'gpt-4o'];
+  const model = ALLOWED_MODELS.includes(req.body.model) ? req.body.model : 'gpt-4o-mini';
+`))
+  },
+  {
+    ruleIds: [8215],
+    name: 'Email address put into the URL query string',
+    detects: f('app/(auth)/signup/signup-form.ts', signupRedirect('router.push(`/verify-email?email=${email}`);')),
+    ignores: f('app/(auth)/signup/signup-form.ts', signupRedirect("router.push('/verify-email');"))
+  },
+  {
+    ruleIds: [8225],
+    name: 'Session replay records form inputs unmasked',
+    detects: f('app/providers/posthog.ts', posthogInit('false')),
+    ignores: f('app/providers/posthog.ts', posthogInit('true'))
+  },
+  {
+    ruleIds: [9505],
+    name: 'Workflow echoes a secret to the build log',
+    detects: f('.github/workflows/release.yml', releaseWorkflow('      - run: echo "Publishing with token ${{ secrets.NPM_TOKEN }}"')),
+    ignores: f('.github/workflows/release.yml', releaseWorkflow('      - run: echo "${{ secrets.NPM_TOKEN }}" | npm login --registry https://registry.npmjs.org --auth-type=legacy'))
   }
 ];

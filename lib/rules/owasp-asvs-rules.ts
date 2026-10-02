@@ -9,6 +9,20 @@ export interface OwaspAsvsRuleResult {
     findings: Finding[];
     logs: string[];
 }
+/** bcrypt cost below 10, e.g. bcrypt.hash(pw, 8), genSaltSync(6), gensalt(rounds=4). */
+const WEAK_BCRYPT_COST = /bcrypt\w*\.(?:hash(?:Sync)?\s*\(\s*[^,()]+,\s*|genSalt(?:Sync)?\s*\(\s*|gensalt\s*\(\s*(?:rounds\s*=\s*)?)[1-9]\s*[,)]/i;
+/** PBKDF2 iteration count literal, Node (pbkdf2/pbkdf2Sync) and Python (hashlib.pbkdf2_hmac). */
+const PBKDF2_ITERATIONS = /pbkdf2(?:Sync)?\s*\(\s*[^,()]+,\s*[^,()]+,\s*(\d[\d_]*)\s*,|pbkdf2_hmac\s*\(\s*[^,()]+,\s*[^,()]+,\s*[^,()]+,\s*(\d[\d_]*)\s*[,)]/gi;
+/** Index of the first line hashing passwords with a weak work factor (bcrypt cost < 10, PBKDF2 < 100k), or -1. */
+function weakKdfLine(lines: string[]): number {
+    return lines.findIndex((l) => {
+        if (WEAK_BCRYPT_COST.test(l)) return true;
+        for (const m of l.matchAll(PBKDF2_ITERATIONS)) {
+            if (Number((m[1] ?? m[2]).replace(/_/g, '')) < 100000) return true;
+        }
+        return false;
+    });
+}
 export function evaluateOwaspAsvsRules(file: CodeFile, lines: string[], cleanContent: string, findingCounter: {
     count: number;
 }): OwaspAsvsRuleResult {
@@ -20,30 +34,6 @@ export function evaluateOwaspAsvsRules(file: CodeFile, lines: string[], cleanCon
         return { findings, logs };
     }
     const ts = new Date().toLocaleTimeString();
-    // ASVS-01: ASVS V2.1 Password Security: Permitting Weak Passwords or Failing Breached Checks
-    if (((/passwordValidator/i.test(lowerPath) || /passwordValidator/i.test(cleanContent)) && !/haveIBeenPwned/i.test(cleanContent))) {
-        const matchLineIdx = locateMatchLine(lines, [/passwordValidator/i], l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('#') && !l.trim().startsWith('*'));
-        const lineNum = matchLineIdx !== -1 ? matchLineIdx + 1 : 1;
-        findings.push({
-            id: `asvs13801-${Date.now()}-${findingCounter.count++}`,
-            ruleId: 13801,
-            type: 'SECURITY',
-            title: "ASVS-01: ASVS V2.1 Password Security: Permitting Weak Passwords or Failing Breached Checks",
-            severity: "CRITICAL",
-            category: "Authentication",
-            filePath: file.path,
-            lineRange: `L${lineNum}`,
-            snippet: lines[matchLineIdx] || 'OWASP ASVS L3 configuration',
-            reproductionSteps: [
-                `Audited OWASP ASVS L3 configuration in ${file.path}:${lineNum}.`,
-                'Matched ASVS-01: ASVS V2.1 Password Security: Permitting Weak Passwords or Failing Breached Checks.'
-            ],
-            remediationPrompt: "Enforce minimum 12-character passwords and check against breached credential dictionaries.",
-            status: 'OPEN',
-            falsePositive: false
-        });
-        logs.push(`[${ts}] [ASVS AUDIT] Found ASVS-01: ASVS V2.1 Password Security: Permitting Weak Passwords or Failing Breached Checks at ${file.path}:${lineNum}`);
-    }
     // ASVS-02: ASVS V3.2 Session Management: Permitting Session Fixation or Insecure Cookie Flags
     if ((/(?:setHeader\(\s*["']set-cookie["']|cookies\(\)\.set|response\.cookies\.set)\s*\(/i.test(cleanContent) && !/HttpOnly/i.test(cleanContent))) {
         const matchLineIdx = locateMatchLine(lines, [/(?:setHeader\(\s*["']set-cookie["']|cookies\(\)\.set|response\.cookies\.set)\s*\(/i], l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('#') && !l.trim().startsWith('*'));
@@ -92,40 +82,16 @@ export function evaluateOwaspAsvsRules(file: CodeFile, lines: string[], cleanCon
         });
         logs.push(`[${ts}] [ASVS AUDIT] Found ASVS-03: ASVS V4.1 Access Control: Insecure Direct Object References (IDOR) on Tenant APIs at ${file.path}:${lineNum}`);
     }
-    // ASVS-04: ASVS V5.1 Input Validation: Missing Canonicalization Before Parsing
-    if ((/sanitizeInput/i.test(cleanContent) && !/normalize\('NFKC'\)/i.test(cleanContent))) {
-        const matchLineIdx = locateMatchLine(lines, [/sanitizeInput/i], l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('#') && !l.trim().startsWith('*'));
-        const lineNum = matchLineIdx !== -1 ? matchLineIdx + 1 : 1;
-        findings.push({
-            id: `asvs13804-${Date.now()}-${findingCounter.count++}`,
-            ruleId: 13804,
-            type: 'SECURITY',
-            title: "ASVS-04: ASVS V5.1 Input Validation: Missing Canonicalization Before Parsing",
-            severity: "HIGH",
-            category: "Input Validation",
-            filePath: file.path,
-            lineRange: `L${lineNum}`,
-            snippet: lines[matchLineIdx] || 'OWASP ASVS L3 configuration',
-            reproductionSteps: [
-                `Audited OWASP ASVS L3 configuration in ${file.path}:${lineNum}.`,
-                'Matched ASVS-04: ASVS V5.1 Input Validation: Missing Canonicalization Before Parsing.'
-            ],
-            remediationPrompt: "Canonicalize all UTF-8 input strings before executing validation rules to prevent parser bypasses.",
-            status: 'OPEN',
-            falsePositive: false
-        });
-        logs.push(`[${ts}] [ASVS AUDIT] Found ASVS-04: ASVS V5.1 Input Validation: Missing Canonicalization Before Parsing at ${file.path}:${lineNum}`);
-    }
     // ASVS-05: ASVS V6.2 Cryptographic Storage: Using Insecure Random Salt or Low Iteration Counts
-    if ((/pbkdf2|bcrypt/i.test(cleanContent))) {
-        const matchLineIdx = locateMatchLine(lines, [/pbkdf2|bcrypt/i], l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('#') && !l.trim().startsWith('*'));
+    if (/pbkdf2|bcrypt/i.test(cleanContent) && weakKdfLine(lines) !== -1) {
+        const matchLineIdx = weakKdfLine(lines);
         const lineNum = matchLineIdx !== -1 ? matchLineIdx + 1 : 1;
         findings.push({
             id: `asvs13805-${Date.now()}-${findingCounter.count++}`,
             ruleId: 13805,
             type: 'SECURITY',
             title: "ASVS-05: ASVS V6.2 Cryptographic Storage: Using Insecure Random Salt or Low Iteration Counts",
-            severity: "CRITICAL",
+            severity: 'HIGH',
             category: "Data at Rest",
             filePath: file.path,
             lineRange: `L${lineNum}`,

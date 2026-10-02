@@ -97,7 +97,7 @@ export function evaluateApiRules(file: CodeFile, lines: string[], cleanContent: 
             ruleId: 7203,
             type: 'SECURITY',
             title: "API-03: Collection Endpoint Missing Pagination Boundary",
-            severity: 'HIGH',
+            severity: 'MEDIUM',
             category: "API Scalability",
             filePath: file.path,
             lineRange: `L${lineNum}`,
@@ -263,31 +263,6 @@ export function evaluateApiRules(file: CodeFile, lines: string[], cleanContent: 
         });
         logs.push(`[${ts}] 🌐 API-09: CORS Preflight (OPTIONS) Missing Access-Control-Max-Age detected (${file.path}:${lineNum})`);
     }
-    // API-10: Sensitive ID Exposure Using Sequential Integers
-    if (/app\/api\/.*\/\[id\]\/route\.ts$/i.test(file.path) && /parseInt\s*\(\s*params\.id\s*,\s*10\s*\)/i.test(cleanContent) && /orders|billing|users/i.test(lowerPath)) {
-        const matchLineIdx = locateMatchLine(lines, [/parseInt\s*\(\s*params\.id\s*,\s*10\s*\)/i], l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('*'));
-        const lineNum = matchLineIdx !== -1 ? matchLineIdx + 1 : 1;
-        findings.push({
-            id: `api10-${Date.now()}-${findingCounter.count++}`,
-            ruleId: 7210,
-            type: 'SECURITY',
-            title: "API-10: Sensitive ID Exposure Using Sequential Integers",
-            severity: 'HIGH',
-            category: "Insecure Direct Object Reference (IDOR)",
-            filePath: file.path,
-            lineRange: `L${lineNum}`,
-            snippet: lines[matchLineIdx] || "<detected API-10 pattern>",
-            reproductionSteps: [
-                `Scanned source code in ${file.path}:${lineNum}.`,
-                "Detected Sensitive ID Exposure Using Sequential Integers: Exposing autoincrementing integer IDs (/api/v1/orders/42) allowing attackers to enumerate all records."
-            ],
-            remediationPrompt: "Use UUIDv7 or nanoid for public-facing identifiers instead of sequential database serial integers.",
-            status: 'OPEN',
-            owner: "Data Modeling",
-            falsePositive: false
-        });
-        logs.push(`[${ts}] 🌐 API-10: Sensitive ID Exposure Using Sequential Integers detected (${file.path}:${lineNum})`);
-    }
     // API-11: Missing Content-Type Validation on POST/PUT Endpoints
     if (/(?:app\/api|pages\/api)/i.test(lowerPath) && /export\s+async\s+function\s+(?:POST|PUT)/i.test(cleanContent) && /await\s+req\.json\(\)/i.test(cleanContent) && !/content-type/i.test(cleanContent)) {
         const matchLineIdx = locateMatchLine(lines, [/export\s+async\s+function\s+(?:POST|PUT)/i, /await\s+req\.json\(\)/i], l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('*'));
@@ -313,31 +288,6 @@ export function evaluateApiRules(file: CodeFile, lines: string[], cleanContent: 
         });
         logs.push(`[${ts}] 🌐 API-11: Missing Content-Type Validation on POST/PUT Endpoints detected (${file.path}:${lineNum})`);
     }
-    // API-12: Dangerous HTTP Method Override Header Allowed
-    if (/X-HTTP-Method-Override/i.test(cleanContent) && !/verifyAdmin|trustedProxy/i.test(cleanContent)) {
-        const matchLineIdx = locateMatchLine(lines, [/X-HTTP-Method-Override/i], l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('*'));
-        const lineNum = matchLineIdx !== -1 ? matchLineIdx + 1 : 1;
-        findings.push({
-            id: `api12-${Date.now()}-${findingCounter.count++}`,
-            ruleId: 7212,
-            type: 'SECURITY',
-            title: "API-12: Dangerous HTTP Method Override Header Allowed",
-            severity: 'HIGH',
-            category: "Method Security",
-            filePath: file.path,
-            lineRange: `L${lineNum}`,
-            snippet: lines[matchLineIdx] || "<detected API-12 pattern>",
-            reproductionSteps: [
-                `Scanned source code in ${file.path}:${lineNum}.`,
-                "Detected Dangerous HTTP Method Override Header Allowed: Honoring X-HTTP-Method-Override or _method query parameter without authentication, bypassing route restrictions."
-            ],
-            remediationPrompt: "Disable method override middleware unless specifically required for legacy client compatibility.",
-            status: 'OPEN',
-            owner: "HTTP Headers",
-            falsePositive: false
-        });
-        logs.push(`[${ts}] 🌐 API-12: Dangerous HTTP Method Override Header Allowed detected (${file.path}:${lineNum})`);
-    }
     // API-13: API Endpoint Missing Strict JSON Schema / Zod Validation
     if (/(?:app\/api|pages\/api)/i.test(lowerPath) && /export\s+async\s+function\s+POST/i.test(cleanContent) && /const\s+\w+\s*=\s*\(?\s*await\s+(?:req|request)\.json\(\)\s*\)?\s*as\s+any\b/i.test(cleanContent)) {
         const matchLineIdx = locateMatchLine(lines, [/const\s+\w+\s*=\s*\(?\s*await\s+(?:req|request)\.json\(\)\s*\)?\s*as\s+any\b/i], l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('*'));
@@ -347,7 +297,7 @@ export function evaluateApiRules(file: CodeFile, lines: string[], cleanContent: 
             ruleId: 7213,
             type: 'SECURITY',
             title: "API-13: API Endpoint Missing Strict JSON Schema / Zod Validation",
-            severity: 'HIGH',
+            severity: 'MEDIUM',
             category: "Input Validation",
             filePath: file.path,
             lineRange: `L${lineNum}`,
@@ -362,31 +312,6 @@ export function evaluateApiRules(file: CodeFile, lines: string[], cleanContent: 
             falsePositive: false
         });
         logs.push(`[${ts}] 🌐 API-13: API Endpoint Missing Strict JSON Schema / Zod Validation detected (${file.path}:${lineNum})`);
-    }
-    // API-14: Missing Cache-Control Header on Authenticated User Data
-    if (/(?:user\/profile|account\/billing)/i.test(lowerPath) && /export\s+async\s+function\s+GET/i.test(cleanContent) && !/Cache-Control/i.test(cleanContent) && /getUser|session/i.test(cleanContent)) {
-        const matchLineIdx = locateMatchLine(lines, [/export\s+async\s+function\s+GET/i, /getUser|session/i], l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('*'));
-        const lineNum = matchLineIdx !== -1 ? matchLineIdx + 1 : 1;
-        findings.push({
-            id: `api14-${Date.now()}-${findingCounter.count++}`,
-            ruleId: 7214,
-            type: 'SECURITY',
-            title: "API-14: Missing Cache-Control Header on Authenticated User Data",
-            severity: 'HIGH',
-            category: "Privacy & Caching",
-            filePath: file.path,
-            lineRange: `L${lineNum}`,
-            snippet: lines[matchLineIdx] || "<detected API-14 pattern>",
-            reproductionSteps: [
-                `Scanned source code in ${file.path}:${lineNum}.`,
-                "Detected Missing Cache-Control Header on Authenticated User Data: Returning private user profile or billing data without Cache-Control: no-store, private."
-            ],
-            remediationPrompt: "Add Cache-Control: no-store, private, max-age=0 to all authenticated API responses.",
-            status: 'OPEN',
-            owner: "API Headers",
-            falsePositive: false
-        });
-        logs.push(`[${ts}] 🌐 API-14: Missing Cache-Control Header on Authenticated User Data detected (${file.path}:${lineNum})`);
     }
     // API-15: GET Endpoint Performing State-Mutating Actions
     const getFuncMatch = cleanContent.match(/export\s+async\s+function\s+GET[\s\S]*?(?=export\s+(?:async\s+)?function|$)/i);
@@ -602,7 +527,7 @@ export function evaluateApiRules(file: CodeFile, lines: string[], cleanContent: 
             ruleId: 7223,
             type: 'SECURITY',
             title: "API-23: Webhook Delivery Missing Cryptographic HMAC Signature",
-            severity: 'HIGH',
+            severity: 'MEDIUM',
             category: "Webhook Integrity",
             filePath: file.path,
             lineRange: `L${lineNum}`,
@@ -743,31 +668,6 @@ export function evaluateApiRules(file: CodeFile, lines: string[], cleanContent: 
         });
         logs.push(`[${ts}] 🌐 API-28: GraphQL Schema Exposing Introspection in Production detected (${file.path}:${lineNum})`);
     }
-    // API-29: GraphQL Mutation Missing Field-Level Authorization Checks
-    if (/Mutation:\s*\{[^}]*deleteAccount:\s*async\s*\([^)]*\)\s*=>\s*\{(?![^}]*context\.user)/i.test(cleanContent)) {
-        const matchLineIdx = locateMatchLine(lines, [/Mutation:\s*\{[^}]*deleteAccount:\s*async\s*\([^)]*\)\s*=>\s*\{(?![^}]*context\.user)/i], l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('*'));
-        const lineNum = matchLineIdx !== -1 ? matchLineIdx + 1 : 1;
-        findings.push({
-            id: `api29-${Date.now()}-${findingCounter.count++}`,
-            ruleId: 7229,
-            type: 'SECURITY',
-            title: "API-29: GraphQL Mutation Missing Field-Level Authorization Checks",
-            severity: 'HIGH',
-            category: "GraphQL Security",
-            filePath: file.path,
-            lineRange: `L${lineNum}`,
-            snippet: lines[matchLineIdx] || "<detected API-29 pattern>",
-            reproductionSteps: [
-                `Scanned source code in ${file.path}:${lineNum}.`,
-                "Detected GraphQL Mutation Missing Field-Level Authorization Checks: Relying solely on query-level authentication while individual field resolvers lack object ownership checks."
-            ],
-            remediationPrompt: "Enforce context.user.id === resource.owner_id in mutation resolvers.",
-            status: 'OPEN',
-            owner: "GraphQL Resolvers",
-            falsePositive: false
-        });
-        logs.push(`[${ts}] 🌐 API-29: GraphQL Mutation Missing Field-Level Authorization Checks detected (${file.path}:${lineNum})`);
-    }
     // API-30: tRPC Procedure Missing Caller Context Authentication
     if (/\.mutation\s*\(/.test(cleanContent) && publicDeleteMutationLine(lines) !== -1) {
         const matchLineIdx = publicDeleteMutationLine(lines);
@@ -818,31 +718,6 @@ export function evaluateApiRules(file: CodeFile, lines: string[], cleanContent: 
         });
         logs.push(`[${ts}] 🌐 API-31: Accept-Encoding Missing Support for Brotli (br) detected (${file.path}:${lineNum})`);
     }
-    // API-33: API Bulk Creation Endpoint Lacking Batch Item Limit
-    if (/(?:bulk|batch)/i.test(lowerPath) && /export\s+async\s+function\s+POST/i.test(cleanContent) && !/max\(|length\s*>\s*\d+|limit/i.test(cleanContent)) {
-        const matchLineIdx = locateMatchLine(lines, [/export\s+async\s+function\s+POST/i], l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('*'));
-        const lineNum = matchLineIdx !== -1 ? matchLineIdx + 1 : 1;
-        findings.push({
-            id: `api33-${Date.now()}-${findingCounter.count++}`,
-            ruleId: 7233,
-            type: 'SECURITY',
-            title: "API-33: API Bulk Creation Endpoint Lacking Batch Item Limit",
-            severity: 'HIGH',
-            category: "DoS Prevention",
-            filePath: file.path,
-            lineRange: `L${lineNum}`,
-            snippet: lines[matchLineIdx] || "<detected API-33 pattern>",
-            reproductionSteps: [
-                `Scanned source code in ${file.path}:${lineNum}.`,
-                "Detected API Bulk Creation Endpoint Lacking Batch Item Limit: POST /api/v1/items/bulk accepting infinite array lengths, causing event loop starvation on 10,000+ items."
-            ],
-            remediationPrompt: "Enforce z.array(...).min(1).max(100) on bulk mutation request payloads.",
-            status: 'OPEN',
-            owner: "Bulk Operations",
-            falsePositive: false
-        });
-        logs.push(`[${ts}] 🌐 API-33: API Bulk Creation Endpoint Lacking Batch Item Limit detected (${file.path}:${lineNum})`);
-    }
     // API-34: Missing Content-Security-Policy on API JSON Endpoints
     if (/servePublicJsonDocs/i.test(cleanContent) && !/Content-Type-Options/i.test(cleanContent)) {
         const matchLineIdx = locateMatchLine(lines, [/servePublicJsonDocs/i], l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('*'));
@@ -869,15 +744,15 @@ export function evaluateApiRules(file: CodeFile, lines: string[], cleanContent: 
         logs.push(`[${ts}] 🌐 API-34: Missing Content-Security-Policy on API JSON Endpoints detected (${file.path}:${lineNum})`);
     }
     // API-35: Unsanitized User-Controlled Filename in Content-Disposition
-    if (/headers\.set\(\s*[\'"]Content-Disposition[\'"]\s*,\s*[\'"]attachment;\s*filename=[\'"]\s*\+\s*[a-zA-Z0-9_]+\s*\)/i.test(cleanContent)) {
-        const matchLineIdx = locateMatchLine(lines, [/headers\.set\(\s*[\'"]Content-Disposition[\'"]\s*,\s*[\'"]attachment;\s*filename=[\'"]\s*\+\s*[a-zA-Z0-9_]+\s*\)/i], l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('*'));
+    if (/headers\.set\(\s*[\'"]Content-Disposition[\'"]\s*,\s*[\'"]attachment;\s*filename=[\'"]\s*\+\s*[\w.]+\s*\)/i.test(cleanContent)) {
+        const matchLineIdx = locateMatchLine(lines, [/headers\.set\(\s*[\'"]Content-Disposition[\'"]\s*,\s*[\'"]attachment;\s*filename=[\'"]\s*\+\s*[\w.]+\s*\)/i], l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('*'));
         const lineNum = matchLineIdx !== -1 ? matchLineIdx + 1 : 1;
         findings.push({
             id: `api35-${Date.now()}-${findingCounter.count++}`,
             ruleId: 7235,
             type: 'SECURITY',
             title: "API-35: Unsanitized User-Controlled Filename in Content-Disposition",
-            severity: 'HIGH',
+            severity: 'MEDIUM',
             category: "Header Injection",
             filePath: file.path,
             lineRange: `L${lineNum}`,
@@ -942,56 +817,6 @@ export function evaluateApiRules(file: CodeFile, lines: string[], cleanContent: 
             falsePositive: false
         });
         logs.push(`[${ts}] 🌐 API-37: Exposing Internal Database Errors in 400 Bad Request detected (${file.path}:${lineNum})`);
-    }
-    // API-38: Session Cookie Omission of SameSite=Lax/Strict on API Auth
-    if (/cookies\(\)\.set\s*\(\s*[\'"](?:session|token|auth)[\'"][^)]*sameSite:\s*[\'"]none[\'"](?![^)]*secure:\s*true)/i.test(cleanContent)) {
-        const matchLineIdx = locateMatchLine(lines, [/cookies\(\)\.set\s*\(\s*[\'"](?:session|token|auth)[\'"][^)]*sameSite:\s*[\'"]none[\'"](?![^)]*secure:\s*true)/i], l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('*'));
-        const lineNum = matchLineIdx !== -1 ? matchLineIdx + 1 : 1;
-        findings.push({
-            id: `api38-${Date.now()}-${findingCounter.count++}`,
-            ruleId: 7238,
-            type: 'SECURITY',
-            title: "API-38: Session Cookie Omission of SameSite=Lax/Strict on API Auth",
-            severity: 'HIGH',
-            category: "CSRF Security",
-            filePath: file.path,
-            lineRange: `L${lineNum}`,
-            snippet: lines[matchLineIdx] || "<detected API-38 pattern>",
-            reproductionSteps: [
-                `Scanned source code in ${file.path}:${lineNum}.`,
-                "Detected Session Cookie Omission of SameSite=Lax/Strict on API Auth: Setting auth token cookies with SameSite=None without Secure flag, exposing sessions to cross-site CSRF."
-            ],
-            remediationPrompt: "Set cookie options: { sameSite: 'lax', secure: true, httpOnly: true }.",
-            status: 'OPEN',
-            owner: "Auth Cookies",
-            falsePositive: false
-        });
-        logs.push(`[${ts}] 🌐 API-38: Session Cookie Omission of SameSite=Lax/Strict on API Auth detected (${file.path}:${lineNum})`);
-    }
-    // API-39: Client IP Resolution Vulnerable to Spoofed X-Forwarded-For
-    if (/function\s+getClientIp/i.test(cleanContent) && /req\.headers\.get\([\'"]x-forwarded-for[\'"]\)\?\.split\([\'"],[\'"]\)\[0\]/i.test(cleanContent) && !/cf-connecting-ip|x-real-ip/i.test(cleanContent)) {
-        const matchLineIdx = locateMatchLine(lines, [/function\s+getClientIp/i, /req\.headers\.get\([\'"]x-forwarded-for[\'"]\)\?\.split\([\'"],[\'"]\)\[0\]/i], l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('*'));
-        const lineNum = matchLineIdx !== -1 ? matchLineIdx + 1 : 1;
-        findings.push({
-            id: `api39-${Date.now()}-${findingCounter.count++}`,
-            ruleId: 7239,
-            type: 'SECURITY',
-            title: "API-39: Client IP Resolution Vulnerable to Spoofed X-Forwarded-For",
-            severity: 'HIGH',
-            category: "IP Spoofing",
-            filePath: file.path,
-            lineRange: `L${lineNum}`,
-            snippet: lines[matchLineIdx] || "<detected API-39 pattern>",
-            reproductionSteps: [
-                `Scanned source code in ${file.path}:${lineNum}.`,
-                "Detected Client IP Resolution Vulnerable to Spoofed X-Forwarded-For: Reading the first entry in x-forwarded-for without validating reverse proxy hop count, allowing IP spoofing."
-            ],
-            remediationPrompt: "Prioritize cf-connecting-ip or validate trusted reverse proxy headers to prevent IP spoofing.",
-            status: 'OPEN',
-            owner: "Rate Limiting",
-            falsePositive: false
-        });
-        logs.push(`[${ts}] 🌐 API-39: Client IP Resolution Vulnerable to Spoofed X-Forwarded-For detected (${file.path}:${lineNum})`);
     }
     // API-40: Missing 204 No Content Status on Successful Empty Response
     if (/(?:app\/api|pages\/api)/i.test(lowerPath) && /export\s+async\s+function\s+DELETE/i.test(cleanContent) && /return\s+NextResponse\.json\(\s*\{\s*\}\s*,\s*\{\s*status:\s*200\s*\}\s*\)/i.test(cleanContent)) {
@@ -1077,7 +902,7 @@ export function evaluateApiRules(file: CodeFile, lines: string[], cleanContent: 
             ruleId: 7243,
             type: 'SECURITY',
             title: "API-43: Unbounded WebSocket Message Payload Size",
-            severity: 'HIGH',
+            severity: 'MEDIUM',
             category: "DoS Prevention",
             filePath: file.path,
             lineRange: `L${lineNum}`,
@@ -1152,7 +977,7 @@ export function evaluateApiRules(file: CodeFile, lines: string[], cleanContent: 
             ruleId: 7246,
             type: 'SECURITY',
             title: "API-46: Missing Timing-Safe Comparison on API Key Authentication",
-            severity: 'HIGH',
+            severity: 'MEDIUM',
             category: "Timing Attacks",
             filePath: file.path,
             lineRange: `L${lineNum}`,

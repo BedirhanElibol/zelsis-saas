@@ -21,30 +21,6 @@ export function evaluateWafEdgeRules(file: CodeFile, lines: string[], cleanConte
         return { findings, logs };
     }
     const ts = new Date().toLocaleTimeString();
-    // WAF-01: WAF Origin Bypass via Unvalidated X-Forwarded-Host Header
-    if ((/req\.headers\.get\s*\(\s*['"]x-forwarded-host['"]\s*\)/i.test(cleanContent) && !/allowedOrigins|trustedHosts/i.test(cleanContent))) {
-        const matchLineIdx = locateMatchLine(lines, [/req\.headers\.get\s*\(\s*['"]x-forwarded-host['"]\s*\)/i], l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('*'));
-        const lineNum = matchLineIdx !== -1 ? matchLineIdx + 1 : 1;
-        findings.push({
-            id: `waf10401-${Date.now()}-${findingCounter.count++}`,
-            ruleId: 10401,
-            type: 'SECURITY',
-            title: "WAF-01: WAF Origin Bypass via Unvalidated X-Forwarded-Host Header",
-            severity: "CRITICAL",
-            category: "Edge Security",
-            filePath: file.path,
-            lineRange: `L${lineNum}`,
-            snippet: lines[matchLineIdx] || 'WAF edge configuration',
-            reproductionSteps: [
-                `Audited edge configuration in ${file.path}:${lineNum}.`,
-                'Detected WAF security violation matching WAF-01.'
-            ],
-            remediationPrompt: "Validate Host and X-Forwarded-Host against known trusted hostnames in reverse proxy middleware.",
-            status: 'OPEN',
-            falsePositive: false
-        });
-        logs.push(`[${ts}] [WAF AUDIT] Found WAF-01: WAF Origin Bypass via Unvalidated X-Forwarded-Host Header at ${file.path}:${lineNum}`);
-    }
     // WAF-02: Missing Edge Rate Limiting on High-Cost AI Inference Endpoints
     const callsAiInference = /chat\.completions|chat\/completions|messages\.create|responses\.create|generateText|streamText|generateObject|streamObject|from\s+['"](?:openai|@anthropic-ai\/sdk|@ai-sdk\/[\w-]+|ai|@google\/generative-ai|@google\/genai|@mistralai\/mistralai|groq-sdk|cohere-ai|replicate|together-ai|ollama)['"]|api\.openai\.com|api\.anthropic\.com|generativelanguage\.googleapis\.com|api\.mistral\.ai|api\.groq\.com|openrouter\.ai\/api|api\.together\.xyz|api\.cohere\.(?:ai|com)|api\.deepseek\.com|api\.x\.ai/i.test(cleanContent);
     if ((callsAiInference || LLM_CALL.test(cleanContent)) && /export\s+async\s+function\s+POST/i.test(cleanContent) && !RATE_LIMIT_GUARD.test(cleanContent)) {
@@ -70,40 +46,22 @@ export function evaluateWafEdgeRules(file: CodeFile, lines: string[], cleanConte
         });
         logs.push(`[${ts}] [WAF AUDIT] Found WAF-02: Missing Edge Rate Limiting on High-Cost AI Inference Endpoints at ${file.path}:${lineNum}`);
     }
-    // WAF-03: Direct Cloud Origin IP Exposure Bypassing WAF Inspection
-    if ((/(?:origin_ip|direct_backend_ip)\s*=\s*['"]\d+\.\d+\.\d+\.\d+['"]/i.test(cleanContent))) {
-        const matchLineIdx = locateMatchLine(lines, [/(?:origin_ip|direct_backend_ip)\s*=\s*['"]\d+\.\d+\.\d+\.\d+['"]/i], l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('*'));
-        const lineNum = matchLineIdx !== -1 ? matchLineIdx + 1 : 1;
-        findings.push({
-            id: `waf10403-${Date.now()}-${findingCounter.count++}`,
-            ruleId: 10403,
-            type: 'SECURITY',
-            title: "WAF-03: Direct Cloud Origin IP Exposure Bypassing WAF Inspection",
-            severity: "CRITICAL",
-            category: "Network Isolation",
-            filePath: file.path,
-            lineRange: `L${lineNum}`,
-            snippet: lines[matchLineIdx] || 'WAF edge configuration',
-            reproductionSteps: [
-                `Audited edge configuration in ${file.path}:${lineNum}.`,
-                'Detected WAF security violation matching WAF-03.'
-            ],
-            remediationPrompt: "Enforce strict firewall rules restricting ingress traffic exclusively to WAF edge proxy IP ranges.",
-            status: 'OPEN',
-            falsePositive: false
-        });
-        logs.push(`[${ts}] [WAF AUDIT] Found WAF-03: Direct Cloud Origin IP Exposure Bypassing WAF Inspection at ${file.path}:${lineNum}`);
-    }
     // WAF-05: Unchecked HTTP Request Body Size Exceeding Edge WAF Inspection Buffer
-    if ((/bodyParser|maxBodySize/i.test(cleanContent))) {
-        const matchLineIdx = locateMatchLine(lines, [/bodyParser|maxBodySize/i], l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('*'));
+    const r10405Idx = !/bodyParser|express\.(?:json|urlencoded|raw|text)|bodySizeLimit|sizeLimit|fastify/i.test(cleanContent) ? -1
+        : lines.findIndex(l => {
+            // request body limit raised to 50 MB+ (or GB): larger than any edge WAF inspects
+            const m = l.match(/\b(?:limit|bodySizeLimit|sizeLimit|bodyLimit)\s*:\s*['"](\d+)\s*(mb|gb)['"]/i);
+            return !!m && (m[2].toLowerCase() === 'gb' || Number(m[1]) >= 50);
+        });
+    if (r10405Idx !== -1) {
+        const matchLineIdx = r10405Idx;
         const lineNum = matchLineIdx !== -1 ? matchLineIdx + 1 : 1;
         findings.push({
             id: `waf10405-${Date.now()}-${findingCounter.count++}`,
             ruleId: 10405,
             type: 'SECURITY',
             title: "WAF-05: Unchecked HTTP Request Body Size Exceeding Edge WAF Inspection Buffer",
-            severity: "HIGH",
+            severity: "MEDIUM",
             category: "Inspection Evasion",
             filePath: file.path,
             lineRange: `L${lineNum}`,

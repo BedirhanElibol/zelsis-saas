@@ -1,15 +1,29 @@
 /**
  * Zelsis Master evaluateLlmCostGovernanceRules Engine
- * Rules LLM-COST-01 to LLM-COST-08 (Rule IDs 8071 to 8078).
- * Provides FinOps, AI Token Cost Protection, Denial-of-Wallet Defense, and Model Governance.
+ * LLM-COST-03 (8073) and LLM-COST-06 (8076).
+ * Removed as unsound (ids never reused): 8071 missing max_tokens (idiomatic SDK code omits it; output is
+ * bounded by the model), 8072 rate limit absent from the route file (usually lives in middleware / gateway),
+ * 8074 "flagship model on a simple task" (a product choice), 8075 stream without timeout (platform caps it).
  */
 import { Finding } from '@/data/schema';
 import { CodeFile } from '../scanner-engine';
-import { LLM_CALL, LLM_OUTPUT_LIMIT, RATE_LIMIT_GUARD } from './shared/stack-signals';
+import { LLM_CALL } from './shared/stack-signals';
 export interface LlmCostGovernanceRuleResult {
     findings: Finding[];
     logs: string[];
 }
+/** Text of the `{ ... }` block opening at or after `from` (brace-matched), or '' when none. */
+function blockAfter(src: string, from: number): string {
+    const open = src.indexOf('{', from);
+    if (open === -1) return '';
+    let depth = 0;
+    for (let i = open; i < src.length; i++) {
+        if (src[i] === '{') depth++;
+        else if (src[i] === '}' && --depth === 0) return src.slice(open, i + 1);
+    }
+    return src.slice(open);
+}
+const lineAt = (src: string, index: number): number => src.slice(0, index).split('\n').length - 1;
 export function evaluateLlmCostGovernanceRules(file: CodeFile, lines: string[], cleanContent: string, findingCounter: {
     count: number;
 }): LlmCostGovernanceRuleResult {
@@ -21,154 +35,53 @@ export function evaluateLlmCostGovernanceRules(file: CodeFile, lines: string[], 
         return { findings, logs };
     }
     const ts = new Date().toLocaleTimeString();
-    // LLM-COST-01: Unbounded Token Generation (max_tokens / max_completion_tokens missing)
-    const hasLlmCall = LLM_CALL.test(cleanContent);
-    if (hasLlmCall && !LLM_OUTPUT_LIMIT.test(cleanContent)) {
-        const matchLineIdx = lines.findIndex(l => !l.trim().startsWith('//') &&
-            !l.trim().startsWith('*') &&
-            /(?:openai\.chat\.completions\.create|anthropic\.messages\.create|mistral\.chat)/i.test(l));
-        const lineNum = matchLineIdx !== -1 ? matchLineIdx + 1 : 1;
-        findings.push({
-            id: `llmcost01-${Date.now()}-${findingCounter.count++}`,
-            ruleId: 8071,
-            type: 'INFRA_DATABASE',
-            title: 'LLM-COST-01: Unbounded Token Generation (Missing max_tokens Guard)',
-            severity: 'HIGH',
-            category: 'FinOps & Cost Governance',
-            filePath: file.path,
-            lineRange: `L${lineNum}`,
-            snippet: lines[matchLineIdx] || '<LLM chat completion call without max_tokens>',
-            reproductionSteps: [
-                `Scanned AI SDK invocation in ${file.path}:${lineNum}.`,
-                'Detected LLM chat completion without explicit `max_tokens` or `max_completion_tokens` boundary.',
-                'Exposes backend infrastructure to Denial-of-Wallet (DoW) and unbounded cloud billing spikes.'
-            ],
-            remediationPrompt: 'Always define an explicit `max_tokens` (e.g. 1024 or 2048) or `max_completion_tokens` parameter on all LLM API invocations.',
-            status: 'OPEN',
-            owner: 'Platform Engineering & FinOps',
-            falsePositive: false
-        });
-        logs.push(`[${ts}] [FINOPS COST] Flagged LLM-COST-01 (Unbounded Tokens) in ${file.path}:${lineNum}`);
+    // LLM-COST-03: one embeddings request per item inside a loop, embedding just that loop item.
+    // The OpenAI / Voyage / Cohere embeddings APIs (and AI SDK embedMany) take an array: N calls -> 1.
+    let perItemEmbedIdx = -1;
+    const loopHeader = /\bfor\s*\(\s*(?:const|let|var)\s+(\w+)\s+of\b|\.(?:map|forEach)\s*\(\s*(?:async\s*)?\(?\s*(\w+)\s*\)?\s*=>/g;
+    for (let m = loopHeader.exec(cleanContent); m && perItemEmbedIdx === -1; m = loopHeader.exec(cleanContent)) {
+        const item = m[1] || m[2];
+        const body = blockAfter(cleanContent, m.index + m[0].length);
+        const call = new RegExp(String.raw`(?:embeddings\.create|\bembed)\s*\(\s*\{[^}]*?\b(?:input|value)\s*:\s*${item}\b(?!\s*\.map)`).exec(body);
+        if (call) perItemEmbedIdx = lineAt(cleanContent, cleanContent.indexOf(body) + call.index);
     }
-    // LLM-COST-02: Missing Token Budget Rate Limiter on API Routes Invoking LLMs
-    const isApiRoute = lowerPath.includes('/api/') || lowerPath.includes('route.ts') || lowerPath.includes('route.js');
-    if (isApiRoute && hasLlmCall && !RATE_LIMIT_GUARD.test(cleanContent)) {
-        const matchLineIdx = lines.findIndex(l => !l.trim().startsWith('//') &&
-            /(?:export async function POST|export async function GET|handler|app\.post)/i.test(l));
-        const lineNum = matchLineIdx !== -1 ? matchLineIdx + 1 : 1;
-        findings.push({
-            id: `llmcost02-${Date.now()}-${findingCounter.count++}`,
-            ruleId: 8072,
-            type: 'INFRA_DATABASE',
-            title: 'LLM-COST-02: Missing Token Budget Rate Limiter on LLM Endpoint',
-            severity: 'HIGH',
-            category: 'FinOps & Cost Governance',
-            filePath: file.path,
-            lineRange: `L${lineNum}`,
-            snippet: lines[matchLineIdx] || '<API route invoking LLM without rate limiting>',
-            reproductionSteps: [
-                `Audited server API route in ${file.path}:${lineNum}.`,
-                'Route invokes LLM model completions without sliding-window IP/user rate limiting or token spend ceilings.',
-                'Attackers can script high-concurrency requests to deplete organization cloud credits rapidly.'
-            ],
-            remediationPrompt: 'Integrate sliding-window rate limiting (e.g. checkRateLimit / Upstash) before invoking commercial LLM APIs.',
-            status: 'OPEN',
-            owner: 'Security & Release Engineering',
-            falsePositive: false
-        });
-        logs.push(`[${ts}] [FINOPS COST] Flagged LLM-COST-02 (Missing Rate Limit on LLM Route) in ${file.path}:${lineNum}`);
-    }
-    // LLM-COST-03: Uncached Vector Embedding Loops
-    const hasEmbeddingLoop = /(?:for|while|\.map|\.forEach)\s*\([^)]*\)[\s\S]{0,300}(?:embeddings\.create|createEmbedding)/i.test(cleanContent);
-    if (hasEmbeddingLoop && !/(?:cache|memoize|lru|redis|kv|store)/i.test(cleanContent)) {
-        const matchLineIdx = lines.findIndex(l => !l.trim().startsWith('//') &&
-            /(?:embeddings\.create|createEmbedding)/i.test(l));
-        const lineNum = matchLineIdx !== -1 ? matchLineIdx + 1 : 1;
+    if (perItemEmbedIdx !== -1) {
+        const matchLineIdx = perItemEmbedIdx;
+        const lineNum = matchLineIdx + 1;
         findings.push({
             id: `llmcost03-${Date.now()}-${findingCounter.count++}`,
             ruleId: 8073,
             type: 'INFRA_DATABASE',
             title: 'LLM-COST-03: Uncached Vector Embedding Loop (Compounding API Cost)',
-            severity: 'HIGH',
+            severity: 'MEDIUM',
             category: 'FinOps & Cost Governance',
             filePath: file.path,
             lineRange: `L${lineNum}`,
-            snippet: lines[matchLineIdx] || '<Embedding generation in loop without cache>',
+            snippet: lines[matchLineIdx] || '<Embedding request per loop item>',
             reproductionSteps: [
                 `Inspected embedding generation logic in ${file.path}:${lineNum}.`,
-                'Detected batch or looped vector embedding calls without hash-based cache or memoization.',
-                'Repeated queries with identical input generate redundant OpenAI/Cohere API fees.'
+                'Detected one embeddings API request per loop item, embedding only that item.',
+                'N sequential round trips multiply latency, rate-limit pressure and per-request overhead; the API accepts the whole batch in one call.'
             ],
-            remediationPrompt: 'Implement SHA-256 content-hash caching (via Redis, KV, or in-memory LRU) before generating remote embeddings.',
+            remediationPrompt: 'Send the inputs as one batch (embeddings.create({ input: chunks }) or embedMany({ values })), chunked to the provider limit, instead of one request per item.',
             status: 'OPEN',
             owner: 'Data Engineering & AI Infrastructure',
             falsePositive: false
         });
-        logs.push(`[${ts}] [FINOPS COST] Flagged LLM-COST-03 (Uncached Embeddings Loop) in ${file.path}:${lineNum}`);
+        logs.push(`[${ts}] [FINOPS COST] Flagged LLM-COST-03 (Per-item embeddings loop) in ${file.path}:${lineNum}`);
     }
-    // LLM-COST-04: High-Cost Flagship Model Overkill for Simple Parsing
-    const hasFlagshipModel = /model\s*:\s*['"](?:gpt-4o|claude-3-opus|claude-3-opus-20240229)['"]/i.test(cleanContent);
-    const isSimpleExtraction = /(?:extract|classify|categorize|parse_json|sentiment|slugify|summary_short)/i.test(cleanContent);
-    if (hasFlagshipModel && isSimpleExtraction && !/(?:haiku|mini|fallbackModel|economyModel)/i.test(cleanContent)) {
-        const matchLineIdx = lines.findIndex(l => !l.trim().startsWith('//') &&
-            /model\s*:\s*['"](?:gpt-4o|claude-3-opus)/i.test(l));
-        const lineNum = matchLineIdx !== -1 ? matchLineIdx + 1 : 1;
-        findings.push({
-            id: `llmcost04-${Date.now()}-${findingCounter.count++}`,
-            ruleId: 8074,
-            type: 'INFRA_DATABASE',
-            title: 'LLM-COST-04: Flagship Model Overkill on Low-Complexity Task',
-            severity: 'MEDIUM',
-            category: 'FinOps & Cost Governance',
-            filePath: file.path,
-            lineRange: `L${lineNum}`,
-            snippet: lines[matchLineIdx] || '<Flagship model assigned to classification/extraction>',
-            reproductionSteps: [
-                `Evaluated model architecture in ${file.path}:${lineNum}.`,
-                'Flagship tier model (GPT-4o or Claude 3 Opus) assigned to lightweight extraction, classification, or formatting.',
-                'Swapping to tier-matched models (gpt-4o-mini or Claude 3.5 Haiku) provides identical accuracy with 80-95% cost reduction.'
-            ],
-            remediationPrompt: 'Route low-complexity classification and extraction tasks to `gpt-4o-mini` or `claude-3-5-haiku` to cut cloud expenses.',
-            status: 'OPEN',
-            owner: 'Platform Engineering & FinOps',
-            falsePositive: false
-        });
-        logs.push(`[${ts}] [FINOPS COST] Flagged LLM-COST-04 (Model Tier Overkill) in ${file.path}:${lineNum}`);
+    // LLM-COST-06: a retry loop around an LLM call that retries immediately (no wait of any kind in the loop).
+    let tightRetryIdx = -1;
+    const retryLoop = /\b(?:while\s*\(\s*\w*(?:attempt|retr|tries)\w*\s*<|for\s*\(\s*let\s+(\w*(?:attempt|retr|tries)\w*)\s*=\s*\d+\s*;\s*\1\s*<)/gi;
+    for (let m = retryLoop.exec(cleanContent); m && tightRetryIdx === -1; m = retryLoop.exec(cleanContent)) {
+        const body = blockAfter(cleanContent, m.index + m[0].length);
+        if (LLM_CALL.test(body) && !/setTimeout|\bsleep\s*\(|\bdelay\b|backoff|\bwait\w*\s*\(|pRetry|retry\s*\(/i.test(body)) {
+            tightRetryIdx = lineAt(cleanContent, m.index);
+        }
     }
-    // LLM-COST-05: Serverless Function Timeout Cost Spiral on Streaming
-    const hasStreaming = /stream\s*:\s*true/i.test(cleanContent);
-    if (isApiRoute && hasStreaming && !/(?:maxDuration|timeout|AbortController|signal)/i.test(cleanContent)) {
-        const matchLineIdx = lines.findIndex(l => !l.trim().startsWith('//') &&
-            /stream\s*:\s*true/i.test(l));
-        const lineNum = matchLineIdx !== -1 ? matchLineIdx + 1 : 1;
-        findings.push({
-            id: `llmcost05-${Date.now()}-${findingCounter.count++}`,
-            ruleId: 8075,
-            type: 'INFRA_DATABASE',
-            title: 'LLM-COST-05: Serverless LLM Stream Without Timeout Guard',
-            severity: 'MEDIUM',
-            category: 'FinOps & Cost Governance',
-            filePath: file.path,
-            lineRange: `L${lineNum}`,
-            snippet: lines[matchLineIdx] || '<Serverless streaming without timeout or AbortSignal>',
-            reproductionSteps: [
-                `Inspected serverless streaming handler in ${file.path}:${lineNum}.`,
-                'Route streams tokens without explicit timeout (`maxDuration`) or `AbortController` cancellation.',
-                'Disconnected clients keep serverless compute instances running until maximum platform timeout, multiplying compute bills.'
-            ],
-            remediationPrompt: 'Attach `req.signal` (AbortSignal) to stream reader and declare `export const maxDuration = 30;` in Next.js routes.',
-            status: 'OPEN',
-            owner: 'Cloud & Infrastructure',
-            falsePositive: false
-        });
-        logs.push(`[${ts}] [FINOPS COST] Flagged LLM-COST-05 (Serverless Stream Timeout Spiral) in ${file.path}:${lineNum}`);
-    }
-    // LLM-COST-06: Infinite / Exponentialless Retry on LLM Provider Errors
-    const hasNaiveRetry = /(?:retryCount\s*\+\+|retries\s*<|attempts\s*<)\s*\d+/i.test(cleanContent);
-    if (hasLlmCall && hasNaiveRetry && !/(?:exponential|backoff|jitter|Math\.pow|setTimeout\s*\([^,]+,\s*(?:delay|\d{3,}))/i.test(cleanContent)) {
-        const matchLineIdx = lines.findIndex(l => !l.trim().startsWith('//') &&
-            /(?:retryCount|retries|attempts)/i.test(l));
-        const lineNum = matchLineIdx !== -1 ? matchLineIdx + 1 : 1;
+    if (tightRetryIdx !== -1) {
+        const matchLineIdx = tightRetryIdx;
+        const lineNum = matchLineIdx + 1;
         findings.push({
             id: `llmcost06-${Date.now()}-${findingCounter.count++}`,
             ruleId: 8076,

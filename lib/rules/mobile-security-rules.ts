@@ -4,7 +4,6 @@
  */
 import { Finding } from "@/data/schema";
 import { CodeFile } from "../scanner-engine";
-import { locateMatchLine } from './shared/locate';
 export interface MobileSecurityRuleResult {
     findings: Finding[];
     logs: string[];
@@ -25,8 +24,11 @@ export function evaluateMobileSecurityRules(file: CodeFile, lines: string[], cle
         return { findings, logs };
     const ts = new Date().toLocaleTimeString();
     // MOB-SEC-01: Insecure Local Data Storage in Cleartext SharedPreferences
-    if ((/getSharedPreferences\s*\([\s\S]*?MODE_PRIVATE/i.test(cleanContent) && cleanContent.includes('authToken'))) {
-        const matchLineIdx = locateMatchLine(lines, [/getSharedPreferences\s*\([\s\S]*?MODE_PRIVATE/i], l => !l.trim().startsWith('//') && !l.trim().startsWith('<!--') && !l.trim().startsWith('*'));
+    const r9301Idx = /EncryptedSharedPreferences|MasterKey|Keychain/.test(cleanContent) ? -1
+        : lines.findIndex(l => /\.putString\(\s*["'](?:auth[_-]?token|access[_-]?token|refresh[_-]?token|id[_-]?token|session[_-]?token|jwt|password|api[_-]?key)["']/i.test(l) ||
+            /UserDefaults\.standard\.set\([^)]*forKey:\s*"(?:auth[_-]?token|access[_-]?token|refresh[_-]?token|id[_-]?token|session[_-]?token|jwt|password|api[_-]?key)"/i.test(l));
+    if (r9301Idx !== -1) {
+        const matchLineIdx = r9301Idx;
         const lineNum = matchLineIdx !== -1 ? matchLineIdx + 1 : 1;
         findings.push({
             id: `mobsec9301-${Date.now()}-${findingCounter.count++}`,
@@ -49,8 +51,9 @@ export function evaluateMobileSecurityRules(file: CodeFile, lines: string[], cle
         logs.push(`[${ts}] [MOB SEC] Found MOB-SEC-01: Insecure Local Data Storage in Cleartext SharedPreferences at ${file.path}:${lineNum}`);
     }
     // MOB-SEC-02: Hardcoded API Keys or OAuth Secrets in Mobile App Bundle
-    if ((/static\s+let\s+clientSecret\s*=\s*['"][a-zA-Z0-9_-]{20,}['"]/i.test(cleanContent))) {
-        const matchLineIdx = locateMatchLine(lines, [/static\s+let\s+clientSecret\s*=\s*['"][a-zA-Z0-9_-]{20,}['"]/i], l => !l.trim().startsWith('//') && !l.trim().startsWith('<!--') && !l.trim().startsWith('*'));
+    const r9302Idx = lines.findIndex(l => /\b(?:let|var|val|String)\s+\w*(?:client_?secret|api_?secret|secret_?key|private_?key)\w*\s*(?::\s*String)?\s*=\s*"[A-Za-z0-9_\-]{20,}"/i.test(l));
+    if (r9302Idx !== -1) {
+        const matchLineIdx = r9302Idx;
         const lineNum = matchLineIdx !== -1 ? matchLineIdx + 1 : 1;
         findings.push({
             id: `mobsec9302-${Date.now()}-${findingCounter.count++}`,
@@ -73,8 +76,10 @@ export function evaluateMobileSecurityRules(file: CodeFile, lines: string[], cle
         logs.push(`[${ts}] [MOB SEC] Found MOB-SEC-02: Hardcoded API Keys or OAuth Secrets in Mobile App Bundle at ${file.path}:${lineNum}`);
     }
     // MOB-SEC-03: Cleartext HTTP Traffic Permitted in Mobile Manifest
-    if ((/android:usesCleartextTraffic\s*=\s*['"]true['"]/i.test(cleanContent)) || (/NSAllowsArbitraryLoads[\s\S]*?<true\/>/i.test(cleanContent))) {
-        const matchLineIdx = locateMatchLine(lines, [/android:usesCleartextTraffic\s*=\s*['"]true['"]/i, /NSAllowsArbitraryLoads[\s\S]*?<true\/>/i], l => !l.trim().startsWith('//') && !l.trim().startsWith('<!--') && !l.trim().startsWith('*'));
+    const r9303Idx = lines.findIndex((l, i) => /android:usesCleartextTraffic\s*=\s*["']true["']/i.test(l) ||
+        (/<key>NSAllowsArbitraryLoads<\/key>/.test(l) && /<true\s*\/>/.test(l + (lines[i + 1] || ''))));
+    if (r9303Idx !== -1) {
+        const matchLineIdx = r9303Idx;
         const lineNum = matchLineIdx !== -1 ? matchLineIdx + 1 : 1;
         findings.push({
             id: `mobsec9303-${Date.now()}-${findingCounter.count++}`,
@@ -96,33 +101,18 @@ export function evaluateMobileSecurityRules(file: CodeFile, lines: string[], cle
         });
         logs.push(`[${ts}] [MOB SEC] Found MOB-SEC-03: Cleartext HTTP Traffic Permitted in Mobile Manifest at ${file.path}:${lineNum}`);
     }
-    // MOB-SEC-04: Missing SSL / TLS Certificate Pinning on Critical Endpoints
-    if ((/(?:URLSession|OkHttpClient|Dio)\b/.test(cleanContent) && !/certificatePinner|pinnedCertificates|ServerTrustPolicy/i.test(cleanContent))) {
-        const matchLineIdx = locateMatchLine(lines, [/(?:URLSession|OkHttpClient|Dio)\b/], l => !l.trim().startsWith('//') && !l.trim().startsWith('<!--') && !l.trim().startsWith('*'));
-        const lineNum = matchLineIdx !== -1 ? matchLineIdx + 1 : 1;
-        findings.push({
-            id: `mobsec9304-${Date.now()}-${findingCounter.count++}`,
-            ruleId: 9304,
-            type: 'SECURITY',
-            title: "MOB-SEC-04: Missing SSL / TLS Certificate Pinning on Critical Endpoints",
-            severity: "HIGH",
-            category: "Network Tampering",
-            filePath: file.path,
-            lineRange: `L${lineNum}`,
-            snippet: lines[matchLineIdx] || 'Mobile app source code line',
-            reproductionSteps: [
-                `Audited mobile codebase in ${file.path}:${lineNum}.`,
-                'Detected mobile security violation matching MOB-SEC-04.'
-            ],
-            remediationPrompt: "Configure CertificatePinner in OkHttpClient with current and backup public key SHA-256 hashes.",
-            status: 'OPEN',
-            falsePositive: false
-        });
-        logs.push(`[${ts}] [MOB SEC] Found MOB-SEC-04: Missing SSL / TLS Certificate Pinning on Critical Endpoints at ${file.path}:${lineNum}`);
-    }
     // MOB-SEC-05: Exported Android Component Lacking Permission Guard
-    if ((/android:exported\s*=\s*['"]true['"]/i.test(cleanContent) && !/android:permission/i.test(cleanContent) && cleanContent.includes('<activity'))) {
-        const matchLineIdx = locateMatchLine(lines, [/android:exported\s*=\s*['"]true['"]/i], l => !l.trim().startsWith('//') && !l.trim().startsWith('<!--') && !l.trim().startsWith('*'));
+    const r9305Idx = lines.findIndex((l, i) => {
+        if (!/<(?:service|receiver|provider)\b/.test(l)) return false;
+        let tag = '';
+        for (let j = i; j < Math.min(lines.length, i + 15); j++) {
+            tag += lines[j] + ' ';
+            if (/>/.test(lines[j])) break;
+        }
+        return /android:exported\s*=\s*"true"/.test(tag) && !/android:(?:readP|writeP|p)ermission\s*=/.test(tag);
+    });
+    if (r9305Idx !== -1) {
+        const matchLineIdx = r9305Idx;
         const lineNum = matchLineIdx !== -1 ? matchLineIdx + 1 : 1;
         findings.push({
             id: `mobsec9305-${Date.now()}-${findingCounter.count++}`,

@@ -7,8 +7,9 @@ import { KNOWN_GAPS, RULE_CASES, type RuleCase } from './cases';
 import { VULNERABLE_VARIANTS } from './variants';
 import { STACK_MATRIX } from './stack-matrix';
 
+// The scanner clears each file's content after scanning (memory), so scan copies and keep fixtures reusable
 const ruleIdsFor = async (files: CodeFile[]) =>
-  new Set((await runStaticCodeScan(files, 'fixture')).findings.map((f) => f.ruleId));
+  new Set((await runStaticCodeScan(files.map((f) => ({ ...f })), 'fixture', { keepDuplicateRules: true })).findings.map((f) => f.ruleId));
 
 /** Per-area fixture tables in tests/rules/fixtures/*.ts, each exporting `CASES`. */
 const AREA_CASES: RuleCase[] = readdirSync(join(__dirname, 'fixtures'))
@@ -32,6 +33,17 @@ describe('rule fixtures', () => {
       });
     });
   }
+});
+
+describe('same-issue dedupe', () => {
+  it('reports one finding per issue in a normal scan', async () => {
+    const source = AREA_CASES.find((c) => c.ruleIds.includes(8321) && c.ruleIds.includes(12204))!.detects;
+    const copy = () => source.map((f) => ({ ...f }));
+    const all = await ruleIdsFor(copy());
+    const deduped = new Set((await runStaticCodeScan(copy(), 'fixture')).findings.map((f) => f.ruleId));
+    assert.ok(all.has(8321) && all.has(12204), 'both host-network rules fire on their own');
+    assert.ok(deduped.has(8321) && !deduped.has(12204), 'the duplicate is dropped in the report');
+  });
 });
 
 describe('known scanner gaps', () => {

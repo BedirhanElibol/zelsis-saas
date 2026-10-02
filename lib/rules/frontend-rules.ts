@@ -306,37 +306,6 @@ export function evaluateFrontendRules(file: CodeFile, lines: string[], cleanCont
         }
     }
     // =========================================================================
-    // f) UI-PERF-03 (Rule ID 1126: Client-Side Waterfall Fetching in useEffect)
-    // =========================================================================
-    if (isJsxTsx) {
-        const waterfallFetchRegex = /useEffect\s*\(\s*\(\)\s*=>\s*\{[\s\S]*?(?:fetch|axios\.(?:get|post)|supabase\.from)\([^)]*\)\.then/;
-        if (waterfallFetchRegex.test(cleanContent)) {
-            const matchLineIdx = lines.findIndex(l => /useEffect\s*\(/.test(l));
-            const lineNum = matchLineIdx !== -1 ? matchLineIdx + 1 : 1;
-            const snippet = lines.slice(Math.max(0, lineNum - 2), Math.min(lines.length, lineNum + 2)).join('\n');
-            findings.push({
-                id: `frontend-${Date.now()}-${findingCounter.count++}`,
-                ruleId: 1126,
-                type: 'VIBEPOLISH',
-                title: 'Client-Side Waterfall Fetching Hazard in useEffect Hook',
-                severity: 'HIGH',
-                category: 'Performance & CWV',
-                filePath: file.path,
-                lineRange: `L${lineNum}`,
-                snippet: snippet || lines[matchLineIdx] || 'useEffect(() => { fetch("/api/data").then(...) }, [])',
-                reproductionSteps: [
-                    `Scanned component lifecycle at ${file.path}:${lineNum}.`,
-                    'Detected chained client-side data fetching inside useEffect, inducing render waterfalls, layout shifts, and delayed Largest Contentful Paint (LCP).'
-                ],
-                remediationPrompt: `Refactor client-side useEffect fetches to React Server Components (RSC) or prefetch in parallel using React Query / SWR / Promise.all in ${file.path}:${lineNum}.`,
-                status: 'OPEN',
-                owner: 'Frontend Team',
-                falsePositive: false
-            });
-            logs.push(`[${ts}] ⚡ HIGH: UI-PERF-03 Waterfall fetch in useEffect in ${file.path}:${lineNum}`);
-        }
-    }
-    // =========================================================================
     // g) UI-PERF-04 (Rule ID 1127: Bloated Monolithic Library Imports)
     // =========================================================================
     if (isJsxTsx) {
@@ -365,39 +334,6 @@ export function evaluateFrontendRules(file: CodeFile, lines: string[], cleanCont
                 falsePositive: false
             });
             logs.push(`[${ts}] ⚡ MEDIUM: UI-PERF-04 Bloated library barrel import in ${file.path}:${lineNum}`);
-        }
-    }
-    // =========================================================================
-    // h) UI-A11Y-03 (Rule ID 1128: Missing Form Error Accessibility Binding)
-    // =========================================================================
-    if (isJsxTsx && (cleanContent.includes('errors.'))) {
-        const unboundInputRegex = /<input[^>]+(?:name|id)=['"][^'"]+['"][^>]*(?![^>]*(?:aria-invalid|aria-describedby))>/;
-        if (unboundInputRegex.test(cleanContent) && cleanContent.includes('<form')) {
-            const matchLineIdx = lines.findIndex(l => /<input/.test(l));
-            if (matchLineIdx !== -1) {
-                const lineNum = matchLineIdx + 1;
-                const snippet = lines.slice(Math.max(0, lineNum - 2), Math.min(lines.length, lineNum + 2)).join('\n');
-                findings.push({
-                    id: `frontend-${Date.now()}-${findingCounter.count++}`,
-                    ruleId: 1128,
-                    type: 'VIBEPOLISH',
-                    title: 'Missing Accessible Form Error Binding (aria-invalid & aria-describedby)',
-                    severity: 'HIGH',
-                    category: 'Accessibility (WCAG)',
-                    filePath: file.path,
-                    lineRange: `L${lineNum}`,
-                    snippet: snippet || lines[matchLineIdx] || '<input name="email" />',
-                    reproductionSteps: [
-                        `Scanned form controls at ${file.path}:${lineNum}.`,
-                        'Detected form input with validation error states visually displayed without programmatic aria-invalid or aria-describedby bindings for screen readers.'
-                    ],
-                    remediationPrompt: `Bind form inputs with aria-invalid={!!errors.email} and aria-describedby={errors.email ? 'email-error' : undefined} in ${file.path}:${lineNum}.`,
-                    status: 'OPEN',
-                    owner: 'Frontend Lead',
-                    falsePositive: false
-                });
-                logs.push(`[${ts}] ♿ HIGH: UI-A11Y-03 Unbound form error in ${file.path}:${lineNum}`);
-            }
         }
     }
     // =========================================================================
@@ -528,37 +464,6 @@ export function evaluateFrontendRules(file: CodeFile, lines: string[], cleanCont
                 });
                 logs.push(`[${ts}] 🔒 MEDIUM: UI-SEC-02 Reverse tab-nabbing in ${file.path}:${lineNum}`);
             }
-        }
-    }
-    // =========================================================================
-    // m) UI-MOTION-01 (Rule ID 1042: GSAP / Animation Lifecycle Memory Leak Hazard)
-    // =========================================================================
-    if (isJsxTsx && /(?:gsap\.(?:to|from|timeline)|ScrollTrigger\.create)\s*\(/i.test(cleanContent)) {
-        const hasGsapCleanup = /kill\(|revert\(|return\s*\(\)\s*=>/i.test(cleanContent);
-        if (!hasGsapCleanup) {
-            const matchLineIdx = lines.findIndex(l => /(?:gsap\.(?:to|from|timeline)|ScrollTrigger\.create)/i.test(l));
-            const lineNum = matchLineIdx !== -1 ? matchLineIdx + 1 : 1;
-            const snippet = lines.slice(Math.max(0, lineNum - 2), Math.min(lines.length, lineNum + 2)).join('\n');
-            findings.push({
-                id: `frontend-${Date.now()}-${findingCounter.count++}`,
-                ruleId: 1042,
-                type: 'VIBEPOLISH',
-                title: 'Uncleaned Animation Lifecycle (GSAP / ScrollTrigger Missing kill() / revert())',
-                severity: 'HIGH',
-                category: 'Interaction & Motion',
-                filePath: file.path,
-                lineRange: `L${lineNum}`,
-                snippet: snippet || lines[matchLineIdx] || 'gsap.to(".card", { opacity: 1 })',
-                reproductionSteps: [
-                    `Scanned component animation lifecycles at ${file.path}:${lineNum}.`,
-                    'Detected GSAP animation or ScrollTrigger instance without unmount cleanup (kill() / revert()), causing memory leaks and detached DOM node retention.'
-                ],
-                remediationPrompt: `Wrap GSAP animations inside useGSAP() with auto-revert or return () => ctx.revert() / tween.kill() inside useEffect in ${file.path}:${lineNum}.`,
-                status: 'OPEN',
-                owner: 'UI Architect',
-                falsePositive: false
-            });
-            logs.push(`[${ts}] 🎬 HIGH: UI-MOTION-01 GSAP animation missing unmount cleanup in ${file.path}:${lineNum}`);
         }
     }
     // =========================================================================

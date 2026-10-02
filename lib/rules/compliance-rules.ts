@@ -1,13 +1,15 @@
 /**
- * Global Regulatory, Privacy & Legal Pre-Flight Gate Rules (Rules 2001-2006)
+ * Global Regulatory, Privacy & Legal Pre-Flight Gate Rules
  *
  * Rules:
- * 1. COMPL-01 (Rule ID 2001): Accessible Privacy Policy & Terms Routes & Links
- * 2. COMPL-02 (Rule ID 2002): Unconsented Third-Party Tracker & Pixel Script Injection
- * 3. COMPL-03 (Rule ID 2003): Dark Pattern Cookie Banner Prevention
- * 4. COMPL-04 (Rule ID 2004): Consent Disclosure on User Input & Lead Forms
- * 5. COMPL-05 (Rule ID 2005): PII & Secret Leakage in URL Query Parameters
- * 6. COMPL-06 (Rule ID 2006): Raw Cardholder Data Input Exposure (PCI-DSS)
+ * - COMPL-01 (Rule ID 2001): Placeholder (dead) Privacy / Terms link
+ * - COMPL-03 (Rule ID 2003): Cookie banner with Accept but no Reject
+ * - COMPL-05 (Rule ID 2005): PII & Secret Leakage in URL Query Parameters
+ * - COMPL-06 (Rule ID 2006): Raw Cardholder Data Input Exposure (PCI-DSS)
+ * - COMPL-10 (Rule ID 2010): Consent cookie lifetime above 13 months
+ * - COMPL-14 (Rule ID 2014): Plaintext password / secret in an email payload
+ * Removed as unsound (ids never reused): 2002 (consent is often configured in the tag manager / CMP,
+ * invisible in code), 2004, 2007, 2008 (file-level "absence of X" heuristics).
  *
  * Classification: 100% Native English Only
  */
@@ -44,38 +46,20 @@ export function evaluateComplianceRules(file: CodeFile, lines: string[], cleanCo
     // ---------------------------------------------------------------------------
     // COMPL-01 (Rule ID 2001): Accessible Privacy Policy & Terms Routes & Links
     // ---------------------------------------------------------------------------
-    const isNavOrAuthScope = lowerPath.includes('footer') ||
-        lowerPath.includes('auth') ||
-        lowerPath.includes('signup') ||
-        lowerPath.includes('register') ||
-        lowerPath.includes('layout') ||
-        lowerPath.includes('nav');
-    if (isNavOrAuthScope) {
-        const hasDummyLink = /href\s*=\s*["'](#|javascript:void\(0\)|)["']/i.test(cleanContent);
-        const mentionsLegal = /(?:privacy|terms|policy|legal)/i.test(cleanContent);
-        if (hasDummyLink && mentionsLegal) {
-            let matchLineIdx = lines.findIndex(l => {
-                const trimmed = l.trim();
-                if (trimmed.startsWith('//') || trimmed.startsWith('*') || trimmed.startsWith('/*'))
-                    return false;
-                return /href\s*=\s*["'](#|javascript:void\(0\)|)["']/i.test(l) && /(?:privacy|terms|policy|legal)/i.test(l);
-            });
-            if (matchLineIdx === -1) {
-                matchLineIdx = lines.findIndex(l => {
-                    const trimmed = l.trim();
-                    if (trimmed.startsWith('//') || trimmed.startsWith('*') || trimmed.startsWith('/*'))
-                        return false;
-                    return /href\s*=\s*["'](#|javascript:void\(0\)|)["']/i.test(l);
-                });
-            }
-            const lineNum = matchLineIdx !== -1 ? matchLineIdx + 1 : 1;
+    // The anchor itself: a link whose visible text is a legal page but whose href goes nowhere.
+    const deadLegalLink = /<(?:a|Link)\b[^>]*\bhref\s*=\s*(?:["'](?:#|javascript:void\(0\);?)?["']|\{\s*["'](?:#)?["']\s*\})[^>]*>\s*(?:Privacy|Terms|Cookie\s+Policy|Legal|Imprint|Impressum|Data\s+Protection)/i;
+    {
+        const legalMatch = deadLegalLink.exec(cleanContent);
+        if (legalMatch) {
+            const matchLineIdx = cleanContent.slice(0, legalMatch.index).split('\n').length - 1;
+            const lineNum = matchLineIdx + 1;
             const snippet = extractSnippet(lines, lineNum);
             findings.push({
                 id: `real-find-${Date.now()}-${findingCounter.count++}`,
                 ruleId: 2001,
                 type: 'LEGAL_COMPLIANCE',
                 title: 'Accessible Privacy Policy & Terms of Service Routes & Links Missing or Inactive',
-                severity: 'HIGH',
+                severity: 'MEDIUM',
                 category: 'Transparency & Notice',
                 filePath: file.path,
                 lineRange: `L${lineNum}`,
@@ -89,48 +73,8 @@ export function evaluateComplianceRules(file: CodeFile, lines: string[], cleanCo
                 owner: 'Compliance & Legal',
                 falsePositive: false
             });
-            logs.push(`[${ts}] ⚖️ HIGH: COMPL-01 Inaccessible Privacy/Terms route in ${file.path}:${lineNum}`);
+            logs.push(`[${ts}] ⚖️ MEDIUM: COMPL-01 Inaccessible Privacy/Terms route in ${file.path}:${lineNum}`);
         }
-    }
-    // ---------------------------------------------------------------------------
-    // COMPL-02 (Rule ID 2002): Unconsented Third-Party Tracker & Pixel Script Injection
-    // ---------------------------------------------------------------------------
-    const trackerPattern = /(?:googletagmanager\.com|gtag\s*\(\s*['"]config['"]|connect\.facebook\.net|fbq\s*\(\s*['"]init['"]|analytics\.tiktok\.com|ttq\.(?:load|page)|static\.hotjar\.com|_hjSettings)/i;
-    const consentGatePattern = /(?:consent|hasConsented|cookieConsent|CookieBanner|ConsentProvider|ConsentGate|default.*denied|ad_storage.*denied|analytics_storage.*denied)/i;
-    const hasTrackerScript = trackerPattern.test(cleanContent) || lines.some(l => {
-        const trimmed = l.trim();
-        return !trimmed.startsWith('//') && !trimmed.startsWith('*') && !trimmed.startsWith('/*') && trackerPattern.test(l);
-    });
-    const hasConsentGate = consentGatePattern.test(cleanContent) || consentGatePattern.test(file.content || '');
-    if (hasTrackerScript && !hasConsentGate) {
-        const matchLineIdx = lines.findIndex(l => {
-            const trimmed = l.trim();
-            if (trimmed.startsWith('//') || trimmed.startsWith('*') || trimmed.startsWith('/*'))
-                return false;
-            return trackerPattern.test(l);
-        });
-        const lineNum = matchLineIdx !== -1 ? matchLineIdx + 1 : 1;
-        const snippet = extractSnippet(lines, lineNum);
-        findings.push({
-            id: `real-find-${Date.now()}-${findingCounter.count++}`,
-            ruleId: 2002,
-            type: 'LEGAL_COMPLIANCE',
-            title: 'Unconsented Third-Party Tracker & Pixel Script Injection (ePrivacy & GDPR Violation)',
-            severity: 'CRITICAL',
-            category: 'Consent & Tracking',
-            filePath: file.path,
-            lineRange: `L${lineNum}`,
-            snippet: snippet || lines[matchLineIdx] || 'fbq("init", "123456789");',
-            reproductionSteps: [
-                `Scanned script execution pathways in ${file.path}:${lineNum}.`,
-                'Detected direct loading or execution of third-party analytics/pixel tracker prior to affirmative user consent verification.'
-            ],
-            remediationPrompt: `Wrap third-party tracking scripts in ${file.path} inside a consent-aware gate component or configure Google Consent Mode v2 default-denied flags (ad_storage='denied', analytics_storage='denied') prior to script execution.`,
-            status: 'OPEN',
-            owner: 'Compliance & Legal',
-            falsePositive: false
-        });
-        logs.push(`[${ts}] 🛑 CRITICAL: COMPL-02 Unconsented Tracker Script in ${file.path}:${lineNum}`);
     }
     // ---------------------------------------------------------------------------
     // COMPL-03 (Rule ID 2003): Dark Pattern Cookie Banner Prevention
@@ -145,36 +89,26 @@ export function evaluateComplianceRules(file: CodeFile, lines: string[], cleanCo
         lowerPath.startsWith('spec/') ||
         /\.(test|spec)\.[a-zA-Z0-9]+$/i.test(lowerPath);
     const isHtmlFile = file.path.endsWith('.html');
+    // Only the file that DEFINES the banner (by path or by declaring the component), not files rendering it.
     const isCookieBannerComponent = !isTestFile &&
-        (lowerPath.includes('cookie-banner') ||
-            lowerPath.includes('consent-modal') ||
-            lowerPath.includes('cookieconsent') ||
-            (!isHtmlFile && /CookieBanner|ConsentModal|CookieConsent/i.test(cleanContent)) ||
+        (/cookie-?banner|consent-?(?:modal|banner)|cookie-?consent/.test(lowerPath) ||
+            (!isHtmlFile && /(?:function|const|class)\s+(?:Cookie\w*(?:Banner|Consent|Notice)|Consent\w*(?:Banner|Modal|Notice))\b/.test(cleanContent)) ||
             (isHtmlFile && /(?:id|class|aria-label)=["'][^"']*(?:cookie-banner|cookie-consent|consent-modal)[^"']*["']/i.test(cleanContent)));
     if (isCookieBannerComponent) {
-        const hasAccept = /(?:accept|allow|agree)/i.test(cleanContent);
-        const hasDecline = /(?:reject|decline|opt[_-]?out|refuse|deny)/i.test(cleanContent);
-        if (hasAccept && !hasDecline) {
-            const matchLineIdx = lines.findIndex(l => {
-                const trimmed = l.trim();
-                if (trimmed.startsWith('//') || trimmed.startsWith('*') || trimmed.startsWith('/*'))
-                    return false;
-                return /(?:accept|allow|agree)/i.test(l) && /(?:button|onClick|btn)/i.test(l);
-            });
-            const fallbackLineIdx = matchLineIdx !== -1 ? matchLineIdx : lines.findIndex(l => {
-                const trimmed = l.trim();
-                if (trimmed.startsWith('//') || trimmed.startsWith('*') || trimmed.startsWith('/*'))
-                    return false;
-                return /(?:accept|allow|agree)/i.test(l);
-            });
-            const lineNum = fallbackLineIdx !== -1 ? fallbackLineIdx + 1 : 1;
+        // An actual accept control: a button whose label or click handler accepts / allows cookies.
+        const acceptControl = /<(?:button|Button)\b[^>]*>\s*(?:Accept|Allow|Agree|I\s+agree)\b|<(?:button|Button)\b[^>]*\bonClick\s*=\s*\{\s*(?:\(\)\s*=>\s*)?\w*(?:accept|allow|agree)\w*/i;
+        const hasDecline = /(?:reject|decline|opt[_-]?out|refuse|deny|necessary\s+only|essential\s+only|only\s+(?:necessary|essential))/i.test(cleanContent);
+        const acceptMatch = acceptControl.exec(cleanContent);
+        if (acceptMatch && !hasDecline) {
+            const fallbackLineIdx = cleanContent.slice(0, acceptMatch.index).split('\n').length - 1;
+            const lineNum = fallbackLineIdx + 1;
             const snippet = extractSnippet(lines, lineNum);
             findings.push({
                 id: `real-find-${Date.now()}-${findingCounter.count++}`,
                 ruleId: 2003,
                 type: 'LEGAL_COMPLIANCE',
                 title: 'Cookie Consent Banner Dark Pattern: Missing Symmetric Reject / Decline Action',
-                severity: 'HIGH',
+                severity: 'MEDIUM',
                 category: 'Consent & Tracking',
                 filePath: file.path,
                 lineRange: `L${lineNum}`,
@@ -188,55 +122,8 @@ export function evaluateComplianceRules(file: CodeFile, lines: string[], cleanCo
                 owner: 'Compliance & Legal',
                 falsePositive: false
             });
-            logs.push(`[${ts}] ⚖️ HIGH: COMPL-03 Cookie Banner Dark Pattern in ${file.path}:${lineNum}`);
+            logs.push(`[${ts}] ⚖️ MEDIUM: COMPL-03 Cookie Banner Dark Pattern in ${file.path}:${lineNum}`);
         }
-    }
-    // ---------------------------------------------------------------------------
-    // COMPL-04 (Rule ID 2004): Consent Disclosure on User Input & Lead Forms
-    // ---------------------------------------------------------------------------
-    const isFormFile = /(?:form|newsletter|waitlist|subscribe|contact|lead|signup|register)/i.test(lowerPath) ||
-        /<form\b[^>]*>/i.test(cleanContent);
-    // Login/Sign-in forms do not require consent checkboxes since consent was granted at signup (F-38)
-    // Same for forms of existing users: password reset, email / name / account settings
-    const isLoginForm = /(?:login|sign-in|signin|session|authenticate|forgot|reset|password|account|settings|profile|update)/i.test(lowerPath) ||
-        (/(?:sign\s*in|log\s*in)/i.test(cleanContent) && !/(?:sign\s*up|register|create\s*account|new\s*account|subscribe|waitlist|newsletter)/i.test(cleanContent));
-    const hasEmailInput = /<input[^>]+(?:type|name)\s*=\s*["'](?:email|tel)["']/i.test(cleanContent);
-    const hasConsentNotice = /(?:privacy\s*policy|terms\s*of\s*service|terms\s*&\s*conditions|agree\s*to\s*(?:our|the)|consent|gdpr|data\s*processing)/i.test(cleanContent);
-    if (isFormFile && !isLoginForm && hasEmailInput && !hasConsentNotice) {
-        const matchLineIdx = lines.findIndex(l => {
-            const trimmed = l.trim();
-            if (trimmed.startsWith('//') || trimmed.startsWith('*') || trimmed.startsWith('/*'))
-                return false;
-            return /<input[^>]+(?:type|name)\s*=\s*["'](?:email|tel)["']/i.test(l);
-        });
-        const fallbackLineIdx = matchLineIdx !== -1 ? matchLineIdx : lines.findIndex(l => {
-            const trimmed = l.trim();
-            if (trimmed.startsWith('//') || trimmed.startsWith('*') || trimmed.startsWith('/*'))
-                return false;
-            return /<form\b/i.test(l);
-        });
-        const lineNum = fallbackLineIdx !== -1 ? fallbackLineIdx + 1 : 1;
-        const snippet = extractSnippet(lines, lineNum);
-        findings.push({
-            id: `real-find-${Date.now()}-${findingCounter.count++}`,
-            ruleId: 2004,
-            type: 'LEGAL_COMPLIANCE',
-            title: 'User Data Collection Form Missing Mandatory Privacy Consent Disclosure',
-            severity: 'MEDIUM',
-            category: 'Data Collection & Forms',
-            filePath: file.path,
-            lineRange: `L${lineNum}`,
-            snippet: snippet || lines[fallbackLineIdx] || '<input type="email" required />',
-            reproductionSteps: [
-                `Scanned form markup in ${file.path}:${lineNum}.`,
-                'Detected personal data collection fields (email/tel) lacking mandatory affirmative consent statement or Privacy Policy notice adjacent to submission.'
-            ],
-            remediationPrompt: `Add an explicit consent disclosure adjacent to the form submit button in ${file.path}: 'By submitting, you agree to our Privacy Policy and Terms of Service.' Ensure 'Privacy Policy' links to an active legal route.`,
-            status: 'OPEN',
-            owner: 'Compliance & Legal',
-            falsePositive: false
-        });
-        logs.push(`[${ts}] ⚠️ MEDIUM: COMPL-04 Missing Form Consent Disclosure in ${file.path}:${lineNum}`);
     }
     // ---------------------------------------------------------------------------
     // COMPL-05 (Rule ID 2005): PII & Secret Leakage in URL Query Parameters
@@ -258,7 +145,7 @@ export function evaluateComplianceRules(file: CodeFile, lines: string[], cleanCo
             ruleId: 2005,
             type: 'LEGAL_COMPLIANCE',
             title: 'PII or Sensitive Authentication Secret Leaked in URL Query Parameters',
-            severity: 'HIGH',
+            severity: 'MEDIUM',
             category: 'Privacy by Design',
             filePath: file.path,
             lineRange: `L${lineNum}`,
@@ -272,7 +159,7 @@ export function evaluateComplianceRules(file: CodeFile, lines: string[], cleanCo
             owner: 'Compliance & Legal',
             falsePositive: false
         });
-        logs.push(`[${ts}] ⚖️ HIGH: COMPL-05 PII Leakage in URL Query Parameters in ${file.path}:${lineNum}`);
+        logs.push(`[${ts}] ⚖️ MEDIUM: COMPL-05 PII Leakage in URL Query Parameters in ${file.path}:${lineNum}`);
     }
     // ---------------------------------------------------------------------------
     // COMPL-06 (Rule ID 2006): Raw Cardholder Data Input Exposure (PCI-DSS)
@@ -295,7 +182,7 @@ export function evaluateComplianceRules(file: CodeFile, lines: string[], cleanCo
             ruleId: 2006,
             type: 'LEGAL_COMPLIANCE',
             title: 'Raw Cardholder Data Input Element Detected (PCI-DSS SAQ-D Exposure Risk)',
-            severity: 'CRITICAL',
+            severity: 'HIGH',
             category: 'Payment Card Security',
             filePath: file.path,
             lineRange: `L${lineNum}`,
@@ -309,89 +196,38 @@ export function evaluateComplianceRules(file: CodeFile, lines: string[], cleanCo
             owner: 'Compliance & Legal',
             falsePositive: false
         });
-        logs.push(`[${ts}] 🛑 CRITICAL: COMPL-06 Raw Cardholder Data Input in ${file.path}:${lineNum}`);
-    }
-    // ---------------------------------------------------------------------------
-    // COMPL-07 (Rule ID 2007): Tamper-Evident Security Audit Logging for Administrative Actions
-    // ---------------------------------------------------------------------------
-    const isAdminRoute = lowerPath.includes('/api/admin/') || lowerPath.includes('/api/v1/admin/');
-    if (isAdminRoute && /\.(?:ts|js)$/i.test(file.path)) {
-        const hasAdminMutation = /export\s+async\s+function\s+(?:POST|PUT|DELETE|PATCH)\b/.test(cleanContent);
-        const hasAuditLog = /(?:audit_logs|auditLog|recordAudit|logger\.audit|insertAudit)/i.test(cleanContent);
-        if (hasAdminMutation && !hasAuditLog) {
-            const matchLineIdx = lines.findIndex(l => /export\s+async\s+function\s+(?:POST|PUT|DELETE|PATCH)\b/.test(l));
-            const lineNum = matchLineIdx !== -1 ? matchLineIdx + 1 : 1;
-            const snippet = extractSnippet(lines, lineNum);
-            findings.push({
-                id: `real-find-${Date.now()}-${findingCounter.count++}`,
-                ruleId: 2007,
-                type: 'LEGAL_COMPLIANCE',
-                title: 'Missing Immutable Security Audit Logging on Administrative Mutation Route',
-                severity: 'CRITICAL',
-                category: 'Enterprise Governance & Auditability',
-                filePath: file.path,
-                lineRange: `L${lineNum}`,
-                snippet,
-                reproductionSteps: [
-                    `Scanned administrative endpoint at ${file.path}:${lineNum}.`,
-                    'Detected state mutation handler without recording structured security audit logs, violating SOC 2 Type II CC6.8 and ISO 27001 compliance standards.'
-                ],
-                remediationPrompt: `Record immutable audit log entry (actor_id, target_id, action, timestamp, IP) in ${file.path}:${lineNum} before returning response.`,
-                status: 'OPEN',
-                owner: 'Compliance Officer',
-                falsePositive: false
-            });
-            logs.push(`[${ts}] ⚖️ CRITICAL: COMPL-07 Missing audit log on admin route in ${file.path}:${lineNum}`);
-        }
-    }
-    // ---------------------------------------------------------------------------
-    // COMPL-08 (Rule ID 2008): Automated Session Invalidation on Password Reset
-    // ---------------------------------------------------------------------------
-    const isPasswordResetFile = (lowerPath.includes('password') || lowerPath.includes('reset')) && /\.(?:ts|js)$/i.test(file.path);
-    if (isPasswordResetFile) {
-        const hasSessionRevoke = /(?:signOut\([^)]*GLOBAL|revokeAll|tokenVersion|session\.destroy|incrementTokenVersion)/i.test(cleanContent);
-        if (!hasSessionRevoke) {
-            const matchLineIdx = lines.findIndex(l => l.includes('updatePassword') || l.includes('resetPassword'));
-            const lineNum = matchLineIdx !== -1 ? matchLineIdx + 1 : 1;
-            const snippet = extractSnippet(lines, lineNum);
-            findings.push({
-                id: `real-find-${Date.now()}-${findingCounter.count++}`,
-                ruleId: 2008,
-                type: 'LEGAL_COMPLIANCE',
-                title: 'Missing Session Revocation / tokenVersion Invalidation on Password Reset',
-                severity: 'HIGH',
-                category: 'Authentication & Identity Security',
-                filePath: file.path,
-                lineRange: `L${lineNum}`,
-                snippet,
-                reproductionSteps: [
-                    `Scanned password mutation handler at ${file.path}:${lineNum}.`,
-                    'Detected password update logic failing to revoke active user sessions or increment tokenVersion, leaving existing authenticated sessions open on adversary devices.'
-                ],
-                remediationPrompt: `Increment tokenVersion or invoke global session revocation (e.g. supabase.auth.admin.signOut(userId, 'GLOBAL')) in ${file.path}:${lineNum}.`,
-                status: 'OPEN',
-                owner: 'Security Lead',
-                falsePositive: false
-            });
-            logs.push(`[${ts}] ⚖️ HIGH: COMPL-08 Password reset missing global session revocation in ${file.path}:${lineNum}`);
-        }
+        logs.push(`[${ts}] 🛑 HIGH: COMPL-06 Raw Cardholder Data Input in ${file.path}:${lineNum}`);
     }
     // ---------------------------------------------------------------------------
     // COMPL-10 (Rule ID 2010): Max Consent Lifetime & Re-consent Policy (12-Month Expiry)
     // ---------------------------------------------------------------------------
     // Any consent cookie: custom names or common CMPs (Cookiebot, OneTrust, CookieYes, Klaro, Osano, vanilla-cookieconsent)
-    if (/consent|cc_cookie|optanon|cookiebot|cookieyes|klaro|osano|gdpr_?cookie/i.test(cleanContent) && /cookie|setCookie|cookies\(\)|document\.cookie|maxAge|expires/i.test(cleanContent)) {
-        const excessiveCookieMaxAgeRegex = /maxAge\s*:\s*(?:[4-9]\d{7,}|[1-9]\d{8,})/;
-        if (excessiveCookieMaxAgeRegex.test(cleanContent)) {
-            const matchLineIdx = lines.findIndex(l => excessiveCookieMaxAgeRegex.test(l));
-            const lineNum = matchLineIdx !== -1 ? matchLineIdx + 1 : 1;
+    // Scoped to a cookie-set call whose cookie NAME is a consent cookie, with units per API:
+    // Express res.cookie maxAge = ms, js-cookie expires = days, Next/nookies/cookie maxAge = seconds.
+    // Fires above 13 months (CNIL guidance), i.e. > 396 days.
+    let consentLifetimeIdx = -1;
+    const cookieSet = /(\bres\.cookie|\bCookies\.set|\bsetCookie|\.set)\s*\(\s*['"`]([^'"`]+)['"`]([^;]{0,400})/g;
+    for (let m = cookieSet.exec(cleanContent); m && consentLifetimeIdx === -1; m = cookieSet.exec(cleanContent)) {
+        if (!/consent|cc_cookie|optanon|cookie_?pref|gdpr/i.test(m[2])) continue;
+        const life = /\b(maxAge|expires)\s*:\s*([\d_]+(?:\s*\*\s*[\d_]+)*)/.exec(m[3]);
+        if (!life) continue;
+        const raw = life[2].split('*').reduce((acc, n) => acc * Number(n.replace(/[_\s]/g, '')), 1);
+        const seconds = m[1] === 'res.cookie' ? raw / 1000 : life[1] === 'expires' ? (m[1] === 'Cookies.set' ? raw * 86400 : NaN) : raw;
+        if (seconds > 396 * 86400) {
+            const at = m.index + m[0].indexOf(life[0], m[0].length - m[3].length);
+            consentLifetimeIdx = cleanContent.slice(0, at).split('\n').length - 1;
+        }
+    }
+    {
+        if (consentLifetimeIdx !== -1) {
+            const lineNum = consentLifetimeIdx + 1;
             const snippet = extractSnippet(lines, lineNum);
             findings.push({
                 id: `real-find-${Date.now()}-${findingCounter.count++}`,
                 ruleId: 2010,
                 type: 'LEGAL_COMPLIANCE',
                 title: 'Excessive Cookie Consent Duration Detected (>12 Months GDPR/CNIL Cap)',
-                severity: 'HIGH',
+                severity: 'MEDIUM',
                 category: 'Cookie & Privacy Compliance',
                 filePath: file.path,
                 lineRange: `L${lineNum}`,
@@ -405,7 +241,7 @@ export function evaluateComplianceRules(file: CodeFile, lines: string[], cleanCo
                 owner: 'Privacy Lead',
                 falsePositive: false
             });
-            logs.push(`[${ts}] ⚖️ HIGH: COMPL-10 Excessive consent duration in ${file.path}:${lineNum}`);
+            logs.push(`[${ts}] ⚖️ MEDIUM: COMPL-10 Excessive consent duration in ${file.path}:${lineNum}`);
         }
     }
     // ---------------------------------------------------------------------------
@@ -414,9 +250,12 @@ export function evaluateComplianceRules(file: CodeFile, lines: string[], cleanCo
     const isEmailOrNotifier = (lowerPath.includes('mail') || lowerPath.includes('email') || lowerPath.includes('notify') || lowerPath.includes('resend')) && /\.(?:ts|js)$/i.test(file.path);
     if (isEmailOrNotifier) {
         const plaintextCredentialInEmailRegex = /(?:sendMail|emails\.send|resend\.emails\.send)\s*\([^)]*(?:password|passwd|api_key|tokenSecret)\s*:/i;
-        if (plaintextCredentialInEmailRegex.test(cleanContent)) {
-            const matchLineIdx = lines.findIndex(l => plaintextCredentialInEmailRegex.test(l));
-            const lineNum = matchLineIdx !== -1 ? matchLineIdx + 1 : 1;
+        const emailMatch = plaintextCredentialInEmailRegex.exec(cleanContent);
+        if (emailMatch) {
+            // Point at the credential key inside the (often multi-line) send call.
+            const keyOffset = emailMatch[0].search(/(?:password|passwd|api_key|tokenSecret)\s*:\s*$/i);
+            const matchLineIdx = cleanContent.slice(0, emailMatch.index + Math.max(0, keyOffset)).split('\n').length - 1;
+            const lineNum = matchLineIdx + 1;
             const snippet = extractSnippet(lines, lineNum);
             findings.push({
                 id: `real-find-${Date.now()}-${findingCounter.count++}`,

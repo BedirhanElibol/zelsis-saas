@@ -52,15 +52,11 @@ for (const [name, call] of [
   ['iyzico', "iyzipay.checkoutFormInitialize.create({ price: amount, paidPrice: amount, currency: 'TRY' }, cb)"],
   ['razorpay', "razorpay.orders.create({ amount: amount, currency: 'INR' })"],
 ] as const) cases.push({ id: `client-price:${name}`, expect: 'detect', rules: [23004], ...R('app/api/checkout/route.ts', `export async function POST(req: Request) {\n  const { priceId, variantId, amount, storeId } = await req.json();\n  const r = await ${call};\n  return Response.json(r);\n}\n`) });
-// LLM max tokens missing across providers (8071 / 4001 / 141)
+// LLM max tokens missing (4001 / 141 cover the OpenAI / Anthropic SDKs; the provider-neutral 8071 was removed as unsound)
 for (const [name, code] of [
   ['openai', "await openai.chat.completions.create({ model: 'gpt-4o', messages })"],
   ['anthropic', "await anthropic.messages.create({ model: 'claude', messages })"],
-  ['ai-sdk', "await generateText({ model: openai('gpt-4o'), prompt })"],
-  ['gemini', "await genAI.getGenerativeModel({ model: 'gemini-2.0-flash' }).generateContent(prompt)"],
-  ['langchain', "await new ChatOpenAI({ model: 'gpt-4o' }).invoke(prompt)"],
-  ['bedrock', "await bedrock.send(new ConverseCommand({ modelId, messages }))"],
-] as const) cases.push({ id: `llm-no-limit:${name}`, expect: 'detect', rules: [8071, 4001, 141], ...R('app/api/ai/route.ts', `export async function POST(req: Request) {\n  const { prompt, messages } = await req.json();\n  const r = ${code};\n  return Response.json(r);\n}\n`) });
+] as const) cases.push({ id: `llm-no-limit:${name}`, expect: 'detect', rules: [4001, 141], ...R('app/api/ai/route.ts', `export async function POST(req: Request) {\n  const { prompt, messages } = await req.json();\n  const r = ${code};\n  return Response.json(r);\n}\n`) });
 // Prompt injection across providers (SAAS-07)
 for (const [name, code] of [
   ['gemini-systemInstruction', "genAI.getGenerativeModel({ model: 'gemini-2.0-flash', systemInstruction: `Act as ${persona}` })"],

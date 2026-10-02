@@ -117,30 +117,6 @@ export function evaluateTenantIsolationRules(file: CodeFile, lines: string[], cl
         });
         logs.push(`[${ts}] [TENANT AUDIT] Found TENANT-04: Tenant S3 Storage Prefix Path Traversal Leakage at ${file.path}:${lineNum}`);
     }
-    // TENANT-05: Tenant Quota Bypass on Asynchronous Background Worker
-    if ((/queue\.add\s*\([^)]*(?:tenantId|orgId)/i.test(cleanContent) && !/rateLimit|concurrency/i.test(cleanContent))) {
-        const matchLineIdx = locateMatchLine(lines, [/queue\.add\s*\([^)]*(?:tenantId|orgId)/i], l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('*'));
-        const lineNum = matchLineIdx !== -1 ? matchLineIdx + 1 : 1;
-        findings.push({
-            id: `tenant9105-${Date.now()}-${findingCounter.count++}`,
-            ruleId: 9105,
-            type: 'SECURITY',
-            title: "TENANT-05: Tenant Quota Bypass on Asynchronous Background Worker",
-            severity: "HIGH",
-            category: "Resource Allocation",
-            filePath: file.path,
-            lineRange: `L${lineNum}`,
-            snippet: lines[matchLineIdx] || 'Multi-tenant operation',
-            reproductionSteps: [
-                `Audited multi-tenant logic in ${file.path}:${lineNum}.`,
-                'Detected tenant isolation violation matching TENANT-05.'
-            ],
-            remediationPrompt: "Check and decrement tenant quota counter in Redis before dispatching background compute tasks.",
-            status: 'OPEN',
-            falsePositive: false
-        });
-        logs.push(`[${ts}] [TENANT AUDIT] Found TENANT-05: Tenant Quota Bypass on Asynchronous Background Worker at ${file.path}:${lineNum}`);
-    }
     // TENANT-06: IDOR - a record loaded by a request-supplied id without scoping it to the caller.
     // Supabase service-role clients bypass RLS; ORMs (Prisma, Drizzle, Mongoose, Sequelize, TypeORM) never had it.
     const reqIdNames = new Set<string>();

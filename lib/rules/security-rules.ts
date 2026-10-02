@@ -454,36 +454,6 @@ export function evaluateSecurityRules(file: CodeFile, lines: string[], cleanCont
             logs.push(`[${ts}] 🛑 CRITICAL: SEC-17 Potential BOLA/IDOR in ${file.path}:${lineNum}`);
         }
     }
-    // Rule 18 / SEC-18: Prompt Injection Risk via Direct User String Interpolation (LLM01)
-    if (isCodeFile) {
-        const promptConcatRegex = /(?:messages:\s*\[[^\]]*(?:content:\s*`[^`]*\$\{(?:req\.body|prompt|userInput|query|text)\b|content:\s*(?:userInput|prompt|text)\s*\+))/i;
-        const promptGuardRegex = /(?:sanitizePrompt|validatePrompt|systemGuard|delimiter|guardrails|zod)/i;
-        if (promptConcatRegex.test(cleanContent) && !promptGuardRegex.test(cleanContent)) {
-            const matchLineIdx = lines.findIndex(l => !l.trim().startsWith('//') && promptConcatRegex.test(l));
-            const lineNum = matchLineIdx !== -1 ? matchLineIdx + 1 : 1;
-            const snippet = lines.slice(Math.max(0, lineNum - 2), Math.min(lines.length, lineNum + 2)).join('\n');
-            findings.push({
-                id: `real-find-${Date.now()}-${findingCounter.count++}`,
-                ruleId: 18,
-                type: 'SECURITY',
-                title: 'Direct User Input Interpolation into LLM Prompt (OWASP LLM01 Prompt Injection)',
-                severity: 'HIGH',
-                category: 'AI & LLM Security',
-                filePath: file.path,
-                lineRange: `L${lineNum}`,
-                snippet: snippet || lines[matchLineIdx] || 'messages: [{ role: "user", content: `User query: ${req.body.query}` }]',
-                reproductionSteps: [
-                    `Scanned LLM message preparation at ${file.path}:${lineNum}.`,
-                    'Detected raw user input template literal interpolation without delimiters, input sanitization, or defensive guardrails.'
-                ],
-                remediationPrompt: `Isolate untrusted user input using XML/triple-quote delimiters and validate inputs with defensive guardrails in ${file.path}:${lineNum}.`,
-                status: 'OPEN',
-                owner: 'AI Security Lead',
-                falsePositive: false
-            });
-            logs.push(`[${ts}] ⚠️ HIGH: SEC-18 Prompt injection risk in ${file.path}:${lineNum}`);
-        }
-    }
     // Rule 19 / SEC-19: Excessive Agency & Unbounded Function Calling (OWASP LLM08)
     if (isCodeFile) {
         const llmToolCallRegex = /(?:tools:\s*\[[^\]]*(?:exec|deleteDatabase|dropTable|eval|sendEmail|transferFunds)\b|autoRun:\s*true)/i;
@@ -516,10 +486,10 @@ export function evaluateSecurityRules(file: CodeFile, lines: string[], cleanCont
     }
     // Rule 23 / SEC-23: Mass Assignment in Database Mutations
     if (isApiRoute) {
-        const massAssignRegex = /(?:prisma\.[a-zA-Z0-9_]+\.(?:create|update)\s*\(\s*\{\s*data:\s*(?:req\.body|await req\.json\(\)|body)\b|db\.[a-zA-Z0-9_]+\.create\s*\(\s*(?:req\.body|body)\s*\))/i;
+        const massAssignRegex = /(?:prisma\.[a-zA-Z0-9_]+\.(?:create|update|upsert)\s*\(\s*\{[^;]{0,160}?\bdata:\s*(?:req\.body|await req\.json\(\)|body)\s*[,}\n]|db\.[a-zA-Z0-9_]+\.create\s*\(\s*(?:req\.body|body)\s*\))/i;
         const schemaParseRegex = /(?:parse|safeParse|validate|pick|whitelist|allowedFields)/i;
         if (massAssignRegex.test(cleanContent) && !schemaParseRegex.test(cleanContent)) {
-            const matchLineIdx = lines.findIndex(l => !l.trim().startsWith('//') && massAssignRegex.test(l));
+            const matchLineIdx = lines.findIndex(l => !l.trim().startsWith('//') && (massAssignRegex.test(l) || /\bdata:\s*(?:req\.body|await req\.json\(\)|body)\s*[,}]?\s*$/.test(l)));
             const lineNum = matchLineIdx !== -1 ? matchLineIdx + 1 : 1;
             const snippet = lines.slice(Math.max(0, lineNum - 2), Math.min(lines.length, lineNum + 2)).join('\n');
             findings.push({
@@ -638,7 +608,7 @@ export function evaluateSecurityRules(file: CodeFile, lines: string[], cleanCont
     }
     // Rule 27 / SEC-27: Catastrophic Backtracking Regular Expression (ReDoS CWE-1333)
     if (isCodeFile) {
-        const redosRegex = /\/\((?:[^\)\(]+[+*]){2,}\)[+*]\/|\/\((?:[a-zA-Z0-9_]+[\s|]+)+[a-zA-Z0-9_]+\)[+*]\//;
+        const redosRegex = /\/[^/\n]*\((?:\?:)?(?:\\[wWdDsS.]|\[(?:[^\]\\\n]|\\.)+\]|\.|[A-Za-z0-9])(?:[+*]|\{\d+,\d*\})(?:(?:\\[wWdDsS.]|\[(?:[^\]\\\n]|\\.)+\]|\.|[A-Za-z0-9])\?)*\)(?:[+*]|\{\d+,\d*\})[^/\n]*\/[dgimsuy]*/;
         if (redosRegex.test(cleanContent)) {
             const matchLineIdx = lines.findIndex(l => !l.trim().startsWith('//') && redosRegex.test(l));
             if (matchLineIdx !== -1) {

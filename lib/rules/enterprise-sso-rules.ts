@@ -4,7 +4,6 @@
  */
 import { Finding } from "@/data/schema";
 import { CodeFile } from "../scanner-engine";
-import { locateMatchLine } from './shared/locate';
 export interface EnterpriseSsoRuleResult {
     findings: Finding[];
     logs: string[];
@@ -20,39 +19,19 @@ export function evaluateEnterpriseSsoRules(file: CodeFile, lines: string[], clea
         return { findings, logs };
     }
     const ts = new Date().toLocaleTimeString();
-    // SSO-01: XML Signature Wrapping (XSW) Vulnerability in SAML Parser
-    if ((/saml/i.test(lowerPath) && !/validateSignatureAnchors/i.test(cleanContent))) {
-        const matchLineIdx = lines.findIndex(l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('#') && !l.trim().startsWith('*'));
-        const lineNum = matchLineIdx !== -1 ? matchLineIdx + 1 : 1;
-        findings.push({
-            id: `sso12801-${Date.now()}-${findingCounter.count++}`,
-            ruleId: 12801,
-            type: 'SECURITY',
-            title: "SSO-01: XML Signature Wrapping (XSW) Vulnerability in SAML Parser",
-            severity: "CRITICAL",
-            category: "SAML Security",
-            filePath: file.path,
-            lineRange: `L${lineNum}`,
-            snippet: lines[matchLineIdx] || 'Enterprise SSO configuration',
-            reproductionSteps: [
-                `Audited Enterprise SSO configuration in ${file.path}:${lineNum}.`,
-                'Detected violation matching SSO-01.'
-            ],
-            remediationPrompt: "Validate XML signature anchors directly against assertion IDs to prevent XML Signature Wrapping attacks.",
-            status: 'OPEN',
-            falsePositive: false
-        });
-        logs.push(`[${ts}] [SSO AUDIT] Found SSO-01: XML Signature Wrapping (XSW) Vulnerability in SAML Parser at ${file.path}:${lineNum}`);
-    }
     // SSO-02: Missing SAML Response Audience and Recipient EntityID Validation
-    if ((/validateSaml/i.test(cleanContent) && !/assertAudience/i.test(cleanContent))) {
-        const matchLineIdx = locateMatchLine(lines, [/validateSaml/i], l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('#') && !l.trim().startsWith('*'));
-        const lineNum = matchLineIdx !== -1 ? matchLineIdx + 1 : 1;
+    // node-saml / passport-saml: `audience: false` explicitly turns off the AudienceRestriction check, so an
+    // assertion the IdP issued for ANY other service provider is accepted here.
+    const usesNodeSaml = /@node-saml\/|passport-saml|\bnew\s+SAML\s*\(|\b(?:Multi)?SamlStrategy\b/.test(cleanContent);
+    const samlAudienceOffIdx = !usesNodeSaml ? -1 : lines.findIndex(l => /\baudience\s*:\s*false\b/.test(l));
+    if (samlAudienceOffIdx !== -1) {
+        const matchLineIdx = samlAudienceOffIdx;
+        const lineNum = matchLineIdx + 1;
         findings.push({
             id: `sso12802-${Date.now()}-${findingCounter.count++}`,
             ruleId: 12802,
             type: 'SECURITY',
-            title: "SSO-02: Missing SAML Response Audience and Recipient EntityID Validation",
+            title: "SSO-02: SAML Audience Validation Disabled (audience: false)",
             severity: "HIGH",
             category: "Audience Verification",
             filePath: file.path,
@@ -62,22 +41,25 @@ export function evaluateEnterpriseSsoRules(file: CodeFile, lines: string[], clea
                 `Audited Enterprise SSO configuration in ${file.path}:${lineNum}.`,
                 'Detected violation matching SSO-02.'
             ],
-            remediationPrompt: "Enforce strict AudienceRestriction validation matching your service provider's EntityID.",
+            remediationPrompt: "Set `audience` to your service provider EntityID (the issuer configured at the IdP) so assertions minted for other applications are rejected.",
             status: 'OPEN',
             falsePositive: false
         });
-        logs.push(`[${ts}] [SSO AUDIT] Found SSO-02: Missing SAML Response Audience and Recipient EntityID Validation at ${file.path}:${lineNum}`);
+        logs.push(`[${ts}] [SSO AUDIT] Found SSO-02: SAML Audience Validation Disabled (audience: false) at ${file.path}:${lineNum}`);
     }
     // SSO-03: SAML Response Replay Attack Permitted (Missing ID Cache)
-    if ((/processSamlAssertion/i.test(cleanContent) && !/assertionCache/i.test(cleanContent))) {
-        const matchLineIdx = locateMatchLine(lines, [/processSamlAssertion/i], l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('#') && !l.trim().startsWith('*'));
-        const lineNum = matchLineIdx !== -1 ? matchLineIdx + 1 : 1;
+    // node-saml / passport-saml with InResponseTo checking switched off: responses are not tied to a request this
+    // SP issued, so a captured SAMLResponse can be replayed until it expires. ('ifPresent' still allows IdP-initiated SSO.)
+    const samlInResponseToOffIdx = !usesNodeSaml ? -1 : lines.findIndex(l => /\bvalidateInResponseTo\s*:\s*(?:false\b|['"`]never['"`]|ValidateInResponseTo\.never\b)/.test(l));
+    if (samlInResponseToOffIdx !== -1) {
+        const matchLineIdx = samlInResponseToOffIdx;
+        const lineNum = matchLineIdx + 1;
         findings.push({
             id: `sso12803-${Date.now()}-${findingCounter.count++}`,
             ruleId: 12803,
             type: 'SECURITY',
-            title: "SSO-03: SAML Response Replay Attack Permitted (Missing ID Cache)",
-            severity: "HIGH",
+            title: "SSO-03: SAML InResponseTo Validation Disabled (Response Replay)",
+            severity: "MEDIUM",
             category: "Replay Defense",
             filePath: file.path,
             lineRange: `L${lineNum}`,
@@ -86,59 +68,11 @@ export function evaluateEnterpriseSsoRules(file: CodeFile, lines: string[], clea
                 `Audited Enterprise SSO configuration in ${file.path}:${lineNum}.`,
                 'Detected violation matching SSO-03.'
             ],
-            remediationPrompt: "Store processed SAML Assertion IDs in an in-memory or distributed cache with TTL to thwart replay attacks.",
+            remediationPrompt: "Set validateInResponseTo to 'always' (or 'ifPresent' when IdP-initiated login is required) and back it with a shared cacheProvider (e.g. Redis) so each request ID is accepted once.",
             status: 'OPEN',
             falsePositive: false
         });
-        logs.push(`[${ts}] [SSO AUDIT] Found SSO-03: SAML Response Replay Attack Permitted (Missing ID Cache) at ${file.path}:${lineNum}`);
-    }
-    // SSO-04: Unauthenticated SCIM 2.0 User Provisioning Endpoint
-    if ((/\/scim\/v2/i.test(lowerPath) && !/verifyBearerToken/i.test(cleanContent))) {
-        const matchLineIdx = lines.findIndex(l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('#') && !l.trim().startsWith('*'));
-        const lineNum = matchLineIdx !== -1 ? matchLineIdx + 1 : 1;
-        findings.push({
-            id: `sso12804-${Date.now()}-${findingCounter.count++}`,
-            ruleId: 12804,
-            type: 'SECURITY',
-            title: "SSO-04: Unauthenticated SCIM 2.0 User Provisioning Endpoint",
-            severity: "CRITICAL",
-            category: "SCIM Governance",
-            filePath: file.path,
-            lineRange: `L${lineNum}`,
-            snippet: lines[matchLineIdx] || 'Enterprise SSO configuration',
-            reproductionSteps: [
-                `Audited Enterprise SSO configuration in ${file.path}:${lineNum}.`,
-                'Detected violation matching SSO-04.'
-            ],
-            remediationPrompt: "Require Bearer token authentication with tenant scoping on all SCIM 2.0 provisioning endpoints.",
-            status: 'OPEN',
-            falsePositive: false
-        });
-        logs.push(`[${ts}] [SSO AUDIT] Found SSO-04: Unauthenticated SCIM 2.0 User Provisioning Endpoint at ${file.path}:${lineNum}`);
-    }
-    // SSO-05: Missing Automatic SCIM Deprovisioning Synchronization Hook
-    if ((/scim/i.test(lowerPath) && !/handleUserDeactivation/i.test(cleanContent))) {
-        const matchLineIdx = lines.findIndex(l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('#') && !l.trim().startsWith('*'));
-        const lineNum = matchLineIdx !== -1 ? matchLineIdx + 1 : 1;
-        findings.push({
-            id: `sso12805-${Date.now()}-${findingCounter.count++}`,
-            ruleId: 12805,
-            type: 'SECURITY',
-            title: "SSO-05: Missing Automatic SCIM Deprovisioning Synchronization Hook",
-            severity: "HIGH",
-            category: "Identity Lifecycle",
-            filePath: file.path,
-            lineRange: `L${lineNum}`,
-            snippet: lines[matchLineIdx] || 'Enterprise SSO configuration',
-            reproductionSteps: [
-                `Audited Enterprise SSO configuration in ${file.path}:${lineNum}.`,
-                'Detected violation matching SSO-05.'
-            ],
-            remediationPrompt: "Handle SCIM DELETE and PATCH active=false requests immediately to revoke access upon employee offboarding.",
-            status: 'OPEN',
-            falsePositive: false
-        });
-        logs.push(`[${ts}] [SSO AUDIT] Found SSO-05: Missing Automatic SCIM Deprovisioning Synchronization Hook at ${file.path}:${lineNum}`);
+        logs.push(`[${ts}] [SSO AUDIT] Found SSO-03: SAML InResponseTo Validation Disabled (Response Replay) at ${file.path}:${lineNum}`);
     }
     return { findings, logs };
 }

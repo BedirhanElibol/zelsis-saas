@@ -24,54 +24,6 @@ export function evaluateOwaspApiSecurityRules(file: CodeFile, lines: string[], c
       return { findings, logs };
     }
     const ts = new Date().toLocaleTimeString();
-    // APIDEF-01: API1:2023 Broken Object Level Authorization (BOLA): Insecure Record Lookup
-    if ((/lookupResource|getItem/i.test(cleanContent) && !/verifyOwnership/i.test(cleanContent))) {
-        const matchLineIdx = locateMatchLine(lines, [/lookupResource|getItem/i], l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('#') && !l.trim().startsWith('*'));
-        const lineNum = matchLineIdx !== -1 ? matchLineIdx + 1 : 1;
-        findings.push({
-            id: `apidef14301-${Date.now()}-${findingCounter.count++}`,
-            ruleId: 14301,
-            type: 'SECURITY',
-            title: "APIDEF-01: API1:2023 Broken Object Level Authorization (BOLA): Insecure Record Lookup",
-            severity: "CRITICAL",
-            category: "Object Authorization",
-            filePath: file.path,
-            lineRange: `L${lineNum}`,
-            snippet: lines[matchLineIdx] || 'OWASP API Top 10 configuration',
-            reproductionSteps: [
-                `Audited OWASP API Top 10 configuration in ${file.path}:${lineNum}.`,
-                'Matched APIDEF-01: API1:2023 Broken Object Level Authorization (BOLA): Insecure Record Lookup.'
-            ],
-            remediationPrompt: "Validate user authorization and tenant ownership for every resource identifier supplied in API paths.",
-            status: 'OPEN',
-            falsePositive: false
-        });
-        logs.push(`[${ts}] [API SECURITY AUDIT] Found APIDEF-01: API1:2023 Broken Object Level Authorization (BOLA): Insecure Record Lookup at ${file.path}:${lineNum}`);
-    }
-    // APIDEF-02: API2:2023 Broken Authentication: Insecure Token Invalidation on Logout
-    if ((/logoutHandler/i.test(cleanContent) && !/blacklistToken/i.test(cleanContent))) {
-        const matchLineIdx = locateMatchLine(lines, [/logoutHandler/i], l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('#') && !l.trim().startsWith('*'));
-        const lineNum = matchLineIdx !== -1 ? matchLineIdx + 1 : 1;
-        findings.push({
-            id: `apidef14302-${Date.now()}-${findingCounter.count++}`,
-            ruleId: 14302,
-            type: 'SECURITY',
-            title: "APIDEF-02: API2:2023 Broken Authentication: Insecure Token Invalidation on Logout",
-            severity: "CRITICAL",
-            category: "Authentication",
-            filePath: file.path,
-            lineRange: `L${lineNum}`,
-            snippet: lines[matchLineIdx] || 'OWASP API Top 10 configuration',
-            reproductionSteps: [
-                `Audited OWASP API Top 10 configuration in ${file.path}:${lineNum}.`,
-                'Matched APIDEF-02: API2:2023 Broken Authentication: Insecure Token Invalidation on Logout.'
-            ],
-            remediationPrompt: "Revoke and blacklist JWTs in a distributed Redis cache upon user logout or credentials reset.",
-            status: 'OPEN',
-            falsePositive: false
-        });
-        logs.push(`[${ts}] [API SECURITY AUDIT] Found APIDEF-02: API2:2023 Broken Authentication: Insecure Token Invalidation on Logout at ${file.path}:${lineNum}`);
-    }
     // APIDEF-03: API3:2023 Broken Object Property Level Authorization: Mass Assignment
     if ((/updateProfile|saveUser/i.test(cleanContent) && !/pickAllowedFields/i.test(cleanContent))) {
         const matchLineIdx = locateMatchLine(lines, [/updateProfile|saveUser/i], l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('#') && !l.trim().startsWith('*'));
@@ -95,30 +47,6 @@ export function evaluateOwaspApiSecurityRules(file: CodeFile, lines: string[], c
             falsePositive: false
         });
         logs.push(`[${ts}] [API SECURITY AUDIT] Found APIDEF-03: API3:2023 Broken Object Property Level Authorization: Mass Assignment at ${file.path}:${lineNum}`);
-    }
-    // APIDEF-04: API4:2023 Unrestricted Resource Consumption: Missing Client Rate Limits
-    if ((/exportData|heavySearch/i.test(cleanContent) && !/checkRateLimit/i.test(cleanContent))) {
-        const matchLineIdx = locateMatchLine(lines, [/exportData|heavySearch/i], l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('#') && !l.trim().startsWith('*'));
-        const lineNum = matchLineIdx !== -1 ? matchLineIdx + 1 : 1;
-        findings.push({
-            id: `apidef14304-${Date.now()}-${findingCounter.count++}`,
-            ruleId: 14304,
-            type: 'SECURITY',
-            title: "APIDEF-04: API4:2023 Unrestricted Resource Consumption: Missing Client Rate Limits",
-            severity: "HIGH",
-            category: "Resource Control",
-            filePath: file.path,
-            lineRange: `L${lineNum}`,
-            snippet: lines[matchLineIdx] || 'OWASP API Top 10 configuration',
-            reproductionSteps: [
-                `Audited OWASP API Top 10 configuration in ${file.path}:${lineNum}.`,
-                'Matched APIDEF-04: API4:2023 Unrestricted Resource Consumption: Missing Client Rate Limits.'
-            ],
-            remediationPrompt: "Enforce token-bucket rate limits and query pagination bounds on resource-intensive analytical routes.",
-            status: 'OPEN',
-            falsePositive: false
-        });
-        logs.push(`[${ts}] [API SECURITY AUDIT] Found APIDEF-04: API4:2023 Unrestricted Resource Consumption: Missing Client Rate Limits at ${file.path}:${lineNum}`);
     }
     // APIDEF-05: API5:2023 Broken Function Level Authorization: Admin Routes Missing Scope Check
     if ((/adminRouter|manageTenant/i.test(cleanContent) && !/requireRole/i.test(cleanContent))) {

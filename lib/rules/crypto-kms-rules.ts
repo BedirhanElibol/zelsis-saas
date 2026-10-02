@@ -4,7 +4,6 @@
  */
 import { Finding } from "@/data/schema";
 import { CodeFile } from "../scanner-engine";
-import { locateMatchLine } from './shared/locate';
 export interface CryptoKmsRuleResult {
     findings: Finding[];
     logs: string[];
@@ -21,8 +20,9 @@ export function evaluateCryptoKmsRules(file: CodeFile, lines: string[], cleanCon
     }
     const ts = new Date().toLocaleTimeString();
     // CRYPTO-01: Hardcoded Cryptographic Keys and Static Salts in Source Code
-    if (/(?:aesKey|secretKey)\s*[:=]\s*["'][a-zA-Z0-9+/=_-]{16,}["']/i.test(cleanContent) && !/process\.env/i.test(cleanContent)) {
-        const matchLineIdx = locateMatchLine(lines, [/(?:aesKey|secretKey)\s*[:=]\s*["'][a-zA-Z0-9+/=_-]{16,}["']/i], l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('#') && !l.trim().startsWith('*'));
+    const hit_13301 = lines.findIndex((l) => /\b(?:aes_?key|AES_KEY|encryption_?key|ENCRYPTION_KEY|cipher_?key|CIPHER_KEY|crypto_?key|CRYPTO_KEY|salt|SALT|static_?salt|STATIC_SALT)\s*[:=]\s*(?:Buffer\.from\(\s*)?["'][A-Za-z0-9+/=_-]{16,}["']/i.test(l) && !/your|example|change|placeholder|dummy|xxxx|<|\.\.\./i.test(l));
+    if (hit_13301 !== -1) {
+        const matchLineIdx = hit_13301;
         const lineNum = matchLineIdx !== -1 ? matchLineIdx + 1 : 1;
         findings.push({
             id: `crypto13301-${Date.now()}-${findingCounter.count++}`,
@@ -45,15 +45,16 @@ export function evaluateCryptoKmsRules(file: CodeFile, lines: string[], cleanCon
         logs.push(`[${ts}] [CRYPTO AUDIT] Found CRYPTO-01: Hardcoded Cryptographic Keys and Static Salts in Source Code at ${file.path}:${lineNum}`);
     }
     // CRYPTO-02: Missing Automated Master Key Rotation Schedule Exceeding 90 Days
-    if ((/kmsKey/i.test(cleanContent) && !/enableKeyRotation/i.test(cleanContent))) {
-        const matchLineIdx = locateMatchLine(lines, [/kmsKey/i], l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('#') && !l.trim().startsWith('*'));
+    const hit_13302 = findKmsKeyWithoutRotation(cleanContent);
+    if (hit_13302 !== -1) {
+        const matchLineIdx = hit_13302;
         const lineNum = matchLineIdx !== -1 ? matchLineIdx + 1 : 1;
         findings.push({
             id: `crypto13302-${Date.now()}-${findingCounter.count++}`,
             ruleId: 13302,
             type: 'SECURITY',
             title: "CRYPTO-02: Missing Automated Master Key Rotation Schedule Exceeding 90 Days",
-            severity: "HIGH",
+            severity: "MEDIUM",
             category: "Key Lifecycle",
             filePath: file.path,
             lineRange: `L${lineNum}`,
@@ -69,8 +70,9 @@ export function evaluateCryptoKmsRules(file: CodeFile, lines: string[], cleanCon
         logs.push(`[${ts}] [CRYPTO AUDIT] Found CRYPTO-02: Missing Automated Master Key Rotation Schedule Exceeding 90 Days at ${file.path}:${lineNum}`);
     }
     // CRYPTO-03: Insecure Legacy Cipher Modes Permitted (AES-ECB / Unauthenticated CBC)
-    if ((/(?:aes-128-ecb|aes-256-ecb)/i.test(cleanContent))) {
-        const matchLineIdx = locateMatchLine(lines, [/(?:aes-128-ecb|aes-256-ecb)/i], l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('#') && !l.trim().startsWith('*'));
+    const hit_13303 = lines.findIndex((l) => /["'](?:aes-(?:128|192|256)-ecb|des-ecb|AES\/ECB\/\w+|DESede\/ECB\/\w+|DES\/ECB\/\w+)["']|\bAES\.MODE_ECB\b|\bmodes\.ECB\s*\(/i.test(l));
+    if (hit_13303 !== -1) {
+        const matchLineIdx = hit_13303;
         const lineNum = matchLineIdx !== -1 ? matchLineIdx + 1 : 1;
         findings.push({
             id: `crypto13303-${Date.now()}-${findingCounter.count++}`,
@@ -93,8 +95,9 @@ export function evaluateCryptoKmsRules(file: CodeFile, lines: string[], cleanCon
         logs.push(`[${ts}] [CRYPTO AUDIT] Found CRYPTO-03: Insecure Legacy Cipher Modes Permitted (AES-ECB / Unauthenticated CBC) at ${file.path}:${lineNum}`);
     }
     // CRYPTO-04: Cryptographic Nonce Reuse in Galois/Counter Mode (GCM) Encryption
-    if ((/createCipheriv.*gcm/i.test(cleanContent) && !/randomBytes/i.test(cleanContent))) {
-        const matchLineIdx = locateMatchLine(lines, [/createCipheriv.*gcm/i], l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('#') && !l.trim().startsWith('*'));
+    const hit_13304 = findStaticGcmNonce(cleanContent);
+    if (hit_13304 !== -1) {
+        const matchLineIdx = hit_13304;
         const lineNum = matchLineIdx !== -1 ? matchLineIdx + 1 : 1;
         findings.push({
             id: `crypto13304-${Date.now()}-${findingCounter.count++}`,
@@ -117,8 +120,9 @@ export function evaluateCryptoKmsRules(file: CodeFile, lines: string[], cleanCon
         logs.push(`[${ts}] [CRYPTO AUDIT] Found CRYPTO-04: Cryptographic Nonce Reuse in Galois/Counter Mode (GCM) Encryption at ${file.path}:${lineNum}`);
     }
     // CRYPTO-05: Weak Asymmetric Key Strengths (RSA < 3072 bits or ECC < 256 bits)
-    if ((/generateKeyPair.*rsa/i.test(cleanContent))) {
-        const matchLineIdx = locateMatchLine(lines, [/generateKeyPair.*rsa/i], l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('#') && !l.trim().startsWith('*'));
+    const hit_13305 = findWeakRsaModulus(cleanContent);
+    if (hit_13305 !== -1) {
+        const matchLineIdx = hit_13305;
         const lineNum = matchLineIdx !== -1 ? matchLineIdx + 1 : 1;
         findings.push({
             id: `crypto13305-${Date.now()}-${findingCounter.count++}`,
@@ -141,4 +145,65 @@ export function evaluateCryptoKmsRules(file: CodeFile, lines: string[], cleanCon
         logs.push(`[${ts}] [CRYPTO AUDIT] Found CRYPTO-05: Weak Asymmetric Key Strengths (RSA < 3072 bits or ECC < 256 bits) at ${file.path}:${lineNum}`);
     }
     return { findings, logs };
+}
+// ---- precise matchers (rule-proof pass) ----
+const lineAt = (text: string, idx: number): number => text.slice(0, idx).split('\n').length - 1;
+/** Brace-matched block text starting at `start` (the first `{` after it). */
+function blockFrom(src: string, start: number, open = '{', close = '}'): string {
+    const o = src.indexOf(open, start);
+    if (o === -1) return '';
+    let depth = 0;
+    let i = o;
+    for (; i < src.length; i++) {
+        if (src[i] === open) depth++;
+        else if (src[i] === close && --depth === 0) break;
+    }
+    return src.slice(start, i + 1);
+}
+/** A symmetric KMS key (Terraform aws_kms_key or CDK kms.Key) declared without automatic rotation. */
+function findKmsKeyWithoutRotation(src: string): number {
+    const tf = /resource\s+"aws_kms_key"\s+"[^"]+"\s*\{/g;
+    let m: RegExpExecArray | null;
+    while ((m = tf.exec(src))) {
+        const block = blockFrom(src, m.index);
+        if (/customer_master_key_spec\s*=\s*"(?!SYMMETRIC_DEFAULT)/.test(block) || /key_usage\s*=\s*"(?:SIGN_VERIFY|GENERATE_VERIFY_MAC)"/.test(block)) continue;
+        if (!/enable_key_rotation\s*=\s*true/.test(block)) return lineAt(src, m.index);
+    }
+    const cdk = /new\s+kms\.Key\s*\(/g;
+    while ((m = cdk.exec(src))) {
+        const call = blockFrom(src, m.index, '(', ')');
+        if (/keySpec\s*:\s*kms\.KeySpec\.(?!SYMMETRIC_DEFAULT)/.test(call)) continue;
+        if (!/enableKeyRotation\s*:\s*true/.test(call)) return lineAt(src, m.index);
+    }
+    return -1;
+}
+/** AES-GCM encryption whose IV is a fixed buffer, a string literal, or a value read from env/config. */
+function findStaticGcmNonce(src: string): number {
+    const call = /createCipheriv\s*\(\s*["']aes-\d+-gcm["']\s*,\s*(?:[^,()]+|\([^()]*\))+,\s*((?:[^,()\n]+|\([^()]*\))+?)\s*[,)]/g;
+    let m: RegExpExecArray | null;
+    const isStatic = (expr: string): boolean => /^Buffer\.(?:alloc\s*\(|from\s*\(\s*(?:["'`]|process\.env|\[))|^["'`]|process\.env/.test(expr.trim());
+    while ((m = call.exec(src))) {
+        const iv = m[1].trim();
+        if (isStatic(iv)) return lineAt(src, m.index);
+        const id = /^[A-Za-z_$][\w$]*$/.test(iv) ? iv : null;
+        if (!id) continue;
+        const decl = new RegExp(`\\b(?:const|let|var)\\s+${id.replace(/\$/g, '\\$')}\\s*=\\s*([^;\\n]+)`).exec(src);
+        if (decl && isStatic(decl[1]) && !/randomBytes|getRandomValues|randomUUID/.test(decl[1])) return lineAt(src, m.index);
+    }
+    return -1;
+}
+/** RSA key generation with a modulus below 2048 bits (Node, Python cryptography, Go). */
+function findWeakRsaModulus(src: string): number {
+    const pats = [
+        /generateKeyPair(?:Sync)?\s*\(\s*["']rsa["']\s*,\s*\{[^}]*?modulusLength\s*:\s*(\d+)/g,
+        /rsa\.generate_private_key\s*\([^)]*?key_size\s*=\s*(\d+)/g,
+        /rsa\.GenerateKey\s*\(\s*[\w.]+\s*,\s*(\d+)\s*\)/g,
+    ];
+    for (const p of pats) {
+        let m: RegExpExecArray | null;
+        while ((m = p.exec(src))) {
+            if (Number(m[1]) < 2048) return lineAt(src, m.index + m[0].lastIndexOf(m[1]));
+        }
+    }
+    return -1;
 }

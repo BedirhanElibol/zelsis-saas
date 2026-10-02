@@ -46,31 +46,6 @@ export function evaluateModernFullstackRules(file: CodeFile, lines: string[], cl
         });
         logs.push(`[${ts}] ⚡ FULLSTACK NEXT15-02: Client Component Props Exposing Server Secrets in ${file.path}:${lineNum}`);
     }
-    // NEXT15-03: Missing React 19 taintObjectReference on Sensitive Entities
-    if (lowerPath.includes('auth') && cleanContent.includes('export async function getUser')) {
-        const matchLineIdx = lines.findIndex(l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('*'));
-        const lineNum = matchLineIdx !== -1 ? matchLineIdx + 1 : 1;
-        findings.push({
-            id: `next15_8603-${Date.now()}-${findingCounter.count++}`,
-            ruleId: 8603,
-            type: 'INFRA_DATABASE',
-            title: "NEXT15-03: Missing React 19 taintObjectReference on Sensitive Entities",
-            severity: 'HIGH',
-            category: "Data Leakage",
-            filePath: file.path,
-            lineRange: `L${lineNum}`,
-            snippet: lines[matchLineIdx] || 'Next.js 15 component declaration',
-            reproductionSteps: [
-                `Scanned Next.js App Router code in ${file.path}:${lineNum}.`,
-                'Detected fullstack architecture defect matching NEXT15-03.'
-            ],
-            remediationPrompt: "Apply experimental_taintObjectReference on sensitive user records.",
-            status: 'OPEN',
-            owner: 'Fullstack Architect',
-            falsePositive: false
-        });
-        logs.push(`[${ts}] ⚡ FULLSTACK NEXT15-03: Missing React 19 taintObjectReference on Sensitive Entities in ${file.path}:${lineNum}`);
-    }
     // NEXT15-04: Uncached Dynamic Route Render Explosion (force-dynamic)
     if (/export\s+const\s+dynamic\s*=\s*['"]force-dynamic['"]/i.test(cleanContent) && !lowerPath.includes('app/api') && !cleanContent.includes('api/')) {
         const matchLineIdx = locateMatchLine(lines, [/export\s+const\s+dynamic\s*=\s*['"]force-dynamic['"]/i], l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('*'));
@@ -97,8 +72,8 @@ export function evaluateModernFullstackRules(file: CodeFile, lines: string[], cl
         logs.push(`[${ts}] ⚡ FULLSTACK NEXT15-04: Uncached Dynamic Route Render Explosion (force-dynamic) in ${file.path}:${lineNum}`);
     }
     // NEXT15-05: Edge Middleware Header Injection via URL Parameters
-    if (lowerPath.includes('middleware') && /headers\.set\s*\([^,]+,\s*req\.nextUrl\.searchParams\.get/i.test(cleanContent) && !/sanitize/i.test(cleanContent)) {
-        const matchLineIdx = locateMatchLine(lines, [/headers\.set\s*\([^,]+,\s*req\.nextUrl\.searchParams\.get/i], l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('*'));
+    if (lowerPath.includes('middleware') && /headers\.set\s*\(\s*["']x-[\w-]*(?:user|tenant|org|role|admin|auth|account)[\w-]*["']\s*,\s*(?:req|request)\.nextUrl\.searchParams\.get/i.test(cleanContent) && !/sanitize/i.test(cleanContent)) {
+        const matchLineIdx = locateMatchLine(lines, [/headers\.set\s*\(\s*["']x-[\w-]*(?:user|tenant|org|role|admin|auth|account)[\w-]*["']\s*,\s*(?:req|request)\.nextUrl\.searchParams\.get/i], l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('*'));
         const lineNum = matchLineIdx !== -1 ? matchLineIdx + 1 : 1;
         findings.push({
             id: `next15_8605-${Date.now()}-${findingCounter.count++}`,
@@ -122,7 +97,7 @@ export function evaluateModernFullstackRules(file: CodeFile, lines: string[], cl
         logs.push(`[${ts}] ⚡ FULLSTACK NEXT15-05: Edge Middleware Header Injection via URL Parameters in ${file.path}:${lineNum}`);
     }
     // NEXT15-06: Unbounded revalidateTag Invocations Allowing Cache Flush DoS
-    if (/revalidateTag\s*\(/i.test(cleanContent) && !/verifyToken|secret|auth|session|isAdmin|hasRole/i.test(cleanContent)) {
+    if (/(?:^|\/)app\/(?:.*\/)?route\.[jt]sx?$|(?:^|\/)pages\/api\//.test(lowerPath) && /revalidateTag\s*\(/i.test(cleanContent) && !/verifyToken|secret|auth|session|isAdmin|hasRole/i.test(cleanContent)) {
         const matchLineIdx = locateMatchLine(lines, [/revalidateTag\s*\(/i], l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('*'));
         const lineNum = matchLineIdx !== -1 ? matchLineIdx + 1 : 1;
         findings.push({
@@ -130,7 +105,7 @@ export function evaluateModernFullstackRules(file: CodeFile, lines: string[], cl
             ruleId: 8606,
             type: 'INFRA_DATABASE',
             title: "NEXT15-06: Unbounded revalidateTag Invocations Allowing Cache Flush DoS",
-            severity: 'HIGH',
+            severity: 'MEDIUM',
             category: "Cache Resilience",
             filePath: file.path,
             lineRange: `L${lineNum}`,
@@ -147,8 +122,8 @@ export function evaluateModernFullstackRules(file: CodeFile, lines: string[], cl
         logs.push(`[${ts}] ⚡ FULLSTACK NEXT15-06: Unbounded revalidateTag Invocations Allowing Cache Flush DoS in ${file.path}:${lineNum}`);
     }
     // NEXT15-07: Mutating Server Action Triggered via Link Navigation (GET)
-    if (/<Link[^>]*href=['"][^'"]*(?:delete|cancel|purge|remove)[^'"]*['"]/i.test(cleanContent) && !cleanContent.includes('LinkWrapperSafe')) {
-        const matchLineIdx = locateMatchLine(lines, [/<Link[^>]*href=['"][^'"]*(?:delete|cancel|purge|remove)[^'"]*['"]/i], l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('*'));
+    if (/<Link\b[^>]*href=(?:\{\s*`|['"])\/api\/[^'"`]*(?:delete|cancel|purge|remove)/i.test(cleanContent)) {
+        const matchLineIdx = locateMatchLine(lines, [/<Link\b[^>]*href=(?:\{\s*`|['"])\/api\/[^'"`]*(?:delete|cancel|purge|remove)/i], l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('*'));
         const lineNum = matchLineIdx !== -1 ? matchLineIdx + 1 : 1;
         findings.push({
             id: `next15_8607-${Date.now()}-${findingCounter.count++}`,

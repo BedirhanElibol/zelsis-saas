@@ -5,7 +5,7 @@
 import { Finding } from '@/data/schema';
 import { CodeFile } from '../scanner-engine';
 import { locateMatchLine } from './shared/locate';
-import { isYamlPath, openIngressLine, stripHashComments, yamlLine } from './iac-rules';
+import { hclBlocks, hclLine, isYamlPath, openIngressLine, stripHashComments, tfResource, yamlLine } from './iac-rules';
 export interface CloudNativeRuleResult {
     findings: Finding[];
     logs: string[];
@@ -23,31 +23,6 @@ export function evaluateCloudNativeRules(file: CodeFile, lines: string[], cleanC
     const ts = new Date().toLocaleTimeString();
     // Comment-stripped lines (same numbering as `lines`) for line-level rules
     const cleanLines = cleanContent.split('\n');
-    // CLOUD-01: Synchronous Serverless Function Timeout Exceeding 30s
-    if (/export\s+const\s+maxDuration\s*=\s*(?:[4-9]\d|\d{3,})/i.test(cleanContent) && !/cron|background|queue/i.test(lowerPath)) {
-        const matchLineIdx = locateMatchLine(lines, [/export\s+const\s+maxDuration\s*=\s*(?:[4-9]\d|\d{3,})/i], l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('*'));
-        const lineNum = matchLineIdx !== -1 ? matchLineIdx + 1 : 1;
-        findings.push({
-            id: `cloud01-${Date.now()}-${findingCounter.count++}`,
-            ruleId: 7001,
-            type: 'INFRA_DATABASE',
-            title: "CLOUD-01: Synchronous Serverless Function Timeout Exceeding 30s",
-            severity: 'HIGH',
-            category: "Serverless & Lambda",
-            filePath: file.path,
-            lineRange: `L${lineNum}`,
-            snippet: lines[matchLineIdx] || "<detected CLOUD-01 pattern>",
-            reproductionSteps: [
-                `Scanned source code in ${file.path}:${lineNum}.`,
-                "Detected Synchronous Serverless Function Timeout Exceeding 30s: Configuring maxDuration or function timeout > 30s on synchronous API routes causing expensive hanging connections and gateway 504 timeouts."
-            ],
-            remediationPrompt: "Reduce route maxDuration to <= 15s and queue long-running workloads to SQS/Inngest/QStash.",
-            status: 'OPEN',
-            owner: "AWS/Vercel Lambda",
-            falsePositive: false
-        });
-        logs.push(`[${ts}] ☁️ CLOUD-01: Synchronous Serverless Function Timeout Exceeding 30s detected (${file.path}:${lineNum})`);
-    }
     // CLOUD-02: Serverless Lambda Memory Starvation (<256MB)
     if (/(?:memorySize|memory_size)\s*:\s*(?:128|64)\b/i.test(cleanContent)) {
         const matchLineIdx = locateMatchLine(lines, [/(?:memorySize|memory_size)\s*:\s*(?:128|64)\b/i], l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('*'));
@@ -198,56 +173,6 @@ export function evaluateCloudNativeRules(file: CodeFile, lines: string[], cleanC
         });
         logs.push(`[${ts}] ☁️ CLOUD-07: Missing Multi-Stage Build in Production Dockerfile detected (${file.path}:${lineNum})`);
     }
-    // CLOUD-08: S3 / Object Storage Bucket Public ACL Exposure
-    if (/(?:AWS::S3::Bucket|aws_s3_bucket)\b/i.test(cleanContent) && !/BlockPublicAcls\s*:\s*true|block_public_acls\s*=\s*true/i.test(cleanContent)) {
-        const matchLineIdx = locateMatchLine(lines, [/(?:AWS::S3::Bucket|aws_s3_bucket)\b/i], l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('*'));
-        const lineNum = matchLineIdx !== -1 ? matchLineIdx + 1 : 1;
-        findings.push({
-            id: `cloud08-${Date.now()}-${findingCounter.count++}`,
-            ruleId: 7008,
-            type: 'INFRA_DATABASE',
-            title: "CLOUD-08: S3 / Object Storage Bucket Public ACL Exposure",
-            severity: 'CRITICAL',
-            category: "Cloud Storage Security",
-            filePath: file.path,
-            lineRange: `L${lineNum}`,
-            snippet: lines[matchLineIdx] || "<detected CLOUD-08 pattern>",
-            reproductionSteps: [
-                `Scanned source code in ${file.path}:${lineNum}.`,
-                "Detected S3 / Object Storage Bucket Public ACL Exposure: S3 bucket definitions omitting BlockPublicAcls, BlockPublicPolicy, or IgnorePublicAcls."
-            ],
-            remediationPrompt: "Configure PublicAccessBlockConfiguration with all four block flags set to true.",
-            status: 'OPEN',
-            owner: "AWS S3 / GCS",
-            falsePositive: false
-        });
-        logs.push(`[${ts}] ☁️ CLOUD-08: S3 / Object Storage Bucket Public ACL Exposure detected (${file.path}:${lineNum})`);
-    }
-    // CLOUD-09: Object Storage Missing Server-Side Encryption (SSE)
-    if (/(?:AWS::S3::Bucket|aws_s3_bucket)\b/i.test(cleanContent) && !/ServerSideEncryption|server_side_encryption/i.test(cleanContent)) {
-        const matchLineIdx = locateMatchLine(lines, [/(?:AWS::S3::Bucket|aws_s3_bucket)\b/i], l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('*'));
-        const lineNum = matchLineIdx !== -1 ? matchLineIdx + 1 : 1;
-        findings.push({
-            id: `cloud09-${Date.now()}-${findingCounter.count++}`,
-            ruleId: 7009,
-            type: 'INFRA_DATABASE',
-            title: "CLOUD-09: Object Storage Missing Server-Side Encryption (SSE)",
-            severity: 'HIGH',
-            category: "Cloud Storage Security",
-            filePath: file.path,
-            lineRange: `L${lineNum}`,
-            snippet: lines[matchLineIdx] || "<detected CLOUD-09 pattern>",
-            reproductionSteps: [
-                `Scanned source code in ${file.path}:${lineNum}.`,
-                "Detected Object Storage Missing Server-Side Encryption (SSE): Buckets configured without default AES-256 or KMS server-side encryption."
-            ],
-            remediationPrompt: "Enable default server-side encryption with AES256 or AWS KMS customer-managed keys.",
-            status: 'OPEN',
-            owner: "AWS S3 / GCS",
-            falsePositive: false
-        });
-        logs.push(`[${ts}] ☁️ CLOUD-09: Object Storage Missing Server-Side Encryption (SSE) detected (${file.path}:${lineNum})`);
-    }
     // CLOUD-10: Missing Lifecycle Expiration on Temporary Storage
     if (/(?:AWS::S3::Bucket|aws_s3_bucket)\b/i.test(cleanContent) && /temp|staging|tmp|cache/i.test(cleanContent) && !/LifecycleConfiguration|lifecycle_rule/i.test(cleanContent)) {
         const matchLineIdx = locateMatchLine(lines, [/(?:AWS::S3::Bucket|aws_s3_bucket)\b/i, /temp|staging|tmp|cache/i], l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('*'));
@@ -297,31 +222,6 @@ export function evaluateCloudNativeRules(file: CodeFile, lines: string[], cleanC
             falsePositive: false
         });
         logs.push(`[${ts}] ☁️ CLOUD-11: Kubernetes Pod Missing CPU & Memory Requests/Limits detected (${file.path}:${lineNum})`);
-    }
-    // CLOUD-12: Kubernetes Pod Missing Liveness and Readiness Probes
-    if (/(?:kind:\s*Deployment|kind:\s*StatefulSet)/i.test(cleanContent) && (!/livenessProbe/i.test(cleanContent) || !/readinessProbe/i.test(cleanContent)) && /\.(?:ya?ml)$/i.test(file.path)) {
-        const matchLineIdx = locateMatchLine(lines, [/(?:kind:\s*Deployment|kind:\s*StatefulSet)/i], l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('*'));
-        const lineNum = matchLineIdx !== -1 ? matchLineIdx + 1 : 1;
-        findings.push({
-            id: `cloud12-${Date.now()}-${findingCounter.count++}`,
-            ruleId: 7012,
-            type: 'INFRA_DATABASE',
-            title: "CLOUD-12: Kubernetes Pod Missing Liveness and Readiness Probes",
-            severity: 'HIGH',
-            category: "Reliability & Resiliency",
-            filePath: file.path,
-            lineRange: `L${lineNum}`,
-            snippet: lines[matchLineIdx] || "<detected CLOUD-12 pattern>",
-            reproductionSteps: [
-                `Scanned source code in ${file.path}:${lineNum}.`,
-                "Detected Kubernetes Pod Missing Liveness and Readiness Probes: Pod manifests without livenessProbe or readinessProbe causing broken containers to receive live traffic."
-            ],
-            remediationPrompt: "Add livenessProbe and readinessProbe targeting /api/health with initialDelaySeconds.",
-            status: 'OPEN',
-            owner: "K8s",
-            falsePositive: false
-        });
-        logs.push(`[${ts}] ☁️ CLOUD-12: Kubernetes Pod Missing Liveness and Readiness Probes detected (${file.path}:${lineNum})`);
     }
     // CLOUD-13: Kubernetes Pod Running with Privileged SecurityContext
     // Only `privileged: true` (allowPrivilegeEscalation: true is the Kubernetes default, a hardening gap rather than a privileged pod)
@@ -399,31 +299,6 @@ export function evaluateCloudNativeRules(file: CodeFile, lines: string[], cleanC
             falsePositive: false
         });
         logs.push(`[${ts}] ☁️ CLOUD-15: Lambda Cold Start Heavy Module Initialization detected (${file.path}:${lineNum})`);
-    }
-    // CLOUD-16: Unbounded Dead Letter Queue (DLQ) Absence on Async Lambdas
-    if (/(?:AWS::Lambda::Function|aws_lambda_function)\b/i.test(cleanContent) && /EventSourceMapping/i.test(cleanContent) && !/DeadLetterConfig|dead_letter_config/i.test(cleanContent)) {
-        const matchLineIdx = locateMatchLine(lines, [/(?:AWS::Lambda::Function|aws_lambda_function)\b/i, /EventSourceMapping/i], l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('*'));
-        const lineNum = matchLineIdx !== -1 ? matchLineIdx + 1 : 1;
-        findings.push({
-            id: `cloud16-${Date.now()}-${findingCounter.count++}`,
-            ruleId: 7016,
-            type: 'INFRA_DATABASE',
-            title: "CLOUD-16: Unbounded Dead Letter Queue (DLQ) Absence on Async Lambdas",
-            severity: 'HIGH',
-            category: "Fault Tolerance",
-            filePath: file.path,
-            lineRange: `L${lineNum}`,
-            snippet: lines[matchLineIdx] || "<detected CLOUD-16 pattern>",
-            reproductionSteps: [
-                `Scanned source code in ${file.path}:${lineNum}.`,
-                "Detected Unbounded Dead Letter Queue (DLQ) Absence on Async Lambdas: Asynchronous Lambda event sources (SNS, SQS, EventBridge) lacking Dead Letter Queue (DLQ) configuration."
-            ],
-            remediationPrompt: "Configure deadLetterTargetArn pointing to a dedicated SQS DLQ for poison pill inspection.",
-            status: 'OPEN',
-            owner: "Serverless / SQS",
-            falsePositive: false
-        });
-        logs.push(`[${ts}] ☁️ CLOUD-16: Unbounded Dead Letter Queue (DLQ) Absence on Async Lambdas detected (${file.path}:${lineNum})`);
     }
     // CLOUD-17: Missing Exponential Backoff on Cloud SDK Invocations
     if (/(?:new\s+S3Client|new\s+DynamoDBClient|new\s+SESClient)\s*\(\s*\{(?![^}]*maxAttempts)/i.test(cleanContent)) {
@@ -539,81 +414,6 @@ export function evaluateCloudNativeRules(file: CodeFile, lines: string[], cleanC
         });
         logs.push(`[${ts}] ☁️ CLOUD-20: CloudFormation / CDK Wildcard IAM Action (Action: '*') detected (${file.path}:${lineNum})`);
     }
-    // CLOUD-21: CloudFormation / CDK Wildcard IAM Resource (Resource: '*')
-    if (/(?:Resource\s*:\s*[\'"]\*[\'"]|resources\s*=\s*\[[\'"]\*[\'"]\]|Resource\s*:\s*\[[\'"]\*[\'"]\])/i.test(cleanContent) && /Allow/i.test(cleanContent) && !lowerPath.includes("test")) {
-        const matchLineIdx = locateMatchLine(lines, [/(?:Resource\s*:\s*[\'"]\*[\'"]|resources\s*=\s*\[[\'"]\*[\'"]\]|Resource\s*:\s*\[[\'"]\*[\'"]\])/i, /Allow/i], l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('*'));
-        const lineNum = matchLineIdx !== -1 ? matchLineIdx + 1 : 1;
-        findings.push({
-            id: `cloud21-${Date.now()}-${findingCounter.count++}`,
-            ruleId: 7021,
-            type: 'INFRA_DATABASE',
-            title: "CLOUD-21: CloudFormation / CDK Wildcard IAM Resource (Resource: '*')",
-            severity: 'HIGH',
-            category: "Cloud IAM Security",
-            filePath: file.path,
-            lineRange: `L${lineNum}`,
-            snippet: lines[matchLineIdx] || "<detected CLOUD-21 pattern>",
-            reproductionSteps: [
-                `Scanned source code in ${file.path}:${lineNum}.`,
-                "Detected CloudFormation / CDK Wildcard IAM Resource (Resource: '*'): IAM policies granting permissions across Resource: '*' instead of scoping to specific ARNs."
-            ],
-            remediationPrompt: "Specify exact resource ARN: arn:aws:s3:::my-secure-bucket/* instead of wildcard *.",
-            status: 'OPEN',
-            owner: "IAM / CDK",
-            falsePositive: false
-        });
-        logs.push(`[${ts}] ☁️ CLOUD-21: CloudFormation / CDK Wildcard IAM Resource (Resource: '*') detected (${file.path}:${lineNum})`);
-    }
-    // CLOUD-22: Missing Serverless Connection Pooling (RDS Proxy / PgBouncer)
-    if (/(?:AWS::RDS::DBInstance|aws_db_instance)\b/i.test(cleanContent) && !/RDS::DBProxy|aws_db_proxy/i.test(cleanContent) && /serverless|lambda/i.test(cleanContent)) {
-        const matchLineIdx = locateMatchLine(lines, [/(?:AWS::RDS::DBInstance|aws_db_instance)\b/i, /serverless|lambda/i], l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('*'));
-        const lineNum = matchLineIdx !== -1 ? matchLineIdx + 1 : 1;
-        findings.push({
-            id: `cloud22-${Date.now()}-${findingCounter.count++}`,
-            ruleId: 7022,
-            type: 'INFRA_DATABASE',
-            title: "CLOUD-22: Missing Serverless Connection Pooling (RDS Proxy / PgBouncer)",
-            severity: 'HIGH',
-            category: "Database Reliability",
-            filePath: file.path,
-            lineRange: `L${lineNum}`,
-            snippet: lines[matchLineIdx] || "<detected CLOUD-22 pattern>",
-            reproductionSteps: [
-                `Scanned source code in ${file.path}:${lineNum}.`,
-                "Detected Missing Serverless Connection Pooling (RDS Proxy / PgBouncer): Serverless functions opening direct unpooled database connections exhausting DB connection pool (max_connections)."
-            ],
-            remediationPrompt: "Point connection string to port 6543 (transaction pooler) or configure AWS RDS Proxy.",
-            status: 'OPEN',
-            owner: "PostgreSQL / Serverless",
-            falsePositive: false
-        });
-        logs.push(`[${ts}] ☁️ CLOUD-22: Missing Serverless Connection Pooling (RDS Proxy / PgBouncer) detected (${file.path}:${lineNum})`);
-    }
-    // CLOUD-23: Edge Runtime Function Invoking Node.js Native Modules
-    if (/export\s+const\s+runtime\s*=\s*[\'"]edge[\'"]/i.test(cleanContent) && /from\s+[\'"](?:fs|child_process|dns|cluster)[\'"]/i.test(cleanContent)) {
-        const matchLineIdx = locateMatchLine(lines, [/export\s+const\s+runtime\s*=\s*[\'"]edge[\'"]/i, /from\s+[\'"](?:fs|child_process|dns|cluster)[\'"]/i], l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('*'));
-        const lineNum = matchLineIdx !== -1 ? matchLineIdx + 1 : 1;
-        findings.push({
-            id: `cloud23-${Date.now()}-${findingCounter.count++}`,
-            ruleId: 7023,
-            type: 'INFRA_DATABASE',
-            title: "CLOUD-23: Edge Runtime Function Invoking Node.js Native Modules",
-            severity: 'CRITICAL',
-            category: "Edge Architecture",
-            filePath: file.path,
-            lineRange: `L${lineNum}`,
-            snippet: lines[matchLineIdx] || "<detected CLOUD-23 pattern>",
-            reproductionSteps: [
-                `Scanned source code in ${file.path}:${lineNum}.`,
-                "Detected Edge Runtime Function Invoking Node.js Native Modules: Exporting export const runtime = 'edge' in route handlers that import fs, path, child_process, or crypto.createHash."
-            ],
-            remediationPrompt: "Replace Node.js built-in modules with Web Standard APIs or switch runtime to 'nodejs'.",
-            status: 'OPEN',
-            owner: "Next.js / Cloudflare",
-            falsePositive: false
-        });
-        logs.push(`[${ts}] ☁️ CLOUD-23: Edge Runtime Function Invoking Node.js Native Modules detected (${file.path}:${lineNum})`);
-    }
     // CLOUD-24: Serverless Route Missing Cache-Control on Edge CDN
     if (/(?:app\/api|pages\/api)/i.test(lowerPath) && /export\s+async\s+function\s+GET/i.test(cleanContent) && /public|assets|catalog|products/i.test(lowerPath) && !/Cache-Control/i.test(cleanContent)) {
         const matchLineIdx = locateMatchLine(lines, [/export\s+async\s+function\s+GET/i], l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('*'));
@@ -638,31 +438,6 @@ export function evaluateCloudNativeRules(file: CodeFile, lines: string[], cleanC
             falsePositive: false
         });
         logs.push(`[${ts}] ☁️ CLOUD-24: Serverless Route Missing Cache-Control on Edge CDN detected (${file.path}:${lineNum})`);
-    }
-    // CLOUD-25: Missing AWS WAF Web ACL on Production CloudFront Distribution
-    if (/(?:AWS::CloudFront::Distribution|aws_cloudfront_distribution)\b/i.test(cleanContent) && !/webAclId|web_acl_id/i.test(cleanContent)) {
-        const matchLineIdx = locateMatchLine(lines, [/(?:AWS::CloudFront::Distribution|aws_cloudfront_distribution)\b/i], l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('*'));
-        const lineNum = matchLineIdx !== -1 ? matchLineIdx + 1 : 1;
-        findings.push({
-            id: `cloud25-${Date.now()}-${findingCounter.count++}`,
-            ruleId: 7025,
-            type: 'INFRA_DATABASE',
-            title: "CLOUD-25: Missing AWS WAF Web ACL on Production CloudFront Distribution",
-            severity: 'HIGH',
-            category: "Edge Security",
-            filePath: file.path,
-            lineRange: `L${lineNum}`,
-            snippet: lines[matchLineIdx] || "<detected CLOUD-25 pattern>",
-            reproductionSteps: [
-                `Scanned source code in ${file.path}:${lineNum}.`,
-                "Detected Missing AWS WAF Web ACL on Production CloudFront Distribution: Public CDN distributions exposed without Web Application Firewall (WAF) rate limiting and bot control."
-            ],
-            remediationPrompt: "Attach AWS WAF WebACL with AWSManagedRulesCommonRuleSet and rate-based IP rules.",
-            status: 'OPEN',
-            owner: "CloudFront / WAF",
-            falsePositive: false
-        });
-        logs.push(`[${ts}] ☁️ CLOUD-25: Missing AWS WAF Web ACL on Production CloudFront Distribution detected (${file.path}:${lineNum})`);
     }
     // CLOUD-26: CloudFront Missing Enforced HTTPS Redirection
     // CloudFront-only setting: Terraform, CloudFormation (quoted or bare) and CDK (ViewerProtocolPolicy.ALLOW_ALL)
@@ -771,15 +546,17 @@ export function evaluateCloudNativeRules(file: CodeFile, lines: string[], cleanC
     }
     // CLOUD-30: Terraform / OpenTofu Plaintext Secret in Output
     // Output names ending in a secret noun (not kms_key_arn / key_pair_name / ssh_key_id identifiers)
-    if (/\.tf$/i.test(file.path) && /output\s+["\'][a-zA-Z0-9_-]*(?:password|secret|api_key|private_key|access_key|token)["\']\s*\{(?![^}]*sensitive\s*=\s*true)/i.test(cleanContent)) {
-        const matchLineIdx = locateMatchLine(lines, [/output\s+["\'][a-zA-Z0-9_-]*(?:password|secret|api_key|private_key|access_key|token)["\']\s*\{(?![^}]*sensitive\s*=\s*true)/i], l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('*'));
+    const tfSrc = /\.tf$/i.test(lowerPath) ? stripHashComments(cleanContent) : '';
+    const cloud30 = tfSrc ? hclBlocks(tfSrc, /output\s+"([\w-]*(?:password|secret|api_key|private_key|access_key|token))"/i).find((b) => !/\bsensitive\s*=\s*true\b/.test(b.body)) : undefined;
+    if (cloud30) {
+        const matchLineIdx = hclLine(tfSrc, cloud30);
         const lineNum = matchLineIdx !== -1 ? matchLineIdx + 1 : 1;
         findings.push({
             id: `cloud30-${Date.now()}-${findingCounter.count++}`,
             ruleId: 7030,
             type: 'INFRA_DATABASE',
             title: "CLOUD-30: Terraform / OpenTofu Plaintext Secret in Output",
-            severity: 'CRITICAL',
+            severity: 'MEDIUM',
             category: "IaC Security",
             filePath: file.path,
             lineRange: `L${lineNum}`,
@@ -805,7 +582,7 @@ export function evaluateCloudNativeRules(file: CodeFile, lines: string[], cleanC
             ruleId: 7031,
             type: 'INFRA_DATABASE',
             title: "CLOUD-31: Terraform State Backend Missing Encryption at Rest",
-            severity: 'HIGH',
+            severity: 'MEDIUM',
             category: "IaC Security",
             filePath: file.path,
             lineRange: `L${lineNum}`,
@@ -845,31 +622,6 @@ export function evaluateCloudNativeRules(file: CodeFile, lines: string[], cleanC
             falsePositive: false
         });
         logs.push(`[${ts}] ☁️ CLOUD-32: Docker HEALTHCHECK Directive Omitted in Production detected (${file.path}:${lineNum})`);
-    }
-    // CLOUD-33: Kubernetes Ingress Missing TLS Termination Certificate
-    if (/(?:kind:\s*Ingress)/i.test(cleanContent) && !/tls:\s*[\s\S]*?secretName/i.test(cleanContent) && /\.(?:ya?ml)$/i.test(file.path)) {
-        const matchLineIdx = locateMatchLine(lines, [/(?:kind:\s*Ingress)/i], l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('*'));
-        const lineNum = matchLineIdx !== -1 ? matchLineIdx + 1 : 1;
-        findings.push({
-            id: `cloud33-${Date.now()}-${findingCounter.count++}`,
-            ruleId: 7033,
-            type: 'INFRA_DATABASE',
-            title: "CLOUD-33: Kubernetes Ingress Missing TLS Termination Certificate",
-            severity: 'HIGH',
-            category: "Transport Security",
-            filePath: file.path,
-            lineRange: `L${lineNum}`,
-            snippet: lines[matchLineIdx] || "<detected CLOUD-33 pattern>",
-            reproductionSteps: [
-                `Scanned source code in ${file.path}:${lineNum}.`,
-                "Detected Kubernetes Ingress Missing TLS Termination Certificate: Ingress resources exposing HTTP without tls secretName configuration."
-            ],
-            remediationPrompt: "Add tls: - hosts: [example.com] secretName: example-tls to Ingress resource.",
-            status: 'OPEN',
-            owner: "K8s Ingress",
-            falsePositive: false
-        });
-        logs.push(`[${ts}] ☁️ CLOUD-33: Kubernetes Ingress Missing TLS Termination Certificate detected (${file.path}:${lineNum})`);
     }
     // CLOUD-34: AWS Lambda Provisioned Concurrency Missing Auto-Scaling
     if (/(?:provisionedConcurrentExecutions|provisioned_concurrent_executions)\s*:\s*\d+/i.test(cleanContent) && !/ScalableTarget|scalable_target/i.test(cleanContent)) {
@@ -930,7 +682,7 @@ export function evaluateCloudNativeRules(file: CodeFile, lines: string[], cleanC
             ruleId: 7036,
             type: 'INFRA_DATABASE',
             title: "CLOUD-36: Missing CloudTrail Multi-Region Audit Logging",
-            severity: 'HIGH',
+            severity: 'MEDIUM',
             category: "Cloud Compliance",
             filePath: file.path,
             lineRange: `L${lineNum}`,
@@ -947,15 +699,20 @@ export function evaluateCloudNativeRules(file: CodeFile, lines: string[], cleanC
         logs.push(`[${ts}] ☁️ CLOUD-36: Missing CloudTrail Multi-Region Audit Logging detected (${file.path}:${lineNum})`);
     }
     // CLOUD-37: ECR Container Image Repository Vulnerability Scan Disabled
-    if (/(?:AWS::ECR::Repository|aws_ecr_repository)\b/i.test(cleanContent) && !/scanOnPush\s*:\s*true|scan_on_push\s*=\s*true/i.test(cleanContent)) {
-        const matchLineIdx = locateMatchLine(lines, [/(?:AWS::ECR::Repository|aws_ecr_repository)\b/i], l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('*'));
+    // Terraform: per aws_ecr_repository block; CloudFormation: the template declaring the repository
+    const cloud37Line = tfSrc
+        ? (() => { const b = hclBlocks(tfSrc, tfResource('aws_ecr_repository')).find((r) => !/\bscan_on_push\s*=\s*true\b/.test(r.body)); return b ? hclLine(tfSrc, b) : -1; })()
+        : /^\s*Type\s*:\s*['"]?AWS::ECR::Repository\b/m.test(cleanContent) && !/\bScanOnPush\s*:\s*['"]?true\b/i.test(cleanContent)
+            ? yamlLine(cleanLines, /^\s*Type\s*:\s*['"]?AWS::ECR::Repository\b/) : -1;
+    if (cloud37Line !== -1) {
+        const matchLineIdx = cloud37Line;
         const lineNum = matchLineIdx !== -1 ? matchLineIdx + 1 : 1;
         findings.push({
             id: `cloud37-${Date.now()}-${findingCounter.count++}`,
             ruleId: 7037,
             type: 'INFRA_DATABASE',
             title: "CLOUD-37: ECR Container Image Repository Vulnerability Scan Disabled",
-            severity: 'HIGH',
+            severity: 'MEDIUM',
             category: "Container Registry",
             filePath: file.path,
             lineRange: `L${lineNum}`,
@@ -1086,7 +843,7 @@ export function evaluateCloudNativeRules(file: CodeFile, lines: string[], cleanC
             ruleId: 7042,
             type: 'INFRA_DATABASE',
             title: "CLOUD-42: Lambda Function Invocation URL Missing AuthType",
-            severity: 'CRITICAL',
+            severity: 'MEDIUM',
             category: "Serverless Security",
             filePath: file.path,
             lineRange: `L${lineNum}`,
@@ -1111,7 +868,7 @@ export function evaluateCloudNativeRules(file: CodeFile, lines: string[], cleanC
             ruleId: 7043,
             type: 'INFRA_DATABASE',
             title: "CLOUD-43: Redis / ElastiCache Cluster Missing In-Transit Encryption",
-            severity: 'HIGH',
+            severity: 'MEDIUM',
             category: "Data In Transit",
             filePath: file.path,
             lineRange: `L${lineNum}`,
@@ -1128,15 +885,20 @@ export function evaluateCloudNativeRules(file: CodeFile, lines: string[], cleanC
         logs.push(`[${ts}] ☁️ CLOUD-43: Redis / ElastiCache Cluster Missing In-Transit Encryption detected (${file.path}:${lineNum})`);
     }
     // CLOUD-44: Redis / ElastiCache Missing Auth Token Requirement
-    if (/(?:AWS::ElastiCache::ReplicationGroup|aws_elasticache_replication_group)\b/i.test(cleanContent) && !/authToken|auth_token/i.test(cleanContent)) {
-        const matchLineIdx = locateMatchLine(lines, [/(?:AWS::ElastiCache::ReplicationGroup|aws_elasticache_replication_group)\b/i], l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('*'));
+    // Terraform: per replication group block (auth_token or RBAC user_group_ids); CloudFormation: per template
+    const cloud44Line = tfSrc
+        ? (() => { const b = hclBlocks(tfSrc, tfResource('aws_elasticache_replication_group')).find((r) => !/\b(?:auth_token|user_group_ids)\s*=/.test(r.body)); return b ? hclLine(tfSrc, b) : -1; })()
+        : /^\s*Type\s*:\s*['"]?AWS::ElastiCache::ReplicationGroup\b/m.test(cleanContent) && !/\bAuthToken\s*:|\bUserGroupIds\s*:/.test(cleanContent)
+            ? yamlLine(cleanLines, /^\s*Type\s*:\s*['"]?AWS::ElastiCache::ReplicationGroup\b/) : -1;
+    if (cloud44Line !== -1) {
+        const matchLineIdx = cloud44Line;
         const lineNum = matchLineIdx !== -1 ? matchLineIdx + 1 : 1;
         findings.push({
             id: `cloud44-${Date.now()}-${findingCounter.count++}`,
             ruleId: 7044,
             type: 'INFRA_DATABASE',
             title: "CLOUD-44: Redis / ElastiCache Missing Auth Token Requirement",
-            severity: 'HIGH',
+            severity: 'MEDIUM',
             category: "Cache Security",
             filePath: file.path,
             lineRange: `L${lineNum}`,
@@ -1176,31 +938,6 @@ export function evaluateCloudNativeRules(file: CodeFile, lines: string[], cleanC
             falsePositive: false
         });
         logs.push(`[${ts}] ☁️ CLOUD-45: Lambda Event Source Mapping Missing Batch Window detected (${file.path}:${lineNum})`);
-    }
-    // CLOUD-46: Serverless Edge Middleware Performing Heavy DB Queries
-    if (/(?:middleware\.ts|middleware\.js)$/i.test(file.path) && /(?:prisma\.[a-zA-Z0-9_]+\.(?:find|query)|sequelize\.|typeorm|mongoose\.)/i.test(cleanContent)) {
-        const matchLineIdx = locateMatchLine(lines, [/(?:prisma\.[a-zA-Z0-9_]+\.(?:find|query)|sequelize\.|typeorm|mongoose\.)/i], l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('*'));
-        const lineNum = matchLineIdx !== -1 ? matchLineIdx + 1 : 1;
-        findings.push({
-            id: `cloud46-${Date.now()}-${findingCounter.count++}`,
-            ruleId: 7046,
-            type: 'INFRA_DATABASE',
-            title: "CLOUD-46: Serverless Edge Middleware Performing Heavy DB Queries",
-            severity: 'HIGH',
-            category: "Edge Performance",
-            filePath: file.path,
-            lineRange: `L${lineNum}`,
-            snippet: lines[matchLineIdx] || "<detected CLOUD-46 pattern>",
-            reproductionSteps: [
-                `Scanned source code in ${file.path}:${lineNum}.`,
-                "Detected Serverless Edge Middleware Performing Heavy DB Queries: Executing direct database queries or heavy ORM queries inside Next.js edge middleware before every page request."
-            ],
-            remediationPrompt: "Refactor database lookups out of middleware into layout or server component loader.",
-            status: 'OPEN',
-            owner: "Next.js Middleware",
-            falsePositive: false
-        });
-        logs.push(`[${ts}] ☁️ CLOUD-46: Serverless Edge Middleware Performing Heavy DB Queries detected (${file.path}:${lineNum})`);
     }
     // CLOUD-47: Missing CloudFront Origin Shield on Cross-Region Traffic
     if (/(?:AWS::CloudFront::Distribution|aws_cloudfront_distribution)\b/i.test(cleanContent) && /multi-region|cross-region/i.test(cleanContent) && !/originShield|origin_shield/i.test(cleanContent)) {

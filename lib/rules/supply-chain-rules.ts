@@ -9,6 +9,13 @@ export interface SupplyChainRuleResult {
     findings: Finding[];
     logs: string[];
 }
+/** `ref:` line of a pull_request_target workflow that checks out the PR head and runs a step after it, or -1. */
+function prTargetHeadCheckoutLine(lines: string[]): number {
+    if (!lines.some((l) => !l.trim().startsWith('#') && /\bpull_request_target\b/.test(l))) return -1;
+    const prHeadRef = /^\s*ref\s*:\s*['"]?(?:\$\{\{\s*(?:github\.event\.pull_request\.head\.(?:sha|ref)|github\.head_ref)\s*\}\}|refs\/pull\/\$\{\{[^}]*\}\}\/(?:merge|head))/;
+    const refIdx = lines.findIndex((l) => prHeadRef.test(l));
+    return refIdx !== -1 && lines.slice(refIdx + 1).some((l) => /^\s*-?\s*run\s*:/.test(l)) ? refIdx : -1;
+}
 export function evaluateSupplyChainRules(file: CodeFile, lines: string[], cleanContent: string, findingCounter: {
     count: number;
 }): SupplyChainRuleResult {
@@ -70,31 +77,6 @@ export function evaluateSupplyChainRules(file: CodeFile, lines: string[], cleanC
         });
         logs.push(`[${ts}] 📦 SUPPLY-02: Dangerous npm Lifecycle Script (preinstall / postinstall curl) detected (${file.path}:${lineNum})`);
     }
-    // SUPPLY-03: Missing Lockfile Integrity Guarantee
-    if (file.path.toLowerCase().endsWith("package.json") && /"scripts":\s*\{[^}]*"(?:preinstall|install|postinstall|ci|build)":\s*"[^"]*npm\s+(?:i\b|install\b)(?![^"]*--(?:package-lock-only|ci))/i.test(cleanContent)) {
-        const matchLineIdx = locateMatchLine(lines, [/"scripts":\s*\{[^}]*"(?:preinstall|install|postinstall|ci|build)":\s*"[^"]*npm\s+(?:i\b|install\b)(?![^"]*--(?:package-lock-only|ci))/i], l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('*'));
-        const lineNum = matchLineIdx !== -1 ? matchLineIdx + 1 : 1;
-        findings.push({
-            id: `supply03-${Date.now()}-${findingCounter.count++}`,
-            ruleId: 7303,
-            type: 'SECURITY',
-            title: "SUPPLY-03: Missing Lockfile Integrity Guarantee",
-            severity: 'HIGH',
-            category: "Reproducible Builds",
-            filePath: file.path,
-            lineRange: `L${lineNum}`,
-            snippet: lines[matchLineIdx] || "<detected SUPPLY-03 pattern>",
-            reproductionSteps: [
-                `Scanned source code in ${file.path}:${lineNum}.`,
-                "Detected Missing Lockfile Integrity Guarantee: Repository lacking package-lock.json, pnpm-lock.yaml, or yarn.lock allowing non-deterministic builds."
-            ],
-            remediationPrompt: "Commit package-lock.json or pnpm-lock.yaml and enforce npm ci in CI/CD pipeline.",
-            status: 'OPEN',
-            owner: "Package Managers",
-            falsePositive: false
-        });
-        logs.push(`[${ts}] 📦 SUPPLY-03: Missing Lockfile Integrity Guarantee detected (${file.path}:${lineNum})`);
-    }
     // SUPPLY-04: Known Malicious / Deprecated Package (event-stream)
     if (/package\.json$/i.test(file.path) && /"flatmap-stream":|"event-stream":\s*"[~^=]?3\.3\.6"/i.test(cleanContent)) {
         const matchLineIdx = locateMatchLine(lines, [/"flatmap-stream":|"event-stream":\s*"[~^=]?3\.3\.6"/i], l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('*'));
@@ -154,7 +136,7 @@ export function evaluateSupplyChainRules(file: CodeFile, lines: string[], cleanC
             ruleId: 7306,
             type: 'SECURITY',
             title: "SUPPLY-06: External CDN Script Missing Subresource Integrity (SRI)",
-            severity: 'HIGH',
+            severity: 'MEDIUM',
             category: "Subresource Integrity",
             filePath: file.path,
             lineRange: `L${lineNum}`,
@@ -271,56 +253,6 @@ export function evaluateSupplyChainRules(file: CodeFile, lines: string[], cleanC
         });
         logs.push(`[${ts}] 📦 SUPPLY-10: Missing Software Bill of Materials (SBOM) Generation in CI detected (${file.path}:${lineNum})`);
     }
-    // SUPPLY-11: Unscoped Private Package Vulnerable to Dependency Confusion
-    if (/package\.json$/i.test(file.path) && /"dependencies":\s*\{[^}]*"internal-(?:auth|payment|crypto)":/i.test(cleanContent)) {
-        const matchLineIdx = locateMatchLine(lines, [/"dependencies":\s*\{[^}]*"internal-(?:auth|payment|crypto)":/i], l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('*'));
-        const lineNum = matchLineIdx !== -1 ? matchLineIdx + 1 : 1;
-        findings.push({
-            id: `supply11-${Date.now()}-${findingCounter.count++}`,
-            ruleId: 7311,
-            type: 'SECURITY',
-            title: "SUPPLY-11: Unscoped Private Package Vulnerable to Dependency Confusion",
-            severity: 'HIGH',
-            category: "Dependency Confusion",
-            filePath: file.path,
-            lineRange: `L${lineNum}`,
-            snippet: lines[matchLineIdx] || "<detected SUPPLY-11 pattern>",
-            reproductionSteps: [
-                `Scanned source code in ${file.path}:${lineNum}.`,
-                "Detected Unscoped Private Package Vulnerable to Dependency Confusion: Internal enterprise packages named without organizational scope (@mycompany/pkg), vulnerable to public registration hijacking."
-            ],
-            remediationPrompt: "Scope internal packages with organizational prefix: @company/internal-utils.",
-            status: 'OPEN',
-            owner: "package.json",
-            falsePositive: false
-        });
-        logs.push(`[${ts}] 📦 SUPPLY-11: Unscoped Private Package Vulnerable to Dependency Confusion detected (${file.path}:${lineNum})`);
-    }
-    // SUPPLY-12: Missing Automated Dependency Vulnerability Scanning in CI
-    if (/\.github\/workflows\/.*\.ya?ml$/i.test(file.path) && /pull_request:/i.test(cleanContent) && /npm\s+test/i.test(cleanContent) && !/audit|snyk|trivy/i.test(cleanContent)) {
-        const matchLineIdx = locateMatchLine(lines, [/pull_request:/i, /npm\s+test/i], l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('*'));
-        const lineNum = matchLineIdx !== -1 ? matchLineIdx + 1 : 1;
-        findings.push({
-            id: `supply12-${Date.now()}-${findingCounter.count++}`,
-            ruleId: 7312,
-            type: 'SECURITY',
-            title: "SUPPLY-12: Missing Automated Dependency Vulnerability Scanning in CI",
-            severity: 'HIGH',
-            category: "Security Scanning",
-            filePath: file.path,
-            lineRange: `L${lineNum}`,
-            snippet: lines[matchLineIdx] || "<detected SUPPLY-12 pattern>",
-            reproductionSteps: [
-                `Scanned source code in ${file.path}:${lineNum}.`,
-                "Detected Missing Automated Dependency Vulnerability Scanning in CI: CI pipeline failing to run npm audit, snyk test, or pnpm audit before merging pull requests."
-            ],
-            remediationPrompt: "Add npm audit --audit-level=high step to pull request CI workflow.",
-            status: 'OPEN',
-            owner: "CI/CD",
-            falsePositive: false
-        });
-        logs.push(`[${ts}] 📦 SUPPLY-12: Missing Automated Dependency Vulnerability Scanning in CI detected (${file.path}:${lineNum})`);
-    }
     // SUPPLY-13: Deprecated Cryptography Package Import: 'crypto-js'
     if (/package\.json$/i.test(file.path) && /"crypto-js":/i.test(cleanContent)) {
         const matchLineIdx = locateMatchLine(lines, [/"crypto-js":/i], l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('*'));
@@ -355,7 +287,7 @@ export function evaluateSupplyChainRules(file: CodeFile, lines: string[], cleanC
             ruleId: 7314,
             type: 'SECURITY',
             title: "SUPPLY-14: Python Dependency Unpinned in requirements.txt",
-            severity: 'HIGH',
+            severity: 'MEDIUM',
             category: "Python Dependencies",
             filePath: file.path,
             lineRange: `L${lineNum}`,
@@ -395,31 +327,6 @@ export function evaluateSupplyChainRules(file: CodeFile, lines: string[], cleanC
             falsePositive: false
         });
         logs.push(`[${ts}] 📦 SUPPLY-15: Missing Hash Verification in pip requirements.txt detected (${file.path}:${lineNum})`);
-    }
-    // SUPPLY-16: Go Module Missing go.sum Integrity Checksum
-    if (/go\.mod$/i.test(file.path)) {
-        const matchLineIdx = lines.findIndex(l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('*') && (/supply-16|go/i.test(l) || lines.indexOf(l) === 0));
-        const lineNum = matchLineIdx !== -1 ? matchLineIdx + 1 : 1;
-        findings.push({
-            id: `supply16-${Date.now()}-${findingCounter.count++}`,
-            ruleId: 7316,
-            type: 'SECURITY',
-            title: "SUPPLY-16: Go Module Missing go.sum Integrity Checksum",
-            severity: 'HIGH',
-            category: "Go Modules",
-            filePath: file.path,
-            lineRange: `L${lineNum}`,
-            snippet: lines[matchLineIdx] || "<detected SUPPLY-16 pattern>",
-            reproductionSteps: [
-                `Scanned source code in ${file.path}:${lineNum}.`,
-                "Detected Go Module Missing go.sum Integrity Checksum: Go repository committing go.mod but omitting go.sum checksum database."
-            ],
-            remediationPrompt: "Run go mod tidy and commit the generated go.sum file.",
-            status: 'OPEN',
-            owner: "Golang / go.sum",
-            falsePositive: false
-        });
-        logs.push(`[${ts}] 📦 SUPPLY-16: Go Module Missing go.sum Integrity Checksum detected (${file.path}:${lineNum})`);
     }
     // SUPPLY-17: Insecure Package Registry URL (HTTP instead of HTTPS)
     if (/(?:\.npmrc|package\.json|pip\.conf)$/i.test(file.path) && /http:\/\/(?:registry\.npmjs\.org|pypi\.org)/i.test(cleanContent)) {
@@ -472,8 +379,8 @@ export function evaluateSupplyChainRules(file: CodeFile, lines: string[], cleanC
         logs.push(`[${ts}] 📦 SUPPLY-18: Pre-release Alpha/Beta Dependency in Production detected (${file.path}:${lineNum})`);
     }
     // SUPPLY-19: Unverified Direct Tarball / URL Package Dependency
-    if (/package\.json$/i.test(file.path) && /"dependencies":\s*\{[^}]*"[^"]+"\s*:\s*"https?:\/\/[^"]+\.tgz"/i.test(cleanContent)) {
-        const matchLineIdx = locateMatchLine(lines, [/"dependencies":\s*\{[^}]*"[^"]+"\s*:\s*"https?:\/\/[^"]+\.tgz"/i], l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('*'));
+    if (/package\.json$/i.test(file.path) && /"dependencies":\s*\{[^}]*"[^"]+"\s*:\s*"http:\/\/[^"]+\.tgz"/i.test(cleanContent)) {
+        const matchLineIdx = locateMatchLine(lines, [/"[^"]+"\s*:\s*"http:\/\/[^"]+\.tgz"/i], l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('*'));
         const lineNum = matchLineIdx !== -1 ? matchLineIdx + 1 : 1;
         findings.push({
             id: `supply19-${Date.now()}-${findingCounter.count++}`,
@@ -555,7 +462,7 @@ export function evaluateSupplyChainRules(file: CodeFile, lines: string[], cleanC
             ruleId: 7322,
             type: 'SECURITY',
             title: "SUPPLY-22: GitHub Actions Workflow Using Mutable Branch Ref (@main)",
-            severity: 'HIGH',
+            severity: 'MEDIUM',
             category: "CI/CD Supply Chain",
             filePath: file.path,
             lineRange: `L${lineNum}`,
@@ -572,8 +479,10 @@ export function evaluateSupplyChainRules(file: CodeFile, lines: string[], cleanC
         logs.push(`[${ts}] 📦 SUPPLY-22: GitHub Actions Workflow Using Mutable Branch Ref (@main) detected (${file.path}:${lineNum})`);
     }
     // SUPPLY-23: GitHub Actions Step Running Untrusted Pull Request Code
-    if (/\.github\/workflows\/.*\.ya?ml$/i.test(file.path) && /on:\s*pull_request_target/i.test(cleanContent) && /actions\/checkout/i.test(cleanContent) && /run:/i.test(cleanContent)) {
-        const matchLineIdx = locateMatchLine(lines, [/on:\s*pull_request_target/i, /actions\/checkout/i, /run:/i], l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('*'));
+    // Only when the PR's own code is checked out (head sha/ref, head_ref, refs/pull/N) and a later step runs it.
+    const supply23Line = /\.github\/workflows\/.*\.ya?ml$/i.test(file.path) ? prTargetHeadCheckoutLine(lines) : -1;
+    if (supply23Line !== -1) {
+        const matchLineIdx = supply23Line;
         const lineNum = matchLineIdx !== -1 ? matchLineIdx + 1 : 1;
         findings.push({
             id: `supply23-${Date.now()}-${findingCounter.count++}`,
@@ -622,8 +531,8 @@ export function evaluateSupplyChainRules(file: CodeFile, lines: string[], cleanC
         logs.push(`[${ts}] 📦 SUPPLY-24: Missing Strict Package Manager Engine Lock detected (${file.path}:${lineNum})`);
     }
     // SUPPLY-25: Vulnerable Prototype Pollution in Deprecated 'lodash' (<4.17.21)
-    if (/package\.json$/i.test(file.path) && /"lodash":\s*"(?:\^?3\.|~?3\.|\^?4\.(?:0|1[0-6])\.)/i.test(cleanContent)) {
-        const matchLineIdx = locateMatchLine(lines, [/"lodash":\s*"(?:\^?3\.|~?3\.|\^?4\.(?:0|1[0-6])\.)/i], l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('*'));
+    if (/package\.json$/i.test(file.path) && /"lodash":\s*"[\^~]?(?:[0-3]\.|4\.(?:\d|1[0-6])\.|4\.17\.(?:\d|1\d|20)")/i.test(cleanContent)) {
+        const matchLineIdx = locateMatchLine(lines, [/"lodash":\s*"[\^~]?(?:[0-3]\.|4\.(?:\d|1[0-6])\.|4\.17\.(?:\d|1\d|20)")/i], l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('*'));
         const lineNum = matchLineIdx !== -1 ? matchLineIdx + 1 : 1;
         findings.push({
             id: `supply25-${Date.now()}-${findingCounter.count++}`,
@@ -647,8 +556,8 @@ export function evaluateSupplyChainRules(file: CodeFile, lines: string[], cleanC
         logs.push(`[${ts}] 📦 SUPPLY-25: Vulnerable Prototype Pollution in Deprecated 'lodash' (<4.17.21) detected (${file.path}:${lineNum})`);
     }
     // SUPPLY-26: Vulnerable XML Parser Susceptible to XXE Injection
-    if (/package\.json$/i.test(file.path) && /"xml2js":\s*"(?:\^?0\.[0-3]\.)/i.test(cleanContent)) {
-        const matchLineIdx = locateMatchLine(lines, [/"xml2js":\s*"(?:\^?0\.[0-3]\.)/i], l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('*'));
+    if (/package\.json$/i.test(file.path) && /"xml2js":\s*"(?:[\^~]?0\.[0-4]\.)/i.test(cleanContent)) {
+        const matchLineIdx = locateMatchLine(lines, [/"xml2js":\s*"(?:[\^~]?0\.[0-4]\.)/i], l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('*'));
         const lineNum = matchLineIdx !== -1 ? matchLineIdx + 1 : 1;
         findings.push({
             id: `supply26-${Date.now()}-${findingCounter.count++}`,
@@ -771,31 +680,6 @@ export function evaluateSupplyChainRules(file: CodeFile, lines: string[], cleanC
         });
         logs.push(`[${ts}] 📦 SUPPLY-30: Dangerous Inline Bash Script in CI Without ShellCheck detected (${file.path}:${lineNum})`);
     }
-    // SUPPLY-31: Exposing Private Repository Access Token in Docker Context
-    if (/\.dockerignore$/i.test(file.path) && !/\.git/i.test(cleanContent)) {
-        const matchLineIdx = lines.findIndex(l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('*') && (/supply-31|exposing/i.test(l) || lines.indexOf(l) === 0));
-        const lineNum = matchLineIdx !== -1 ? matchLineIdx + 1 : 1;
-        findings.push({
-            id: `supply31-${Date.now()}-${findingCounter.count++}`,
-            ruleId: 7331,
-            type: 'SECURITY',
-            title: "SUPPLY-31: Exposing Private Repository Access Token in Docker Context",
-            severity: 'HIGH',
-            category: "Build Context Security",
-            filePath: file.path,
-            lineRange: `L${lineNum}`,
-            snippet: lines[matchLineIdx] || "<detected SUPPLY-31 pattern>",
-            reproductionSteps: [
-                `Scanned source code in ${file.path}:${lineNum}.`,
-                "Detected Exposing Private Repository Access Token in Docker Context: Copying .git folder or local ~/.ssh/id_rsa into Docker build context."
-            ],
-            remediationPrompt: "Add .git, .env, and *.pem to .dockerignore.",
-            status: 'OPEN',
-            owner: "Docker / CI",
-            falsePositive: false
-        });
-        logs.push(`[${ts}] 📦 SUPPLY-31: Exposing Private Repository Access Token in Docker Context detected (${file.path}:${lineNum})`);
-    }
     // SUPPLY-32: Insecure Gradle / Maven Dependency Without Checksum
     if (/(?:build\.gradle|pom\.xml)$/i.test(file.path) && /http:\/\/(?:repo\.maven\.apache\.org|jcenter)/i.test(cleanContent)) {
         const matchLineIdx = locateMatchLine(lines, [/http:\/\/(?:repo\.maven\.apache\.org|jcenter)/i], l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('*'));
@@ -821,31 +705,6 @@ export function evaluateSupplyChainRules(file: CodeFile, lines: string[], cleanC
         });
         logs.push(`[${ts}] 📦 SUPPLY-32: Insecure Gradle / Maven Dependency Without Checksum detected (${file.path}:${lineNum})`);
     }
-    // SUPPLY-33: Rust Cargo.lock Missing in Binary Application Repository
-    if (/Cargo\.toml$/i.test(file.path) && /\[\[bin\]\]/i.test(cleanContent)) {
-        const matchLineIdx = locateMatchLine(lines, [/\[\[bin\]\]/i], l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('*'));
-        const lineNum = matchLineIdx !== -1 ? matchLineIdx + 1 : 1;
-        findings.push({
-            id: `supply33-${Date.now()}-${findingCounter.count++}`,
-            ruleId: 7333,
-            type: 'SECURITY',
-            title: "SUPPLY-33: Rust Cargo.lock Missing in Binary Application Repository",
-            severity: 'HIGH',
-            category: "Rust Dependencies",
-            filePath: file.path,
-            lineRange: `L${lineNum}`,
-            snippet: lines[matchLineIdx] || "<detected SUPPLY-33 pattern>",
-            reproductionSteps: [
-                `Scanned source code in ${file.path}:${lineNum}.`,
-                "Detected Rust Cargo.lock Missing in Binary Application Repository: Rust binary application omitting committed Cargo.lock, leading to non-deterministic compilation."
-            ],
-            remediationPrompt: "Commit Cargo.lock to repository for all application services.",
-            status: 'OPEN',
-            owner: "Rust / Cargo",
-            falsePositive: false
-        });
-        logs.push(`[${ts}] 📦 SUPPLY-33: Rust Cargo.lock Missing in Binary Application Repository detected (${file.path}:${lineNum})`);
-    }
     // SUPPLY-34: Direct Dependency on Native Binary Compilers in Runtime
     if (file.path.toLowerCase().endsWith("dockerfile") && /FROM\s+[^\n]+\s+AS\s+runner[\s\S]*?RUN\s+apk\s+add\s+[^\n]*(?:gcc|g\+\+|make)/i.test(cleanContent)) {
         const matchLineIdx = locateMatchLine(lines, [/FROM\s+[^\n]+\s+AS\s+runner[\s\S]*?RUN\s+apk\s+add\s+[^\n]*(?:gcc|g\+\+|make)/i], l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('*'));
@@ -870,31 +729,6 @@ export function evaluateSupplyChainRules(file: CodeFile, lines: string[], cleanC
             falsePositive: false
         });
         logs.push(`[${ts}] 📦 SUPPLY-34: Direct Dependency on Native Binary Compilers in Runtime detected (${file.path}:${lineNum})`);
-    }
-    // SUPPLY-35: Composer / PHP Dependency Vulnerable to Unserialized Payload
-    if (/composer\.json$/i.test(file.path) && /"vulnerable\/php-unserialize":/i.test(cleanContent)) {
-        const matchLineIdx = locateMatchLine(lines, [/"vulnerable\/php-unserialize":/i], l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('*'));
-        const lineNum = matchLineIdx !== -1 ? matchLineIdx + 1 : 1;
-        findings.push({
-            id: `supply35-${Date.now()}-${findingCounter.count++}`,
-            ruleId: 7335,
-            type: 'SECURITY',
-            title: "SUPPLY-35: Composer / PHP Dependency Vulnerable to Unserialized Payload",
-            severity: 'HIGH',
-            category: "PHP Supply Chain",
-            filePath: file.path,
-            lineRange: `L${lineNum}`,
-            snippet: lines[matchLineIdx] || "<detected SUPPLY-35 pattern>",
-            reproductionSteps: [
-                `Scanned source code in ${file.path}:${lineNum}.`,
-                "Detected Composer / PHP Dependency Vulnerable to Unserialized Payload: composer.json importing unmaintained packages with known unserialize() vulnerabilities."
-            ],
-            remediationPrompt: "Run composer audit in CI and upgrade flagged packages.",
-            status: 'OPEN',
-            owner: "PHP / Composer",
-            falsePositive: false
-        });
-        logs.push(`[${ts}] 📦 SUPPLY-35: Composer / PHP Dependency Vulnerable to Unserialized Payload detected (${file.path}:${lineNum})`);
     }
     // SUPPLY-36: Unpinned Action in Third-Party Marketplace Step
     if (/\.github\/workflows\/.*\.ya?ml$/i.test(file.path) && /uses:\s*(?!actions\/)[a-zA-Z0-9_-]+\/[a-zA-Z0-9_-]+@(v\d+|latest)/i.test(cleanContent)) {
@@ -980,7 +814,7 @@ export function evaluateSupplyChainRules(file: CodeFile, lines: string[], cleanC
             ruleId: 7339,
             type: 'SECURITY',
             title: "SUPPLY-39: Unverified Download of Standalone Binary CLI Tools in CI",
-            severity: 'HIGH',
+            severity: 'MEDIUM',
             category: "CI/CD Integrity",
             filePath: file.path,
             lineRange: `L${lineNum}`,
@@ -1195,31 +1029,6 @@ export function evaluateSupplyChainRules(file: CodeFile, lines: string[], cleanC
             falsePositive: false
         });
         logs.push(`[${ts}] 📦 SUPPLY-47: Missing .npmignore Leading to Secret Exposure in NPM Tarball detected (${file.path}:${lineNum})`);
-    }
-    // SUPPLY-48: Missing Automated Static Analysis for GitHub Actions (actionlint)
-    if (/\.github\/workflows\/.*\.ya?ml$/i.test(file.path) && /run:\s*\|/i.test(cleanContent) && !/actionlint/i.test(cleanContent) && /steps:/i.test(cleanContent)) {
-        const matchLineIdx = locateMatchLine(lines, [/run:\s*\|/i, /steps:/i], l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('*'));
-        const lineNum = matchLineIdx !== -1 ? matchLineIdx + 1 : 1;
-        findings.push({
-            id: `supply48-${Date.now()}-${findingCounter.count++}`,
-            ruleId: 7348,
-            type: 'SECURITY',
-            title: "SUPPLY-48: Missing Automated Static Analysis for GitHub Actions (actionlint)",
-            severity: 'LOW',
-            category: "CI/CD Linting",
-            filePath: file.path,
-            lineRange: `L${lineNum}`,
-            snippet: lines[matchLineIdx] || "<detected SUPPLY-48 pattern>",
-            reproductionSteps: [
-                `Scanned source code in ${file.path}:${lineNum}.`,
-                "Detected Missing Automated Static Analysis for GitHub Actions (actionlint): GitHub Actions workflow files committed without static analysis (actionlint) verifying shell syntax."
-            ],
-            remediationPrompt: "Run actionlint on all .github/workflows/*.yml files.",
-            status: 'OPEN',
-            owner: "GitHub Actions",
-            falsePositive: false
-        });
-        logs.push(`[${ts}] 📦 SUPPLY-48: Missing Automated Static Analysis for GitHub Actions (actionlint) detected (${file.path}:${lineNum})`);
     }
     // SUPPLY-49: Over-Permissive File Permissions in Published NPM Tarball
     if (/package\.json$/i.test(file.path) && /(?:chmod\s+(?:-R\s+)?(?:777|0777)|umask\s+000)/i.test(cleanContent)) {

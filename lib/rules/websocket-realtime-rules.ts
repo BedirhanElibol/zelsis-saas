@@ -4,7 +4,6 @@
  */
 import { Finding } from "@/data/schema";
 import { CodeFile } from "../scanner-engine";
-import { locateMatchLine } from './shared/locate';
 export interface WebsocketRealtimeRuleResult {
     findings: Finding[];
     logs: string[];
@@ -21,15 +20,17 @@ export function evaluateWebsocketRealtimeRules(file: CodeFile, lines: string[], 
     }
     const ts = new Date().toLocaleTimeString();
     // WS-01: Missing WebSocket Heartbeat Ping/Pong Health Interval
-    if ((/new\s+WebSocketServer\s*\([\s\S]*?\)/.test(cleanContent) && !/ping|pong|heartbeat/i.test(cleanContent))) {
-        const matchLineIdx = locateMatchLine(lines, [/new\s+WebSocketServer\s*\([\s\S]*?\)/], l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('*'));
+    const r10501Idx = /\bping\b|\bpong\b|heartbeat|isAlive/i.test(cleanContent) ? -1
+        : lines.findIndex(l => /new\s+(?:WebSocketServer|WebSocket\.Server)\s*\(/.test(l));
+    if (r10501Idx !== -1) {
+        const matchLineIdx = r10501Idx;
         const lineNum = matchLineIdx !== -1 ? matchLineIdx + 1 : 1;
         findings.push({
             id: `ws10501-${Date.now()}-${findingCounter.count++}`,
             ruleId: 10501,
             type: 'INFRA_DATABASE',
             title: "WS-01: Missing WebSocket Heartbeat Ping/Pong Health Interval",
-            severity: "HIGH",
+            severity: "LOW",
             category: "Connection Health",
             filePath: file.path,
             lineRange: `L${lineNum}`,
@@ -45,8 +46,10 @@ export function evaluateWebsocketRealtimeRules(file: CodeFile, lines: string[], 
         logs.push(`[${ts}] [WS AUDIT] Found WS-01: Missing WebSocket Heartbeat Ping/Pong Health Interval at ${file.path}:${lineNum}`);
     }
     // WS-02: Missing Authentication Handshake Guard on WebSocket Upgrade
-    if ((/server\.on\s*\(\s*['"]upgrade['"]/i.test(cleanContent) && !/jwt|token|verify|session/i.test(cleanContent))) {
-        const matchLineIdx = locateMatchLine(lines, [/server\.on\s*\(\s*['"]upgrade['"]/i], l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('*'));
+    const r10502Idx = /auth|token|jwt|verify|getUser|session|apiKey|api_key/i.test(cleanContent) ? -1
+        : lines.findIndex(l => /\.on\s*\(\s*['"]upgrade['"]/.test(l));
+    if (r10502Idx !== -1) {
+        const matchLineIdx = r10502Idx;
         const lineNum = matchLineIdx !== -1 ? matchLineIdx + 1 : 1;
         findings.push({
             id: `ws10502-${Date.now()}-${findingCounter.count++}`,
@@ -69,8 +72,11 @@ export function evaluateWebsocketRealtimeRules(file: CodeFile, lines: string[], 
         logs.push(`[${ts}] [WS AUDIT] Found WS-02: Missing Authentication Handshake Guard on WebSocket Upgrade at ${file.path}:${lineNum}`);
     }
     // WS-03: Cross-Site WebSocket Hijacking (CSWSH) via Unvalidated Origin
-    if ((/server\.on\s*\(\s*['"]upgrade['"]/i.test(cleanContent) && !/origin|allowedOrigins/i.test(cleanContent))) {
-        const matchLineIdx = locateMatchLine(lines, [/server\.on\s*\(\s*['"]upgrade['"]/i], l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('*'));
+    const r10503Idx = /\borigin\b/i.test(cleanContent) ? -1
+        : lines.findIndex((l, i) => /\.on\s*\(\s*['"]upgrade['"]/.test(l) &&
+            /headers\.cookie|\bcookies?\b|getSession|session/i.test(lines.slice(i, i + 25).join('\n')));
+    if (r10503Idx !== -1) {
+        const matchLineIdx = r10503Idx;
         const lineNum = matchLineIdx !== -1 ? matchLineIdx + 1 : 1;
         findings.push({
             id: `ws10503-${Date.now()}-${findingCounter.count++}`,
@@ -92,40 +98,19 @@ export function evaluateWebsocketRealtimeRules(file: CodeFile, lines: string[], 
         });
         logs.push(`[${ts}] [WS AUDIT] Found WS-03: Cross-Site WebSocket Hijacking (CSWSH) via Unvalidated Origin at ${file.path}:${lineNum}`);
     }
-    // WS-04: Unbounded Broadcast Memory Buffering (Missing Backpressure)
-    if ((/socket\.send\s*\([\s\S]*?\)/.test(cleanContent) && !/bufferedAmount|drain/i.test(cleanContent))) {
-        const matchLineIdx = locateMatchLine(lines, [/socket\.send\s*\([\s\S]*?\)/], l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('*'));
-        const lineNum = matchLineIdx !== -1 ? matchLineIdx + 1 : 1;
-        findings.push({
-            id: `ws10504-${Date.now()}-${findingCounter.count++}`,
-            ruleId: 10504,
-            type: 'INFRA_DATABASE',
-            title: "WS-04: Unbounded Broadcast Memory Buffering (Missing Backpressure)",
-            severity: "HIGH",
-            category: "Buffer Management",
-            filePath: file.path,
-            lineRange: `L${lineNum}`,
-            snippet: lines[matchLineIdx] || 'WebSocket connection setup',
-            reproductionSteps: [
-                `Audited socket connection in ${file.path}:${lineNum}.`,
-                'Detected realtime socket violation matching WS-04.'
-            ],
-            remediationPrompt: "Implement backpressure checking: pause message emission when ws.bufferedAmount exceeds 64KB.",
-            status: 'OPEN',
-            falsePositive: false
-        });
-        logs.push(`[${ts}] [WS AUDIT] Found WS-04: Unbounded Broadcast Memory Buffering (Missing Backpressure) at ${file.path}:${lineNum}`);
-    }
     // WS-05: Socket Reconnection Storm Flooding Backend Gateways
-    if ((/socket\.onclose\s*=/i.test(cleanContent) && !/random|jitter|backoff/i.test(cleanContent))) {
-        const matchLineIdx = locateMatchLine(lines, [/socket\.onclose\s*=/i], l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('*'));
+    const r10505Idx = /Math\.random|jitter|backoff|\*\*\s*\w|Math\.pow|Math\.min\(/i.test(cleanContent) ? -1
+        : lines.findIndex((l, i) => /\.(?:onclose\s*=|addEventListener\(\s*['"]close['"]|on\(\s*['"]close['"])/.test(l) &&
+            /setTimeout\s*\(\s*(?:[\w$.]+|\(\)\s*=>\s*[\w$.]+\([^)]*\))\s*,\s*\d+\s*\)/.test(lines.slice(i, i + 8).join('\n')));
+    if (r10505Idx !== -1) {
+        const matchLineIdx = r10505Idx;
         const lineNum = matchLineIdx !== -1 ? matchLineIdx + 1 : 1;
         findings.push({
             id: `ws10505-${Date.now()}-${findingCounter.count++}`,
             ruleId: 10505,
             type: 'INFRA_DATABASE',
             title: "WS-05: Socket Reconnection Storm Flooding Backend Gateways",
-            severity: "HIGH",
+            severity: "MEDIUM",
             category: "Reconnection Resilience",
             filePath: file.path,
             lineRange: `L${lineNum}`,
