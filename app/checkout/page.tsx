@@ -2,9 +2,8 @@
 
 import React, { Suspense, useState, useEffect } from 'react';
 import { useSearchParams, useRouter } from 'next/navigation';
-import { AppShell } from '@/components/layout/AppShell';
+import { CheckoutShell } from '@/components/checkout/CheckoutShell';
 import { CheckoutView } from '@/components/checkout/CheckoutView';
-import { MOCK_PROJECTS } from '@/data/demo-data';
 import { AuthModal, UserProfile } from '@/components/auth/AuthModal';
 import { purgeZelsisStorage, purgeShipguardStorage } from '@/lib/storage';
 import { verifyLicenseKey } from '@/lib/stripe-checkout';
@@ -79,41 +78,11 @@ function CheckoutPageContent() {
   }, []);
 
   return (
-    <AppShell
-      projects={[MOCK_PROJECTS[0]]}
-      activeNav="checkout"
-      onNavigate={(nav) => {
-        if (nav === 'dashboard') router.push('/dashboard');
-        else router.push(`/dashboard?nav=${nav}`);
-      }}
-      selectedProject={MOCK_PROJECTS[0]}
-      onSelectProject={() => {}}
-      onTriggerScan={() => router.push('/dashboard?nav=scans')}
-      onNavigateLanding={() => router.push('/')}
+    <CheckoutShell
       user={user}
       onOpenAuth={(mode) => {
         setAuthInitialMode(mode);
         setIsAuthModalOpen(true);
-      }}
-      onSignOut={() => {
-        setUser(null);
-        try {
-          localStorage.removeItem('zelsis_user');
-          localStorage.removeItem('shipguard_user');
-          localStorage.removeItem('zelsis_projects');
-          localStorage.removeItem('shipguard_projects');
-          localStorage.removeItem('zelsis_selected_project_id');
-          localStorage.removeItem('shipguard_selected_project_id');
-          localStorage.removeItem('zelsis_license_key');
-          localStorage.removeItem('shipguard_license_key');
-          if (typeof document !== 'undefined') {
-            const secureFlag = window.location.protocol === 'https:' ? '; Secure' : '';
-            document.cookie = `zelsis_user=; path=/; max-age=0; SameSite=Lax${secureFlag}`;
-            document.cookie = `shipguard_user=; path=/; max-age=0; SameSite=Lax${secureFlag}`;
-          }
-        } catch (e) {
-          console.warn('[CheckoutPage] Failed to purge storage:', e);
-        }
       }}
     >
       <CheckoutView
@@ -199,7 +168,7 @@ function CheckoutPageContent() {
           }
         }}
       />
-    </AppShell>
+    </CheckoutShell>
   );
 }
 

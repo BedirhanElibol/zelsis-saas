@@ -91,7 +91,8 @@ export const BenchmarkSection: React.FC = () => {
             <button
               key={tab.id}
               onClick={() => setActiveTab(tab.id)}
-              className={`flex-1 min-w-[140px] py-2 px-3 rounded-lg text-[11px] font-mono font-bold transition-all cursor-pointer ${
+              aria-pressed={activeTab === tab.id}
+              className={`flex-1 min-w-[140px] min-h-11 px-3 rounded-lg text-xs font-mono font-bold transition-all cursor-pointer ${
                 activeTab === tab.id ? 'bg-white text-black shadow-sm' : 'text-zinc-400 hover:text-white'
               }`}
             >

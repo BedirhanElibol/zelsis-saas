@@ -171,7 +171,7 @@ export const Header: React.FC<HeaderProps> = ({
           {onNavigateLanding && (
             <button
               onClick={onNavigateLanding}
-              className="flex items-center gap-1.5 text-xs text-[#A1A1AA] hover:text-white transition-colors shrink-0"
+              className="hidden sm:flex items-center gap-1.5 text-xs text-[#A1A1AA] hover:text-white transition-colors shrink-0 min-h-11"
               title="Return to Landing Page"
             >
               <ArrowLeft size={15} />
@@ -204,7 +204,7 @@ export const Header: React.FC<HeaderProps> = ({
                 const found = projects.find((p) => p.id === e.target.value);
                 if (found) onSelectProject(found);
               }}
-              className="bg-[#141414] border border-white/10 rounded-lg px-2 sm:px-2.5 py-1.5 text-[11px] sm:text-xs font-mono font-bold text-white outline-none focus-visible:ring-2 focus-visible:ring-white/20 cursor-pointer max-w-[120px] xs:max-w-[160px] sm:max-w-[240px] truncate"
+              className="bg-[#141414] border border-white/10 rounded-lg px-2 sm:px-2.5 py-1.5 text-[11px] sm:text-xs font-mono font-bold text-white outline-none focus-visible:ring-2 focus-visible:ring-white/20 cursor-pointer max-w-[150px] sm:max-w-[240px] min-h-11 sm:min-h-0 truncate"
             >
               {projects.map((p) => (
                 <option key={p.id} value={p.id}>
@@ -222,7 +222,7 @@ export const Header: React.FC<HeaderProps> = ({
             <button
               onClick={() => setIsGithubModalOpen(true)}
               aria-label="Connect Repository / Website"
-              className="min-w-[36px] min-h-[36px] p-2 rounded-lg bg-white/5 hover:bg-white/10 border border-white/10 text-white transition-colors shrink-0 flex items-center justify-center outline-none focus-visible:ring-2 focus-visible:ring-white/20"
+              className="min-w-11 min-h-11 sm:min-w-[36px] sm:min-h-[36px] p-2 rounded-lg bg-white/5 hover:bg-white/10 border border-white/10 text-white transition-colors shrink-0 flex items-center justify-center outline-none focus-visible:ring-2 focus-visible:ring-white/20"
               title="Connect Repository / Website"
             >
               <FolderGit2 size={14} />
@@ -231,7 +231,8 @@ export const Header: React.FC<HeaderProps> = ({
         </div>
 
         {/* Center: Interactive Target Command Bar */}
-        <form onSubmit={handleAuditAction} className="flex items-center flex-1 max-w-sm sm:max-w-md lg:max-w-lg mx-2 sm:mx-4 min-w-0">
+        {/* On phones the folder button opens the same connect-and-scan modal, so the bar is hidden */}
+        <form onSubmit={handleAuditAction} className="hidden md:flex items-center flex-1 max-w-sm sm:max-w-md lg:max-w-lg mx-2 sm:mx-4 min-w-0">
           <div className="relative w-full flex items-center">
             <Terminal size={14} className="absolute left-2.5 sm:left-3 text-[#A1A1AA] pointer-events-none shrink-0" />
             <input
@@ -440,13 +441,13 @@ export const Header: React.FC<HeaderProps> = ({
             <div className="flex items-center gap-1.5 sm:gap-2 shrink-0">
               <button
                 onClick={() => onOpenAuth && onOpenAuth('signin')}
-                className="text-[11px] sm:text-xs font-mono text-[#A1A1AA] hover:text-white px-1.5 sm:px-2 py-1 rounded transition-colors whitespace-nowrap"
+                className="hidden sm:inline-flex items-center min-h-11 text-xs font-mono text-[#A1A1AA] hover:text-white px-2 rounded transition-colors whitespace-nowrap"
               >
                 Sign In
               </button>
               <button
                 onClick={() => onOpenAuth && onOpenAuth('signup')}
-                className="btn btn-primary text-[11px] sm:text-xs font-mono px-2 sm:px-3 py-1 rounded bg-white text-black hover:bg-neutral-200 whitespace-nowrap font-bold"
+                className="btn btn-primary text-xs font-mono px-3 min-h-11 sm:min-h-9 rounded bg-white text-black hover:bg-neutral-200 whitespace-nowrap font-bold"
               >
                 Sign Up
               </button>

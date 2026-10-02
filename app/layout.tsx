@@ -8,6 +8,7 @@ import { CookieBanner } from '@/components/CookieBanner';
 import { AnalyticsScripts } from '@/components/analytics/AnalyticsScripts';
 import { ChunkErrorListener } from '@/components/common/ChunkErrorListener';
 import { getConfiguredAppUrl } from '@/lib/app-url';
+import { ReducedMotion } from '@/components/ui/ReducedMotion';
 
 const satoshi = localFont({
   src: [
@@ -112,9 +113,11 @@ export default function RootLayout({
         <a href="#main-content" className="sr-only focus:not-sr-only focus:fixed focus:top-4 focus:left-4 focus:z-50 focus:px-4 focus:py-2 focus:bg-white focus:text-black focus:rounded-md focus:font-mono focus:text-xs">Skip to main content</a>
         <OfflineBanner />
         <ToastProvider>
-          <main id="main-content">
-            {children}
-          </main>
+          <ReducedMotion>
+            <main id="main-content">
+              {children}
+            </main>
+          </ReducedMotion>
           <CookieBanner />
         </ToastProvider>
       </body>

@@ -233,7 +233,7 @@ export const TeamWorkspaceCard: React.FC<TeamWorkspaceCardProps> = ({ user, onOp
                 <li key={m.userId} className="flex flex-wrap items-center justify-between gap-3 px-4 py-3">
                   <div className="min-w-0">
                     <div className="text-xs text-white truncate">{m.name || m.email}</div>
-                    {m.name && <div className="text-[11px] text-zinc-500 truncate">{m.email}</div>}
+                    {m.name && <div className="text-[11px] text-zinc-400 truncate">{m.email}</div>}
                   </div>
                   <div className="flex items-center gap-2">
                     {role === 'owner' && m.role !== 'owner' ? (
@@ -414,14 +414,14 @@ export const TeamWorkspaceCard: React.FC<TeamWorkspaceCardProps> = ({ user, onOp
           <section className="flex flex-col gap-2">
             <h3 className="text-xs font-mono font-bold text-[#EDEDED] uppercase tracking-wider">Teammates&apos; projects</h3>
             {teamProjects.length === 0 ? (
-              <p className="text-[11px] text-zinc-500">No saved projects from teammates yet.</p>
+              <p className="text-[11px] text-zinc-400">No saved projects from teammates yet.</p>
             ) : (
               <ul className="flex flex-col divide-y divide-white/5 rounded-xl border border-white/10 bg-[#0A0A0A]">
                 {teamProjects.map((p) => (
                   <li key={p.id} className="flex flex-wrap items-center justify-between gap-2 px-4 py-2.5 text-xs">
                     <div className="min-w-0">
                       <div className="text-white truncate">{p.name}</div>
-                      <div className="text-[11px] text-zinc-500 truncate">{p.ownerEmail}</div>
+                      <div className="text-[11px] text-zinc-400 truncate">{p.ownerEmail}</div>
                     </div>
                     <div className="flex items-center gap-3 font-mono text-[11px]">
                       <span className="text-zinc-300">{p.readinessScore}/100</span>

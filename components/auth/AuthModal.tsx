@@ -6,6 +6,7 @@ import { X, Mail, Lock, User, Code, ArrowRight, CheckCircle2, KeyRound, AlertCir
 import { supabaseSignIn, supabaseSignUp, supabaseResetPassword, supabaseSignInWithOAuth, isSupabaseConfigured } from '@/lib/supabase';
 import { isPwnedPassword } from '@/lib/pwned-password';
 import { ZelsisLogo } from '@/components/ui/ZelsisLogo';
+import { useDialogFocus } from '@/hooks/useDialogFocus';
 
 export interface UserProfile {
   name: string;
@@ -73,16 +74,8 @@ export const AuthModal: React.FC<AuthModalProps> = ({
     };
   }, []);
 
-  React.useEffect(() => {
-    if (!isOpen) return;
-    const handleKeyDown = (e: KeyboardEvent) => {
-      if (e.key === 'Escape') {
-        onClose();
-      }
-    };
-    window.addEventListener('keydown', handleKeyDown);
-    return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [isOpen, onClose]);
+  const dialogRef = React.useRef<HTMLDivElement>(null);
+  useDialogFocus(dialogRef, isOpen, onClose);
 
   if (!isOpen) return null;
 
@@ -216,6 +209,11 @@ export const AuthModal: React.FC<AuthModalProps> = ({
         }}
       >
         <motion.div
+          ref={dialogRef}
+          role="dialog"
+          aria-modal="true"
+          aria-labelledby="auth-modal-title"
+          tabIndex={-1}
           initial={{ opacity: 0, scale: 0.95, y: 15 }}
           animate={{ opacity: 1, scale: 1, y: 0 }}
           exit={{ opacity: 0, scale: 0.95, y: 15 }}
@@ -235,7 +233,7 @@ export const AuthModal: React.FC<AuthModalProps> = ({
             <div className="mb-1">
               <ZelsisLogo size="lg" showWordmark={false} />
             </div>
-            <h2 className="text-xl font-extrabold text-[#EDEDED]">
+            <h2 id="auth-modal-title" className="text-xl font-extrabold text-[#EDEDED]">
               {mode === 'signin'
                 ? 'Welcome Back to Zelsis'
                 : mode === 'signup'
@@ -334,14 +332,14 @@ export const AuthModal: React.FC<AuthModalProps> = ({
           {/* Form Inputs */}
           <form onSubmit={handleSubmit} className="flex flex-col gap-3">
             {error && (
-              <div className="text-xs text-red-400 bg-red-500/10 border border-red-500/20 p-2.5 rounded-lg text-center font-medium flex items-center justify-center gap-2">
+              <div role="alert" className="text-xs text-red-400 bg-red-500/10 border border-red-500/20 p-2.5 rounded-lg text-center font-medium flex items-center justify-center gap-2">
                 <AlertCircle size={14} className="shrink-0" />
                 <span>{error}</span>
               </div>
             )}
 
             {successMsg && (
-              <div className="text-xs text-white bg-white/5 border border-white/10 p-2.5 rounded-lg text-center font-medium flex items-center justify-center gap-2">
+              <div role="status" className="text-xs text-white bg-white/5 border border-white/10 p-2.5 rounded-lg text-center font-medium flex items-center justify-center gap-2">
                 <CheckCircle2 size={14} className="shrink-0" />
                 <span>{successMsg}</span>
               </div>
@@ -354,13 +352,14 @@ export const AuthModal: React.FC<AuthModalProps> = ({
                   <User size={15} className="text-[#A1A1AA]" />
                   <input
                     id="auth-fullname-input"
+                    autoComplete="name"
                     name="fullName"
                     aria-label="Full Name"
                     type="text"
                     value={name}
                     onChange={(e) => setName(e.target.value)}
                     placeholder="e.g. Alex Morgan"
-                    className="bg-transparent text-xs text-[#EDEDED] outline-none focus-visible:ring-1 focus-visible:ring-white/20 w-full"
+                    className="bg-transparent text-xs text-[#EDEDED] outline-none focus-visible:ring-1 focus-visible:ring-white/70 w-full"
                   />
                 </div>
               </div>
@@ -372,13 +371,14 @@ export const AuthModal: React.FC<AuthModalProps> = ({
                 <Mail size={15} className="text-[#A1A1AA]" />
                 <input
                   id="auth-email-input"
+                  autoComplete="email"
                   name="email"
                   aria-label="Email Address"
                   type="email"
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
                   placeholder="name@company.com"
-                  className="bg-transparent text-xs text-[#EDEDED] outline-none focus-visible:ring-1 focus-visible:ring-white/20 w-full"
+                  className="bg-transparent text-xs text-[#EDEDED] outline-none focus-visible:ring-1 focus-visible:ring-white/70 w-full"
                 />
               </div>
             </div>
@@ -401,13 +401,14 @@ export const AuthModal: React.FC<AuthModalProps> = ({
                   <Lock size={15} className="text-[#A1A1AA]" />
                   <input
                     id="auth-password-input"
+                    autoComplete={mode === 'signup' ? 'new-password' : 'current-password'}
                     name="password"
                     aria-label="Password"
                     type={showPassword ? 'text' : 'password'}
                     value={password}
                     onChange={(e) => setPassword(e.target.value)}
                     placeholder="••••••••"
-                    className="bg-transparent text-xs text-[#EDEDED] outline-none focus-visible:ring-1 focus-visible:ring-white/20 w-full"
+                    className="bg-transparent text-xs text-[#EDEDED] outline-none focus-visible:ring-1 focus-visible:ring-white/70 w-full"
                   />
                   <button
                     type="button"
@@ -448,7 +449,7 @@ export const AuthModal: React.FC<AuthModalProps> = ({
               ← Back to Sign In
             </button>
           ) : (
-            <div className="text-center text-[0.7rem] text-[#64748B]">
+            <div className="text-center text-xs text-zinc-400">
               By signing in, you agree to Zelsis{' '}
               <a href="/terms" target="_blank" rel="noopener noreferrer" className="underline hover:text-white transition-colors">Terms of Service</a>
               {' '}&amp;{' '}

@@ -80,13 +80,13 @@ $ curl -X POST ${getConfiguredAppUrl()}/api/v1/gate-check \\
         {/* Section Header */}
         <div className="flex flex-col gap-4 text-center max-w-3xl mx-auto">
           <div className="inline-flex items-center justify-center text-xs font-mono uppercase tracking-widest text-zinc-400">
-            <span>OPERATIONAL ARCHITECTURE</span>
+            <span>How it works</span>
           </div>
           <h2 className="text-3xl sm:text-5xl font-extrabold text-[#EDEDED] tracking-tight">
-            How Zelsis Protects Production
+            From repository to release decision
           </h2>
           <p className="text-base sm:text-lg text-[#A1A1AA] leading-relaxed">
-            Eliminate human oversight. Our deterministic pipeline delivers comprehensive release gate verification in the time it takes to review a single pull request line.
+            Connect a repo, get findings in seconds, and let the gate fail the build when something critical slips in. Your reviewers still decide; Zelsis makes sure they see the risks.
           </p>
         </div>
 
@@ -96,6 +96,7 @@ $ curl -X POST ${getConfiguredAppUrl()}/api/v1/gate-check \\
             <button
               key={step.badge}
               onClick={() => setActiveStep(idx)}
+              aria-pressed={activeStep === idx}
               className={`p-6 rounded-xl text-left border transition-all flex flex-col justify-between gap-4 cursor-pointer ${
                 activeStep === idx
                   ? 'bg-[#141414] border-white/30 shadow-xl'
@@ -103,7 +104,8 @@ $ curl -X POST ${getConfiguredAppUrl()}/api/v1/gate-check \\
               }`}
             >
               <div className="flex items-center justify-between w-full">
-                <span className={`text-[10px] font-mono uppercase tracking-wider px-2 py-0.5 rounded border transition-colors ${
+                <span className="text-2xl font-extrabold font-mono text-zinc-400">{step.number}</span>
+                <span className={`text-xs font-mono uppercase tracking-wider px-2 py-0.5 rounded border transition-colors ${
                   activeStep === idx 
                     ? 'bg-white/10 text-white border-white/20 font-bold' 
                     : 'bg-white/[0.04] text-zinc-400 border-white/5'
@@ -112,12 +114,9 @@ $ curl -X POST ${getConfiguredAppUrl()}/api/v1/gate-check \\
                 </span>
               </div>
               <div>
-                <h3 className="text-sm font-bold text-white mb-1">
+                <h3 className="text-base font-bold text-white">
                   {step.title}
                 </h3>
-                <p className="text-xs text-zinc-400 line-clamp-2 leading-relaxed">
-                  {step.description}
-                </p>
               </div>
             </button>
           ))}

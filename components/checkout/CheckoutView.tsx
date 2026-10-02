@@ -55,12 +55,8 @@ export const CheckoutView: React.FC<CheckoutViewProps> = ({
 
   // Form Fields
   const [fullName, setFullName] = useState(user?.name || '');
-  const [companyName, setCompanyName] = useState('');
-  const [vatNumber, setVatNumber] = useState('');
   const [email, setEmail] = useState(user?.email || '');
   const [isSubmitted, setIsSubmitted] = useState(initialSuccess);
-  const [activeLicenseKey, setActiveLicenseKey] = useState('');
-  const [copiedKey, setCopiedKey] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   const cleanupAuthQueryParam = () => {
@@ -185,7 +181,6 @@ export const CheckoutView: React.FC<CheckoutViewProps> = ({
             const verifiedTier: 'Pro' | 'Enterprise' = data.tier === 'Enterprise' ? 'Enterprise' : 'Pro';
             const userEmail = data.email || currentUser?.email || email || 'customer@zelsis.dev';
             const key = generateLicenseKey(selectedPlanId, userEmail);
-            setActiveLicenseKey(key);
             activateUserTier(verifiedTier, key, {
               name: fullName || currentUser?.name,
               email: userEmail,
@@ -303,7 +298,6 @@ export const CheckoutView: React.FC<CheckoutViewProps> = ({
       const trimmedName = (fullName || currentUser?.name || 'Developer').trim();
       const tier = selectedPlanId === 'vibecare' ? 'Enterprise' : 'Pro';
       const key = generateLicenseKey(selectedPlanId, trimmedEmail);
-      setActiveLicenseKey(key);
       activateUserTier(tier, key, {
         name: trimmedName,
         email: trimmedEmail,
@@ -319,20 +313,22 @@ export const CheckoutView: React.FC<CheckoutViewProps> = ({
 
   return (
     <div className="flex flex-col gap-8 max-w-6xl mx-auto py-6 px-4">
-      {/* Header Bar */}
-      <div className="flex items-center justify-between border-b border-white/10 pb-4">
+      {/* Page heading */}
+      <div className="flex flex-col gap-3 border-b border-white/10 pb-5">
         <button
+          type="button"
           onClick={onBackToPricing}
-          className="flex items-center gap-2 text-xs font-bold text-[#A1A1AA] hover:text-white transition-colors"
+          className="sm:hidden self-start flex items-center gap-2 min-h-11 text-sm text-zinc-400 hover:text-white transition-colors"
         >
           <ArrowLeft size={16} />
-          <span>Back to Subscription Tiers</span>
+          <span>Back to pricing</span>
         </button>
-
-        <div className="flex items-center gap-2 text-xs text-[#10B981] font-extrabold bg-[#10B981]/10 px-3 py-1 rounded-full border border-[#10B981]/30">
-          <ShieldCheck size={14} />
-          <span>256-Bit SSL Encrypted B2B Checkout</span>
-        </div>
+        <h1 className="text-2xl sm:text-3xl font-extrabold text-white [text-wrap:balance]">
+          Upgrade to {selectedPlan.name}
+        </h1>
+        <p className="text-sm text-zinc-400 max-w-2xl">
+          Payments are processed by Polar, our merchant of record. We never see your card details. Billed monthly, cancel anytime.
+        </p>
       </div>
 
       {/* Quota Exceeded Context Banner */}
@@ -371,7 +367,7 @@ export const CheckoutView: React.FC<CheckoutViewProps> = ({
       )}
 
       {verificationError && !isSubmitted && (
-        <div className="p-4 rounded-xl bg-red-500/10 border border-red-500/30 text-xs text-red-200 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 shadow-md">
+        <div role="alert" className="p-4 rounded-xl bg-red-500/10 border border-red-500/30 text-xs text-red-200 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 shadow-md">
           <div className="flex items-center gap-2.5">
             <AlertCircle size={16} className="text-red-400 shrink-0" />
             <span className="leading-relaxed">{verificationError}</span>
@@ -396,11 +392,11 @@ export const CheckoutView: React.FC<CheckoutViewProps> = ({
               <ShieldCheck size={24} className="text-amber-300" />
             </div>
             <div className="flex flex-col gap-1">
-              <h3 className="text-sm font-bold text-white tracking-wide">
-                Account Required
-              </h3>
+              <h2 className="text-sm font-bold text-white tracking-wide">
+                Account required
+              </h2>
               <p className="text-xs text-[#CBD5E1] leading-relaxed max-w-2xl">
-                Please sign in or create a free account before upgrading your plan. Your license and security gates will be permanently bound to your account.
+                Sign in or create a free account first. Your plan is attached to that account.
               </p>
             </div>
           </div>
@@ -420,35 +416,11 @@ export const CheckoutView: React.FC<CheckoutViewProps> = ({
         <div className="bg-[#141414] border border-white/10 rounded-xl p-12 text-center flex flex-col items-center gap-5 border-[#10B981]/40 bg-[#10B981]/10">
           <CheckCircle2 size={64} className="text-[#10B981]" />
           <h2 className="text-3xl font-extrabold text-white">
-            Subscription Order Activated!
+            Your {selectedPlan.name} plan is active
           </h2>
           <p className="text-sm text-[#CBD5E1] max-w-lg leading-relaxed">
-            Your <strong className="text-white">{selectedPlan.name}</strong> subscription has been successfully provisioned. A VAT invoice and license key have been emailed to <span className="text-white font-mono">{email}</span>.
+            The plan is attached to <span className="text-white font-mono">{currentUser?.email || email}</span>. Polar emails your receipt and invoice; manage or cancel the subscription anytime from Settings.
           </p>
-
-          <div className="p-4 rounded-xl bg-[#0A0E1A] border border-white/10 font-mono text-xs text-[#6EE7B7] max-w-md w-full text-left flex flex-col gap-2">
-            <div className="flex items-center justify-between">
-              <span className="font-bold text-white">PROVISIONED LICENSE KEY:</span>
-              <button
-                type="button"
-                onClick={() => {
-                  navigator.clipboard.writeText(activeLicenseKey);
-                  setCopiedKey(true);
-                  setTimeout(() => setCopiedKey(false), 2000);
-                }}
-                className="btn btn-secondary text-[0.68rem] px-2 py-0.5 flex items-center gap-1"
-              >
-                {copiedKey ? <CheckCircle2 size={12} className="text-white" /> : <Copy size={12} />}
-                <span>{copiedKey ? 'Copied!' : 'Copy Key'}</span>
-              </button>
-            </div>
-            <div className="bg-[#0A0A0A] p-2 rounded border border-white/10 select-all break-all text-white">
-              {activeLicenseKey || 'SG-PROD-2026-X94821'}
-            </div>
-            <div className="text-[0.7rem] text-[#A1A1AA]">
-              STATUS: ACTIVE (Full Security Checks &amp; VibePolish Rules Enabled)
-            </div>
-          </div>
 
           <button
             onClick={() => {
@@ -466,10 +438,10 @@ export const CheckoutView: React.FC<CheckoutViewProps> = ({
             <div className="bg-[#141414] border border-white/10 rounded-xl p-6 sm:p-8 flex flex-col gap-6">
               <div>
                 <h2 className="text-lg font-extrabold text-[#F8FAFC]">
-                  1. Company &amp; Invoice Details
+                  1. Your details
                 </h2>
-                <p className="text-xs text-[#A1A1AA] mt-0.5">
-                  Provide your organization details for official VAT tax invoice generation
+                <p className="text-sm text-[#A1A1AA] mt-0.5">
+                  Prefilled on Polar&apos;s payment page. Business name and VAT ID can be added there for the invoice.
                 </p>
               </div>
 
@@ -477,7 +449,7 @@ export const CheckoutView: React.FC<CheckoutViewProps> = ({
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                   <div>
                     <label htmlFor="full-name-input" className="block text-xs font-bold text-[#A1A1AA] mb-1.5 uppercase font-mono">
-                      Full Name / Contact Person
+                      Full name
                     </label>
                     <div className="relative">
                       <input
@@ -485,10 +457,11 @@ export const CheckoutView: React.FC<CheckoutViewProps> = ({
                         name="fullName"
                         type="text"
                         placeholder="Alex Morgan"
+                        autoComplete="name"
                         value={fullName}
                         onChange={(e) => setFullName(e.target.value)}
                         required
-                        className="w-full px-3.5 py-2.5 rounded-lg bg-[#0A0A0A] border border-white/10 text-xs text-[#EDEDED] outline-none focus-visible:ring-1 focus-visible:ring-white/20 focus:border-white/20 pl-9"
+                        className="w-full px-3.5 py-2.5 rounded-lg bg-[#0A0A0A] border border-white/10 text-xs text-[#EDEDED] outline-none focus-visible:ring-2 focus-visible:ring-white/70 focus:border-white/30 pl-9"
                       />
                       <User size={14} className="absolute left-3 top-3 text-[#64748B]" />
                     </div>
@@ -496,7 +469,7 @@ export const CheckoutView: React.FC<CheckoutViewProps> = ({
 
                   <div>
                     <label htmlFor="email-input" className="block text-xs font-bold text-[#A1A1AA] mb-1.5 uppercase font-mono">
-                      Business Email Address
+                      Email
                     </label>
                     <div className="relative">
                       <input
@@ -504,57 +477,24 @@ export const CheckoutView: React.FC<CheckoutViewProps> = ({
                         name="email"
                         type="email"
                         placeholder="user@company.com"
+                        autoComplete="email"
                         value={email}
                         onChange={(e) => setEmail(e.target.value)}
                         required
-                        className="w-full px-3.5 py-2.5 rounded-lg bg-[#0A0A0A] border border-white/10 text-xs text-[#EDEDED] outline-none focus-visible:ring-1 focus-visible:ring-white/20 focus:border-white/20 pl-9"
+                        className="w-full px-3.5 py-2.5 rounded-lg bg-[#0A0A0A] border border-white/10 text-xs text-[#EDEDED] outline-none focus-visible:ring-2 focus-visible:ring-white/70 focus:border-white/30 pl-9"
                       />
                       <Mail size={14} className="absolute left-3 top-3 text-[#64748B]" />
                     </div>
                   </div>
                 </div>
 
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                  <div>
-                    <label htmlFor="company-input" className="block text-xs font-bold text-[#A1A1AA] mb-1.5 uppercase font-mono">
-                      Company / Agency Name
-                    </label>
-                    <div className="relative">
-                      <input
-                        id="company-input"
-                        name="companyName"
-                        type="text"
-                        placeholder="Your Company Name"
-                        value={companyName}
-                        onChange={(e) => setCompanyName(e.target.value)}
-                        className="w-full px-3.5 py-2.5 rounded-lg bg-[#0A0A0A] border border-white/10 text-xs text-[#EDEDED] outline-none focus-visible:ring-1 focus-visible:ring-white/20 focus:border-white/20 pl-9"
-                      />
-                      <Building2 size={14} className="absolute left-3 top-3 text-[#64748B]" />
-                    </div>
-                  </div>
-
-                  <div>
-                    <label htmlFor="vat-input" className="block text-xs font-bold text-[#A1A1AA] mb-1.5 uppercase font-mono">
-                      VAT / Tax ID (Optional)
-                    </label>
-                    <input
-                      id="vat-input"
-                      name="vatNumber"
-                      type="text"
-                      placeholder="US987654321 or EU123456"
-                      value={vatNumber}
-                      onChange={(e) => setVatNumber(e.target.value)}
-                      className="w-full px-3.5 py-2.5 rounded-lg bg-[#0A0A0A] border border-white/10 text-xs text-[#EDEDED] outline-none focus-visible:ring-1 focus-visible:ring-white/20 focus:border-white/20"
-                    />
-                  </div>
-                </div>
 
                 <div className="pt-4 border-t border-white/10 mt-2">
                   <h2 className="text-lg font-extrabold text-[#EDEDED] mb-1">
                     2. Payment Method
                   </h2>
                   <p className="text-xs text-[#A1A1AA] mb-4">
-                    All major credit cards accepted. Cancel anytime with 1 click.
+                    Cards, Apple Pay and Google Pay. Cancel anytime.
                   </p>
 
                   {/* Polar Live Checkout Card */}
@@ -562,7 +502,7 @@ export const CheckoutView: React.FC<CheckoutViewProps> = ({
                     <div className="flex items-center justify-between">
                       <div className="flex items-center gap-2">
                         <CreditCard size={18} className="text-white" />
-                        <span className="text-base font-extrabold text-white">Live Polar 3D Secure Checkout</span>
+                        <span className="text-base font-extrabold text-white">Pay with Polar</span>
                       </div>
                       <span className="px-2.5 py-0.5 rounded-full text-[10px] font-mono font-bold bg-white/10 text-white border border-white/20">
                         Merchant of Record
@@ -570,7 +510,7 @@ export const CheckoutView: React.FC<CheckoutViewProps> = ({
                     </div>
 
                     <p className="text-xs text-[#A1A1AA] leading-relaxed">
-                      Instant 3D Secure checkout managed by Polar Software, Inc. Official VAT tax invoice and subscription activated immediately.
+                      Polar Software, Inc. is the merchant of record: it charges your card, handles VAT and sends the invoice. Your plan activates as soon as the payment clears.
                     </p>
 
                     {isAlreadySubscribedToSelectedPlan ? (
@@ -666,7 +606,7 @@ export const CheckoutView: React.FC<CheckoutViewProps> = ({
                       </div>
                       <div className="flex items-center gap-2 text-[11px] font-mono text-zinc-400">
                         <Lock size={12} className="text-zinc-400 shrink-0" />
-                        <span>256-Bit SSL Encrypted Checkout via Polar / Stripe</span>
+                        <span>Card details are handled by Polar, never by Zelsis</span>
                       </div>
                       <div className="flex items-center gap-2 text-[11px] font-mono text-zinc-400">
                         <RefreshCw size={12} className="text-zinc-400 shrink-0" />
@@ -674,7 +614,7 @@ export const CheckoutView: React.FC<CheckoutViewProps> = ({
                       </div>
                       <div className="pt-1 border-t border-white/5 text-[10px] font-mono text-zinc-400 flex items-center justify-between">
                         <span>Read our <a href="/refund" target="_blank" rel="noopener noreferrer" className="text-zinc-400 hover:text-white underline">Refund Policy</a></span>
-                        <span>VAT Invoices Provided</span>
+                        <span>Invoice by email</span>
                       </div>
                     </div>
                   </div>
@@ -743,6 +683,7 @@ export const CheckoutView: React.FC<CheckoutViewProps> = ({
                     key={plan.id}
                     type="button"
                     onClick={() => setSelectedPlanId(plan.id)}
+                    aria-pressed={selectedPlanId === plan.id}
                     className={`flex-1 py-1.5 px-2 rounded-lg text-[0.68rem] font-bold transition-all truncate ${
                       selectedPlanId === plan.id
                         ? 'bg-white text-black font-bold shadow-sm'
