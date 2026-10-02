@@ -114,6 +114,9 @@ import { evaluateDotnetCsharpRules } from '../rules/dotnet-csharp-rules';
 import { evaluateSaasCoreRules } from '../rules/saas-core-rules';
 import { evaluateJsCoreSecurityRules } from '../rules/js-core-security-rules';
 import { evaluatePolyglotCoreRules } from '../rules/polyglot-core-rules';
+import { evaluateNextjsSupabaseRules } from '../rules/nextjs-supabase-rules';
+import { evaluateNodeWebVulnRules } from '../rules/node-web-vuln-rules';
+import { evaluateAiAppCiRules } from '../rules/ai-app-ci-rules';
 
 export type RuleEngine = (
   file: CodeFile,
@@ -382,4 +385,10 @@ export const RULE_ENGINES: ReadonlyArray<{ evaluate: RuleEngine; scanRawContent?
   { evaluate: evaluateJsCoreSecurityRules },
   // Core injection classes for Java, Kotlin, Ruby, PHP, Python, C#, Go and templates (CORE-01 to 08, Rule IDs 24101-24108)
   { evaluate: evaluatePolyglotCoreRules },
+  // Next.js App Router, Server Actions, middleware and Supabase auth/storage misuse (NEXT-SB-01.., Rule IDs 28001-28099)
+  { evaluate: evaluateNextjsSupabaseRules },
+  // Node.js web vulnerabilities: SSRF, traversal, prototype pollution, redirects, JWT, NoSQL, ReDoS (NODE-WEB-01.., Rule IDs 28101-28199)
+  { evaluate: evaluateNodeWebVulnRules },
+  // LLM application security and GitHub Actions workflow injection (AI-APP-01.., Rule IDs 28201-28299)
+  { evaluate: evaluateAiAppCiRules },
 ];

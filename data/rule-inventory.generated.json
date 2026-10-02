@@ -1,8 +1,8 @@
 {
  "summary": {
-  "implementedRules": 1501,
-  "testedRules": 229,
-  "preciseLocationRules": 1382,
+  "implementedRules": 1558,
+  "testedRules": 333,
+  "preciseLocationRules": 1439,
   "catalogEntries": 1922,
   "catalogOnlyNotImplemented": 775,
   "catalogPlaceholderMetadata": 1810
@@ -4842,7 +4842,7 @@
    "severity": "CRITICAL",
    "source": "lib/rules/cloud-native-rules.ts",
    "preciseLocation": true,
-   "tested": false,
+   "tested": true,
    "inCatalog": true
   },
   {
@@ -5112,7 +5112,7 @@
    "severity": "CRITICAL",
    "source": "lib/rules/cloud-native-rules.ts",
    "preciseLocation": true,
-   "tested": false,
+   "tested": true,
    "inCatalog": true
   },
   {
@@ -5782,7 +5782,7 @@
    "severity": "HIGH",
    "source": "lib/rules/api-rules.ts",
    "preciseLocation": true,
-   "tested": false,
+   "tested": true,
    "inCatalog": true
   },
   {
@@ -5842,7 +5842,7 @@
    "severity": "HIGH",
    "source": "lib/rules/api-rules.ts",
    "preciseLocation": true,
-   "tested": false,
+   "tested": true,
    "inCatalog": true
   },
   {
@@ -5922,7 +5922,7 @@
    "severity": "HIGH",
    "source": "lib/rules/api-rules.ts",
    "preciseLocation": true,
-   "tested": false,
+   "tested": true,
    "inCatalog": true
   },
   {
@@ -5942,7 +5942,7 @@
    "severity": "HIGH",
    "source": "lib/rules/api-rules.ts",
    "preciseLocation": true,
-   "tested": false,
+   "tested": true,
    "inCatalog": true
   },
   {
@@ -6012,7 +6012,7 @@
    "severity": "HIGH",
    "source": "lib/rules/api-rules.ts",
    "preciseLocation": true,
-   "tested": false,
+   "tested": true,
    "inCatalog": true
   },
   {
@@ -6132,7 +6132,7 @@
    "severity": "HIGH",
    "source": "lib/rules/api-rules.ts",
    "preciseLocation": true,
-   "tested": false,
+   "tested": true,
    "inCatalog": true
   },
   {
@@ -6162,7 +6162,7 @@
    "severity": "HIGH",
    "source": "lib/rules/api-rules.ts",
    "preciseLocation": true,
-   "tested": false,
+   "tested": true,
    "inCatalog": true
   },
   {
@@ -6172,7 +6172,7 @@
    "severity": "HIGH",
    "source": "lib/rules/api-rules.ts",
    "preciseLocation": true,
-   "tested": false,
+   "tested": true,
    "inCatalog": true
   },
   {
@@ -6192,7 +6192,7 @@
    "severity": "HIGH",
    "source": "lib/rules/api-rules.ts",
    "preciseLocation": true,
-   "tested": false,
+   "tested": true,
    "inCatalog": true
   },
   {
@@ -7382,7 +7382,7 @@
    "severity": "HIGH",
    "source": "lib/rules/zero-trust-rules.ts",
    "preciseLocation": true,
-   "tested": false,
+   "tested": true,
    "inCatalog": true
   },
   {
@@ -7392,7 +7392,7 @@
    "severity": "CRITICAL",
    "source": "lib/rules/zero-trust-rules.ts",
    "preciseLocation": true,
-   "tested": false,
+   "tested": true,
    "inCatalog": true
   },
   {
@@ -7402,7 +7402,7 @@
    "severity": "HIGH",
    "source": "lib/rules/zero-trust-rules.ts",
    "preciseLocation": true,
-   "tested": false,
+   "tested": true,
    "inCatalog": true
   },
   {
@@ -7442,7 +7442,7 @@
    "severity": "HIGH",
    "source": "lib/rules/zero-trust-rules.ts",
    "preciseLocation": true,
-   "tested": false,
+   "tested": true,
    "inCatalog": true
   },
   {
@@ -7452,7 +7452,7 @@
    "severity": "CRITICAL",
    "source": "lib/rules/zero-trust-rules.ts",
    "preciseLocation": true,
-   "tested": false,
+   "tested": true,
    "inCatalog": true
   },
   {
@@ -7462,7 +7462,7 @@
    "severity": "HIGH",
    "source": "lib/rules/zero-trust-rules.ts",
    "preciseLocation": true,
-   "tested": false,
+   "tested": true,
    "inCatalog": true
   },
   {
@@ -7532,7 +7532,7 @@
    "severity": "HIGH",
    "source": "lib/rules/zero-trust-rules.ts",
    "preciseLocation": true,
-   "tested": false,
+   "tested": true,
    "inCatalog": true
   },
   {
@@ -7552,7 +7552,7 @@
    "severity": "CRITICAL",
    "source": "lib/rules/zero-trust-rules.ts",
    "preciseLocation": true,
-   "tested": false,
+   "tested": true,
    "inCatalog": true
   },
   {
@@ -7572,7 +7572,7 @@
    "severity": "HIGH",
    "source": "lib/rules/zero-trust-rules.ts",
    "preciseLocation": true,
-   "tested": false,
+   "tested": true,
    "inCatalog": true
   },
   {
@@ -7592,7 +7592,7 @@
    "severity": "CRITICAL",
    "source": "lib/rules/zero-trust-rules.ts",
    "preciseLocation": true,
-   "tested": false,
+   "tested": true,
    "inCatalog": true
   },
   {
@@ -7742,7 +7742,7 @@
    "severity": "HIGH",
    "source": "lib/rules/zero-trust-rules.ts",
    "preciseLocation": true,
-   "tested": false,
+   "tested": true,
    "inCatalog": true
   },
   {
@@ -7852,7 +7852,7 @@
    "severity": "CRITICAL",
    "source": "lib/rules/zero-trust-rules.ts",
    "preciseLocation": true,
-   "tested": false,
+   "tested": true,
    "inCatalog": true
   },
   {
@@ -8402,7 +8402,7 @@
    "severity": "CRITICAL",
    "source": "lib/rules/iac-rules.ts",
    "preciseLocation": true,
-   "tested": false,
+   "tested": true,
    "inCatalog": true
   },
   {
@@ -8412,7 +8412,7 @@
    "severity": "CRITICAL",
    "source": "lib/rules/iac-rules.ts",
    "preciseLocation": true,
-   "tested": false,
+   "tested": true,
    "inCatalog": true
   },
   {
@@ -8422,7 +8422,7 @@
    "severity": "CRITICAL",
    "source": "lib/rules/iac-rules.ts",
    "preciseLocation": true,
-   "tested": false,
+   "tested": true,
    "inCatalog": true
   },
   {
@@ -8442,7 +8442,7 @@
    "severity": "CRITICAL",
    "source": "lib/rules/iac-rules.ts",
    "preciseLocation": true,
-   "tested": false,
+   "tested": true,
    "inCatalog": true
   },
   {
@@ -8492,7 +8492,7 @@
    "severity": "CRITICAL",
    "source": "lib/rules/iac-rules.ts",
    "preciseLocation": true,
-   "tested": false,
+   "tested": true,
    "inCatalog": true
   },
   {
@@ -8512,7 +8512,7 @@
    "severity": "CRITICAL",
    "source": "lib/rules/iac-rules.ts",
    "preciseLocation": true,
-   "tested": false,
+   "tested": true,
    "inCatalog": true
   },
   {
@@ -8592,7 +8592,7 @@
    "severity": "CRITICAL",
    "source": "lib/rules/iac-rules.ts",
    "preciseLocation": true,
-   "tested": false,
+   "tested": true,
    "inCatalog": true
   },
   {
@@ -8602,7 +8602,7 @@
    "severity": "CRITICAL",
    "source": "lib/rules/iac-rules.ts",
    "preciseLocation": true,
-   "tested": false,
+   "tested": true,
    "inCatalog": true
   },
   {
@@ -8612,7 +8612,7 @@
    "severity": "CRITICAL",
    "source": "lib/rules/iac-rules.ts",
    "preciseLocation": true,
-   "tested": false,
+   "tested": true,
    "inCatalog": true
   },
   {
@@ -8632,7 +8632,7 @@
    "severity": "CRITICAL",
    "source": "lib/rules/iac-rules.ts",
    "preciseLocation": true,
-   "tested": false,
+   "tested": true,
    "inCatalog": true
   },
   {
@@ -8672,7 +8672,7 @@
    "severity": "HIGH",
    "source": "lib/rules/iac-rules.ts",
    "preciseLocation": true,
-   "tested": false,
+   "tested": true,
    "inCatalog": true
   },
   {
@@ -8682,7 +8682,7 @@
    "severity": "CRITICAL",
    "source": "lib/rules/iac-rules.ts",
    "preciseLocation": true,
-   "tested": false,
+   "tested": true,
    "inCatalog": true
   },
   {
@@ -8702,7 +8702,7 @@
    "severity": "CRITICAL",
    "source": "lib/rules/iac-rules.ts",
    "preciseLocation": true,
-   "tested": false,
+   "tested": true,
    "inCatalog": true
   },
   {
@@ -8742,7 +8742,7 @@
    "severity": "HIGH",
    "source": "lib/rules/iac-rules.ts",
    "preciseLocation": true,
-   "tested": false,
+   "tested": true,
    "inCatalog": true
   },
   {
@@ -8872,7 +8872,7 @@
    "severity": "HIGH",
    "source": "lib/rules/iac-rules.ts",
    "preciseLocation": true,
-   "tested": false,
+   "tested": true,
    "inCatalog": true
   },
   {
@@ -10572,7 +10572,7 @@
    "severity": "CRITICAL",
    "source": "lib/rules/k8s-hardening-rules.ts",
    "preciseLocation": true,
-   "tested": false,
+   "tested": true,
    "inCatalog": true
   },
   {
@@ -10602,7 +10602,7 @@
    "severity": "CRITICAL",
    "source": "lib/rules/k8s-hardening-rules.ts",
    "preciseLocation": true,
-   "tested": false,
+   "tested": true,
    "inCatalog": true
   },
   {
@@ -10652,7 +10652,7 @@
    "severity": "CRITICAL",
    "source": "lib/rules/k8s-hardening-rules.ts",
    "preciseLocation": true,
-   "tested": false,
+   "tested": true,
    "inCatalog": true
   },
   {
@@ -11412,7 +11412,7 @@
    "severity": "HIGH",
    "source": "lib/rules/cicd-supplychain-rules.ts",
    "preciseLocation": true,
-   "tested": false,
+   "tested": true,
    "inCatalog": true
   },
   {
@@ -12142,7 +12142,7 @@
    "severity": "CRITICAL",
    "source": "lib/rules/terraform-iac-rules.ts",
    "preciseLocation": true,
-   "tested": false,
+   "tested": true,
    "inCatalog": true
   },
   {
@@ -12152,7 +12152,7 @@
    "severity": "CRITICAL",
    "source": "lib/rules/terraform-iac-rules.ts",
    "preciseLocation": true,
-   "tested": false,
+   "tested": true,
    "inCatalog": true
   },
   {
@@ -12722,7 +12722,7 @@
    "severity": "CRITICAL",
    "source": "lib/rules/container-security-rules.ts",
    "preciseLocation": true,
-   "tested": false,
+   "tested": true,
    "inCatalog": true
   },
   {
@@ -12732,7 +12732,7 @@
    "severity": "HIGH",
    "source": "lib/rules/container-security-rules.ts",
    "preciseLocation": true,
-   "tested": false,
+   "tested": true,
    "inCatalog": true
   },
   {
@@ -12752,7 +12752,7 @@
    "severity": "CRITICAL",
    "source": "lib/rules/container-security-rules.ts",
    "preciseLocation": true,
-   "tested": false,
+   "tested": true,
    "inCatalog": true
   },
   {
@@ -15793,6 +15793,576 @@
    "source": "lib/scanner/builtin-rules.ts",
    "preciseLocation": true,
    "tested": false,
+   "inCatalog": false
+  },
+  {
+   "ruleId": 28001,
+   "code": "RULE-28001",
+   "title": "Server Action Uses the Service-Role Client Without Verifying the Caller",
+   "severity": "CRITICAL",
+   "source": "lib/rules/nextjs-supabase-rules.ts",
+   "preciseLocation": true,
+   "tested": true,
+   "inCatalog": false
+  },
+  {
+   "ruleId": 28002,
+   "code": "RULE-28002",
+   "title": "Route Handler Uses the Service-Role Client Without Verifying the Caller",
+   "severity": "CRITICAL",
+   "source": "lib/rules/nextjs-supabase-rules.ts",
+   "preciseLocation": true,
+   "tested": true,
+   "inCatalog": false
+  },
+  {
+   "ruleId": 28003,
+   "code": "RULE-28003",
+   "title": "Authorization Decision Based on Supabase user_metadata",
+   "severity": "HIGH",
+   "source": "lib/rules/nextjs-supabase-rules.ts",
+   "preciseLocation": true,
+   "tested": true,
+   "inCatalog": false
+  },
+  {
+   "ruleId": 28004,
+   "code": "RULE-28004",
+   "title": "Database Authorization Trusts User-Editable user_metadata",
+   "severity": "HIGH",
+   "source": "lib/rules/nextjs-supabase-rules.ts",
+   "preciseLocation": true,
+   "tested": true,
+   "inCatalog": false
+  },
+  {
+   "ruleId": 28005,
+   "code": "RULE-28005",
+   "title": "Storage Policy Lets Any User Overwrite or Delete Every File in the Bucket",
+   "severity": "HIGH",
+   "source": "lib/rules/nextjs-supabase-rules.ts",
+   "preciseLocation": true,
+   "tested": true,
+   "inCatalog": false
+  },
+  {
+   "ruleId": 28006,
+   "code": "RULE-28006",
+   "title": "Public View Bypasses Row Level Security (Missing security_invoker)",
+   "severity": "MEDIUM",
+   "source": "lib/rules/nextjs-supabase-rules.ts",
+   "preciseLocation": true,
+   "tested": true,
+   "inCatalog": false
+  },
+  {
+   "ruleId": 28007,
+   "code": "RULE-28007",
+   "title": "SECURITY DEFINER Function Writes Data Without Checking the Caller",
+   "severity": "MEDIUM",
+   "source": "lib/rules/nextjs-supabase-rules.ts",
+   "preciseLocation": true,
+   "tested": true,
+   "inCatalog": false
+  },
+  {
+   "ruleId": 28008,
+   "code": "RULE-28008",
+   "title": "Middleware Passes Request Headers as Response Headers (CVE-2025-57822)",
+   "severity": "HIGH",
+   "source": "lib/rules/nextjs-supabase-rules.ts",
+   "preciseLocation": true,
+   "tested": true,
+   "inCatalog": false
+  },
+  {
+   "ruleId": 28009,
+   "code": "RULE-28009",
+   "title": "Image Optimizer Allows Any Remote Host (remotePatterns hostname ",
+   "severity": "MEDIUM",
+   "source": "lib/rules/nextjs-supabase-rules.ts",
+   "preciseLocation": true,
+   "tested": true,
+   "inCatalog": false
+  },
+  {
+   "ruleId": 28010,
+   "code": "RULE-28010",
+   "title": "dangerouslyAllowSVG Enabled Without an Image Content-Security-Policy",
+   "severity": "MEDIUM",
+   "source": "lib/rules/nextjs-supabase-rules.ts",
+   "preciseLocation": true,
+   "tested": true,
+   "inCatalog": false
+  },
+  {
+   "ruleId": 28011,
+   "code": "RULE-28011",
+   "title": "Server Actions allowedOrigins Accepts Any Origin",
+   "severity": "MEDIUM",
+   "source": "lib/rules/nextjs-supabase-rules.ts",
+   "preciseLocation": true,
+   "tested": true,
+   "inCatalog": false
+  },
+  {
+   "ruleId": 28012,
+   "code": "RULE-28012",
+   "title": "Auth Token Cookie Set Without httpOnly",
+   "severity": "MEDIUM",
+   "source": "lib/rules/nextjs-supabase-rules.ts",
+   "preciseLocation": true,
+   "tested": true,
+   "inCatalog": false
+  },
+  {
+   "ruleId": 28013,
+   "code": "RULE-28013",
+   "title": "Open Redirect Through a Request-Controlled Redirect Target",
+   "severity": "MEDIUM",
+   "source": "lib/rules/nextjs-supabase-rules.ts",
+   "preciseLocation": true,
+   "tested": true,
+   "inCatalog": false
+  },
+  {
+   "ruleId": 28014,
+   "code": "RULE-28014",
+   "title": "Record Owner Taken From the Request Instead of the Session",
+   "severity": "HIGH",
+   "source": "lib/rules/nextjs-supabase-rules.ts",
+   "preciseLocation": true,
+   "tested": true,
+   "inCatalog": false
+  },
+  {
+   "ruleId": 28015,
+   "code": "RULE-28015",
+   "title": "Next.js Version Vulnerable to React2Shell RCE (CVE-2025-66478 / CVE-2025-55182)",
+   "severity": "UNKNOWN",
+   "source": "lib/rules/nextjs-supabase-rules.ts",
+   "preciseLocation": true,
+   "tested": true,
+   "inCatalog": false
+  },
+  {
+   "ruleId": 28016,
+   "code": "RULE-28016",
+   "title": "Users Can Update Their Own Privilege or Billing Column Through RLS",
+   "severity": "HIGH",
+   "source": "lib/rules/nextjs-supabase-rules.ts",
+   "preciseLocation": true,
+   "tested": true,
+   "inCatalog": false
+  },
+  {
+   "ruleId": 28017,
+   "code": "RULE-28017",
+   "title": "Supabase Signed URL Valid for a Year or More",
+   "severity": "LOW",
+   "source": "lib/rules/nextjs-supabase-rules.ts",
+   "preciseLocation": true,
+   "tested": true,
+   "inCatalog": false
+  },
+  {
+   "ruleId": 28101,
+   "code": "RULE-28101",
+   "title": "Path Traversal in res.sendFile / res.download (CWE-22)",
+   "severity": "HIGH",
+   "source": "lib/rules/node-web-vuln-rules.ts",
+   "preciseLocation": true,
+   "tested": true,
+   "inCatalog": false
+  },
+  {
+   "ruleId": 28102,
+   "code": "RULE-28102",
+   "title": "Prototype Pollution via Request-Controlled Object Keys (CWE-1321)",
+   "severity": "HIGH",
+   "source": "lib/rules/node-web-vuln-rules.ts",
+   "preciseLocation": true,
+   "tested": true,
+   "inCatalog": false
+  },
+  {
+   "ruleId": 28103,
+   "code": "RULE-28103",
+   "title": "NoSQL / ORM Operator Injection via Request Object Used as Query Filter (CWE-943)",
+   "severity": "HIGH",
+   "source": "lib/rules/node-web-vuln-rules.ts",
+   "preciseLocation": true,
+   "tested": true,
+   "inCatalog": false
+  },
+  {
+   "ruleId": 28104,
+   "code": "RULE-28104",
+   "title": "Login Query Matches the Request Password in the Database Filter",
+   "severity": "HIGH",
+   "source": "lib/rules/node-web-vuln-rules.ts",
+   "preciseLocation": true,
+   "tested": true,
+   "inCatalog": false
+  },
+  {
+   "ruleId": 28105,
+   "code": "RULE-28105",
+   "title": "Regular Expression Built From Request Input (ReDoS / Regex Injection, CWE-1333)",
+   "severity": "MEDIUM",
+   "source": "lib/rules/node-web-vuln-rules.ts",
+   "preciseLocation": true,
+   "tested": true,
+   "inCatalog": false
+  },
+  {
+   "ruleId": 28106,
+   "code": "RULE-28106",
+   "title": "Hardcoded JWT Signing Secret in Source Code (CWE-798)",
+   "severity": "HIGH",
+   "source": "lib/rules/node-web-vuln-rules.ts",
+   "preciseLocation": true,
+   "tested": true,
+   "inCatalog": false
+  },
+  {
+   "ruleId": 28107,
+   "code": "RULE-28107",
+   "title": "HMAC Signature Compared With === (Timing Attack, CWE-208)",
+   "severity": "MEDIUM",
+   "source": "lib/rules/node-web-vuln-rules.ts",
+   "preciseLocation": true,
+   "tested": true,
+   "inCatalog": false
+  },
+  {
+   "ruleId": 28108,
+   "code": "RULE-28108",
+   "title": "Deprecated crypto.createCipher Without IV (Weak Key Derivation, CWE-327)",
+   "severity": "HIGH",
+   "source": "lib/rules/node-web-vuln-rules.ts",
+   "preciseLocation": true,
+   "tested": true,
+   "inCatalog": false
+  },
+  {
+   "ruleId": 28109,
+   "code": "RULE-28109",
+   "title": "Static / Zero IV Passed to createCipheriv (CWE-329)",
+   "severity": "MEDIUM",
+   "source": "lib/rules/node-web-vuln-rules.ts",
+   "preciseLocation": true,
+   "tested": true,
+   "inCatalog": false
+  },
+  {
+   "ruleId": 28110,
+   "code": "RULE-28110",
+   "title": "Reflected XSS: Request Input Interpolated Into an HTML Response (CWE-79)",
+   "severity": "HIGH",
+   "source": "lib/rules/node-web-vuln-rules.ts",
+   "preciseLocation": true,
+   "tested": true,
+   "inCatalog": false
+  },
+  {
+   "ruleId": 28111,
+   "code": "RULE-28111",
+   "title": "Template Path Injection: res.render View Name From Request (CWE-73)",
+   "severity": "HIGH",
+   "source": "lib/rules/node-web-vuln-rules.ts",
+   "preciseLocation": true,
+   "tested": true,
+   "inCatalog": false
+  },
+  {
+   "ruleId": 28112,
+   "code": "RULE-28112",
+   "title": "Request Object Passed as Template Locals (EJS / hbs Option Injection RCE)",
+   "severity": "HIGH",
+   "source": "lib/rules/node-web-vuln-rules.ts",
+   "preciseLocation": true,
+   "tested": true,
+   "inCatalog": false
+  },
+  {
+   "ruleId": 28113,
+   "code": "RULE-28113",
+   "title": "Zip Slip: Archive Entry Name Used as an Output Path (CWE-22)",
+   "severity": "HIGH",
+   "source": "lib/rules/node-web-vuln-rules.ts",
+   "preciseLocation": true,
+   "tested": true,
+   "inCatalog": false
+  },
+  {
+   "ruleId": 28114,
+   "code": "RULE-28114",
+   "title": "Remote Code Execution: node:vm Evaluates Request Input (CWE-94)",
+   "severity": "CRITICAL",
+   "source": "lib/rules/node-web-vuln-rules.ts",
+   "preciseLocation": true,
+   "tested": true,
+   "inCatalog": false
+  },
+  {
+   "ruleId": 28115,
+   "code": "RULE-28115",
+   "title": "vm2 Sandbox Used to Run Code (Abandoned, Known Escapes)",
+   "severity": "HIGH",
+   "source": "lib/rules/node-web-vuln-rules.ts",
+   "preciseLocation": true,
+   "tested": true,
+   "inCatalog": false
+  },
+  {
+   "ruleId": 28116,
+   "code": "RULE-28116",
+   "title": "Command Injection: spawn / execFile With Request-Controlled Command or shell: true (CWE-78)",
+   "severity": "CRITICAL",
+   "source": "lib/rules/node-web-vuln-rules.ts",
+   "preciseLocation": true,
+   "tested": true,
+   "inCatalog": false
+  },
+  {
+   "ruleId": 28117,
+   "code": "RULE-28117",
+   "title": "Dynamic require() / import() of Request Input (CWE-94)",
+   "severity": "CRITICAL",
+   "source": "lib/rules/node-web-vuln-rules.ts",
+   "preciseLocation": true,
+   "tested": true,
+   "inCatalog": false
+  },
+  {
+   "ruleId": 28118,
+   "code": "RULE-28118",
+   "title": "Server-Side Request Forgery: Outbound Request to a Request-Supplied URL (CWE-918)",
+   "severity": "HIGH",
+   "source": "lib/rules/node-web-vuln-rules.ts",
+   "preciseLocation": true,
+   "tested": true,
+   "inCatalog": false
+  },
+  {
+   "ruleId": 28119,
+   "code": "RULE-28119",
+   "title": "Open Redirect to a Request-Supplied URL (CWE-601)",
+   "severity": "MEDIUM",
+   "source": "lib/rules/node-web-vuln-rules.ts",
+   "preciseLocation": true,
+   "tested": true,
+   "inCatalog": false
+  },
+  {
+   "ruleId": 28120,
+   "code": "RULE-28120",
+   "title": "Password Reset / Verification Link Built From the Host Header (CWE-640)",
+   "severity": "HIGH",
+   "source": "lib/rules/node-web-vuln-rules.ts",
+   "preciseLocation": true,
+   "tested": true,
+   "inCatalog": false
+  },
+  {
+   "ruleId": 28121,
+   "code": "RULE-28121",
+   "title": "Password Hashed With a Fast SHA-2 Digest (CWE-916)",
+   "severity": "HIGH",
+   "source": "lib/rules/node-web-vuln-rules.ts",
+   "preciseLocation": true,
+   "tested": true,
+   "inCatalog": false
+  },
+  {
+   "ruleId": 28122,
+   "code": "RULE-28122",
+   "title": "CORS Reflects Any Origin With Credentials Allowed (CWE-942)",
+   "severity": "HIGH",
+   "source": "lib/rules/node-web-vuln-rules.ts",
+   "preciseLocation": true,
+   "tested": true,
+   "inCatalog": false
+  },
+  {
+   "ruleId": 28123,
+   "code": "RULE-28123",
+   "title": "Static File Server Exposes the Project Directory (.env, Source Code)",
+   "severity": "HIGH",
+   "source": "lib/rules/node-web-vuln-rules.ts",
+   "preciseLocation": true,
+   "tested": true,
+   "inCatalog": false
+  },
+  {
+   "ruleId": 28124,
+   "code": "RULE-28124",
+   "title": "JWT Algorithm Confusion: HMAC and Public-Key Algorithms Accepted Together",
+   "severity": "HIGH",
+   "source": "lib/rules/node-web-vuln-rules.ts",
+   "preciseLocation": true,
+   "tested": true,
+   "inCatalog": false
+  },
+  {
+   "ruleId": 28125,
+   "code": "RULE-28125",
+   "title": "SQL Injection: Request Input Interpolated Into a Raw Query Fragment (CWE-89)",
+   "severity": "CRITICAL",
+   "source": "lib/rules/node-web-vuln-rules.ts",
+   "preciseLocation": true,
+   "tested": true,
+   "inCatalog": false
+  },
+  {
+   "ruleId": 28201,
+   "code": "RULE-28201",
+   "title": "LLM Provider API Key Exposed Through a Public Env Prefix",
+   "severity": "UNKNOWN",
+   "source": "lib/rules/ai-app-ci-rules.ts",
+   "preciseLocation": true,
+   "tested": true,
+   "inCatalog": false
+  },
+  {
+   "ruleId": 28202,
+   "code": "RULE-28202",
+   "title": "LLM Output Executed as Code or Shell Command",
+   "severity": "CRITICAL",
+   "source": "lib/rules/ai-app-ci-rules.ts",
+   "preciseLocation": true,
+   "tested": true,
+   "inCatalog": false
+  },
+  {
+   "ruleId": 28203,
+   "code": "RULE-28203",
+   "title": "LLM-Generated SQL Executed Without Restriction",
+   "severity": "HIGH",
+   "source": "lib/rules/ai-app-ci-rules.ts",
+   "preciseLocation": true,
+   "tested": true,
+   "inCatalog": false
+  },
+  {
+   "ruleId": 28204,
+   "code": "RULE-28204",
+   "title": "Agent / MCP Tool Executes Model-Supplied Shell Command or Code",
+   "severity": "HIGH",
+   "source": "lib/rules/ai-app-ci-rules.ts",
+   "preciseLocation": true,
+   "tested": true,
+   "inCatalog": false
+  },
+  {
+   "ruleId": 28205,
+   "code": "RULE-28205",
+   "title": "Agent / MCP Tool Reads or Writes a Model-Supplied File Path Unchecked",
+   "severity": "HIGH",
+   "source": "lib/rules/ai-app-ci-rules.ts",
+   "preciseLocation": true,
+   "tested": true,
+   "inCatalog": false
+  },
+  {
+   "ruleId": 28206,
+   "code": "RULE-28206",
+   "title": "LLM SDK Used in the Browser With a Bundled API Key (dangerouslyAllowBrowser)",
+   "severity": "HIGH",
+   "source": "lib/rules/ai-app-ci-rules.ts",
+   "preciseLocation": true,
+   "tested": true,
+   "inCatalog": false
+  },
+  {
+   "ruleId": 28207,
+   "code": "RULE-28207",
+   "title": "LangChain Agent Given an Unsandboxed Python / Shell Interpreter",
+   "severity": "HIGH",
+   "source": "lib/rules/ai-app-ci-rules.ts",
+   "preciseLocation": true,
+   "tested": true,
+   "inCatalog": false
+  },
+  {
+   "ruleId": 28251,
+   "code": "RULE-28251",
+   "title": "pull_request_target Checks Out and Runs Untrusted PR Code (Pwn Request)",
+   "severity": "CRITICAL",
+   "source": "lib/rules/ai-app-ci-rules.ts",
+   "preciseLocation": true,
+   "tested": true,
+   "inCatalog": false
+  },
+  {
+   "ruleId": 28252,
+   "code": "RULE-28252",
+   "title": "workflow_run Checks Out and Runs the Triggering PR Head (Pwn Request)",
+   "severity": "CRITICAL",
+   "source": "lib/rules/ai-app-ci-rules.ts",
+   "preciseLocation": true,
+   "tested": true,
+   "inCatalog": false
+  },
+  {
+   "ruleId": 28253,
+   "code": "RULE-28253",
+   "title": "Script Injection via workflow_run / toJSON(github.event) Expression in run:",
+   "severity": "CRITICAL",
+   "source": "lib/rules/ai-app-ci-rules.ts",
+   "preciseLocation": true,
+   "tested": true,
+   "inCatalog": false
+  },
+  {
+   "ruleId": 28254,
+   "code": "RULE-28254",
+   "title": "Comment-Triggered Workflow Runs PR Code Without a Permission Check",
+   "severity": "HIGH",
+   "source": "lib/rules/ai-app-ci-rules.ts",
+   "preciseLocation": true,
+   "tested": true,
+   "inCatalog": false
+  },
+  {
+   "ruleId": 28255,
+   "code": "RULE-28255",
+   "title": "Artifact Contents Written to GITHUB_ENV / GITHUB_PATH in a Privileged Workflow",
+   "severity": "HIGH",
+   "source": "lib/rules/ai-app-ci-rules.ts",
+   "preciseLocation": true,
+   "tested": true,
+   "inCatalog": false
+  },
+  {
+   "ruleId": 28256,
+   "code": "RULE-28256",
+   "title": "Insecure Workflow Commands Re-Enabled (ACTIONS_ALLOW_UNSECURE_COMMANDS)",
+   "severity": "HIGH",
+   "source": "lib/rules/ai-app-ci-rules.ts",
+   "preciseLocation": true,
+   "tested": true,
+   "inCatalog": false
+  },
+  {
+   "ruleId": 28257,
+   "code": "RULE-28257",
+   "title": "Workspace Uploaded as Artifact With Persisted Git Credentials (ArtiPACKED)",
+   "severity": "HIGH",
+   "source": "lib/rules/ai-app-ci-rules.ts",
+   "preciseLocation": true,
+   "tested": true,
+   "inCatalog": false
+  },
+  {
+   "ruleId": 28258,
+   "code": "RULE-28258",
+   "title": "Spoofable Bot Check (github.actor) Guards a Privileged Workflow",
+   "severity": "MEDIUM",
+   "source": "lib/rules/ai-app-ci-rules.ts",
+   "preciseLocation": true,
+   "tested": true,
    "inCatalog": false
   }
  ]

@@ -9,9 +9,24 @@ export function evaluateRubyRailsRules(file: CodeFile, lines: string[], cleanCon
     if (!lowerPath.endsWith('.rb') && !lowerPath.endsWith('.erb')) return { findings, logs };
 
     // RUBY-SEC-01: YAML.load insecure deserialization
-    const reg_yaml = /YAML\.load\s*\(/i;
-    if (reg_yaml.test(cleanContent)) {
-        const matchLineIdx = lines.findIndex(l => reg_yaml.test(l));
+    // Psych 4 (Ruby 3.1+) made YAML.load safe by default, so flag YAML.unsafe_load on anything but a
+    // local file, and YAML.load only on request input (exploitable on Ruby < 3.1).
+    const reg_yaml = /\b(?:YAML|Psych)\.(load|unsafe_load)\s*\(\s*(.*)$/;
+    const requestInput = /\bparams\[|\bparams\.(?:require|fetch|dig)\b|request\.(?:body|raw_post|params)\b|\bcookies\[/;
+    const requestVars = new Set<string>();
+    for (const l of lines) {
+        const m = /^\s*(\w+)\s*=\s*(.*)$/.exec(l);
+        if (m && requestInput.test(m[2])) requestVars.add(m[1]);
+    }
+    const matchLineIdx = lines.findIndex(l => {
+        if (l.trim().startsWith('#')) return false;
+        const m = reg_yaml.exec(l);
+        if (!m) return false;
+        const arg = m[2];
+        const fromRequest = requestInput.test(arg) || [...arg.matchAll(/\b([a-z_]\w*)\b/g)].some((v) => requestVars.has(v[1]));
+        return fromRequest || (m[1] === 'unsafe_load' && !/^(?:File|IO|ERB|Rails\.root|Pathname)\b/.test(arg));
+    });
+    if (matchLineIdx !== -1) {
         findings.push({
             id: `ruby-yaml-${findingCounter.count++}`,
             ruleId: 27201,

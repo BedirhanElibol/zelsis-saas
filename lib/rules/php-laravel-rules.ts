@@ -10,8 +10,8 @@ export function evaluatePhpLaravelRules(file: CodeFile, lines: string[], cleanCo
 
     // PHP-SEC-01: unserialize() user input
     const reg_unserialize = /unserialize\s*\(\s*\$_(GET|POST|REQUEST|COOKIE)/i;
-    if (reg_unserialize.test(cleanContent)) {
-        const matchLineIdx = lines.findIndex(l => reg_unserialize.test(l));
+    const matchLineIdx = lines.findIndex(l => !/^\s*(?:\/\/|#|\*)/.test(l) && reg_unserialize.test(l) && !/allowed_classes['"]\s*=>\s*false/i.test(l));
+    if (matchLineIdx !== -1) {
         findings.push({
             id: `php-uns-${findingCounter.count++}`,
             ruleId: 27202,

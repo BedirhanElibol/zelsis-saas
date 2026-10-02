@@ -5,6 +5,7 @@
 import { Finding } from "@/data/schema";
 import { CodeFile } from "../scanner-engine";
 import { locateMatchLine } from './shared/locate';
+import { capabilityAdds, yamlLine } from './iac-rules';
 export interface K8sHardeningRuleResult {
     findings: Finding[];
     logs: string[];
@@ -25,8 +26,9 @@ export function evaluateK8sHardeningRules(file: CodeFile, lines: string[], clean
         return { findings, logs };
     const ts = new Date().toLocaleTimeString();
     // K8S-01: Privileged Container Execution (privileged: true)
-    if (/privileged\s*:\s*true/i.test(cleanContent)) {
-        const matchLineIdx = locateMatchLine(lines, [/privileged\s*:\s*true/i], l => !l.trim().startsWith('#'));
+    const k8s01Line = yamlLine(lines, /^\s*privileged\s*:\s*true\b/);
+    if (k8s01Line !== -1) {
+        const matchLineIdx = k8s01Line;
         const lineNum = matchLineIdx !== -1 ? matchLineIdx + 1 : 1;
         findings.push({
             id: `k8s8901-${Date.now()}-${findingCounter.count++}`,
@@ -97,8 +99,24 @@ export function evaluateK8sHardeningRules(file: CodeFile, lines: string[], clean
         logs.push(`[${ts}] [K8S AUDIT] Found K8S-03: Missing CPU and Memory Resource Limits at ${file.path}:${lineNum}`);
     }
     // K8S-04: Dangerous Host Path Volume Mount (/ or /etc or /var/run)
-    if (/hostPath\s*:[\s\S]*?path\s*:\s*['"]?(?:\/|\/etc|\/var\/run\/docker\.sock)['"]?/i.test(cleanContent)) {
-        const matchLineIdx = locateMatchLine(lines, [/hostPath\s*:[\s\S]*?path\s*:\s*['"]?(?:\/|\/etc|\/var\/run\/docker\.sock)['"]?/i], l => !l.trim().startsWith('#'));
+    // The `path:` of a hostPath volume (next lines, or inline `hostPath: { path: / }`) is the host root,
+    // /etc, /root, the runtime dirs or a container runtime socket; e.g. /var/log/app is fine
+    const dangerousHostPath = /^\/(?:|etc|root|var\/run|run|var\/lib\/kubelet|(?:var\/)?run\/(?:docker|containerd\/containerd|crio\/crio)\.sock)\/?$/;
+    const k8s04Line = (() => {
+        for (let i = 0; i < lines.length; i++) {
+            if (lines[i].trim().startsWith('#') || !/\bhostPath\s*:/.test(lines[i])) continue;
+            for (let j = i; j < Math.min(lines.length, i + 4); j++) {
+                const p = /(?:^\s*|\{\s*)path\s*:\s*['"]?([^'"\s,}#]+)/.exec(lines[j]);
+                if (p) {
+                    if (dangerousHostPath.test(p[1])) return j;
+                    break;
+                }
+            }
+        }
+        return -1;
+    })();
+    if (k8s04Line !== -1) {
+        const matchLineIdx = k8s04Line;
         const lineNum = matchLineIdx !== -1 ? matchLineIdx + 1 : 1;
         findings.push({
             id: `k8s8904-${Date.now()}-${findingCounter.count++}`,
@@ -217,8 +235,10 @@ export function evaluateK8sHardeningRules(file: CodeFile, lines: string[], clean
         logs.push(`[${ts}] [K8S AUDIT] Found K8S-08: Writable Root Filesystem (readOnlyRootFilesystem: false) at ${file.path}:${lineNum}`);
     }
     // K8S-09: Container Insecure Capability Allocation (ALL or CAP_SYS_ADMIN)
-    if (/(?:CAP_SYS_ADMIN|add\s*:\s*\[\s*['"]ALL['"])/i.test(cleanContent)) {
-        const matchLineIdx = locateMatchLine(lines, [/(?:CAP_SYS_ADMIN|add\s*:\s*\[\s*['"]ALL['"])/i], l => !l.trim().startsWith('#'));
+    // capabilities.add containing ALL or SYS_ADMIN (flow or block list); `drop: [ALL]` is the hardening idiom
+    const k8s09Line = capabilityAdds(lines).find((a) => a.caps.some((c) => c === 'ALL' || c === 'SYS_ADMIN' || c === 'CAP_SYS_ADMIN'))?.line ?? -1;
+    if (k8s09Line !== -1) {
+        const matchLineIdx = k8s09Line;
         const lineNum = matchLineIdx !== -1 ? matchLineIdx + 1 : 1;
         findings.push({
             id: `k8s8909-${Date.now()}-${findingCounter.count++}`,

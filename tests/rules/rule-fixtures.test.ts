@@ -3,15 +3,21 @@ import assert from 'node:assert/strict';
 import { runStaticCodeScan, type CodeFile } from '../../lib/scanner-engine';
 import { readdirSync, readFileSync } from 'node:fs';
 import { join } from 'node:path';
-import { KNOWN_GAPS, RULE_CASES } from './cases';
+import { KNOWN_GAPS, RULE_CASES, type RuleCase } from './cases';
 import { VULNERABLE_VARIANTS } from './variants';
 import { STACK_MATRIX } from './stack-matrix';
 
 const ruleIdsFor = async (files: CodeFile[]) =>
   new Set((await runStaticCodeScan(files, 'fixture')).findings.map((f) => f.ruleId));
 
+/** Per-area fixture tables in tests/rules/fixtures/*.ts, each exporting `CASES`. */
+const AREA_CASES: RuleCase[] = readdirSync(join(__dirname, 'fixtures'))
+  .filter((n) => n.endsWith('.ts'))
+  .sort()
+  .flatMap((n) => (require(join(__dirname, 'fixtures', n)) as { CASES: RuleCase[] }).CASES);
+
 describe('rule fixtures', () => {
-  for (const c of RULE_CASES) {
+  for (const c of [...RULE_CASES, ...AREA_CASES]) {
     describe(`${c.name} (#${c.ruleIds.join(', #')})`, () => {
       it('detects the vulnerable fixture', async () => {
         const found = await ruleIdsFor(c.detects);

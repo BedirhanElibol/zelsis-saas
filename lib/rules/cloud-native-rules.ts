@@ -5,6 +5,7 @@
 import { Finding } from '@/data/schema';
 import { CodeFile } from '../scanner-engine';
 import { locateMatchLine } from './shared/locate';
+import { isYamlPath, openIngressLine, stripHashComments, yamlLine } from './iac-rules';
 export interface CloudNativeRuleResult {
     findings: Finding[];
     logs: string[];
@@ -20,6 +21,8 @@ export function evaluateCloudNativeRules(file: CodeFile, lines: string[], cleanC
         return { findings, logs };
     }
     const ts = new Date().toLocaleTimeString();
+    // Comment-stripped lines (same numbering as `lines`) for line-level rules
+    const cleanLines = cleanContent.split('\n');
     // CLOUD-01: Synchronous Serverless Function Timeout Exceeding 30s
     if (/export\s+const\s+maxDuration\s*=\s*(?:[4-9]\d|\d{3,})/i.test(cleanContent) && !/cron|background|queue/i.test(lowerPath)) {
         const matchLineIdx = locateMatchLine(lines, [/export\s+const\s+maxDuration\s*=\s*(?:[4-9]\d|\d{3,})/i], l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('*'));
@@ -321,8 +324,10 @@ export function evaluateCloudNativeRules(file: CodeFile, lines: string[], cleanC
         logs.push(`[${ts}] ☁️ CLOUD-12: Kubernetes Pod Missing Liveness and Readiness Probes detected (${file.path}:${lineNum})`);
     }
     // CLOUD-13: Kubernetes Pod Running with Privileged SecurityContext
-    if (/(?:privileged:\s*true|allowPrivilegeEscalation:\s*true)/i.test(cleanContent) && /\.(?:ya?ml)$/i.test(file.path)) {
-        const matchLineIdx = locateMatchLine(lines, [/(?:privileged:\s*true|allowPrivilegeEscalation:\s*true)/i], l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('*'));
+    // Only `privileged: true` (allowPrivilegeEscalation: true is the Kubernetes default, a hardening gap rather than a privileged pod)
+    const cloud13Line = isYamlPath(lowerPath) && /^\s*apiVersion\s*:/m.test(cleanContent) ? yamlLine(lines, /^\s*privileged\s*:\s*true\b/) : -1;
+    if (cloud13Line !== -1) {
+        const matchLineIdx = cloud13Line;
         const lineNum = matchLineIdx !== -1 ? matchLineIdx + 1 : 1;
         findings.push({
             id: `cloud13-${Date.now()}-${findingCounter.count++}`,
@@ -496,8 +501,22 @@ export function evaluateCloudNativeRules(file: CodeFile, lines: string[], cleanC
         logs.push(`[${ts}] ☁️ CLOUD-19: Serverless Function Exceeding Bundle Size Limit (>50MB) detected (${file.path}:${lineNum})`);
     }
     // CLOUD-20: CloudFormation / CDK Wildcard IAM Action (Action: '*')
-    if (/(?:Action\s*:\s*[\'"]\*[\'"]|actions\s*=\s*\[[\'"]\*[\'"]\]|Action\s*:\s*\[[\'"]\*[\'"]\])/i.test(cleanContent) && !lowerPath.includes("test")) {
-        const matchLineIdx = locateMatchLine(lines, [/(?:Action\s*:\s*[\'"]\*[\'"]|actions\s*=\s*\[[\'"]\*[\'"]\]|Action\s*:\s*\[[\'"]\*[\'"]\])/i], l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('*'));
+    // Action '*' in an Allow statement: CloudFormation YAML/JSON, CDK PolicyStatement (`actions: ['*']`) or HCL.
+    // The statement context (Effect / PolicyStatement) must sit within a few lines, so app-level RBAC
+    // config such as `{ role: 'admin', actions: ['*'] }` is not mistaken for an IAM policy.
+    const cloud20Line = (() => {
+        if (lowerPath.includes('test')) return -1;
+        const starAction = /(?:\bAction"?\s*[:=]\s*\[?\s*['"]\*['"]|\bactions\s*[:=]\s*\[\s*['"]\*['"]\s*\])/;
+        for (let i = 0; i < lines.length; i++) {
+            const l = cleanLines[i];
+            if (/^\s*(?:\/\/|#|\*)/.test(l) || !starAction.test(l)) continue;
+            const statement = cleanLines.slice(Math.max(0, i - 6), i + 7).join('\n');
+            if (/PolicyStatement|\bEffect"?\s*[:=]|\beffect\s*=/.test(statement) && !/\bDeny\b|Effect\.DENY/.test(statement)) return i;
+        }
+        return -1;
+    })();
+    if (cloud20Line !== -1) {
+        const matchLineIdx = cloud20Line;
         const lineNum = matchLineIdx !== -1 ? matchLineIdx + 1 : 1;
         findings.push({
             id: `cloud20-${Date.now()}-${findingCounter.count++}`,
@@ -646,8 +665,10 @@ export function evaluateCloudNativeRules(file: CodeFile, lines: string[], cleanC
         logs.push(`[${ts}] ☁️ CLOUD-25: Missing AWS WAF Web ACL on Production CloudFront Distribution detected (${file.path}:${lineNum})`);
     }
     // CLOUD-26: CloudFront Missing Enforced HTTPS Redirection
-    if (/(?:AWS::CloudFront::Distribution|aws_cloudfront_distribution)\b/i.test(cleanContent) && /viewerProtocolPolicy\s*:\s*[\'"]allow-all[\'"]|viewer_protocol_policy\s*=\s*[\'"]allow-all[\'"]/i.test(cleanContent)) {
-        const matchLineIdx = locateMatchLine(lines, [/(?:AWS::CloudFront::Distribution|aws_cloudfront_distribution)\b/i, /viewerProtocolPolicy\s*:\s*[\'"]allow-all[\'"]|viewer_protocol_policy\s*=\s*[\'"]allow-all[\'"]/i], l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('*'));
+    // CloudFront-only setting: Terraform, CloudFormation (quoted or bare) and CDK (ViewerProtocolPolicy.ALLOW_ALL)
+    const cloud26Line = yamlLine(cleanLines, /\bviewer_?protocol_?policy"?\s*[:=]\s*(?:['"]?allow-all\b|(?:\w+\.)?ViewerProtocolPolicy\.ALLOW_ALL\b)/i);
+    if (cloud26Line !== -1) {
+        const matchLineIdx = cloud26Line;
         const lineNum = matchLineIdx !== -1 ? matchLineIdx + 1 : 1;
         findings.push({
             id: `cloud26-${Date.now()}-${findingCounter.count++}`,
@@ -671,8 +692,11 @@ export function evaluateCloudNativeRules(file: CodeFile, lines: string[], cleanC
         logs.push(`[${ts}] ☁️ CLOUD-26: CloudFront Missing Enforced HTTPS Redirection detected (${file.path}:${lineNum})`);
     }
     // CLOUD-27: CloudFront Insecure Legacy TLS Protocol Version (<TLSv1.2)
-    if (/(?:AWS::CloudFront::Distribution|aws_cloudfront_distribution)\b/i.test(cleanContent) && /minimumProtocolVersion\s*:\s*[\'"](?:TLSv1|TLSv1_2016)[\'"]/i.test(cleanContent)) {
-        const matchLineIdx = locateMatchLine(lines, [/(?:AWS::CloudFront::Distribution|aws_cloudfront_distribution)\b/i, /minimumProtocolVersion\s*:\s*[\'"](?:TLSv1|TLSv1_2016)[\'"]/i], l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('*'));
+    // CloudFormation (MinimumProtocolVersion: TLSv1, quoted or bare) and CDK (SecurityPolicyProtocol.TLS_V1_2016 etc.);
+    // Terraform minimum_protocol_version is covered by IAC-35
+    const cloud27Line = yamlLine(cleanLines, /\bminimumProtocolVersion"?\s*:\s*(?:['"]?(?:SSLv3|TLSv1|TLSv1_2016|TLSv1\.1_2016)['"]?\s*,?\s*$|(?:\w+\.)?SecurityPolicyProtocol\.(?:SSL_V3|TLS_V1(?:_2016|_1_2016)?)\b)/i);
+    if (cloud27Line !== -1) {
+        const matchLineIdx = cloud27Line;
         const lineNum = matchLineIdx !== -1 ? matchLineIdx + 1 : 1;
         findings.push({
             id: `cloud27-${Date.now()}-${findingCounter.count++}`,
@@ -746,8 +770,9 @@ export function evaluateCloudNativeRules(file: CodeFile, lines: string[], cleanC
         logs.push(`[${ts}] ☁️ CLOUD-29: Indefinite CloudWatch Log Retention Period detected (${file.path}:${lineNum})`);
     }
     // CLOUD-30: Terraform / OpenTofu Plaintext Secret in Output
-    if (/\.tf$/i.test(file.path) && /output\s+["\'][a-zA-Z0-9_-]*(?:password|secret|key|token)["\']\s*\{(?![^}]*sensitive\s*=\s*true)/i.test(cleanContent)) {
-        const matchLineIdx = locateMatchLine(lines, [/output\s+["\'][a-zA-Z0-9_-]*(?:password|secret|key|token)["\']\s*\{(?![^}]*sensitive\s*=\s*true)/i], l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('*'));
+    // Output names ending in a secret noun (not kms_key_arn / key_pair_name / ssh_key_id identifiers)
+    if (/\.tf$/i.test(file.path) && /output\s+["\'][a-zA-Z0-9_-]*(?:password|secret|api_key|private_key|access_key|token)["\']\s*\{(?![^}]*sensitive\s*=\s*true)/i.test(cleanContent)) {
+        const matchLineIdx = locateMatchLine(lines, [/output\s+["\'][a-zA-Z0-9_-]*(?:password|secret|api_key|private_key|access_key|token)["\']\s*\{(?![^}]*sensitive\s*=\s*true)/i], l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('*'));
         const lineNum = matchLineIdx !== -1 ? matchLineIdx + 1 : 1;
         findings.push({
             id: `cloud30-${Date.now()}-${findingCounter.count++}`,
@@ -771,7 +796,8 @@ export function evaluateCloudNativeRules(file: CodeFile, lines: string[], cleanC
         logs.push(`[${ts}] ☁️ CLOUD-30: Terraform / OpenTofu Plaintext Secret in Output detected (${file.path}:${lineNum})`);
     }
     // CLOUD-31: Terraform State Backend Missing Encryption at Rest
-    if (/\.tf$/i.test(file.path) && /backend\s+["\']s3["\']\s*\{(?![^}]*encrypt\s*=\s*true)/i.test(cleanContent)) {
+    // An empty block is partial configuration (-backend-config), which the scanner cannot see
+    if (/\.tf$/i.test(file.path) && /backend\s+["\']s3["\']\s*\{(?!\s*\})(?![^}]*encrypt\s*=\s*true)/i.test(stripHashComments(cleanContent))) {
         const matchLineIdx = locateMatchLine(lines, [/backend\s+["\']s3["\']\s*\{(?![^}]*encrypt\s*=\s*true)/i], l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('*'));
         const lineNum = matchLineIdx !== -1 ? matchLineIdx + 1 : 1;
         findings.push({
@@ -897,7 +923,7 @@ export function evaluateCloudNativeRules(file: CodeFile, lines: string[], cleanC
     }
     // CLOUD-36: Missing CloudTrail Multi-Region Audit Logging
     if (/(?:AWS::CloudTrail::Trail|aws_cloudtrail)\b/i.test(cleanContent) && /isMultiRegionTrail\s*:\s*false|is_multi_region_trail\s*=\s*false/i.test(cleanContent)) {
-        const matchLineIdx = locateMatchLine(lines, [/(?:AWS::CloudTrail::Trail|aws_cloudtrail)\b/i, /isMultiRegionTrail\s*:\s*false|is_multi_region_trail\s*=\s*false/i], l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('*'));
+        const matchLineIdx = locateMatchLine(lines, [/isMultiRegionTrail\s*:\s*false|is_multi_region_trail\s*=\s*false/i], l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('*'));
         const lineNum = matchLineIdx !== -1 ? matchLineIdx + 1 : 1;
         findings.push({
             id: `cloud36-${Date.now()}-${findingCounter.count++}`,
@@ -996,8 +1022,14 @@ export function evaluateCloudNativeRules(file: CodeFile, lines: string[], cleanC
         logs.push(`[${ts}] ☁️ CLOUD-39: Missing VPC Flow Logs on Production Subnets detected (${file.path}:${lineNum})`);
     }
     // CLOUD-40: Security Group Permissive Inbound Ingress (0.0.0.0/0)
-    if (/(?:AWS::EC2::SecurityGroup|aws_security_group)\b/i.test(cleanContent) && /cidrIp\s*:\s*[\'"]0\.0\.0\.0\/0[\'"]|cidr_blocks\s*=\s*\[[\'"]0\.0\.0\.0\/0[\'"]\]/i.test(cleanContent) && /(?:22|3389|5432|3306|27017|6379)\b/i.test(cleanContent)) {
-        const matchLineIdx = locateMatchLine(lines, [/(?:AWS::EC2::SecurityGroup|aws_security_group)\b/i, /cidrIp\s*:\s*[\'"]0\.0\.0\.0\/0[\'"]|cidr_blocks\s*=\s*\[[\'"]0\.0\.0\.0\/0[\'"]\]/i, /(?:22|3389|5432|3306|27017|6379)\b/i], l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('*'));
+    // Admin / database ports open to the internet: Terraform ingress rules (per rule block) and CDK
+    // `addIngressRule(Peer.anyIpv4(), Port.tcp(22))`
+    const exposedPorts = [22, 3389, 5432, 3306, 27017, 6379];
+    const cloud40Line = /\.tf$/i.test(lowerPath)
+        ? openIngressLine(stripHashComments(cleanContent), exposedPorts)
+        : yamlLine(cleanLines, /addIngressRule\(\s*(?:\w+\.)?Peer\.any(?:Ipv4|Ipv6)\(\)\s*,\s*(?:\w+\.)?Port\.tcp\(\s*(?:22|3389|5432|3306|27017|6379)\s*\)/);
+    if (cloud40Line !== -1) {
+        const matchLineIdx = cloud40Line;
         const lineNum = matchLineIdx !== -1 ? matchLineIdx + 1 : 1;
         findings.push({
             id: `cloud40-${Date.now()}-${findingCounter.count++}`,
@@ -1047,7 +1079,7 @@ export function evaluateCloudNativeRules(file: CodeFile, lines: string[], cleanC
     }
     // CLOUD-42: Lambda Function Invocation URL Missing AuthType
     if (/(?:AWS::Lambda::Url|aws_lambda_function_url)\b/i.test(cleanContent) && /authType\s*:\s*[\'"]NONE[\'"]|authorization_type\s*=\s*[\'"]NONE[\'"]/i.test(cleanContent)) {
-        const matchLineIdx = locateMatchLine(lines, [/(?:AWS::Lambda::Url|aws_lambda_function_url)\b/i, /authType\s*:\s*[\'"]NONE[\'"]|authorization_type\s*=\s*[\'"]NONE[\'"]/i], l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('*'));
+        const matchLineIdx = locateMatchLine(lines, [/authType\s*:\s*[\'"]NONE[\'"]|authorization_type\s*=\s*[\'"]NONE[\'"]/i], l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('*'));
         const lineNum = matchLineIdx !== -1 ? matchLineIdx + 1 : 1;
         findings.push({
             id: `cloud42-${Date.now()}-${findingCounter.count++}`,
@@ -1072,7 +1104,7 @@ export function evaluateCloudNativeRules(file: CodeFile, lines: string[], cleanC
     }
     // CLOUD-43: Redis / ElastiCache Cluster Missing In-Transit Encryption
     if (/(?:AWS::ElastiCache::ReplicationGroup|aws_elasticache_replication_group)\b/i.test(cleanContent) && /transitEncryptionEnabled\s*:\s*false|transit_encryption_enabled\s*=\s*false/i.test(cleanContent)) {
-        const matchLineIdx = locateMatchLine(lines, [/(?:AWS::ElastiCache::ReplicationGroup|aws_elasticache_replication_group)\b/i, /transitEncryptionEnabled\s*:\s*false|transit_encryption_enabled\s*=\s*false/i], l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('*'));
+        const matchLineIdx = locateMatchLine(lines, [/transitEncryptionEnabled\s*:\s*false|transit_encryption_enabled\s*=\s*false/i], l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('*'));
         const lineNum = matchLineIdx !== -1 ? matchLineIdx + 1 : 1;
         findings.push({
             id: `cloud43-${Date.now()}-${findingCounter.count++}`,

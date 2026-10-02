@@ -20,9 +20,14 @@ export function evaluateIacRules(file: CodeFile, lines: string[], cleanContent: 
         return { findings, logs };
     }
     const ts = new Date().toLocaleTimeString();
+    // Terraform source with `#` comments blanked; rules below evaluate one resource block at a time
+    const isTf = /\.tf$/i.test(lowerPath);
+    const tf = isTf ? stripHashComments(cleanContent) : '';
+    const isYaml = isYamlPath(lowerPath);
     // IAC-01: Security Group Ingress Open to World on SSH Port 22
-    if (/(?:aws_security_group|AWS::EC2::SecurityGroup)/i.test(cleanContent) && /from_port\s*=\s*22\b/i.test(cleanContent) && /0\.0\.0\.0\/0/i.test(cleanContent)) {
-        const matchLineIdx = locateMatchLine(lines, [/(?:aws_security_group|AWS::EC2::SecurityGroup)/i, /from_port\s*=\s*22\b/i, /0\.0\.0\.0\/0/i], l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('*'));
+    const iac01Line = isTf ? openIngressLine(tf, [22]) : -1;
+    if (iac01Line !== -1) {
+        const matchLineIdx = iac01Line;
         const lineNum = matchLineIdx !== -1 ? matchLineIdx + 1 : 1;
         findings.push({
             id: `iac01-${Date.now()}-${findingCounter.count++}`,
@@ -46,8 +51,9 @@ export function evaluateIacRules(file: CodeFile, lines: string[], cleanContent: 
         logs.push(`[${ts}] 🏗️ CRITICAL: IAC-01 finding in ${file.path}:${lineNum}`);
     }
     // IAC-02: Security Group Ingress Open to World on RDP Port 3389
-    if (/(?:aws_security_group|AWS::EC2::SecurityGroup)/i.test(cleanContent) && /from_port\s*=\s*3389\b/i.test(cleanContent) && /0\.0\.0\.0\/0/i.test(cleanContent)) {
-        const matchLineIdx = locateMatchLine(lines, [/(?:aws_security_group|AWS::EC2::SecurityGroup)/i, /from_port\s*=\s*3389\b/i, /0\.0\.0\.0\/0/i], l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('*'));
+    const iac02Line = isTf ? openIngressLine(tf, [3389]) : -1;
+    if (iac02Line !== -1) {
+        const matchLineIdx = iac02Line;
         const lineNum = matchLineIdx !== -1 ? matchLineIdx + 1 : 1;
         findings.push({
             id: `iac02-${Date.now()}-${findingCounter.count++}`,
@@ -71,8 +77,9 @@ export function evaluateIacRules(file: CodeFile, lines: string[], cleanContent: 
         logs.push(`[${ts}] 🏗️ CRITICAL: IAC-02 finding in ${file.path}:${lineNum}`);
     }
     // IAC-03: Security Group Ingress Open to World on Database Ports (5432 / 3306)
-    if (/(?:aws_security_group|AWS::EC2::SecurityGroup)/i.test(cleanContent) && /(?:from_port\s*=\s*5432|from_port\s*=\s*3306)\b/i.test(cleanContent) && /0\.0\.0\.0\/0/i.test(cleanContent)) {
-        const matchLineIdx = locateMatchLine(lines, [/(?:aws_security_group|AWS::EC2::SecurityGroup)/i, /(?:from_port\s*=\s*5432|from_port\s*=\s*3306)\b/i, /0\.0\.0\.0\/0/i], l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('*'));
+    const iac03Line = isTf ? openIngressLine(tf, [5432, 3306]) : -1;
+    if (iac03Line !== -1) {
+        const matchLineIdx = iac03Line;
         const lineNum = matchLineIdx !== -1 ? matchLineIdx + 1 : 1;
         findings.push({
             id: `iac03-${Date.now()}-${findingCounter.count++}`,
@@ -121,8 +128,25 @@ export function evaluateIacRules(file: CodeFile, lines: string[], cleanContent: 
         logs.push(`[${ts}] 🏗️ HIGH: IAC-04 finding in ${file.path}:${lineNum}`);
     }
     // IAC-05: IAM Policy with Wildcard Administrative Actions (Action: *)
-    if (/(?:aws_iam_policy|aws_iam_role_policy)\b/i.test(cleanContent) && /"Action"\s*:\s*"\*"/i.test(cleanContent) && /"Resource"\s*:\s*"\*"/i.test(cleanContent)) {
-        const matchLineIdx = locateMatchLine(lines, [/(?:aws_iam_policy|aws_iam_role_policy)\b/i, /"Action"\s*:\s*"\*"/i, /"Resource"\s*:\s*"\*"/i], l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('*'));
+    // Allow statements granting Action "*" on Resource "*": inline JSON / jsonencode policies and
+    // aws_iam_policy_document statements (both keys within a few lines, no Deny in the block)
+    const iac05Line = (() => {
+        if (!isTf) return -1;
+        const starAction = /\bactions?"?\s*[:=]\s*\[?\s*"\*"/i;
+        const starResource = /\bresources?"?\s*[:=]\s*\[?\s*"\*"/i;
+        const blocks = [
+            ...hclBlocks(tf, tfResource('aws_iam_policy|aws_iam_role_policy|aws_iam_user_policy|aws_iam_group_policy')),
+            ...hclBlocks(tf, /data\s+"aws_iam_policy_document"\s+"([\w-]+)"/).flatMap((d) => hclBlocks(tf, /\bstatement/, d))
+        ];
+        for (const b of blocks) {
+            if (!starAction.test(b.body) || !starResource.test(b.body) || /"?effect"?\s*[:=]\s*"Deny"/i.test(b.body)) continue;
+            const a = hclLine(tf, b, starAction);
+            if (Math.abs(a - hclLine(tf, b, starResource)) <= 6) return a;
+        }
+        return -1;
+    })();
+    if (iac05Line !== -1) {
+        const matchLineIdx = iac05Line;
         const lineNum = matchLineIdx !== -1 ? matchLineIdx + 1 : 1;
         findings.push({
             id: `iac05-${Date.now()}-${findingCounter.count++}`,
@@ -147,7 +171,7 @@ export function evaluateIacRules(file: CodeFile, lines: string[], cleanContent: 
     }
     // IAC-06: S3 Bucket Versioning Disabled on Critical Storage
     if (/aws_s3_bucket_versioning\b/i.test(cleanContent) && /status\s*=\s*["\']Disabled["\']/i.test(cleanContent)) {
-        const matchLineIdx = locateMatchLine(lines, [/aws_s3_bucket_versioning\b/i, /status\s*=\s*["\']Disabled["\']/i], l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('*'));
+        const matchLineIdx = locateMatchLine(lines, [/status\s*=\s*["\']Disabled["\']/i], l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('*'));
         const lineNum = matchLineIdx !== -1 ? matchLineIdx + 1 : 1;
         findings.push({
             id: `iac06-${Date.now()}-${findingCounter.count++}`,
@@ -172,7 +196,7 @@ export function evaluateIacRules(file: CodeFile, lines: string[], cleanContent: 
     }
     // IAC-07: AWS CloudTrail Multi-Region Audit Logging Disabled
     if (/aws_cloudtrail\b/i.test(cleanContent) && /is_multi_region_trail\s*=\s*false/i.test(cleanContent)) {
-        const matchLineIdx = locateMatchLine(lines, [/aws_cloudtrail\b/i, /is_multi_region_trail\s*=\s*false/i], l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('*'));
+        const matchLineIdx = locateMatchLine(lines, [/is_multi_region_trail\s*=\s*false/i], l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('*'));
         const lineNum = matchLineIdx !== -1 ? matchLineIdx + 1 : 1;
         findings.push({
             id: `iac07-${Date.now()}-${findingCounter.count++}`,
@@ -222,7 +246,7 @@ export function evaluateIacRules(file: CodeFile, lines: string[], cleanContent: 
     }
     // IAC-09: RDS Database Instance Missing Automated Backup Retention
     if (/aws_db_instance\b/i.test(cleanContent) && /backup_retention_period\s*=\s*0\b/i.test(cleanContent)) {
-        const matchLineIdx = locateMatchLine(lines, [/aws_db_instance\b/i, /backup_retention_period\s*=\s*0\b/i], l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('*'));
+        const matchLineIdx = locateMatchLine(lines, [/backup_retention_period\s*=\s*0\b/i], l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('*'));
         const lineNum = matchLineIdx !== -1 ? matchLineIdx + 1 : 1;
         findings.push({
             id: `iac09-${Date.now()}-${findingCounter.count++}`,
@@ -246,8 +270,9 @@ export function evaluateIacRules(file: CodeFile, lines: string[], cleanContent: 
         logs.push(`[${ts}] 🏗️ HIGH: IAC-09 finding in ${file.path}:${lineNum}`);
     }
     // IAC-10: RDS Database Instance Publicly Accessible (publicly_accessible = true)
-    if (/aws_db_instance\b/i.test(cleanContent) && /publicly_accessible\s*=\s*true/i.test(cleanContent)) {
-        const matchLineIdx = locateMatchLine(lines, [/aws_db_instance\b/i, /publicly_accessible\s*=\s*true/i], l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('*'));
+    const iac10Line = isTf ? attrLineIn(tf, hclBlocks(tf, tfResource('aws_db_instance|aws_rds_cluster_instance')), /\bpublicly_accessible\s*=\s*true\b/) : -1;
+    if (iac10Line !== -1) {
+        const matchLineIdx = iac10Line;
         const lineNum = matchLineIdx !== -1 ? matchLineIdx + 1 : 1;
         findings.push({
             id: `iac10-${Date.now()}-${findingCounter.count++}`,
@@ -296,8 +321,9 @@ export function evaluateIacRules(file: CodeFile, lines: string[], cleanContent: 
         logs.push(`[${ts}] 🏗️ HIGH: IAC-11 finding in ${file.path}:${lineNum}`);
     }
     // IAC-12: Kubernetes Container Running with Host PID or IPC Namespace
-    if (/(?:hostPID\s*:\s*true|hostIPC\s*:\s*true)/i.test(cleanContent) && /\.(?:ya?ml)$/i.test(file.path)) {
-        const matchLineIdx = locateMatchLine(lines, [/(?:hostPID\s*:\s*true|hostIPC\s*:\s*true)/i], l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('*'));
+    const iac12Line = isYaml ? yamlLine(lines, /^\s*host(?:PID|IPC)\s*:\s*true\b/) : -1;
+    if (iac12Line !== -1) {
+        const matchLineIdx = iac12Line;
         const lineNum = matchLineIdx !== -1 ? matchLineIdx + 1 : 1;
         findings.push({
             id: `iac12-${Date.now()}-${findingCounter.count++}`,
@@ -496,8 +522,10 @@ export function evaluateIacRules(file: CodeFile, lines: string[], cleanContent: 
         logs.push(`[${ts}] 🏗️ MEDIUM: IAC-19 finding in ${file.path}:${lineNum}`);
     }
     // IAC-20: AWS KMS Key Policy Permitting Wildcard Principal (*)
-    if (/aws_kms_key\b/i.test(cleanContent) && /"Principal"\s*:\s*\{[^}]*"AWS"\s*:\s*"\*"/i.test(cleanContent)) {
-        const matchLineIdx = locateMatchLine(lines, [/aws_kms_key\b/i, /"Principal"\s*:\s*\{[^}]*"AWS"\s*:\s*"\*"/i], l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('*'));
+    // Key policy granting everyone with no Condition (e.g. kms:CallerAccount) and no Deny statement
+    const iac20Line = isTf ? attrLineIn(tf, hclBlocks(tf, tfResource('aws_kms_key')), PRINCIPAL_STAR, (b) => UNSCOPED_GRANT_EXEMPT.test(b.body)) : -1;
+    if (iac20Line !== -1) {
+        const matchLineIdx = iac20Line;
         const lineNum = matchLineIdx !== -1 ? matchLineIdx + 1 : 1;
         findings.push({
             id: `iac20-${Date.now()}-${findingCounter.count++}`,
@@ -521,8 +549,9 @@ export function evaluateIacRules(file: CodeFile, lines: string[], cleanContent: 
         logs.push(`[${ts}] 🏗️ CRITICAL: IAC-20 finding in ${file.path}:${lineNum}`);
     }
     // IAC-21: Container Running with hostNetwork Enabled
-    if (/hostNetwork\s*:\s*true/i.test(cleanContent) && /\.(?:ya?ml|dockerfile)$/i.test(file.path)) {
-        const matchLineIdx = locateMatchLine(lines, [/hostNetwork\s*:\s*true/i], l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('*'));
+    const iac21Line = isYaml ? yamlLine(lines, /^\s*hostNetwork\s*:\s*true\b/) : -1;
+    if (iac21Line !== -1) {
+        const matchLineIdx = iac21Line;
         const lineNum = matchLineIdx !== -1 ? matchLineIdx + 1 : 1;
         findings.push({
             id: `iac21-${Date.now()}-${findingCounter.count++}`,
@@ -546,8 +575,10 @@ export function evaluateIacRules(file: CodeFile, lines: string[], cleanContent: 
         logs.push(`[${ts}] 🏗️ CRITICAL: IAC-21 finding in ${file.path}:${lineNum}`);
     }
     // IAC-22: Terraform Resource Using Hardcoded Plaintext Passwords
-    if (/\.(?:tf|hcl)$/i.test(file.path) && /password\s*=\s*["\'][^"\'$]{6,}["\']/i.test(cleanContent) && !/data\.aws_secretsmanager/i.test(cleanContent) && !/test|spec|mock/i.test(lowerPath)) {
-        const matchLineIdx = locateMatchLine(lines, [/password\s*=\s*["\'][^"\'$]{6,}["\']/i], l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('*'));
+    const iac22Line = /\.(?:tf|hcl)$/i.test(file.path) && !/data\.aws_secretsmanager/i.test(cleanContent) && !/test|spec|mock/i.test(lowerPath)
+        ? yamlLine(lines, /^\s*\w*password\s*=\s*["\'][^"\'$]{6,}["\']/i) : -1;
+    if (iac22Line !== -1) {
+        const matchLineIdx = iac22Line;
         const lineNum = matchLineIdx !== -1 ? matchLineIdx + 1 : 1;
         findings.push({
             id: `iac22-${Date.now()}-${findingCounter.count++}`,
@@ -572,7 +603,7 @@ export function evaluateIacRules(file: CodeFile, lines: string[], cleanContent: 
     }
     // IAC-23: AWS Elasticache Redis Cluster Missing In-Transit Encryption
     if (/aws_elasticache_replication_group\b/i.test(cleanContent) && /transit_encryption_enabled\s*=\s*false/i.test(cleanContent)) {
-        const matchLineIdx = locateMatchLine(lines, [/aws_elasticache_replication_group\b/i, /transit_encryption_enabled\s*=\s*false/i], l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('*'));
+        const matchLineIdx = locateMatchLine(lines, [/transit_encryption_enabled\s*=\s*false/i], l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('*'));
         const lineNum = matchLineIdx !== -1 ? matchLineIdx + 1 : 1;
         findings.push({
             id: `iac23-${Date.now()}-${findingCounter.count++}`,
@@ -596,8 +627,10 @@ export function evaluateIacRules(file: CodeFile, lines: string[], cleanContent: 
         logs.push(`[${ts}] 🏗️ HIGH: IAC-23 finding in ${file.path}:${lineNum}`);
     }
     // IAC-24: AWS S3 Bucket Policy Permitting Wildcard Principal (*)
-    if (/aws_s3_bucket_policy\b/i.test(cleanContent) && /"Principal"\s*:\s*"\*"/i.test(cleanContent)) {
-        const matchLineIdx = locateMatchLine(lines, [/aws_s3_bucket_policy\b/i, /"Principal"\s*:\s*"\*"/i], l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('*'));
+    // Bucket policy granting everyone with no Condition and no Deny (e.g. the common deny-insecure-transport policy)
+    const iac24Line = isTf ? attrLineIn(tf, hclBlocks(tf, tfResource('aws_s3_bucket_policy')), PRINCIPAL_STAR, (b) => UNSCOPED_GRANT_EXEMPT.test(b.body)) : -1;
+    if (iac24Line !== -1) {
+        const matchLineIdx = iac24Line;
         const lineNum = matchLineIdx !== -1 ? matchLineIdx + 1 : 1;
         findings.push({
             id: `iac24-${Date.now()}-${findingCounter.count++}`,
@@ -696,8 +729,19 @@ export function evaluateIacRules(file: CodeFile, lines: string[], cleanContent: 
         logs.push(`[${ts}] 🏗️ LOW: IAC-27 finding in ${file.path}:${lineNum}`);
     }
     // IAC-28: AWS Elastic Load Balancer (ALB) Dropping HTTP to HTTPS Redirection
-    if (/aws_lb_listener\b/i.test(cleanContent) && /port\s*=\s*80\b/i.test(cleanContent) && /type\s*=\s*["\']forward["\']/i.test(cleanContent)) {
-        const matchLineIdx = locateMatchLine(lines, [/aws_lb_listener\b/i, /port\s*=\s*80\b/i, /type\s*=\s*["\']forward["\']/i], l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('*'));
+    // A plain-HTTP listener (port 80 / protocol HTTP) that forwards to the app instead of redirecting,
+    // unless it belongs to an internal load balancer declared in the same file
+    const iac28Line = (() => {
+        if (!isTf) return -1;
+        const internalLbs = new Set(hclBlocks(tf, tfResource('aws_lb|aws_alb')).filter((b) => /\binternal\s*=\s*true\b/.test(b.body)).map((b) => b.label));
+        return attrLineIn(tf, hclBlocks(tf, tfResource('aws_lb_listener|aws_alb_listener')), /\btype\s*=\s*"forward"/, (b) => {
+            const plainHttp = (/\bport\s*=\s*"?80"?\s*$/m.test(b.body) || /\bprotocol\s*=\s*"HTTP"/.test(b.body)) && !/\bprotocol\s*=\s*"HTTPS"/.test(b.body);
+            const lb = /load_balancer_arn\s*=\s*aws_a?lb\.([\w-]+)\.arn/.exec(b.body);
+            return !plainHttp || (!!lb && internalLbs.has(lb[1]));
+        });
+    })();
+    if (iac28Line !== -1) {
+        const matchLineIdx = iac28Line;
         const lineNum = matchLineIdx !== -1 ? matchLineIdx + 1 : 1;
         findings.push({
             id: `iac28-${Date.now()}-${findingCounter.count++}`,
@@ -721,8 +765,9 @@ export function evaluateIacRules(file: CodeFile, lines: string[], cleanContent: 
         logs.push(`[${ts}] 🏗️ HIGH: IAC-28 finding in ${file.path}:${lineNum}`);
     }
     // IAC-29: Kubernetes Pod Permitting Linux Capabilities (ALL)
-    if (/capabilities:\s*\{[^}]*add:\s*\[[\s\S]*?["\']ALL["\']/i.test(cleanContent) && /\.(?:ya?ml)$/i.test(file.path)) {
-        const matchLineIdx = locateMatchLine(lines, [/capabilities:\s*\{[^}]*add:\s*\[[\s\S]*?["\']ALL["\']/i], l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('*'));
+    const iac29Line = isYaml ? (capabilityAdds(lines).find((a) => a.caps.includes('ALL'))?.line ?? -1) : -1;
+    if (iac29Line !== -1) {
+        const matchLineIdx = iac29Line;
         const lineNum = matchLineIdx !== -1 ? matchLineIdx + 1 : 1;
         findings.push({
             id: `iac29-${Date.now()}-${findingCounter.count++}`,
@@ -771,8 +816,9 @@ export function evaluateIacRules(file: CodeFile, lines: string[], cleanContent: 
         logs.push(`[${ts}] 🏗️ MEDIUM: IAC-30 finding in ${file.path}:${lineNum}`);
     }
     // IAC-31: Docker Compose Version 2/3 File Declaring Privileged Flag
-    if (/docker-compose.*\.ya?ml$/i.test(file.path) && /privileged\s*:\s*true/i.test(cleanContent)) {
-        const matchLineIdx = locateMatchLine(lines, [/privileged\s*:\s*true/i], l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('*'));
+    const iac31Line = /(?:^|\/)(?:docker-)?compose(?:[.-][\w.-]+)?\.ya?ml$/i.test(lowerPath) ? yamlLine(lines, /^\s*privileged\s*:\s*true\b/) : -1;
+    if (iac31Line !== -1) {
+        const matchLineIdx = iac31Line;
         const lineNum = matchLineIdx !== -1 ? matchLineIdx + 1 : 1;
         findings.push({
             id: `iac31-${Date.now()}-${findingCounter.count++}`,
@@ -822,7 +868,7 @@ export function evaluateIacRules(file: CodeFile, lines: string[], cleanContent: 
     }
     // IAC-33: AWS OpenSearch / Elasticsearch Cluster Missing Node-to-Node Encryption
     if (/aws_opensearch_domain\b/i.test(cleanContent) && /node_to_node_encryption\s*\{[^}]*enabled\s*=\s*false/i.test(cleanContent)) {
-        const matchLineIdx = locateMatchLine(lines, [/aws_opensearch_domain\b/i, /node_to_node_encryption\s*\{[^}]*enabled\s*=\s*false/i], l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('*'));
+        const matchLineIdx = locateMatchLine(lines, [/node_to_node_encryption\s*\{/i], l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('*'));
         const lineNum = matchLineIdx !== -1 ? matchLineIdx + 1 : 1;
         findings.push({
             id: `iac33-${Date.now()}-${findingCounter.count++}`,
@@ -871,8 +917,9 @@ export function evaluateIacRules(file: CodeFile, lines: string[], cleanContent: 
         logs.push(`[${ts}] 🏗️ HIGH: IAC-34 finding in ${file.path}:${lineNum}`);
     }
     // IAC-35: AWS CloudFront Distribution Using Insecure SSL/TLS Protocols (TLSv1)
-    if (/aws_cloudfront_distribution\b/i.test(cleanContent) && /minimum_protocol_version\s*=\s*["\']TLSv1["\']/i.test(cleanContent)) {
-        const matchLineIdx = locateMatchLine(lines, [/aws_cloudfront_distribution\b/i, /minimum_protocol_version\s*=\s*["\']TLSv1["\']/i], l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('*'));
+    const iac35Line = isTf ? attrLineIn(tf, hclBlocks(tf, tfResource('aws_cloudfront_distribution')), /\bminimum_protocol_version\s*=\s*"(?:SSLv3|TLSv1|TLSv1_2016|TLSv1\.1_2016)"/) : -1;
+    if (iac35Line !== -1) {
+        const matchLineIdx = iac35Line;
         const lineNum = matchLineIdx !== -1 ? matchLineIdx + 1 : 1;
         findings.push({
             id: `iac35-${Date.now()}-${findingCounter.count++}`,
@@ -947,7 +994,7 @@ export function evaluateIacRules(file: CodeFile, lines: string[], cleanContent: 
     }
     // IAC-38: AWS EKS Cluster Endpoint Publicly Accessible Without CIDR Whitelist
     if (/aws_eks_cluster\b/i.test(cleanContent) && /endpoint_public_access\s*=\s*true/i.test(cleanContent) && !/public_access_cidrs/i.test(cleanContent)) {
-        const matchLineIdx = locateMatchLine(lines, [/aws_eks_cluster\b/i, /endpoint_public_access\s*=\s*true/i], l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('*'));
+        const matchLineIdx = locateMatchLine(lines, [/endpoint_public_access\s*=\s*true/i], l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('*'));
         const lineNum = matchLineIdx !== -1 ? matchLineIdx + 1 : 1;
         findings.push({
             id: `iac38-${Date.now()}-${findingCounter.count++}`,
@@ -1047,7 +1094,7 @@ export function evaluateIacRules(file: CodeFile, lines: string[], cleanContent: 
     }
     // IAC-42: AWS Lambda Function Runtime Using Deprecated Node.js or Python
     if (/aws_lambda_function\b/i.test(cleanContent) && /runtime\s*=\s*["\'](?:nodejs1[0-6]\.x|python3\.[6-8])["\']/i.test(cleanContent)) {
-        const matchLineIdx = locateMatchLine(lines, [/aws_lambda_function\b/i, /runtime\s*=\s*["\'](?:nodejs1[0-6]\.x|python3\.[6-8])["\']/i], l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('*'));
+        const matchLineIdx = locateMatchLine(lines, [/runtime\s*=\s*["\'](?:nodejs1[0-6]\.x|python3\.[6-8])["\']/i], l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('*'));
         const lineNum = matchLineIdx !== -1 ? matchLineIdx + 1 : 1;
         findings.push({
             id: `iac42-${Date.now()}-${findingCounter.count++}`,
@@ -1097,7 +1144,7 @@ export function evaluateIacRules(file: CodeFile, lines: string[], cleanContent: 
     }
     // IAC-44: AWS RDS Parameter Group Enforcing SSL/TLS Disabled
     if (/aws_db_parameter_group\b/i.test(cleanContent) && /name\s*=\s*["\']rds\.force_ssl["\'][\s\S]*?value\s*=\s*["\']0["\']/i.test(cleanContent)) {
-        const matchLineIdx = locateMatchLine(lines, [/aws_db_parameter_group\b/i, /name\s*=\s*["\']rds\.force_ssl["\'][\s\S]*?value\s*=\s*["\']0["\']/i], l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('*'));
+        const matchLineIdx = locateMatchLine(lines, [/rds\.force_ssl/i], l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('*'));
         const lineNum = matchLineIdx !== -1 ? matchLineIdx + 1 : 1;
         findings.push({
             id: `iac44-${Date.now()}-${findingCounter.count++}`,
@@ -1196,8 +1243,12 @@ export function evaluateIacRules(file: CodeFile, lines: string[], cleanContent: 
         logs.push(`[${ts}] 🏗️ HIGH: IAC-47 finding in ${file.path}:${lineNum}`);
     }
     // IAC-48: Terraform AWS EC2 Instance Missing IMDSv2 Enforcement
-    if (/aws_instance\b/i.test(cleanContent) && /metadata_options\s*\{[^}]*http_tokens\s*=\s*["\']optional["\']/i.test(cleanContent)) {
-        const matchLineIdx = locateMatchLine(lines, [/aws_instance\b/i, /metadata_options\s*\{[^}]*http_tokens\s*=\s*["\']optional["\']/i], l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('*'));
+    // IMDSv1 explicitly left on (http_tokens = "optional"): SSRF can read instance role credentials
+    const iac48Line = isTf
+        ? attrLineIn(tf, hclBlocks(tf, tfResource('aws_instance|aws_launch_template')).flatMap((b) => hclBlocks(tf, /\bmetadata_options/, b)), /\bhttp_tokens\s*=\s*"optional"/)
+        : -1;
+    if (iac48Line !== -1) {
+        const matchLineIdx = iac48Line;
         const lineNum = matchLineIdx !== -1 ? matchLineIdx + 1 : 1;
         findings.push({
             id: `iac48-${Date.now()}-${findingCounter.count++}`,
@@ -1271,4 +1322,118 @@ export function evaluateIacRules(file: CodeFile, lines: string[], cleanContent: 
         logs.push(`[${ts}] 🏗️ LOW: IAC-50 finding in ${file.path}:${lineNum}`);
     }
     return { findings, logs };
+}
+
+// ---------------------------------------------------------------------------------------------
+// Shared Terraform / YAML / Dockerfile helpers (also used by the cloud-native, terraform-iac,
+// k8s-hardening and container-security packs). Rules evaluate one resource block at a time so a
+// setting in one resource is never paired with an unrelated resource elsewhere in the file.
+// ---------------------------------------------------------------------------------------------
+
+/** Blanks `#` comment lines (HCL, YAML, Dockerfile) while keeping line numbers stable. */
+export const stripHashComments = (content: string): string => content.replace(/^[ \t]*#.*$/gm, '');
+
+const lineAt = (content: string, index: number): number => content.slice(0, index).split('\n').length - 1;
+
+export const isYamlPath = (path: string): boolean => /\.ya?ml$/i.test(path);
+
+/** A brace-matched HCL block: `start` is the header offset, `offset`/`body` the text between the braces. */
+export interface HclBlock { start: number; offset: number; body: string; label: string }
+
+/** Header regex for `resource "<type>" "<name>"`; `type` may be an alternation. Captures the name. */
+export const tfResource = (type: string): RegExp => new RegExp(`resource\\s+"(?:${type})"\\s+"([\\w-]+)"`);
+
+/** Blocks whose header matches `header` (the `{` is appended), searched in `src` or inside `within`. */
+export function hclBlocks(src: string, header: RegExp, within?: HclBlock): HclBlock[] {
+    const text = within ? within.body : src;
+    const base = within ? within.offset : 0;
+    const re = new RegExp(`${header.source}\\s*\\{`, 'g');
+    const blocks: HclBlock[] = [];
+    for (const m of text.matchAll(re)) {
+        const open = (m.index ?? 0) + m[0].length - 1;
+        let depth = 0;
+        let end = open;
+        for (; end < text.length; end++) {
+            if (text[end] === '{') depth++;
+            else if (text[end] === '}' && --depth === 0) break;
+        }
+        blocks.push({ start: base + (m.index ?? 0), offset: base + open + 1, body: text.slice(open + 1, end), label: m[1] ?? '' });
+    }
+    return blocks;
+}
+
+/** 0-based line of the first `attr` match inside the block (the header line when absent). */
+export function hclLine(src: string, block: HclBlock, attr?: RegExp): number {
+    const m = attr ? new RegExp(attr.source, attr.flags.replace('g', '')).exec(block.body) : null;
+    return lineAt(src, m ? block.offset + m.index : block.start);
+}
+
+/** First block (of `blocks`) whose body matches `attr`, as a 0-based line of that attribute; -1 when none. */
+export function attrLineIn(src: string, blocks: HclBlock[], attr: RegExp, skip?: (b: HclBlock) => boolean): number {
+    const hit = blocks.find((b) => attr.test(b.body) && !(skip && skip(b)));
+    return hit ? hclLine(src, hit, attr) : -1;
+}
+
+/** A policy principal of everyone: "Principal": "*" or {"AWS": "*"} (heredoc JSON or jsonencode). */
+export const PRINCIPAL_STAR = /"?\bPrincipal"?\s*[:=]\s*(?:"\*"|\{[^}]*"?\bAWS"?\s*[:=]\s*\[?\s*"\*")/;
+/** Grants to everyone are scoped by a Condition, or the statement is a Deny guard. */
+export const UNSCOPED_GRANT_EXEMPT = /"?\bCondition"?\s*[:=]|"?\bEffect"?\s*[:=]\s*"Deny"/;
+
+const WORLD_CIDR =/(?:\bcidr_blocks|\bipv6_cidr_blocks)\s*=\s*\[[^\]]*"(?:0\.0\.0\.0\/0|::\/0)"|\bcidr_ipv[46]\s*=\s*"(?:0\.0\.0\.0\/0|::\/0)"/;
+
+function ingressPorts(body: string): [number, number] | null {
+    if (/\b(?:ip_)?protocol\s*=\s*"(?:-1|all)"/.test(body)) return [0, 65535];
+    const from = /\bfrom_port\s*=\s*(\d+)/.exec(body);
+    if (!from) return null;
+    const to = /\bto_port\s*=\s*(\d+)/.exec(body);
+    return [Number(from[1]), to ? Number(to[1]) : Number(from[1])];
+}
+
+/**
+ * Terraform ingress rules open to the internet (0.0.0.0/0 or ::/0) whose port range covers one of
+ * `ports`: inline `ingress {}` blocks of aws_security_group, aws_security_group_rule (type = "ingress")
+ * and aws_vpc_security_group_ingress_rule. Returns the 0-based line of the CIDR, or -1.
+ */
+export function openIngressLine(src: string, ports: number[]): number {
+    const candidates: HclBlock[] = [];
+    for (const sg of hclBlocks(src, tfResource('aws_security_group'))) candidates.push(...hclBlocks(src, /\bingress/, sg));
+    candidates.push(...hclBlocks(src, tfResource('aws_security_group_rule')).filter((b) => /\btype\s*=\s*"ingress"/.test(b.body)));
+    candidates.push(...hclBlocks(src, tfResource('aws_vpc_security_group_ingress_rule')));
+    for (const b of candidates) {
+        const range = ingressPorts(b.body);
+        if (range && WORLD_CIDR.test(b.body) && ports.some((p) => range[0] <= p && p <= range[1])) return hclLine(src, b, WORLD_CIDR);
+    }
+    return -1;
+}
+
+/** 0-based index of the first non-comment YAML line matching `re`; -1 when none. */
+export const yamlLine = (lines: string[], re: RegExp): number => lines.findIndex((l) => !l.trim().startsWith('#') && re.test(l));
+
+/** Kubernetes `capabilities.add` lists (flow `[A, B]` or block `- A` style), upper-cased, with their 0-based line. */
+export function capabilityAdds(lines: string[]): { line: number; caps: string[] }[] {
+    const out: { line: number; caps: string[] }[] = [];
+    const parseFlow = (list: string) => list.replace(/[\[\]"']/g, '').split(',').map((c) => c.trim().toUpperCase()).filter(Boolean);
+    lines.forEach((l, i) => {
+        if (l.trim().startsWith('#')) return;
+        const inline = /capabilities\s*:\s*\{[^}]*\badd\s*:\s*(\[[^\]]*\])/.exec(l);
+        if (inline) {
+            out.push({ line: i, caps: parseFlow(inline[1]) });
+            return;
+        }
+        const m = /^\s*add\s*:\s*([^#]*)/.exec(l);
+        if (!m || !lines.slice(Math.max(0, i - 4), i).some((p) => /^\s*capabilities\s*:\s*$/.test(p))) return;
+        const rest = m[1].trim();
+        if (rest.startsWith('[')) {
+            out.push({ line: i, caps: parseFlow(rest) });
+            return;
+        }
+        const caps: string[] = [];
+        for (let j = i + 1; j < lines.length; j++) {
+            const item = /^\s*-\s*["']?([\w]+)["']?\s*(?:#.*)?$/.exec(lines[j]);
+            if (!item) break;
+            caps.push(item[1].toUpperCase());
+        }
+        out.push({ line: i, caps });
+    });
+    return out;
 }

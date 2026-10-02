@@ -6,6 +6,19 @@ import { Finding } from '@/data/schema';
 import { CodeFile } from '../scanner-engine';
 import { RATE_LIMIT_GUARD, SERVER_HANDLER, WEBHOOK_VERIFY, isOutboundWebhookSender } from './shared/stack-signals';
 import { locateMatchLine } from './shared/locate';
+/** HMAC / signature compared with a plain equality operator (timing side channel). */
+const SIGNATURE_PLAIN_EQ = /\b\w*(?:signature|hmac|digest)\w*\s*(?:===|!==)\s*\w*(?:signature|hmac|digest|expected|computed)\w*\b(?!\s*[.(\[])/i;
+/** express-session login that stores the user on the pre-login session id. */
+const SESSION_LOGIN_ASSIGN = /\breq\.session\.(?:userId|user_id|user|uid|accountId|account|isLoggedIn|loggedIn|authenticated)\s*=(?!=)/;
+const PASSWORD_CHECK = /bcrypt\w*\.compare|argon2\.verify|verifyPassword|comparePassword|checkPassword|scrypt/i;
+/** Bearer / access token read from the URL query string. */
+const TOKEN_FROM_QUERY = /const\s+\w*token\s*=\s*(?:[\w.]*searchParams\.get\s*\(\s*["'](?:access_token|bearer_token|auth_token)["']\s*\)|req\.query\.(?:access_token|bearer_token|auth_token)\b|req\.query\s*\[\s*["'](?:access_token|bearer_token|auth_token)["']\s*\])/i;
+/** Stored password (hash) compared with ===, or a plaintext password column. */
+const PASSWORD_PLAIN_EQ = /\b(?:user|account|existingUser|dbUser|foundUser|admin|member)\??\.(?:password|passwordHash|password_hash|hashedPassword)\s*(?:===|!==|==|!=)\s*(?!null\b|undefined\b|['"`])(?![\w.]*confirm)[\w.]+|\b(?:storedPasswordHash)\s*===\s*(?:inputHash|hashedAttempt)\b/i;
+/** Session cookie read in a route handler (sync or Next 15 async cookies()). */
+const SESSION_COOKIE_READ = /(?:cookies\(\)|\(\s*await\s+cookies\(\)\s*\)|cookieStore)\.get\s*\(\s*["']session["']\s*\)/i;
+/** Short-lived secret derived from Math.random(). */
+const MATH_RANDOM_TOKEN = /const\s+(?:\w*token|\w*Token|nonce|sessionId|secretCode|\w*[sS]ecret|otp|otpCode|verificationCode|inviteCode|resetCode|apiKey)\s*=\s*(?:Math\.random\(\)\.toString|Date\.now\(\)\.toString\(\s*36\s*\)\s*\+\s*Math\.random|Math\.floor\s*\(\s*\d+\s*\+\s*Math\.random\(\))/;
 export interface ZeroTrustRuleResult {
     findings: Finding[];
     logs: string[];
@@ -72,8 +85,8 @@ export function evaluateZeroTrustRules(file: CodeFile, lines: string[], cleanCon
         logs.push(`[${ts}] 🛡️ HIGH: ZERO-AUTH-02 finding in ${file.path}:${lineNum}`);
     }
     // ZERO-AUTH-03: Cryptographic Timing Attack in Token & Signature Verification
-    if (/(?:userProvidedToken|apiToken|webhookSignature)\s*===\s*(?:expectedToken|secretHash|actualSignature)/i.test(cleanContent) && !/timingSafeEqual/i.test(cleanContent)) {
-        const matchLineIdx = locateMatchLine(lines, [/(?:userProvidedToken|apiToken|webhookSignature)\s*===\s*(?:expectedToken|secretHash|actualSignature)/i], l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('*'));
+    if (/(?:userProvidedToken|apiToken|webhookSignature)\s*===\s*(?:expectedToken|secretHash|actualSignature)|createHmac|\.digest\(/i.test(cleanContent) && SIGNATURE_PLAIN_EQ.test(cleanContent) && !/timingSafeEqual|safeCompare|constantTime/i.test(cleanContent)) {
+        const matchLineIdx = locateMatchLine(lines, [SIGNATURE_PLAIN_EQ], l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('*'));
         const lineNum = matchLineIdx !== -1 ? matchLineIdx + 1 : 1;
         findings.push({
             id: `zeroauth03-${Date.now()}-${findingCounter.count++}`,
@@ -97,8 +110,8 @@ export function evaluateZeroTrustRules(file: CodeFile, lines: string[], cleanCon
         logs.push(`[${ts}] 🛡️ HIGH: ZERO-AUTH-03 finding in ${file.path}:${lineNum}`);
     }
     // ZERO-AUTH-04: Hardcoded Authentication Bypass Headers (x-bypass-auth)
-    if (/req\.headers\.get\s*\(\s*["\']x-bypass-auth["\']\s*\)|headers\[["\']x-bypass-auth["\']\]/i.test(cleanContent) && !/NODE_ENV === ["\']test["\']/i.test(cleanContent) && !/test|spec|mock/i.test(lowerPath)) {
-        const matchLineIdx = locateMatchLine(lines, [/req\.headers\.get\s*\(\s*["\']x-bypass-auth["\']\s*\)|headers\[["\']x-bypass-auth["\']\]/i], l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('*'));
+    if (/(?:req|request)\.headers\.get\s*\(\s*["\']x-bypass-auth["\']\s*\)|headers\[["\']x-bypass-auth["\']\]/i.test(cleanContent) && !/NODE_ENV === ["\']test["\']/i.test(cleanContent) && !/test|spec|mock/i.test(lowerPath)) {
+        const matchLineIdx = locateMatchLine(lines, [/(?:req|request)\.headers\.get\s*\(\s*["\']x-bypass-auth["\']\s*\)|headers\[["\']x-bypass-auth["\']\]/i], l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('*'));
         const lineNum = matchLineIdx !== -1 ? matchLineIdx + 1 : 1;
         findings.push({
             id: `zeroauth04-${Date.now()}-${findingCounter.count++}`,
@@ -122,8 +135,8 @@ export function evaluateZeroTrustRules(file: CodeFile, lines: string[], cleanCon
         logs.push(`[${ts}] 🛡️ CRITICAL: ZERO-AUTH-04 finding in ${file.path}:${lineNum}`);
     }
     // ZERO-AUTH-05: Broken Object Property Level Authorization (BOPLA / Mass Assignment)
-    if (/(?:prisma\.[a-zA-Z0-9_]+\.update|User\.findByIdAndUpdate)\s*\(\s*\{[\s\S]*?data:\s*req\.body\b/i.test(cleanContent) && !/pick|whitelist|schema\.parse/i.test(cleanContent)) {
-        const matchLineIdx = locateMatchLine(lines, [/(?:prisma\.[a-zA-Z0-9_]+\.update|User\.findByIdAndUpdate)\s*\(\s*\{[\s\S]*?data:\s*req\.body\b/i], l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('*'));
+    if (/(?:prisma\.[a-zA-Z0-9_]+\.update|User\.findByIdAndUpdate)\s*\(\s*\{[^;]{0,200}?data:\s*req\.body\b/i.test(cleanContent) && !/pick|whitelist|schema\.parse/i.test(cleanContent)) {
+        const matchLineIdx = locateMatchLine(lines, [/data:\s*req\.body\b/i], l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('*'));
         const lineNum = matchLineIdx !== -1 ? matchLineIdx + 1 : 1;
         findings.push({
             id: `zeroauth05-${Date.now()}-${findingCounter.count++}`,
@@ -222,8 +235,8 @@ export function evaluateZeroTrustRules(file: CodeFile, lines: string[], cleanCon
         logs.push(`[${ts}] 🛡️ HIGH: ZERO-AUTH-08 finding in ${file.path}:${lineNum}`);
     }
     // ZERO-AUTH-09: Session Fixation Vulnerability on Login State Transition
-    if (!lowerPath.endsWith('.tsx') && !lowerPath.endsWith('.jsx') && /handleLoginSuccess/i.test(cleanContent) && !/regenerateSession|destroyOldSession/i.test(cleanContent)) {
-        const matchLineIdx = locateMatchLine(lines, [/handleLoginSuccess/i], l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('*'));
+    if (!lowerPath.endsWith('.tsx') && !lowerPath.endsWith('.jsx') && (/handleLoginSuccess/i.test(cleanContent) || (SESSION_LOGIN_ASSIGN.test(cleanContent) && PASSWORD_CHECK.test(cleanContent))) && !/regenerateSession|destroyOldSession|session\.regenerate\s*\(/i.test(cleanContent)) {
+        const matchLineIdx = locateMatchLine(lines, [SESSION_LOGIN_ASSIGN, /handleLoginSuccess/i], l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('*'));
         const lineNum = matchLineIdx !== -1 ? matchLineIdx + 1 : 1;
         findings.push({
             id: `zeroauth09-${Date.now()}-${findingCounter.count++}`,
@@ -272,8 +285,8 @@ export function evaluateZeroTrustRules(file: CodeFile, lines: string[], cleanCon
         logs.push(`[${ts}] 🛡️ CRITICAL: ZERO-AUTH-10 finding in ${file.path}:${lineNum}`);
     }
     // ZERO-AUTH-11: Insecure Transmission of Bearer Tokens in URL Query Parameters
-    if (/const\s+token\s*=\s*(?:searchParams\.get|req\.query)\s*\(\s*["\'](?:access_token|bearer_token|auth_token)["\']\s*\)/i.test(cleanContent)) {
-        const matchLineIdx = locateMatchLine(lines, [/const\s+token\s*=\s*(?:searchParams\.get|req\.query)\s*\(\s*["\'](?:access_token|bearer_token|auth_token)["\']\s*\)/i], l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('*'));
+    if (TOKEN_FROM_QUERY.test(cleanContent)) {
+        const matchLineIdx = locateMatchLine(lines, [TOKEN_FROM_QUERY], l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('*'));
         const lineNum = matchLineIdx !== -1 ? matchLineIdx + 1 : 1;
         findings.push({
             id: `zeroauth11-${Date.now()}-${findingCounter.count++}`,
@@ -447,8 +460,8 @@ export function evaluateZeroTrustRules(file: CodeFile, lines: string[], cleanCon
         logs.push(`[${ts}] 🛡️ MEDIUM: ZERO-AUTH-17 finding in ${file.path}:${lineNum}`);
     }
     // ZERO-AUTH-18: Missing Cross-Site Request Forgery (CSRF) Protection on Cookie-Based Auth
-    if (/cookies\(\)\.get\s*\(\s*["\']session["\']\s*\)/i.test(cleanContent) && /export\s+async\s+function\s+(?:POST|PUT|DELETE)/i.test(cleanContent) && !/csrf|origin|referer|sec-fetch-site/i.test(cleanContent)) {
-        const matchLineIdx = locateMatchLine(lines, [/cookies\(\)\.get\s*\(\s*["\']session["\']\s*\)/i, /export\s+async\s+function\s+(?:POST|PUT|DELETE)/i], l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('*'));
+    if (SESSION_COOKIE_READ.test(cleanContent) && /export\s+async\s+function\s+(?:POST|PUT|PATCH|DELETE)/i.test(cleanContent) && !/csrf|origin|referer|sec-fetch-site/i.test(cleanContent)) {
+        const matchLineIdx = locateMatchLine(lines, [/export\s+async\s+function\s+(?:POST|PUT|PATCH|DELETE)/i], l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('*'));
         const lineNum = matchLineIdx !== -1 ? matchLineIdx + 1 : 1;
         findings.push({
             id: `zeroauth18-${Date.now()}-${findingCounter.count++}`,
@@ -497,8 +510,8 @@ export function evaluateZeroTrustRules(file: CodeFile, lines: string[], cleanCon
         logs.push(`[${ts}] 🛡️ HIGH: ZERO-AUTH-19 finding in ${file.path}:${lineNum}`);
     }
     // ZERO-AUTH-20: Missing OAuth State Parameter (CSRF in OAuth Flow)
-    if (/const\s+authUrl\s*=\s*`https:\/\/[^`]*\/oauth\/authorize\?[^`]*client_id=[^`]*`/i.test(cleanContent) && !/state=/i.test(cleanContent)) {
-        const matchLineIdx = locateMatchLine(lines, [/const\s+authUrl\s*=\s*`https:\/\/[^`]*\/oauth\/authorize\?[^`]*client_id=[^`]*`/i], l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('*'));
+    if (/const\s+\w+\s*=\s*`https:\/\/[^`]*\/oauth2?\/(?:v\d+\/)?authorize\?[^`]*client_id=[^`]*`/i.test(cleanContent) && !/state=/i.test(cleanContent)) {
+        const matchLineIdx = locateMatchLine(lines, [/const\s+\w+\s*=\s*`https:\/\/[^`]*\/oauth2?\/(?:v\d+\/)?authorize\?[^`]*client_id=[^`]*`/i], l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('*'));
         const lineNum = matchLineIdx !== -1 ? matchLineIdx + 1 : 1;
         findings.push({
             id: `zeroauth20-${Date.now()}-${findingCounter.count++}`,
@@ -547,8 +560,8 @@ export function evaluateZeroTrustRules(file: CodeFile, lines: string[], cleanCon
         logs.push(`[${ts}] 🛡️ HIGH: ZERO-AUTH-21 finding in ${file.path}:${lineNum}`);
     }
     // ZERO-AUTH-22: Lack of Constant-Time Password Hash Verification
-    if (/(?:storedPasswordHash|user\.passwordHash)\s*===\s*(?:inputHash|hashedAttempt)/i.test(cleanContent)) {
-        const matchLineIdx = locateMatchLine(lines, [/(?:storedPasswordHash|user\.passwordHash)\s*===\s*(?:inputHash|hashedAttempt)/i], l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('*'));
+    if (PASSWORD_PLAIN_EQ.test(cleanContent) && /\.[cm]?[jt]s$|\.py$/.test(lowerPath)) {
+        const matchLineIdx = locateMatchLine(lines, [PASSWORD_PLAIN_EQ], l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('*'));
         const lineNum = matchLineIdx !== -1 ? matchLineIdx + 1 : 1;
         findings.push({
             id: `zeroauth22-${Date.now()}-${findingCounter.count++}`,
@@ -597,8 +610,8 @@ export function evaluateZeroTrustRules(file: CodeFile, lines: string[], cleanCon
         logs.push(`[${ts}] 🛡️ HIGH: ZERO-AUTH-23 finding in ${file.path}:${lineNum}`);
     }
     // ZERO-AUTH-24: Insecure OAuth Redirect URI Matching (Wildcard / Subdomain Match)
-    if (/redirectUri\.includes\s*\(\s*["\']example\.com["\']\s*\)|redirectUri\.startsWith\s*\(\s*["\']http/i.test(cleanContent)) {
-        const matchLineIdx = locateMatchLine(lines, [/redirectUri\.includes\s*\(\s*["\']example\.com["\']\s*\)|redirectUri\.startsWith\s*\(\s*["\']http/i], l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('*'));
+    if (/redirect_?ur[il]\.startsWith\s*\(\s*["\']https?:?(?:\/\/)?["\']\s*\)/i.test(cleanContent)) {
+        const matchLineIdx = locateMatchLine(lines, [/redirect_?ur[il]\.startsWith\s*\(\s*["\']https?:?(?:\/\/)?["\']\s*\)/i], l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('*'));
         const lineNum = matchLineIdx !== -1 ? matchLineIdx + 1 : 1;
         findings.push({
             id: `zeroauth24-${Date.now()}-${findingCounter.count++}`,
@@ -1250,8 +1263,8 @@ export function evaluateZeroTrustRules(file: CodeFile, lines: string[], cleanCon
         logs.push(`[${ts}] 🛡️ HIGH: ZERO-AUTH-49 finding in ${file.path}:${lineNum}`);
     }
     // ZERO-AUTH-50: Insecure Ephemeral Token Generation using Math.random()
-    if (/const\s+(?:token|nonce|sessionId|secretCode)\s*=\s*(?:Math\.random\(\)\.toString|Date\.now\(\)\.toString\(\s*36\s*\)\s*\+\s*Math\.random)/i.test(cleanContent)) {
-        const matchLineIdx = locateMatchLine(lines, [/const\s+(?:token|nonce|sessionId|secretCode)\s*=\s*(?:Math\.random\(\)\.toString|Date\.now\(\)\.toString\(\s*36\s*\)\s*\+\s*Math\.random)/i], l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('*'));
+    if (MATH_RANDOM_TOKEN.test(cleanContent)) {
+        const matchLineIdx = locateMatchLine(lines, [MATH_RANDOM_TOKEN], l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('*'));
         const lineNum = matchLineIdx !== -1 ? matchLineIdx + 1 : 1;
         findings.push({
             id: `zeroauth50-${Date.now()}-${findingCounter.count++}`,

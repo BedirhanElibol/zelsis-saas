@@ -24,10 +24,23 @@ export function evaluateGoMicroservicesRules(file: CodeFile, lines: string[], cl
         return { findings, logs };
     const ts = new Date().toLocaleTimeString();
     // GO-01: Command Injection via Unsanitized exec.Command Input
-    const reg_9001 = /(?:exec\.Command\s*\(\s*(?:['"](?:sh|bash|cmd|powershell)['"]\s*,\s*['"]-(?:c|C)['"]\s*,|input|cmd|query|req\.|r\.URL|[a-zA-Z0-9_]+\s*\+\s*)|exec\.CommandContext\s*\([^,]+,\s*(?:['"](?:sh|bash)['"]\s*,\s*['"]-c['"]\s*,))/i;
-    if (reg_9001.test(cleanContent)) {
-        const linePattern = /exec\.Command/i;
-        const matchLineIdx = lines.findIndex(l => !l.trim().startsWith('//') && linePattern.test(l));
+    const idx_9001 = (() => {
+        const tainted = goRequestVars(lines);
+        const call = /exec\.Command(?:Context)?\s*\(/;
+        return goFindLine(lines, call, (_l, i) => {
+            const text = callText(lines, i, call);
+            const args = goSplitArgs(text);
+            if (/^exec\.CommandContext/.test(text)) args.shift();
+            if (args.length >= 3 && /^"(?:sh|bash|\/bin\/sh|\/bin\/bash|cmd|cmd\.exe|powershell)"$/.test(args[0]) && /^"(?:-c|\/c|\/C|-Command)"$/.test(args[1])) {
+                const script = args[2];
+                if (/^"(?:[^"\\]|\\.)*"$|^`[^`]*`$/.test(script)) return false;
+                return /fmt\.Sprintf\s*\(|\+/.test(script) || goTainted(script, tainted);
+            }
+            return !!args[0] && goTainted(args[0], tainted);
+        });
+    })();
+    if (idx_9001 !== -1) {
+        const matchLineIdx = idx_9001;
         const lineNum = matchLineIdx !== -1 ? matchLineIdx + 1 : 1;
         const rawSnippet = matchLineIdx !== -1 ? lines[matchLineIdx].trim() : lines.find(l => !l.trim().startsWith('//'))?.trim() || "Command Injection via Unsanitized exec.Command Input";
         findings.push({
@@ -78,10 +91,25 @@ export function evaluateGoMicroservicesRules(file: CodeFile, lines: string[], cl
         logs.push(`[${ts}] [GO AUDIT] Found GO-02: SQL Injection via String Concatenation or fmt.Sprintf at ${file.path}:${lineNum}`);
     }
     // GO-03: Missing Response Body Close (Leaking TCP Sockets)
-    const reg_9003 = /(?:http\.Get|client\.Do)\s*\([\s\S]*?if\s+err\s*==\s*nil[\s\S]*?(?!defer\s+[a-zA-Z0-9_]+\.Body\.Close\(\))/i;
-    if (reg_9003.test(cleanContent)) {
-        const linePattern = /http\.Get|client\.Do/i;
-        const matchLineIdx = lines.findIndex(l => !l.trim().startsWith('//') && linePattern.test(l));
+    const idx_9003 = (() => {
+        const call = /^\s*(\w+)\s*,\s*\w+\s*:?=\s*(?:http\.(?:Get|Post|PostForm|Head)|[\w.]*(?:[cC]lient|http\.DefaultClient)\.(?:Do|Get|Post|PostForm|Head))\s*\(/;
+        for (let i = 0; i < lines.length; i++) {
+            const m = call.exec(lines[i]);
+            if (!m || !goIsCode(lines[i])) continue;
+            const name = m[1];
+            if (name === '_') return i;
+            const handled = new RegExp(`\\b${name}\\.Body\\.Close\\s*\\(|\\breturn\\b[^\\n]*\\b${name}\\b|\\(\\s*${name}\\s*[,)]`);
+            let closed = false;
+            for (let j = i + 1; j < Math.min(lines.length, i + 80); j++) {
+                if (/^(?:func\s|\})/.test(lines[j])) break;
+                if (goIsCode(lines[j]) && handled.test(lines[j])) { closed = true; break; }
+            }
+            if (!closed) return i;
+        }
+        return -1;
+    })();
+    if (idx_9003 !== -1) {
+        const matchLineIdx = idx_9003;
         const lineNum = matchLineIdx !== -1 ? matchLineIdx + 1 : 1;
         const rawSnippet = matchLineIdx !== -1 ? lines[matchLineIdx].trim() : lines.find(l => !l.trim().startsWith('//'))?.trim() || "Missing Response Body Close (Leaking TCP Sockets)";
         findings.push({
@@ -132,10 +160,32 @@ export function evaluateGoMicroservicesRules(file: CodeFile, lines: string[], cl
         logs.push(`[${ts}] [GO AUDIT] Found GO-04: Default HTTP Client Without Timeout (http.DefaultClient) at ${file.path}:${lineNum}`);
     }
     // GO-05: Data Race on Shared Map Without Mutex or sync.Map
-    const reg_9005 = /go\s+func\s*\([^)]*\)\s*\{[\s\S]*?\b[a-zA-Z0-9_]+\[[^\]]+\]\s*=/i;
-    if (reg_9005.test(cleanContent)) {
-        const linePattern = /go\s+func/i;
-        const matchLineIdx = lines.findIndex(l => !l.trim().startsWith('//') && linePattern.test(l));
+    const idx_9005 = (() => {
+        const maps = new Set<string>();
+        for (const l of lines) {
+            const made = /(\w+)\s*(?::?=|:)\s*(?:make\s*\(\s*map\[|map\[[^\]]+\][\w.*[\]]+\s*\{)/.exec(l);
+            if (made) maps.add(made[1]);
+            const declared = /^\s*(?:var\s+)?(\w+)\s+map\[/.exec(l);
+            if (declared) maps.add(declared[1]);
+        }
+        if (maps.size === 0) return -1;
+        for (let i = 0; i < lines.length; i++) {
+            if (!goIsCode(lines[i]) || !/\bgo\s+func\s*\(/.test(lines[i])) continue;
+            const [s, e] = goBlockRange(lines, i);
+            const body = lines.slice(s, e + 1);
+            if (body.some((l) => /\.(?:Lock|RLock)\s*\(\s*\)/.test(l))) continue;
+            for (let j = s; j <= e; j++) {
+                const w = /^\s*(?:\w+\.)*(\w+)\[[^\]]+\]\s*(?:=(?!=)|\+\+|--|[-+*/]=)|^\s*delete\s*\(\s*(?:\w+\.)*(\w+)\s*,/.exec(lines[j]);
+                const name = w && (w[1] || w[2]);
+                if (!name || !maps.has(name)) continue;
+                if (body.some((l) => new RegExp(`\\b${name}\\s*:?=\\s*(?:make|map)\\b`).test(l))) continue;
+                return j;
+            }
+        }
+        return -1;
+    })();
+    if (idx_9005 !== -1) {
+        const matchLineIdx = idx_9005;
         const lineNum = matchLineIdx !== -1 ? matchLineIdx + 1 : 1;
         const rawSnippet = matchLineIdx !== -1 ? lines[matchLineIdx].trim() : lines.find(l => !l.trim().startsWith('//'))?.trim() || "Data Race on Shared Map Without Mutex or sync.Map";
         findings.push({
@@ -159,10 +209,18 @@ export function evaluateGoMicroservicesRules(file: CodeFile, lines: string[], cl
         logs.push(`[${ts}] [GO AUDIT] Found GO-05: Data Race on Shared Map Without Mutex or sync.Map at ${file.path}:${lineNum}`);
     }
     // GO-06: Path Traversal via Unvalidated File Access in Go Source
-    const reg_9006 = /(?:os\.Open|os\.ReadFile|ioutil\.ReadFile|os\.Create)\s*\(\s*(?:r\.URL|req\.|path\s*\+|filepath\.Join\([^)]*r\.URL)/i;
-    if (reg_9006.test(cleanContent)) {
-        const linePattern = /(?:os\.Open|os\.ReadFile|ioutil\.ReadFile|os\.Create)/i;
-        const matchLineIdx = lines.findIndex(l => !l.trim().startsWith('//') && linePattern.test(l));
+    const idx_9006 = (() => {
+        const tainted = goRequestVars(lines);
+        const sink = /(?:os\.(?:Open|OpenFile|ReadFile|Create|Remove|RemoveAll|WriteFile)|ioutil\.(?:ReadFile|WriteFile)|http\.ServeFile|c\.(?:File|FileAttachment|SendFile|Attachment))\s*\(/;
+        return goFindLine(lines, sink, (_l, i) => {
+            const text = callText(lines, i, sink);
+            const args = goSplitArgs(text);
+            const pathArg = /^http\.ServeFile/.test(text) ? args[2] : args[0];
+            return !!pathArg && goTainted(pathArg, tainted);
+        });
+    })();
+    if (idx_9006 !== -1) {
+        const matchLineIdx = idx_9006;
         const lineNum = matchLineIdx !== -1 ? matchLineIdx + 1 : 1;
         const rawSnippet = matchLineIdx !== -1 ? lines[matchLineIdx].trim() : lines.find(l => !l.trim().startsWith('//'))?.trim() || "Path Traversal via Unvalidated File Access in Go Source";
         findings.push({
@@ -213,10 +271,12 @@ export function evaluateGoMicroservicesRules(file: CodeFile, lines: string[], cl
         logs.push(`[${ts}] [GO AUDIT] Found GO-07: Cross-Site Scripting (XSS) via Unescaped template.HTML at ${file.path}:${lineNum}`);
     }
     // GO-08: Hardcoded Secret or API Key in Go Source Code
-    const reg_9008 = /(?:const|var)\s+[a-zA-Z0-9_]*(?:Secret|Password|Token|ApiKey|PrivateKey)\s*=\s*["'][a-zA-Z0-9!@#$%^&*()_+=-]{8,}["']/i;
-    if (reg_9008.test(cleanContent)) {
-        const linePattern = /(?:Secret|Password|Token|ApiKey|PrivateKey)\s*=/i;
-        const matchLineIdx = lines.findIndex(l => !l.trim().startsWith('//') && linePattern.test(l));
+    const idx_9008 = goFindLine(lines, /(?:^|\b(?:const|var)\s+)\s*[a-zA-Z_]\w*(?:secret|password|passwd|token|apikey|api_key|privatekey|signingkey)\s*(?:string\s*)?:?=\s*"[^"\s]{12,}"/i, (l) => {
+        const v = (/"([^"\s]{12,})"/.exec(l) as RegExpExecArray)[1];
+        return /[0-9]/.test(v) && /[A-Za-z]/.test(v) && !/^[A-Za-z]+(?:[-_.:][A-Za-z0-9]+)*$/.test(v) && !/^(?:https?:|\/)/.test(v);
+    });
+    if (idx_9008 !== -1) {
+        const matchLineIdx = idx_9008;
         const lineNum = matchLineIdx !== -1 ? matchLineIdx + 1 : 1;
         const rawSnippet = matchLineIdx !== -1 ? lines[matchLineIdx].trim() : lines.find(l => !l.trim().startsWith('//'))?.trim() || "Hardcoded Secret or API Key in Go Source Code";
         findings.push({
@@ -240,10 +300,10 @@ export function evaluateGoMicroservicesRules(file: CodeFile, lines: string[], cl
         logs.push(`[${ts}] [GO AUDIT] Found GO-08: Hardcoded Secret or API Key in Go Source Code at ${file.path}:${lineNum}`);
     }
     // GO-09: Weak Cryptographic Algorithm in Go Source (MD5 / SHA1 / DES)
-    const reg_9009 = /(?:md5\.New|sha1\.New|des\.NewCipher)\s*\(/i;
-    if (reg_9009.test(cleanContent)) {
-        const linePattern = /(?:md5\.New|sha1\.New|des\.NewCipher)/i;
-        const matchLineIdx = lines.findIndex(l => !l.trim().startsWith('//') && linePattern.test(l));
+    const idx_9009 = goFindLine(lines, /(?:des\.(?:NewCipher|NewTripleDESCipher)|rc4\.NewCipher|md5\.(?:New|Sum)|sha1\.(?:New|Sum))\s*\(/, (l, i) =>
+        /(?:des\.(?:NewCipher|NewTripleDESCipher)|rc4\.NewCipher)\s*\(/.test(l) || /passw(?:or)?d|\bpwd\b/i.test(lines.slice(Math.max(0, i - 3), i + 4).join('\n')));
+    if (idx_9009 !== -1) {
+        const matchLineIdx = idx_9009;
         const lineNum = matchLineIdx !== -1 ? matchLineIdx + 1 : 1;
         const rawSnippet = matchLineIdx !== -1 ? lines[matchLineIdx].trim() : lines.find(l => !l.trim().startsWith('//'))?.trim() || "Weak Cryptographic Algorithm in Go Source (MD5 / SHA1 / DES)";
         findings.push({
@@ -348,10 +408,18 @@ export function evaluateGoMicroservicesRules(file: CodeFile, lines: string[], cl
         logs.push(`[${ts}] [GO AUDIT] Found GO-12: Goroutine Leak on Unbuffered Channel Send Without Cancellation at ${file.path}:${lineNum}`);
     }
     // GO-13: Server-Side Request Forgery (SSRF) via Dynamic HTTP Call
-    const reg_9013 = /http\.(?:Get|Post|NewRequest)\s*\(\s*(?:[a-zA-Z0-9_.]*(?:url|targetURL)|r\.URL\.Query)/i;
-    if (reg_9013.test(cleanContent)) {
-        const linePattern = /http\.(?:Get|Post|NewRequest)/i;
-        const matchLineIdx = lines.findIndex(l => !l.trim().startsWith('//') && linePattern.test(l));
+    const idx_9013 = (() => {
+        const tainted = goRequestVars(lines);
+        const call = /(?:http|[\w.]*[cC]lient)\.(?:Get|Post|PostForm|Head|NewRequest|NewRequestWithContext)\s*\(/;
+        return goFindLine(lines, call, (_l, i) => {
+            const text = callText(lines, i, call);
+            const args = goSplitArgs(text);
+            const urlArg = /NewRequestWithContext\s*\(/.test(text) ? args[2] : /NewRequest\s*\(/.test(text) ? args[1] : args[0];
+            return !!urlArg && goTainted(urlArg, tainted);
+        });
+    })();
+    if (idx_9013 !== -1) {
+        const matchLineIdx = idx_9013;
         const lineNum = matchLineIdx !== -1 ? matchLineIdx + 1 : 1;
         const rawSnippet = matchLineIdx !== -1 ? lines[matchLineIdx].trim() : lines.find(l => !l.trim().startsWith('//'))?.trim() || "Server-Side Request Forgery (SSRF) via Dynamic HTTP Call";
         findings.push({
@@ -375,10 +443,10 @@ export function evaluateGoMicroservicesRules(file: CodeFile, lines: string[], cl
         logs.push(`[${ts}] [GO AUDIT] Found GO-13: Server-Side Request Forgery (SSRF) via Dynamic HTTP Call at ${file.path}:${lineNum}`);
     }
     // GO-14: Unbounded Request Body Read (DoS Memory Exhaustion)
-    const reg_9014 = /(?:io\.ReadAll|ioutil\.ReadAll)\s*\(\s*r\.Body\s*\)/i;
-    if (reg_9014.test(cleanContent)) {
-        const linePattern = /(?:io\.ReadAll|ioutil\.ReadAll)\s*\(\s*r\.Body/i;
-        const matchLineIdx = lines.findIndex(l => !l.trim().startsWith('//') && linePattern.test(l));
+    const idx_9014 = goFindLine(lines, /(?:io|ioutil)\.ReadAll\s*\(\s*(?:r|req|c\.Request)\.Body\s*\)/, (_l, i) =>
+        !lines.slice(goFuncStart(lines, i), i).some((x) => /MaxBytesReader\s*\(/.test(x)));
+    if (idx_9014 !== -1) {
+        const matchLineIdx = idx_9014;
         const lineNum = matchLineIdx !== -1 ? matchLineIdx + 1 : 1;
         const rawSnippet = matchLineIdx !== -1 ? lines[matchLineIdx].trim() : lines.find(l => !l.trim().startsWith('//'))?.trim() || "Unbounded Request Body Read (DoS Memory Exhaustion)";
         findings.push({
@@ -402,10 +470,24 @@ export function evaluateGoMicroservicesRules(file: CodeFile, lines: string[], cl
         logs.push(`[${ts}] [GO AUDIT] Found GO-14: Unbounded Request Body Read (DoS Memory Exhaustion) at ${file.path}:${lineNum}`);
     }
     // GO-15: Weak Random Number Generator Used in Security Context (math/rand)
-    const reg_9015 = /(?:token|password|secret|auth|nonce)\s*=[\s\S]*?rand\.(?:Int|Intn|Read|Uint32|Float64)\s*\(/i;
-    if (reg_9015.test(cleanContent)) {
-        const linePattern = /rand\.(?:Int|Intn|Read|Uint32|Float64)/i;
-        const matchLineIdx = lines.findIndex(l => !l.trim().startsWith('//') && linePattern.test(l));
+    const idx_9015 = (() => {
+        const imp = /(?:^|\s)(?:(\w+)\s+)?"math\/rand(?:\/v2)?"/m.exec(cleanContent);
+        if (!imp) return -1;
+        const alias = imp[1] || 'rand';
+        const secretName = /(?:token|password|passwd|secret|otp|nonce|salt|apikey|resetcode|verificationcode)/i;
+        const call = new RegExp(`\\b${alias}\\.(?:Int|Intn|IntN|Int31|Int31n|Int63|Int63n|N|Uint32|Uint64|Read|Perm|Float64)\\s*\\(`);
+        return goFindLine(lines, call, (l, i) => {
+            const lhs = /^\s*(?:var\s+)?([\w.]+)(?:\s*,\s*\w+)?\s*(?::?=|\[)/.exec(l);
+            if (lhs && secretName.test(lhs[1])) return true;
+            for (let j = i; j >= 0; j--) {
+                const fn = /^func\s+(?:\([^)]*\)\s*)?(\w+)/.exec(lines[j]);
+                if (fn) return secretName.test(fn[1]);
+            }
+            return false;
+        });
+    })();
+    if (idx_9015 !== -1) {
+        const matchLineIdx = idx_9015;
         const lineNum = matchLineIdx !== -1 ? matchLineIdx + 1 : 1;
         const rawSnippet = matchLineIdx !== -1 ? lines[matchLineIdx].trim() : lines.find(l => !l.trim().startsWith('//'))?.trim() || "Weak Random Number Generator Used in Security Context (math/rand)";
         findings.push({
@@ -456,10 +538,10 @@ export function evaluateGoMicroservicesRules(file: CodeFile, lines: string[], cl
         logs.push(`[${ts}] [GO AUDIT] Found GO-16: Unsafe Pointer Usage (unsafe.Pointer) at ${file.path}:${lineNum}`);
     }
     // GO-17: CORS Permissive Wildcard with AllowCredentials in Gin / Echo / Chi
-    const reg_9017 = /AllowOrigins\s*:\s*\[\]string\{\s*['"]\*['"]\s*\}[\s\S]*?AllowCredentials\s*:\s*true/i;
-    if (reg_9017.test(cleanContent)) {
-        const linePattern = /AllowOrigins|AllowCredentials/i;
-        const matchLineIdx = lines.findIndex(l => !l.trim().startsWith('//') && linePattern.test(l));
+    const idx_9017 = goFindLine(lines, /AllowOrigins\s*:\s*(?:\[\]string\s*\{\s*"\*"\s*\}|"\*")/, (_l, i) =>
+        lines.slice(Math.max(0, i - 10), i + 11).some((x) => goIsCode(x) && /AllowCredentials\s*:\s*true\b/.test(x)));
+    if (idx_9017 !== -1) {
+        const matchLineIdx = idx_9017;
         const lineNum = matchLineIdx !== -1 ? matchLineIdx + 1 : 1;
         const rawSnippet = matchLineIdx !== -1 ? lines[matchLineIdx].trim() : lines.find(l => !l.trim().startsWith('//'))?.trim() || "CORS Permissive Wildcard with AllowCredentials in Gin / Echo / Chi";
         findings.push({
@@ -483,10 +565,9 @@ export function evaluateGoMicroservicesRules(file: CodeFile, lines: string[], cl
         logs.push(`[${ts}] [GO AUDIT] Found GO-17: CORS Permissive Wildcard with AllowCredentials in Gin / Echo / Chi at ${file.path}:${lineNum}`);
     }
     // GO-18: Gin Framework Running in Debug Mode in Production
-    const reg_9018 = /gin\.SetMode\s*\(\s*gin\.DebugMode\s*\)/i;
-    if (reg_9018.test(cleanContent)) {
-        const linePattern = /gin\.SetMode/i;
-        const matchLineIdx = lines.findIndex(l => !l.trim().startsWith('//') && linePattern.test(l));
+    const idx_9018 = goFindLine(lines, /gin\.SetMode\s*\(\s*(?:gin\.DebugMode|"debug")\s*\)/);
+    if (idx_9018 !== -1) {
+        const matchLineIdx = idx_9018;
         const lineNum = matchLineIdx !== -1 ? matchLineIdx + 1 : 1;
         const rawSnippet = matchLineIdx !== -1 ? lines[matchLineIdx].trim() : lines.find(l => !l.trim().startsWith('//'))?.trim() || "Gin Framework Running in Debug Mode in Production";
         findings.push({
@@ -537,10 +618,19 @@ export function evaluateGoMicroservicesRules(file: CodeFile, lines: string[], cl
         logs.push(`[${ts}] [GO AUDIT] Found GO-19: Open Redirect via http.Redirect with Unsanitized User Input at ${file.path}:${lineNum}`);
     }
     // GO-20: Missing Read/Write Timeout on http.Server (Slowloris DoS)
-    const reg_9020 = /&http\.Server\s*\{[\s\S]*?Addr\s*:[\s\S]*?\}(?!.*ReadTimeout)/i;
-    if (reg_9020.test(cleanContent)) {
-        const linePattern = /&http\.Server/i;
-        const matchLineIdx = lines.findIndex(l => !l.trim().startsWith('//') && linePattern.test(l));
+    const idx_9020 = (() => {
+        for (let i = 0; i < lines.length; i++) {
+            if (!goIsCode(lines[i]) || !/&?http\.Server\s*\{/.test(lines[i])) continue;
+            const [s, e] = goBlockRange(lines, i);
+            if (/Read(?:Header)?Timeout\s*:/.test(lines.slice(s, e + 1).join('\n'))) continue;
+            const v = /(\w+)\s*:?=\s*&?http\.Server/.exec(lines[i]);
+            if (v && new RegExp(`\\b${v[1]}\\.Read(?:Header)?Timeout\\s*=`).test(cleanContent)) continue;
+            return i;
+        }
+        return -1;
+    })();
+    if (idx_9020 !== -1) {
+        const matchLineIdx = idx_9020;
         const lineNum = matchLineIdx !== -1 ? matchLineIdx + 1 : 1;
         const rawSnippet = matchLineIdx !== -1 ? lines[matchLineIdx].trim() : lines.find(l => !l.trim().startsWith('//'))?.trim() || "Missing Read/Write Timeout on http.Server (Slowloris DoS)";
         findings.push({
@@ -564,10 +654,9 @@ export function evaluateGoMicroservicesRules(file: CodeFile, lines: string[], cl
         logs.push(`[${ts}] [GO AUDIT] Found GO-20: Missing Read/Write Timeout on http.Server (Slowloris DoS) at ${file.path}:${lineNum}`);
     }
     // GO-21: Hardcoded Database Connection String with Credentials in Go
-    const reg_9021 = /(?:postgres|postgresql|mysql|mongodb):\/\/[a-zA-Z0-9_]+:[a-zA-Z0-9!@#$%^&*()_+=-]+@[a-zA-Z0-9.-]+/i;
-    if (reg_9021.test(cleanContent)) {
-        const linePattern = /(?:postgres|postgresql|mysql|mongodb):\/\//i;
-        const matchLineIdx = lines.findIndex(l => !l.trim().startsWith('//') && linePattern.test(l));
+    const idx_9021 = goFindLine(lines, /(?:postgres|postgresql|mysql|mariadb|mongodb|redis|amqp)(?:\+\w+)?:\/\/|"\w+:[^@"\s]+@tcp\(/i, (l) => hasDbUrlWithRealPassword(l));
+    if (idx_9021 !== -1) {
+        const matchLineIdx = idx_9021;
         const lineNum = matchLineIdx !== -1 ? matchLineIdx + 1 : 1;
         const rawSnippet = matchLineIdx !== -1 ? lines[matchLineIdx].trim() : lines.find(l => !l.trim().startsWith('//'))?.trim() || "Hardcoded Database Connection String with Credentials in Go";
         findings.push({
@@ -591,10 +680,9 @@ export function evaluateGoMicroservicesRules(file: CodeFile, lines: string[], cl
         logs.push(`[${ts}] [GO AUDIT] Found GO-21: Hardcoded Database Connection String with Credentials in Go at ${file.path}:${lineNum}`);
     }
     // GO-22: Insecure JWT Parsing Without Signature Verification
-    const reg_9022 = /(?:ParseUnverified|jwt\.ParseUnverified)\s*\(/i;
-    if (reg_9022.test(cleanContent)) {
-        const linePattern = /ParseUnverified/i;
-        const matchLineIdx = lines.findIndex(l => !l.trim().startsWith('//') && linePattern.test(l));
+    const idx_9022 = goFindLine(lines, /\.ParseUnverified\s*\(/);
+    if (idx_9022 !== -1) {
+        const matchLineIdx = idx_9022;
         const lineNum = matchLineIdx !== -1 ? matchLineIdx + 1 : 1;
         const rawSnippet = matchLineIdx !== -1 ? lines[matchLineIdx].trim() : lines.find(l => !l.trim().startsWith('//'))?.trim() || "Insecure JWT Parsing Without Signature Verification";
         findings.push({
@@ -618,10 +706,9 @@ export function evaluateGoMicroservicesRules(file: CodeFile, lines: string[], cl
         logs.push(`[${ts}] [GO AUDIT] Found GO-22: Insecure JWT Parsing Without Signature Verification at ${file.path}:${lineNum}`);
     }
     // GO-23: Insecure SSH Host Key Validation (ssh.InsecureIgnoreHostKey)
-    const reg_9023 = /ssh\.InsecureIgnoreHostKey\s*\(\s*\)/i;
-    if (reg_9023.test(cleanContent)) {
-        const linePattern = /ssh\.InsecureIgnoreHostKey/i;
-        const matchLineIdx = lines.findIndex(l => !l.trim().startsWith('//') && linePattern.test(l));
+    const idx_9023 = goFindLine(lines, /ssh\.InsecureIgnoreHostKey\s*\(\s*\)/);
+    if (idx_9023 !== -1) {
+        const matchLineIdx = idx_9023;
         const lineNum = matchLineIdx !== -1 ? matchLineIdx + 1 : 1;
         const rawSnippet = matchLineIdx !== -1 ? lines[matchLineIdx].trim() : lines.find(l => !l.trim().startsWith('//'))?.trim() || "Insecure SSH Host Key Validation (ssh.InsecureIgnoreHostKey)";
         findings.push({
@@ -645,10 +732,13 @@ export function evaluateGoMicroservicesRules(file: CodeFile, lines: string[], cl
         logs.push(`[${ts}] [GO AUDIT] Found GO-23: Insecure SSH Host Key Validation (ssh.InsecureIgnoreHostKey) at ${file.path}:${lineNum}`);
     }
     // GO-24: Archive Path Traversal (Zip Slip / Tar Slip in Go)
-    const reg_9024 = /(?:zip\.OpenReader|tar\.NewReader)[\s\S]*?os\.Create\s*\(\s*(?:header\.Name|f\.Name)/i;
-    if (reg_9024.test(cleanContent)) {
-        const linePattern = /os\.Create\s*\(\s*(?:header\.Name|f\.Name)/i;
-        const matchLineIdx = lines.findIndex(l => !l.trim().startsWith('//') && linePattern.test(l));
+    const idx_9024 = (() => {
+        if (!/"archive\/(?:zip|tar)"/.test(cleanContent)) return -1;
+        if (/filepath\.IsLocal\s*\(|strings\.HasPrefix\s*\([^)]*filepath\.Clean|filepath\.Rel\s*\(|strings\.Contains\s*\([^)]*"\.\."|SecureJoin/.test(cleanContent)) return -1;
+        return goFindLine(lines, /(?:filepath|path)\.Join\s*\([^)]*\b\w+\.Name\b(?!\s*\()|os\.(?:Create|OpenFile|MkdirAll)\s*\(\s*\w+\.Name\b(?!\s*\()/);
+    })();
+    if (idx_9024 !== -1) {
+        const matchLineIdx = idx_9024;
         const lineNum = matchLineIdx !== -1 ? matchLineIdx + 1 : 1;
         const rawSnippet = matchLineIdx !== -1 ? lines[matchLineIdx].trim() : lines.find(l => !l.trim().startsWith('//'))?.trim() || "Archive Path Traversal (Zip Slip / Tar Slip in Go)";
         findings.push({
@@ -780,10 +870,12 @@ export function evaluateGoMicroservicesRules(file: CodeFile, lines: string[], cl
         logs.push(`[${ts}] [GO AUDIT] Found GO-28: Missing CSRF Middleware in Web Handlers at ${file.path}:${lineNum}`);
     }
     // GO-29: Sensitive Information Leak via Insecure Log Output in Go
-    const reg_9029 = /log\.(?:Print|Printf|Println)\s*\([^)]*\b(?:password|passwd|secret|token|apiKey)\b/i;
-    if (reg_9029.test(cleanContent)) {
-        const linePattern = /log\.(?:Print|Printf|Println)/i;
-        const matchLineIdx = lines.findIndex(l => !l.trim().startsWith('//') && linePattern.test(l));
+    const idx_9029 = goFindLine(lines, /\blog\.(?:Print|Printf|Println|Fatal|Fatalf|Fatalln|Panic|Panicf)\s*\(/, (l) => {
+        const args = /log\.\w+\s*\((.*)$/.exec(l.replace(/"(?:[^"\\]|\\.)*"|`[^`]*`/g, '""'));
+        return !!args && /(?<!len\()(?:^|[^\w.])(?:\w+\.)*\w*(?:password|passwd|secret|token|apikey|api_key)\b(?!\s*\()/i.test(args[1]);
+    });
+    if (idx_9029 !== -1) {
+        const matchLineIdx = idx_9029;
         const lineNum = matchLineIdx !== -1 ? matchLineIdx + 1 : 1;
         const rawSnippet = matchLineIdx !== -1 ? lines[matchLineIdx].trim() : lines.find(l => !l.trim().startsWith('//'))?.trim() || "Sensitive Information Leak via Insecure Log Output in Go";
         findings.push({
@@ -888,10 +980,9 @@ export function evaluateGoMicroservicesRules(file: CodeFile, lines: string[], cl
         logs.push(`[${ts}] [GO AUDIT] Found GO-32: Insecure Cookie Configuration Missing HttpOnly or Secure Flag at ${file.path}:${lineNum}`);
     }
     // GO-33: Weak RSA Key Generation (< 2048 Bits) in Go
-    const reg_9033 = /rsa\.GenerateKey\s*\([^,]+,\s*(?:512|1024)\s*\)/i;
-    if (reg_9033.test(cleanContent)) {
-        const linePattern = /rsa\.GenerateKey/i;
-        const matchLineIdx = lines.findIndex(l => !l.trim().startsWith('//') && linePattern.test(l));
+    const idx_9033 = goFindLine(lines, /rsa\.GenerateKey\s*\([^,]+,\s*(?:512|768|1024|1536)\s*\)/);
+    if (idx_9033 !== -1) {
+        const matchLineIdx = idx_9033;
         const lineNum = matchLineIdx !== -1 ? matchLineIdx + 1 : 1;
         const rawSnippet = matchLineIdx !== -1 ? lines[matchLineIdx].trim() : lines.find(l => !l.trim().startsWith('//'))?.trim() || "Weak RSA Key Generation (< 2048 Bits) in Go";
         findings.push({
@@ -915,10 +1006,9 @@ export function evaluateGoMicroservicesRules(file: CodeFile, lines: string[], cl
         logs.push(`[${ts}] [GO AUDIT] Found GO-33: Weak RSA Key Generation (< 2048 Bits) in Go at ${file.path}:${lineNum}`);
     }
     // GO-34: Hardcoded AWS Access Key ID in Go Source
-    const reg_9034 = /["']AKIA[0-9A-Z]{16}["']/i;
-    if (reg_9034.test(cleanContent)) {
-        const linePattern = /AKIA[0-9A-Z]{16}/i;
-        const matchLineIdx = lines.findIndex(l => !l.trim().startsWith('//') && linePattern.test(l));
+    const idx_9034 = goFindLine(lines, /["'`]AKIA[0-9A-Z]{16}["'`]/, (l) => !/AKIAIOSFODNN7EXAMPLE/.test(l));
+    if (idx_9034 !== -1) {
+        const matchLineIdx = idx_9034;
         const lineNum = matchLineIdx !== -1 ? matchLineIdx + 1 : 1;
         const rawSnippet = matchLineIdx !== -1 ? lines[matchLineIdx].trim() : lines.find(l => !l.trim().startsWith('//'))?.trim() || "Hardcoded AWS Access Key ID in Go Source";
         findings.push({
@@ -942,10 +1032,23 @@ export function evaluateGoMicroservicesRules(file: CodeFile, lines: string[], cl
         logs.push(`[${ts}] [GO AUDIT] Found GO-34: Hardcoded AWS Access Key ID in Go Source at ${file.path}:${lineNum}`);
     }
     // GO-35: Cgo Memory Leak or Missing C.free Call
-    const reg_9035 = /C\.CString\s*\([\s\S]*?(?!defer\s+C\.free)/i;
-    if (reg_9035.test(cleanContent)) {
-        const linePattern = /C\.CString/i;
-        const matchLineIdx = lines.findIndex(l => !l.trim().startsWith('//') && linePattern.test(l));
+    const idx_9035 = (() => {
+        for (let i = 0; i < lines.length; i++) {
+            if (!goIsCode(lines[i])) continue;
+            const m = /(\w+)\s*:?=\s*C\.CString\s*\(/.exec(lines[i]);
+            if (m) {
+                const freed = new RegExp(`C\\.free\\s*\\(\\s*unsafe\\.Pointer\\s*\\(\\s*${m[1]}\\s*\\)`);
+                let ok = false;
+                for (let j = i; j < lines.length && !/^\}/.test(lines[j]); j++) if (freed.test(lines[j])) { ok = true; break; }
+                if (!ok) return i;
+            } else if (/C\.\w+\s*\([^)]*C\.CString\s*\(/.test(lines[i])) {
+                return i;
+            }
+        }
+        return -1;
+    })();
+    if (idx_9035 !== -1) {
+        const matchLineIdx = idx_9035;
         const lineNum = matchLineIdx !== -1 ? matchLineIdx + 1 : 1;
         const rawSnippet = matchLineIdx !== -1 ? lines[matchLineIdx].trim() : lines.find(l => !l.trim().startsWith('//'))?.trim() || "Cgo Memory Leak or Missing C.free Call";
         findings.push({
@@ -1023,10 +1126,15 @@ export function evaluateGoMicroservicesRules(file: CodeFile, lines: string[], cl
         logs.push(`[${ts}] [GO AUDIT] Found GO-37: Context Leak via Missing defer cancel() Call at ${file.path}:${lineNum}`);
     }
     // GO-38: Unsafe Dynamic Plugin Loading via plugin.Open()
-    const reg_9038 = /plugin\.Open\s*\(\s*(?:[a-zA-Z0-9_.]*(?:path|file|input|query))/i;
-    if (reg_9038.test(cleanContent)) {
-        const linePattern = /plugin\.Open/i;
-        const matchLineIdx = lines.findIndex(l => !l.trim().startsWith('//') && linePattern.test(l));
+    const idx_9038 = (() => {
+        const tainted = goRequestVars(lines);
+        return goFindLine(lines, /plugin\.Open\s*\(/, (_l, i) => {
+            const args = goSplitArgs(callText(lines, i, /plugin\.Open\s*\(/));
+            return !!args[0] && goTainted(args[0], tainted);
+        });
+    })();
+    if (idx_9038 !== -1) {
+        const matchLineIdx = idx_9038;
         const lineNum = matchLineIdx !== -1 ? matchLineIdx + 1 : 1;
         const rawSnippet = matchLineIdx !== -1 ? lines[matchLineIdx].trim() : lines.find(l => !l.trim().startsWith('//'))?.trim() || "Unsafe Dynamic Plugin Loading via plugin.Open()";
         findings.push({
@@ -1050,10 +1158,9 @@ export function evaluateGoMicroservicesRules(file: CodeFile, lines: string[], cl
         logs.push(`[${ts}] [GO AUDIT] Found GO-38: Unsafe Dynamic Plugin Loading via plugin.Open() at ${file.path}:${lineNum}`);
     }
     // GO-39: Insecure gRPC Connection via grpc.WithInsecure()
-    const reg_9039 = /grpc\.WithInsecure\s*\(\s*\)/i;
-    if (reg_9039.test(cleanContent)) {
-        const linePattern = /grpc\.WithInsecure/i;
-        const matchLineIdx = lines.findIndex(l => !l.trim().startsWith('//') && linePattern.test(l));
+    const idx_9039 = goFindLine(lines, /grpc\.WithInsecure\s*\(\s*\)/);
+    if (idx_9039 !== -1) {
+        const matchLineIdx = idx_9039;
         const lineNum = matchLineIdx !== -1 ? matchLineIdx + 1 : 1;
         const rawSnippet = matchLineIdx !== -1 ? lines[matchLineIdx].trim() : lines.find(l => !l.trim().startsWith('//'))?.trim() || "Insecure gRPC Connection via grpc.WithInsecure()";
         findings.push({
@@ -1104,10 +1211,9 @@ export function evaluateGoMicroservicesRules(file: CodeFile, lines: string[], cl
         logs.push(`[${ts}] [GO AUDIT] Found GO-40: Insecure Temporary File Creation via Path Concatenation at ${file.path}:${lineNum}`);
     }
     // GO-41: LDAP Injection via Formatted Search Query in Go
-    const reg_9041 = /ldap\.NewSearchRequest\s*\([^)]*fmt\.Sprintf/i;
-    if (reg_9041.test(cleanContent)) {
-        const linePattern = /ldap\.NewSearchRequest/i;
-        const matchLineIdx = lines.findIndex(l => !l.trim().startsWith('//') && linePattern.test(l));
+    const idx_9041 = /ldap\.NewSearchRequest\s*\(/.test(cleanContent) ? goFindLine(lines, /fmt\.Sprintf\s*\(\s*"[^"]*\(\w+=[^"]*%[sv]/, (l) => !/ldap\.EscapeFilter\s*\(/.test(l)) : -1;
+    if (idx_9041 !== -1) {
+        const matchLineIdx = idx_9041;
         const lineNum = matchLineIdx !== -1 ? matchLineIdx + 1 : 1;
         const rawSnippet = matchLineIdx !== -1 ? lines[matchLineIdx].trim() : lines.find(l => !l.trim().startsWith('//'))?.trim() || "LDAP Injection via Formatted Search Query in Go";
         findings.push({
@@ -1131,10 +1237,9 @@ export function evaluateGoMicroservicesRules(file: CodeFile, lines: string[], cl
         logs.push(`[${ts}] [GO AUDIT] Found GO-41: LDAP Injection via Formatted Search Query in Go at ${file.path}:${lineNum}`);
     }
     // GO-42: XPath Injection via Unsanitized Query Strings in Go
-    const reg_9042 = /xpath\.Compile\s*\(\s*fmt\.Sprintf/i;
-    if (reg_9042.test(cleanContent)) {
-        const linePattern = /xpath\.Compile/i;
-        const matchLineIdx = lines.findIndex(l => !l.trim().startsWith('//') && linePattern.test(l));
+    const idx_9042 = goFindLine(lines, /(?:xpath\.(?:Compile|MustCompile)|xmlquery\.(?:Find|FindOne|Query|QueryAll)|htmlquery\.(?:Find|FindOne|Query|QueryAll))\s*\([^)]*(?:fmt\.Sprintf\s*\(|"\s*\+)/);
+    if (idx_9042 !== -1) {
+        const matchLineIdx = idx_9042;
         const lineNum = matchLineIdx !== -1 ? matchLineIdx + 1 : 1;
         const rawSnippet = matchLineIdx !== -1 ? lines[matchLineIdx].trim() : lines.find(l => !l.trim().startsWith('//'))?.trim() || "XPath Injection via Unsanitized Query Strings in Go";
         findings.push({
@@ -1212,10 +1317,9 @@ export function evaluateGoMicroservicesRules(file: CodeFile, lines: string[], cl
         logs.push(`[${ts}] [GO AUDIT] Found GO-44: HTTP Header Injection / Response Splitting via CRLF at ${file.path}:${lineNum}`);
     }
     // GO-45: Unsafe Deserialization via Gob Decoder on Untrusted Data
-    const reg_9045 = /gob\.NewDecoder\s*\(\s*r\.Body\s*\)/i;
-    if (reg_9045.test(cleanContent)) {
-        const linePattern = /gob\.NewDecoder/i;
-        const matchLineIdx = lines.findIndex(l => !l.trim().startsWith('//') && linePattern.test(l));
+    const idx_9045 = goFindLine(lines, /gob\.NewDecoder\s*\(\s*(?:r|req|c\.Request)\.Body\s*\)/);
+    if (idx_9045 !== -1) {
+        const matchLineIdx = idx_9045;
         const lineNum = matchLineIdx !== -1 ? matchLineIdx + 1 : 1;
         const rawSnippet = matchLineIdx !== -1 ? lines[matchLineIdx].trim() : lines.find(l => !l.trim().startsWith('//'))?.trim() || "Unsafe Deserialization via Gob Decoder on Untrusted Data";
         findings.push({
@@ -1239,10 +1343,9 @@ export function evaluateGoMicroservicesRules(file: CodeFile, lines: string[], cl
         logs.push(`[${ts}] [GO AUDIT] Found GO-45: Unsafe Deserialization via Gob Decoder on Untrusted Data at ${file.path}:${lineNum}`);
     }
     // GO-46: Deprecated TLS Minimum Version (TLS 1.0 / TLS 1.1)
-    const reg_9046 = /MinVersion\s*:\s*tls\.VersionTLS1[01]\b/i;
-    if (reg_9046.test(cleanContent)) {
-        const linePattern = /MinVersion\s*:/i;
-        const matchLineIdx = lines.findIndex(l => !l.trim().startsWith('//') && linePattern.test(l));
+    const idx_9046 = goFindLine(lines, /MinVersion\s*:\s*tls\.Version(?:TLS1[01]|SSL30)\b/);
+    if (idx_9046 !== -1) {
+        const matchLineIdx = idx_9046;
         const lineNum = matchLineIdx !== -1 ? matchLineIdx + 1 : 1;
         const rawSnippet = matchLineIdx !== -1 ? lines[matchLineIdx].trim() : lines.find(l => !l.trim().startsWith('//'))?.trim() || "Deprecated TLS Minimum Version (TLS 1.0 / TLS 1.1)";
         findings.push({
@@ -1347,10 +1450,9 @@ export function evaluateGoMicroservicesRules(file: CodeFile, lines: string[], cl
         logs.push(`[${ts}] [GO AUDIT] Found GO-49: Unbuffered Channel Deadlock Risk in Single Goroutine Flow at ${file.path}:${lineNum}`);
     }
     // GO-50: Verbose Stack Trace Exposure in HTTP Response (Echo / Fiber)
-    const reg_9050 = /(?:w\.Write|c\.String|c\.SendString)\s*\([^)]*debug\.Stack\(\)/i;
-    if (reg_9050.test(cleanContent)) {
-        const linePattern = /debug\.Stack/i;
-        const matchLineIdx = lines.findIndex(l => !l.trim().startsWith('//') && linePattern.test(l));
+    const idx_9050 = goFindLine(lines, /(?:\bw\.Write\s*\(|\b(?:c|ctx)\.(?:String|SendString|JSON|AbortWithStatusJSON|IndentedJSON|Data)\s*\(|\.SendString\s*\(|fmt\.Fprint(?:f|ln)?\s*\(\s*w\s*,|http\.Error\s*\(\s*w\s*,)[^;]*debug\.Stack\s*\(\s*\)/);
+    if (idx_9050 !== -1) {
+        const matchLineIdx = idx_9050;
         const lineNum = matchLineIdx !== -1 ? matchLineIdx + 1 : 1;
         const rawSnippet = matchLineIdx !== -1 ? lines[matchLineIdx].trim() : lines.find(l => !l.trim().startsWith('//'))?.trim() || "Verbose Stack Trace Exposure in HTTP Response (Echo / Fiber)";
         findings.push({
@@ -1374,4 +1476,122 @@ export function evaluateGoMicroservicesRules(file: CodeFile, lines: string[], cl
         logs.push(`[${ts}] [GO AUDIT] Found GO-50: Verbose Stack Trace Exposure in HTTP Response (Echo / Fiber) at ${file.path}:${lineNum}`);
     }
     return { findings, logs };
+}
+
+/** A Go source line that is code (not blank, not a // comment). */
+function goIsCode(line: string): boolean {
+    const t = line.trim();
+    return t !== '' && !t.startsWith('//');
+}
+
+/** First code line matching `re` (and `ok`, when given), or -1. */
+function goFindLine(lines: string[], re: RegExp, ok?: (line: string, idx: number) => boolean): number {
+    return lines.findIndex((l, i) => goIsCode(l) && re.test(l) && (!ok || ok(l, i)));
+}
+
+/** Same text with string-literal contents blanked to spaces (length preserved). */
+const blankGoStrings = (s: string) =>
+    s.replace(/"(?:[^"\\]|\\.)*"|`[^`]*`|'(?:[^'\\]|\\.)*'/g, (m) => m[0] + ' '.repeat(m.length - 2) + m[m.length - 1]);
+
+/** Text of the call matched by `re` on line `idx`, up to its balanced closing parenthesis (max 15 lines). */
+function callText(lines: string[], idx: number, re: RegExp): string {
+    const m = re.exec(lines[idx]);
+    let out = '';
+    let depth = 0;
+    for (let i = idx; i < Math.min(lines.length, idx + 15); i++) {
+        const seg = i === idx && m ? lines[i].slice(m.index) : lines[i];
+        const structure = blankGoStrings(seg);
+        for (let c = 0; c < seg.length; c++) {
+            out += seg[c];
+            if (structure[c] === '(') depth++;
+            else if (structure[c] === ')' && --depth === 0) return out;
+        }
+        out += '\n';
+    }
+    return out;
+}
+
+/** Top-level arguments of a call text such as `exec.Command("sh", "-c", x)`. */
+function goSplitArgs(text: string): string[] {
+    const open = text.indexOf('(');
+    if (open === -1) return [];
+    const args: string[] = [];
+    let depth = 0;
+    let cur = '';
+    let quote = '';
+    for (let i = open + 1; i < text.length; i++) {
+        const ch = text[i];
+        if (quote) {
+            cur += ch;
+            if (ch === '\\' && quote !== '`') { cur += text[++i] ?? ''; continue; }
+            if (ch === quote) quote = '';
+            continue;
+        }
+        if (ch === '"' || ch === '`' || ch === "'") { quote = ch; cur += ch; continue; }
+        if (ch === '(' || ch === '[' || ch === '{') depth++;
+        if (ch === ')' || ch === ']' || ch === '}') {
+            if (depth === 0) break;
+            depth--;
+        }
+        if (ch === ',' && depth === 0) { args.push(cur.trim()); cur = ''; continue; }
+        cur += ch;
+    }
+    if (cur.trim()) args.push(cur.trim());
+    return args;
+}
+
+/** [start, end] lines of the brace block opened on line `idx`. */
+function goBlockRange(lines: string[], idx: number): [number, number] {
+    let depth = 0;
+    let opened = false;
+    for (let i = idx; i < lines.length; i++) {
+        for (const ch of blankGoStrings(lines[i])) {
+            if (ch === '{') { depth++; opened = true; }
+            else if (ch === '}' && opened && --depth === 0) return [idx, i];
+        }
+    }
+    return [idx, lines.length - 1];
+}
+
+/** Line index of the `func` declaration enclosing line `idx` (0 when none). */
+function goFuncStart(lines: string[], idx: number): number {
+    for (let j = idx; j >= 0; j--) if (/^func\s/.test(lines[j])) return j;
+    return 0;
+}
+
+/** Request accessors of net/http, Gin, Echo, Fiber, chi and gorilla/mux. */
+const GO_REQUEST_EXPR = /(?:\br|\breq)\.URL\.Query\(\)\.Get\(|(?:\br|\breq)\.(?:FormValue|PostFormValue)\(|\bc\.(?:Query|DefaultQuery|PostForm|DefaultPostForm|Param|QueryParam|FormValue|Params)\(|chi\.URLParam\(|mux\.Vars\((?:r|req)\)\[/;
+/** Calls that turn request input into a safe value (or a lookup keyed by it). */
+const GO_SANITIZER = /filepath\.Base\(|strconv\.(?:Atoi|ParseInt|ParseUint|ParseBool|Quote)\(|ldap\.EscapeFilter\(|net\.ParseIP\(|url\.(?:Parse|PathEscape|QueryEscape)\(|uuid\.Parse\(|html\.EscapeString\(|^\s*[\w.]+\[[^\]]+\]\s*$/;
+
+/** True when `expr` reads request input directly or through a request-derived variable. */
+function goTainted(expr: string, tainted: Set<string>): boolean {
+    const code = blankGoStrings(expr);
+    if (GO_SANITIZER.test(code)) return false;
+    if (GO_REQUEST_EXPR.test(code)) return true;
+    for (const m of code.matchAll(/(?<![\w.])([a-zA-Z_]\w*)\b(?!\s*\()/g)) if (tainted.has(m[1])) return true;
+    return false;
+}
+
+/** Variables assigned from request input in this file (propagated through plain assignments). */
+function goRequestVars(lines: string[]): Set<string> {
+    const names = new Set<string>();
+    for (let pass = 0; pass < 3; pass++) {
+        for (const l of lines) {
+            if (!goIsCode(l)) continue;
+            const m = /^\s*(?:var\s+)?(\w+)(?:\s*,\s*\w+)?\s*(?:\w+\s*)?:?=\s*(.+)$/.exec(l);
+            if (m && m[1] !== '_' && !names.has(m[1]) && goTainted(m[2], names)) names.add(m[1]);
+        }
+    }
+    return names;
+}
+
+/** A database / broker URL or MySQL DSN with an inline password that is not a local-dev default or placeholder. */
+function hasDbUrlWithRealPassword(line: string): boolean {
+    const m = /(?:postgres|postgresql|mysql|mariadb|mongodb(?:\+srv)?|redis|amqp)(?:\+\w+)?:\/\/([^:/\s'"@`]*):([^@/\s'"`]+)@([^/:\s'"`?]+)/i.exec(line)
+        || /"(\w+):([^@"\s]+)@tcp\(([^:)]+)/.exec(line);
+    if (!m) return false;
+    const [, , password, host] = m;
+    if (/^(?:localhost|127\.0\.0\.1|0\.0\.0\.0|host\.docker\.internal|db|database|postgres|postgresql|mysql|mariadb|mongo|mongodb|redis|rabbitmq)$/i.test(host)) return false;
+    return !/[{}$<>%]|^(?:password|pass|passwd|pwd|secret|changeme|change_?me|example|x{3,}|\*+|user|postgres|root|admin)$/i.test(password);
 }

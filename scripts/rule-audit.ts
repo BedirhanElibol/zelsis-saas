@@ -43,7 +43,8 @@ function testedRuleIds(): Set<number> {
   const add = (text: string, re: RegExp) => {
     for (const m of text.matchAll(re)) for (const n of m[1].match(/\d+/g) ?? []) ids.add(Number(n));
   };
-  for (const p of ['tests/rules/cases.ts', 'tests/rules/variants.ts', 'tests/rules/stack-matrix.ts', 'tests/unit/osv.test.ts', 'tests/unit/live-checks.test.ts', 'tests/rules/secret-samples.generated.ts']) {
+  const areaFixtures = readdirSync(join(root, 'tests/rules/fixtures')).filter((f) => f.endsWith('.ts')).sort().map((f) => `tests/rules/fixtures/${f}`);
+  for (const p of ['tests/rules/cases.ts', ...areaFixtures, 'tests/rules/variants.ts', 'tests/rules/stack-matrix.ts', 'tests/unit/osv.test.ts', 'tests/unit/live-checks.test.ts', 'tests/rules/secret-samples.generated.ts']) {
     const t = read(p);
     add(t, /ruleIds:\s*\[([^\]]*)\]/g);
     add(t, /rules:\s*\[([^\]]*)\]/g);
