@@ -166,7 +166,7 @@ export const UpgradePaywallModal: React.FC<UpgradePaywallModalProps> = ({
                       }}
                       className={`btn w-full py-2.5 text-xs uppercase tracking-wider font-extrabold rounded-lg flex items-center justify-center gap-1.5 transition-all shadow-sm font-mono cursor-pointer text-center ${
                         tier === 'Pro'
-                          ? 'btn-primary bg-white text-black hover:bg-neutral-200'
+                          ? 'btn-primary bg-emerald-500 text-black hover:bg-emerald-400'
                           : 'btn-secondary border border-white/20 text-[#EDEDED] hover:bg-white/5'
                       }`}
                     >

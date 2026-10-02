@@ -79,7 +79,7 @@ $ curl -X POST ${getConfiguredAppUrl()}/api/v1/gate-check \\
       <div className="max-w-6xl mx-auto flex flex-col gap-16">
         {/* Section Header */}
         <div className="flex flex-col gap-4 text-center max-w-3xl mx-auto">
-          <div className="inline-flex items-center justify-center text-xs font-mono uppercase tracking-widest text-zinc-400">
+          <div className="inline-flex items-center justify-center text-xs font-mono uppercase tracking-widest text-emerald-400">
             <span>How it works</span>
           </div>
           <h2 className="text-3xl sm:text-5xl font-extrabold text-[#EDEDED] tracking-tight">

@@ -213,7 +213,7 @@ export const GateStatusBanner: React.FC<GateStatusBannerProps> = ({
         {/* Primary Action: Re-Run Audit */}
         <button
           onClick={() => onTriggerScan()}
-          className="btn btn-primary px-4 sm:px-5 py-2.5 text-xs font-bold uppercase tracking-wider rounded-lg flex items-center justify-center gap-2 bg-white text-black hover:bg-neutral-200 flex-1 sm:flex-initial shadow-md transition-all active:scale-95 cursor-pointer"
+          className="btn btn-primary px-4 sm:px-5 py-2.5 text-xs font-bold uppercase tracking-wider rounded-lg flex items-center justify-center gap-2 bg-emerald-500 text-black hover:bg-emerald-400 flex-1 sm:flex-initial shadow-md transition-all active:scale-95 cursor-pointer"
         >
           <Play size={13} fill="#0A0A0A" />
           <span>Re-Run Audit</span>

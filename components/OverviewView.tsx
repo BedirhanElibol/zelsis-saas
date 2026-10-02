@@ -71,7 +71,7 @@ export const DemoShowcaseBanner: React.FC<DemoShowcaseBannerProps> = ({
           <button
             type="button"
             onClick={() => onOpenAuth?.('signup')}
-            className="btn btn-primary text-xs font-mono font-bold px-3.5 py-1.5 rounded-lg bg-white text-black hover:bg-neutral-200 transition-colors shadow-sm"
+            className="btn btn-primary text-xs font-mono font-bold px-3.5 py-1.5 rounded-lg bg-emerald-500 text-black hover:bg-emerald-400 transition-colors shadow-sm"
           >
             Sign Up Free
           </button>

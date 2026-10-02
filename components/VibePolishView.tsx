@@ -65,7 +65,7 @@ ABSOLUTELY DO NOT USE THE FOLLOWING CLICHÉS: Forced Apple-style bento box grids
           </p>
         </div>
 
-        <button className="btn btn-primary px-5 py-2.5 rounded-lg text-xs font-bold uppercase tracking-wider flex items-center gap-2 bg-white text-black hover:bg-neutral-200 transition-all shadow-sm" onClick={copyNegativePrompt}>
+        <button className="btn btn-primary px-5 py-2.5 rounded-lg text-xs font-bold uppercase tracking-wider flex items-center gap-2 bg-emerald-500 text-black hover:bg-emerald-400 transition-all shadow-sm" onClick={copyNegativePrompt}>
           {copiedNegativePrompt ? <CheckCircle2 size={16} /> : <Copy size={16} />}
           <span>{copiedNegativePrompt ? 'Negative Prompt Copied!' : 'Copy Negative UI Prompt'}</span>
         </button>

@@ -218,7 +218,7 @@ export const ProjectsView: React.FC<ProjectsViewProps> = ({
             </div>
             <button
               onClick={() => setIsModalOpen(true)}
-              className="btn btn-primary px-4 py-2 text-xs font-bold uppercase tracking-wider bg-white text-black hover:bg-neutral-200"
+              className="btn btn-primary px-4 py-2 text-xs font-bold uppercase tracking-wider bg-emerald-500 text-black hover:bg-emerald-400"
             >
               Connect First App
             </button>

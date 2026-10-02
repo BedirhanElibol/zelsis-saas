@@ -100,7 +100,7 @@ export const ScanPreviewCard: React.FC<ScanPreviewCardProps> = ({ result, onUnlo
         <button
           type="button"
           onClick={onUnlock}
-          className="px-4 py-2 rounded-lg text-xs font-bold font-mono bg-white text-black hover:bg-neutral-200 transition-all flex items-center justify-center gap-2 shrink-0 cursor-pointer"
+          className="px-4 py-2 rounded-lg text-xs font-bold font-mono bg-emerald-500 text-black hover:bg-emerald-400 transition-all flex items-center justify-center gap-2 shrink-0 cursor-pointer"
         >
           <span>{hasFindings ? 'See full report' : 'Create free account'}</span>
           <ArrowRight size={13} />

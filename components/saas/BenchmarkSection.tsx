@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState } from 'react';
-import { motion } from 'framer-motion';
+import { m } from 'framer-motion';
 import { CheckCircle2, CircleAlert, CircleX, ExternalLink } from 'lucide-react';
 import benchmark from '@/data/benchmark-summary.generated.json';
 import { formatCount, RULE_COUNTS } from '@/lib/rule-status';
@@ -51,7 +51,7 @@ export const BenchmarkSection: React.FC = () => {
     <section id="benchmark" className="py-24 sm:py-32 px-4 sm:px-6 lg:px-12 bg-[#0A0A0A] border-b border-white/10 font-sans relative">
       <div className="max-w-6xl mx-auto flex flex-col gap-12">
         <div className="flex flex-col gap-3 text-center max-w-3xl mx-auto">
-          <div className="inline-flex items-center gap-2 justify-center text-xs font-mono uppercase tracking-wider text-zinc-300 bg-white/[0.04] border border-white/10 px-3 py-1 rounded-full self-center">
+          <div className="inline-flex items-center gap-2 justify-center text-xs font-mono uppercase tracking-wider text-emerald-400 bg-emerald-500/10 border border-emerald-500/30 px-3 py-1 rounded-full self-center">
             <span>Measured benchmark · {benchmark.generatedAt}</span>
           </div>
           <h2 className="text-3xl sm:text-4xl lg:text-5xl font-extrabold text-white tracking-tight">
@@ -102,7 +102,7 @@ export const BenchmarkSection: React.FC = () => {
         </div>
 
         {activeTab === 'flaws' && (
-          <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.3 }} className="rounded-2xl border border-white/10 bg-[#121214] overflow-hidden shadow-2xl">
+          <m.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.3 }} className="rounded-2xl border border-white/10 bg-[#121214] overflow-hidden shadow-2xl">
             <div className="p-4 sm:p-6 border-b border-white/10 bg-[#0E0E10]">
               <h3 className="text-base font-bold text-white">Known vulnerabilities in intentionally vulnerable apps</h3>
               <p className="text-xs text-zinc-400 mt-1">Each flaw is located in the app&apos;s source; it counts as found only if Zelsis reports that class of issue in that file.</p>
@@ -137,11 +137,11 @@ export const BenchmarkSection: React.FC = () => {
                 </tbody>
               </table>
             </div>
-          </motion.div>
+          </m.div>
         )}
 
         {activeTab === 'clean' && (
-          <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.3 }} className="rounded-2xl border border-white/10 bg-[#121214] overflow-hidden shadow-2xl">
+          <m.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.3 }} className="rounded-2xl border border-white/10 bg-[#121214] overflow-hidden shadow-2xl">
             <div className="p-4 sm:p-6 border-b border-white/10 bg-[#0E0E10]">
               <h3 className="text-base font-bold text-white">Maintained production projects</h3>
               <p className="text-xs text-zinc-400 mt-1">
@@ -178,11 +178,11 @@ export const BenchmarkSection: React.FC = () => {
                 </tbody>
               </table>
             </div>
-          </motion.div>
+          </m.div>
         )}
 
         {activeTab === 'method' && (
-          <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.3 }} className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <m.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.3 }} className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div className="p-6 rounded-2xl border border-white/10 bg-[#121214] flex flex-col gap-3">
               <h4 className="text-sm font-bold text-white">How it is measured</h4>
               <ul className="text-xs text-zinc-400 leading-relaxed list-disc pl-4 flex flex-col gap-1.5">
@@ -202,7 +202,7 @@ export const BenchmarkSection: React.FC = () => {
                 <li>A small benchmark cannot prove the absence of false positives on every codebase. Report one and we add it.</li>
               </ul>
             </div>
-          </motion.div>
+          </m.div>
         )}
       </div>
     </section>

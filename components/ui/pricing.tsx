@@ -1,6 +1,6 @@
 'use client';
 
-import { motion } from 'framer-motion';
+import { m } from 'framer-motion';
 import React, { useState, useEffect } from 'react';
 import { Check, Clock } from 'lucide-react';
 import NumberFlow from '@number-flow/react';
@@ -69,7 +69,7 @@ export function PricingSection({ onSelectPlan }: PricingProps) {
             const displayPrice = plan.priceMonthly;
 
             return (
-              <motion.div
+              <m.div
                 key={plan.id}
                 whileHover={{ y: -4 }}
                 transition={{ duration: 0.15 }}
@@ -80,8 +80,8 @@ export function PricingSection({ onSelectPlan }: PricingProps) {
                 }`}
               >
                 {plan.isPopular && (
-                  <div className="absolute -top-3 left-1/2 -translate-x-1/2 bg-white text-black text-[0.68rem] font-bold px-3 py-0.5 rounded-full uppercase tracking-wider shadow">
-                    <span>MOST POPULAR CHOICE</span>
+                  <div className="absolute -top-3 left-1/2 -translate-x-1/2 bg-emerald-500 text-black text-xs font-bold px-3 py-0.5 rounded-full uppercase tracking-wider shadow">
+                    <span>Most popular</span>
                   </div>
                 )}
 
@@ -132,7 +132,7 @@ export function PricingSection({ onSelectPlan }: PricingProps) {
                 >
                   {plan.buttonText}
                 </button>
-              </motion.div>
+              </m.div>
             );
           })
         )}

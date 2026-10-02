@@ -308,7 +308,7 @@ export const ConnectTargetModal: React.FC<ConnectTargetModalProps> = ({
           <button
             type="submit"
             disabled={isConnecting}
-            className="mt-2 btn btn-primary py-3 text-xs uppercase tracking-wider font-extrabold w-full rounded-xl bg-white text-black hover:bg-neutral-200 transition-all shadow-sm disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2 cursor-pointer"
+            className="mt-2 btn btn-primary py-3 text-xs uppercase tracking-wider font-extrabold w-full rounded-xl bg-emerald-500 text-black hover:bg-emerald-400 transition-all shadow-sm disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2 cursor-pointer"
           >
             <Play size={13} fill="currentColor" />
             <span>{isConnecting ? 'Connecting & Auditing...' : 'Connect & Run Audit'}</span>

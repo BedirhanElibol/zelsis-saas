@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
+import { m, AnimatePresence } from 'framer-motion';
 import { X, Mail, Lock, User, Code, ArrowRight, CheckCircle2, KeyRound, AlertCircle, Eye, EyeOff } from 'lucide-react';
 import { supabaseSignIn, supabaseSignUp, supabaseResetPassword, supabaseSignInWithOAuth, isSupabaseConfigured } from '@/lib/supabase';
 import { isPwnedPassword } from '@/lib/pwned-password';
@@ -208,7 +208,7 @@ export const AuthModal: React.FC<AuthModalProps> = ({
           }
         }}
       >
-        <motion.div
+        <m.div
           ref={dialogRef}
           role="dialog"
           aria-modal="true"
@@ -425,7 +425,7 @@ export const AuthModal: React.FC<AuthModalProps> = ({
             <button
               type="submit"
               disabled={loadingTarget !== null}
-              className="mt-2 btn btn-primary py-3 text-xs uppercase tracking-wider font-extrabold w-full flex items-center justify-center gap-2 rounded-xl bg-white text-black hover:bg-neutral-200 transition-all shadow-md disabled:opacity-50"
+              className="mt-2 btn btn-primary py-3 text-xs uppercase tracking-wider font-extrabold w-full flex items-center justify-center gap-2 rounded-xl bg-emerald-500 text-black hover:bg-emerald-400 transition-all shadow-md disabled:opacity-50"
             >
               <span>
                 {loadingTarget === 'email'
@@ -456,7 +456,7 @@ export const AuthModal: React.FC<AuthModalProps> = ({
               <a href="/privacy" target="_blank" rel="noopener noreferrer" className="underline hover:text-white transition-colors">Privacy Policy</a>.
             </div>
           )}
-        </motion.div>
+        </m.div>
       </div>
     </AnimatePresence>
   );

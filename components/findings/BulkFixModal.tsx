@@ -177,7 +177,7 @@ ${addedComment}
               </button>
               {canDownload ? (
                 <button
-                  className="btn btn-primary text-xs px-5 py-2 font-bold uppercase tracking-wider rounded-lg flex items-center gap-2 bg-white text-black hover:bg-neutral-200 transition-all shadow-sm"
+                  className="btn btn-primary text-xs px-5 py-2 font-bold uppercase tracking-wider rounded-lg flex items-center gap-2 bg-emerald-500 text-black hover:bg-emerald-400 transition-all shadow-sm"
                   disabled={selectedIds.length === 0}
                   onClick={handleDownloadCombinedPatch}
                 >

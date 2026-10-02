@@ -140,12 +140,12 @@ html.lenis, html.lenis body {
 }
 
 .btn-primary {
-  background: #ffffff;
+  background: #10b981; /* brand green from the logo */
   color: #0a0a0a;
 }
 
 .btn-primary:hover {
-  background: #e4e4e7;
+  background: #34d399;
   transform: translateY(-1px);
 }
 

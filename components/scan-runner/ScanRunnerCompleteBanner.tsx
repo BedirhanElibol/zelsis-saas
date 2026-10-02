@@ -64,7 +64,7 @@ export const ScanRunnerCompleteBanner: React.FC<ScanRunnerCompleteBannerProps> =
           </div>
 
           <button
-            className="btn btn-primary px-8 py-4 text-xs font-bold uppercase tracking-wider rounded-xl shadow-lg shrink-0 flex items-center gap-2 bg-white text-black hover:bg-neutral-200 transition-all"
+            className="btn btn-primary px-8 py-4 text-xs font-bold uppercase tracking-wider rounded-xl shadow-lg shrink-0 flex items-center gap-2 bg-emerald-500 text-black hover:bg-emerald-400 transition-all"
             onClick={onViewReport}
           >
             <CheckCircle2 size={18} />
@@ -109,7 +109,7 @@ export const ScanRunnerCompleteBanner: React.FC<ScanRunnerCompleteBannerProps> =
               !scanFailureReason?.includes('404') && (
               <button
                 onClick={() => setIsPrivateTokenModalOpen(true)}
-                className="btn btn-primary px-5 py-3 text-xs font-bold uppercase tracking-wider rounded-xl shadow-lg shrink-0 flex items-center gap-2 bg-white text-black hover:bg-neutral-200 transition-all font-mono cursor-pointer"
+                className="btn btn-primary px-5 py-3 text-xs font-bold uppercase tracking-wider rounded-xl shadow-lg shrink-0 flex items-center gap-2 bg-emerald-500 text-black hover:bg-emerald-400 transition-all font-mono cursor-pointer"
               >
                 <Key size={14} />
                 <span>{scanFailureReason?.includes('rate limit') ? 'Add Free GitHub Token (5,000 req/hr)' : 'Enter GitHub Token'}</span>

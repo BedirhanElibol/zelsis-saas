@@ -511,7 +511,7 @@ export const FindingsTable: React.FC<FindingsTableProps> = ({
                   <button
                     type="button"
                     onClick={() => onLoadDemoFindings(DEMO_AUDIT_FINDINGS)}
-                    className="btn btn-primary py-2.5 px-3 text-xs font-bold w-full flex items-center justify-center gap-2 rounded-xl bg-white text-black hover:bg-neutral-200 transition-all shadow-sm"
+                    className="btn btn-primary py-2.5 px-3 text-xs font-bold w-full flex items-center justify-center gap-2 rounded-xl bg-emerald-500 text-black hover:bg-emerald-400 transition-all shadow-sm"
                   >
                     <Layers size={14} />
                     <span>Load 1-Click Demo Template</span>
@@ -725,7 +725,7 @@ export const FindingsTable: React.FC<FindingsTableProps> = ({
                       e.stopPropagation();
                       onInspectFinding(item);
                     }}
-                    className="btn btn-primary text-xs px-3 py-2 flex-1 flex items-center justify-center gap-1.5 bg-white text-black hover:bg-neutral-200 transition-colors cursor-pointer font-mono font-bold shadow-sm"
+                    className="btn btn-primary text-xs px-3 py-2 flex-1 flex items-center justify-center gap-1.5 bg-emerald-500 text-black hover:bg-emerald-400 transition-colors cursor-pointer font-mono font-bold shadow-sm"
                   >
                     <span>Inspect Fix</span>
                     <ArrowRight size={12} className="shrink-0" />

@@ -447,7 +447,7 @@ export const Header: React.FC<HeaderProps> = ({
               </button>
               <button
                 onClick={() => onOpenAuth && onOpenAuth('signup')}
-                className="btn btn-primary text-xs font-mono px-3 min-h-11 sm:min-h-9 rounded bg-white text-black hover:bg-neutral-200 whitespace-nowrap font-bold"
+                className="btn btn-primary text-xs font-mono px-3 min-h-11 sm:min-h-9 rounded bg-emerald-500 text-black hover:bg-emerald-400 whitespace-nowrap font-bold"
               >
                 Sign Up
               </button>

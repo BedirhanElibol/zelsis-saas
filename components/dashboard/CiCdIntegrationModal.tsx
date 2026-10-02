@@ -193,7 +193,7 @@ jobs:
                 <button
                   type="button"
                   onClick={() => onOpenCheckout?.('Pro')}
-                  className="btn btn-primary text-xs px-5 py-2.5 font-bold rounded-xl flex items-center justify-center gap-2 bg-white text-black hover:bg-neutral-200 transition-all shadow-sm flex-1 min-h-[44px]"
+                  className="btn btn-primary text-xs px-5 py-2.5 font-bold rounded-xl flex items-center justify-center gap-2 bg-emerald-500 text-black hover:bg-emerald-400 transition-all shadow-sm flex-1 min-h-[44px]"
                 >
                   <Lock size={13} />
                   <span>Upgrade to Pro</span>
@@ -303,7 +303,7 @@ jobs:
                 </div>
                 <button
                   onClick={onClose}
-                  className="btn btn-primary text-xs px-5 py-2 font-bold bg-white text-black hover:bg-neutral-200 rounded-lg transition-all min-h-[44px]"
+                  className="btn btn-primary text-xs px-5 py-2 font-bold bg-emerald-500 text-black hover:bg-emerald-400 rounded-lg transition-all min-h-[44px]"
                 >
                   Done
                 </button>

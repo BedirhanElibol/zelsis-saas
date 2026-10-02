@@ -99,7 +99,7 @@ export const QuotaLimitModal: React.FC<QuotaLimitModalProps> = ({
                 onClose();
                 router.push('/checkout?plan=pro&reason=quota_exceeded');
               }}
-              className="btn btn-primary w-full py-2.5 px-4 rounded-xl text-xs font-mono font-bold uppercase tracking-wider bg-white text-black hover:bg-neutral-200 transition-all flex items-center justify-center gap-2 shadow-lg cursor-pointer"
+              className="btn btn-primary w-full py-2.5 px-4 rounded-xl text-xs font-mono font-bold uppercase tracking-wider bg-emerald-500 text-black hover:bg-emerald-400 transition-all flex items-center justify-center gap-2 shadow-lg cursor-pointer"
             >
               <span>Upgrade to Pro ({priceLabel('Pro')})</span>
               <ArrowRight size={14} />

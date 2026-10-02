@@ -193,7 +193,7 @@ export const NotificationSettingsModal: React.FC<NotificationSettingsModalProps>
                 Cancel
               </button>
               <button
-                className="btn btn-primary text-xs px-5 py-2 font-bold uppercase tracking-wider rounded-lg bg-white text-black hover:bg-neutral-200 transition-all shadow-sm"
+                className="btn btn-primary text-xs px-5 py-2 font-bold uppercase tracking-wider rounded-lg bg-emerald-500 text-black hover:bg-emerald-400 transition-all shadow-sm"
                 onClick={() => {
                   if (typeof window !== 'undefined') {
                     localStorage.setItem(storageKey, JSON.stringify({ slackUrl, discordUrl }));

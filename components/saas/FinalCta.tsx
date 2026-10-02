@@ -33,7 +33,7 @@ export const FinalCta: React.FC = () => {
         <div className="flex flex-col sm:flex-row items-center justify-center gap-4 w-full sm:w-auto">
           <button
             onClick={() => router.push('/dashboard')}
-            className="w-full sm:w-auto px-8 py-4 rounded-xl text-xs font-mono font-bold uppercase tracking-wider bg-white text-black hover:bg-neutral-200 transition-all flex items-center justify-center gap-2.5 shadow-sm active:scale-[0.98] cursor-pointer"
+            className="w-full sm:w-auto px-8 py-4 rounded-xl text-xs font-mono font-bold uppercase tracking-wider bg-emerald-500 text-black hover:bg-emerald-400 transition-all flex items-center justify-center gap-2.5 shadow-sm active:scale-[0.98] cursor-pointer"
           >
             <Play size={14} fill="currentColor" />
             <span>Scan a repository</span>

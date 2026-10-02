@@ -379,7 +379,7 @@ export const RuleKnowledgeBaseModal: React.FC<RuleKnowledgeBaseModalProps> = ({
             <div className="text-xs text-[#94A3B8] font-mono">
               Displaying {filteredRules.length} active clearance rule specs.
             </div>
-            <button className="btn btn-primary text-xs px-5 py-2 font-bold uppercase tracking-wider rounded-lg bg-white text-black hover:bg-neutral-200 transition-all shadow-sm" onClick={onClose}>
+            <button className="btn btn-primary text-xs px-5 py-2 font-bold uppercase tracking-wider rounded-lg bg-emerald-500 text-black hover:bg-emerald-400 transition-all shadow-sm" onClick={onClose}>
               Close Knowledge Base
             </button>
           </div>

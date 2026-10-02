@@ -404,7 +404,7 @@ export const CheckoutView: React.FC<CheckoutViewProps> = ({
           <button
             type="button"
             onClick={() => handleOpenAuthModal('signup')}
-            className="min-h-[44px] px-5 py-2.5 rounded-xl bg-white text-black font-extrabold text-xs hover:bg-neutral-200 transition-all shadow-md flex items-center justify-center gap-2 shrink-0 cursor-pointer font-mono"
+            className="min-h-[44px] px-5 py-2.5 rounded-xl bg-emerald-500 text-black hover:bg-emerald-400 font-extrabold text-xs hover:bg-neutral-200 transition-all shadow-md flex items-center justify-center gap-2 shrink-0 cursor-pointer font-mono"
           >
             <User size={15} />
             <span>Open Sign In / Sign Up</span>
@@ -426,7 +426,7 @@ export const CheckoutView: React.FC<CheckoutViewProps> = ({
             onClick={() => {
               router.push('/dashboard');
             }}
-            className="btn btn-primary px-8 py-3 uppercase text-xs font-bold tracking-wider mt-4 flex items-center gap-2 rounded-xl bg-white text-black hover:bg-neutral-200 transition-all shadow-sm"
+            className="btn btn-primary px-8 py-3 uppercase text-xs font-bold tracking-wider mt-4 flex items-center gap-2 rounded-xl bg-emerald-500 text-black hover:bg-emerald-400 transition-all shadow-sm"
           >
             <span>Proceed to Security Gate Dashboard</span>
           </button>
@@ -556,7 +556,7 @@ export const CheckoutView: React.FC<CheckoutViewProps> = ({
                         rel="noopener noreferrer"
                         onClick={handleProceedToPolar}
                         aria-busy={isSubmitting}
-                        className={`btn btn-primary min-h-[44px] py-4 px-4 text-xs font-extrabold uppercase tracking-wider w-full rounded-xl flex items-center justify-center gap-2 bg-white text-black hover:bg-neutral-200 transition-all shadow-xl font-mono text-center ${
+                        className={`btn btn-primary min-h-[44px] py-4 px-4 text-xs font-extrabold uppercase tracking-wider w-full rounded-xl flex items-center justify-center gap-2 bg-emerald-500 text-black hover:bg-emerald-400 transition-all shadow-xl font-mono text-center ${
                           isSubmitting ? 'opacity-60 cursor-not-allowed pointer-events-none' : 'cursor-pointer'
                         }`}
                       >

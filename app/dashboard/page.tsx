@@ -348,7 +348,7 @@ function DashboardContent() {
           <div className="flex flex-col sm:flex-row gap-3 w-full">
             <button
               onClick={handleRestoreDemoShowcase}
-              className="btn btn-primary flex-1 py-2.5 px-4 rounded-xl text-xs font-bold font-mono bg-white text-black hover:bg-neutral-200 transition-all flex items-center justify-center gap-2 shadow-lg"
+              className="btn btn-primary flex-1 py-2.5 px-4 rounded-xl text-xs font-bold font-mono bg-emerald-500 text-black hover:bg-emerald-400 transition-all flex items-center justify-center gap-2 shadow-lg"
             >
               <ShieldCheck size={14} />
               <span>Load Demo Showcase</span>

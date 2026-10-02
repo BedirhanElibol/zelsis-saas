@@ -203,7 +203,7 @@ export const PrivateRepoTokenModal: React.FC<PrivateRepoTokenModalProps> = ({
               <button
                 type="submit"
                 disabled={isSubmitting || !token.trim()}
-                className="btn btn-primary flex-1 py-2.5 rounded-xl text-xs font-mono font-extrabold uppercase tracking-wider bg-white text-black hover:bg-neutral-200 transition-all flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed shadow-lg cursor-pointer"
+                className="btn btn-primary flex-1 py-2.5 rounded-xl text-xs font-mono font-extrabold uppercase tracking-wider bg-emerald-500 text-black hover:bg-emerald-400 transition-all flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed shadow-lg cursor-pointer"
               >
                 <span>{isSubmitting ? 'Verifying & Scanning...' : 'Save Token & Scan Now'}</span>
                 <ArrowRight size={13} />

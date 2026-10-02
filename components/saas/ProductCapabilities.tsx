@@ -2,7 +2,7 @@
 
 import React, { useCallback, useRef, useState } from 'react';
 import { useDialogFocus } from '@/hooks/useDialogFocus';
-import { motion, AnimatePresence } from 'framer-motion';
+import { m, AnimatePresence } from 'framer-motion';
 import Image from 'next/image';
 import { 
   ShieldCheck, 
@@ -136,7 +136,7 @@ export const ProductCapabilities: React.FC = () => {
       <div className="max-w-6xl mx-auto flex flex-col gap-20">
         {/* Section Title */}
         <div className="flex flex-col gap-4 text-center max-w-3xl mx-auto">
-          <div className="inline-flex items-center justify-center text-xs font-mono uppercase tracking-widest text-zinc-400">
+          <div className="inline-flex items-center justify-center text-xs font-mono uppercase tracking-widest text-emerald-400">
             <span>What it checks</span>
           </div>
           <h2 className="text-3xl sm:text-5xl font-extrabold text-[#EDEDED] tracking-tight">
@@ -226,7 +226,7 @@ export const ProductCapabilities: React.FC = () => {
         {/* Modal Lightbox for High-Res Zoom */}
         <AnimatePresence>
           {zoomImage && (
-            <motion.div
+            <m.div
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
@@ -257,7 +257,7 @@ export const ProductCapabilities: React.FC = () => {
                   <X size={20} />
                 </button>
               </div>
-            </motion.div>
+            </m.div>
           )}
         </AnimatePresence>
       </div>

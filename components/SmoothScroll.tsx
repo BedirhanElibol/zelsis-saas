@@ -6,8 +6,9 @@ export const SmoothScroll: React.FC<{ children: React.ReactNode }> = ({ children
   useEffect(() => {
     if (typeof window === 'undefined') return;
 
-    // Respect OS prefers-reduced-motion accessibility preference (F-34)
-    if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
+    // Respect OS prefers-reduced-motion accessibility preference (F-34); touch devices keep native
+    // scrolling, which is smoother there and avoids a permanent animation-frame loop.
+    if (window.matchMedia('(prefers-reduced-motion: reduce)').matches || window.matchMedia('(pointer: coarse)').matches) {
       return;
     }
 

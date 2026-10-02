@@ -160,7 +160,7 @@ export const RuleConfiguratorModal: React.FC<RuleConfiguratorModalProps> = ({
                     Cancel
                   </button>
                   <button
-                    className="btn btn-primary text-xs px-5 py-2 font-bold uppercase tracking-wider rounded-lg bg-white text-black hover:bg-neutral-200 transition-all shadow-sm min-h-[44px]"
+                    className="btn btn-primary text-xs px-5 py-2 font-bold uppercase tracking-wider rounded-lg bg-emerald-500 text-black hover:bg-emerald-400 transition-all shadow-sm min-h-[44px]"
                     onClick={() => {
                       navigator.clipboard.writeText(rcJson).then(() => setSavedStatus(true)).catch(() => setSavedStatus(false));
                     }}

@@ -3,7 +3,11 @@
 import React, { useState, useEffect } from 'react';
 import { Check, X, Shield, ArrowRight, Lock, ExternalLink, Zap } from 'lucide-react';
 import { useRouter } from 'next/navigation';
-import { AuthModal, UserProfile } from '@/components/auth/AuthModal';
+import dynamic from 'next/dynamic';
+import type { UserProfile } from '@/components/auth/AuthModal';
+
+// Loaded only when a visitor picks a paid plan without being signed in
+const AuthModal = dynamic(() => import('@/components/auth/AuthModal').then((m) => m.AuthModal), { ssr: false });
 import { formatCount, RULE_COUNTS } from '@/lib/rule-status';
 import { ENTERPRISE_SEAT_LIMIT, PLAN_PRICES, priceLabel, SUPPORT_TERMS, ZELSIS_PRICING_PLANS } from '@/data/pricing-plans';
 import { contactMailto } from '@/lib/contact';
@@ -295,7 +299,7 @@ export const ComparisonTable: React.FC = () => {
       <div className="max-w-7xl mx-auto flex flex-col gap-16">
         {/* Section Header */}
         <div className="flex flex-col gap-4 text-center max-w-3xl mx-auto">
-          <div className="inline-flex items-center justify-center text-xs font-mono uppercase tracking-widest text-zinc-400 bg-white/5 px-3 py-1 rounded-full border border-white/10 self-center">
+          <div className="inline-flex items-center justify-center text-xs font-mono uppercase tracking-widest text-emerald-400 bg-white/5 px-3 py-1 rounded-full border border-white/10 self-center">
             <span>Pricing</span>
           </div>
           <h2 className="text-3xl sm:text-5xl font-extrabold text-[#EDEDED] tracking-tight [text-wrap:balance]">
@@ -340,7 +344,7 @@ export const ComparisonTable: React.FC = () => {
                     type="button"
                     onClick={() => (tier === 'Free' ? router.push('/dashboard') : handleSelectPlan(tier))}
                     className={`min-h-11 rounded-lg text-sm font-semibold transition-colors ${
-                      plan.isPopular ? 'bg-white text-black hover:bg-neutral-200' : 'bg-white/10 text-white border border-white/20 hover:bg-white/15'
+                      plan.isPopular ? 'bg-emerald-500 text-black hover:bg-emerald-400' : 'bg-white/10 text-white border border-white/20 hover:bg-white/15'
                     }`}
                   >
                     {tier === 'Free' ? 'Start free' : `Get ${tier}`}
@@ -415,7 +419,7 @@ export const ComparisonTable: React.FC = () => {
                             Included
                           </span>
                         ) : (
-                          <span className="text-[11px] font-bold uppercase tracking-wider bg-white/10 text-zinc-300 px-2 py-0.5 rounded border border-white/20">
+                          <span className="text-xs font-bold uppercase tracking-wider bg-emerald-500/10 text-emerald-400 px-2 py-0.5 rounded border border-emerald-500/30">
                             Recommended
                           </span>
                         )}
@@ -449,7 +453,7 @@ export const ComparisonTable: React.FC = () => {
                         <button
                           type="button"
                           onClick={() => handleSelectPlan('Pro')}
-                          className="mt-2 w-full min-h-11 px-3 rounded-lg font-sans bg-white hover:bg-zinc-200 text-black text-sm font-semibold transition-colors flex items-center justify-center gap-1.5 shadow cursor-pointer"
+                          className="mt-2 w-full min-h-11 px-3 rounded-lg font-sans bg-emerald-500 text-black hover:bg-emerald-400 text-sm font-semibold transition-colors flex items-center justify-center gap-1.5 shadow cursor-pointer"
                         >
                           <span>Get Pro</span>
                           <ArrowRight size={13} />
@@ -599,7 +603,7 @@ export const ComparisonTable: React.FC = () => {
                 <button
                   type="button"
                   onClick={() => handleSelectPlan('Enterprise')}
-                  className="px-5 py-2 rounded-lg text-xs font-mono font-bold uppercase tracking-wider bg-white text-black hover:bg-neutral-200 transition-all flex items-center gap-2 shadow cursor-pointer"
+                  className="px-5 py-2 rounded-lg text-xs font-mono font-bold uppercase tracking-wider bg-emerald-500 text-black hover:bg-emerald-400 transition-all flex items-center gap-2 shadow cursor-pointer"
                 >
                   <span>Upgrade to Enterprise ({priceLabel('Enterprise')})</span>
                   <ArrowRight size={14} />
@@ -608,7 +612,7 @@ export const ComparisonTable: React.FC = () => {
                 <button
                   type="button"
                   onClick={() => handleSelectPlan('Pro')}
-                  className="px-5 py-2 rounded-lg text-xs font-mono font-bold uppercase tracking-wider bg-white text-black hover:bg-neutral-200 transition-all flex items-center gap-2 shadow cursor-pointer"
+                  className="px-5 py-2 rounded-lg text-xs font-mono font-bold uppercase tracking-wider bg-emerald-500 text-black hover:bg-emerald-400 transition-all flex items-center gap-2 shadow cursor-pointer"
                 >
                   <span>Upgrade to Pro ({priceLabel('Pro')})</span>
                   <ArrowRight size={14} />
@@ -634,15 +638,17 @@ export const ComparisonTable: React.FC = () => {
       </div>
 
       {/* Auth Modal for Unauthenticated Checkout Actions */}
-      <AuthModal
-        isOpen={isAuthModalOpen && !currentUser?.isLoggedIn}
-        onClose={() => {
-          setIsAuthModalOpen(false);
-          setPendingPlan(null);
-        }}
-        initialMode={authInitialMode}
-        onLoginSuccess={handleModalAuthSuccess}
-      />
+      {isAuthModalOpen && (
+        <AuthModal
+          isOpen={isAuthModalOpen && !currentUser?.isLoggedIn}
+          onClose={() => {
+            setIsAuthModalOpen(false);
+            setPendingPlan(null);
+          }}
+          initialMode={authInitialMode}
+          onLoginSuccess={handleModalAuthSuccess}
+        />
+      )}
     </section>
   );
 };

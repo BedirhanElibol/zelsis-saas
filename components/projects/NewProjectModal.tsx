@@ -149,7 +149,7 @@ export const NewProjectModal: React.FC<NewProjectModalProps> = ({ isOpen, onClos
             <button
               type="submit"
               disabled={isSubmitting || !name.trim() || !repoUrl.trim()}
-              className="btn btn-primary flex-1 py-2.5 text-xs font-bold uppercase tracking-wider bg-white text-black hover:bg-neutral-200 disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer"
+              className="btn btn-primary flex-1 py-2.5 text-xs font-bold uppercase tracking-wider bg-emerald-500 text-black hover:bg-emerald-400 disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer"
             >
               {isSubmitting ? 'Connecting...' : 'Connect & Audit'}
             </button>

@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
+import { m, AnimatePresence } from 'framer-motion';
 import { ChevronDown, HelpCircle, ShieldCheck } from 'lucide-react';
 
 interface FaqItem {
@@ -57,7 +57,7 @@ export const FaqSection: React.FC = () => {
       <div className="max-w-4xl mx-auto flex flex-col gap-12">
         {/* Section Header */}
         <div className="flex flex-col gap-4 text-center">
-          <div className="inline-flex items-center justify-center text-xs font-mono uppercase tracking-widest text-zinc-400">
+          <div className="inline-flex items-center justify-center text-xs font-mono uppercase tracking-widest text-emerald-400">
             <span>SECURITY &amp; ARCHITECTURE FAQ</span>
           </div>
           <h2 className="text-3xl sm:text-5xl font-extrabold text-[#EDEDED] tracking-tight">
@@ -88,7 +88,7 @@ export const FaqSection: React.FC = () => {
 
               <AnimatePresence>
                 {openIdx === idx && (
-                  <motion.div
+                  <m.div
                     initial={{ opacity: 0, height: 0 }}
                     animate={{ opacity: 1, height: 'auto' }}
                     exit={{ opacity: 0, height: 0 }}
@@ -98,7 +98,7 @@ export const FaqSection: React.FC = () => {
                     <p className="mt-4 text-sm text-zinc-400 leading-relaxed font-sans pr-6">
                       {faq.answer}
                     </p>
-                  </motion.div>
+                  </m.div>
                 )}
               </AnimatePresence>
             </div>
