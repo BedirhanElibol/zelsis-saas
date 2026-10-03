@@ -12,6 +12,7 @@ import {
   ExternalLink 
 } from 'lucide-react';
 import { getConfiguredAppUrl } from '@/lib/app-url';
+import { CODE_RETENTION_STATEMENT } from '@/lib/data-retention';
 
 export const WorkflowSteps: React.FC = () => {
   const [activeStep, setActiveStep] = useState(0);
@@ -22,14 +23,14 @@ export const WorkflowSteps: React.FC = () => {
       badge: 'CONNECT & PRIVACY',
       title: 'Connect a Repository, Scanned In Memory',
       description:
-        'Paste a public GitHub repository, or connect private ones with a read-only GitHub token. Files are fetched into worker memory, scanned, and released: we keep the findings, never your source.',
+        'Paste a public GitHub repository, or connect private ones with a read-only GitHub token. Files are fetched into worker memory, scanned, and released.',
       codeSnippet: `# From the dashboard, or from any CI runner with one HTTP call
 $ curl -X POST ${getConfiguredAppUrl()}/api/v1/gate-check \\
     -H "Content-Type: application/json" \\
     -d '{"repoUrl": "your-org/your-app"}'
 {"gateStatus": "PASSED", "readinessScore": 94, ...}`,
       features: [
-        'Source code is never stored: only findings with short snippets',
+        CODE_RETENTION_STATEMENT,
         'Public repositories instantly, private ones with a read-only token',
         'GitHub Actions, GitLab CI and pre-commit configs generated for you'
       ]

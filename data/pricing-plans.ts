@@ -42,7 +42,7 @@ export const ZELSIS_PRICING_PLANS: PricingPlanItem[] = [
     isPopular: false,
     description: 'Release-gate scans for hobbyists and public open-source repositories.',
     features: [
-      '3 scans per month',
+      '3 scans / month (Strict Cap)',
       '1 connected public repository',
       `All ${formatCount(RULE_COUNTS.gating)} active rules`,
       '1 AI fix prompt trial',
@@ -57,7 +57,7 @@ export const ZELSIS_PRICING_PLANS: PricingPlanItem[] = [
     isPopular: true,
     description: 'Unlimited scans of public and private repos, CI release gate and AI fix prompts.',
     features: [
-      'Unlimited scans (fair-use rate limits)',
+      'Unlimited scans (60 req/min rate limit)',
       'Unlimited public & private repositories',
       `All ${formatCount(RULE_COUNTS.gating)} active rules`,
       'Unlimited AI fix prompts',
@@ -73,13 +73,13 @@ export const ZELSIS_PRICING_PLANS: PricingPlanItem[] = [
     name: 'Zelsis Enterprise',
     priceMonthly: PLAN_PRICES.Enterprise,
     isPopular: false,
-    description: 'Pro for your whole team: shared workspace, one gate policy for every repo and white-label SOC 2 reports.',
+    description: 'Pro for your whole team: shared workspace, one gate policy for every repo and SOC 2 control mapping.',
     features: [
       'Everything in Zelsis Pro',
       `Team workspace: ${ENTERPRISE_SEAT_LIMIT} seats, every member gets Pro`,
       'Owner / admin / member roles and invite links',
       'Organization gate policy applied to every repo',
-      'White-label PDF report with SOC 2 control mapping',
+      'SOC 2 control-mapping appendix (PDF)',
       SUPPORT_TERMS.Enterprise,
     ],
     buttonText: 'Upgrade to Enterprise',

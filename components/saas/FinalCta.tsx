@@ -3,6 +3,7 @@
 import React from 'react';
 import { ArrowRight, Terminal, ShieldCheck, Play } from 'lucide-react';
 import { useRouter } from 'next/navigation';
+import { CODE_RETENTION_STATEMENT } from '@/lib/data-retention';
 
 export const FinalCta: React.FC = () => {
   const router = useRouter();
@@ -26,7 +27,7 @@ export const FinalCta: React.FC = () => {
 
         {/* Subtitle */}
         <p className="text-base sm:text-lg text-[#A1A1AA] max-w-2xl mx-auto mt-6 mb-10 font-sans leading-relaxed">
-          Scan a repository in seconds. We never store your code, only the findings with a short snippet of each flagged line.
+          Scan a repository in seconds. {CODE_RETENTION_STATEMENT}
         </p>
 
         {/* CTA Buttons */}
@@ -51,7 +52,7 @@ export const FinalCta: React.FC = () => {
         {/* Footnote */}
         <div className="flex flex-wrap items-center justify-center gap-6 sm:gap-8 mt-8 text-xs font-mono text-zinc-400">
           <span>No install, no credit card</span>
-          <span>Repo never stored</span>
+          <span>Code scanned in memory, never stored</span>
           <span>Benchmark published, misses included</span>
         </div>
       </div>
