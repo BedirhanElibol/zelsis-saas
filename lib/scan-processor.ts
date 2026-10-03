@@ -213,7 +213,27 @@ export async function executeScanJob(options: ExecuteScanJobOptions): Promise<Sc
       current_phase: 'Executing deterministic AST security rules'
     });
 
-    const result = await runStaticCodeScan(filesToScan, resolvedTargetName, { dependencyAudit: { timeoutMs: 8000 }, orgPolicy });
+    let dismissals: { ruleId: number; filePath: string }[] = [];
+    if (adminClient && authenticatedUserId) {
+      const { data: existingProj } = await adminClient
+        .from('projects')
+        .select('id')
+        .eq('user_id', authenticatedUserId)
+        .eq('repo_url', rawRepoUrl)
+        .maybeSingle();
+
+      if (existingProj?.id) {
+        const { data: dismissalsData } = await adminClient
+          .from('finding_dismissals')
+          .select('rule_id, file_path')
+          .eq('project_id', existingProj.id);
+        if (dismissalsData) {
+          dismissals = dismissalsData.map((d: any) => ({ ruleId: d.rule_id, filePath: d.file_path }));
+        }
+      }
+    }
+
+    const result = await runStaticCodeScan(filesToScan, resolvedTargetName, { dependencyAudit: { timeoutMs: 8000 }, orgPolicy, dismissals });
 
     // ─── Phase 4: AGGREGATING (Persisting Findings & Manifest) ───
     await updateJobState({

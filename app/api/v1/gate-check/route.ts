@@ -412,7 +412,32 @@ export async function POST(req: NextRequest) {
       }
     }
 
-    const result = await runStaticCodeScan(filesToScan, targetName, { dependencyAudit: { timeoutMs: 8000 }, orgPolicy });
+    let dismissals: { ruleId: number; filePath: string }[] = [];
+    if (authenticatedUserId && serviceRoleKey) {
+      try {
+        const adminClient = createClient(supabaseUrl, serviceRoleKey, { auth: { persistSession: false } });
+        const { data: existingProj } = await adminClient
+          .from('projects')
+          .select('id')
+          .eq('user_id', authenticatedUserId)
+          .eq('repo_url', rawRepoUrl)
+          .maybeSingle();
+
+        if (existingProj?.id) {
+          const { data: dismissalsData } = await adminClient
+            .from('finding_dismissals')
+            .select('rule_id, file_path')
+            .eq('project_id', existingProj.id);
+          if (dismissalsData) {
+            dismissals = dismissalsData.map((d: any) => ({ ruleId: d.rule_id, filePath: d.file_path }));
+          }
+        }
+      } catch (err) {
+        logger.warn('[Gate Check] Error fetching dismissals:', err);
+      }
+    }
+
+    const result = await runStaticCodeScan(filesToScan, targetName, { dependencyAudit: { timeoutMs: 8000 }, orgPolicy, dismissals });
 
     // Auto-dispatch webhook notifications if URLs provided
     if (slackWebhookUrl || discordWebhookUrl) {
