@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@supabase/supabase-js';
 import { checkRateLimit, createRateLimitResponse } from '@/lib/rate-limiter';
 import { getEffectiveSupabaseUrl, getEffectiveSupabaseAnonKey } from '@/lib/supabase';
+import { sendWaitlistWelcomeEmail } from '@/lib/email';
 
 export const dynamic = 'force-dynamic';
 
@@ -70,6 +71,11 @@ export async function POST(req: NextRequest) {
       console.error('Waitlist insert error:', error);
       return NextResponse.json({ error: 'Failed to join waitlist' }, { status: 500 });
     }
+
+    // Fire welcome email asynchronously without blocking response
+    void sendWaitlistWelcomeEmail(email, framework_interest).catch((err) => {
+      console.warn('[Waitlist] Welcome email sending error:', err);
+    });
 
     return NextResponse.json({ success: true });
   } catch (err) {

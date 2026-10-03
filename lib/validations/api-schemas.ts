@@ -224,6 +224,7 @@ export const OrgNameSchema = z.object({
 export const OrgInviteSchema = z.object({
   accessToken: AccessTokenSchema,
   role: z.enum(['admin', 'member']).default('member'),
+  email: z.string().trim().email('Invalid email address').optional().or(z.literal('')),
 });
 
 export const OrgAcceptInviteSchema = z.object({

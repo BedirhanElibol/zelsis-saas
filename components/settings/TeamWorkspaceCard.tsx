@@ -292,6 +292,13 @@ export const TeamWorkspaceCard: React.FC<TeamWorkspaceCardProps> = ({ user, onOp
                       <option value="member">Member</option>
                       {role === 'owner' && <option value="admin">Admin</option>}
                     </select>
+                    <input
+                      type="email"
+                      name="email"
+                      placeholder="teammate@company.com (optional)"
+                      aria-label="Teammate email for direct invitation"
+                      className="bg-[#0A0A0A] border border-white/10 rounded-xl px-3.5 py-2.5 text-xs text-white placeholder:text-zinc-500 focus:border-white/30 focus-visible:ring-2 focus-visible:ring-emerald-500 focus-visible:outline-none flex-1 min-w-[200px]"
+                    />
                     <button
                       type="submit"
                       disabled={pending || seatsUsed >= snapshot.seatLimit}
