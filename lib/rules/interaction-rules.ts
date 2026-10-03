@@ -688,7 +688,11 @@ export function evaluateInteractionRules(file: CodeFile, lines: string[], cleanC
     }
     // UI-INTERACT-44: Broken Zoom Affordance on Pinch Gestures
     // Meta viewport string, or the Next.js `export const viewport` object form.
-    const zoomLock = /user-scalable\s*=\s*(?:no|0)\b|maximum-scale\s*=\s*1(?:\.0)?\b|\buserScalable\s*:\s*false\b|\bmaximumScale\s*:\s*1(?:\.0)?\b/i;
+    // Only inside a viewport declaration: the same text in a docs snippet or label string is not a zoom lock.
+    const metaZoomLock = /<meta[^>]*viewport[^>]*(?:user-scalable\s*=\s*(?:no|0)\b|maximum-scale\s*=\s*1(?:\.0)?\b)/i;
+    const objectZoomLock = /\buserScalable\s*:\s*false\b|\bmaximumScale\s*:\s*1(?:\.0)?\b/;
+    const declaresViewport = /export\s+(?:const\s+viewport\b|(?:async\s+)?function\s+generateViewport\b)/.test(cleanContent);
+    const zoomLock = declaresViewport ? new RegExp(`${metaZoomLock.source}|${objectZoomLock.source}`, 'i') : metaZoomLock;
     if (zoomLock.test(cleanContent)) {
         const matchLineIdx = locateMatchLine(lines, [zoomLock], l => !l.trim().startsWith('//') && !l.trim().startsWith('*'));
         const lineNum = matchLineIdx !== -1 ? matchLineIdx + 1 : 1;
