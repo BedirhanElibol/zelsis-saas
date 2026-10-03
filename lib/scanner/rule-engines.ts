@@ -121,6 +121,8 @@ import { evaluateLlmAppV2Rules } from '../rules/llm-app-v2-rules';
 import { evaluatePrivacyDataRules } from '../rules/privacy-data-rules';
 import { evaluateCloudIacV2Rules } from '../rules/cloud-iac-v2-rules';
 import { evaluateUiQualityRules } from '../rules/ui-quality-rules';
+import { evaluateSaasV3Rules } from '../rules/saas-v3-rules';
+import { evaluateNextAiV3Rules } from '../rules/next-ai-v3-rules';
 
 export type RuleEngine = (
   file: CodeFile,
@@ -403,4 +405,8 @@ export const RULE_ENGINES: ReadonlyArray<{ evaluate: RuleEngine; scanRawContent?
   { evaluate: evaluateCloudIacV2Rules },
   // Measurable UI quality: WCAG 2.2 accessibility and UX defects in JSX/HTML (A11Y-01.., Rule IDs 28601-28699)
   { evaluate: evaluateUiQualityRules },
+  // Webhook/payment integrity, postMessage origin, RLS identity, Next.js 16 request APIs (SAAS3-01.., Rule IDs 28701-28749)
+  { evaluate: evaluateSaasV3Rules },
+  // Next.js cache isolation, server-to-client data leaks, destructive AI tools (NEXTAI-01.., Rule IDs 28751-28799)
+  { evaluate: evaluateNextAiV3Rules },
 ];

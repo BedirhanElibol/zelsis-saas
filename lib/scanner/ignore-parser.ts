@@ -26,6 +26,8 @@ const PREFIX_OFFSETS: ReadonlyArray<readonly [RegExp, readonly number[]]> = [
   [/^PRIV-?(\d+)$/i, [28400]],
   [/^CLOUD-V2-?(\d+)$/i, [28500]],
   [/^A11Y-?(\d+)$/i, [28600]],
+  [/^SAAS3-?(\d+)$/i, [28700]],
+  [/^NEXTAI-?(\d+)$/i, [28750]],
   [/^SAAS-?(\d+)$/i, [23000]],
   [/^JS-SEC-?(\d+)$/i, [24000]],
   [/^CORE-?(\d+)$/i, [24100]],

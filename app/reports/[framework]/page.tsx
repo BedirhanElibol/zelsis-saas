@@ -79,11 +79,12 @@ const FRAMEWORK_DATA = {
 };
 
 type Props = {
-  params: { framework: string };
+  params: Promise<{ framework: string }>;
 };
 
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
-  const data = FRAMEWORK_DATA[params.framework as keyof typeof FRAMEWORK_DATA];
+  const { framework } = await params;
+  const data = FRAMEWORK_DATA[framework as keyof typeof FRAMEWORK_DATA];
   if (!data) return { title: 'Report Not Found' };
 
   return {
@@ -95,8 +96,9 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   };
 }
 
-export default function ReportPage({ params }: Props) {
-  const data = FRAMEWORK_DATA[params.framework as keyof typeof FRAMEWORK_DATA];
+export default async function ReportPage({ params }: Props) {
+  const { framework } = await params;
+  const data = FRAMEWORK_DATA[framework as keyof typeof FRAMEWORK_DATA];
 
   if (!data) {
     notFound();
@@ -192,7 +194,7 @@ export default function ReportPage({ params }: Props) {
       
       <div className="mt-12 text-center flex flex-col items-center pb-12">
         <p className="text-muted-foreground mb-4">Want to check your own {data.name} codebase for these patterns?</p>
-        <WaitlistForm source="report_page" framework={params.framework} />
+        <WaitlistForm source="report_page" framework={framework} />
       </div>
     </div>
   );

@@ -1,8 +1,8 @@
 {
  "summary": {
-  "implementedRules": 792,
-  "testedRules": 783,
-  "preciseLocationRules": 789,
+  "implementedRules": 801,
+  "testedRules": 792,
+  "preciseLocationRules": 798,
   "catalogEntries": 1922,
   "catalogOnlyNotImplemented": 1401,
   "catalogPlaceholderMetadata": 1810
@@ -9327,6 +9327,96 @@
    "title": "Keyboard Trap: onBlur Forces Focus Back Into the Field",
    "severity": "HIGH",
    "source": "lib/rules/ui-quality-rules.ts",
+   "preciseLocation": true,
+   "tested": true,
+   "inCatalog": false
+  },
+  {
+   "ruleId": 28701,
+   "code": "RULE-28701",
+   "title": "Webhook Signature Verified Over Re-Serialized JSON Instead of the Raw Body",
+   "severity": "MEDIUM",
+   "source": "lib/rules/saas-v3-rules.ts",
+   "preciseLocation": true,
+   "tested": true,
+   "inCatalog": false
+  },
+  {
+   "ruleId": 28702,
+   "code": "RULE-28702",
+   "title": "Payment Webhook Grants Credits Without Event-ID Deduplication",
+   "severity": "HIGH",
+   "source": "lib/rules/saas-v3-rules.ts",
+   "preciseLocation": true,
+   "tested": true,
+   "inCatalog": false
+  },
+  {
+   "ruleId": 28703,
+   "code": "RULE-28703",
+   "title": "Webhook HMAC Signs a Timestamp That Is Never Checked for Freshness",
+   "severity": "MEDIUM",
+   "source": "lib/rules/saas-v3-rules.ts",
+   "preciseLocation": true,
+   "tested": true,
+   "inCatalog": false
+  },
+  {
+   "ruleId": 28704,
+   "code": "RULE-28704",
+   "title": "postMessage Listener Trusts event.data Without Checking event.origin",
+   "severity": "HIGH",
+   "source": "lib/rules/saas-v3-rules.ts",
+   "preciseLocation": true,
+   "tested": true,
+   "inCatalog": false
+  },
+  {
+   "ruleId": 28705,
+   "code": "RULE-28705",
+   "title": "RLS Policy Authorizes Rows by the JWT Email Claim",
+   "severity": "MEDIUM",
+   "source": "lib/rules/saas-v3-rules.ts",
+   "preciseLocation": true,
+   "tested": true,
+   "inCatalog": false
+  },
+  {
+   "ruleId": 28706,
+   "code": "RULE-28706",
+   "title": "Next.js 16 Request Props Are Promises: params / searchParams Read Without await",
+   "severity": "MEDIUM",
+   "source": "lib/rules/saas-v3-rules.ts",
+   "preciseLocation": true,
+   "tested": true,
+   "inCatalog": false
+  },
+  {
+   "ruleId": 28751,
+   "code": "RULE-28751",
+   "title": "unstable_cache Callback Reads a Per-User Value Missing From the Cache Key",
+   "severity": "HIGH",
+   "source": "lib/rules/next-ai-v3-rules.ts",
+   "preciseLocation": true,
+   "tested": true,
+   "inCatalog": false
+  },
+  {
+   "ruleId": 28752,
+   "code": "RULE-28752",
+   "title": "Whole Database Row With Secret Columns Passed to a Client Component",
+   "severity": "HIGH",
+   "source": "lib/rules/next-ai-v3-rules.ts",
+   "preciseLocation": true,
+   "tested": true,
+   "inCatalog": false
+  },
+  {
+   "ruleId": 28753,
+   "code": "RULE-28753",
+   "title": "Destructive Agent Tool Runs Without Human Approval",
+   "severity": "MEDIUM",
+   "source": "lib/rules/next-ai-v3-rules.ts",
    "preciseLocation": true,
    "tested": true,
    "inCatalog": false
