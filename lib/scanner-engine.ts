@@ -50,6 +50,8 @@ export interface ScanOptions {
   orgPolicy?: string | null;
   /** Report every rule that fired, without SAME_ISSUE_RULES dedupe. Rule fixtures use it to prove each rule on its own. */
   keepDuplicateRules?: boolean;
+  /** Findings dismissed by the user, which should be marked as ACCEPTED_RISK and not fail the gate. */
+  dismissals?: { ruleId: number; filePath: string }[];
 }
 
 export async function runStaticCodeScan(files: CodeFile[], repoName: string = 'Target Repository', options: ScanOptions = {}): Promise<ScanResult> {
@@ -223,6 +225,10 @@ export async function runStaticCodeScan(files: CodeFile[], repoName: string = 'T
       if (isTestFixture && !isSecretRuleId(f.ruleId)) {
         testFixtureSkips++;
         return;
+      }
+      // Feature: Dismiss Findings
+      if (options.dismissals && options.dismissals.some(d => d.ruleId === f.ruleId && d.filePath === f.filePath)) {
+        f.status = 'ACCEPTED_RISK';
       }
       // Deduplicate findings by fingerprint (same file, line, and rule title/family)
       const isDuplicate = findings.some(existing =>

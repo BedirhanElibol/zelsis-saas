@@ -210,6 +210,7 @@ Enforce strict OWASP Top 10 compliance, fix the listed UI quality and accessibil
           <SeverityChart project={safeProject} />
           <ComponentErrorBoundary componentName="FindingsTable" resetKeys={[safeProject?.id, safeProject?.findings?.length]}>
             <FindingsTable
+              projectId={safeProject.id}
               findings={safeProject.findings}
               onInspectFinding={onInspectFinding}
               onTriggerScan={onTriggerScan}

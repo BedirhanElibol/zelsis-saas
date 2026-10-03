@@ -4,13 +4,15 @@ import React, { useState } from 'react';
 import { Finding, UserTier } from '@/data/schema';
 import { DEMO_AUDIT_FINDINGS } from '@/data/demo-data';
 import { BulkFixModal } from './BulkFixModal';
-import { Search, Filter, ArrowRight, Layers, Check, RotateCcw, Play, Copy, Lock, ShieldCheck, Database, Server, Sliders, AlertOctagon, GitCommit, ChevronDown, SearchX, ExternalLink } from 'lucide-react';
+import { DismissFindingModal } from './DismissFindingModal';
+import { Search, Filter, ArrowRight, Layers, Check, RotateCcw, Play, Copy, Lock, ShieldCheck, Database, Server, Sliders, AlertOctagon, GitCommit, ChevronDown, SearchX, ExternalLink, ShieldX } from 'lucide-react';
 import { ClipboardToastBadge, useClipboardToast } from '../ui/Toast';
 import { safeLower, safeString, safeTrim, safeReplace } from '@/lib/safe-utils';
 import { hasFixPromptAccess } from '@/lib/subscription-utils';
 import { ExperimentalBadge, UnprovenBadge } from '@/components/findings/ExperimentalBadge';
 
 interface FindingsTableProps {
+  projectId?: string;
   findings: Finding[];
   onInspectFinding: (f: Finding) => void;
   onTriggerScan?: () => void;
@@ -25,6 +27,7 @@ interface FindingsTableProps {
 const isAdvisoryFinding = (f: Finding | null | undefined) => f?.maturity === 'experimental' || f?.maturity === 'unproven';
 
 export const FindingsTable: React.FC<FindingsTableProps> = ({
+  projectId,
   findings: allFindings,
   onInspectFinding,
   onTriggerScan,
@@ -40,6 +43,7 @@ export const FindingsTable: React.FC<FindingsTableProps> = ({
   const [pillarFilter, setPillarFilter] = useState<string>('ALL');
   const [hasDiffOnly, setHasDiffOnly] = useState<boolean>(false);
   const [isBulkOpen, setIsBulkOpen] = useState(false);
+  const [dismissFindingItem, setDismissFindingItem] = useState<Finding | null>(null);
   const [expandedCardIds, setExpandedCardIds] = useState<Set<string>>(new Set());
   const [showAdvisory, setShowAdvisory] = useState(false);
 
@@ -709,6 +713,20 @@ export const FindingsTable: React.FC<FindingsTableProps> = ({
 
                 {/* Action Buttons: "Copy Prompt" and "Inspect Fix" */}
                 <div className="pt-2.5 border-t border-white/5 flex items-center gap-2">
+                  {projectId && item.status === 'OPEN' && (
+                    <button
+                      type="button"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        setDismissFindingItem(item);
+                      }}
+                      className="btn btn-secondary text-xs px-3 py-2 flex items-center justify-center gap-1.5 border-white/10 text-[#A1A1AA] hover:bg-white/10 hover:text-white transition-colors cursor-pointer font-mono"
+                      title="Dismiss Finding (Not an issue)"
+                    >
+                      <ShieldX size={12} className="shrink-0" />
+                    </button>
+                  )}
+
                   <button
                     type="button"
                     onClick={(e) => handleCopyFindingPrompt(e, item)}
@@ -887,16 +905,30 @@ export const FindingsTable: React.FC<FindingsTableProps> = ({
 
                   {/* Action */}
                   <td className="py-3.5 px-4 text-right whitespace-nowrap">
-                    <button
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        onInspectFinding(item);
-                      }}
-                      className="btn btn-secondary btn-sm text-[0.7rem] px-3 py-1"
-                    >
-                      <span>Inspect</span>
-                      <ArrowRight size={12} />
-                    </button>
+                    <div className="flex items-center justify-end gap-2">
+                      {projectId && item.status === 'OPEN' && (
+                        <button
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            setDismissFindingItem(item);
+                          }}
+                          className="btn btn-secondary btn-sm text-[0.7rem] px-2 py-1 flex items-center justify-center border-white/10 text-[#A1A1AA] hover:bg-white/10 hover:text-white transition-colors cursor-pointer"
+                          title="Dismiss Finding"
+                        >
+                          <ShieldX size={12} />
+                        </button>
+                      )}
+                      <button
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          onInspectFinding(item);
+                        }}
+                        className="btn btn-secondary btn-sm text-[0.7rem] px-3 py-1"
+                      >
+                        <span>Inspect</span>
+                        <ArrowRight size={12} />
+                      </button>
+                    </div>
                   </td>
                 </tr>
               ))
@@ -912,6 +944,18 @@ export const FindingsTable: React.FC<FindingsTableProps> = ({
         badge={toastBadge}
         onDismiss={hideToast}
       />
+
+      {projectId && (
+        <DismissFindingModal
+          isOpen={!!dismissFindingItem}
+          onClose={() => setDismissFindingItem(null)}
+          finding={dismissFindingItem}
+          projectId={projectId}
+          onDismissed={() => {
+            showToast('Finding dismissed. Please refresh or re-scan.', '[DISMISSED]');
+          }}
+        />
+      )}
     </div>
   );
 };
