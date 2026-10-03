@@ -25,6 +25,7 @@ import {
 } from '@/lib/organization';
 import { getConfiguredAppUrl } from '@/lib/app-url';
 import { logger } from '@/lib/logger';
+import { sendWorkspaceInviteEmail } from '@/lib/email';
 import type { OrgActionState, WorkspaceSnapshot } from '@/lib/org-action-state';
 
 const fail = (message: string): OrgActionState => ({ status: 'error', message });
@@ -152,9 +153,38 @@ export async function createInvite(_prev: OrgActionState, formData: FormData): P
     logger.error('[Org] Invite insert failed:', error.message);
     return fail('Could not create the invite. Please try again.');
   }
-  await audit(ctx.admin, ctx.user.id, 'org.invite_created', membership.orgId, { role: input.role });
-  return ok(`Invite link created. It works once and expires in ${INVITE_TTL_DAYS} days.`, {
-    inviteUrl: `${getConfiguredAppUrl()}/invite/${token}`,
+  const inviteUrl = `${getConfiguredAppUrl()}/invite/${token}`;
+  let emailDispatched = false;
+
+  if (input.email) {
+    const { data: orgData } = await ctx.admin
+      .from('organizations')
+      .select('name')
+      .eq('id', membership.orgId)
+      .maybeSingle();
+
+    const orgName = orgData?.name || 'Workspace';
+    const emailResult = await sendWorkspaceInviteEmail({
+      toEmail: input.email,
+      orgName,
+      role: input.role,
+      inviteUrl,
+    });
+    emailDispatched = emailResult.success;
+  }
+
+  await audit(ctx.admin, ctx.user.id, 'org.invite_created', membership.orgId, {
+    role: input.role,
+    email: input.email || null,
+    emailDispatched,
+  });
+
+  const successMessage = emailDispatched
+    ? `Invite link created and email sent to ${input.email}. It expires in ${INVITE_TTL_DAYS} days.`
+    : `Invite link created. It works once and expires in ${INVITE_TTL_DAYS} days.`;
+
+  return ok(successMessage, {
+    inviteUrl,
   });
 }
 
