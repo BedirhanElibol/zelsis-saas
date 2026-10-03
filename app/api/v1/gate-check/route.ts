@@ -12,6 +12,7 @@ import { validateSafeTargetUrl } from '@/lib/ssrf-guard';
 import { hasFixPromptAccess } from '@/lib/subscription-utils';
 import { getEffectivePlanTier, getOrgPolicy } from '@/lib/organization';
 import { LOCKED_FIX_TEXT } from '@/lib/fix-gate';
+import { calculateGateStatus, gateSeverity, gatingFindings } from '@/lib/scanner/scoring';
 
 // F-31: Bounded execution duration for static code scans (bounded to 30s for serverless SLA)
 export const maxDuration = 30;
@@ -287,6 +288,7 @@ export async function POST(req: NextRequest) {
 
     let filesToScan: CodeFile[] = [];
     let targetName = rawRepoUrl;
+    let changedFiles: string[] | null = null;
 
     if (rawRepoUrl.toLowerCase() === 'local') {
       const { WORKSPACE_SOURCE_FILES } = await import('@/data/workspaceFiles');
@@ -333,7 +335,8 @@ export async function POST(req: NextRequest) {
       }
     } else if (isGithubTarget) {
       logger.info(`[Gate Check] Initiating GitHub repository audit for ${rawRepoUrl}`);
-      const liveData = await fetchGithubRepositoryData(rawRepoUrl, githubToken);
+      const liveData = await fetchGithubRepositoryData(rawRepoUrl, githubToken, undefined, undefined, body.ref, body.base);
+      changedFiles = (liveData as any)?.changedFiles || null;
 
       if (liveData?.error === 'REPO_NOT_FOUND') {
         logger.warn(`[Gate Check] Repository not found: ${rawRepoUrl}`);
@@ -497,18 +500,30 @@ export async function POST(req: NextRequest) {
       }
     }
 
+    let finalGateStatus = result.gateStatus;
+    let newFindings = result.findings;
+    let existingFindings: typeof result.findings = [];
+
+    if (changedFiles !== null) {
+      newFindings = result.findings.filter(f => changedFiles!.includes(f.filePath));
+      existingFindings = result.findings.filter(f => !changedFiles!.includes(f.filePath));
+
+      const gFindings = gatingFindings(newFindings);
+      finalGateStatus = calculateGateStatus(gFindings);
+    }
+
     const failOnBlock = req.nextUrl.searchParams.get('failOnBlock') === 'true';
-    const isPassed = result.gateStatus === 'PASSED';
+    const isPassed = finalGateStatus === 'PASSED';
     const statusCode = (failOnBlock && !isPassed) ? 422 : 200;
 
     return NextResponse.json(
       {
         status: 'SUCCESS',
-        gateStatus: result.gateStatus,
+        gateStatus: finalGateStatus,
         readinessScore: result.score,
-        summary: result.gateStatus === 'PASSED'
+        summary: finalGateStatus === 'PASSED'
           ? 'Production Audit PASSED. All security and design compliance checks cleared.'
-          : result.gateStatus === 'WARNING'
+          : finalGateStatus === 'WARNING'
           ? `Release WARNING. Detected ${result.highCount} High and ${result.mediumCount} Medium findings. Review recommended before production deployment.`
           : `Release BLOCKED. Detected ${result.criticalCount} Critical blocker(s) requiring immediate remediation.`,
         metrics: {
@@ -521,7 +536,26 @@ export async function POST(req: NextRequest) {
           filesAnalyzed: filesToScan.length,
           openFindingsCount: result.findings.length
         },
-        findings: result.findings.map((f) => ({
+        findings: changedFiles !== null ? {
+          new: newFindings.map((f) => ({
+            id: f.id,
+            title: f.title,
+            severity: f.severity,
+            category: f.category,
+            filePath: f.filePath,
+            lineRange: f.lineRange,
+            remediationPrompt: canSeeFixes ? f.remediationPrompt : LOCKED_FIX_TEXT
+          })),
+          existing: existingFindings.map((f) => ({
+            id: f.id,
+            title: f.title,
+            severity: f.severity,
+            category: f.category,
+            filePath: f.filePath,
+            lineRange: f.lineRange,
+            remediationPrompt: canSeeFixes ? f.remediationPrompt : LOCKED_FIX_TEXT
+          }))
+        } : result.findings.map((f) => ({
           id: f.id,
           title: f.title,
           severity: f.severity,

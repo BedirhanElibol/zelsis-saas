@@ -31,16 +31,42 @@ jobs:
           ZELSIS_API_URL: ${{ secrets.ZELSIS_API_URL || 'https://shipguard-saas.vercel.app/api/v1/gate-check' }}
           SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
           DISCORD_WEBHOOK_URL: ${{ secrets.DISCORD_WEBHOOK_URL }}
+          FAIL_OPEN: ${{ vars.ZELSIS_FAIL_OPEN || 'false' }}
         run: |
           echo "🚀 Triggering Zelsis Release Gate Audit for repository: ${{ github.repository }}..."
-          RESPONSE=$(curl -s -X POST "$ZELSIS_API_URL" \
+          
+          # Pass ref and base for PRs
+          REF=""
+          BASE=""
+          if [ "${{ github.event_name }}" = "pull_request" ]; then
+            REF="${{ github.event.pull_request.head.sha }}"
+            BASE="${{ github.event.pull_request.base.sha }}"
+          fi
+          
+          RESPONSE=$(curl -s -w "\n%{http_code}" -X POST "$ZELSIS_API_URL" \
             -H "Content-Type: application/json" \
             -H "Authorization: Bearer ${{ secrets.GITHUB_TOKEN }}" \
-            -d "{\"repoUrl\": \"${{ github.repository }}\", \"slackWebhookUrl\": \"$SLACK_WEBHOOK_URL\", \"discordWebhookUrl\": \"$DISCORD_WEBHOOK_URL\"}")
+            -d "{\"repoUrl\": \"${{ github.repository }}\", \"slackWebhookUrl\": \"$SLACK_WEBHOOK_URL\", \"discordWebhookUrl\": \"$DISCORD_WEBHOOK_URL\", \"ref\": \"$REF\", \"base\": \"$BASE\"}")
           
-          echo "Audit Response: $RESPONSE"
-          GATE_STATUS=$(echo "$RESPONSE" | jq -r '.gateStatus // "FAILED"')
-          READINESS_SCORE=$(echo "$RESPONSE" | jq -r '.readinessScore // 0')
+          HTTP_CODE=$(echo "$RESPONSE" | tail -n1)
+          BODY=$(echo "$RESPONSE" | sed '$d')
+          
+          echo "Audit HTTP Status: $HTTP_CODE"
+          echo "Audit Response: $BODY"
+          
+          if [ "$HTTP_CODE" -ge 500 ] || [ -z "$BODY" ] || ! echo "$BODY" | jq -e . >/dev/null 2>&1; then
+            echo "❌ Zelsis API unreachable or returned invalid response."
+            if [ "$FAIL_OPEN" = "true" ]; then
+              echo "⚠️ Fail-open strategy is enabled. Passing the gate."
+              exit 0
+            else
+              echo "🛑 Failing the workflow."
+              exit 1
+            fi
+          fi
+          
+          GATE_STATUS=$(echo "$BODY" | jq -r '.gateStatus // "FAILED"')
+          READINESS_SCORE=$(echo "$BODY" | jq -r '.readinessScore // 0')
           
           echo "--------------------------------------------------"
           echo "📊 Zelsis Gate Status: $GATE_STATUS"

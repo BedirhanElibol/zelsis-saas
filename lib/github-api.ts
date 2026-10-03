@@ -32,6 +32,7 @@ export interface GithubRepoInfo {
   isPrivate?: boolean;
   requiresAuth?: boolean;
   isEmpty?: boolean;
+  changedFiles?: string[];
   error?: 'RATE_LIMIT_EXCEEDED' | 'PRIVATE_OR_UNAUTHENTICATED' | 'TREE_FETCH_FAILED' | 'REPO_NOT_FOUND' | 'EMPTY_REPOSITORY' | 'CLOUDFLARE_BOT_PROTECTION' | string;
 }
 
@@ -232,7 +233,9 @@ export async function fetchGithubRepositoryData(
   repoUrl: string,
   token?: string,
   signal?: AbortSignal,
-  onProgress?: (progress: FetchProgress) => void
+  onProgress?: (progress: FetchProgress) => void,
+  ref?: string,
+  base?: string
 ): Promise<GithubRepoInfo | null> {
   const parsed = parseGithubUrl(repoUrl);
   if (!parsed) return null;
@@ -506,12 +509,12 @@ export async function fetchGithubRepositoryData(
 
     if (signal?.aborted) return null;
 
-    // Default branch detection with fallback checks for main, master, and develop
-    const candidateBranches = Array.from(
+    const targetRef = ref || detectedBranch;
+    const candidateBranches = ref ? [ref] : Array.from(
       new Set([detectedBranch, 'main', 'master', 'develop'].filter(Boolean))
     );
     let treeRes: Response | null = null;
-    let resolvedBranch = detectedBranch;
+    let resolvedBranch = targetRef;
 
     for (const branch of candidateBranches) {
       if (signal?.aborted) return null;
@@ -704,6 +707,24 @@ export async function fetchGithubRepositoryData(
 
     const codeFiles: CodeFile[] = fetchedFiles.filter((f): f is CodeFile => f !== null);
 
+    let changedFiles: string[] | undefined;
+    if (base && ref) {
+      try {
+        const compareRes = await fetch(`https://api.github.com/repos/${owner}/${repo}/compare/${base}...${ref}`, {
+          headers,
+          signal: createTimeoutSignal(8000, signal)
+        });
+        if (compareRes.ok) {
+          const compareData = await compareRes.json();
+          if (compareData.files && Array.isArray(compareData.files)) {
+            changedFiles = compareData.files.map((f: any) => f.filename);
+          }
+        }
+      } catch (err) {
+        console.warn('Failed to fetch github compare', err);
+      }
+    }
+
     if (codeFiles.length > 0) {
       return {
         name: (repoData?.name as string) || repo,
@@ -713,7 +734,8 @@ export async function fetchGithubRepositoryData(
         stars: (repoData?.stargazers_count as number) || 0,
         language: (repoData?.language as string) || 'TypeScript',
         files: codeFiles,
-        isPrivate: repoData?.private === true
+        isPrivate: repoData?.private === true,
+        changedFiles
       };
     }
 

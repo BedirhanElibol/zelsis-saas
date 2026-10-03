@@ -64,14 +64,40 @@ jobs:
         id: gate_check
         run: |
           echo "Initiating pre-flight release audit for \${{ github.repository }}..."
-          RESPONSE=$(curl -s -X POST "${APP_URL}/api/v1/gate-check?failOnBlock=true" \\
-            -H "Content-Type: application/json" \\
-            -d '{"repoUrl": "\${{ github.server_url }}/\${{ github.repository }}"}')
           
-          STATUS=$(echo "$RESPONSE" | grep -o '"gateStatus":"[^"]*' | cut -d'"' -f4)
-          SCORE=$(echo "$RESPONSE" | grep -o '"readinessScore":[0-9]*' | cut -d':' -f2)
-          CRITICALS=$(echo "$RESPONSE" | grep -o '"criticalCount":[0-9]*' | cut -d':' -f2)
-          HIGHS=$(echo "$RESPONSE" | grep -o '"highCount":[0-9]*' | cut -d':' -f2)
+          REF=""
+          BASE=""
+          if [ "\${{ github.event_name }}" = "pull_request" ]; then
+            REF="\${{ github.event.pull_request.head.sha }}"
+            BASE="\${{ github.event.pull_request.base.sha }}"
+          fi
+
+          FAIL_OPEN="\${{ vars.ZELSIS_FAIL_OPEN || 'false' }}"
+
+          RESPONSE=$(curl -s -w "\\n%{http_code}" -X POST "${APP_URL}/api/v1/gate-check?failOnBlock=true" \\
+            -H "Content-Type: application/json" \\
+            -d '{"repoUrl": "\${{ github.server_url }}/\${{ github.repository }}", "ref": "'$REF'", "base": "'$BASE'"}')
+          
+          HTTP_CODE=$(echo "$RESPONSE" | tail -n1)
+          BODY=$(echo "$RESPONSE" | sed '$d')
+
+          if [ "$HTTP_CODE" -ge 500 ] || [ -z "$BODY" ] || ! echo "$BODY" | jq -e . >/dev/null 2>&1; then
+            echo "❌ Zelsis API unreachable or returned invalid response."
+            if [ "$FAIL_OPEN" = "true" ]; then
+              echo "⚠️ Fail-open strategy is enabled. Passing the gate."
+              echo "gate_status=PASSED" >> $GITHUB_OUTPUT
+              echo "readiness_score=100" >> $GITHUB_OUTPUT
+              exit 0
+            else
+              echo "🛑 Failing the workflow."
+              exit 1
+            fi
+          fi
+          
+          STATUS=$(echo "$BODY" | jq -r '.gateStatus // "FAILED"')
+          SCORE=$(echo "$BODY" | jq -r '.readinessScore // 0')
+          CRITICALS=$(echo "$BODY" | jq -r '.criticalCount // 0')
+          HIGHS=$(echo "$BODY" | jq -r '.highCount // 0')
 
           echo "gate_status=$STATUS" >> $GITHUB_OUTPUT
           echo "readiness_score=$SCORE" >> $GITHUB_OUTPUT
