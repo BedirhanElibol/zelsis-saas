@@ -4,7 +4,8 @@ import { z } from 'zod';
 import { logger } from '@/lib/logger';
 import { checkRateLimit, createRateLimitResponse } from '@/lib/rate-limiter';
 import { RevealFixRequestSchema, validateRequestBody } from '@/lib/validations/api-schemas';
-import { hasFixPromptAccess, isPlatformAdminEmail, resolveServerPlanTier } from '@/lib/subscription-utils';
+import { hasFixPromptAccess } from '@/lib/subscription-utils';
+import { getEffectivePlanTier } from '@/lib/organization';
 import { FREE_FIX_TRIAL_LIMIT, StoredFix } from '@/lib/fix-gate';
 
 export const dynamic = 'force-dynamic';
@@ -71,11 +72,7 @@ export async function POST(req: NextRequest) {
       .eq('user_id', user.id)
       .maybeSingle();
 
-    const tier = resolveServerPlanTier({
-      storedTier: sub?.plan_tier,
-      currentPeriodEnd: sub?.current_period_end,
-      isAdmin: isPlatformAdminEmail(user.email)
-    });
+    const tier = await getEffectivePlanTier(adminClient, user.id, user.email);
     const revealed: string[] = fixRow.revealed_finding_ids || [];
     const trialUsed: number = sub?.fix_prompts_used ?? 0;
 

@@ -3,8 +3,14 @@
 import React, { useState, useEffect } from 'react';
 import { Check, X, Shield, ArrowRight, Lock, ExternalLink, Zap } from 'lucide-react';
 import { useRouter } from 'next/navigation';
-import { AuthModal, UserProfile } from '@/components/auth/AuthModal';
+import dynamic from 'next/dynamic';
+import type { UserProfile } from '@/components/auth/AuthModal';
+
+// Loaded only when a visitor picks a paid plan without being signed in
+const AuthModal = dynamic(() => import('@/components/auth/AuthModal').then((m) => m.AuthModal), { ssr: false });
 import { formatCount, RULE_COUNTS } from '@/lib/rule-status';
+import { ENTERPRISE_SEAT_LIMIT, PLAN_PRICES, priceLabel, SUPPORT_TERMS, ZELSIS_PRICING_PLANS } from '@/data/pricing-plans';
+import { contactMailto } from '@/lib/contact';
 
 interface ComparisonItem {
   name: string;
@@ -18,6 +24,13 @@ interface ComparisonCategory {
   title: string;
   items: ComparisonItem[];
 }
+
+const planFor = (id: string) => ZELSIS_PRICING_PLANS.find((p) => p.id === id)!;
+const MOBILE_PLANS = [
+  { tier: 'Free' as const, plan: planFor('free') },
+  { tier: 'Pro' as const, plan: planFor('zelsis-core') },
+  { tier: 'Enterprise' as const, plan: planFor('vibecare') },
+];
 
 export const ComparisonTable: React.FC = () => {
   const router = useRouter();
@@ -109,7 +122,7 @@ export const ComparisonTable: React.FC = () => {
           description: 'Supported repository types and permission boundary',
           free: '1 Public Repository only',
           pro: 'Unlimited Public & Private Repos',
-          enterprise: 'Unlimited Org-Wide & Team Repos'
+          enterprise: 'Unlimited Public & Private Repos'
         },
       ]
     },
@@ -223,16 +236,30 @@ export const ComparisonTable: React.FC = () => {
         {
           name: 'Technical Support Channel',
           description: 'Direct engineering support and issue escalation channel',
-          free: 'Email Support',
-          pro: '24-Hour Priority Email Support',
-          enterprise: 'Priority Email & Dedicated Slack Support'
+          free: SUPPORT_TERMS.Free,
+          pro: SUPPORT_TERMS.Pro,
+          enterprise: SUPPORT_TERMS.Enterprise
         },
         {
-          name: 'Custom Ruleset Onboarding',
-          description: 'Technical guidance for configuring organization-specific security gates',
+          name: 'Team Workspace & Roles',
+          description: 'Shared workspace with invite links and owner / admin / member roles; every member gets Pro',
           free: false,
           pro: false,
-          enterprise: 'Custom Ruleset Onboarding Guidance'
+          enterprise: `${ENTERPRISE_SEAT_LIMIT} seats included`
+        },
+        {
+          name: 'Organization Gate Policy',
+          description: 'One .zelsisrc policy (strategy, minimum score, ignored rules and paths) enforced on all member scans and the CI gate',
+          free: false,
+          pro: false,
+          enterprise: 'Included'
+        },
+        {
+          name: 'White-label SOC 2 Report',
+          description: 'PDF report with your company name and logo, findings mapped to SOC 2 Trust Services Criteria',
+          free: false,
+          pro: false,
+          enterprise: 'Included'
         }
       ]
     }
@@ -243,10 +270,12 @@ export const ComparisonTable: React.FC = () => {
       return val ? (
         <span className="inline-flex items-center justify-center w-5 h-5 rounded-full bg-white/10 text-white">
           <Check size={12} className="stroke-[2.5]" />
+          <span className="sr-only">Included</span>
         </span>
       ) : (
         <span className="inline-flex items-center justify-center w-5 h-5 rounded-full bg-white/5 text-zinc-400">
           <X size={12} className="stroke-[2]" />
+          <span className="sr-only">Not included</span>
         </span>
       );
     }
@@ -270,21 +299,67 @@ export const ComparisonTable: React.FC = () => {
       <div className="max-w-7xl mx-auto flex flex-col gap-16">
         {/* Section Header */}
         <div className="flex flex-col gap-4 text-center max-w-3xl mx-auto">
-          <div className="inline-flex items-center justify-center text-xs font-mono uppercase tracking-widest text-zinc-400 bg-white/5 px-3 py-1 rounded-full border border-white/10 self-center">
-            <span>PLAN COMPARISON MATRIX</span>
+          <div className="inline-flex items-center justify-center text-xs font-mono uppercase tracking-widest text-emerald-400 bg-white/5 px-3 py-1 rounded-full border border-white/10 self-center">
+            <span>Pricing</span>
           </div>
-          <h2 className="text-3xl sm:text-5xl font-extrabold text-[#EDEDED] tracking-tight">
-            Transparent Tier Limits. Zero Guesswork.
+          <h2 className="text-3xl sm:text-5xl font-extrabold text-[#EDEDED] tracking-tight [text-wrap:balance]">
+            Start free, upgrade when you ship
           </h2>
           <p className="text-base sm:text-lg text-[#A1A1AA] leading-relaxed">
-            Understand exactly what you are paying for. Compare operational limits, rule depth, surgical diffs, and release gate enforcement across Free, Pro, and Enterprise tiers.
+            Every plan runs the same rules. Paid plans remove the limits, unlock private repositories and the CI gate, and add team features.
           </p>
         </div>
 
+        {/* Mobile: stacked plan cards (the matrix needs ~760px) */}
+        <div className="md:hidden flex flex-col gap-4">
+          {MOBILE_PLANS.map(({ tier, plan }) => {
+            const isCurrent = isLoggedIn && currentTier === tier;
+            return (
+              <div
+                key={plan.id}
+                className={`rounded-2xl border p-5 flex flex-col gap-4 bg-[#121216] ${plan.isPopular ? 'border-white/30' : 'border-white/10'}`}
+              >
+                <div className="flex items-baseline justify-between gap-3">
+                  <h3 className="text-lg font-bold text-white">{tier}</h3>
+                  <div className="text-2xl font-extrabold text-white font-mono">
+                    ${plan.priceMonthly}
+                    <span className="text-sm font-normal text-zinc-400"> / month</span>
+                  </div>
+                </div>
+                <p className="text-sm text-zinc-400">{plan.description}</p>
+                <ul className="flex flex-col gap-2">
+                  {plan.features.map((feature) => (
+                    <li key={feature} className="flex items-start gap-2 text-sm text-zinc-200">
+                      <Check size={16} className="text-white shrink-0 mt-0.5" aria-hidden="true" />
+                      <span>{feature}</span>
+                    </li>
+                  ))}
+                </ul>
+                {isCurrent ? (
+                  <div className="min-h-11 flex items-center justify-center rounded-lg border border-white/15 text-sm text-zinc-300">
+                    Current plan
+                  </div>
+                ) : (
+                  <button
+                    type="button"
+                    onClick={() => (tier === 'Free' ? router.push('/dashboard') : handleSelectPlan(tier))}
+                    className={`min-h-11 rounded-lg text-sm font-semibold transition-colors ${
+                      plan.isPopular ? 'bg-emerald-500 text-black hover:bg-emerald-400' : 'bg-white/10 text-white border border-white/20 hover:bg-white/15'
+                    }`}
+                  >
+                    {tier === 'Free' ? 'Start free' : `Get ${tier}`}
+                  </button>
+                )}
+              </div>
+            );
+          })}
+        </div>
+
         {/* Matrix Container */}
-        <div className="rounded-2xl border border-white/15 bg-[#121216] overflow-hidden shadow-2xl">
+        <div className="hidden md:block rounded-2xl border border-white/15 bg-[#121216] overflow-hidden shadow-2xl">
           <div className="overflow-x-auto">
             <table className="w-full text-left border-collapse min-w-[760px]">
+              <caption className="sr-only">Feature comparison of the Free, Pro and Enterprise plans</caption>
               <thead>
                 <tr className="border-b border-white/15 bg-[#0E0E12]">
                   <th className="p-5 sm:p-6 text-xs font-mono uppercase tracking-wider text-zinc-400 w-[34%] align-bottom">
@@ -310,21 +385,21 @@ export const ComparisonTable: React.FC = () => {
                         <button
                           type="button"
                           onClick={() => router.push('/dashboard')}
-                          className="mt-2 w-full py-2 px-3 rounded-lg bg-white/10 border border-white/20 text-white text-xs font-bold font-mono transition-colors flex items-center justify-center gap-1.5 cursor-pointer"
+                          className="mt-2 w-full min-h-11 px-3 rounded-lg font-sans bg-white/10 border border-white/20 text-white text-sm font-semibold transition-colors flex items-center justify-center gap-1.5 cursor-pointer"
                         >
                           <span>Current Plan</span>
                         </button>
                       ) : isLoggedIn && (currentTier === 'Pro' || currentTier === 'Enterprise') ? (
-                        <div className="mt-2 w-full py-2 px-3 rounded-lg bg-white/5 border border-white/10 text-zinc-400 text-xs font-bold font-mono">
+                        <div className="mt-2 w-full min-h-11 px-3 rounded-lg font-sans bg-white/5 border border-white/10 text-zinc-400 text-sm font-semibold">
                           Included Baseline
                         </div>
                       ) : (
                         <button
                           type="button"
                           onClick={() => router.push('/dashboard')}
-                          className="mt-2 w-full py-2 px-3 rounded-lg bg-white/10 hover:bg-white/15 border border-white/15 text-white text-xs font-bold font-mono transition-colors cursor-pointer"
+                          className="mt-2 w-full min-h-11 px-3 rounded-lg font-sans bg-white/10 hover:bg-white/15 border border-white/15 text-white text-sm font-semibold transition-colors cursor-pointer"
                         >
-                          Start Free (3 Scans)
+                          Start free
                         </button>
                       )}
                     </div>
@@ -344,13 +419,13 @@ export const ComparisonTable: React.FC = () => {
                             Included
                           </span>
                         ) : (
-                          <span className="text-[11px] font-bold uppercase tracking-wider bg-white/10 text-zinc-300 px-2 py-0.5 rounded border border-white/20">
+                          <span className="text-xs font-bold uppercase tracking-wider bg-emerald-500/10 text-emerald-400 px-2 py-0.5 rounded border border-emerald-500/30">
                             Recommended
                           </span>
                         )}
                       </div>
                       <div className="text-2xl font-extrabold text-white font-mono">
-                        $19 <span className="text-xs text-zinc-400 font-normal">/ month</span>
+                        ${PLAN_PRICES.Pro} <span className="text-xs text-zinc-400 font-normal">/ month</span>
                       </div>
                       <span className="text-[11px] text-zinc-400 font-sans">For professional developers and shipping teams</span>
 
@@ -360,7 +435,7 @@ export const ComparisonTable: React.FC = () => {
                             href="https://polar.sh/purchases"
                             target="_blank"
                             rel="noopener noreferrer"
-                            className="w-full py-2 px-3 rounded-lg bg-white/10 hover:bg-white/15 border border-white/20 text-white text-xs font-extrabold font-mono transition-colors flex items-center justify-center gap-1.5 shadow cursor-pointer"
+                            className="w-full min-h-11 px-3 rounded-lg font-sans bg-white/10 hover:bg-white/15 border border-white/20 text-white text-sm font-semibold transition-colors flex items-center justify-center gap-1.5 shadow cursor-pointer"
                           >
                             <span>Manage at Polar</span>
                             <ExternalLink size={12} />
@@ -369,7 +444,7 @@ export const ComparisonTable: React.FC = () => {
                         </div>
                       ) : isLoggedIn && currentTier === 'Enterprise' ? (
                         <div className="flex flex-col gap-1 mt-2">
-                          <div className="w-full py-2 px-3 rounded-lg bg-white/5 border border-white/10 text-zinc-400 text-xs font-bold font-mono">
+                          <div className="w-full min-h-11 px-3 rounded-lg font-sans bg-white/5 border border-white/10 text-zinc-400 text-sm font-semibold">
                             Included in Enterprise
                           </div>
                           <span className="text-[10px] text-zinc-400">All Pro features active</span>
@@ -378,9 +453,9 @@ export const ComparisonTable: React.FC = () => {
                         <button
                           type="button"
                           onClick={() => handleSelectPlan('Pro')}
-                          className="mt-2 w-full py-2 px-3 rounded-lg bg-white hover:bg-zinc-200 text-black text-xs font-extrabold font-mono transition-colors flex items-center justify-center gap-1.5 shadow cursor-pointer"
+                          className="mt-2 w-full min-h-11 px-3 rounded-lg font-sans bg-emerald-500 text-black hover:bg-emerald-400 text-sm font-semibold transition-colors flex items-center justify-center gap-1.5 shadow cursor-pointer"
                         >
-                          <span>Upgrade to Pro ($19)</span>
+                          <span>Get Pro</span>
                           <ArrowRight size={13} />
                         </button>
                       )}
@@ -403,9 +478,9 @@ export const ComparisonTable: React.FC = () => {
                         ) : null}
                       </div>
                       <div className="text-2xl font-extrabold text-white font-mono">
-                        $99 <span className="text-xs text-zinc-400 font-normal">/ month</span>
+                        ${PLAN_PRICES.Enterprise} <span className="text-xs text-zinc-400 font-normal">/ month</span>
                       </div>
-                      <span className="text-[11px] text-zinc-400 font-sans">For organizations requiring CI/CD gates &amp; SLAs</span>
+                      <span className="text-[11px] text-zinc-400 font-sans">For teams: shared workspace, org policy &amp; SOC 2 reports</span>
 
                       {isLoggedIn && currentTier === 'Enterprise' ? (
                         <div className="flex flex-col gap-1 mt-2">
@@ -413,29 +488,29 @@ export const ComparisonTable: React.FC = () => {
                             href="https://polar.sh/purchases"
                             target="_blank"
                             rel="noopener noreferrer"
-                            className="w-full py-2 px-3 rounded-lg bg-white/10 hover:bg-white/15 border border-white/20 text-white text-xs font-extrabold font-mono transition-colors flex items-center justify-center gap-1.5 shadow cursor-pointer"
+                            className="w-full min-h-11 px-3 rounded-lg font-sans bg-white/10 hover:bg-white/15 border border-white/20 text-white text-sm font-semibold transition-colors flex items-center justify-center gap-1.5 shadow cursor-pointer"
                           >
                             <span>Manage at Polar</span>
                             <ExternalLink size={12} />
                           </a>
-                          <span className="text-[10px] text-zinc-400">Active enterprise cluster</span>
+                          <span className="text-[10px] text-zinc-400">Enterprise plan active</span>
                         </div>
                       ) : isLoggedIn && currentTier === 'Pro' ? (
                         <button
                           type="button"
                           onClick={() => handleSelectPlan('Enterprise')}
-                          className="mt-2 w-full py-2 px-3 rounded-lg bg-white/10 hover:bg-white/15 border border-white/20 text-white text-xs font-extrabold font-mono transition-colors flex items-center justify-center gap-1.5 shadow cursor-pointer"
+                          className="mt-2 w-full min-h-11 px-3 rounded-lg font-sans bg-white/10 hover:bg-white/15 border border-white/20 text-white text-sm font-semibold transition-colors flex items-center justify-center gap-1.5 shadow cursor-pointer"
                         >
-                          <span>Upgrade to Enterprise ($99)</span>
+                          <span>Upgrade to Enterprise</span>
                           <ArrowRight size={13} />
                         </button>
                       ) : (
                         <button
                           type="button"
                           onClick={() => handleSelectPlan('Enterprise')}
-                          className="mt-2 w-full py-2 px-3 rounded-lg bg-white/10 hover:bg-white/15 border border-white/20 text-white text-xs font-bold font-mono transition-colors flex items-center justify-center gap-1.5 cursor-pointer"
+                          className="mt-2 w-full min-h-11 px-3 rounded-lg font-sans bg-white/10 hover:bg-white/15 border border-white/20 text-white text-sm font-semibold transition-colors flex items-center justify-center gap-1.5 cursor-pointer"
                         >
-                          <span>Deploy Enterprise ($99)</span>
+                          <span>Get Enterprise</span>
                           <ArrowRight size={13} />
                         </button>
                       )}
@@ -471,10 +546,10 @@ export const ComparisonTable: React.FC = () => {
                       ) : (
                         category.items.map((item, itemIdx) => (
                           <tr key={itemIdx} className="hover:bg-white/[0.02] transition-colors">
-                            <td className="p-4 sm:p-5">
+                            <th scope="row" className="p-4 sm:p-5 font-normal text-left">
                               <div className="font-bold text-white mb-0.5 text-xs sm:text-sm">{item.name}</div>
-                              <div className="text-[11px] text-zinc-400 font-sans leading-snug">{item.description}</div>
-                            </td>
+                              <div className="text-xs text-zinc-400 font-sans leading-snug">{item.description}</div>
+                            </th>
 
                             {/* Free Value */}
                             <td className="p-4 sm:p-5 border-l border-white/10">
@@ -528,18 +603,18 @@ export const ComparisonTable: React.FC = () => {
                 <button
                   type="button"
                   onClick={() => handleSelectPlan('Enterprise')}
-                  className="px-5 py-2 rounded-lg text-xs font-mono font-bold uppercase tracking-wider bg-white text-black hover:bg-neutral-200 transition-all flex items-center gap-2 shadow cursor-pointer"
+                  className="px-5 py-2 rounded-lg text-xs font-mono font-bold uppercase tracking-wider bg-emerald-500 text-black hover:bg-emerald-400 transition-all flex items-center gap-2 shadow cursor-pointer"
                 >
-                  <span>Upgrade to Enterprise ($99/mo)</span>
+                  <span>Upgrade to Enterprise ({priceLabel('Enterprise')})</span>
                   <ArrowRight size={14} />
                 </button>
               ) : (
                 <button
                   type="button"
                   onClick={() => handleSelectPlan('Pro')}
-                  className="px-5 py-2 rounded-lg text-xs font-mono font-bold uppercase tracking-wider bg-white text-black hover:bg-neutral-200 transition-all flex items-center gap-2 shadow cursor-pointer"
+                  className="px-5 py-2 rounded-lg text-xs font-mono font-bold uppercase tracking-wider bg-emerald-500 text-black hover:bg-emerald-400 transition-all flex items-center gap-2 shadow cursor-pointer"
                 >
-                  <span>Upgrade to Pro ($19/mo)</span>
+                  <span>Upgrade to Pro ({priceLabel('Pro')})</span>
                   <ArrowRight size={14} />
                 </button>
               )}
@@ -550,28 +625,30 @@ export const ComparisonTable: React.FC = () => {
         {/* Custom Enterprise Inquiries Banner */}
         <div className="p-4 sm:p-6 rounded-xl border border-white/10 bg-[#0E0E12] flex flex-col sm:flex-row items-center justify-between gap-4 text-center sm:text-left">
           <div>
-            <h4 className="text-sm font-bold text-white mb-1">Looking for custom security requirements or bespoke invoicing?</h4>
+            <h3 className="text-sm font-bold text-white mb-1">Looking for custom security requirements or bespoke invoicing?</h3>
             <p className="text-xs text-zinc-400">We offer custom organization onboarding, volume team pricing, and security questionnaire assistance.</p>
           </div>
           <a
-            href="mailto:contact@zelsis.com?subject=Enterprise%20Custom%20Inquiry"
-            className="px-4 py-2 rounded-lg text-xs font-mono font-bold uppercase tracking-wider bg-white/10 hover:bg-white/15 border border-white/20 text-white transition-all shrink-0 cursor-pointer"
+            href={contactMailto('Enterprise inquiry')}
+            className="px-4 min-h-11 inline-flex items-center rounded-lg text-sm font-semibold bg-white/10 hover:bg-white/15 border border-white/20 text-white transition-all shrink-0 cursor-pointer"
           >
-            Contact Enterprise Sales
+            Contact us
           </a>
         </div>
       </div>
 
       {/* Auth Modal for Unauthenticated Checkout Actions */}
-      <AuthModal
-        isOpen={isAuthModalOpen && !currentUser?.isLoggedIn}
-        onClose={() => {
-          setIsAuthModalOpen(false);
-          setPendingPlan(null);
-        }}
-        initialMode={authInitialMode}
-        onLoginSuccess={handleModalAuthSuccess}
-      />
+      {isAuthModalOpen && (
+        <AuthModal
+          isOpen={isAuthModalOpen && !currentUser?.isLoggedIn}
+          onClose={() => {
+            setIsAuthModalOpen(false);
+            setPendingPlan(null);
+          }}
+          initialMode={authInitialMode}
+          onLoginSuccess={handleModalAuthSuccess}
+        />
+      )}
     </section>
   );
 };

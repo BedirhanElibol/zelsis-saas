@@ -4,7 +4,6 @@
  */
 import { Finding } from "@/data/schema";
 import { CodeFile } from "../scanner-engine";
-import { locateMatchLine } from './shared/locate';
 export interface GrpcWebSecurityRuleResult {
     findings: Finding[];
     logs: string[];
@@ -21,15 +20,16 @@ export function evaluateGrpcWebSecurityRules(file: CodeFile, lines: string[], cl
     }
     const ts = new Date().toLocaleTimeString();
     // GRPCSEC-01: Insecure Plaintext gRPC Channel Instantiation in Production
-    if ((/createChannel|grpc\.insecure/i.test(cleanContent) && !/ChannelCredentials\.createSsl/i.test(cleanContent))) {
-        const matchLineIdx = locateMatchLine(lines, [/createChannel|grpc\.insecure/i], l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('#') && !l.trim().startsWith('*'));
+    const hit_14701 = lines.findIndex((l) => /\bgrpc\.insecure_channel\s*\(|\bgrpc\.WithInsecure\s*\(\s*\)|\binsecure\.NewCredentials\s*\(\s*\)/.test(l) && !/localhost|127\.0\.0\.1|\[::1\]|unix:|bufconn/.test(l));
+    if (hit_14701 !== -1) {
+        const matchLineIdx = hit_14701;
         const lineNum = matchLineIdx !== -1 ? matchLineIdx + 1 : 1;
         findings.push({
             id: `grpcsec14701-${Date.now()}-${findingCounter.count++}`,
             ruleId: 14701,
             type: 'INFRA_DATABASE',
             title: "GRPCSEC-01: Insecure Plaintext gRPC Channel Instantiation in Production",
-            severity: "CRITICAL",
+            severity: "MEDIUM",
             category: "Transport Security",
             filePath: file.path,
             lineRange: `L${lineNum}`,
@@ -44,33 +44,10 @@ export function evaluateGrpcWebSecurityRules(file: CodeFile, lines: string[], cl
         });
         logs.push(`[${ts}] [GRPC AUDIT] Found GRPCSEC-01: Insecure Plaintext gRPC Channel Instantiation in Production at ${file.path}:${lineNum}`);
     }
-    // GRPCSEC-02: Missing HTTP/2 Flow Control and Stream Window Limits
-    if ((/http2_settings|initial_window_size/i.test(cleanContent) && !/max_concurrent_streams/i.test(cleanContent))) {
-        const matchLineIdx = locateMatchLine(lines, [/http2_settings|initial_window_size/i], l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('#') && !l.trim().startsWith('*'));
-        const lineNum = matchLineIdx !== -1 ? matchLineIdx + 1 : 1;
-        findings.push({
-            id: `grpcsec14702-${Date.now()}-${findingCounter.count++}`,
-            ruleId: 14702,
-            type: 'INFRA_DATABASE',
-            title: "GRPCSEC-02: Missing HTTP/2 Flow Control and Stream Window Limits",
-            severity: "HIGH",
-            category: "Flow Control",
-            filePath: file.path,
-            lineRange: `L${lineNum}`,
-            snippet: lines[matchLineIdx] || 'gRPC-Web Security configuration',
-            reproductionSteps: [
-                `Audited gRPC-Web Security configuration in ${file.path}:${lineNum}.`,
-                'Matched GRPCSEC-02: Missing HTTP/2 Flow Control and Stream Window Limits.'
-            ],
-            remediationPrompt: "Configure HTTP/2 initial connection and stream window limits to mitigate stream flood Denial of Service attacks.",
-            status: 'OPEN',
-            falsePositive: false
-        });
-        logs.push(`[${ts}] [GRPC AUDIT] Found GRPCSEC-02: Missing HTTP/2 Flow Control and Stream Window Limits at ${file.path}:${lineNum}`);
-    }
     // GRPCSEC-03: Unbounded gRPC Inbound Message Size Permitting Memory Exhaustion
-    if ((/max_receive_message_length/i.test(cleanContent))) {
-        const matchLineIdx = locateMatchLine(lines, [/max_receive_message_length/i], l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('#') && !l.trim().startsWith('*'));
+    const hit_14703 = lines.findIndex((l) => /["']grpc\.max_(?:receive|send)_message_length["']\s*[,:]\s*-1\b/.test(l) || /\bmax(?:Receive|Send)MessageLength\s*:\s*-1\b/.test(l) || /\bgrpc\.MaxRecvMsgSize\s*\(\s*math\.MaxInt(?:32|64)?\s*\)/.test(l));
+    if (hit_14703 !== -1) {
+        const matchLineIdx = hit_14703;
         const lineNum = matchLineIdx !== -1 ? matchLineIdx + 1 : 1;
         findings.push({
             id: `grpcsec14703-${Date.now()}-${findingCounter.count++}`,
@@ -91,54 +68,6 @@ export function evaluateGrpcWebSecurityRules(file: CodeFile, lines: string[], cl
             falsePositive: false
         });
         logs.push(`[${ts}] [GRPC AUDIT] Found GRPCSEC-03: Unbounded gRPC Inbound Message Size Permitting Memory Exhaustion at ${file.path}:${lineNum}`);
-    }
-    // GRPCSEC-04: Unprotected gRPC Server Reflection Enabled in Production
-    if ((/(?:reflection|enableReflection)/i.test(cleanContent) && !/disableInProduction/i.test(cleanContent))) {
-        const matchLineIdx = locateMatchLine(lines, [/(?:reflection|enableReflection)/i], l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('#') && !l.trim().startsWith('*'));
-        const lineNum = matchLineIdx !== -1 ? matchLineIdx + 1 : 1;
-        findings.push({
-            id: `grpcsec14704-${Date.now()}-${findingCounter.count++}`,
-            ruleId: 14704,
-            type: 'INFRA_DATABASE',
-            title: "GRPCSEC-04: Unprotected gRPC Server Reflection Enabled in Production",
-            severity: "HIGH",
-            category: "Schema Protection",
-            filePath: file.path,
-            lineRange: `L${lineNum}`,
-            snippet: lines[matchLineIdx] || 'gRPC-Web Security configuration',
-            reproductionSteps: [
-                `Audited gRPC-Web Security configuration in ${file.path}:${lineNum}.`,
-                'Matched GRPCSEC-04: Unprotected gRPC Server Reflection Enabled in Production.'
-            ],
-            remediationPrompt: "Disable Server Reflection services in production environments to prevent unauthorized API schema enumeration.",
-            status: 'OPEN',
-            falsePositive: false
-        });
-        logs.push(`[${ts}] [GRPC AUDIT] Found GRPCSEC-04: Unprotected gRPC Server Reflection Enabled in Production at ${file.path}:${lineNum}`);
-    }
-    // GRPCSEC-05: Missing Protobuf Payload Schema Validation Rules
-    if ((/rpcHandler|serviceImpl/i.test(cleanContent) && !/validateRequest/i.test(cleanContent))) {
-        const matchLineIdx = locateMatchLine(lines, [/rpcHandler|serviceImpl/i], l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('#') && !l.trim().startsWith('*'));
-        const lineNum = matchLineIdx !== -1 ? matchLineIdx + 1 : 1;
-        findings.push({
-            id: `grpcsec14705-${Date.now()}-${findingCounter.count++}`,
-            ruleId: 14705,
-            type: 'INFRA_DATABASE',
-            title: "GRPCSEC-05: Missing Protobuf Payload Schema Validation Rules",
-            severity: "CRITICAL",
-            category: "Input Validation",
-            filePath: file.path,
-            lineRange: `L${lineNum}`,
-            snippet: lines[matchLineIdx] || 'gRPC-Web Security configuration',
-            reproductionSteps: [
-                `Audited gRPC-Web Security configuration in ${file.path}:${lineNum}.`,
-                'Matched GRPCSEC-05: Missing Protobuf Payload Schema Validation Rules.'
-            ],
-            remediationPrompt: "Enforce protoc-gen-validate (PGV) rules and message constraints on all incoming gRPC RPC requests.",
-            status: 'OPEN',
-            falsePositive: false
-        });
-        logs.push(`[${ts}] [GRPC AUDIT] Found GRPCSEC-05: Missing Protobuf Payload Schema Validation Rules at ${file.path}:${lineNum}`);
     }
     return { findings, logs };
 }

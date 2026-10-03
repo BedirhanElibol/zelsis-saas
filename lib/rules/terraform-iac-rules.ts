@@ -4,7 +4,7 @@
  */
 import { Finding } from "@/data/schema";
 import { CodeFile } from "../scanner-engine";
-import { locateMatchLine } from './shared/locate';
+import { hclBlocks, hclLine, openIngressLine, stripHashComments } from './iac-rules';
 export interface TerraformIacRuleResult {
     findings: Finding[];
     logs: string[];
@@ -20,16 +20,21 @@ export function evaluateTerraformIacRules(file: CodeFile, lines: string[], clean
         return { findings, logs };
     }
     const ts = new Date().toLocaleTimeString();
+    const isTf = /\.tf$/i.test(lowerPath);
+    const tf = isTf ? stripHashComments(cleanContent) : '';
+    // Inline S3 backend blocks; an empty block means partial config (-backend-config), which we cannot see
+    const s3Backends = isTf ? hclBlocks(tf, /backend\s+"s3"/).filter((b) => b.body.trim() !== '') : [];
     // TF-01: Unencrypted Cloud State Backend (Missing SSE on S3 / GCS State Bucket)
-    if ((/backend\s+['"]s3['"]/i.test(cleanContent) && !/encrypt\s*=\s*true|kms_key_id/i.test(cleanContent))) {
-        const matchLineIdx = locateMatchLine(lines, [/backend\s+['"]s3['"]/i], l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('#') && !l.trim().startsWith('*'));
+    const tf01 = s3Backends.find((b) => !/\bencrypt\s*=\s*true|\bkms_key_id\s*=/.test(b.body));
+    if (tf01) {
+        const matchLineIdx = hclLine(tf, tf01);
         const lineNum = matchLineIdx !== -1 ? matchLineIdx + 1 : 1;
         findings.push({
             id: `tf11001-${Date.now()}-${findingCounter.count++}`,
             ruleId: 11001,
             type: 'INFRA_DATABASE',
             title: "TF-01: Unencrypted Cloud State Backend (Missing SSE on S3 / GCS State Bucket)",
-            severity: "CRITICAL",
+            severity: 'MEDIUM',
             category: "State Security",
             filePath: file.path,
             lineRange: `L${lineNum}`,
@@ -45,15 +50,17 @@ export function evaluateTerraformIacRules(file: CodeFile, lines: string[], clean
         logs.push(`[${ts}] [TF AUDIT] Found TF-01: Unencrypted Cloud State Backend (Missing SSE on S3 / GCS State Bucket) at ${file.path}:${lineNum}`);
     }
     // TF-02: Missing State Locking on Distributed Terraform Backend (DynamoDB Table)
-    if ((/backend\s+['"]s3['"]/i.test(cleanContent) && !/dynamodb_table/i.test(cleanContent))) {
-        const matchLineIdx = locateMatchLine(lines, [/backend\s+['"]s3['"]/i], l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('#') && !l.trim().startsWith('*'));
+    // Terraform >= 1.10 locks natively with use_lockfile = true
+    const tf02 = s3Backends.find((b) => !/\bdynamodb_table\s*=|\buse_lockfile\s*=\s*true/.test(b.body));
+    if (tf02) {
+        const matchLineIdx = hclLine(tf, tf02);
         const lineNum = matchLineIdx !== -1 ? matchLineIdx + 1 : 1;
         findings.push({
             id: `tf11002-${Date.now()}-${findingCounter.count++}`,
             ruleId: 11002,
             type: 'INFRA_DATABASE',
             title: "TF-02: Missing State Locking on Distributed Terraform Backend (DynamoDB Table)",
-            severity: "HIGH",
+            severity: 'MEDIUM',
             category: "Concurrency",
             filePath: file.path,
             lineRange: `L${lineNum}`,
@@ -69,8 +76,10 @@ export function evaluateTerraformIacRules(file: CodeFile, lines: string[], clean
         logs.push(`[${ts}] [TF AUDIT] Found TF-02: Missing State Locking on Distributed Terraform Backend (DynamoDB Table) at ${file.path}:${lineNum}`);
     }
     // TF-03: Security Group Ingress Open to the World on Administrative Ports (0.0.0.0/0)
-    if ((/from_port\s*=\s*22/i.test(cleanContent))) {
-        const matchLineIdx = locateMatchLine(lines, [/from_port\s*=\s*22/i], l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('#') && !l.trim().startsWith('*'));
+    // Ingress open to 0.0.0.0/0 or ::/0 whose port range covers SSH or RDP
+    const tf03Line = isTf ? openIngressLine(tf, [22, 3389]) : -1;
+    if (tf03Line !== -1) {
+        const matchLineIdx = tf03Line;
         const lineNum = matchLineIdx !== -1 ? matchLineIdx + 1 : 1;
         findings.push({
             id: `tf11003-${Date.now()}-${findingCounter.count++}`,
@@ -93,8 +102,11 @@ export function evaluateTerraformIacRules(file: CodeFile, lines: string[], clean
         logs.push(`[${ts}] [TF AUDIT] Found TF-03: Security Group Ingress Open to the World on Administrative Ports (0.0.0.0/0) at ${file.path}:${lineNum}`);
     }
     // TF-04: Hardcoded Cloud Provider Access Keys in Terraform Files
-    if ((/provider\s+['"]aws['"][\s\S]*?access_key\s*=\s*['"][A-Z0-9]{16,}['"]/i.test(cleanContent))) {
-        const matchLineIdx = locateMatchLine(lines, [/provider\s+['"]aws['"][\s\S]*?access_key\s*=\s*['"][A-Z0-9]{16,}['"]/i], l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('#') && !l.trim().startsWith('*'));
+    // A literal access key ID inside a provider "aws" block (AWS documentation sample keys excluded)
+    const accessKeyAttr = /\baccess_key\s*=\s*"(?:AKIA|ASIA)[A-Z0-9]{12,}"/;
+    const tf04 = isTf ? hclBlocks(tf, /provider\s+"aws"/).find((b) => accessKeyAttr.test(b.body) && !/EXAMPLE"/.test(b.body)) : undefined;
+    if (tf04) {
+        const matchLineIdx = hclLine(tf, tf04, accessKeyAttr);
         const lineNum = matchLineIdx !== -1 ? matchLineIdx + 1 : 1;
         findings.push({
             id: `tf11004-${Date.now()}-${findingCounter.count++}`,
@@ -117,8 +129,21 @@ export function evaluateTerraformIacRules(file: CodeFile, lines: string[], clean
         logs.push(`[${ts}] [TF AUDIT] Found TF-04: Hardcoded Cloud Provider Access Keys in Terraform Files at ${file.path}:${lineNum}`);
     }
     // TF-05: Unversioned Terraform Provider / Module References (Floating Dependencies)
-    if ((/module\s+['"][a-zA-Z0-9_-]+['"][\s\S]*?source\s*=\s*['"][^'"]+['"]/i.test(cleanContent) && !/version|ref=/i.test(cleanContent))) {
-        const matchLineIdx = locateMatchLine(lines, [/module\s+['"][a-zA-Z0-9_-]+['"][\s\S]*?source\s*=\s*['"][^'"]+['"]/i], l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('#') && !l.trim().startsWith('*'));
+    // Per module block: a registry source (ns/name/provider) with no `version`, or a git source with no ?ref=; local ./ sources need no pin
+    const tf05Line = (() => {
+        if (!isTf) return -1;
+        for (const b of hclBlocks(tf, /module\s+"[\w-]+"/)) {
+            const src = /^\s*source\s*=\s*"([^"]+)"/m.exec(b.body);
+            if (!src) continue;
+            const s = src[1];
+            const registry = /^(?:[\w.-]+\/)?[\w-]+\/[\w-]+\/[\w-]+$/.test(s) && !/^\.{1,2}\//.test(s);
+            const git = /^(?:git::|git@|github\.com\/|bitbucket\.org\/)/.test(s);
+            if ((registry && !/^\s*version\s*=/m.test(b.body)) || (git && !/[?&]ref=/.test(s))) return hclLine(tf, b, /^\s*source\s*=/m);
+        }
+        return -1;
+    })();
+    if (tf05Line !== -1) {
+        const matchLineIdx = tf05Line;
         const lineNum = matchLineIdx !== -1 ? matchLineIdx + 1 : 1;
         findings.push({
             id: `tf11005-${Date.now()}-${findingCounter.count++}`,

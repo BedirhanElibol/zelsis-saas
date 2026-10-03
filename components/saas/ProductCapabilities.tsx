@@ -1,7 +1,8 @@
 'use client';
 
-import React, { useState } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
+import React, { useCallback, useRef, useState } from 'react';
+import { useDialogFocus } from '@/hooks/useDialogFocus';
+import { m, AnimatePresence } from 'framer-motion';
 import Image from 'next/image';
 import { 
   ShieldCheck, 
@@ -31,12 +32,15 @@ interface ProductCapability {
 
 export const ProductCapabilities: React.FC = () => {
   const [zoomImage, setZoomImage] = useState<string | null>(null);
+  const lightboxRef = useRef<HTMLDivElement>(null);
+  const closeZoom = useCallback(() => setZoomImage(null), []);
+  useDialogFocus(lightboxRef, Boolean(zoomImage), closeZoom);
 
   const capabilities: ProductCapability[] = [
     {
       id: 'rules',
       badge: 'RULE TAXONOMY',
-      title: 'Exhaustive Pre-Flight Release Rules',
+      title: 'Release rules that know your stack',
       subtitle: 'Continuous verification across OWASP Top 10, database isolation, and cloud architecture.',
       description:
         'Audit your codebase against an extensive taxonomy of deterministic static & lexical rules. Enforce zero day-one OWASP Top 10 vulnerabilities, verify multi-database security policies, block wildcard CORS endpoints, and eliminate root container privilege escalation risks.',
@@ -132,14 +136,14 @@ export const ProductCapabilities: React.FC = () => {
       <div className="max-w-6xl mx-auto flex flex-col gap-20">
         {/* Section Title */}
         <div className="flex flex-col gap-4 text-center max-w-3xl mx-auto">
-          <div className="inline-flex items-center justify-center text-xs font-mono uppercase tracking-widest text-zinc-400">
-            <span>CORE PLATFORM ENGINES</span>
+          <div className="inline-flex items-center justify-center text-xs font-mono uppercase tracking-widest text-emerald-400">
+            <span>What it checks</span>
           </div>
           <h2 className="text-3xl sm:text-5xl font-extrabold text-[#EDEDED] tracking-tight">
-            Production Readiness Across 4 Core Pillars
+            Security checks built for how SaaS apps break
           </h2>
           <p className="text-base sm:text-lg text-[#A1A1AA] leading-relaxed font-sans">
-            Engineered to replace fragmented linters, manual security spreadsheets, and bloated compliance suites with a unified developer platform.
+            Secrets, database access rules, injection, auth and dependencies, each finding with the exact line and a fix you can paste into your AI assistant.
           </p>
         </div>
 
@@ -202,15 +206,15 @@ export const ProductCapabilities: React.FC = () => {
                     {/* Zoom Trigger Button */}
                     <button
                       onClick={() => setZoomImage(capability.image)}
-                      className="absolute top-3 right-3 p-2 rounded-lg bg-[#0E0E10]/80 backdrop-blur-md border border-white/15 text-zinc-300 hover:text-white transition-all opacity-0 group-hover:opacity-100 shadow-lg cursor-pointer"
+                      className="absolute top-3 right-3 p-3 rounded-lg bg-[#0E0E10]/80 backdrop-blur-md border border-white/15 text-zinc-300 hover:text-white transition-all opacity-0 group-hover:opacity-100 focus-visible:opacity-100 focus-visible:ring-2 focus-visible:ring-white/70 shadow-lg cursor-pointer"
                       aria-label="Zoom Image Preview"
                     >
                       <Maximize2 size={16} />
                     </button>
 
                     <div className="absolute bottom-0 inset-x-0 p-3 bg-gradient-to-t from-black/90 via-black/40 to-transparent flex items-center justify-between text-xs font-mono text-zinc-400">
-                      <span className="text-[11px] text-zinc-300 font-semibold">{capability.alt}</span>
-                      <span className="text-[10px] text-zinc-300 font-bold">{capability.tag}</span>
+                      <span className="text-xs text-zinc-300 font-semibold">{capability.alt}</span>
+                      <span className="text-xs text-zinc-300 font-bold">{capability.tag}</span>
                     </div>
                   </div>
                 </div>
@@ -222,14 +226,19 @@ export const ProductCapabilities: React.FC = () => {
         {/* Modal Lightbox for High-Res Zoom */}
         <AnimatePresence>
           {zoomImage && (
-            <motion.div
+            <m.div
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
               onClick={() => setZoomImage(null)}
               className="fixed inset-0 z-50 bg-black/90 backdrop-blur-md flex items-center justify-center p-4 sm:p-8 cursor-zoom-out"
             >
-              <div 
+              <div
+                ref={lightboxRef}
+                role="dialog"
+                aria-modal="true"
+                aria-label="Screenshot preview"
+                tabIndex={-1}
                 className="relative max-w-6xl w-full aspect-[16/10] rounded-xl overflow-hidden border border-white/20 shadow-2xl"
                 onClick={(e) => e.stopPropagation()}
               >
@@ -237,6 +246,7 @@ export const ProductCapabilities: React.FC = () => {
                   src={zoomImage}
                   alt="High Resolution Screenshot Preview"
                   fill
+                  sizes="(max-width: 1280px) 100vw, 1152px"
                   className="object-contain"
                 />
                 <button
@@ -247,7 +257,7 @@ export const ProductCapabilities: React.FC = () => {
                   <X size={20} />
                 </button>
               </div>
-            </motion.div>
+            </m.div>
           )}
         </AnimatePresence>
       </div>

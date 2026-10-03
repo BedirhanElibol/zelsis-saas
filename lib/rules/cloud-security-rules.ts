@@ -4,7 +4,6 @@
  */
 import { Finding } from "@/data/schema";
 import { CodeFile } from "../scanner-engine";
-import { locateMatchLine } from './shared/locate';
 export interface CloudSecurityRuleResult {
     findings: Finding[];
     logs: string[];
@@ -25,8 +24,9 @@ export function evaluateCloudSecurityRules(file: CodeFile, lines: string[], clea
         return { findings, logs };
     const ts = new Date().toLocaleTimeString();
     // CLOUD-SEC-01: Publicly Accessible S3 Bucket / Blob Container
-    if ((/acl\s*=\s*['"]public-read['"]/i.test(cleanContent) && cleanContent.includes('aws_s3_bucket'))) {
-        const matchLineIdx = locateMatchLine(lines, [/acl\s*=\s*['"]public-read['"]/i], l => !l.trim().startsWith('//') && !l.trim().startsWith('#'));
+    const hit_9201 = findInBlocks(cleanContent, /resource\s+"aws_s3_bucket(?:_acl)?"\s+"[^"]+"\s*\{/g, /^\s*acl\s*=\s*"public-read(?:-write)?"/m);
+    if (hit_9201 !== -1) {
+        const matchLineIdx = hit_9201;
         const lineNum = matchLineIdx !== -1 ? matchLineIdx + 1 : 1;
         findings.push({
             id: `cloudsec9201-${Date.now()}-${findingCounter.count++}`,
@@ -49,8 +49,9 @@ export function evaluateCloudSecurityRules(file: CodeFile, lines: string[], clea
         logs.push(`[${ts}] [CLOUD SEC] Found CLOUD-SEC-01: Publicly Accessible S3 Bucket / Blob Container at ${file.path}:${lineNum}`);
     }
     // CLOUD-SEC-02: Overprivileged IAM Wildcard Action (*)
-    if ((/"Action"\s*:\s*"\*"[\s\S]*?"Resource"\s*:\s*"\*"/i.test(cleanContent) && cleanContent.includes('Effect'))) {
-        const matchLineIdx = locateMatchLine(lines, [/"Action"\s*:\s*"\*"[\s\S]*?"Resource"\s*:\s*"\*"/i], l => !l.trim().startsWith('//') && !l.trim().startsWith('#'));
+    const hit_9202 = findWildcardIamStatement(cleanContent);
+    if (hit_9202 !== -1) {
+        const matchLineIdx = hit_9202;
         const lineNum = matchLineIdx !== -1 ? matchLineIdx + 1 : 1;
         findings.push({
             id: `cloudsec9202-${Date.now()}-${findingCounter.count++}`,
@@ -73,8 +74,9 @@ export function evaluateCloudSecurityRules(file: CodeFile, lines: string[], clea
         logs.push(`[${ts}] [CLOUD SEC] Found CLOUD-SEC-02: Overprivileged IAM Wildcard Action (*) at ${file.path}:${lineNum}`);
     }
     // CLOUD-SEC-03: Unencrypted Cloud Storage Volumes at Rest (EBS / Managed Disk)
-    if ((/resource\s+["']aws_ebs_volume["']/i.test(cleanContent) && /encrypted\s*=\s*false/i.test(cleanContent))) {
-        const matchLineIdx = locateMatchLine(lines, [/resource\s+["']aws_ebs_volume["']/i, /encrypted\s*=\s*false/i], l => !l.trim().startsWith('//') && !l.trim().startsWith('#'));
+    const hit_9203 = findInBlocks(cleanContent, /resource\s+"aws_ebs_volume"\s+"[^"]+"\s*\{/g, /^\s*encrypted\s*=\s*false\b/m);
+    if (hit_9203 !== -1) {
+        const matchLineIdx = hit_9203;
         const lineNum = matchLineIdx !== -1 ? matchLineIdx + 1 : 1;
         findings.push({
             id: `cloudsec9203-${Date.now()}-${findingCounter.count++}`,
@@ -97,8 +99,9 @@ export function evaluateCloudSecurityRules(file: CodeFile, lines: string[], clea
         logs.push(`[${ts}] [CLOUD SEC] Found CLOUD-SEC-03: Unencrypted Cloud Storage Volumes at Rest (EBS / Managed Disk) at ${file.path}:${lineNum}`);
     }
     // CLOUD-SEC-04: Security Group Ingress Open to 0.0.0.0/0 on Management Ports
-    if ((/cidr_blocks\s*=\s*\[\s*['"]0\.0\.0\.0\/0['"]\s*\]/i.test(cleanContent) && /(?:from_port\s*=\s*22|from_port\s*=\s*3389)/i.test(cleanContent))) {
-        const matchLineIdx = locateMatchLine(lines, [/cidr_blocks\s*=\s*\[\s*['"]0\.0\.0\.0\/0['"]\s*\]/i, /(?:from_port\s*=\s*22|from_port\s*=\s*3389)/i], l => !l.trim().startsWith('//') && !l.trim().startsWith('#'));
+    const hit_9204 = findOpenManagementIngress(cleanContent);
+    if (hit_9204 !== -1) {
+        const matchLineIdx = hit_9204;
         const lineNum = matchLineIdx !== -1 ? matchLineIdx + 1 : 1;
         findings.push({
             id: `cloudsec9204-${Date.now()}-${findingCounter.count++}`,
@@ -121,8 +124,9 @@ export function evaluateCloudSecurityRules(file: CodeFile, lines: string[], clea
         logs.push(`[${ts}] [CLOUD SEC] Found CLOUD-SEC-04: Security Group Ingress Open to 0.0.0.0/0 on Management Ports at ${file.path}:${lineNum}`);
     }
     // CLOUD-SEC-05: Multi-Cloud Audit Logging / CloudTrail Disabled
-    if ((/resource\s+["']aws_cloudtrail["']/i.test(cleanContent) && /enable_logging\s*=\s*false/i.test(cleanContent))) {
-        const matchLineIdx = locateMatchLine(lines, [/resource\s+["']aws_cloudtrail["']/i, /enable_logging\s*=\s*false/i], l => !l.trim().startsWith('//') && !l.trim().startsWith('#'));
+    const hit_9205 = findInBlocks(cleanContent, /resource\s+"aws_cloudtrail"\s+"[^"]+"\s*\{/g, /^\s*enable_logging\s*=\s*false\b/m);
+    if (hit_9205 !== -1) {
+        const matchLineIdx = hit_9205;
         const lineNum = matchLineIdx !== -1 ? matchLineIdx + 1 : 1;
         findings.push({
             id: `cloudsec9205-${Date.now()}-${findingCounter.count++}`,
@@ -145,4 +149,67 @@ export function evaluateCloudSecurityRules(file: CodeFile, lines: string[], clea
         logs.push(`[${ts}] [CLOUD SEC] Found CLOUD-SEC-05: Multi-Cloud Audit Logging / CloudTrail Disabled at ${file.path}:${lineNum}`);
     }
     return { findings, logs };
+}
+// ---- precise matchers (rule-proof pass) ----
+const lineAt = (text: string, idx: number): number => text.slice(0, idx).split('\n').length - 1;
+/** Brace-matched blocks whose opening (ending in `{`) matches `open`; HCL `#` comment lines are blanked first. */
+function hclBlocks(src: string, open: RegExp): { start: number; text: string }[] {
+    const code = src.replace(/^[ \t]*#.*$/gm, (l) => ' '.repeat(l.length));
+    const out: { start: number; text: string }[] = [];
+    const re = new RegExp(open.source, open.flags.includes('g') ? open.flags : open.flags + 'g');
+    let m: RegExpExecArray | null;
+    while ((m = re.exec(code))) {
+        let depth = 0;
+        let i = m.index + m[0].length - 1;
+        for (; i < code.length; i++) {
+            if (code[i] === '{') depth++;
+            else if (code[i] === '}' && --depth === 0) break;
+        }
+        out.push({ start: m.index, text: code.slice(m.index, i + 1) });
+    }
+    return out;
+}
+/** Line of the first `attr` match inside a block opened by `open`, or -1. */
+function findInBlocks(src: string, open: RegExp, attr: RegExp): number {
+    for (const b of hclBlocks(src, open)) {
+        const m = attr.exec(b.text);
+        if (m) return lineAt(src, b.start + m.index + (m[0].length - m[0].trimStart().length));
+    }
+    return -1;
+}
+/** An Allow statement granting Action "*" on Resource "*" (IAM JSON or aws_iam_policy_document HCL). */
+function findWildcardIamStatement(src: string): number {
+    const json = /"Action"\s*:\s*(?:"\*"|\[\s*"\*"\s*\])/g;
+    let m: RegExpExecArray | null;
+    while ((m = json.exec(src))) {
+        const s = src.lastIndexOf('{', m.index);
+        const e = src.indexOf('}', m.index);
+        const stmt = src.slice(s, e === -1 ? undefined : e);
+        if (/"Effect"\s*:\s*"Allow"/i.test(stmt) && /"Resource"\s*:\s*(?:"\*"|\[\s*"\*"\s*\])/.test(stmt)) return lineAt(src, m.index);
+    }
+    for (const b of hclBlocks(src, /\bstatement\s*\{/g)) {
+        const a = /^\s*actions\s*=\s*\[\s*"\*"\s*\]/m.exec(b.text);
+        if (a && /^\s*resources\s*=\s*\[\s*"\*"\s*\]/m.test(b.text) && !/effect\s*=\s*"Deny"/i.test(b.text)) {
+            return lineAt(src, b.start + a.index + (a[0].length - a[0].trimStart().length));
+        }
+    }
+    return -1;
+}
+/** An ingress rule open to 0.0.0.0/0 whose port range covers SSH (22) or RDP (3389). */
+function findOpenManagementIngress(src: string): number {
+    const blocks = [
+        ...hclBlocks(src, /\bingress\s*\{/g),
+        ...hclBlocks(src, /resource\s+"aws_security_group_rule"\s+"[^"]+"\s*\{/g).filter((b) => /type\s*=\s*"ingress"/.test(b.text)),
+        ...hclBlocks(src, /resource\s+"aws_vpc_security_group_ingress_rule"\s+"[^"]+"\s*\{/g),
+    ];
+    for (const b of blocks) {
+        const cidr = /(?:cidr_blocks\s*=\s*\[[^\]]*"0\.0\.0\.0\/0"|cidr_ipv4\s*=\s*"0\.0\.0\.0\/0")/.exec(b.text);
+        if (!cidr) continue;
+        const from = Number(/from_port\s*=\s*(\d+)/.exec(b.text)?.[1] ?? NaN);
+        const to = Number(/to_port\s*=\s*(\d+)/.exec(b.text)?.[1] ?? from);
+        const allProto = /(?:protocol|ip_protocol)\s*=\s*"-1"/.test(b.text);
+        const covers = (p: number) => from <= p && p <= to;
+        if (allProto || covers(22) || covers(3389)) return lineAt(src, b.start + cidr.index);
+    }
+    return -1;
 }

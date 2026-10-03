@@ -147,10 +147,12 @@ export const ConnectTargetModal: React.FC<ConnectTargetModalProps> = ({
     >
       <div className="bg-[#141414] border border-white/10 rounded-2xl w-full max-w-lg p-6 sm:p-8 relative shadow-lg">
         <button
+          type="button"
+          aria-label="Close"
           onClick={onClose}
           className="absolute top-4 right-4 text-[#A1A1AA] hover:text-white"
         >
-          <X size={20} />
+          <X size={20} aria-hidden="true" />
         </button>
 
         <div className="flex items-center gap-3 mb-4">
@@ -308,7 +310,7 @@ export const ConnectTargetModal: React.FC<ConnectTargetModalProps> = ({
           <button
             type="submit"
             disabled={isConnecting}
-            className="mt-2 btn btn-primary py-3 text-xs uppercase tracking-wider font-extrabold w-full rounded-xl bg-white text-black hover:bg-neutral-200 transition-all shadow-sm disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2 cursor-pointer"
+            className="mt-2 btn btn-primary py-3 text-xs uppercase tracking-wider font-extrabold w-full rounded-xl bg-emerald-500 text-black hover:bg-emerald-400 transition-all shadow-sm disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2 cursor-pointer"
           >
             <Play size={13} fill="currentColor" />
             <span>{isConnecting ? 'Connecting & Auditing...' : 'Connect & Run Audit'}</span>

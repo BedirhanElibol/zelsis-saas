@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useState } from 'react';
+import { getConfiguredAppUrl } from '@/lib/app-url';
 import { Project } from '@/data/schema';
 import { ShieldCheck, Copy, CheckCircle2, X } from 'lucide-react';
 
@@ -31,10 +32,14 @@ export const BadgeGeneratorModal: React.FC<BadgeGeneratorModalProps> = ({
   const score = project.readinessScore ?? 100;
   const status = project.gateStatus ?? 'PASSED';
 
-  const badgeApiUrl = `https://zelsis.com/api/v1/badge?status=${status}&score=${score}&label=Zelsis%20Gate`;
+  const appUrl = getConfiguredAppUrl();
+  // projectId makes the badge read the saved scan, so it cannot be edited into a fake pass
+  const badgeApiUrl = project.id
+    ? `${appUrl}/api/v1/badge?projectId=${encodeURIComponent(project.id)}`
+    : `${appUrl}/api/v1/badge?status=${status}&score=${score}&label=Zelsis%20Gate`;
 
-  const markdownSnippet = `[![Zelsis Release Gate](${badgeApiUrl})](https://zelsis.com)`;
-  const htmlSnippet = `<a href="https://zelsis.com"><${'im' + 'g'} src="${badgeApiUrl}" alt="Zelsis Release Gate Status" /></a>`;
+  const markdownSnippet = `[![Zelsis Release Gate](${badgeApiUrl})](${appUrl})`;
+  const htmlSnippet = `<a href="${appUrl}"><${'im' + 'g'} src="${badgeApiUrl}" alt="Zelsis Release Gate Status" /></a>`;
 
   const handleCopy = (text: string, type: string) => {
     navigator.clipboard.writeText(text);

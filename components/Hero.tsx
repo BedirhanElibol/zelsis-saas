@@ -201,7 +201,7 @@ export const Hero: React.FC<HeroProps> = ({ onOpenDashboard }) => {
           {onOpenDashboard && (
             <button
               onClick={onOpenDashboard}
-              className="btn btn-primary px-8 py-3.5 rounded-lg text-xs font-bold tracking-wider uppercase flex items-center gap-2 bg-white text-black hover:bg-neutral-200 transition-all shadow-sm"
+              className="btn btn-primary px-8 py-3.5 rounded-lg text-xs font-bold tracking-wider uppercase flex items-center gap-2 bg-emerald-500 text-black hover:bg-emerald-400 transition-all shadow-sm"
             >
               <Play size={14} fill="#0A0A0A" />
               <span>Launch Full Audit Suite</span>

@@ -7,7 +7,6 @@ import { UserProfile } from '@/components/auth/AuthModal';
 
 export interface SaasCheckoutProps {
   initialPlanId?: string;
-  initialBilling?: 'annual' | 'monthly';
   initialSuccess?: boolean;
   checkoutId?: string | null;
   onBackToPricing?: () => void;

@@ -15,7 +15,30 @@ interface CveDefinition {
     title: string;
     description: string;
     safeVersion: string;
+    /** Patched releases on older major (or 0.x minor) lines, e.g. semver 6.3.1 for a 7.5.2 fix */
+    backports?: string[];
     isVulnerable: (verStr: string) => boolean;
+}
+type SemVer = { major: number; minor: number; patch: number };
+/**
+ * A package.json entry is a RANGE: "^1.6.0" installs the newest 1.x, which may well be patched. Only report
+ * when no version the range can resolve to is fixed: exact pins below the fix, or ^/~ ranges capped below
+ * every fixed release on their line. Anything undecidable (*, >=, x-ranges, git/file/workspace) is skipped.
+ */
+function rangeStaysVulnerable(spec: string, def: CveDefinition): boolean {
+    const s = spec.trim();
+    if (!/^(?:[\^~]|=|v)?\s*\d+\.\d+(?:\.\d+)?(?:-[\w.]+)?$/.test(s)) return false;
+    const low = parseSemVer(s);
+    if (!low || !def.isVulnerable(s)) return false;
+    const atLeast = (a: SemVer, b: SemVer) => !isLessThan(a, [b.major, b.minor, b.patch]);
+    const fixes = [def.safeVersion, ...(def.backports ?? [])].map(parseSemVer).filter((v): v is SemVer => v !== null);
+    const sameLine = (fx: SemVer, tilde: boolean) => fx.major === low.major && ((tilde || low.major === 0) ? fx.minor === low.minor : true);
+    // pinned at or after a backported fix on its own line
+    if (fixes.some((fx) => fx.major === low.major && (low.major !== 0 || fx.minor === low.minor) && atLeast(low, fx))) return false;
+    const caret = s.startsWith('^');
+    const tilde = s.startsWith('~');
+    if (!caret && !tilde) return true;
+    return !fixes.some((fx) => sameLine(fx, tilde) && atLeast(fx, low));
 }
 // Helper to parse clean semver numbers (major, minor, patch)
 function parseSemVer(verStr: string): {
@@ -52,11 +75,11 @@ function isLessThan(ver: {
 // Curated high-impact real-world CVEs
 const NPM_CVE_REGISTRY: Record<string, CveDefinition> = {
     axios: {
-        cveId: "CVE-2023-45857",
-        cvss: 9.1,
-        severity: "CRITICAL",
-        title: "Axios Server-Side Request Forgery (SSRF) & Credential Leakage",
-        description: "Axios versions prior to 1.7.4 are vulnerable to SSRF and sensitive header leakage across cross-origin redirects.",
+        cveId: "CVE-2024-39338",
+        cvss: 7.5,
+        severity: "HIGH",
+        title: "Axios Server-Side Request Forgery (SSRF) via Protocol-Relative URLs",
+        description: "Axios versions prior to 1.7.4 treat protocol-relative URLs as relative paths on the server, letting attacker input redirect requests to arbitrary hosts (SSRF); releases before 1.6.0 also leak the XSRF-TOKEN to third-party hosts (CVE-2023-45857).",
         safeVersion: "^1.7.4",
         isVulnerable: (ver) => {
             const v = parseSemVer(ver);
@@ -76,11 +99,11 @@ const NPM_CVE_REGISTRY: Record<string, CveDefinition> = {
         }
     },
     jsonwebtoken: {
-        cveId: "CVE-2022-23529",
-        cvss: 9.8,
-        severity: "CRITICAL",
-        title: "JsonWebToken Insecure Key Retrieval & Remote Code Execution",
-        description: "Versions of jsonwebtoken prior to 9.0.0 allow arbitrary file retrieval and prototype manipulation via crafted payload options.",
+        cveId: "CVE-2022-23540",
+        cvss: 7.6,
+        severity: "HIGH",
+        title: "JsonWebToken Insecure Default Algorithm Allows Signature Bypass",
+        description: "jsonwebtoken before 9.0.0 accepts unsigned ('none' algorithm) tokens when jwt.verify() is called without an explicit algorithms list and a falsy secret, and permits insecure key types by default (CVE-2022-23540/23541).",
         safeVersion: "^9.0.0",
         isVulnerable: (ver) => {
             const v = parseSemVer(ver);
@@ -118,6 +141,7 @@ const NPM_CVE_REGISTRY: Record<string, CveDefinition> = {
         title: "Semver Regular Expression Denial of Service (ReDoS)",
         description: "Semver before 7.5.2 is vulnerable to ReDoS when parsing complex version expressions or range sets.",
         safeVersion: "^7.5.4",
+        backports: ["6.3.1", "5.7.2"],
         isVulnerable: (ver) => {
             const v = parseSemVer(ver);
             return v !== null && isLessThan(v, [7, 5, 2]);
@@ -220,11 +244,11 @@ const NPM_CVE_REGISTRY: Record<string, CveDefinition> = {
         }
     },
     nodemailer: {
-        cveId: "CVE-2024-0007",
-        cvss: 7.5,
-        severity: "HIGH",
-        title: "Nodemailer SMTP Header Injection & Address Spoofing",
-        description: "Nodemailer versions before 6.9.9 allow attackers to inject CRLF headers via unsanitized envelope recipients.",
+        cveId: "GHSA-9h6g-pr28-7cqp",
+        cvss: 5.3,
+        severity: "MEDIUM",
+        title: "Nodemailer Regular Expression Denial of Service in Address Parsing",
+        description: "Nodemailer versions before 6.9.9 can be driven into catastrophic regex backtracking by a crafted email address or attachment header, blocking the event loop.",
         safeVersion: "^6.9.9",
         isVulnerable: (ver) => {
             const v = parseSemVer(ver);
@@ -274,6 +298,7 @@ const NPM_CVE_REGISTRY: Record<string, CveDefinition> = {
         title: "Path-To-Regexp ReDoS on Complex Parameterized Routes",
         description: "Versions prior to 6.3.0 are vulnerable to catastrophic backtracking when matching URL paths against long patterns.",
         safeVersion: "^6.3.0",
+        backports: ["0.1.10", "1.9.0", "3.3.0"],
         isVulnerable: (ver) => {
             const v = parseSemVer(ver);
             return v !== null && isLessThan(v, [6, 3, 0]);
@@ -344,7 +369,7 @@ export function evaluateScaDependencyRules(file: CodeFile, lines: string[], clea
             // Check 1.1: Known CVEs in Dependencies
             for (const [pkgName, versionSpec] of Object.entries(allDeps)) {
                 const cveDef = NPM_CVE_REGISTRY[pkgName];
-                if (cveDef && cveDef.isVulnerable(versionSpec)) {
+                if (cveDef && rangeStaysVulnerable(versionSpec, cveDef)) {
                     // Find exact line in package.json
                     const lineIdx = lines.findIndex(l => {
                         const trimmed = l.trim();
@@ -410,36 +435,6 @@ export function evaluateScaDependencyRules(file: CodeFile, lines: string[], clea
                         owner: "Dependency Security Lead",
                         falsePositive: false
                     });
-                }
-            }
-            // Check 1.3: Open Source License Compliance (GPL/AGPL Viral Copyleft)
-            const declaredLicense = pkgJson.license || pkgJson.licenses;
-            if (declaredLicense && typeof declaredLicense === "string") {
-                const isStrongCopyleft = /GPL-?([23])(\.0)?|AGPL-?([23])(\.0)?|SSPL|EUPL/i.test(declaredLicense);
-                if (isStrongCopyleft) {
-                    const lineIdx = lines.findIndex(l => l.includes('"license"') || l.includes("'license'"));
-                    const lineNum = lineIdx !== -1 ? lineIdx + 1 : 1;
-                    findings.push({
-                        id: `sca-lic-${Date.now()}-${findingCounter.count++}`,
-                        ruleId: 27213,
-                        type: "LEGAL_COMPLIANCE",
-                        title: `LICENSE-01: Restrictive Strong Copyleft License Detected (${declaredLicense})`,
-                        severity: "MEDIUM",
-                        category: "Open Source License Compliance",
-                        filePath: file.path,
-                        lineRange: `L${lineNum}`,
-                        snippet: lines[lineIdx]?.trim() || `"license": "${declaredLicense}"`,
-                        reproductionSteps: [
-                            `Audited license declaration in ${file.path}:${lineNum}.`,
-                            `Detected Strong Copyleft license '${declaredLicense}'.`,
-                            "Strong Copyleft licenses can legally require proprietary commercial software that links with them to disclose and open-source all internal source code."
-                        ],
-                        remediationPrompt: "For proprietary commercial SaaS products, utilize permissive open-source licenses such as MIT, Apache-2.0, BSD-3-Clause, or ISC.",
-                        status: "OPEN",
-                        owner: "Compliance Officer",
-                        falsePositive: false
-                    });
-                    logs.push(`[${new Date().toLocaleTimeString()}] [LICENSE] Strong copyleft license '${declaredLicense}' detected in ${file.path}`);
                 }
             }
         }

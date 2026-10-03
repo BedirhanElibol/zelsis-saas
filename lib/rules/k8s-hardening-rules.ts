@@ -5,6 +5,7 @@
 import { Finding } from "@/data/schema";
 import { CodeFile } from "../scanner-engine";
 import { locateMatchLine } from './shared/locate';
+import { capabilityAdds, yamlLine } from './iac-rules';
 export interface K8sHardeningRuleResult {
     findings: Finding[];
     logs: string[];
@@ -25,8 +26,9 @@ export function evaluateK8sHardeningRules(file: CodeFile, lines: string[], clean
         return { findings, logs };
     const ts = new Date().toLocaleTimeString();
     // K8S-01: Privileged Container Execution (privileged: true)
-    if (/privileged\s*:\s*true/i.test(cleanContent)) {
-        const matchLineIdx = locateMatchLine(lines, [/privileged\s*:\s*true/i], l => !l.trim().startsWith('#'));
+    const k8s01Line = yamlLine(lines, /^\s*privileged\s*:\s*true\b/);
+    if (k8s01Line !== -1) {
+        const matchLineIdx = k8s01Line;
         const lineNum = matchLineIdx !== -1 ? matchLineIdx + 1 : 1;
         findings.push({
             id: `k8s8901-${Date.now()}-${findingCounter.count++}`,
@@ -49,15 +51,17 @@ export function evaluateK8sHardeningRules(file: CodeFile, lines: string[], clean
         logs.push(`[${ts}] [K8S AUDIT] Found K8S-01: Privileged Container Execution (privileged: true) at ${file.path}:${lineNum}`);
     }
     // K8S-02: Container Allowed to Run as Root User
-    if (/runAsUser\s*:\s*0\b/i.test(cleanContent) || (cleanContent.includes('kind: Deployment'))) {
-        const matchLineIdx = locateMatchLine(lines, [/runAsUser\s*:\s*0\b/i], l => !l.trim().startsWith('#'));
+    // Only an explicit `runAsUser: 0` (not every Deployment)
+    const k8s02Line = yamlLine(lines, /^\s*runAsUser\s*:\s*0\s*(?:#.*)?$/);
+    if (k8s02Line !== -1) {
+        const matchLineIdx = k8s02Line;
         const lineNum = matchLineIdx !== -1 ? matchLineIdx + 1 : 1;
         findings.push({
             id: `k8s8902-${Date.now()}-${findingCounter.count++}`,
             ruleId: 8902,
             type: 'INFRA_DATABASE',
             title: "K8S-02: Container Allowed to Run as Root User",
-            severity: "HIGH",
+            severity: "MEDIUM",
             category: "User Privilege",
             filePath: file.path,
             lineRange: `L${lineNum}`,
@@ -72,33 +76,25 @@ export function evaluateK8sHardeningRules(file: CodeFile, lines: string[], clean
         });
         logs.push(`[${ts}] [K8S AUDIT] Found K8S-02: Container Allowed to Run as Root User at ${file.path}:${lineNum}`);
     }
-    // K8S-03: Missing CPU and Memory Resource Limits
-    if (/containers\s*:/i.test(cleanContent) && !/limits\s*:[\s\S]*?cpu/i.test(cleanContent)) {
-        const matchLineIdx = locateMatchLine(lines, [/containers\s*:/i], l => !l.trim().startsWith('#'));
-        const lineNum = matchLineIdx !== -1 ? matchLineIdx + 1 : 1;
-        findings.push({
-            id: `k8s8903-${Date.now()}-${findingCounter.count++}`,
-            ruleId: 8903,
-            type: 'INFRA_DATABASE',
-            title: "K8S-03: Missing CPU and Memory Resource Limits",
-            severity: "HIGH",
-            category: "Resource Starvation",
-            filePath: file.path,
-            lineRange: `L${lineNum}`,
-            snippet: lines[matchLineIdx] || 'Kubernetes manifest item',
-            reproductionSteps: [
-                `Audited Kubernetes manifest in ${file.path}:${lineNum}.`,
-                'Detected configuration violation matching K8S-03.'
-            ],
-            remediationPrompt: "Add resources.limits and resources.requests for CPU and memory.",
-            status: 'OPEN',
-            falsePositive: false
-        });
-        logs.push(`[${ts}] [K8S AUDIT] Found K8S-03: Missing CPU and Memory Resource Limits at ${file.path}:${lineNum}`);
-    }
     // K8S-04: Dangerous Host Path Volume Mount (/ or /etc or /var/run)
-    if (/hostPath\s*:[\s\S]*?path\s*:\s*['"]?(?:\/|\/etc|\/var\/run\/docker\.sock)['"]?/i.test(cleanContent)) {
-        const matchLineIdx = locateMatchLine(lines, [/hostPath\s*:[\s\S]*?path\s*:\s*['"]?(?:\/|\/etc|\/var\/run\/docker\.sock)['"]?/i], l => !l.trim().startsWith('#'));
+    // The `path:` of a hostPath volume (next lines, or inline `hostPath: { path: / }`) is the host root,
+    // /etc, /root, the runtime dirs or a container runtime socket; e.g. /var/log/app is fine
+    const dangerousHostPath = /^\/(?:|etc|root|var\/run|run|var\/lib\/kubelet|(?:var\/)?run\/(?:docker|containerd\/containerd|crio\/crio)\.sock)\/?$/;
+    const k8s04Line = (() => {
+        for (let i = 0; i < lines.length; i++) {
+            if (lines[i].trim().startsWith('#') || !/\bhostPath\s*:/.test(lines[i])) continue;
+            for (let j = i; j < Math.min(lines.length, i + 4); j++) {
+                const p = /(?:^\s*|\{\s*)path\s*:\s*['"]?([^'"\s,}#]+)/.exec(lines[j]);
+                if (p) {
+                    if (dangerousHostPath.test(p[1])) return j;
+                    break;
+                }
+            }
+        }
+        return -1;
+    })();
+    if (k8s04Line !== -1) {
+        const matchLineIdx = k8s04Line;
         const lineNum = matchLineIdx !== -1 ? matchLineIdx + 1 : 1;
         findings.push({
             id: `k8s8904-${Date.now()}-${findingCounter.count++}`,
@@ -121,8 +117,9 @@ export function evaluateK8sHardeningRules(file: CodeFile, lines: string[], clean
         logs.push(`[${ts}] [K8S AUDIT] Found K8S-04: Dangerous Host Path Volume Mount (/ or /etc or /var/run) at ${file.path}:${lineNum}`);
     }
     // K8S-05: AutomountServiceAccountToken Enabled by Default
-    if (cleanContent.includes('automountServiceAccountToken: true')) {
-        const matchLineIdx = lines.findIndex(l => !l.trim().startsWith('#'));
+    const k8s05Line = yamlLine(lines, /^\s*automountServiceAccountToken\s*:\s*true\b/);
+    if (k8s05Line !== -1) {
+        const matchLineIdx = k8s05Line;
         const lineNum = matchLineIdx !== -1 ? matchLineIdx + 1 : 1;
         findings.push({
             id: `k8s8905-${Date.now()}-${findingCounter.count++}`,
@@ -144,54 +141,6 @@ export function evaluateK8sHardeningRules(file: CodeFile, lines: string[], clean
         });
         logs.push(`[${ts}] [K8S AUDIT] Found K8S-05: AutomountServiceAccountToken Enabled by Default at ${file.path}:${lineNum}`);
     }
-    // K8S-06: Missing Pod Disruption Budget (PDB) on Critical Deployments
-    if ((/kind:\s*Deployment/i.test(cleanContent) && /replicas:\s*[2-9]/i.test(cleanContent) && !/PodDisruptionBudget/i.test(cleanContent))) {
-        const matchLineIdx = locateMatchLine(lines, [/kind:\s*Deployment/i, /replicas:\s*[2-9]/i], l => !l.trim().startsWith('#'));
-        const lineNum = matchLineIdx !== -1 ? matchLineIdx + 1 : 1;
-        findings.push({
-            id: `k8s8906-${Date.now()}-${findingCounter.count++}`,
-            ruleId: 8906,
-            type: 'INFRA_DATABASE',
-            title: "K8S-06: Missing Pod Disruption Budget (PDB) on Critical Deployments",
-            severity: "MEDIUM",
-            category: "High Availability",
-            filePath: file.path,
-            lineRange: `L${lineNum}`,
-            snippet: lines[matchLineIdx] || 'Kubernetes manifest item',
-            reproductionSteps: [
-                `Audited Kubernetes manifest in ${file.path}:${lineNum}.`,
-                'Detected configuration violation matching K8S-06.'
-            ],
-            remediationPrompt: "Create a PodDisruptionBudget manifest for the production deployment.",
-            status: 'OPEN',
-            falsePositive: false
-        });
-        logs.push(`[${ts}] [K8S AUDIT] Found K8S-06: Missing Pod Disruption Budget (PDB) on Critical Deployments at ${file.path}:${lineNum}`);
-    }
-    // K8S-07: Missing Liveness and Readiness Health Probes
-    if (cleanContent.includes('kind: Deployment')) {
-        const matchLineIdx = lines.findIndex(l => !l.trim().startsWith('#'));
-        const lineNum = matchLineIdx !== -1 ? matchLineIdx + 1 : 1;
-        findings.push({
-            id: `k8s8907-${Date.now()}-${findingCounter.count++}`,
-            ruleId: 8907,
-            type: 'INFRA_DATABASE',
-            title: "K8S-07: Missing Liveness and Readiness Health Probes",
-            severity: "HIGH",
-            category: "Pod Reliability",
-            filePath: file.path,
-            lineRange: `L${lineNum}`,
-            snippet: lines[matchLineIdx] || 'Kubernetes manifest item',
-            reproductionSteps: [
-                `Audited Kubernetes manifest in ${file.path}:${lineNum}.`,
-                'Detected configuration violation matching K8S-07.'
-            ],
-            remediationPrompt: "Add livenessProbe and readinessProbe to container configuration.",
-            status: 'OPEN',
-            falsePositive: false
-        });
-        logs.push(`[${ts}] [K8S AUDIT] Found K8S-07: Missing Liveness and Readiness Health Probes at ${file.path}:${lineNum}`);
-    }
     // K8S-08: Writable Root Filesystem (readOnlyRootFilesystem: false)
     if (/readOnlyRootFilesystem\s*:\s*false/i.test(cleanContent)) {
         const matchLineIdx = locateMatchLine(lines, [/readOnlyRootFilesystem\s*:\s*false/i], l => !l.trim().startsWith('#'));
@@ -201,7 +150,7 @@ export function evaluateK8sHardeningRules(file: CodeFile, lines: string[], clean
             ruleId: 8908,
             type: 'INFRA_DATABASE',
             title: "K8S-08: Writable Root Filesystem (readOnlyRootFilesystem: false)",
-            severity: "HIGH",
+            severity: 'MEDIUM',
             category: "Runtime Hardening",
             filePath: file.path,
             lineRange: `L${lineNum}`,
@@ -217,8 +166,10 @@ export function evaluateK8sHardeningRules(file: CodeFile, lines: string[], clean
         logs.push(`[${ts}] [K8S AUDIT] Found K8S-08: Writable Root Filesystem (readOnlyRootFilesystem: false) at ${file.path}:${lineNum}`);
     }
     // K8S-09: Container Insecure Capability Allocation (ALL or CAP_SYS_ADMIN)
-    if (/(?:CAP_SYS_ADMIN|add\s*:\s*\[\s*['"]ALL['"])/i.test(cleanContent)) {
-        const matchLineIdx = locateMatchLine(lines, [/(?:CAP_SYS_ADMIN|add\s*:\s*\[\s*['"]ALL['"])/i], l => !l.trim().startsWith('#'));
+    // capabilities.add containing ALL or SYS_ADMIN (flow or block list); `drop: [ALL]` is the hardening idiom
+    const k8s09Line = capabilityAdds(lines).find((a) => a.caps.some((c) => c === 'ALL' || c === 'SYS_ADMIN' || c === 'CAP_SYS_ADMIN'))?.line ?? -1;
+    if (k8s09Line !== -1) {
+        const matchLineIdx = k8s09Line;
         const lineNum = matchLineIdx !== -1 ? matchLineIdx + 1 : 1;
         findings.push({
             id: `k8s8909-${Date.now()}-${findingCounter.count++}`,
@@ -239,30 +190,6 @@ export function evaluateK8sHardeningRules(file: CodeFile, lines: string[], clean
             falsePositive: false
         });
         logs.push(`[${ts}] [K8S AUDIT] Found K8S-09: Container Insecure Capability Allocation (ALL or CAP_SYS_ADMIN) at ${file.path}:${lineNum}`);
-    }
-    // K8S-10: Missing NetworkPolicy for Workload Ingress / Egress Isolation
-    if ((/kind:\s*Namespace/i.test(cleanContent) && !/NetworkPolicy/i.test(cleanContent))) {
-        const matchLineIdx = locateMatchLine(lines, [/kind:\s*Namespace/i], l => !l.trim().startsWith('#'));
-        const lineNum = matchLineIdx !== -1 ? matchLineIdx + 1 : 1;
-        findings.push({
-            id: `k8s8910-${Date.now()}-${findingCounter.count++}`,
-            ruleId: 8910,
-            type: 'INFRA_DATABASE',
-            title: "K8S-10: Missing NetworkPolicy for Workload Ingress / Egress Isolation",
-            severity: "HIGH",
-            category: "Zero Trust Network",
-            filePath: file.path,
-            lineRange: `L${lineNum}`,
-            snippet: lines[matchLineIdx] || 'Kubernetes manifest item',
-            reproductionSteps: [
-                `Audited Kubernetes manifest in ${file.path}:${lineNum}.`,
-                'Detected configuration violation matching K8S-10.'
-            ],
-            remediationPrompt: "Create a NetworkPolicy restricting ingress to authorized service pods only.",
-            status: 'OPEN',
-            falsePositive: false
-        });
-        logs.push(`[${ts}] [K8S AUDIT] Found K8S-10: Missing NetworkPolicy for Workload Ingress / Egress Isolation at ${file.path}:${lineNum}`);
     }
     return { findings, logs };
 }

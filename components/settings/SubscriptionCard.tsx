@@ -7,7 +7,6 @@ import {
   CheckCircle2,
   ShieldCheck,
   AlertTriangle,
-  Key,
   Calendar,
   ExternalLink,
   Loader2,
@@ -19,6 +18,7 @@ import { getSupabase } from '@/lib/supabase';
 import { verifyLicenseKey } from '@/lib/stripe-checkout';
 import { getSubscriptionValidity, formatRenewalDate } from '@/lib/subscription-utils';
 import { UserProfileSettingsForm } from './UserProfileSettingsForm';
+import { priceLabel } from '@/data/pricing-plans';
 
 interface SubscriptionCardProps {
   user?: UserProfile | null;
@@ -43,11 +43,6 @@ export const SubscriptionCard: React.FC<SubscriptionCardProps> = ({
     message: '',
   });
 
-  const [licenseInput, setLicenseInput] = useState('');
-  const [licenseFeedback, setLicenseFeedback] = useState<{ status: 'idle' | 'success' | 'error'; message: string }>({
-    status: 'idle',
-    message: '',
-  });
 
   const handleSyncSubscription = async () => {
     if (!user?.email) return;
@@ -143,33 +138,6 @@ export const SubscriptionCard: React.FC<SubscriptionCardProps> = ({
     }
   };
 
-  const handleActivateLicense = (e: React.FormEvent) => {
-    e.preventDefault();
-    const trimmedKey = licenseInput.trim();
-    if (!trimmedKey) {
-      setLicenseFeedback({
-        status: 'error',
-        message: 'License key or subscription reference is empty. Please enter your reference.',
-      });
-      setTimeout(() => setLicenseFeedback({ status: 'idle', message: '' }), 5000);
-      return;
-    }
-
-    if (isAuthenticated) {
-      setLicenseFeedback({
-        status: 'idle',
-        message: 'Synchronizing subscription with Polar server...',
-      });
-      handleSyncSubscription();
-    } else {
-      setLicenseFeedback({
-        status: 'error',
-        message: 'Please sign in to verify and link your Polar subscription.',
-      });
-      setTimeout(() => setLicenseFeedback({ status: 'idle', message: '' }), 6000);
-    }
-  };
-
 
   return (
     <div className="bg-[#141414] border border-white/10 rounded-xl p-6 sm:p-8 flex flex-col gap-6 shadow-xl relative overflow-hidden">
@@ -210,7 +178,7 @@ export const SubscriptionCard: React.FC<SubscriptionCardProps> = ({
                 </div>
               </div>
               <span className="text-xs font-mono font-bold text-[#EDEDED] bg-white/5 border border-white/10 px-2.5 py-1 rounded-lg tabular-nums">
-                {user?.tier === 'Pro' ? '$19 / mo' : user?.tier === 'Enterprise' ? '$99 / mo' : '$0 / Free Tier'}
+                {user?.tier === 'Pro' ? priceLabel('Pro') : user?.tier === 'Enterprise' ? priceLabel('Enterprise') : '$0 / Free Tier'}
               </span>
             </div>
 
@@ -324,7 +292,7 @@ export const SubscriptionCard: React.FC<SubscriptionCardProps> = ({
                     className="min-h-[44px] px-4 py-2 rounded-xl bg-gradient-to-r from-amber-400 to-amber-500 hover:from-amber-300 hover:to-amber-400 text-black font-extrabold text-xs flex items-center justify-center gap-2 shadow-lg transition-all cursor-pointer focus-visible:ring-2 focus-visible:ring-emerald-500 focus-visible:outline-none"
                   >
                     <ArrowRight size={14} />
-                    <span>Upgrade to Enterprise ($99/mo)</span>
+                    <span>Upgrade to Enterprise ({priceLabel('Enterprise')})</span>
                   </button>
                 </>
               ) : user?.tier === 'Enterprise' ? (
@@ -347,7 +315,7 @@ export const SubscriptionCard: React.FC<SubscriptionCardProps> = ({
                   className="min-h-[44px] px-4 py-2 rounded-xl bg-gradient-to-r from-amber-400 to-amber-500 hover:from-amber-300 hover:to-amber-400 text-black font-extrabold text-xs flex items-center justify-center gap-2 shadow-lg transition-all cursor-pointer focus-visible:ring-2 focus-visible:ring-emerald-500 focus-visible:outline-none"
                 >
                   <ArrowRight size={14} />
-                  <span>Upgrade to Pro ($19/mo)</span>
+                  <span>Upgrade to Pro ({priceLabel('Pro')})</span>
                 </button>
               )}
             </div>
@@ -367,44 +335,6 @@ export const SubscriptionCard: React.FC<SubscriptionCardProps> = ({
         />
       </div>
 
-      {/* License Key Activation Banner */}
-      <div className="pt-4 border-t border-white/10 flex flex-col md:flex-row items-start md:items-center justify-between gap-4 bg-[#0A0A0A] p-4 rounded-xl border border-white/10">
-        <div className="flex items-start gap-3">
-          <div className="w-8 h-8 rounded-lg bg-white/5 border border-white/10 text-white flex items-center justify-center shrink-0 mt-0.5">
-            <Key size={16} />
-          </div>
-          <div>
-            <h3 className="text-xs font-bold text-white font-mono uppercase tracking-wider">Have an Enterprise or Pro License Key?</h3>
-            <p className="text-[11px] text-[#A1A1AA] mt-0.5">Paste your license key to immediately unlock advanced rules and multi-team gate clearance.</p>
-            {licenseFeedback.status !== 'idle' && (
-              <div className={`text-[11px] font-mono mt-1.5 flex items-center gap-1.5 ${licenseFeedback.status === 'success' ? 'text-emerald-400' : 'text-red-400'}`}>
-                {licenseFeedback.status === 'success' ? <Check size={12} /> : <AlertTriangle size={12} />}
-                <span>{licenseFeedback.message}</span>
-              </div>
-            )}
-          </div>
-        </div>
-
-        <div className="flex items-center gap-2 w-full md:w-auto">
-          <input
-            id="settings-license-key-input"
-            name="licenseKey"
-            aria-label="License Key Input"
-            type="text"
-            placeholder="SG-PRO-2026-..."
-            value={licenseInput}
-            onChange={(e) => setLicenseInput(e.target.value)}
-            className="bg-[#141414] border border-white/10 rounded-xl px-3.5 py-2 text-xs text-white font-mono uppercase flex-1 md:w-60 focus:border-white/30 focus-visible:ring-2 focus-visible:ring-emerald-500 focus-visible:outline-none"
-          />
-          <button
-            type="button"
-            onClick={handleActivateLicense}
-            className="min-h-[44px] px-4 py-2 rounded-xl text-xs font-mono font-bold whitespace-nowrap bg-white text-black hover:bg-neutral-200 transition-all cursor-pointer focus-visible:ring-2 focus-visible:ring-emerald-500 focus-visible:outline-none"
-          >
-            Activate
-          </button>
-        </div>
-      </div>
     </div>
   );
 };

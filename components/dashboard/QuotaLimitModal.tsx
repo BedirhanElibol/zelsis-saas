@@ -4,6 +4,7 @@ import React, { useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { X, ShieldAlert, Zap, ArrowRight } from 'lucide-react';
 import { useRouter } from 'next/navigation';
+import { priceLabel } from '@/data/pricing-plans';
 
 interface QuotaLimitModalProps {
   isOpen: boolean;
@@ -81,7 +82,7 @@ export const QuotaLimitModal: React.FC<QuotaLimitModalProps> = ({
           <div className="p-4 rounded-xl bg-[#0A0A0A] border border-white/10 flex flex-col gap-2.5 text-xs font-mono">
             <div className="flex items-center gap-2 text-white font-bold">
               <Zap size={14} className="text-amber-400" />
-              <span>Upgrade to Zelsis Pro ($19/mo) unlocks:</span>
+              <span>Upgrade to Zelsis Pro ({priceLabel('Pro')}) unlocks:</span>
             </div>
             <ul className="space-y-1.5 text-zinc-400 text-[11px] pl-5 list-disc">
               <li><strong className="text-zinc-200">Unlimited</strong> manual &amp; automated repository audits</li>
@@ -98,9 +99,9 @@ export const QuotaLimitModal: React.FC<QuotaLimitModalProps> = ({
                 onClose();
                 router.push('/checkout?plan=pro&reason=quota_exceeded');
               }}
-              className="btn btn-primary w-full py-2.5 px-4 rounded-xl text-xs font-mono font-bold uppercase tracking-wider bg-white text-black hover:bg-neutral-200 transition-all flex items-center justify-center gap-2 shadow-lg cursor-pointer"
+              className="btn btn-primary w-full py-2.5 px-4 rounded-xl text-xs font-mono font-bold uppercase tracking-wider bg-emerald-500 text-black hover:bg-emerald-400 transition-all flex items-center justify-center gap-2 shadow-lg cursor-pointer"
             >
-              <span>Upgrade to Pro ($19/mo)</span>
+              <span>Upgrade to Pro ({priceLabel('Pro')})</span>
               <ArrowRight size={14} />
             </button>
           </div>

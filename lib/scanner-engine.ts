@@ -10,8 +10,14 @@ import { ruleMaturity } from './scanner/rule-maturity';
 /** [kept, dropped] rule pairs that report the same issue (rule packs overlap). */
 const SAME_ISSUE_RULES: ReadonlyArray<readonly [number, number]> = [
   [7004, 3002], // Dockerfile without USER: CLOUD-04 (reviewed true positive) over the infra-pack duplicate
-  [8404, 10303], // DB pool without max size: CHAOS-04 over PG-03
-  [8404, 6013], // ...and over DB-PERF-13 (pool acquisition timeout), same client config line
+  [8901, 7013], [8901, 12201], // privileged pod
+  [8321, 12204], // hostNetwork
+  [8301, 11003], [8301, 7040], // SSH open to the world
+  [8329, 8909], // capabilities ALL
+  [26, 8501], [26, 8503], // Apollo server config, same line
+  [28251, 9501], [28251, 7323], [9501, 7323], // pull_request_target running PR-head code
+  [3001, 6010], // public-schema table without RLS
+  [9704, 8143], // webhook handler without signature verification
 ];
 import { RULE_ENGINES } from './scanner/rule-engines';
 import { evaluateBuiltinRules } from './scanner/builtin-rules';
@@ -37,6 +43,13 @@ export { detectAppStack, UNDETECTED_FRAMEWORK } from './scanner/stack-detect';
 export interface ScanOptions {
   /** Look up resolved dependency versions in OSV.dev. Off by default so offline runs stay deterministic. */
   dependencyAudit?: OsvOptions | boolean;
+  /**
+   * Enterprise workspace policy (.zelsisrc.json content). Its strategy and threshold override the
+   * repository's file; its ignored rules, paths and disabled gates are added to the repository's.
+   */
+  orgPolicy?: string | null;
+  /** Report every rule that fired, without SAME_ISSUE_RULES dedupe. Rule fixtures use it to prove each rule on its own. */
+  keepDuplicateRules?: boolean;
 }
 
 export async function runStaticCodeScan(files: CodeFile[], repoName: string = 'Target Repository', options: ScanOptions = {}): Promise<ScanResult> {
@@ -53,6 +66,12 @@ export async function runStaticCodeScan(files: CodeFile[], repoName: string = 'T
   const { config: rcConfig, ignoredRuleIds: rcRuleIds, ignoredPaths: rcPaths, disabledPillars } = parseZelsisRc(rcFile?.content || '');
   rcRuleIds.forEach(id => ignoredRuleIds.add(id));
   rcPaths.forEach(p => ignoredPaths.push(p));
+
+  const orgRc = parseZelsisRc(options.orgPolicy || '');
+  orgRc.ignoredRuleIds.forEach(id => ignoredRuleIds.add(id));
+  orgRc.ignoredPaths.forEach(p => ignoredPaths.push(p));
+  orgRc.disabledPillars.forEach(p => disabledPillars.add(p));
+  const effectiveRc = orgRc.config ? { ...(rcConfig || {}), ...orgRc.config } : rcConfig;
 
   // Pre-detect project database and ORM architecture before streaming loop cleans file memory
   const detectedStack = detectProjectDatabases(files);
@@ -78,7 +97,9 @@ export async function runStaticCodeScan(files: CodeFile[], repoName: string = 'T
     logs.push(`[${new Date().toLocaleTimeString()}] [STACK] Multi-Database Stack Detected: ${[...detectedStack.databases, ...detectedStack.orms].join(', ')}`);
   }
 
-  if (rcConfig) {
+  if (orgRc.config) {
+    logs.push(`[${new Date().toLocaleTimeString()}] [CONFIG] Organization policy active (Strategy: ${effectiveRc?.failStrategy || 'smart'}, MinScore: ${effectiveRc?.minScoreThreshold ?? 85}).`);
+  } else if (rcConfig) {
     logs.push(`[${new Date().toLocaleTimeString()}] [CONFIG] Policy-as-Code active: Loaded ${rcFile?.path || '.zelsisrc.json'} (Strategy: ${rcConfig.failStrategy || 'smart'}, MinScore: ${rcConfig.minScoreThreshold ?? 85}).`);
   }
   if (ignoredRuleIds.size > 0 || ignoredPaths.length > 0) {
@@ -303,7 +324,7 @@ export async function runStaticCodeScan(files: CodeFile[], repoName: string = 'T
   }
 
   // Rule packs overlap: when two rules report the same issue in one file, keep the first of the pair
-  for (const [keep, drop] of SAME_ISSUE_RULES) {
+  for (const [keep, drop] of options.keepDuplicateRules ? [] : SAME_ISSUE_RULES) {
     const filesWithKeep = new Set(findings.filter((f) => f.ruleId === keep).map((f) => f.filePath));
     for (let k = findings.length - 1; k >= 0; k--) {
       if (findings[k].ruleId === drop && filesWithKeep.has(findings[k].filePath)) findings.splice(k, 1);
@@ -330,12 +351,12 @@ export async function runStaticCodeScan(files: CodeFile[], repoName: string = 'T
   let gateStatus = calculateGateStatus(findings);
 
   // Policy-as-Code strategy enforcement (F-43)
-  if (rcConfig) {
-    if (rcConfig.failStrategy === 'advisory') {
+  if (effectiveRc) {
+    if (effectiveRc.failStrategy === 'advisory') {
       gateStatus = 'PASSED';
       logs.push(`[${new Date().toLocaleTimeString()}] [CONFIG] Policy-as-Code: Advisory mode active — Release gate set to PASSED.`);
-    } else if (rcConfig.failStrategy === 'strict') {
-      const minThreshold = typeof rcConfig.minScoreThreshold === 'number' ? rcConfig.minScoreThreshold : 85;
+    } else if (effectiveRc.failStrategy === 'strict') {
+      const minThreshold = typeof effectiveRc.minScoreThreshold === 'number' ? effectiveRc.minScoreThreshold : 85;
       if (score < minThreshold) {
         gateStatus = 'FAILED';
         logs.push(`[${new Date().toLocaleTimeString()}] [CONFIG] Policy-as-Code: Strict mode active — Score ${score} is below required ${minThreshold} threshold. Release gate BLOCKED.`);

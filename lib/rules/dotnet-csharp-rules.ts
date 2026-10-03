@@ -9,9 +9,21 @@ export function evaluateDotnetCsharpRules(file: CodeFile, lines: string[], clean
     if (!lowerPath.endsWith('.cs')) return { findings, logs };
 
     // DOTNET-SEC-01: Insecure XML Deserialization
-    const reg_xml = /XmlSerializer\s*\(/i;
-    if (reg_xml.test(cleanContent)) {
-        const matchLineIdx = lines.findIndex(l => reg_xml.test(l));
+    // XmlSerializer bound to a compile-time type (typeof(T)) is safe; the exploitable case is a type
+    // resolved at runtime from input, e.g. new XmlSerializer(Type.GetType(request.TypeName)).
+    const runtimeTypeVars = new Set<string>();
+    for (const l of lines) {
+        const m = /\b(\w+)\s*=\s*Type\.GetType\s*\(\s*(?!"[^"]*"\s*\))/.exec(l);
+        if (m) runtimeTypeVars.add(m[1]);
+    }
+    const reg_xml = /XmlSerializer\s*\(\s*(Type\.GetType\s*\(\s*(?!"[^"]*"\s*\))|\w+\s*[,)])/;
+    const matchLineIdx = lines.findIndex(l => {
+        if (/^\s*(?:\/\/|\*)/.test(l)) return false;
+        const m = reg_xml.exec(l);
+        if (!m) return false;
+        return m[1].startsWith('Type.GetType') || runtimeTypeVars.has(m[1].replace(/\s*[,)]$/, ''));
+    });
+    if (matchLineIdx !== -1) {
         findings.push({
             id: `dotnet-xml-${findingCounter.count++}`,
             ruleId: 27204,

@@ -3,15 +3,22 @@ import assert from 'node:assert/strict';
 import { runStaticCodeScan, type CodeFile } from '../../lib/scanner-engine';
 import { readdirSync, readFileSync } from 'node:fs';
 import { join } from 'node:path';
-import { KNOWN_GAPS, RULE_CASES } from './cases';
+import { KNOWN_GAPS, RULE_CASES, type RuleCase } from './cases';
 import { VULNERABLE_VARIANTS } from './variants';
 import { STACK_MATRIX } from './stack-matrix';
 
+// The scanner clears each file's content after scanning (memory), so scan copies and keep fixtures reusable
 const ruleIdsFor = async (files: CodeFile[]) =>
-  new Set((await runStaticCodeScan(files, 'fixture')).findings.map((f) => f.ruleId));
+  new Set((await runStaticCodeScan(files.map((f) => ({ ...f })), 'fixture', { keepDuplicateRules: true })).findings.map((f) => f.ruleId));
+
+/** Per-area fixture tables in tests/rules/fixtures/*.ts, each exporting `CASES`. */
+const AREA_CASES: RuleCase[] = readdirSync(join(__dirname, 'fixtures'))
+  .filter((n) => n.endsWith('.ts'))
+  .sort()
+  .flatMap((n) => (require(join(__dirname, 'fixtures', n)) as { CASES: RuleCase[] }).CASES);
 
 describe('rule fixtures', () => {
-  for (const c of RULE_CASES) {
+  for (const c of [...RULE_CASES, ...AREA_CASES]) {
     describe(`${c.name} (#${c.ruleIds.join(', #')})`, () => {
       it('detects the vulnerable fixture', async () => {
         const found = await ruleIdsFor(c.detects);
@@ -26,6 +33,17 @@ describe('rule fixtures', () => {
       });
     });
   }
+});
+
+describe('same-issue dedupe', () => {
+  it('reports one finding per issue in a normal scan', async () => {
+    const source = AREA_CASES.find((c) => c.ruleIds.includes(8321) && c.ruleIds.includes(12204))!.detects;
+    const copy = () => source.map((f) => ({ ...f }));
+    const all = await ruleIdsFor(copy());
+    const deduped = new Set((await runStaticCodeScan(copy(), 'fixture')).findings.map((f) => f.ruleId));
+    assert.ok(all.has(8321) && all.has(12204), 'both host-network rules fire on their own');
+    assert.ok(deduped.has(8321) && !deduped.has(12204), 'the duplicate is dropped in the report');
+  });
 });
 
 describe('known scanner gaps', () => {
@@ -85,6 +103,14 @@ describe('test fixture files', () => {
 
   it('still scans production code with the same content', async () => {
     assert.ok((await ruleIdsFor([{ path: 'lib/calc.ts', content: 'export const run = (input: string) => eval(input);\n' }])).has(32));
+  });
+});
+
+describe('new rule packs accept their codes in .zelsisignore', () => {
+  it('maps each code prefix to its id range', async () => {
+    const { parseZelsisIgnore } = await import('../../lib/scanner-engine');
+    const cases: [string, number][] = [['NEXT-SB-01', 28001], ['NODE-WEB-25', 28125], ['AI-APP-07', 28207], ['GHA-01', 28251], ['LLM-V2-16', 28316], ['PRIV-14', 28414], ['CLOUD-V2-25', 28525], ['A11Y-23', 28623]];
+    for (const [code, id] of cases) assert.ok(parseZelsisIgnore(code).ignoredRuleIds.has(id), `${code} -> ${id}`);
   });
 });
 

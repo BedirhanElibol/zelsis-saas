@@ -4,6 +4,7 @@ import React, { useState } from 'react';
 import { Shield, ArrowUpRight, Lock, CheckCircle2, ExternalLink } from 'lucide-react';
 import { UserTier, PlanUsageQuota } from '@/data/schema';
 import { TierDetailsModal } from '@/components/pricing/TierDetailsModal';
+import { priceLabel } from '@/data/pricing-plans';
 
 interface UsageGaugeProps {
   tier: UserTier;
@@ -127,7 +128,7 @@ export const UsageGauge: React.FC<UsageGaugeProps> = ({
               onClick={() => onOpenCheckout?.('Pro')}
               className="w-full py-2.5 px-3 rounded-lg bg-white text-black hover:bg-neutral-200 transition-all font-extrabold text-xs flex items-center justify-center gap-1.5 cursor-pointer shadow-md mt-1"
             >
-              <span>Upgrade to Pro ($19/mo)</span>
+              <span>Upgrade to Pro ({priceLabel('Pro')})</span>
               <ArrowUpRight size={13} />
             </button>
 
@@ -173,7 +174,7 @@ export const UsageGauge: React.FC<UsageGaugeProps> = ({
                 onClick={() => onOpenCheckout?.('Enterprise')}
                 className="w-full mt-1 py-2 px-2.5 rounded-lg bg-white/5 hover:bg-white/10 border border-white/10 text-[10px] font-bold text-zinc-300 hover:text-white flex items-center justify-center gap-1 transition-colors cursor-pointer"
               >
-                <span>Need SLA? View Enterprise ($99/mo)</span>
+                <span>Need priority support? View Enterprise ({priceLabel('Enterprise')})</span>
                 <ArrowUpRight size={11} />
               </button>
             )}

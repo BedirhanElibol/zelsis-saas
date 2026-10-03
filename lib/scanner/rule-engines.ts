@@ -114,6 +114,13 @@ import { evaluateDotnetCsharpRules } from '../rules/dotnet-csharp-rules';
 import { evaluateSaasCoreRules } from '../rules/saas-core-rules';
 import { evaluateJsCoreSecurityRules } from '../rules/js-core-security-rules';
 import { evaluatePolyglotCoreRules } from '../rules/polyglot-core-rules';
+import { evaluateNextjsSupabaseRules } from '../rules/nextjs-supabase-rules';
+import { evaluateNodeWebVulnRules } from '../rules/node-web-vuln-rules';
+import { evaluateAiAppCiRules } from '../rules/ai-app-ci-rules';
+import { evaluateLlmAppV2Rules } from '../rules/llm-app-v2-rules';
+import { evaluatePrivacyDataRules } from '../rules/privacy-data-rules';
+import { evaluateCloudIacV2Rules } from '../rules/cloud-iac-v2-rules';
+import { evaluateUiQualityRules } from '../rules/ui-quality-rules';
 
 export type RuleEngine = (
   file: CodeFile,
@@ -382,4 +389,18 @@ export const RULE_ENGINES: ReadonlyArray<{ evaluate: RuleEngine; scanRawContent?
   { evaluate: evaluateJsCoreSecurityRules },
   // Core injection classes for Java, Kotlin, Ruby, PHP, Python, C#, Go and templates (CORE-01 to 08, Rule IDs 24101-24108)
   { evaluate: evaluatePolyglotCoreRules },
+  // Next.js App Router, Server Actions, middleware and Supabase auth/storage misuse (NEXT-SB-01.., Rule IDs 28001-28099)
+  { evaluate: evaluateNextjsSupabaseRules },
+  // Node.js web vulnerabilities: SSRF, traversal, prototype pollution, redirects, JWT, NoSQL, ReDoS (NODE-WEB-01.., Rule IDs 28101-28199)
+  { evaluate: evaluateNodeWebVulnRules },
+  // LLM application security and GitHub Actions workflow injection (AI-APP-01.., Rule IDs 28201-28299)
+  { evaluate: evaluateAiAppCiRules },
+  // LLM and agent application security (LLM-V2-01.., Rule IDs 28301-28399)
+  { evaluate: evaluateLlmAppV2Rules },
+  // Personal data exposure, GDPR/KVKK-relevant code patterns (PRIV-01.., Rule IDs 28401-28499)
+  { evaluate: evaluatePrivacyDataRules },
+  // Cloud, IaC, Kubernetes and container misconfiguration (CLOUD-V2-01.., Rule IDs 28501-28599)
+  { evaluate: evaluateCloudIacV2Rules },
+  // Measurable UI quality: WCAG 2.2 accessibility and UX defects in JSX/HTML (A11Y-01.., Rule IDs 28601-28699)
+  { evaluate: evaluateUiQualityRules },
 ];

@@ -1,6 +1,7 @@
 /**
  * Zelsis Master evaluateTenantIsolationRules Engine (50 Rules)
  * Rules TENANT-01 to TENANT-50 (Rule IDs 9101 to 9150).
+ * Removed as unsound (ids never reused): 9101 (whole-file absence of a tenant column), 9103 (wrong premise).
  */
 import { Finding } from "@/data/schema";
 import { CodeFile } from "../scanner-engine";
@@ -21,30 +22,6 @@ export function evaluateTenantIsolationRules(file: CodeFile, lines: string[], cl
         return { findings, logs };
     }
     const ts = new Date().toLocaleTimeString();
-    // TENANT-01: Cross-Tenant Query Missing Tenant ID Filter Clause
-    if ((/(?:findMany|findFirst|select)\s*\([\s\S]*?where\s*:\s*\{\s*id\s*:/i.test(cleanContent) && !/tenant_id|tenantId|orgId|organizationId/i.test(cleanContent))) {
-        const matchLineIdx = locateMatchLine(lines, [/(?:findMany|findFirst|select)\s*\([\s\S]*?where\s*:\s*\{\s*id\s*:/i], l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('*'));
-        const lineNum = matchLineIdx !== -1 ? matchLineIdx + 1 : 1;
-        findings.push({
-            id: `tenant9101-${Date.now()}-${findingCounter.count++}`,
-            ruleId: 9101,
-            type: 'SECURITY',
-            title: "TENANT-01: Cross-Tenant Query Missing Tenant ID Filter Clause",
-            severity: "CRITICAL",
-            category: "Multi-Tenant Isolation",
-            filePath: file.path,
-            lineRange: `L${lineNum}`,
-            snippet: lines[matchLineIdx] || 'Multi-tenant operation',
-            reproductionSteps: [
-                `Audited multi-tenant logic in ${file.path}:${lineNum}.`,
-                'Detected tenant isolation violation matching TENANT-01.'
-            ],
-            remediationPrompt: "Enforce tenant_id scoping in query: SELECT * FROM documents WHERE tenant_id = :tenant_id AND id = :id.",
-            status: 'OPEN',
-            falsePositive: false
-        });
-        logs.push(`[${ts}] [TENANT AUDIT] Found TENANT-01: Cross-Tenant Query Missing Tenant ID Filter Clause at ${file.path}:${lineNum}`);
-    }
     // TENANT-02: Tenant Context Leaked Across Async Execution Store
     if (/^(?:export\s+)?let\s+(?:current(?:Tenant|TenantId|Org|OrgId|User|UserId)|tenantId|orgId)\b/m.test(cleanContent)) {
         const matchLineIdx = locateMatchLine(lines, [/^(?:export\s+)?let\s+(?:current(?:Tenant|TenantId|Org|OrgId|User|UserId)|tenantId|orgId)\b/], l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('*'));
@@ -69,30 +46,6 @@ export function evaluateTenantIsolationRules(file: CodeFile, lines: string[], cl
         });
         logs.push(`[${ts}] [TENANT AUDIT] Found TENANT-02: Tenant Context Leaked Across Async Execution Store at ${file.path}:${lineNum}`);
     }
-    // TENANT-03: Missing Tenant Schema Isolation Check on Database Migration
-    if ((/SET\s+search_path\s*=/i.test(cleanContent) && !/\bpublic\b/i.test(cleanContent))) {
-        const matchLineIdx = locateMatchLine(lines, [/SET\s+search_path\s*=/i], l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('*'));
-        const lineNum = matchLineIdx !== -1 ? matchLineIdx + 1 : 1;
-        findings.push({
-            id: `tenant9103-${Date.now()}-${findingCounter.count++}`,
-            ruleId: 9103,
-            type: 'SECURITY',
-            title: "TENANT-03: Missing Tenant Schema Isolation Check on Database Migration",
-            severity: "HIGH",
-            category: "Schema Security",
-            filePath: file.path,
-            lineRange: `L${lineNum}`,
-            snippet: lines[matchLineIdx] || 'Multi-tenant operation',
-            reproductionSteps: [
-                `Audited multi-tenant logic in ${file.path}:${lineNum}.`,
-                'Detected tenant isolation violation matching TENANT-03.'
-            ],
-            remediationPrompt: "Set search_path = tenant_schema prior to executing tenant-specific database migrations.",
-            status: 'OPEN',
-            falsePositive: false
-        });
-        logs.push(`[${ts}] [TENANT AUDIT] Found TENANT-03: Missing Tenant Schema Isolation Check on Database Migration at ${file.path}:${lineNum}`);
-    }
     // TENANT-04: Tenant S3 Storage Prefix Path Traversal Leakage
     if (/(?:\.upload|PutObjectCommand|GetObjectCommand|DeleteObjectCommand)\s*\(\s*\{[^}]{0,400}?\bKey\s*:\s*(?:req\.(?:body|query|params)\.\w+|(?:body|params|query)\.(?:filename|key|path|name)\b|formData\.get\()/i.test(cleanContent)) {
         const matchLineIdx = locateMatchLine(lines, [/\bKey\s*:\s*(?:req\.(?:body|query|params)\.\w+|(?:body|params|query)\.(?:filename|key|path|name)\b|formData\.get\()/i], l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('*'));
@@ -116,30 +69,6 @@ export function evaluateTenantIsolationRules(file: CodeFile, lines: string[], cl
             falsePositive: false
         });
         logs.push(`[${ts}] [TENANT AUDIT] Found TENANT-04: Tenant S3 Storage Prefix Path Traversal Leakage at ${file.path}:${lineNum}`);
-    }
-    // TENANT-05: Tenant Quota Bypass on Asynchronous Background Worker
-    if ((/queue\.add\s*\([^)]*(?:tenantId|orgId)/i.test(cleanContent) && !/rateLimit|concurrency/i.test(cleanContent))) {
-        const matchLineIdx = locateMatchLine(lines, [/queue\.add\s*\([^)]*(?:tenantId|orgId)/i], l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('*'));
-        const lineNum = matchLineIdx !== -1 ? matchLineIdx + 1 : 1;
-        findings.push({
-            id: `tenant9105-${Date.now()}-${findingCounter.count++}`,
-            ruleId: 9105,
-            type: 'SECURITY',
-            title: "TENANT-05: Tenant Quota Bypass on Asynchronous Background Worker",
-            severity: "HIGH",
-            category: "Resource Allocation",
-            filePath: file.path,
-            lineRange: `L${lineNum}`,
-            snippet: lines[matchLineIdx] || 'Multi-tenant operation',
-            reproductionSteps: [
-                `Audited multi-tenant logic in ${file.path}:${lineNum}.`,
-                'Detected tenant isolation violation matching TENANT-05.'
-            ],
-            remediationPrompt: "Check and decrement tenant quota counter in Redis before dispatching background compute tasks.",
-            status: 'OPEN',
-            falsePositive: false
-        });
-        logs.push(`[${ts}] [TENANT AUDIT] Found TENANT-05: Tenant Quota Bypass on Asynchronous Background Worker at ${file.path}:${lineNum}`);
     }
     // TENANT-06: IDOR - a record loaded by a request-supplied id without scoping it to the caller.
     // Supabase service-role clients bypass RLS; ORMs (Prisma, Drizzle, Mongoose, Sequelize, TypeORM) never had it.

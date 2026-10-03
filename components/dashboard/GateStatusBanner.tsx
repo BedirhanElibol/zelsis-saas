@@ -30,6 +30,8 @@ import { exportFindingsToCsv, exportScorecardToJson } from '@/lib/export-utils';
 import { ActiveModalType } from './DashboardModals';
 import { safeReplace, safeTrim, safeString, safeLower } from '@/lib/safe-utils';
 import { UNDETECTED_FRAMEWORK } from '@/lib/scanner/stack-detect';
+import { priceLabel } from '@/data/pricing-plans';
+import { fetchOrgBranding } from '@/lib/supabase';
 
 interface GateStatusBannerProps {
   project: Project;
@@ -200,7 +202,7 @@ export const GateStatusBanner: React.FC<GateStatusBannerProps> = ({
               {highs.length} High
             </span>
             <span className="text-[#A1A1AA]">
-              {uiCliches.length} UI Clichés
+              {uiCliches.length} UI Issues
             </span>
           </p>
         </div>
@@ -211,7 +213,7 @@ export const GateStatusBanner: React.FC<GateStatusBannerProps> = ({
         {/* Primary Action: Re-Run Audit */}
         <button
           onClick={() => onTriggerScan()}
-          className="btn btn-primary px-4 sm:px-5 py-2.5 text-xs font-bold uppercase tracking-wider rounded-lg flex items-center justify-center gap-2 bg-white text-black hover:bg-neutral-200 flex-1 sm:flex-initial shadow-md transition-all active:scale-95 cursor-pointer"
+          className="btn btn-primary px-4 sm:px-5 py-2.5 text-xs font-bold uppercase tracking-wider rounded-lg flex items-center justify-center gap-2 bg-emerald-500 text-black hover:bg-emerald-400 flex-1 sm:flex-initial shadow-md transition-all active:scale-95 cursor-pointer"
         >
           <Play size={13} fill="#0A0A0A" />
           <span>Re-Run Audit</span>
@@ -270,8 +272,39 @@ export const GateStatusBanner: React.FC<GateStatusBannerProps> = ({
                     )}
                   </div>
                   <span className="text-[10px] text-[#A1A1AA]">
-                    {user?.tier === 'Free' ? 'Requires Pro subscription ($19/mo)' : 'Formal stakeholder sign-off'}
+                    {user?.tier === 'Free' ? `Requires Pro subscription (${priceLabel('Pro')})` : 'Score, gate and findings for stakeholders'}
                   </span>
+                </div>
+              </button>
+
+              <button
+                onClick={async () => {
+                  setIsExportMenuOpen(false);
+                  // Enterprise owners and workspace members get the white-label SOC 2 report
+                  const branding = await fetchOrgBranding().catch(() => null);
+                  if (user?.tier !== 'Enterprise' && !branding) {
+                    onOpenCheckout?.('Enterprise');
+                    return;
+                  }
+                  generateAuditPdfReport(safeProject, {
+                    brandName: branding?.brandName,
+                    brandLogoUrl: branding?.brandLogoUrl,
+                    includeSoc2: true,
+                  });
+                }}
+                className="w-full text-left px-3 py-2 rounded-lg text-white hover:bg-white/10 flex items-center gap-2.5 transition-colors cursor-pointer"
+              >
+                <ShieldCheck size={14} className="text-zinc-400" />
+                <div className="flex flex-col">
+                  <div className="flex items-center gap-1.5">
+                    <span className="font-bold">White-label SOC 2 Report</span>
+                    {user?.tier !== 'Enterprise' && (
+                      <span className="text-[11px] font-mono font-extrabold uppercase px-1 py-0.5 rounded bg-white/10 text-white border border-white/20">
+                        ENT
+                      </span>
+                    )}
+                  </div>
+                  <span className="text-[10px] text-[#A1A1AA]">Your branding + SOC 2 control mapping</span>
                 </div>
               </button>
 

@@ -4,7 +4,11 @@
  * Rules:
  * 1. UI-A11Y-01 (Rule ID 1026): WCAG 2.2 AA Focus & Label Validation
  * 2. UI-PERF-01 (Rule ID 1027): Core Web Vitals & Next.js Image Optimization
- * 3. UI-SEO-01  (Rule ID 1028): Social OpenGraph & Semantic Metadata
+ *
+ * Removed as unsound (ids never reused): 1028 (multiple <h1> / missing page title: conditional branches and
+ * inherited layout metadata are normal), 1127 (Next.js already optimizes lucide-react / date-fns / lodash imports),
+ * 1129 (disabled:pointer-events-none is the shadcn default, not a defect), 27231 (target=_blank without rel: browsers
+ * imply noopener; the remaining case is covered by rule 274).
  */
 import { Finding } from '@/data/schema';
 import { CodeFile } from '../scanner-engine';
@@ -29,43 +33,34 @@ export function evaluateFrontendRules(file: CodeFile, lines: string[], cleanCont
     // =========================================================================
     // a) UI-A11Y-01 (Rule ID 1026: WCAG 2.2 AA Focus & Label Validation)
     // =========================================================================
-    const hasOutlineNone = /(?:focus:)?outline-none\b|outline:\s*none/i.test(cleanContent);
-    const hasFocusRing = /focus(?:-visible)?:ring|focus-visible:outline|focus:border/i.test(cleanContent);
-    const outlineNoneViolation = hasOutlineNone && !hasFocusRing;
-    // Detect unlabelled interactive inputs: <input>, <textarea>, <select>
-    // Handle JSX arrow functions like onChange={(e) => ...} by matching up to /> or (?<!=)>
-    // Native lowercase elements only (<Input> components are checked where they render <input>); inputs
-    // nested in a <label> are labelled implicitly; {...props} spreads may carry id / aria-label.
-    const withoutWrappedLabels = cleanContent.replace(/<label\b[^>]*>[\s\S]*?<\/label>/g, '');
-    const inputTags = (withoutWrappedLabels.match(/<(?:input|textarea|select)\b[\s\S]*?(?:\/>|<\/(?:input|textarea|select)>|(?<!=)>)/g) || [])
-        .filter((tag) => !/\{\s*\.\.\./.test(tag));
-    let unlabelledInputFound = false;
-    let unlabelledInputSnippet = '';
-    let inputMatchLineIdx = -1;
-    for (const tag of inputTags) {
-        if (/type\s*=\s*["'](?:hidden|submit|button|reset|image)["']/i.test(tag)) {
-            continue;
-        }
-        const hasAriaLabel = /\baria-label\s*=/i.test(tag);
-        const hasAriaLabelledBy = /\baria-labelledby\s*=/i.test(tag);
-        const hasId = /\bid\s*=/i.test(tag);
-        if (!hasAriaLabel && !hasAriaLabelledBy && !hasId) {
-            unlabelledInputFound = true;
-            unlabelledInputSnippet = tag.slice(0, 100);
-            const searchFragment = tag.slice(0, 30);
-            inputMatchLineIdx = lines.findIndex(l => l.includes(searchFragment) || /<(?:input|textarea|select)\b/i.test(l));
-            break;
-        }
-    }
+    // Checked per element, never file-wide:
+    // - outline-none on a native focusable element (input, textarea, select, button, a) whose own class list adds no
+    //   replacement focus style (focus/focus-visible ring, border, shadow, outline, bg or underline);
+    // - a native <input>/<textarea>/<select> with no aria-label, aria-labelledby, title or id (id implies a
+    //   <label htmlFor>) that is not nested inside a <label>. {...props} spreads may carry either, so they are skipped.
+    // Tags end at /> or a > that is not part of => (JSX arrow handlers).
+    const offsetLine = (offset: number) => cleanContent.slice(0, offset).split('\n').length - 1;
+    const focusableTags = Array.from(cleanContent.matchAll(/<(input|textarea|select|button|a)\b[\s\S]*?(?:\/>|(?<!=)>)/g))
+        .filter((m) => !/\{\s*\.\.\./.test(m[0]));
+    const replacementFocus = /\b(?:focus|focus-visible|focus-within):(?:ring|border|shadow|outline-(?!none)|bg-|underline)|(?:^|[\s"'`])ring-\d/;
+    // Input groups draw the focus ring on the wrapper (focus-within:) and strip the inner outline: the parent tag counts.
+    const parentTag = (offset: number) => {
+        const opens = Array.from(cleanContent.slice(Math.max(0, offset - 600), offset).matchAll(/<[a-zA-Z][^<>]*?(?<!\/)>/g));
+        return opens.length ? opens[opens.length - 1][0] : '';
+    };
+    const outlineTag = focusableTags.find((m) => /(?:^|[\s"'`])(?:focus:|focus-visible:)?outline-none\b/.test(m[0]) &&
+        !replacementFocus.test(m[0]) && !/\bfocus-within:(?:ring|border|shadow|outline-(?!none))/.test(parentTag(m.index ?? 0)));
+    const outlineNoneViolation = !!outlineTag;
+    const labelRanges = Array.from(cleanContent.matchAll(/<label\b[^>]*>[\s\S]*?<\/label>/g)).map((m) => [m.index ?? 0, (m.index ?? 0) + m[0].length]);
+    const unlabelledTag = focusableTags.find((m) => /^<(?:input|textarea|select)\b/.test(m[0]) &&
+        !/type\s*=\s*["'](?:hidden|submit|button|reset|image)["']/i.test(m[0]) &&
+        !/\b(?:aria-label|aria-labelledby|title|id)\s*=/.test(m[0]) &&
+        !labelRanges.some(([s, e]) => (m.index ?? 0) > s && (m.index ?? 0) < e));
+    const unlabelledInputFound = !!unlabelledTag;
+    const unlabelledInputSnippet = unlabelledTag ? unlabelledTag[0].slice(0, 100) : '';
     if (outlineNoneViolation || unlabelledInputFound) {
-        let matchLineIdx = -1;
-        if (outlineNoneViolation) {
-            matchLineIdx = lines.findIndex(l => /(?:focus:)?outline-none\b|outline:\s*none/i.test(l));
-        }
-        if (matchLineIdx === -1 && inputMatchLineIdx !== -1) {
-            matchLineIdx = inputMatchLineIdx;
-        }
-        const lineNum = matchLineIdx !== -1 ? matchLineIdx + 1 : 1;
+        const matchLineIdx = offsetLine((outlineTag ?? unlabelledTag)!.index ?? 0);
+        const lineNum = matchLineIdx + 1;
         const snippet = lines.slice(Math.max(0, lineNum - 2), Math.min(lines.length, lineNum + 2)).join('\n');
         findings.push({
             id: `frontend-${Date.now()}-${findingCounter.count++}`,
@@ -157,96 +152,20 @@ export function evaluateFrontendRules(file: CodeFile, lines: string[], cleanCont
         logs.push(`[${ts}] ⚡ ${severity}: UI-PERF-01 ${title} detected in ${file.path}:${lineNum}`);
     }
     // =========================================================================
-    // c) UI-SEO-01 (Rule ID 1028: Social OpenGraph & Semantic Metadata)
-    // =========================================================================
-    const h1Matches = cleanContent.match(/<h1[\s>]/gi);
-    const hasDuplicateH1 = !!h1Matches && h1Matches.length > 1;
-    const isRootLayout = lowerPath === 'app/layout.tsx' ||
-        lowerPath === 'app/layout.jsx' ||
-        lowerPath.endsWith('/app/layout.tsx') ||
-        lowerPath.endsWith('/app/layout.jsx') ||
-        lowerPath === 'src/app/layout.tsx' ||
-        lowerPath === 'src/app/layout.jsx' ||
-        lowerPath.endsWith('/src/app/layout.tsx') ||
-        lowerPath.endsWith('/src/app/layout.jsx') ||
-        lowerPath === 'pages/_app.tsx' ||
-        lowerPath === 'pages/_app.jsx' ||
-        lowerPath.endsWith('/pages/_app.tsx');
-    let hasMissingSocialMeta = false;
-    const hasMetadataExport = cleanContent.includes('export const metadata') ||
-        cleanContent.includes('export async function generateMetadata') ||
-        cleanContent.includes('export function generateMetadata');
-    if (isRootLayout) {
-        if (!hasMetadataExport) {
-            hasMissingSocialMeta = true;
-        }
-        else {
-            // Don't flag if openGraph or og:image is already configured (F-38 false positive fix)
-            const hasOpenGraph = cleanContent.includes('openGraph') || cleanContent.includes('og:');
-            const hasTitle = cleanContent.includes('title');
-            if (!hasOpenGraph && !hasTitle) {
-                hasMissingSocialMeta = true;
-            }
-        }
-    }
-    else if (hasMetadataExport) {
-        const hasTitle = cleanContent.includes('title:') || cleanContent.includes('title :');
-        if (!hasTitle) {
-            hasMissingSocialMeta = true;
-        }
-    }
-    if (hasDuplicateH1 || hasMissingSocialMeta) {
-        let matchLineIdx = -1;
-        if (hasDuplicateH1) {
-            let count = 0;
-            for (let i = 0; i < lines.length; i++) {
-                if (/<h1[\s>]/i.test(lines[i])) {
-                    count++;
-                    if (count === 2) {
-                        matchLineIdx = i;
-                        break;
-                    }
-                }
-            }
-        }
-        if (matchLineIdx === -1 && hasMissingSocialMeta) {
-            matchLineIdx = lines.findIndex(l => l.includes('metadata'));
-        }
-        const lineNum = matchLineIdx !== -1 ? matchLineIdx + 1 : 1;
-        const snippet = lines.slice(Math.max(0, lineNum - 2), Math.min(lines.length, lineNum + 2)).join('\n');
-        findings.push({
-            id: `frontend-${Date.now()}-${findingCounter.count++}`,
-            ruleId: 1028,
-            type: 'VIBEPOLISH',
-            title: hasDuplicateH1 ? 'Duplicate <h1> Elements Violating Semantic Hierarchy' : 'Incomplete Social OpenGraph Metadata Export',
-            severity: hasDuplicateH1 ? 'MEDIUM' : 'LOW',
-            category: 'SEO & Social Meta',
-            filePath: file.path,
-            lineRange: `L${lineNum}`,
-            snippet: snippet || lines[matchLineIdx] || 'export const metadata = { ... }',
-            reproductionSteps: [
-                `Scanned page template and metadata in ${file.path}:${lineNum}.`,
-                hasDuplicateH1 && hasMissingSocialMeta
-                    ? 'Detected both duplicate <h1> elements violating semantic hierarchy and incomplete OpenGraph metadata.'
-                    : hasDuplicateH1
-                        ? 'Detected multiple <h1> heading elements in a single component template, violating semantic HTML5 outline.'
-                        : 'Detected missing OpenGraph or title metadata export in Next.js page or layout.'
-            ],
-            remediationPrompt: `Export complete Next.js Metadata in ${file.path} including openGraph and title properties. Ensure only a single semantic <h1> tag exists per page for clear heading hierarchy.`,
-            status: 'OPEN',
-            owner: 'Marketing Tech / SEO Lead',
-            falsePositive: false
-        });
-        logs.push(`[${ts}] 🔍 ${hasDuplicateH1 ? 'MEDIUM' : 'LOW'}: UI-SEO-01 ${hasDuplicateH1 ? 'Duplicate H1' : 'Incomplete OpenGraph'} in ${file.path}:${lineNum}`);
-    }
-    // =========================================================================
     // d) UI-A11Y-02 (Rule ID 1029: Inaccessible Non-Semantic Clickable Element)
     // =========================================================================
     if (isJsxTsx) {
-        const clickableNonSemanticRegex = /<(?:div|span|section|article)\b(?![^>]*\b(?:role\s*=\s*["'](?:button|link|menuitem|tab)["']|tabIndex))\s+[^>]*\bonClick\s*=/i;
-        if (clickableNonSemanticRegex.test(cleanContent)) {
-            const matchLineIdx = lines.findIndex(l => !l.trim().startsWith('//') && clickableNonSemanticRegex.test(l));
-            if (matchLineIdx !== -1) {
+        // Per element (multi-line tags included): a static element with onClick and no role, tabIndex or key handler.
+        // aria-hidden elements, {...spread} props and handlers that only stop event propagation are skipped, and so are
+        // modal backdrops (click outside to dismiss: e.target === e.currentTarget), a mouse shortcut for Escape.
+        const clickableTag = Array.from(cleanContent.matchAll(/<(?:div|span|section|article|li|p|img)\b[\s\S]*?(?:\/>|(?<!=)>)/g)).find((m) =>
+            /\sonClick\s*=/.test(m[0]) &&
+            !/\s(?:role|tabIndex|onKeyDown|onKeyUp|onKeyPress|aria-hidden)\s*=|\{\s*\.\.\./.test(m[0]) &&
+            !/onClick\s*=\s*\{\s*\(?\s*(\w+)\s*\)?\s*=>\s*\{?\s*\1\.stopPropagation\(\)\s*;?\s*\}?\s*\}/.test(m[0]) &&
+            !/\b(\w+)\.target\s*===?\s*\1\.currentTarget\b/.test(m[0]));
+        if (clickableTag) {
+            const matchLineIdx = offsetLine(clickableTag.index ?? 0);
+            {
                 const lineNum = matchLineIdx + 1;
                 const snippet = lines.slice(Math.max(0, lineNum - 2), Math.min(lines.length, lineNum + 2)).join('\n');
                 findings.push({
@@ -254,7 +173,7 @@ export function evaluateFrontendRules(file: CodeFile, lines: string[], cleanCont
                     ruleId: 1029,
                     type: 'VIBEPOLISH',
                     title: 'WCAG 2.2 AA: Non-Semantic Clickable Container Missing Keyboard Accessibility',
-                    severity: 'HIGH',
+                    severity: 'MEDIUM',
                     category: 'Accessibility (WCAG)',
                     filePath: file.path,
                     lineRange: `L${lineNum}`,
@@ -268,7 +187,7 @@ export function evaluateFrontendRules(file: CodeFile, lines: string[], cleanCont
                     owner: 'Frontend Team',
                     falsePositive: false
                 });
-                logs.push(`[${ts}] ♿ HIGH: UI-A11Y-02 Non-semantic clickable element missing keyboard accessibility in ${file.path}:${lineNum}`);
+                logs.push(`[${ts}] ♿ MEDIUM: UI-A11Y-02 Non-semantic clickable element missing keyboard accessibility in ${file.path}:${lineNum}`);
             }
         }
     }
@@ -276,10 +195,13 @@ export function evaluateFrontendRules(file: CodeFile, lines: string[], cleanCont
     // e) UI-PERF-02 (Rule ID 1030: Unkeyed React Array Mapping Reconciliation Hazard)
     // =========================================================================
     if (isJsxTsx) {
-        const unkeyedMapRegex = /\.map\s*\(\s*(?:\([^)]*\)|[a-zA-Z0-9_]+)\s*=>\s*<[a-zA-Z0-9]+(?![^>]*\bkey\s*=)/;
-        if (unkeyedMapRegex.test(cleanContent)) {
-            const matchLineIdx = lines.findIndex(l => !l.trim().startsWith('//') && unkeyedMapRegex.test(l));
-            if (matchLineIdx !== -1) {
+        // Matched on the whole source so a key on a later line of a multi-line tag counts; reported at the .map( line.
+        // A {...spread} on the element may carry the key and is skipped.
+        const unkeyedMapRegex = /\.map\s*\(\s*(?:\([^)]*\)|[a-zA-Z0-9_]+)\s*=>\s*\(?\s*<[a-zA-Z][\w.]*(?![^>]*\bkey\s*=)(?![^>]*\{\s*\.\.\.)/;
+        const unkeyedMap = unkeyedMapRegex.exec(cleanContent);
+        if (unkeyedMap) {
+            const matchLineIdx = offsetLine(unkeyedMap.index);
+            {
                 const lineNum = matchLineIdx + 1;
                 const snippet = lines.slice(Math.max(0, lineNum - 2), Math.min(lines.length, lineNum + 2)).join('\n');
                 findings.push({
@@ -306,137 +228,14 @@ export function evaluateFrontendRules(file: CodeFile, lines: string[], cleanCont
         }
     }
     // =========================================================================
-    // f) UI-PERF-03 (Rule ID 1126: Client-Side Waterfall Fetching in useEffect)
-    // =========================================================================
-    if (isJsxTsx) {
-        const waterfallFetchRegex = /useEffect\s*\(\s*\(\)\s*=>\s*\{[\s\S]*?(?:fetch|axios\.(?:get|post)|supabase\.from)\([^)]*\)\.then/;
-        if (waterfallFetchRegex.test(cleanContent)) {
-            const matchLineIdx = lines.findIndex(l => /useEffect\s*\(/.test(l));
-            const lineNum = matchLineIdx !== -1 ? matchLineIdx + 1 : 1;
-            const snippet = lines.slice(Math.max(0, lineNum - 2), Math.min(lines.length, lineNum + 2)).join('\n');
-            findings.push({
-                id: `frontend-${Date.now()}-${findingCounter.count++}`,
-                ruleId: 1126,
-                type: 'VIBEPOLISH',
-                title: 'Client-Side Waterfall Fetching Hazard in useEffect Hook',
-                severity: 'HIGH',
-                category: 'Performance & CWV',
-                filePath: file.path,
-                lineRange: `L${lineNum}`,
-                snippet: snippet || lines[matchLineIdx] || 'useEffect(() => { fetch("/api/data").then(...) }, [])',
-                reproductionSteps: [
-                    `Scanned component lifecycle at ${file.path}:${lineNum}.`,
-                    'Detected chained client-side data fetching inside useEffect, inducing render waterfalls, layout shifts, and delayed Largest Contentful Paint (LCP).'
-                ],
-                remediationPrompt: `Refactor client-side useEffect fetches to React Server Components (RSC) or prefetch in parallel using React Query / SWR / Promise.all in ${file.path}:${lineNum}.`,
-                status: 'OPEN',
-                owner: 'Frontend Team',
-                falsePositive: false
-            });
-            logs.push(`[${ts}] ⚡ HIGH: UI-PERF-03 Waterfall fetch in useEffect in ${file.path}:${lineNum}`);
-        }
-    }
-    // =========================================================================
-    // g) UI-PERF-04 (Rule ID 1127: Bloated Monolithic Library Imports)
-    // =========================================================================
-    if (isJsxTsx) {
-        const bloatedImportRegex = /import\s*\{[^}]{180,}\}\s*from\s*['"](?:lodash|date-fns|lucide-react)['"]/;
-        if (bloatedImportRegex.test(cleanContent)) {
-            const matchLineIdx = lines.findIndex(l => bloatedImportRegex.test(l));
-            const lineNum = matchLineIdx !== -1 ? matchLineIdx + 1 : 1;
-            const snippet = lines.slice(Math.max(0, lineNum - 2), Math.min(lines.length, lineNum + 2)).join('\n');
-            findings.push({
-                id: `frontend-${Date.now()}-${findingCounter.count++}`,
-                ruleId: 1127,
-                type: 'VIBEPOLISH',
-                title: 'Bloated Monolithic Library Barrel Import (Missing optimizePackageImports)',
-                severity: 'MEDIUM',
-                category: 'Performance & CWV',
-                filePath: file.path,
-                lineRange: `L${lineNum}`,
-                snippet: snippet || lines[matchLineIdx] || 'import { ... } from "lucide-react";',
-                reproductionSteps: [
-                    `Scanned module import headers at ${file.path}:${lineNum}.`,
-                    'Detected massive barrel import pulling dozens of icons/utilities into client bundle, increasing JavaScript parsing time and Total Blocking Time (TBT).'
-                ],
-                remediationPrompt: `Configure optimizePackageImports: ['lucide-react'] in next.config.js or use direct subpath imports in ${file.path}:${lineNum}.`,
-                status: 'OPEN',
-                owner: 'Frontend Team',
-                falsePositive: false
-            });
-            logs.push(`[${ts}] ⚡ MEDIUM: UI-PERF-04 Bloated library barrel import in ${file.path}:${lineNum}`);
-        }
-    }
-    // =========================================================================
-    // h) UI-A11Y-03 (Rule ID 1128: Missing Form Error Accessibility Binding)
-    // =========================================================================
-    if (isJsxTsx && (cleanContent.includes('errors.'))) {
-        const unboundInputRegex = /<input[^>]+(?:name|id)=['"][^'"]+['"][^>]*(?![^>]*(?:aria-invalid|aria-describedby))>/;
-        if (unboundInputRegex.test(cleanContent) && cleanContent.includes('<form')) {
-            const matchLineIdx = lines.findIndex(l => /<input/.test(l));
-            if (matchLineIdx !== -1) {
-                const lineNum = matchLineIdx + 1;
-                const snippet = lines.slice(Math.max(0, lineNum - 2), Math.min(lines.length, lineNum + 2)).join('\n');
-                findings.push({
-                    id: `frontend-${Date.now()}-${findingCounter.count++}`,
-                    ruleId: 1128,
-                    type: 'VIBEPOLISH',
-                    title: 'Missing Accessible Form Error Binding (aria-invalid & aria-describedby)',
-                    severity: 'HIGH',
-                    category: 'Accessibility (WCAG)',
-                    filePath: file.path,
-                    lineRange: `L${lineNum}`,
-                    snippet: snippet || lines[matchLineIdx] || '<input name="email" />',
-                    reproductionSteps: [
-                        `Scanned form controls at ${file.path}:${lineNum}.`,
-                        'Detected form input with validation error states visually displayed without programmatic aria-invalid or aria-describedby bindings for screen readers.'
-                    ],
-                    remediationPrompt: `Bind form inputs with aria-invalid={!!errors.email} and aria-describedby={errors.email ? 'email-error' : undefined} in ${file.path}:${lineNum}.`,
-                    status: 'OPEN',
-                    owner: 'Frontend Lead',
-                    falsePositive: false
-                });
-                logs.push(`[${ts}] ♿ HIGH: UI-A11Y-03 Unbound form error in ${file.path}:${lineNum}`);
-            }
-        }
-    }
-    // =========================================================================
-    // i) UI-A11Y-04 (Rule ID 1129: Disabled Button Pointer-Events Trap)
-    // =========================================================================
-    if (isJsxTsx) {
-        const disabledPointerTrapRegex = /<button[^>]*(?:disabled)[^>]*className=['"][^'"]*pointer-events-none/i;
-        if (disabledPointerTrapRegex.test(cleanContent)) {
-            const matchLineIdx = lines.findIndex(l => disabledPointerTrapRegex.test(l));
-            const lineNum = matchLineIdx !== -1 ? matchLineIdx + 1 : 1;
-            const snippet = lines.slice(Math.max(0, lineNum - 2), Math.min(lines.length, lineNum + 2)).join('\n');
-            findings.push({
-                id: `frontend-${Date.now()}-${findingCounter.count++}`,
-                ruleId: 1129,
-                type: 'VIBEPOLISH',
-                title: 'Disabled Button Pointer-Events Trap (Keyboard & Screen Reader Hazard)',
-                severity: 'MEDIUM',
-                category: 'Accessibility (WCAG)',
-                filePath: file.path,
-                lineRange: `L${lineNum}`,
-                snippet: snippet || lines[matchLineIdx] || '<button disabled className="... pointer-events-none">',
-                reproductionSteps: [
-                    `Scanned button attributes at ${file.path}:${lineNum}.`,
-                    'Detected pointer-events-none applied to disabled button, stripping assistive technology hover tooltips and causing focus confusion.'
-                ],
-                remediationPrompt: `Remove pointer-events-none from disabled buttons in ${file.path}:${lineNum}. Rely on native disabled or aria-disabled with cursor-not-allowed.`,
-                status: 'OPEN',
-                owner: 'Frontend Lead',
-                falsePositive: false
-            });
-            logs.push(`[${ts}] ♿ MEDIUM: UI-A11Y-04 Disabled button pointer-events trap in ${file.path}:${lineNum}`);
-        }
-    }
-    // =========================================================================
     // j) UI-PERF-06 (Rule ID 1033: Custom Web Fonts Missing font-display: swap)
     // =========================================================================
-    if (cleanContent.includes('@font-face') && !cleanContent.includes('font-display: swap') && !cleanContent.includes('font-display:swap')) {
-        const matchLineIdx = lines.findIndex(l => l.includes('@font-face'));
-        const lineNum = matchLineIdx !== -1 ? matchLineIdx + 1 : 1;
+    // Per @font-face block with no font-display at all (the browser default "auto" blocks text for up to 3s);
+    // any explicit value (swap, optional, fallback) is a deliberate choice.
+    const fontFaceNoDisplay = Array.from(cleanContent.matchAll(/@font-face\s*\{[^}]*\}/g)).find((m) => !/font-display\s*:/.test(m[0]));
+    if (fontFaceNoDisplay) {
+        const matchLineIdx = offsetLine(fontFaceNoDisplay.index ?? 0);
+        const lineNum = matchLineIdx + 1;
         const snippet = lines.slice(Math.max(0, lineNum - 2), Math.min(lines.length, lineNum + 2)).join('\n');
         findings.push({
             id: `frontend-${Date.now()}-${findingCounter.count++}`,
@@ -463,7 +262,8 @@ export function evaluateFrontendRules(file: CodeFile, lines: string[], cleanCont
     // k) UI-PERF-07 (Rule ID 1034: Synchronous Render-Blocking Script Tags)
     // =========================================================================
     if (file.path.endsWith('.html') || lowerPath.includes('layout.') || lowerPath.includes('document.')) {
-        const scriptTags = Array.from(cleanContent.matchAll(/<script\b([^>]*)>/gi));
+        // Lowercase <script> only: next/script's <Script> defaults to afterInteractive and never blocks parsing.
+        const scriptTags = Array.from(cleanContent.matchAll(/<script\b([^>]*)>/g));
         const blockingTag = scriptTags.find(m => {
             const attrs = m[1];
             const hasSrc = /\bsrc\s*=/i.test(attrs);
@@ -472,15 +272,15 @@ export function evaluateFrontendRules(file: CodeFile, lines: string[], cleanCont
             return !isNonBlocking;
         });
         if (blockingTag) {
-            const matchLineIdx = lines.findIndex(l => /<script\b[^>]*\bsrc\s*=/i.test(l) && !/\b(async|defer|nomodule)\b/i.test(l) && !/type\s*=\s*['"]module['"]/i.test(l));
-            const lineNum = matchLineIdx !== -1 ? matchLineIdx + 1 : 1;
+            const matchLineIdx = offsetLine(blockingTag.index ?? 0);
+            const lineNum = matchLineIdx + 1;
             const snippet = lines.slice(Math.max(0, lineNum - 2), Math.min(lines.length, lineNum + 2)).join('\n');
             findings.push({
                 id: `frontend-${Date.now()}-${findingCounter.count++}`,
                 ruleId: 1034,
                 type: 'VIBEPOLISH',
                 title: 'Synchronous Render-Blocking Script Tag Detected in Document Head',
-                severity: 'MEDIUM',
+                severity: 'LOW',
                 category: 'Performance & CWV',
                 filePath: file.path,
                 lineRange: `L${lineNum}`,
@@ -494,75 +294,11 @@ export function evaluateFrontendRules(file: CodeFile, lines: string[], cleanCont
                 owner: 'Performance Lead',
                 falsePositive: false
             });
-            logs.push(`[${ts}] ⚡ MEDIUM: UI-PERF-07 Render-blocking script tag in ${file.path}:${lineNum}`);
+            logs.push(`[${ts}] ⚡ LOW: UI-PERF-07 Render-blocking script tag in ${file.path}:${lineNum}`);
         }
     }
     // =========================================================================
-    // l) UI-SEC-02 (Rule ID 1041: Reverse Tab-Nabbing Security Hazard)
-    // =========================================================================
-    if (isJsxTsx || file.path.endsWith('.html')) {
-        const tabNabbingRegex = /<a\b(?=[^>]*\btarget\s*=\s*["']_blank["'])(?![^>]*\brel\s*=\s*["'][^"']*(?:noopener|noreferrer))[^>]*>/i;
-        if (tabNabbingRegex.test(cleanContent)) {
-            const matchLineIdx = lines.findIndex(l => tabNabbingRegex.test(l));
-            if (matchLineIdx !== -1) {
-                const lineNum = matchLineIdx + 1;
-                const snippet = lines.slice(Math.max(0, lineNum - 2), Math.min(lines.length, lineNum + 2)).join('\n');
-                findings.push({
-                    id: `frontend-${Date.now()}-${findingCounter.count++}`,
-                    ruleId: 27231,
-                    type: 'VIBEPOLISH',
-                    title: 'Reverse Tab-Nabbing Security Hazard (target="_blank" Missing rel="noopener noreferrer")',
-                    severity: 'MEDIUM',
-                    category: 'Frontend Security',
-                    filePath: file.path,
-                    lineRange: `L${lineNum}`,
-                    snippet: snippet || lines[matchLineIdx] || '<a href="..." target="_blank">',
-                    reproductionSteps: [
-                        `Scanned anchor link security attributes at ${file.path}:${lineNum}.`,
-                        'Detected <a target="_blank"> missing rel="noopener noreferrer", allowing the opened external page to manipulate window.opener and redirect the user to phishing sites.'
-                    ],
-                    remediationPrompt: `Add rel="noopener noreferrer" to external link in ${file.path}:${lineNum} to prevent reverse tab-nabbing window.opener tampering.`,
-                    status: 'OPEN',
-                    owner: 'Security Lead',
-                    falsePositive: false
-                });
-                logs.push(`[${ts}] 🔒 MEDIUM: UI-SEC-02 Reverse tab-nabbing in ${file.path}:${lineNum}`);
-            }
-        }
-    }
-    // =========================================================================
-    // m) UI-MOTION-01 (Rule ID 1042: GSAP / Animation Lifecycle Memory Leak Hazard)
-    // =========================================================================
-    if (isJsxTsx && /(?:gsap\.(?:to|from|timeline)|ScrollTrigger\.create)\s*\(/i.test(cleanContent)) {
-        const hasGsapCleanup = /kill\(|revert\(|return\s*\(\)\s*=>/i.test(cleanContent);
-        if (!hasGsapCleanup) {
-            const matchLineIdx = lines.findIndex(l => /(?:gsap\.(?:to|from|timeline)|ScrollTrigger\.create)/i.test(l));
-            const lineNum = matchLineIdx !== -1 ? matchLineIdx + 1 : 1;
-            const snippet = lines.slice(Math.max(0, lineNum - 2), Math.min(lines.length, lineNum + 2)).join('\n');
-            findings.push({
-                id: `frontend-${Date.now()}-${findingCounter.count++}`,
-                ruleId: 1042,
-                type: 'VIBEPOLISH',
-                title: 'Uncleaned Animation Lifecycle (GSAP / ScrollTrigger Missing kill() / revert())',
-                severity: 'HIGH',
-                category: 'Interaction & Motion',
-                filePath: file.path,
-                lineRange: `L${lineNum}`,
-                snippet: snippet || lines[matchLineIdx] || 'gsap.to(".card", { opacity: 1 })',
-                reproductionSteps: [
-                    `Scanned component animation lifecycles at ${file.path}:${lineNum}.`,
-                    'Detected GSAP animation or ScrollTrigger instance without unmount cleanup (kill() / revert()), causing memory leaks and detached DOM node retention.'
-                ],
-                remediationPrompt: `Wrap GSAP animations inside useGSAP() with auto-revert or return () => ctx.revert() / tween.kill() inside useEffect in ${file.path}:${lineNum}.`,
-                status: 'OPEN',
-                owner: 'UI Architect',
-                falsePositive: false
-            });
-            logs.push(`[${ts}] 🎬 HIGH: UI-MOTION-01 GSAP animation missing unmount cleanup in ${file.path}:${lineNum}`);
-        }
-    }
-    // =========================================================================
-    // n) UI-A11Y-05 (Rule ID 1044: Touch Target Below WCAG 2.2 AA Minimum (<44x44px))
+    // n) UI-A11Y-05 (Rule ID 1044: Touch Target Below WCAG 2.2 AA Minimum (<24x24px, SC 2.5.8))
     // =========================================================================
     if (isJsxTsx) {
         const tinyTargetRegex = /<(?:button|a)\b[^>]*className=['"][^'"]*\b(?:w-[2345]\s+h-[2345]|h-[2345]\s+w-[2345])\b(?![^'"]*\b(?:p-|py-|px-|min-h-|min-w-|h-1[0-9]|w-1[0-9]))[^'"]*['"][^>]*>/i;
@@ -575,22 +311,22 @@ export function evaluateFrontendRules(file: CodeFile, lines: string[], cleanCont
                     id: `frontend-${Date.now()}-${findingCounter.count++}`,
                     ruleId: 1044,
                     type: 'VIBEPOLISH',
-                    title: 'Interactive Element Touch Target Below WCAG 2.2 AA Minimum (<44x44px)',
-                    severity: 'MEDIUM',
+                    title: 'Interactive Element Touch Target Below WCAG 2.2 AA Minimum (<24x24px)',
+                    severity: 'LOW',
                     category: 'Accessibility (WCAG)',
                     filePath: file.path,
                     lineRange: `L${lineNum}`,
                     snippet: snippet || lines[matchLineIdx] || '<button className="w-4 h-4">',
                     reproductionSteps: [
                         `Scanned interactive tap target dimensions at ${file.path}:${lineNum}.`,
-                        'Detected clickable button/link with bounding box below 44x44 CSS pixels without padding, failing WCAG 2.2 AA Target Size criteria.'
+                        'Detected a clickable button/link sized w-2..w-5 / h-2..h-5 (8-20px) with no padding or min size, below the 24x24 CSS pixel WCAG 2.2 AA Target Size (Minimum) criterion (2.5.8).'
                     ],
-                    remediationPrompt: `Increase interactive hit area to at least 44x44px using padding (p-2.5) or min-w-[44px] min-h-[44px] in ${file.path}:${lineNum}.`,
+                    remediationPrompt: `Increase the interactive hit area to at least 24x24px (44x44px recommended) using padding (p-1 or more) or min-w-6 min-h-6 in ${file.path}:${lineNum}.`,
                     status: 'OPEN',
                     owner: 'Accessibility Lead',
                     falsePositive: false
                 });
-                logs.push(`[${ts}] ♿ MEDIUM: UI-A11Y-05 Touch target below 44x44px in ${file.path}:${lineNum}`);
+                logs.push(`[${ts}] ♿ LOW: UI-A11Y-05 Touch target below 24x24px in ${file.path}:${lineNum}`);
             }
         }
     }

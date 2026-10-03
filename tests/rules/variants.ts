@@ -27,11 +27,6 @@ export const VULNERABLE_VARIANTS: [ruleId: number, name: string, files: CodeFile
   [41, 'redirect template literal', rd('redirect(`${next}`);')],
   [41, 'unrelated startsWith guard elsewhere', rd('redirect(next);', "  const isProto = req.url.startsWith('//');\n  void isProto;\n")],
   [41, 'express res.redirect(req.query.url)', f('server/r.ts', "app.get('/go', (req, res) => {\n  res.redirect(req.query.url);\n});\n")],
-  // THREAT-02
-  [13602, 'exec', f('lib/run.ts', "import { exec } from 'child_process';\nexport const run = (c: string) => exec(c);\n")],
-  [13602, "spawn('/bin/sh')", f('lib/run.ts', "import { spawn } from 'child_process';\nexport const run = (c: string) => spawn('/bin/sh', ['-c', c]);\n")],
-  [13602, 'require child_process execSync', f('lib/run.js', "const cp = require('child_process');\nmodule.exports = (c) => cp.execSync(c);\n")],
-  [13602, 'spawn shell:true', f('lib/run.ts', "import { spawn } from 'node:child_process';\nexport const run = (c: string) => spawn(c, { shell: true });\n")],
   // KERN-SEC-01
   [15701, 'k8s add SYS_ADMIN inline', f('k8s/deploy.yaml', "spec:\n  containers:\n    - name: app\n      securityContext:\n        capabilities:\n          add: [\"SYS_ADMIN\"]\n")],
   [15701, 'k8s add block list', f('k8s/deploy.yaml', "spec:\n  containers:\n    - name: app\n      securityContext:\n        capabilities:\n          add:\n            - NET_ADMIN\n            - SYS_ADMIN\n")],

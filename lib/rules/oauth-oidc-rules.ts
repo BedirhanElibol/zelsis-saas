@@ -9,6 +9,10 @@ export interface OauthOidcRuleResult {
     findings: Finding[];
     logs: string[];
 }
+/** passport login through a social / OAuth2 strategy (local username+password strategies have no state). */
+const OAUTH_STRATEGY_AUTH = /passport\.authenticate\s*\(\s*["'](?:google|github|facebook|twitter|oauth2|linkedin|microsoft|discord|gitlab|apple|slack|auth0)["']/i;
+/** Resource Owner Password Credentials grant (form body, object literal or kwarg); Supabase's own password login excluded. */
+const ROPC_GRANT = /grant_type["']?\s*[:=]\s*["']password["']|grant_type=password\b(?![^\n]*auth\/v1\/token)/i;
 export function evaluateOauthOidcRules(file: CodeFile, lines: string[], cleanContent: string, findingCounter: {
     count: number;
 }): OauthOidcRuleResult {
@@ -20,40 +24,19 @@ export function evaluateOauthOidcRules(file: CodeFile, lines: string[], cleanCon
         return { findings, logs };
     }
     const ts = new Date().toLocaleTimeString();
-    // OAUTH-01: Missing PKCE (Proof Key for Code Exchange) on Authorization Code Flow
-    if ((/response_type=code/i.test(cleanContent) && !/code_challenge/i.test(cleanContent))) {
-        const matchLineIdx = locateMatchLine(lines, [/response_type=code/i], l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('*'));
-        const lineNum = matchLineIdx !== -1 ? matchLineIdx + 1 : 1;
-        findings.push({
-            id: `oauth10901-${Date.now()}-${findingCounter.count++}`,
-            ruleId: 10901,
-            type: 'SECURITY',
-            title: "OAUTH-01: Missing PKCE (Proof Key for Code Exchange) on Authorization Code Flow",
-            severity: "CRITICAL",
-            category: "OAuth Security",
-            filePath: file.path,
-            lineRange: `L${lineNum}`,
-            snippet: lines[matchLineIdx] || 'OAuth authentication handler',
-            reproductionSteps: [
-                `Audited identity federation in ${file.path}:${lineNum}.`,
-                'Detected OAuth 2.1 identity violation matching OAUTH-01.'
-            ],
-            remediationPrompt: "Add code_challenge and code_challenge_method: 'S256' to OAuth authorization request parameters.",
-            status: 'OPEN',
-            falsePositive: false
-        });
-        logs.push(`[${ts}] [OAUTH AUDIT] Found OAUTH-01: Missing PKCE (Proof Key for Code Exchange) on Authorization Code Flow at ${file.path}:${lineNum}`);
-    }
     // OAUTH-02: Permissive Wildcard Redirect URI in OAuth Client Configuration
-    if ((/redirect_uri/i.test(cleanContent))) {
-        const matchLineIdx = locateMatchLine(lines, [/redirect_uri/i], l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('*'));
-        const lineNum = matchLineIdx !== -1 ? matchLineIdx + 1 : 1;
+    // Only a registered redirect URI (redirect_uri(s) / redirectUri(s) config value or list entry) that holds
+    // a `*` wildcard: an attacker-controlled sub-domain or path then receives the authorization code.
+    const wildcardRedirect = /\bredirect_?ur(?:i|l)s?["']?\s*[:=]\s*\[?[^\]\n;]*?["'`](?:https?:\/\/)?[^"'`\s]*\*[^"'`\s]*["'`]/i.exec(cleanContent);
+    if (wildcardRedirect) {
+        const matchLineIdx = cleanContent.slice(0, wildcardRedirect.index + wildcardRedirect[0].length).split('\n').length - 1;
+        const lineNum = matchLineIdx + 1;
         findings.push({
             id: `oauth10902-${Date.now()}-${findingCounter.count++}`,
             ruleId: 10902,
             type: 'SECURITY',
             title: "OAUTH-02: Permissive Wildcard Redirect URI in OAuth Client Configuration",
-            severity: "CRITICAL",
+            severity: "HIGH",
             category: "Redirect Validation",
             filePath: file.path,
             lineRange: `L${lineNum}`,
@@ -69,8 +52,8 @@ export function evaluateOauthOidcRules(file: CodeFile, lines: string[], cleanCon
         logs.push(`[${ts}] [OAUTH AUDIT] Found OAUTH-02: Permissive Wildcard Redirect URI in OAuth Client Configuration at ${file.path}:${lineNum}`);
     }
     // OAUTH-03: Missing Cryptographic State / Nonce Parameter on Social Auth Handshake
-    if ((/passport\.authenticate\s*\([\s\S]*?\)/.test(cleanContent) && !/state:\s*true|stateParameter/i.test(cleanContent))) {
-        const matchLineIdx = locateMatchLine(lines, [/passport\.authenticate\s*\([\s\S]*?\)/], l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('*'));
+    if (OAUTH_STRATEGY_AUTH.test(cleanContent) && /new\s+\w*Strategy\s*\(/.test(cleanContent) && !/state:\s*true|stateParameter|\bstore:/i.test(cleanContent)) {
+        const matchLineIdx = locateMatchLine(lines, [OAUTH_STRATEGY_AUTH], l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('*'));
         const lineNum = matchLineIdx !== -1 ? matchLineIdx + 1 : 1;
         findings.push({
             id: `oauth10903-${Date.now()}-${findingCounter.count++}`,
@@ -92,40 +75,16 @@ export function evaluateOauthOidcRules(file: CodeFile, lines: string[], cleanCon
         });
         logs.push(`[${ts}] [OAUTH AUDIT] Found OAUTH-03: Missing Cryptographic State / Nonce Parameter on Social Auth Handshake at ${file.path}:${lineNum}`);
     }
-    // OAUTH-04: JWT Algorithm Confusion Vulnerability (Accepting 'none' Algorithm)
-    if ((/jwt\.verify\s*\([\s\S]*?\)/.test(cleanContent) && !/algorithms\s*:\s*\[/i.test(cleanContent))) {
-        const matchLineIdx = locateMatchLine(lines, [/jwt\.verify\s*\([\s\S]*?\)/], l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('*'));
-        const lineNum = matchLineIdx !== -1 ? matchLineIdx + 1 : 1;
-        findings.push({
-            id: `oauth10904-${Date.now()}-${findingCounter.count++}`,
-            ruleId: 10904,
-            type: 'SECURITY',
-            title: "OAUTH-04: JWT Algorithm Confusion Vulnerability (Accepting 'none' Algorithm)",
-            severity: "CRITICAL",
-            category: "Token Verification",
-            filePath: file.path,
-            lineRange: `L${lineNum}`,
-            snippet: lines[matchLineIdx] || 'OAuth authentication handler',
-            reproductionSteps: [
-                `Audited identity federation in ${file.path}:${lineNum}.`,
-                'Detected OAuth 2.1 identity violation matching OAUTH-04.'
-            ],
-            remediationPrompt: "Set algorithms: ['RS256'] explicitly in jwt.verify() options to defeat algorithm confusion.",
-            status: 'OPEN',
-            falsePositive: false
-        });
-        logs.push(`[${ts}] [OAUTH AUDIT] Found OAUTH-04: JWT Algorithm Confusion Vulnerability (Accepting 'none' Algorithm) at ${file.path}:${lineNum}`);
-    }
     // OAUTH-05: Use of Deprecated Resource Owner Password Credentials (ROPC) Grant
-    if ((/grant_type\s*=\s*['"]password['"]/i.test(cleanContent))) {
-        const matchLineIdx = locateMatchLine(lines, [/grant_type\s*=\s*['"]password['"]/i], l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('*'));
+    if (ROPC_GRANT.test(cleanContent)) {
+        const matchLineIdx = locateMatchLine(lines, [ROPC_GRANT], l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('*'));
         const lineNum = matchLineIdx !== -1 ? matchLineIdx + 1 : 1;
         findings.push({
             id: `oauth10905-${Date.now()}-${findingCounter.count++}`,
             ruleId: 10905,
             type: 'SECURITY',
             title: "OAUTH-05: Use of Deprecated Resource Owner Password Credentials (ROPC) Grant",
-            severity: "HIGH",
+            severity: 'MEDIUM',
             category: "Grant Security",
             filePath: file.path,
             lineRange: `L${lineNum}`,

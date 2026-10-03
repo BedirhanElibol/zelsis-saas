@@ -2823,8 +2823,21 @@ export function evaluateSecretRules(file: CodeFile, lines: string[], rawContentO
     }
     // SEC-SECRET-100: Generic High-Entropy Hex/Base64 API Key
     const pattern100 = /(?:api_secret|app_secret|secret_key)\s*=\s*["\'][a-zA-Z0-9_-]{32,}["\']/i;
-    if (pattern100.test(contentToScan)) {
-        const matchLineIdx = lines.findIndex(l => pattern100.test(l) && !isDummyPlaceholder(l));
+    // Generic names carry no vendor prefix, so require a random-looking value: mixed letters + digits,
+    // Shannon entropy >= 3.5 bits/char, and none of the dev-default / template wording
+    const isRandomSecretValue = (line: string): boolean => {
+        const value = /["']([a-zA-Z0-9_-]{32,})["']/.exec(line)?.[1] ?? '';
+        if (!/[a-zA-Z]/.test(value) || !/\d/.test(value)) return false;
+        if (/insecure|change|your|replace|example|sample|secret|default|development|local/i.test(value)) return false;
+        const freq = new Map<string, number>();
+        for (const ch of value) freq.set(ch, (freq.get(ch) ?? 0) + 1);
+        let bits = 0;
+        for (const n of freq.values()) bits -= (n / value.length) * Math.log2(n / value.length);
+        return bits >= 3.5;
+    };
+    const isTemplateFile = /\.(?:example|sample|template|dist)(?:\.[a-z]+)?$/.test(lowerPath);
+    if (!isTemplateFile && pattern100.test(contentToScan)) {
+        const matchLineIdx = lines.findIndex(l => pattern100.test(l) && !isDummyPlaceholder(l) && isRandomSecretValue(l));
         if (matchLineIdx !== -1) {
             const lineNum = matchLineIdx + 1;
             findings.push({
@@ -2832,7 +2845,7 @@ export function evaluateSecretRules(file: CodeFile, lines: string[], rawContentO
                 ruleId: 5100,
                 type: 'SECURITY',
                 title: 'SEC-SECRET-100: Generic High-Entropy Hex/Base64 API Key',
-                severity: 'CRITICAL',
+                severity: 'HIGH',
                 category: "Secret Isolation",
                 filePath: file.path,
                 lineRange: `L${lineNum}`,

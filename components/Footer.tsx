@@ -3,6 +3,7 @@
 import React from 'react';
 import { ShieldCheck, ArrowUpRight } from 'lucide-react';
 import { ZelsisLogo } from '@/components/ui/ZelsisLogo';
+import { CONTACT_EMAIL } from '@/lib/contact';
 
 export const Footer: React.FC = () => {
   return (
@@ -19,10 +20,10 @@ export const Footer: React.FC = () => {
           <div className="flex flex-col gap-1.5 mt-2 text-xs font-mono text-zinc-400">
             <span className="text-white font-semibold">Zelsis Software Technologies</span>
             <span className="inline-flex items-center gap-1 text-zinc-300">
-              <span>contact@zelsis.com</span>
+              <span>{CONTACT_EMAIL}</span>
               <ArrowUpRight size={12} />
             </span>
-            <span>Support: Mon-Sun / Typical response within 24h</span>
+            <span>Support: reply within 2 business days</span>
             <span className="text-[11px] text-zinc-400">Istanbul &amp; Global Edge Infrastructure</span>
           </div>
         </div>
@@ -32,13 +33,13 @@ export const Footer: React.FC = () => {
           <span className="text-xs font-bold text-white font-mono tracking-widest uppercase mb-2">
             NAVIGATION
           </span>
-          <a href="#features" className="text-sm hover:text-white transition-colors">
+          <a href="#features" className="text-sm hover:text-white transition-colors py-1.5 inline-block">
             Platform Features
           </a>
-          <a href="#workflow" className="text-sm hover:text-white transition-colors">
+          <a href="#workflow" className="text-sm hover:text-white transition-colors py-1.5 inline-block">
             How It Works
           </a>
-          <a href="#pricing" className="text-sm hover:text-white transition-colors">
+          <a href="#pricing" className="text-sm hover:text-white transition-colors py-1.5 inline-block">
             Pricing Plans
           </a>
         </div>
@@ -49,7 +50,7 @@ export const Footer: React.FC = () => {
             ZELSIS PLATFORM
           </span>
           <a href="/dashboard" className="text-sm text-white hover:underline transition-colors font-mono">
-            Launch Audit Engine →
+            Open dashboard →
           </a>
           <span className="text-xs text-[#A1A1AA]">Deterministic Pre-Flight Vulnerability Clearance</span>
           <span className="text-xs text-[#A1A1AA]">Automated WCAG 2.2 AA &amp; UX Audit Gates</span>
@@ -65,10 +66,10 @@ export const Footer: React.FC = () => {
           © 2026 Zelsis Software Technologies. All rights reserved.
         </div>
         <div className="flex flex-wrap gap-4 sm:gap-6">
-          <a href="/privacy" className="hover:text-white transition-colors">Privacy &amp; Cookies</a>
-          <a href="/terms" className="hover:text-white transition-colors">Terms of Service</a>
-          <a href="/refund" className="hover:text-white transition-colors">Refund Policy</a>
-          <a href="/do-not-sell" className="hover:text-white transition-colors">Do Not Sell or Share My Personal Information</a>
+          <a href="/privacy" className="hover:text-white transition-colors py-1.5 inline-block">Privacy &amp; Cookies</a>
+          <a href="/terms" className="hover:text-white transition-colors py-1.5 inline-block">Terms of Service</a>
+          <a href="/refund" className="hover:text-white transition-colors py-1.5 inline-block">Refund Policy</a>
+          <a href="/do-not-sell" className="hover:text-white transition-colors py-1.5 inline-block">Do Not Sell or Share My Personal Information</a>
           <button
             type="button"
             onClick={() => {

@@ -4,7 +4,6 @@
  */
 import { Finding } from "@/data/schema";
 import { CodeFile } from "../scanner-engine";
-import { locateMatchLine } from './shared/locate';
 export interface SbomAttestationRuleResult {
     findings: Finding[];
     logs: string[];
@@ -20,64 +19,22 @@ export function evaluateSbomAttestationRules(file: CodeFile, lines: string[], cl
         return { findings, logs };
     }
     const ts = new Date().toLocaleTimeString();
-    // SBOM-01: Missing CycloneDX or SPDX Software Bill of Materials (SBOM)
-    if ((/(?:release-workflow|ci-pipeline)/i.test(lowerPath) && !/cyclonedx|spdx/i.test(cleanContent))) {
-        const matchLineIdx = lines.findIndex(l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('#') && !l.trim().startsWith('*'));
-        const lineNum = matchLineIdx !== -1 ? matchLineIdx + 1 : 1;
-        findings.push({
-            id: `sbom12601-${Date.now()}-${findingCounter.count++}`,
-            ruleId: 12601,
-            type: 'SECURITY',
-            title: "SBOM-01: Missing CycloneDX or SPDX Software Bill of Materials (SBOM)",
-            severity: "HIGH",
-            category: "SBOM Completeness",
-            filePath: file.path,
-            lineRange: `L${lineNum}`,
-            snippet: lines[matchLineIdx] || 'SBOM Attestation configuration',
-            reproductionSteps: [
-                `Audited SBOM Attestation configuration in ${file.path}:${lineNum}.`,
-                'Detected violation matching SBOM-01.'
-            ],
-            remediationPrompt: "Generate and attach machine-readable CycloneDX or SPDX SBOM artifacts on every build release.",
-            status: 'OPEN',
-            falsePositive: false
-        });
-        logs.push(`[${ts}] [SBOM AUDIT] Found SBOM-01: Missing CycloneDX or SPDX Software Bill of Materials (SBOM) at ${file.path}:${lineNum}`);
-    }
-    // SBOM-02: Unsigned Container Images and Missing Cosign Cryptographic Signatures
-    if ((/docker\s+push/i.test(cleanContent) && !/cosign\s+sign/i.test(cleanContent))) {
-        const matchLineIdx = locateMatchLine(lines, [/docker\s+push/i], l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('#') && !l.trim().startsWith('*'));
-        const lineNum = matchLineIdx !== -1 ? matchLineIdx + 1 : 1;
-        findings.push({
-            id: `sbom12602-${Date.now()}-${findingCounter.count++}`,
-            ruleId: 12602,
-            type: 'SECURITY',
-            title: "SBOM-02: Unsigned Container Images and Missing Cosign Cryptographic Signatures",
-            severity: "CRITICAL",
-            category: "Supply Chain Trust",
-            filePath: file.path,
-            lineRange: `L${lineNum}`,
-            snippet: lines[matchLineIdx] || 'SBOM Attestation configuration',
-            reproductionSteps: [
-                `Audited SBOM Attestation configuration in ${file.path}:${lineNum}.`,
-                'Detected violation matching SBOM-02.'
-            ],
-            remediationPrompt: "Sign all release container images using Sigstore Cosign with cryptographic OIDC attestation.",
-            status: 'OPEN',
-            falsePositive: false
-        });
-        logs.push(`[${ts}] [SBOM AUDIT] Found SBOM-02: Unsigned Container Images and Missing Cosign Cryptographic Signatures at ${file.path}:${lineNum}`);
-    }
     // SBOM-03: SLSA Level 3 Provenance Attestation Missing in CI/CD Build Pipeline
-    if (/\.github\/workflows\/[^/]+\.ya?ml$/i.test(file.path) && /^\s*release\s*:|^\s*tags\s*:|npm\s+publish|docker\s+push|docker\/build-push-action|goreleaser|gh\s+release|action-gh-release|twine\s+upload|cargo\s+publish/im.test(cleanContent) && !/slsa-framework|attest-build-provenance|provenance\s*:\s*true|--provenance/i.test(cleanContent)) {
-        const matchLineIdx = locateMatchLine(lines, [/^\s*release\s*:|^\s*tags\s*:|npm\s+publish|docker\s+push|docker\/build-push-action|goreleaser|gh\s+release|action-gh-release|twine\s+upload|cargo\s+publish/im], l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('#') && !l.trim().startsWith('*'));
-        const lineNum = matchLineIdx !== -1 ? matchLineIdx + 1 : 1;
+    // Advisory: a workflow step that actually publishes an artifact (a tag trigger alone is not a release) with no
+    // provenance attestation anywhere in the workflow. Points at the publish step.
+    const publishStepRe = /npm\s+publish|docker\s+push|docker\/build-push-action|goreleaser|gh\s+release\s+(?:create|upload)|action-gh-release|twine\s+upload|cargo\s+publish/i;
+    const publishStepIdx = /\.github\/workflows\/[^/]+\.ya?ml$/i.test(file.path) && !/slsa-framework|attest-build-provenance|provenance\s*:\s*true|--provenance/i.test(cleanContent)
+        ? lines.findIndex(l => !l.trim().startsWith('#') && publishStepRe.test(l))
+        : -1;
+    if (publishStepIdx !== -1) {
+        const matchLineIdx = publishStepIdx;
+        const lineNum = matchLineIdx + 1;
         findings.push({
             id: `sbom12603-${Date.now()}-${findingCounter.count++}`,
             ruleId: 12603,
             type: 'SECURITY',
             title: "SBOM-03: SLSA Level 3 Provenance Attestation Missing in CI/CD Build Pipeline",
-            severity: "HIGH",
+            severity: "LOW",
             category: "Build Integrity",
             filePath: file.path,
             lineRange: `L${lineNum}`,
@@ -91,30 +48,6 @@ export function evaluateSbomAttestationRules(file: CodeFile, lines: string[], cl
             falsePositive: false
         });
         logs.push(`[${ts}] [SBOM AUDIT] Found SBOM-03: SLSA Level 3 Provenance Attestation Missing in CI/CD Build Pipeline at ${file.path}:${lineNum}`);
-    }
-    // SBOM-04: Dependency Confusion Risk with Unscoped Internal Package Names
-    if (/package\.json$/i.test(lowerPath) && /"(?:dependencies|devDependencies)":\s*\{[^}]*"(?:internal-|company-|corp-|private-|myorg-)[a-z0-9-]+":/i.test(cleanContent) && !/@[a-z0-9-]+\//i.test(cleanContent)) {
-        const matchLineIdx = locateMatchLine(lines, [/"(?:dependencies|devDependencies)":\s*\{[^}]*"(?:internal-|company-|corp-|private-|myorg-)[a-z0-9-]+":/i], l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('#') && !l.trim().startsWith('*'));
-        const lineNum = matchLineIdx !== -1 ? matchLineIdx + 1 : 1;
-        findings.push({
-            id: `sbom12604-${Date.now()}-${findingCounter.count++}`,
-            ruleId: 12604,
-            type: 'SECURITY',
-            title: "SBOM-04: Dependency Confusion Risk with Unscoped Internal Package Names",
-            severity: "CRITICAL",
-            category: "Registry Security",
-            filePath: file.path,
-            lineRange: `L${lineNum}`,
-            snippet: lines[matchLineIdx] || 'SBOM Attestation configuration',
-            reproductionSteps: [
-                `Audited SBOM Attestation configuration in ${file.path}:${lineNum}.`,
-                'Detected violation matching SBOM-04.'
-            ],
-            remediationPrompt: "Scope internal packages with organizational namespace (@org/pkg) and configure scoped registry .npmrc.",
-            status: 'OPEN',
-            falsePositive: false
-        });
-        logs.push(`[${ts}] [SBOM AUDIT] Found SBOM-04: Dependency Confusion Risk with Unscoped Internal Package Names at ${file.path}:${lineNum}`);
     }
     // SBOM-05: Unvetted Third-Party GitHub Actions in Production CI/CD Workflows
     const thirdPartyActionRegex = /^\s*-?\s*uses\s*:\s*['\"]?(?!(?:actions|github)\/)[\w.-]+\/[\w./-]+@(?![0-9a-f]{40}\b)[\w.-]+/i;

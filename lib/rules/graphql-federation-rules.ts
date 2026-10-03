@@ -4,7 +4,6 @@
  */
 import { Finding } from "@/data/schema";
 import { CodeFile } from "../scanner-engine";
-import { locateMatchLine } from './shared/locate';
 export interface GraphqlFederationRuleResult {
     findings: Finding[];
     logs: string[];
@@ -25,64 +24,17 @@ export function evaluateGraphqlFederationRules(file: CodeFile, lines: string[], 
       return { findings, logs };
     }
     const ts = new Date().toLocaleTimeString();
-    // FED-01: Unbounded Subgraph Query Depth in Federated Gateway
-    if ((/router|supergraph/i.test(cleanContent) && !/max_depth|queryDepth/i.test(cleanContent))) {
-        const matchLineIdx = locateMatchLine(lines, [/router|supergraph/i], l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('#') && !l.trim().startsWith('*'));
-        const lineNum = matchLineIdx !== -1 ? matchLineIdx + 1 : 1;
-        findings.push({
-            id: `fed13701-${Date.now()}-${findingCounter.count++}`,
-            ruleId: 13701,
-            type: 'INFRA_DATABASE',
-            title: "FED-01: Unbounded Subgraph Query Depth in Federated Gateway",
-            severity: "CRITICAL",
-            category: "Query Complexity",
-            filePath: file.path,
-            lineRange: `L${lineNum}`,
-            snippet: lines[matchLineIdx] || 'GraphQL Federation configuration',
-            reproductionSteps: [
-                `Audited GraphQL Federation configuration in ${file.path}:${lineNum}.`,
-                'Matched FED-01: Unbounded Subgraph Query Depth in Federated Gateway.'
-            ],
-            remediationPrompt: "Enforce maximum query depth limits at the federated router to prevent deeply nested entity resolution loops.",
-            status: 'OPEN',
-            falsePositive: false
-        });
-        logs.push(`[${ts}] [FEDERATION AUDIT] Found FED-01: Unbounded Subgraph Query Depth in Federated Gateway at ${file.path}:${lineNum}`);
-    }
-    // FED-02: Missing Entity Resolver Batching Causing N+1 Subgraph Storms
-    if ((/resolveReference|@key/i.test(cleanContent) && !/DataLoader|batchFetch/i.test(cleanContent))) {
-        const matchLineIdx = locateMatchLine(lines, [/resolveReference|@key/i], l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('#') && !l.trim().startsWith('*'));
-        const lineNum = matchLineIdx !== -1 ? matchLineIdx + 1 : 1;
-        findings.push({
-            id: `fed13702-${Date.now()}-${findingCounter.count++}`,
-            ruleId: 13702,
-            type: 'INFRA_DATABASE',
-            title: "FED-02: Missing Entity Resolver Batching Causing N+1 Subgraph Storms",
-            severity: "HIGH",
-            category: "Performance Optimization",
-            filePath: file.path,
-            lineRange: `L${lineNum}`,
-            snippet: lines[matchLineIdx] || 'GraphQL Federation configuration',
-            reproductionSteps: [
-                `Audited GraphQL Federation configuration in ${file.path}:${lineNum}.`,
-                'Matched FED-02: Missing Entity Resolver Batching Causing N+1 Subgraph Storms.'
-            ],
-            remediationPrompt: "Implement DataLoader pattern on @key entity representations to batch subgraph network fetches.",
-            status: 'OPEN',
-            falsePositive: false
-        });
-        logs.push(`[${ts}] [FEDERATION AUDIT] Found FED-02: Missing Entity Resolver Batching Causing N+1 Subgraph Storms at ${file.path}:${lineNum}`);
-    }
     // FED-03: Unprotected Subgraph Introspection in Production
-    if ((/(?:"introspection"|introspection)\s*:\s*true/i.test(cleanContent))) {
-        const matchLineIdx = locateMatchLine(lines, [/(?:"introspection"|introspection)\s*:\s*true/i], l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('#') && !l.trim().startsWith('*'));
+    const hit_13703 = /ApolloServer|createYoga|graphqlHTTP|createHandler|GraphQLModule|mercurius|supergraph:/.test(cleanContent) ? lines.findIndex((l) => /^\s*["']?introspection["']?\s*:\s*true\b/.test(l)) : -1;
+    if (hit_13703 !== -1) {
+        const matchLineIdx = hit_13703;
         const lineNum = matchLineIdx !== -1 ? matchLineIdx + 1 : 1;
         findings.push({
             id: `fed13703-${Date.now()}-${findingCounter.count++}`,
             ruleId: 13703,
             type: 'INFRA_DATABASE',
             title: "FED-03: Unprotected Subgraph Introspection in Production",
-            severity: "HIGH",
+            severity: "MEDIUM",
             category: "Schema Protection",
             filePath: file.path,
             lineRange: `L${lineNum}`,
@@ -96,54 +48,6 @@ export function evaluateGraphqlFederationRules(file: CodeFile, lines: string[], 
             falsePositive: false
         });
         logs.push(`[${ts}] [FEDERATION AUDIT] Found FED-03: Unprotected Subgraph Introspection in Production at ${file.path}:${lineNum}`);
-    }
-    // FED-04: Breaking Schema Changes Lacking CI/CD Composition Check
-    if ((/subgraph/i.test(lowerPath) && !/rover subgraph check/i.test(cleanContent))) {
-        const matchLineIdx = lines.findIndex(l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('#') && !l.trim().startsWith('*'));
-        const lineNum = matchLineIdx !== -1 ? matchLineIdx + 1 : 1;
-        findings.push({
-            id: `fed13704-${Date.now()}-${findingCounter.count++}`,
-            ruleId: 13704,
-            type: 'INFRA_DATABASE',
-            title: "FED-04: Breaking Schema Changes Lacking CI/CD Composition Check",
-            severity: "CRITICAL",
-            category: "Schema Governance",
-            filePath: file.path,
-            lineRange: `L${lineNum}`,
-            snippet: lines[matchLineIdx] || 'GraphQL Federation configuration',
-            reproductionSteps: [
-                `Audited GraphQL Federation configuration in ${file.path}:${lineNum}.`,
-                'Matched FED-04: Breaking Schema Changes Lacking CI/CD Composition Check.'
-            ],
-            remediationPrompt: "Run schema composition linting (rover subgraph check) before merging PRs to prevent router composition failure.",
-            status: 'OPEN',
-            falsePositive: false
-        });
-        logs.push(`[${ts}] [FEDERATION AUDIT] Found FED-04: Breaking Schema Changes Lacking CI/CD Composition Check at ${file.path}:${lineNum}`);
-    }
-    // FED-05: Missing Subgraph Authentication Header Propagation
-    if ((/subgraph_endpoint/i.test(cleanContent) && !/Authorization|mTLS/i.test(cleanContent))) {
-        const matchLineIdx = locateMatchLine(lines, [/subgraph_endpoint/i], l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('#') && !l.trim().startsWith('*'));
-        const lineNum = matchLineIdx !== -1 ? matchLineIdx + 1 : 1;
-        findings.push({
-            id: `fed13705-${Date.now()}-${findingCounter.count++}`,
-            ruleId: 13705,
-            type: 'INFRA_DATABASE',
-            title: "FED-05: Missing Subgraph Authentication Header Propagation",
-            severity: "CRITICAL",
-            category: "Transport Security",
-            filePath: file.path,
-            lineRange: `L${lineNum}`,
-            snippet: lines[matchLineIdx] || 'GraphQL Federation configuration',
-            reproductionSteps: [
-                `Audited GraphQL Federation configuration in ${file.path}:${lineNum}.`,
-                'Matched FED-05: Missing Subgraph Authentication Header Propagation.'
-            ],
-            remediationPrompt: "Validate mTLS or cryptographic JWT signatures on requests between Apollo Router and internal subgraphs.",
-            status: 'OPEN',
-            falsePositive: false
-        });
-        logs.push(`[${ts}] [FEDERATION AUDIT] Found FED-05: Missing Subgraph Authentication Header Propagation at ${file.path}:${lineNum}`);
     }
     return { findings, logs };
 }

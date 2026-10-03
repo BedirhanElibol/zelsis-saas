@@ -1,17 +1,16 @@
 'use client';
 
-import { motion } from 'framer-motion';
+import { m } from 'framer-motion';
 import React, { useState, useEffect } from 'react';
-import { Check, Star as LucideStar, ShieldCheck } from 'lucide-react';
+import { Check, Clock } from 'lucide-react';
 import NumberFlow from '@number-flow/react';
 import { ZELSIS_PRICING_PLANS } from '@/data/pricing-plans';
 
 interface PricingProps {
-  onSelectPlan?: (planId: string, isAnnual: boolean) => void;
+  onSelectPlan?: (planId: string) => void;
 }
 
 export function PricingSection({ onSelectPlan }: PricingProps) {
-  const [isAnnual, setIsAnnual] = useState(false);
   const [plans, setPlans] = useState(ZELSIS_PRICING_PLANS);
 
   useEffect(() => {
@@ -26,12 +25,10 @@ export function PricingSection({ onSelectPlan }: PricingProps) {
             const matchedProduct = products.find((p: any) => p.name.toLowerCase().includes(plan.name.toLowerCase().replace('zelsis ', '')));
             if (matchedProduct && matchedProduct.prices) {
               const monthlyPriceObj = matchedProduct.prices.find((p: any) => p.recurring_interval === 'month');
-              const annualPriceObj = matchedProduct.prices.find((p: any) => p.recurring_interval === 'year');
-              
+
               return {
                 ...plan,
                 priceMonthly: monthlyPriceObj ? monthlyPriceObj.price_amount / 100 : plan.priceMonthly,
-                priceAnnual: annualPriceObj ? Math.floor((annualPriceObj.price_amount / 100) / 12) : plan.priceAnnual,
               };
             }
             return plan;
@@ -58,56 +55,21 @@ export function PricingSection({ onSelectPlan }: PricingProps) {
         <p className="text-sm text-[#A1A1AA] max-w-xl">
           Deploy with confidence. Start free with core AST checks, upgrade when your team needs automated release gating and compliance.
         </p>
-
-        {/* Monthly / Annual Toggle Button */}
-        <div className="flex items-center gap-3 mt-4 bg-[#0A0A0A] p-1.5 rounded-xl border border-white/10">
-          <button
-            type="button"
-            onClick={() => setIsAnnual(false)}
-            className={`px-4 py-2 rounded-lg text-xs font-bold transition-all ${
-              !isAnnual
-                ? 'bg-white text-black shadow'
-                : 'text-[#A1A1AA] hover:text-white'
-            }`}
-          >
-            Monthly Billing
-          </button>
-
-          <button
-            type="button"
-            onClick={() => setIsAnnual(true)}
-            className={`px-4 py-2 rounded-lg text-xs font-bold transition-all flex items-center gap-2 ${
-              isAnnual
-                ? 'bg-white text-black shadow'
-                : 'text-[#A1A1AA] hover:text-white'
-            }`}
-          >
-            <span>Annual Billing</span>
-            <span
-              className={`px-1.5 py-0.5 rounded text-[0.65rem] font-mono font-extrabold transition-colors ${
-                isAnnual
-                  ? 'bg-neutral-900 text-emerald-400'
-                  : 'bg-white/10 text-emerald-400'
-              }`}
-            >
-              SAVE 20%
-            </span>
-          </button>
-        </div>
+        <p className="text-xs text-[#A1A1AA] font-mono">Billed monthly. Cancel anytime.</p>
       </div>
 
       {/* 3 Pricing Cards Grid */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6 w-full max-w-6xl mx-auto">
         {plans.length === 0 ? (
           <div className="col-span-3 p-8 text-center bg-[#141414] border border-white/10 rounded-xl text-xs text-[#A1A1AA]">
-            No pricing tiers available. Contact sales@zelsis.com for enterprise quotes.
+            No pricing tiers available right now. Please try again shortly.
           </div>
         ) : (
           plans.map((plan) => {
-            const displayPrice = isAnnual ? plan.priceAnnual : plan.priceMonthly;
+            const displayPrice = plan.priceMonthly;
 
             return (
-              <motion.div
+              <m.div
                 key={plan.id}
                 whileHover={{ y: -4 }}
                 transition={{ duration: 0.15 }}
@@ -118,8 +80,8 @@ export function PricingSection({ onSelectPlan }: PricingProps) {
                 }`}
               >
                 {plan.isPopular && (
-                  <div className="absolute -top-3 left-1/2 -translate-x-1/2 bg-white text-black text-[0.68rem] font-bold px-3 py-0.5 rounded-full uppercase tracking-wider shadow">
-                    <span>MOST POPULAR CHOICE</span>
+                  <div className="absolute -top-3 left-1/2 -translate-x-1/2 bg-emerald-500 text-black text-xs font-bold px-3 py-0.5 rounded-full uppercase tracking-wider shadow">
+                    <span>Most popular</span>
                   </div>
                 )}
 
@@ -138,7 +100,7 @@ export function PricingSection({ onSelectPlan }: PricingProps) {
                       <NumberFlow value={displayPrice} />
                     </span>
                     <span className="text-xs text-[#A1A1AA] font-bold">
-                      {displayPrice === 0 ? 'forever free' : `/ mo ${isAnnual ? '(billed annually)' : ''}`}
+                      {displayPrice === 0 ? 'forever free' : '/ mo'}
                     </span>
                   </div>
 
@@ -150,11 +112,18 @@ export function PricingSection({ onSelectPlan }: PricingProps) {
                         <span>{feature}</span>
                       </div>
                     ))}
+                    {plan.comingSoon?.map((feature) => (
+                      <div key={feature} className="flex items-center gap-2.5 text-xs text-[#A1A1AA]">
+                        <Clock size={14} className="text-[#A1A1AA] shrink-0" />
+                        <span>{feature}</span>
+                        <span className="px-1.5 py-0.5 rounded bg-white/5 border border-white/10 text-[0.6rem] font-mono uppercase tracking-wider shrink-0">Coming soon</span>
+                      </div>
+                    ))}
                   </div>
                 </div>
 
                 <button
-                  onClick={() => onSelectPlan && onSelectPlan(plan.id, isAnnual)}
+                  onClick={() => onSelectPlan && onSelectPlan(plan.id)}
                   className={`btn w-full py-3 rounded-lg text-xs font-bold uppercase tracking-wider transition-all mt-4 ${
                     plan.isPopular
                       ? 'btn-primary'
@@ -163,7 +132,7 @@ export function PricingSection({ onSelectPlan }: PricingProps) {
                 >
                   {plan.buttonText}
                 </button>
-              </motion.div>
+              </m.div>
             );
           })
         )}

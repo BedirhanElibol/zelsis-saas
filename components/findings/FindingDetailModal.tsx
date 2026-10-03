@@ -11,6 +11,7 @@ import { hasFixPromptAccess } from '@/lib/subscription-utils';
 import { getActiveUserAuth } from '@/lib/supabase-client';
 import type { StoredFix } from '@/lib/fix-gate';
 import { ExperimentalBadge, UnprovenBadge } from '@/components/findings/ExperimentalBadge';
+import { priceLabel } from '@/data/pricing-plans';
 
 export interface FindingDetailModalProps {
   isOpen: boolean;
@@ -510,7 +511,7 @@ export const FindingDetailModal: React.FC<FindingDetailModalProps> = ({
                           Trial AI Remediation Limit Reached (1/1)
                         </div>
                         <p className="text-xs text-zinc-400 max-w-md mx-auto leading-relaxed">
-                          You have used your 1 free AI fix prompt. Upgrade to Zelsis Pro ($19/mo) to unlock unlimited 1-click AI remediation prompts and automated diff patches.
+                          You have used your 1 free AI fix prompt. Upgrade to Zelsis Pro ({priceLabel('Pro')}) to unlock unlimited 1-click AI remediation prompts and automated diff patches.
                         </p>
                       </div>
                       <button
@@ -519,7 +520,7 @@ export const FindingDetailModal: React.FC<FindingDetailModalProps> = ({
                         className="btn btn-primary px-5 py-2.5 text-xs font-bold font-mono uppercase tracking-wider rounded-xl bg-emerald-500 hover:bg-emerald-400 text-black transition-all cursor-pointer flex items-center gap-2"
                       >
                         <Lock size={13} />
-                        <span>Unlock Unlimited AI Fixes ($19/mo)</span>
+                        <span>Unlock Unlimited AI Fixes ({priceLabel('Pro')})</span>
                       </button>
                     </div>
                   ) : (

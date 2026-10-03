@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
+import { m, AnimatePresence } from 'framer-motion';
 import { ChevronDown, HelpCircle, ShieldCheck } from 'lucide-react';
 
 interface FaqItem {
@@ -46,7 +46,7 @@ export const FaqSection: React.FC = () => {
     {
       question: 'What is your refund policy and subscription cancellation model?',
       answer:
-        'All plans are 100% self-serve and transparent. You can cancel or modify your subscription at any time with a single click in your billing portal. You will retain full access until the end of your paid billing cycle with zero surprise charges.'
+        'All plans are 100% self-serve and transparent. You can cancel or modify your subscription at any time with a single click in your billing portal. You will retain full access until the end of your paid billing cycle with zero surprise charges. First-time purchases are covered by a 14-day money-back guarantee; see the Refund Policy.'
     }
   ];
 
@@ -57,7 +57,7 @@ export const FaqSection: React.FC = () => {
       <div className="max-w-4xl mx-auto flex flex-col gap-12">
         {/* Section Header */}
         <div className="flex flex-col gap-4 text-center">
-          <div className="inline-flex items-center justify-center text-xs font-mono uppercase tracking-widest text-zinc-400">
+          <div className="inline-flex items-center justify-center text-xs font-mono uppercase tracking-widest text-emerald-400">
             <span>SECURITY &amp; ARCHITECTURE FAQ</span>
           </div>
           <h2 className="text-3xl sm:text-5xl font-extrabold text-[#EDEDED] tracking-tight">
@@ -74,7 +74,7 @@ export const FaqSection: React.FC = () => {
             <div key={idx} className="py-6">
               <button
                 onClick={() => setOpenIdx(openIdx === idx ? null : idx)}
-                className="w-full flex items-center justify-between gap-4 text-left group focus:outline-none focus-visible:ring-2 focus-visible:ring-white/20 focus-visible:ring-offset-2 focus-visible:ring-offset-black rounded-md cursor-pointer"
+                className="w-full flex items-center justify-between gap-4 text-left group focus:outline-none focus-visible:ring-2 focus-visible:ring-white/70 focus-visible:ring-offset-2 focus-visible:ring-offset-black rounded-md cursor-pointer"
                 aria-expanded={openIdx === idx}
                 aria-label={`Toggle answer for: ${faq.question}`}
               >
@@ -88,7 +88,7 @@ export const FaqSection: React.FC = () => {
 
               <AnimatePresence>
                 {openIdx === idx && (
-                  <motion.div
+                  <m.div
                     initial={{ opacity: 0, height: 0 }}
                     animate={{ opacity: 1, height: 'auto' }}
                     exit={{ opacity: 0, height: 0 }}
@@ -98,7 +98,7 @@ export const FaqSection: React.FC = () => {
                     <p className="mt-4 text-sm text-zinc-400 leading-relaxed font-sans pr-6">
                       {faq.answer}
                     </p>
-                  </motion.div>
+                  </m.div>
                 )}
               </AnimatePresence>
             </div>

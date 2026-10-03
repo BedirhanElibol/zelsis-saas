@@ -123,7 +123,7 @@ export const RULE_CASES: RuleCase[] = [
     ignores: f('lib/calc.ts', 'export function calc(input: string) {\n  return JSON.parse(input);\n}\n')
   },
   {
-    ruleIds: [33, 13602],
+    ruleIds: [33],
     name: 'Command injection via shell exec',
     detects: f('app/api/ping/route.ts', "import { exec } from 'child_process';\nexport async function GET(req: Request) {\n  const host = new URL(req.url).searchParams.get('host');\n  exec(`ping -c 1 ${host}`);\n  return new Response('ok');\n}\n"),
     ignores: f('app/api/ping/route.ts', "import { execFile } from 'child_process';\nexport async function GET(req: Request) {\n  const host = new URL(req.url).searchParams.get('host') ?? '';\n  if (!/^[a-z0-9.-]+$/i.test(host)) return new Response('bad', { status: 400 });\n  execFile('ping', ['-c', '1', host]);\n  return new Response('ok');\n}\n")
@@ -189,7 +189,7 @@ export const RULE_CASES: RuleCase[] = [
 
   // ─── LLM cost ─────────────────────────────────────────────────────────
   {
-    ruleIds: [141, 4001, 8071],
+    ruleIds: [141, 4001],
     name: 'LLM call without max_tokens',
     detects: f('app/api/chat/route.ts', "import OpenAI from 'openai';\nconst openai = new OpenAI();\nexport async function POST(req: Request) {\n  const { prompt } = await req.json();\n  const r = await openai.chat.completions.create({ model: 'gpt-4o', messages: [{ role: 'user', content: prompt }] });\n  return Response.json(r);\n}\n"),
     ignores: f('app/api/chat/route.ts', "import OpenAI from 'openai';\nconst openai = new OpenAI();\nexport async function POST(req: Request) {\n  const { prompt } = await req.json();\n  const r = await openai.chat.completions.create({ model: 'gpt-4o', max_tokens: 512, messages: [{ role: 'user', content: String(prompt).slice(0, 4000) }] });\n  return Response.json(r);\n}\n")
@@ -301,7 +301,7 @@ export const RULE_CASES: RuleCase[] = [
     ignores: f('.github/workflows/ci.yml', 'on: push\njobs:\n  b:\n    runs-on: ubuntu-latest\n    steps:\n      - uses: tj-actions/changed-files@c3a1bb2c992d77180ae65be6ae6c166cf40f857c\n      - uses: actions/checkout@v4\n')
   },
   {
-    ruleIds: [14104, 12603],
+    ruleIds: [12603],
     name: 'Release pipeline with mutable action tags and no provenance',
     detects: f('.github/workflows/release.yml', 'on:\n  push:\n    tags: ["v*"]\njobs:\n  r:\n    runs-on: ubuntu-latest\n    steps:\n      - uses: actions/checkout@v4\n      - run: npm publish\n'),
     ignores: [

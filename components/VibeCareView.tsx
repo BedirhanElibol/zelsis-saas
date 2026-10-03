@@ -103,7 +103,7 @@ export const VibeCareView: React.FC<VibeCareViewProps> = ({ project, user, onOpe
         {project && (
           <button
             onClick={handleExportPdf}
-            className="btn btn-primary px-6 py-3 text-xs font-bold uppercase tracking-wider shrink-0 rounded-lg flex items-center gap-2 bg-white text-black hover:bg-neutral-200 transition-all shadow-sm cursor-pointer"
+            className="btn btn-primary px-6 py-3 text-xs font-bold uppercase tracking-wider shrink-0 rounded-lg flex items-center gap-2 bg-emerald-500 text-black hover:bg-emerald-400 transition-all shadow-sm cursor-pointer"
           >
             {user?.tier === 'Free' ? <Lock size={15} /> : <Download size={16} />}
             <span>{user?.tier === 'Free' ? 'Export PDF (Pro Feature)' : 'Download Audit PDF Report'}</span>

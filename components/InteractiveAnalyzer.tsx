@@ -294,7 +294,7 @@ export function processUserData(payload: any) {
           </div>
         </div>
 
-        <button onClick={runLiveAudit} className="btn btn-primary px-5 py-2.5 text-xs font-bold uppercase tracking-wider rounded-lg flex items-center gap-2 bg-white text-black hover:bg-neutral-200 transition-all shadow-sm">
+        <button onClick={runLiveAudit} className="btn btn-primary px-5 py-2.5 text-xs font-bold uppercase tracking-wider rounded-lg flex items-center gap-2 bg-emerald-500 text-black hover:bg-emerald-400 transition-all shadow-sm">
           <Play size={14} fill="#0A0A0A" />
           <span>Analyze Codebase</span>
         </button>

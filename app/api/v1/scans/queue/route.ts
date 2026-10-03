@@ -6,6 +6,7 @@ import { isValidGithubUrl, parseGithubUrl } from '@/lib/github-api';
 import { isValidWebUrl } from '@/lib/website-scanner';
 import { getInternalBaseUrl, getInternalSecret } from '@/lib/internal-auth';
 import { getEffectiveSupabaseUrl, getEffectiveSupabaseAnonKey, getEffectiveSupabaseServiceRoleKey, getSupabaseAdmin } from '@/lib/supabase-admin';
+import { getEffectivePlanTier } from '@/lib/organization';
 import { executeScanJob } from '@/lib/scan-processor';
 import { z } from 'zod';
 
@@ -103,9 +104,11 @@ export async function POST(req: NextRequest) {
           .eq('user_id', authenticatedUserId)
           .maybeSingle();
 
+        // Own plan or a seat in an Enterprise workspace
+        userTier = await getEffectivePlanTier(adminClient, authenticatedUserId);
+
         if (sub) {
           const periodElapsed = Boolean(sub.current_period_end && new Date(sub.current_period_end).getTime() < Date.now());
-          userTier = periodElapsed ? 'Free' : ((sub.plan_tier as any) || 'Free');
           const monthlyQuota = userTier === 'Free' ? 3 : (sub.monthly_scan_quota ?? 3);
           const scansUsed = periodElapsed ? 0 : (sub.scans_used_this_month ?? 0);
 

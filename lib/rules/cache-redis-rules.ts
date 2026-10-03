@@ -24,57 +24,9 @@ export function evaluateCacheRedisRules(file: CodeFile, lines: string[], cleanCo
       return { findings, logs };
     }
     const ts = new Date().toLocaleTimeString();
-    // CACHE-01: Cache Stampede (Thundering Herd) via Unsynchronized Cache Misses
-    if ((/redis\.get\s*\([\s\S]*?\)/.test(cleanContent) && !/lock|mutex|redlock/i.test(cleanContent))) {
-        const matchLineIdx = locateMatchLine(lines, [/redis\.get\s*\([\s\S]*?\)/], l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('*'));
-        const lineNum = matchLineIdx !== -1 ? matchLineIdx + 1 : 1;
-        findings.push({
-            id: `cache10701-${Date.now()}-${findingCounter.count++}`,
-            ruleId: 10701,
-            type: 'INFRA_DATABASE',
-            title: "CACHE-01: Cache Stampede (Thundering Herd) via Unsynchronized Cache Misses",
-            severity: "HIGH",
-            category: "Cache Reliability",
-            filePath: file.path,
-            lineRange: `L${lineNum}`,
-            snippet: lines[matchLineIdx] || 'Redis cache operation',
-            reproductionSteps: [
-                `Audited caching routines in ${file.path}:${lineNum}.`,
-                'Detected cache architecture violation matching CACHE-01.'
-            ],
-            remediationPrompt: "Wrap high-traffic cache fetches with distributed redlock or early probabilistic recomputation.",
-            status: 'OPEN',
-            falsePositive: false
-        });
-        logs.push(`[${ts}] [CACHE AUDIT] Found CACHE-01: Cache Stampede (Thundering Herd) via Unsynchronized Cache Misses at ${file.path}:${lineNum}`);
-    }
-    // CACHE-02: Unbounded Cache Keys Lacking TTL Expiration (OOM Crash)
-    if ((/redis\.(?:set|setex|hset)\s*\([\s\S]*?\)/.test(cleanContent) && !/ex|ttl|expire/i.test(cleanContent))) {
-        const matchLineIdx = locateMatchLine(lines, [/redis\.(?:set|setex|hset)\s*\([\s\S]*?\)/], l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('*'));
-        const lineNum = matchLineIdx !== -1 ? matchLineIdx + 1 : 1;
-        findings.push({
-            id: `cache10702-${Date.now()}-${findingCounter.count++}`,
-            ruleId: 10702,
-            type: 'INFRA_DATABASE',
-            title: "CACHE-02: Unbounded Cache Keys Lacking TTL Expiration (OOM Crash)",
-            severity: "CRITICAL",
-            category: "Memory Management",
-            filePath: file.path,
-            lineRange: `L${lineNum}`,
-            snippet: lines[matchLineIdx] || 'Redis cache operation',
-            reproductionSteps: [
-                `Audited caching routines in ${file.path}:${lineNum}.`,
-                'Detected cache architecture violation matching CACHE-02.'
-            ],
-            remediationPrompt: "Enforce mandatory EX parameter on redis.set() calls and verify maxmemory-policy is set to allkeys-lru.",
-            status: 'OPEN',
-            falsePositive: false
-        });
-        logs.push(`[${ts}] [CACHE AUDIT] Found CACHE-02: Unbounded Cache Keys Lacking TTL Expiration (OOM Crash) at ${file.path}:${lineNum}`);
-    }
     // CACHE-03: Unauthenticated Redis Port Bound to Public Network Interfaces (0.0.0.0)
-    if ((/bind\s+0\.0\.0\.0/.test(cleanContent) && !/requirepass/i.test(cleanContent))) {
-        const matchLineIdx = locateMatchLine(lines, [/bind\s+0\.0\.0\.0/], l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('*'));
+    if ((/(?:^|\/)redis[^/]*\.conf$/.test(lowerPath) && /^\s*bind\s+0\.0\.0\.0/m.test(cleanContent) && !/^\s*requirepass\s+\S/m.test(cleanContent)) || (/redis-server[^\n]*--bind\s+0\.0\.0\.0/.test(cleanContent) && !/--requirepass/.test(cleanContent))) {
+        const matchLineIdx = locateMatchLine(lines, [/^\s*bind\s+0\.0\.0\.0|--bind\s+0\.0\.0\.0/], l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('*'));
         const lineNum = matchLineIdx !== -1 ? matchLineIdx + 1 : 1;
         findings.push({
             id: `cache10703-${Date.now()}-${findingCounter.count++}`,

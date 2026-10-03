@@ -4,7 +4,6 @@
  */
 import { Finding } from "@/data/schema";
 import { CodeFile } from "../scanner-engine";
-import { locateMatchLine } from './shared/locate';
 export interface Web3SecurityRuleResult {
     findings: Finding[];
     logs: string[];
@@ -27,8 +26,9 @@ export function evaluateWeb3SecurityRules(file: CodeFile, lines: string[], clean
     const ts = new Date().toLocaleTimeString();
     // WEB3-01: Reentrancy Vulnerability (Checks-Effects-Interactions Violation)
     // An external call before the balance update, in a contract without a reentrancy guard
-    if (/(?:call\.value|call\{value:)[\s\S]*?balances\[/i.test(cleanContent) && !cleanContent.includes('nonReentrant')) {
-        const matchLineIdx = locateMatchLine(lines, [/(?:call\.value|call\{value:)[\s\S]*?balances\[/i], l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('*'));
+    const hit_8701 = findReentrancy(cleanContent);
+    if (hit_8701 !== -1) {
+        const matchLineIdx = hit_8701;
         const lineNum = matchLineIdx !== -1 ? matchLineIdx + 1 : 1;
         findings.push({
             id: `web38701-${Date.now()}-${findingCounter.count++}`,
@@ -51,8 +51,9 @@ export function evaluateWeb3SecurityRules(file: CodeFile, lines: string[], clean
         logs.push(`[${ts}] [WEB3 AUDIT] Found WEB3-01: Reentrancy Vulnerability (Checks-Effects-Interactions Violation) at ${file.path}:${lineNum}`);
     }
     // WEB3-02: Integer Overflow / Underflow in Unchecked Math Block
-    if (/unchecked\s*\{[\s\S]*?balances\[[^\]]+\]\s*-=/i.test(cleanContent)) {
-        const matchLineIdx = locateMatchLine(lines, [/unchecked\s*\{[\s\S]*?balances\[[^\]]+\]\s*-=/i], l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('*'));
+    const hit_8702 = findUncheckedUnderflow(cleanContent);
+    if (hit_8702 !== -1) {
+        const matchLineIdx = hit_8702;
         const lineNum = matchLineIdx !== -1 ? matchLineIdx + 1 : 1;
         findings.push({
             id: `web38702-${Date.now()}-${findingCounter.count++}`,
@@ -75,8 +76,9 @@ export function evaluateWeb3SecurityRules(file: CodeFile, lines: string[], clean
         logs.push(`[${ts}] [WEB3 AUDIT] Found WEB3-02: Integer Overflow / Underflow in Unchecked Math Block at ${file.path}:${lineNum}`);
     }
     // WEB3-03: Frontrunning / MEV Sandwich Vulnerability (Zero Slippage Tolerance)
-    if (/(?:swapExactTokensForTokens|swapExactETHForTokens)\s*\([^,]+,\s*0\b/i.test(cleanContent)) {
-        const matchLineIdx = locateMatchLine(lines, [/(?:swapExactTokensForTokens|swapExactETHForTokens)\s*\([^,]+,\s*0\b/i], l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('*'));
+    const hit_8703 = lines.findIndex((l) => /\bswapExact(?:Tokens|ETH)For(?:Tokens|ETH)(?:SupportingFeeOnTransferTokens)?\s*\(\s*[^,()]+,\s*0\s*,/.test(l) || /\bswapExactETHForTokens(?:SupportingFeeOnTransferTokens)?\s*(?:\{[^}]*\})?\s*\(\s*0\s*,/.test(l));
+    if (hit_8703 !== -1) {
+        const matchLineIdx = hit_8703;
         const lineNum = matchLineIdx !== -1 ? matchLineIdx + 1 : 1;
         findings.push({
             id: `web38703-${Date.now()}-${findingCounter.count++}`,
@@ -98,33 +100,10 @@ export function evaluateWeb3SecurityRules(file: CodeFile, lines: string[], clean
         });
         logs.push(`[${ts}] [WEB3 AUDIT] Found WEB3-03: Frontrunning / MEV Sandwich Vulnerability (Zero Slippage Tolerance) at ${file.path}:${lineNum}`);
     }
-    // WEB3-04: Oracle Spot Price Manipulation (Missing TWAP / Chainlink)
-    if (/(?:getReserves\(\)|pair\.balanceOf)[\s\S]*?calculatePrice/i.test(cleanContent)) {
-        const matchLineIdx = locateMatchLine(lines, [/(?:getReserves\(\)|pair\.balanceOf)[\s\S]*?calculatePrice/i], l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('*'));
-        const lineNum = matchLineIdx !== -1 ? matchLineIdx + 1 : 1;
-        findings.push({
-            id: `web38704-${Date.now()}-${findingCounter.count++}`,
-            ruleId: 8704,
-            type: 'SECURITY',
-            title: "WEB3-04: Oracle Spot Price Manipulation (Missing TWAP / Chainlink)",
-            severity: "CRITICAL",
-            category: "Oracle Security",
-            filePath: file.path,
-            lineRange: `L${lineNum}`,
-            snippet: lines[matchLineIdx] || 'Smart contract instruction',
-            reproductionSteps: [
-                `Audited smart contract in ${file.path}:${lineNum}.`,
-                'Detected security violation matching WEB3-04.'
-            ],
-            remediationPrompt: "Use Chainlink Decentralized Oracle Feeds or Uniswap v3 Time-Weighted Average Price (TWAP).",
-            status: 'OPEN',
-            falsePositive: false
-        });
-        logs.push(`[${ts}] [WEB3 AUDIT] Found WEB3-04: Oracle Spot Price Manipulation (Missing TWAP / Chainlink) at ${file.path}:${lineNum}`);
-    }
     // WEB3-05: Missing Access Control on Critical Admin Functions
-    if (/function\s+(?:withdrawTreasury|pauseContract|mintToken)\s*\([^)]*\)\s*(?:public|external)(?!.*(?:onlyOwner|hasRole))/i.test(cleanContent)) {
-        const matchLineIdx = locateMatchLine(lines, [/function\s+(?:withdrawTreasury|pauseContract|mintToken)\s*\([^)]*\)\s*(?:public|external)(?!.*(?:onlyOwner|hasRole))/i], l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('*'));
+    const hit_8705 = findUnguardedAdminFn(cleanContent);
+    if (hit_8705 !== -1) {
+        const matchLineIdx = hit_8705;
         const lineNum = matchLineIdx !== -1 ? matchLineIdx + 1 : 1;
         findings.push({
             id: `web38705-${Date.now()}-${findingCounter.count++}`,
@@ -147,8 +126,9 @@ export function evaluateWeb3SecurityRules(file: CodeFile, lines: string[], clean
         logs.push(`[${ts}] [WEB3 AUDIT] Found WEB3-05: Missing Access Control on Critical Admin Functions at ${file.path}:${lineNum}`);
     }
     // WEB3-06: Signature Replay Attack (Missing EIP-712 Nonce & ChainID)
-    if (/ecrecover\s*\(/i.test(cleanContent) && !/nonce|chainid|EIP712/i.test(cleanContent)) {
-        const matchLineIdx = locateMatchLine(lines, [/ecrecover\s*\(/i], l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('*'));
+    const hit_8706 = findReplayableEcrecover(cleanContent);
+    if (hit_8706 !== -1) {
+        const matchLineIdx = hit_8706;
         const lineNum = matchLineIdx !== -1 ? matchLineIdx + 1 : 1;
         findings.push({
             id: `web38706-${Date.now()}-${findingCounter.count++}`,
@@ -171,8 +151,9 @@ export function evaluateWeb3SecurityRules(file: CodeFile, lines: string[], clean
         logs.push(`[${ts}] [WEB3 AUDIT] Found WEB3-06: Signature Replay Attack (Missing EIP-712 Nonce & ChainID) at ${file.path}:${lineNum}`);
     }
     // WEB3-07: Dangerous Delegatecall to Untrusted Target Address
-    if (/delegatecall\s*\([\s\S]*?userTarget/i.test(cleanContent)) {
-        const matchLineIdx = locateMatchLine(lines, [/delegatecall\s*\([\s\S]*?userTarget/i], l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('*'));
+    const hit_8707 = findUserDelegatecall(cleanContent);
+    if (hit_8707 !== -1) {
+        const matchLineIdx = hit_8707;
         const lineNum = matchLineIdx !== -1 ? matchLineIdx + 1 : 1;
         findings.push({
             id: `web38707-${Date.now()}-${findingCounter.count++}`,
@@ -195,8 +176,9 @@ export function evaluateWeb3SecurityRules(file: CodeFile, lines: string[], clean
         logs.push(`[${ts}] [WEB3 AUDIT] Found WEB3-07: Dangerous Delegatecall to Untrusted Target Address at ${file.path}:${lineNum}`);
     }
     // WEB3-08: Unprotected Selfdestruct / Suicide Call
-    if (/(?:selfdestruct|suicide)\s*\(/i.test(cleanContent) && !/onlyOwner/i.test(cleanContent)) {
-        const matchLineIdx = locateMatchLine(lines, [/(?:selfdestruct|suicide)\s*\(/i], l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('*'));
+    const hit_8708 = findUnguardedSelfdestruct(cleanContent);
+    if (hit_8708 !== -1) {
+        const matchLineIdx = hit_8708;
         const lineNum = matchLineIdx !== -1 ? matchLineIdx + 1 : 1;
         findings.push({
             id: `web38708-${Date.now()}-${findingCounter.count++}`,
@@ -219,8 +201,9 @@ export function evaluateWeb3SecurityRules(file: CodeFile, lines: string[], clean
         logs.push(`[${ts}] [WEB3 AUDIT] Found WEB3-08: Unprotected Selfdestruct / Suicide Call at ${file.path}:${lineNum}`);
     }
     // WEB3-09: Block Timestamp as Randomness Source
-    if (/(?:keccak256|sha256)\s*\([^)]*block\.timestamp[^)]*\)/i.test(cleanContent)) {
-        const matchLineIdx = locateMatchLine(lines, [/(?:keccak256|sha256)\s*\([^)]*block\.timestamp[^)]*\)/i], l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('*'));
+    const hit_8709 = findTimestampRandomness(cleanContent);
+    if (hit_8709 !== -1) {
+        const matchLineIdx = hit_8709;
         const lineNum = matchLineIdx !== -1 ? matchLineIdx + 1 : 1;
         findings.push({
             id: `web38709-${Date.now()}-${findingCounter.count++}`,
@@ -243,8 +226,9 @@ export function evaluateWeb3SecurityRules(file: CodeFile, lines: string[], clean
         logs.push(`[${ts}] [WEB3 AUDIT] Found WEB3-09: Block Timestamp as Randomness Source at ${file.path}:${lineNum}`);
     }
     // WEB3-10: Unchecked ERC-20 Transfer Return Value
-    if (/IERC20\([^)]+\)\.transfer\([^)]+\);/i.test(cleanContent)) {
-        const matchLineIdx = locateMatchLine(lines, [/IERC20\([^)]+\)\.transfer\([^)]+\);/i], l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('*'));
+    const hit_8710 = findUncheckedErc20Transfer(cleanContent, lines);
+    if (hit_8710 !== -1) {
+        const matchLineIdx = hit_8710;
         const lineNum = matchLineIdx !== -1 ? matchLineIdx + 1 : 1;
         findings.push({
             id: `web38710-${Date.now()}-${findingCounter.count++}`,
@@ -267,4 +251,100 @@ export function evaluateWeb3SecurityRules(file: CodeFile, lines: string[], clean
         logs.push(`[${ts}] [WEB3 AUDIT] Found WEB3-10: Unchecked ERC-20 Transfer Return Value at ${file.path}:${lineNum}`);
     }
     return { findings, logs };
+}
+// ---- precise matchers (rule-proof pass) ----
+const lineAt = (text: string, idx: number): number => text.slice(0, idx).split('\n').length - 1;
+interface SolFn { name: string; params: string; header: string; body: string; bodyStart: number; headerStart: number }
+/** Every `function name(params) modifiers { body }` in a Solidity source, with brace-matched bodies. */
+function solFunctions(src: string): SolFn[] {
+    const out: SolFn[] = [];
+    const re = /\bfunction\s+(\w+)\s*\(([^)]*)\)([^{;]*)\{/g;
+    let m: RegExpExecArray | null;
+    while ((m = re.exec(src))) {
+        const open = m.index + m[0].length - 1;
+        let depth = 0;
+        let i = open;
+        for (; i < src.length; i++) {
+            if (src[i] === '{') depth++;
+            else if (src[i] === '}' && --depth === 0) break;
+        }
+        out.push({ name: m[1], params: m[2], header: m[3], body: src.slice(open + 1, i), bodyStart: open + 1, headerStart: m.index });
+    }
+    return out;
+}
+const ACCESS_MODIFIER = /\bonly[A-Z]\w*|\bonly\b|\brequiresAuth\b|\bauth\b|\binitializer\b/;
+const INLINE_ACCESS_CHECK = /msg\.sender\s*==|==\s*msg\.sender|msg\.sender\s*!=|!=\s*msg\.sender|_checkOwner\s*\(|_checkRole\s*\(|hasRole\s*\(|_onlyOwner\s*\(|isAdmin\s*\[|admins?\s*\[\s*msg\.sender/;
+const isExposed = (fn: SolFn): boolean => /\b(?:public|external)\b/.test(fn.header);
+const isGuarded = (fn: SolFn): boolean => ACCESS_MODIFIER.test(fn.header) || INLINE_ACCESS_CHECK.test(fn.body);
+/** WEB3-01: an ETH-sending low-level call followed by a balance write in the same unguarded function. */
+function findReentrancy(src: string): number {
+    for (const fn of solFunctions(src)) {
+        if (/\bnonReentrant\b/.test(fn.header)) continue;
+        const call = /\.call(?:\{\s*value\s*:|\.value\s*\()/.exec(fn.body);
+        if (!call) continue;
+        if (/\b\w*balances?\s*\[[^\]]+\]\s*(?:-?=|\+=)/i.test(fn.body.slice(call.index))) return lineAt(src, fn.bodyStart + call.index);
+    }
+    return -1;
+}
+/** WEB3-02: `balances[x] -= y` inside `unchecked {}` with no preceding bound check in the function. */
+function findUncheckedUnderflow(src: string): number {
+    for (const fn of solFunctions(src)) {
+        const block = /unchecked\s*\{[^}]*?\b\w*balances?\s*\[[^\]]+\]\s*-=/i.exec(fn.body);
+        if (!block) continue;
+        if (/\brequire\s*\(|\brevert\b|\bif\s*\(/.test(fn.body.slice(0, block.index))) continue;
+        const sub = fn.body.indexOf('-=', block.index);
+        return lineAt(src, fn.bodyStart + sub);
+    }
+    return -1;
+}
+/** WEB3-05: a public mint/pause/treasury-withdraw/ownership function with no access modifier or sender check. */
+function findUnguardedAdminFn(src: string): number {
+    const ADMIN = /^(?:mint|safeMint|mintTo|pause|unpause|withdrawTreasury|withdrawAll|emergencyWithdraw|setOwner|setAdmin|transferOwnership|upgradeTo|upgradeToAndCall|setFeeRecipient|setOracle)$/;
+    for (const fn of solFunctions(src)) {
+        if (!ADMIN.test(fn.name) || !isExposed(fn) || isGuarded(fn)) continue;
+        return lineAt(src, fn.headerStart);
+    }
+    return -1;
+}
+/** WEB3-06: raw ecrecover in a contract that has no nonce / chainId / EIP-712 domain / used-signature tracking. */
+function findReplayableEcrecover(src: string): number {
+    if (!/\bcontract\s+\w+/.test(src)) return -1; // signature libraries (ECDSA.sol) are not where replay protection lives
+    if (/nonce|chainid|block\.chainid|EIP712|_hashTypedData|usedSignatures|\bused\w*\s*\[|claimed\s*\[|deadline|expir/i.test(src)) return -1;
+    const m = /\becrecover\s*\(/.exec(src);
+    return m ? lineAt(src, m.index) : -1;
+}
+/** WEB3-07: delegatecall to an address that the (unguarded, external) caller passes in. */
+function findUserDelegatecall(src: string): number {
+    for (const fn of solFunctions(src)) {
+        if (!isExposed(fn) || isGuarded(fn)) continue;
+        const params = [...fn.params.matchAll(/\baddress(?:\s+payable)?\s+(\w+)/g)].map((p) => p[1]);
+        for (const p of params) {
+            const m = new RegExp(`\\b${p}\\.delegatecall\\s*\\(`).exec(fn.body);
+            if (m) return lineAt(src, fn.bodyStart + m.index);
+        }
+    }
+    return -1;
+}
+/** WEB3-08: selfdestruct inside a function with no owner modifier or sender check. */
+function findUnguardedSelfdestruct(src: string): number {
+    for (const fn of solFunctions(src)) {
+        const m = /\b(?:selfdestruct|suicide)\s*\(/.exec(fn.body);
+        if (!m || isGuarded(fn)) continue;
+        return lineAt(src, fn.bodyStart + m.index);
+    }
+    return -1;
+}
+/** WEB3-09: a hash of block.timestamp / difficulty / prevrandao reduced modulo N, i.e. used as a random number. */
+function findTimestampRandomness(src: string): number {
+    const re = /[^;{}]*\bkeccak256\s*\([^;]*\bblock\.(?:timestamp|difficulty|prevrandao)\b[^;]*%[^;]*;/g;
+    const m = re.exec(src);
+    if (!m) return -1;
+    return lineAt(src, m.index + m[0].search(/keccak256/));
+}
+/** WEB3-10: an ERC-20 transfer/transferFrom used as a bare statement, its bool return value dropped. */
+function findUncheckedErc20Transfer(src: string, lines: string[]): number {
+    const typed = [...src.matchAll(/\bIERC20\w*\s+(?:(?:public|private|internal|immutable|constant)\s+)*(\w+)\s*[;=)]/g)].map((m) => m[1]);
+    const receivers = ['IERC20\\w*\\s*\\([^)]*\\)', ...typed].join('|');
+    const stmt = new RegExp(`^\\s*(?:${receivers})\\.transfer(?:From)?\\s*\\(`);
+    return lines.findIndex((l) => stmt.test(l));
 }

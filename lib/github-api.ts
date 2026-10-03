@@ -267,12 +267,38 @@ export async function fetchGithubRepositoryData(
         }
       }
       if (effectiveToken) {
-        proxyHeaders['Authorization'] = `Bearer ${effectiveToken.trim()}`;
+        proxyHeaders['x-github-token'] = effectiveToken.trim();
+      }
+      // The session lets the proxy check the plan before it serves a private repository.
+      try {
+        const { getActiveUserAuth } = await import('@/lib/supabase-client');
+        const { accessToken } = await getActiveUserAuth();
+        if (accessToken) proxyHeaders['Authorization'] = `Bearer ${accessToken}`;
+      } catch (sessionErr) {
+        console.debug('[GitHub API] Session lookup notice:', sessionErr);
       }
       const proxyRes = await fetch(proxyEndpoint, {
         headers: proxyHeaders,
         signal: createTimeoutSignal(15000, signal)
       });
+      if (proxyRes.status === 403) {
+        const denied = await proxyRes.json().catch(() => null);
+        if (denied?.error === 'PLAN_REQUIRED') {
+          // Plan gate: do not fall back to fetching the private repo directly from GitHub.
+          return {
+            name: denied.name || parsed.repo,
+            fullName: denied.fullName || `${parsed.owner}/${parsed.repo}`,
+            description: denied.message,
+            defaultBranch: 'main',
+            stars: 0,
+            language: 'None',
+            files: [],
+            isPrivate: true,
+            requiresAuth: true,
+            error: 'PRIVATE_OR_UNAUTHENTICATED'
+          };
+        }
+      }
       if (proxyRes.ok) {
         const data = await proxyRes.json();
         if (data) {
@@ -686,7 +712,8 @@ export async function fetchGithubRepositoryData(
         defaultBranch: resolvedBranch,
         stars: (repoData?.stargazers_count as number) || 0,
         language: (repoData?.language as string) || 'TypeScript',
-        files: codeFiles
+        files: codeFiles,
+        isPrivate: repoData?.private === true
       };
     }
 

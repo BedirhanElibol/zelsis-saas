@@ -23,30 +23,6 @@ export function evaluateHipaaComplianceRules(file: CodeFile, lines: string[], cl
         return { findings, logs };
     }
     const ts = new Date().toLocaleTimeString();
-    // HIPAA-01: Unencrypted Protected Health Information (PHI) at Rest
-    if ((/(?:medical_record|diagnosis|patient_health_record)/i.test(cleanContent))) {
-        const matchLineIdx = locateMatchLine(lines, [/(?:medical_record|diagnosis|patient_health_record)/i], l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('*'));
-        const lineNum = matchLineIdx !== -1 ? matchLineIdx + 1 : 1;
-        findings.push({
-            id: `hipaa9801-${Date.now()}-${findingCounter.count++}`,
-            ruleId: 9801,
-            type: 'LEGAL_COMPLIANCE',
-            title: "HIPAA-01: Unencrypted Protected Health Information (PHI) at Rest",
-            severity: "CRITICAL",
-            category: "PHI Storage",
-            filePath: file.path,
-            lineRange: `L${lineNum}`,
-            snippet: lines[matchLineIdx] || 'Healthcare data operation',
-            reproductionSteps: [
-                `Audited healthcare data flow in ${file.path}:${lineNum}.`,
-                'Detected HIPAA compliance violation matching HIPAA-01.'
-            ],
-            remediationPrompt: "Enable column-level encryption or transparent data encryption on all patient medical record stores.",
-            status: 'OPEN',
-            falsePositive: false
-        });
-        logs.push(`[${ts}] [HIPAA AUDIT] Found HIPAA-01: Unencrypted Protected Health Information (PHI) at Rest at ${file.path}:${lineNum}`);
-    }
     // HIPAA-02: PHI Exposed in URL Query Parameters / Referral Headers
     if ((/fetch\s*\([`'"].*?[?&](?:mrn|diagnosis|ssn|patient_id)=\$\{/i.test(cleanContent))) {
         const matchLineIdx = locateMatchLine(lines, [/fetch\s*\([`'"].*?[?&](?:mrn|diagnosis|ssn|patient_id)=\$\{/i], l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('*'));
@@ -70,30 +46,6 @@ export function evaluateHipaaComplianceRules(file: CodeFile, lines: string[], cl
             falsePositive: false
         });
         logs.push(`[${ts}] [HIPAA AUDIT] Found HIPAA-02: PHI Exposed in URL Query Parameters / Referral Headers at ${file.path}:${lineNum}`);
-    }
-    // HIPAA-03: Missing Audit Trail for PHI Record Access and Modification
-    if ((/(?:patient|medicalRecord|ehr|phi)\.(?:find|query|select)/i.test(cleanContent) && !/auditLog|auditTrail|recordAccess/i.test(cleanContent))) {
-        const matchLineIdx = locateMatchLine(lines, [/(?:patient|medicalRecord|ehr|phi)\.(?:find|query|select)/i], l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('*'));
-        const lineNum = matchLineIdx !== -1 ? matchLineIdx + 1 : 1;
-        findings.push({
-            id: `hipaa9803-${Date.now()}-${findingCounter.count++}`,
-            ruleId: 9803,
-            type: 'LEGAL_COMPLIANCE',
-            title: "HIPAA-03: Missing Audit Trail for PHI Record Access and Modification",
-            severity: "HIGH",
-            category: "Access Logging",
-            filePath: file.path,
-            lineRange: `L${lineNum}`,
-            snippet: lines[matchLineIdx] || 'Healthcare data operation',
-            reproductionSteps: [
-                `Audited healthcare data flow in ${file.path}:${lineNum}.`,
-                'Detected HIPAA compliance violation matching HIPAA-03.'
-            ],
-            remediationPrompt: "Record an immutable audit log entry whenever patient medical records are queried or updated.",
-            status: 'OPEN',
-            falsePositive: false
-        });
-        logs.push(`[${ts}] [HIPAA AUDIT] Found HIPAA-03: Missing Audit Trail for PHI Record Access and Modification at ${file.path}:${lineNum}`);
     }
     // HIPAA-04: Third-Party Analytics Tracking Pixels on Health Portal
     if ((/fbq\s*\(\s*['"]track['"]/i.test(cleanContent))) {
@@ -120,8 +72,16 @@ export function evaluateHipaaComplianceRules(file: CodeFile, lines: string[], cl
         logs.push(`[${ts}] [HIPAA AUDIT] Found HIPAA-04: Third-Party Analytics Tracking Pixels on Health Portal at ${file.path}:${lineNum}`);
     }
     // HIPAA-05: Automated Session Timeout Missing on Clinical Terminal
-    if ((/session\.(?:maxAge|timeout)/i.test(cleanContent) && /(?:Infinity|null|undefined|86400000)/.test(cleanContent))) {
-        const matchLineIdx = locateMatchLine(lines, [/session\.(?:maxAge|timeout)/i, /(?:Infinity|null|undefined|86400000)/], l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('*'));
+    const r9805Idx = !/\bsession\b|cookie/i.test(cleanContent) ? -1 : lines.findIndex(l => {
+        // cookie / session lifetime of a day or more (ms), or never expiring
+        const m = l.match(/\bmaxAge\s*:\s*(Infinity|null|\d[\d_\s*]*)\s*[,}]?\s*$/);
+        if (!m) return false;
+        if (/Infinity|null/.test(m[1])) return true;
+        const value = m[1].split('*').reduce((acc, part) => acc * Number(part.replace(/[_\s]/g, '') || 1), 1);
+        return value >= 86400000;
+    });
+    if (r9805Idx !== -1) {
+        const matchLineIdx = r9805Idx;
         const lineNum = matchLineIdx !== -1 ? matchLineIdx + 1 : 1;
         findings.push({
             id: `hipaa9805-${Date.now()}-${findingCounter.count++}`,

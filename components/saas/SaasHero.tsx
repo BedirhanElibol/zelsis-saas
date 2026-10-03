@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState } from 'react';
-import { motion } from 'framer-motion';
+import { m } from 'framer-motion';
 import { 
   ShieldCheck, 
   ArrowRight, 
@@ -12,11 +12,11 @@ import {
   Lock,
   Loader2
 } from 'lucide-react';
-import Image from 'next/image';
 import { useRouter } from 'next/navigation';
 import { normalizeRepoUrl } from '@/lib/github-api';
 import { ScanPreviewCard, ScanPreviewResult } from '@/components/saas/ScanPreviewCard';
 import benchmark from '@/data/benchmark-summary.generated.json';
+import { HeroGateMock } from './HeroGateMock';
 
 interface SaasHeroProps {
   onOpenDashboard?: (repoUrl?: string) => void;
@@ -87,31 +87,16 @@ export const SaasHero: React.FC<SaasHeroProps> = ({ onOpenDashboard }) => {
   return (
     <section className="relative min-h-[90vh] flex flex-col justify-start pt-28 sm:pt-36 pb-20 px-4 sm:px-6 lg:px-12 bg-[#0A0A0A] border-b border-white/10">
       <div className="relative z-10 max-w-6xl mx-auto w-full flex flex-col items-center text-center">
-        <motion.h1
-          initial={{ opacity: 0, y: 12 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.5, delay: 0.1 }}
-          className="text-4xl sm:text-6xl lg:text-7xl font-extrabold text-[#EDEDED] tracking-tight leading-[1.06] max-w-5xl mb-6"
-        >
-          Find the security holes in your app <br className="hidden sm:inline" />
-          <span className="text-white">before your users do.</span>
-        </motion.h1>
-        <motion.p
-          initial={{ opacity: 0, y: 12 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.5, delay: 0.15 }}
-          className="text-base sm:text-lg lg:text-xl text-[#A1A1AA] max-w-3xl mx-auto leading-relaxed mt-6 mb-10 font-sans font-normal"
-        >
+        {/* Plain elements: the headline is the LCP, so it must not wait for hydration to fade in */}
+        <h1 className="text-4xl sm:text-6xl lg:text-7xl font-extrabold text-[#EDEDED] tracking-tight leading-[1.06] max-w-4xl mb-6 [text-wrap:balance]">
+          Find the security holes in your app <span className="text-emerald-400">before your users do.</span>
+        </h1>
+        <p className="text-base sm:text-lg lg:text-xl text-[#A1A1AA] max-w-3xl mx-auto leading-relaxed mt-6 mb-10 font-sans font-normal">
           Zelsis scans your repository for leaked secrets, open Supabase RLS policies, injection, broken auth and vulnerable dependencies, then fails the release when something critical slips in. Paste a public repo and see the results in seconds.
-        </motion.p>
+        </p>
 
         {/* Direct Repository Scan Command Bar */}
-        <motion.div
-          initial={{ opacity: 0, y: 15 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.5, delay: 0.2 }}
-          className="w-full max-w-2xl mb-6"
-        >
+        <div className="w-full max-w-2xl mb-6">
           <form 
             onSubmit={handleStartScan}
             className="flex flex-col sm:flex-row items-stretch gap-2 p-1.5 rounded-xl bg-[#141414] border border-white/10 shadow-2xl focus-within:border-white/30 transition-all"
@@ -126,14 +111,14 @@ export const SaasHero: React.FC<SaasHeroProps> = ({ onOpenDashboard }) => {
                 value={repoInput}
                 onChange={(e) => setRepoInput(e.target.value)}
                 placeholder="owner/repository or public git URL"
-                className="w-full bg-transparent text-xs font-mono text-[#EDEDED] placeholder-zinc-500 focus:outline-none focus-visible:ring-1 focus-visible:ring-white/20 rounded px-1"
+                className="w-full bg-transparent text-sm font-mono text-[#EDEDED] placeholder-zinc-400 focus:outline-none focus-visible:ring-2 focus-visible:ring-white/70 rounded px-1"
                 aria-label="GitHub Repository to Scan"
               />
             </div>
             <button
               type="submit"
               disabled={isScanning}
-              className="px-5 py-2.5 rounded-lg text-xs font-bold font-mono uppercase tracking-wider bg-white text-black hover:bg-neutral-200 transition-all flex items-center justify-center gap-2 shrink-0 shadow-sm active:scale-[0.98] disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer"
+              className="px-5 min-h-11 rounded-lg text-xs font-bold font-mono uppercase tracking-wider bg-emerald-500 text-black hover:bg-emerald-400 transition-all flex items-center justify-center gap-2 shrink-0 shadow-sm active:scale-[0.98] disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer"
             >
               {isScanning ? <Loader2 size={13} className="animate-spin" /> : null}
               <span>{isScanning ? 'Scanning…' : 'Scan Repository'}</span>
@@ -143,14 +128,15 @@ export const SaasHero: React.FC<SaasHeroProps> = ({ onOpenDashboard }) => {
 
           {/* Minimal 1-Click Preset Chips */}
           <div className="flex flex-wrap items-center justify-center gap-2 mt-3.5 text-xs">
-            <span className="text-zinc-400 text-[11px] font-mono uppercase tracking-wider">Presets:</span>
+            <span className="text-zinc-400 text-xs font-mono uppercase tracking-wider">Try:</span>
             {sampleRepos.map((r) => (
               <button
                 key={r.value}
                 type="button"
                 onClick={() => handleSelectAndScan(r.value)}
                 title={`Run instant audit on ${r.value}`}
-                className={`text-[11px] font-mono px-2.5 py-1 rounded-md border transition-all cursor-pointer flex items-center gap-1.5 ${
+                aria-pressed={repoInput === r.value}
+                className={`text-xs font-mono px-3 min-h-11 sm:min-h-9 rounded-md border transition-all cursor-pointer flex items-center gap-1.5 ${
                   repoInput === r.value
                     ? 'border-white/40 bg-white/10 text-white'
                     : 'border-white/10 bg-[#121212] text-zinc-400 hover:text-white hover:border-white/25'
@@ -164,12 +150,12 @@ export const SaasHero: React.FC<SaasHeroProps> = ({ onOpenDashboard }) => {
           {previewError && (
             <p role="alert" className="mt-3 text-xs font-mono text-red-400">{previewError}</p>
           )}
-        </motion.div>
+        </div>
 
         {preview && <ScanPreviewCard result={preview} onUnlock={handleUnlockFullReport} />}
 
         {/* Minimal Engineering Telemetry Ribbon */}
-        <motion.div
+        <m.div
           initial={{ opacity: 0, y: 15 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.5, delay: 0.25 }}
@@ -177,7 +163,7 @@ export const SaasHero: React.FC<SaasHeroProps> = ({ onOpenDashboard }) => {
         >
           <div className="flex items-center gap-2">
             <span className="w-1.5 h-1.5 rounded-full bg-white/40" />
-            <span>Source code never stored</span>
+            <span>Repo never stored, only findings</span>
           </div>
           <div className="flex items-center gap-2">
             <span className="w-1.5 h-1.5 rounded-full bg-white/40" />
@@ -187,10 +173,10 @@ export const SaasHero: React.FC<SaasHeroProps> = ({ onOpenDashboard }) => {
             <span className="w-1.5 h-1.5 rounded-full bg-white/40" />
             <span>Free for public repos</span>
           </div>
-        </motion.div>
+        </m.div>
 
         {/* Hero Showcase: Clean Industrial Application Preview Frame */}
-        <motion.div
+        <m.div
           initial={{ opacity: 0, y: 25 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.7, delay: 0.3 }}
@@ -198,20 +184,20 @@ export const SaasHero: React.FC<SaasHeroProps> = ({ onOpenDashboard }) => {
         >
           {/* Browser Window Chrome Header */}
           <div className="flex items-center justify-between px-4 py-2.5 bg-[#0E0E10] border-b border-white/10">
-            <div className="flex items-center gap-2">
+            <div className="flex items-center gap-2 min-w-0 flex-1">
               <span className="w-2.5 h-2.5 rounded-full bg-white/20" />
               <span className="w-2.5 h-2.5 rounded-full bg-white/20" />
               <span className="w-2.5 h-2.5 rounded-full bg-white/20" />
-              <div className="ml-3 px-3 py-1 rounded bg-white/[0.04] border border-white/5 text-[11px] font-mono text-zinc-400 flex items-center gap-1.5">
-                <Lock size={10} className="text-zinc-400" />
-                <span>zelsis.com/dashboard/eval/production-gate</span>
+              <div className="ml-3 px-3 py-1 rounded bg-white/[0.04] border border-white/5 text-xs font-mono text-zinc-400 flex items-center gap-1.5 min-w-0">
+                <Lock size={10} className="text-zinc-400 shrink-0" />
+                <span className="truncate">zelsis.com/dashboard</span>
               </div>
             </div>
 
-            <div className="flex items-center gap-3">
-              <span className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded text-[10px] font-mono font-medium uppercase bg-white/[0.04] text-zinc-300 border border-white/10">
-                <span className="w-1.5 h-1.5 rounded-full bg-emerald-500" />
-                Gate Status: PASSED (94/100)
+            <div className="hidden sm:flex items-center gap-3 shrink-0">
+              <span className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded text-xs font-mono font-medium uppercase bg-white/[0.04] text-zinc-300 border border-white/10">
+                <span className="w-1.5 h-1.5 rounded-full bg-red-500" />
+                Example scan
               </span>
               <button
                 onClick={() => {
@@ -226,35 +212,20 @@ export const SaasHero: React.FC<SaasHeroProps> = ({ onOpenDashboard }) => {
             </div>
           </div>
 
-          {/* Screenshot Container */}
-          <div className="relative aspect-[16/10] sm:aspect-[16/9] w-full bg-[#0A0A0A] overflow-hidden">
-            <Image
-              src="/images/dashboard_overview.png"
-              alt="Zelsis Production Readiness and Security Dashboard Overview"
-              fill
-              priority
-              sizes="(max-width: 1200px) 100vw, 1200px"
-              className="object-cover object-top"
-            />
-          </div>
+          {/* Example result: a failing gate with findings */}
+          <HeroGateMock />
 
           {/* Footer Ribbon inside Frame */}
-          <div className="px-5 py-2.5 bg-[#0E0E10] border-t border-white/10 flex flex-wrap items-center justify-between gap-3 text-xs font-mono text-zinc-400">
-            <div className="flex items-center gap-4">
-              <span>Engine: <strong className="text-zinc-200 font-mono">Lexical &amp; Static Analysis</strong></span>
-              <span>Memory: <strong className="text-zinc-200 font-mono">Ephemeral Buffer</strong></span>
-              <span>Compliance: <strong className="text-zinc-200 font-mono">OWASP &amp; WCAG 2.2</strong></span>
-            </div>
-            <div className="flex items-center gap-2 text-zinc-400 text-[11px]">
-              <span>Industrial Deployment Readiness Gate</span>
-            </div>
+          <div className="hidden sm:flex px-5 py-2.5 bg-[#0E0E10] border-t border-white/10 flex-wrap items-center gap-x-6 gap-y-1 text-xs font-mono text-zinc-400">
+            <span>Engine: <strong className="text-zinc-200 font-mono">pattern-based static analysis</strong></span>
+            <span>Coverage: <strong className="text-zinc-200 font-mono">OWASP Top 10, secrets, RLS, dependencies</strong></span>
           </div>
-        </motion.div>
+        </m.div>
 
         {/* Supported Stacks Band */}
         <div className="w-full mt-16 pt-8 border-t border-white/10 flex flex-col items-center gap-4">
           <span className="text-xs font-mono uppercase tracking-widest text-zinc-400">
-            Calibrated for Enterprise Production Stacks
+            Works with
           </span>
           <div className="flex flex-wrap items-center justify-center gap-6 sm:gap-8 text-xs font-mono text-zinc-400">
             <span className="hover:text-white transition-colors">Next.js 15 (App Router)</span>

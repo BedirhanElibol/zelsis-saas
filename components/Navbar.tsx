@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
+import { m, AnimatePresence } from 'framer-motion';
 import { Menu, X, ArrowUpRight } from 'lucide-react';
 import { ZelsisLogo } from '@/components/ui/ZelsisLogo';
 import { UserProfile } from '@/components/auth/AuthModal';
@@ -76,11 +76,21 @@ export const Navbar: React.FC<NavbarProps> = ({ onToggleDashboard, showDashboard
     };
   }, [mobileMenuOpen]);
 
+  // On the landing page the hero already has the scan box; elsewhere fall back to the dashboard
+  const focusHeroScan = () => {
+    const input = document.getElementById('hero-repo-input');
+    if (input) {
+      input.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      (input as HTMLInputElement).focus({ preventScroll: true });
+    } else {
+      window.location.href = '/dashboard';
+    }
+  };
+
   const navLinks = [
+    { label: 'How it works', href: '#workflow' },
     { label: 'Features', href: '#features' },
     { label: 'Benchmark', href: '#benchmark' },
-    { label: 'Workflow', href: '#workflow' },
-    { label: 'Comparison', href: '#comparison' },
     { label: 'Pricing', href: '#pricing' },
     { label: 'FAQ', href: '#faq' },
   ];
@@ -135,7 +145,7 @@ export const Navbar: React.FC<NavbarProps> = ({ onToggleDashboard, showDashboard
 
                 <button
                   onClick={() => { window.location.href = '/dashboard'; }}
-                  className="px-3.5 py-1.5 rounded-md text-xs font-bold tracking-wider uppercase bg-white text-black hover:bg-neutral-200 transition-all flex items-center gap-1 shadow-sm cursor-pointer"
+                  className="px-3.5 py-1.5 rounded-md text-xs font-bold tracking-wider uppercase bg-emerald-500 text-black hover:bg-emerald-400 transition-all flex items-center gap-1 shadow-sm cursor-pointer"
                 >
                   <span>Dashboard</span>
                   <ArrowUpRight size={13} />
@@ -151,8 +161,8 @@ export const Navbar: React.FC<NavbarProps> = ({ onToggleDashboard, showDashboard
                 </a>
 
                 <button
-                  onClick={() => { window.location.href = '/dashboard'; }}
-                  className="px-3.5 py-1.5 rounded-md text-xs font-bold tracking-wider uppercase bg-white text-black hover:bg-neutral-200 transition-all flex items-center gap-1 shadow-sm cursor-pointer"
+                  onClick={focusHeroScan}
+                  className="px-3.5 py-1.5 rounded-md text-xs font-bold tracking-wider uppercase bg-emerald-500 text-black hover:bg-emerald-400 transition-all flex items-center gap-1 shadow-sm cursor-pointer"
                 >
                   <span>Scan Repo</span>
                   <ArrowUpRight size={13} />
@@ -175,7 +185,7 @@ export const Navbar: React.FC<NavbarProps> = ({ onToggleDashboard, showDashboard
       {/* Mobile Menu Overlay */}
       <AnimatePresence>
         {mobileMenuOpen && (
-          <motion.div
+          <m.div
             initial={{ opacity: 0, y: -20 }}
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: -20 }}
@@ -184,7 +194,7 @@ export const Navbar: React.FC<NavbarProps> = ({ onToggleDashboard, showDashboard
           >
             <nav className="flex flex-col gap-6">
               {navLinks.map((link, idx) => (
-                <motion.a
+                <m.a
                   key={link.label}
                   href={link.href}
                   onClick={() => setMobileMenuOpen(false)}
@@ -194,7 +204,7 @@ export const Navbar: React.FC<NavbarProps> = ({ onToggleDashboard, showDashboard
                   className="text-3xl font-extrabold text-[#F5F3EF] hover:text-white tracking-wider transition-colors"
                 >
                   {link.label}
-                </motion.a>
+                </m.a>
               ))}
             </nav>
 
@@ -236,7 +246,7 @@ export const Navbar: React.FC<NavbarProps> = ({ onToggleDashboard, showDashboard
                   <button
                     onClick={() => {
                       setMobileMenuOpen(false);
-                      window.location.href = '/dashboard';
+                      focusHeroScan();
                     }}
                     className="btn btn-primary w-full uppercase tracking-widest text-xs py-3 flex items-center justify-center gap-2"
                   >
@@ -246,7 +256,7 @@ export const Navbar: React.FC<NavbarProps> = ({ onToggleDashboard, showDashboard
                 </>
               )}
             </div>
-          </motion.div>
+          </m.div>
         )}
       </AnimatePresence>
     </>

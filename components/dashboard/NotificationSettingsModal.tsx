@@ -119,10 +119,12 @@ export const NotificationSettingsModal: React.FC<NotificationSettingsModalProps>
             </div>
 
             <button
+              type="button"
+              aria-label="Close"
               onClick={onClose}
               className="p-1.5 rounded-lg bg-white/5 hover:bg-white/10 text-gray-400 hover:text-white transition-colors"
             >
-              <X size={18} />
+              <X size={18} aria-hidden="true" />
             </button>
           </div>
 
@@ -193,7 +195,7 @@ export const NotificationSettingsModal: React.FC<NotificationSettingsModalProps>
                 Cancel
               </button>
               <button
-                className="btn btn-primary text-xs px-5 py-2 font-bold uppercase tracking-wider rounded-lg bg-white text-black hover:bg-neutral-200 transition-all shadow-sm"
+                className="btn btn-primary text-xs px-5 py-2 font-bold uppercase tracking-wider rounded-lg bg-emerald-500 text-black hover:bg-emerald-400 transition-all shadow-sm"
                 onClick={() => {
                   if (typeof window !== 'undefined') {
                     localStorage.setItem(storageKey, JSON.stringify({ slackUrl, discordUrl }));

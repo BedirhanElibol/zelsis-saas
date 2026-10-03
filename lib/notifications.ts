@@ -1,4 +1,5 @@
 import { ScanResult } from './scanner-engine';
+import { getConfiguredAppUrl } from './app-url';
 
 export interface WebhookAlertConfig {
   slackWebhookUrl?: string;
@@ -83,7 +84,7 @@ export async function dispatchWebhookAlerts(
     try {
       const discordPayload = {
         username: 'Zelsis Release Gate Bot',
-        avatar_url: 'https://zelsis.com/zelsis-logo.svg',
+        avatar_url: `${getConfiguredAppUrl()}/zelsis-logo.svg`,
         embeds: [
           {
             title: `${statusEmoji} Release Gate Audit: ${projectName} (${result.gateStatus})`,

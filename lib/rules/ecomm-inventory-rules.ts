@@ -4,7 +4,6 @@
  */
 import { Finding } from "@/data/schema";
 import { CodeFile } from "../scanner-engine";
-import { locateMatchLine } from './shared/locate';
 export interface EcommInventoryRuleResult {
     findings: Finding[];
     logs: string[];
@@ -21,8 +20,13 @@ export function evaluateEcommInventoryRules(file: CodeFile, lines: string[], cle
     }
     const ts = new Date().toLocaleTimeString();
     // ECOMM-01: Inventory Overselling Race Condition (Missing Row-Level Lock)
-    if ((/stock\s*=\s*stock\s*-\s*1/i.test(cleanContent) && !/FOR\s+UPDATE|atomic/i.test(cleanContent))) {
-        const matchLineIdx = locateMatchLine(lines, [/stock\s*=\s*stock\s*-\s*1/i], l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('*'));
+    const r10101Idx = lines.findIndex(l =>
+        // read-modify-write of stock in application code (lost update under concurrency). The SQL form
+        // `SET stock = stock - 1` and Prisma `{ decrement: n }` are atomic and are NOT matched.
+        /\bstock\s*:\s*[\w$.]+\.stock\s*-\s*[\w$.]+/.test(l) ||
+        /\b([\w$]+)\.stock\s*(?:-=\s*[\w$.]+|=\s*\1\.stock\s*-\s*[\w$.]+)/.test(l));
+    if (r10101Idx !== -1) {
+        const matchLineIdx = r10101Idx;
         const lineNum = matchLineIdx !== -1 ? matchLineIdx + 1 : 1;
         findings.push({
             id: `ecomm10101-${Date.now()}-${findingCounter.count++}`,
@@ -45,8 +49,11 @@ export function evaluateEcommInventoryRules(file: CodeFile, lines: string[], cle
         logs.push(`[${ts}] [ECOMM AUDIT] Found ECOMM-01: Inventory Overselling Race Condition (Missing Row-Level Lock) at ${file.path}:${lineNum}`);
     }
     // ECOMM-02: Client-Supplied Price / Discount Tampering Vulnerability
-    if ((/total\s*\+?=\s*(?:req\.body|item)\.price/i.test(cleanContent))) {
-        const matchLineIdx = locateMatchLine(lines, [/total\s*\+?=\s*(?:req\.body|item)\.price/i], l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('*'));
+    const r10102Idx = lines.findIndex(l =>
+        // money amount taken straight from the request body instead of the server-side catalog
+        /(?:\btotal\s*\+?=|\bamount\s*:|\bunit_amount\s*:|\bprice\s*:)[^;\n]*\b(?:req\.body|body|input|payload)\.(?:items\[[^\]]*\]\.)?(?:price|amount|total|unitPrice|unit_amount)\b/.test(l));
+    if (r10102Idx !== -1) {
+        const matchLineIdx = r10102Idx;
         const lineNum = matchLineIdx !== -1 ? matchLineIdx + 1 : 1;
         findings.push({
             id: `ecomm10102-${Date.now()}-${findingCounter.count++}`,
@@ -68,40 +75,18 @@ export function evaluateEcommInventoryRules(file: CodeFile, lines: string[], cle
         });
         logs.push(`[${ts}] [ECOMM AUDIT] Found ECOMM-02: Client-Supplied Price / Discount Tampering Vulnerability at ${file.path}:${lineNum}`);
     }
-    // ECOMM-03: Coupon Code Re-entrancy / Parallel Redemption Exploit
-    if ((/applyCoupon|redeemDiscount/i.test(cleanContent) && !/transaction|forUpdate|lock|mutex/i.test(cleanContent))) {
-        const matchLineIdx = locateMatchLine(lines, [/applyCoupon|redeemDiscount/i], l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('*'));
-        const lineNum = matchLineIdx !== -1 ? matchLineIdx + 1 : 1;
-        findings.push({
-            id: `ecomm10103-${Date.now()}-${findingCounter.count++}`,
-            ruleId: 10103,
-            type: 'SECURITY',
-            title: "ECOMM-03: Coupon Code Re-entrancy / Parallel Redemption Exploit",
-            severity: "HIGH",
-            category: "Coupon Fraud",
-            filePath: file.path,
-            lineRange: `L${lineNum}`,
-            snippet: lines[matchLineIdx] || 'eCommerce shopping transaction line',
-            reproductionSteps: [
-                `Audited eCommerce transaction flow in ${file.path}:${lineNum}.`,
-                'Detected eCommerce integrity violation matching ECOMM-03.'
-            ],
-            remediationPrompt: "Acquire distributed lock on coupon code during checkout transaction to prevent race-condition reuse.",
-            status: 'OPEN',
-            falsePositive: false
-        });
-        logs.push(`[${ts}] [ECOMM AUDIT] Found ECOMM-03: Coupon Code Re-entrancy / Parallel Redemption Exploit at ${file.path}:${lineNum}`);
-    }
     // ECOMM-04: Negative Quantity Shopping Cart Exploit (Price Inversion)
-    if ((/quantity\s*:\s*(?:req\.body|body)\.quantity/.test(cleanContent) && !/quantity\s*>\s*0|Math\.max/i.test(cleanContent))) {
-        const matchLineIdx = locateMatchLine(lines, [/quantity\s*:\s*(?:req\.body|body)\.quantity/], l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('*'));
+    const r10104Idx = /\.(?:positive|nonnegative)\(\)|\.min\(\s*1\s*\)|quantity\s*(?:<=?|>=?)\s*[01]\b|Math\.max\(|Number\.isInteger\(\s*(?:req\.body|body)\.quantity/.test(cleanContent) ? -1
+        : lines.findIndex(l => /\bquantity\s*:\s*(?:Number\(\s*|parseInt\(\s*)?(?:req\.body|body)\.quantity\b/.test(l));
+    if (r10104Idx !== -1) {
+        const matchLineIdx = r10104Idx;
         const lineNum = matchLineIdx !== -1 ? matchLineIdx + 1 : 1;
         findings.push({
             id: `ecomm10104-${Date.now()}-${findingCounter.count++}`,
             ruleId: 10104,
             type: 'SECURITY',
             title: "ECOMM-04: Negative Quantity Shopping Cart Exploit (Price Inversion)",
-            severity: "CRITICAL",
+            severity: "HIGH",
             category: "Input Validation",
             filePath: file.path,
             lineRange: `L${lineNum}`,
@@ -117,8 +102,9 @@ export function evaluateEcommInventoryRules(file: CodeFile, lines: string[], cle
         logs.push(`[${ts}] [ECOMM AUDIT] Found ECOMM-04: Negative Quantity Shopping Cart Exploit (Price Inversion) at ${file.path}:${lineNum}`);
     }
     // ECOMM-05: Shopping Cart Session Hijacking via Predictable Cart ID
-    if ((/cartId\s*=\s*(?:Date\.now\(\)|Math\.random\(\))/.test(cleanContent))) {
-        const matchLineIdx = locateMatchLine(lines, [/cartId\s*=\s*(?:Date\.now\(\)|Math\.random\(\))/], l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('*'));
+    const r10105Idx = lines.findIndex(l => /\bcart_?Id\s*=\s*(?:String\(\s*)?(?:Date\.now\(\)|Math\.random\(\))/i.test(l));
+    if (r10105Idx !== -1) {
+        const matchLineIdx = r10105Idx;
         const lineNum = matchLineIdx !== -1 ? matchLineIdx + 1 : 1;
         findings.push({
             id: `ecomm10105-${Date.now()}-${findingCounter.count++}`,

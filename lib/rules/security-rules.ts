@@ -119,120 +119,76 @@ export function evaluateSecurityRules(file: CodeFile, lines: string[], cleanCont
         });
         logs.push(`[${ts}] ⚠️ HIGH: SEC-16 Unsanitized innerHTML in ${file.path}:${lineNum}`);
     }
-    // Rule 20 / SEC-20 (SEC-SCA-01): Vulnerable Dependency & Wildcard Version
+    // Rule 20 / SEC-20 (SEC-SCA-01): Dependency pinned to a version range that cannot reach the patched release.
+    // A caret / tilde range that still allows the fixed version installs it on a fresh lockfile, so only exact pins
+    // and ranges capped below the fix are reported. Wildcards ("*" is how npm workspaces reference local packages),
+    // deprecation (moment) and peerDependencies (compatibility ranges, not installs) are out of scope.
     if (lowerPath.endsWith('package.json')) {
-        const KNOWN_VULNERABLE_PACKAGES: Record<string, {
-            minSafe: string;
-            reason: string;
-        }> = {
-            lodash: {
-                minSafe: '4.17.21',
-                reason: 'Prototype pollution & command injection vulnerabilities (CVE-2020-8203, CVE-2021-23337)'
-            },
-            axios: {
-                minSafe: '1.7.4',
-                reason: 'Server-Side Request Forgery (SSRF) and header injection vulnerabilities (CVE-2023-45857, CVE-2024-39338)'
-            },
-            moment: {
-                minSafe: 'DEPRECATED',
-                reason: 'Deprecated library with known Regular Expression Denial of Service (ReDoS) issues and high bundle size'
-            },
-            minimist: {
-                minSafe: '1.2.6',
-                reason: 'Prototype pollution vulnerability (CVE-2021-44906)'
-            },
-            jsonwebtoken: {
-                minSafe: '9.0.0',
-                reason: 'Key confusion and signature verification bypass vulnerabilities'
-            },
-            express: {
-                minSafe: '4.19.2',
-                reason: 'Open redirect and IP spoofing vulnerabilities (CVE-2024-29041)'
-            }
+        // Per release line: the first patched version of each major
+        const KNOWN_VULNERABLE_PACKAGES: Record<string, { fixed: Record<string, string>; reason: string }> = {
+            lodash: { fixed: { '4': '4.17.21' }, reason: 'prototype pollution and command injection in template (CVE-2020-8203, CVE-2021-23337)' },
+            axios: { fixed: { '0': '0.28.0', '1': '1.7.4' }, reason: 'CSRF token leak to third-party hosts (CVE-2023-45857) and SSRF via path-relative URLs (CVE-2024-39338)' },
+            minimist: { fixed: { '0': '0.2.4', '1': '1.2.6' }, reason: 'prototype pollution (CVE-2021-44906)' },
+            jsonwebtoken: { fixed: { '8': '9.0.0' }, reason: 'insecure key / algorithm handling allowing signature bypass (CVE-2022-23529, CVE-2022-23540, CVE-2022-23541)' },
+            express: { fixed: { '4': '4.19.2' }, reason: 'open redirect in res.location / res.redirect (CVE-2024-29041)' }
         };
-        const isVersionLessThan = (actual: string, minSafe: string): boolean => {
-            const cleanActual = actual.replace(/^[^\d]*/, '').split('-')[0].trim();
-            const cleanMinSafe = minSafe.replace(/^[^\d]*/, '').split('-')[0].trim();
-            if (!cleanActual || !cleanMinSafe)
-                return false;
-            const actualParts = cleanActual.split('.').map((p) => parseInt(p, 10) || 0);
-            const minSafeParts = cleanMinSafe.split('.').map((p) => parseInt(p, 10) || 0);
-            for (let i = 0; i < 3; i++) {
-                const a = actualParts[i] ?? 0;
-                const m = minSafeParts[i] ?? 0;
-                if (a < m)
-                    return true;
-                if (a > m)
-                    return false;
-            }
-            return false;
+        const parseVer = (v: string): number[] | null => {
+            const m = /^(\d+)\.(\d+)\.(\d+)/.exec(v);
+            return m ? [Number(m[1]), Number(m[2]), Number(m[3])] : null;
         };
-        const processDep = (depName: string, version: string) => {
-            const v = String(version).trim();
-            const isWildcard = v === '*' || v === 'latest' || v === 'x' || v === '' || v.startsWith('>=0.');
-            const vulnDef = KNOWN_VULNERABLE_PACKAGES[depName.toLowerCase()];
-            const isDeprecated = vulnDef?.minSafe === 'DEPRECATED';
-            const isOutdated = vulnDef && !isDeprecated && isVersionLessThan(v, vulnDef.minSafe);
-            if (isWildcard || isDeprecated || isOutdated) {
-                const matchLineIdx = lines.findIndex((l) => l.includes(`"${depName}"`));
-                const lineNum = matchLineIdx !== -1 ? matchLineIdx + 1 : 1;
-                const snippet = lines.slice(Math.max(0, lineNum - 2), Math.min(lines.length, lineNum + 2)).join('\n');
-                let issueDescription = '';
-                let remediation = '';
-                if (isWildcard) {
-                    issueDescription = `Detected unpinned wildcard version "${v}" for package "${depName}". Wildcard dependencies create non-deterministic builds and supply chain injection risks.`;
-                    remediation = `Pin exact dependency version in ${file.path} for "${depName}". Replace "${v}" with a safe pinned semver release (e.g. "^1.0.0").`;
-                }
-                else if (isDeprecated) {
-                    issueDescription = `Detected package "${depName}" (${v}) is deprecated: ${vulnDef?.reason}.`;
-                    remediation = `Replace deprecated "${depName}" in ${file.path} with a modern maintained alternative such as "date-fns" or "dayjs".`;
-                }
-                else if (isOutdated && vulnDef) {
-                    issueDescription = `Detected dependency "${depName}": "${v}" with published security CVE vulnerability advisory (${vulnDef.reason}). Minimum safe version is >= ${vulnDef.minSafe}.`;
-                    remediation = `Upgrade "${depName}" from ${v} to >= ${vulnDef.minSafe} in ${file.path} to resolve published CVE vulnerabilities.`;
-                }
-                findings.push({
-                    id: `real-find-${Date.now()}-${findingCounter.count++}`,
-                    ruleId: 20,
-                    type: 'SECURITY',
-                    title: 'Vulnerable Dependency or Wildcard Version in package.json',
-                    severity: 'HIGH',
-                    category: 'Supply Chain & Deps',
-                    filePath: file.path,
-                    lineRange: `L${lineNum}`,
-                    snippet: snippet || `"${depName}": "${version}"`,
-                    reproductionSteps: [
-                        `Scanned package manifest at ${file.path}:${lineNum}.`,
-                        issueDescription
-                    ],
-                    remediationPrompt: remediation,
-                    status: 'OPEN',
-                    owner: 'DevOps & Security Lead',
-                    falsePositive: false
-                });
-                logs.push(`[${ts}] 📦 HIGH: SEC-20 ${depName}@${version} in ${file.path}:${lineNum}`);
-            }
+        const lessThan = (a: number[], b: number[]) => a[0] !== b[0] ? a[0] < b[0] : a[1] !== b[1] ? a[1] < b[1] : a[2] < b[2];
+        /** The patched version this spec can never resolve to, or null when it can (or the spec is not understood). */
+        const unreachableFix = (spec: string, fixed: Record<string, string>): string | null => {
+            const m = /^\s*(\^|~|=|v)?\s*(\d+\.\d+\.\d+)(?:-[\w.]+)?\s*$/.exec(spec);
+            if (!m) return null;
+            const op = m[1] === '^' || m[1] === '~' ? m[1] : '';
+            const v = parseVer(m[2])!;
+            const lowestMajor = Math.min(...Object.keys(fixed).map(Number));
+            // Release lines older than every listed one are unpatched; newer majors are not affected
+            const fix = fixed[String(v[0])] ?? (v[0] < lowestMajor ? fixed[String(lowestMajor)] : undefined);
+            if (!fix) return null;
+            const f = parseVer(fix)!;
+            if (!lessThan(v, f)) return null;
+            if (op === '^' && v[0] > 0 && f[0] === v[0]) return null;
+            if (op === '^' && v[0] === 0 && f[0] === 0 && f[1] === v[1]) return null;
+            if (op === '~' && f[0] === v[0] && f[1] === v[1]) return null;
+            return fix;
         };
+        let pkg: { dependencies?: Record<string, string>; devDependencies?: Record<string, string> } | null = null;
         try {
-            const pkg = JSON.parse(file.content);
-            const allDeps: Record<string, string> = {
-                ...(pkg.dependencies || {}),
-                ...(pkg.devDependencies || {}),
-                ...(pkg.peerDependencies || {})
-            };
-            for (const [depName, version] of Object.entries(allDeps)) {
-                processDep(depName, version);
-            }
+            pkg = JSON.parse(file.content);
         }
         catch {
-            const depRegex = /"([^"]+)"\s*:\s*"([^"]+)"/g;
-            let match: RegExpExecArray | null;
-            while ((match = depRegex.exec(file.content)) !== null) {
-                const [, depName, version] = match;
-                if (depName && version && (depName.toLowerCase() in KNOWN_VULNERABLE_PACKAGES || version === '*' || version === 'latest')) {
-                    processDep(depName, version);
-                }
-            }
+            pkg = null;
+        }
+        const deps: Record<string, string> = { ...(pkg?.dependencies || {}), ...(pkg?.devDependencies || {}) };
+        for (const [depName, version] of Object.entries(deps)) {
+            const vulnDef = KNOWN_VULNERABLE_PACKAGES[depName.toLowerCase()];
+            const fix = vulnDef && typeof version === 'string' ? unreachableFix(version, vulnDef.fixed) : null;
+            if (!vulnDef || !fix) continue;
+            const matchLineIdx = lines.findIndex((l) => l.includes(`"${depName}"`));
+            const lineNum = matchLineIdx !== -1 ? matchLineIdx + 1 : 1;
+            const snippet = lines.slice(Math.max(0, lineNum - 2), Math.min(lines.length, lineNum + 2)).join('\n');
+            findings.push({
+                id: `real-find-${Date.now()}-${findingCounter.count++}`,
+                ruleId: 20,
+                type: 'SECURITY',
+                title: 'Vulnerable Dependency or Wildcard Version in package.json',
+                severity: 'HIGH',
+                category: 'Supply Chain & Deps',
+                filePath: file.path,
+                lineRange: `L${lineNum}`,
+                snippet: snippet || `"${depName}": "${version}"`,
+                reproductionSteps: [
+                    `Scanned package manifest at ${file.path}:${lineNum}.`,
+                    `"${depName}": "${version}" can never resolve to the patched release ${fix}: ${vulnDef.reason}.`
+                ],
+                remediationPrompt: `Upgrade "${depName}" in ${file.path} to "^${fix}" (or later) and refresh the lockfile.`,
+                status: 'OPEN',
+                owner: 'DevOps & Security Lead',
+                falsePositive: false
+            });
+            logs.push(`[${ts}] 📦 HIGH: SEC-20 ${depName}@${version} in ${file.path}:${lineNum}`);
         }
     }
     // Rule 21 / SEC-21 (SEC-LOG-01): Potential Secret or PII Log Leakage
@@ -454,36 +410,6 @@ export function evaluateSecurityRules(file: CodeFile, lines: string[], cleanCont
             logs.push(`[${ts}] 🛑 CRITICAL: SEC-17 Potential BOLA/IDOR in ${file.path}:${lineNum}`);
         }
     }
-    // Rule 18 / SEC-18: Prompt Injection Risk via Direct User String Interpolation (LLM01)
-    if (isCodeFile) {
-        const promptConcatRegex = /(?:messages:\s*\[[^\]]*(?:content:\s*`[^`]*\$\{(?:req\.body|prompt|userInput|query|text)\b|content:\s*(?:userInput|prompt|text)\s*\+))/i;
-        const promptGuardRegex = /(?:sanitizePrompt|validatePrompt|systemGuard|delimiter|guardrails|zod)/i;
-        if (promptConcatRegex.test(cleanContent) && !promptGuardRegex.test(cleanContent)) {
-            const matchLineIdx = lines.findIndex(l => !l.trim().startsWith('//') && promptConcatRegex.test(l));
-            const lineNum = matchLineIdx !== -1 ? matchLineIdx + 1 : 1;
-            const snippet = lines.slice(Math.max(0, lineNum - 2), Math.min(lines.length, lineNum + 2)).join('\n');
-            findings.push({
-                id: `real-find-${Date.now()}-${findingCounter.count++}`,
-                ruleId: 18,
-                type: 'SECURITY',
-                title: 'Direct User Input Interpolation into LLM Prompt (OWASP LLM01 Prompt Injection)',
-                severity: 'HIGH',
-                category: 'AI & LLM Security',
-                filePath: file.path,
-                lineRange: `L${lineNum}`,
-                snippet: snippet || lines[matchLineIdx] || 'messages: [{ role: "user", content: `User query: ${req.body.query}` }]',
-                reproductionSteps: [
-                    `Scanned LLM message preparation at ${file.path}:${lineNum}.`,
-                    'Detected raw user input template literal interpolation without delimiters, input sanitization, or defensive guardrails.'
-                ],
-                remediationPrompt: `Isolate untrusted user input using XML/triple-quote delimiters and validate inputs with defensive guardrails in ${file.path}:${lineNum}.`,
-                status: 'OPEN',
-                owner: 'AI Security Lead',
-                falsePositive: false
-            });
-            logs.push(`[${ts}] ⚠️ HIGH: SEC-18 Prompt injection risk in ${file.path}:${lineNum}`);
-        }
-    }
     // Rule 19 / SEC-19: Excessive Agency & Unbounded Function Calling (OWASP LLM08)
     if (isCodeFile) {
         const llmToolCallRegex = /(?:tools:\s*\[[^\]]*(?:exec|deleteDatabase|dropTable|eval|sendEmail|transferFunds)\b|autoRun:\s*true)/i;
@@ -516,10 +442,10 @@ export function evaluateSecurityRules(file: CodeFile, lines: string[], cleanCont
     }
     // Rule 23 / SEC-23: Mass Assignment in Database Mutations
     if (isApiRoute) {
-        const massAssignRegex = /(?:prisma\.[a-zA-Z0-9_]+\.(?:create|update)\s*\(\s*\{\s*data:\s*(?:req\.body|await req\.json\(\)|body)\b|db\.[a-zA-Z0-9_]+\.create\s*\(\s*(?:req\.body|body)\s*\))/i;
+        const massAssignRegex = /(?:prisma\.[a-zA-Z0-9_]+\.(?:create|update|upsert)\s*\(\s*\{[^;]{0,160}?\bdata:\s*(?:req\.body|await req\.json\(\)|body)\s*[,}\n]|db\.[a-zA-Z0-9_]+\.create\s*\(\s*(?:req\.body|body)\s*\))/i;
         const schemaParseRegex = /(?:parse|safeParse|validate|pick|whitelist|allowedFields)/i;
         if (massAssignRegex.test(cleanContent) && !schemaParseRegex.test(cleanContent)) {
-            const matchLineIdx = lines.findIndex(l => !l.trim().startsWith('//') && massAssignRegex.test(l));
+            const matchLineIdx = lines.findIndex(l => !l.trim().startsWith('//') && (massAssignRegex.test(l) || /\bdata:\s*(?:req\.body|await req\.json\(\)|body)\s*[,}]?\s*$/.test(l)));
             const lineNum = matchLineIdx !== -1 ? matchLineIdx + 1 : 1;
             const snippet = lines.slice(Math.max(0, lineNum - 2), Math.min(lines.length, lineNum + 2)).join('\n');
             findings.push({
@@ -638,7 +564,7 @@ export function evaluateSecurityRules(file: CodeFile, lines: string[], cleanCont
     }
     // Rule 27 / SEC-27: Catastrophic Backtracking Regular Expression (ReDoS CWE-1333)
     if (isCodeFile) {
-        const redosRegex = /\/\((?:[^\)\(]+[+*]){2,}\)[+*]\/|\/\((?:[a-zA-Z0-9_]+[\s|]+)+[a-zA-Z0-9_]+\)[+*]\//;
+        const redosRegex = /\/[^/\n]*\((?:\?:)?(?:\\[wWdDsS.]|\[(?:[^\]\\\n]|\\.)+\]|\.|[A-Za-z0-9])(?:[+*]|\{\d+,\d*\})(?:(?:\\[wWdDsS.]|\[(?:[^\]\\\n]|\\.)+\]|\.|[A-Za-z0-9])\?)*\)(?:[+*]|\{\d+,\d*\})[^/\n]*\/[dgimsuy]*/;
         if (redosRegex.test(cleanContent)) {
             const matchLineIdx = lines.findIndex(l => !l.trim().startsWith('//') && redosRegex.test(l));
             if (matchLineIdx !== -1) {
@@ -698,35 +624,8 @@ export function evaluateSecurityRules(file: CodeFile, lines: string[], cleanCont
             logs.push(`[${ts}] 🛑 CRITICAL: SEC-28 JWT Algorithm Confusion risk in ${file.path}:${lineNum}`);
         }
     }
-    // Rule 30 / SEC-30: Sensitive Cookie Domain Scope (Domain=.example.com Leaks)
-    if (isCodeFile && (cleanContent.includes('domain:') || cleanContent.includes('Domain='))) {
-        const looseCookieDomainRegex = /domain\s*:\s*['"]\.[a-zA-Z0-9.-]+['"]|Domain=\.[a-zA-Z0-9.-]+/i;
-        if (looseCookieDomainRegex.test(cleanContent)) {
-            const matchLineIdx = lines.findIndex(l => !l.trim().startsWith('//') && looseCookieDomainRegex.test(l));
-            const lineNum = matchLineIdx !== -1 ? matchLineIdx + 1 : 1;
-            const snippet = lines.slice(Math.max(0, lineNum - 2), Math.min(lines.length, lineNum + 2)).join('\n');
-            findings.push({
-                id: `real-find-${Date.now()}-${findingCounter.count++}`,
-                ruleId: 30,
-                type: 'SECURITY',
-                title: 'Sensitive Cookie Loose Parent Domain Scope (Wildcard Domain Leak)',
-                severity: 'MEDIUM',
-                category: 'Cookie & Session Management',
-                filePath: file.path,
-                lineRange: `L${lineNum}`,
-                snippet: snippet || lines[matchLineIdx] || 'cookies().set({ name: "token", domain: ".example.com" });',
-                reproductionSteps: [
-                    `Scanned cookie configuration at ${file.path}:${lineNum}.`,
-                    'Detected wildcard parent domain attribute on cookie, exposing sensitive session tokens to all current and future subdomains.'
-                ],
-                remediationPrompt: `Remove leading dot or wildcard domain attribute from cookie configuration in ${file.path}:${lineNum} so cookies remain scoped to origin host.`,
-                status: 'OPEN',
-                owner: 'Security Lead',
-                falsePositive: false
-            });
-            logs.push(`[${ts}] 🍪 MEDIUM: SEC-30 Loose cookie domain scope in ${file.path}:${lineNum}`);
-        }
-    }
+    // Rule 30 / SEC-30 removed as unsound: a leading-dot cookie Domain is ignored (RFC 6265) and sharing a cookie with
+    // subdomains is usually deliberate; the regex also matched any { domain: ".x" } config object.
     // Rule 31 / SEC-31: Insecure File Deserialization / YAML / XML External Entity (XXE)
     // js-yaml >= 4 load() is safe by default; flag PyYAML unsafe loaders and js-yaml 3's full schema only
     if (isCodeFile && /yaml\.(?:unsafe_)?load|DEFAULT_FULL_SCHEMA/.test(cleanContent)) {
@@ -965,11 +864,22 @@ export function evaluateSecurityRules(file: CodeFile, lines: string[], cleanCont
         }
     }
     // Rule 35 / SEC-35: Path Traversal Vulnerability via User-Controlled File Path
-    if (isCodeFile && (cleanContent.includes('fs.') || cleanContent.includes('readFile') || cleanContent.includes('createReadStream'))) {
-        const pathTraversalRegex = /(?:fs\.(?:readFile|readFileSync|createReadStream|writeFile|writeFileSync|unlink))\s*\([^;\n]*(?:path\.join\([^)]*|req\.(?:query|params|body)|\b(?:file|filePath|userInput|targetPath)\b)/;
-        if (pathTraversalRegex.test(cleanContent)) {
-            const matchLineIdx = lines.findIndex(l => !l.trim().startsWith('//') && !l.trim().startsWith('*') && pathTraversalRegex.test(l));
-            const lineNum = matchLineIdx !== -1 ? matchLineIdx + 1 : 1;
+    // Only paths built from request input: req.query/params/body directly, or a variable assigned / destructured from
+    // it (or from searchParams / formData), reaching an fs read/write/delete call on the same line. A containment check
+    // (path.basename, or resolve + startsWith on the result) anywhere in the file counts as the fix.
+    const fsCall = String.raw`(?:fs(?:\.promises)?|fsp|fsPromises)\.(?:readFile|readFileSync|createReadStream|writeFile|writeFileSync|createWriteStream|unlink|unlinkSync|rm|rmSync|appendFile|appendFileSync)\s*\(`;
+    if (isCodeFile && new RegExp(fsCall).test(cleanContent)) {
+        const pathVars = new Set<string>();
+        for (const m of cleanContent.matchAll(/(?:const|let|var)\s+(\w+)\s*=\s*[^;\n]*(?:\breq(?:uest)?\.(?:query|body|params)\b|searchParams\.get\(|\bformData\.get\()/g)) pathVars.add(m[1]);
+        for (const m of cleanContent.matchAll(/(?:const|let|var)\s*\{([^}]*)\}\s*=\s*(?:await\s+)?(?:req(?:uest)?\.(?:query|body|params)\b|request\.json\(\)|req\.json\(\))/g)) {
+            m[1].split(',').map((x) => x.split(':').pop()!.split('=')[0].trim()).filter((x) => /^\w+$/.test(x)).forEach((x) => pathVars.add(x));
+        }
+        const userPath = String.raw`(?:req(?:uest)?\.(?:query|params|body)\.\w+` + (pathVars.size ? String.raw`|\b(?:` + [...pathVars].join('|') + String.raw`)\b` : '') + ')';
+        const pathTraversalRegex = new RegExp(fsCall + String.raw`[^;\n]*` + userPath);
+        const isContained = /path\.basename\s*\(|\.startsWith\s*\(\s*(?:path\.resolve|\w*(?:root|base|dir|upload)\w*)/i.test(cleanContent);
+        const matchLineIdx = isContained ? -1 : lines.findIndex(l => !l.trim().startsWith('//') && !l.trim().startsWith('*') && pathTraversalRegex.test(l));
+        if (matchLineIdx !== -1) {
+            const lineNum = matchLineIdx + 1;
             const snippet = lines.slice(Math.max(0, lineNum - 2), Math.min(lines.length, lineNum + 2)).join('\n');
             findings.push({
                 id: `real-find-${Date.now()}-${findingCounter.count++}`,
@@ -1051,7 +961,9 @@ export function evaluateSecurityRules(file: CodeFile, lines: string[], cleanCont
     }
     // Rule 38 / SEC-38: Insecure Cryptographic Pseudo-Random Generation (Math.random)
     if (isCodeFile && !file.path.includes('live-deployment/bundle-') && cleanContent.includes('Math.random()')) {
-        const mathRandomRegex = /(?:token|secret|password|session|nonce|key|auth|salt)\s*[=:]\s*[^;\n]*Math\.random\s*\(\)|Math\.random\s*\(\)\.toString\s*\(\s*(?:36|16)\s*\)/i;
+        // Only values assigned to a security-named identifier (resetToken, sessionId, otpCode, apiKey...). A bare
+        // Math.random().toString(36) is the usual way to build UI keys / temp ids and is not reported on its own.
+        const mathRandomRegex = /\b\w*(?:token|secret|password|passwd|nonce|salt|otp|csrf|apiKey|api_key|sessionId|session_id|resetCode|verificationCode|inviteCode)\s*[=:]\s*[^;\n]*Math\.random\s*\(\)/i;
         if (mathRandomRegex.test(cleanContent)) {
             const matchLineIdx = lines.findIndex(l => !l.trim().startsWith('//') && !l.trim().startsWith('*') && mathRandomRegex.test(l));
             const lineNum = matchLineIdx !== -1 ? matchLineIdx + 1 : 1;

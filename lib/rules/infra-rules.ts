@@ -146,6 +146,10 @@ export function evaluateInfraRules(file: CodeFile, lines: string[], cleanContent
             if (['postgres', 'root', 'admin', 'test', 'demo'].includes(user.toLowerCase()) && ['postgres', 'root', 'admin', 'test', 'demo', ''].includes(password.toLowerCase())) {
                 continue;
             }
+            // Loopback databases (local dev / CI service containers) hold no production data
+            if (/^(?:localhost|127\.0\.0\.1|0\.0\.0\.0|host\.docker\.internal)$/i.test(dbMatch[3])) {
+                continue;
+            }
             const lineNum = cleanContent.slice(0, dbMatch.index).split('\n').length;
             const matchingLine = lines[lineNum - 1]?.trim() || '';
             // Skip commented-out sample URIs in YAML, Python, SQL, or code comments
@@ -185,14 +189,18 @@ export function evaluateInfraRules(file: CodeFile, lines: string[], cleanContent
     // =========================================================================
     const isNetworkFile = lowerPath.includes('middleware') || lowerPath.includes('api/') || lowerPath.includes('cors') || lowerPath.includes('server') || lowerPath.includes('next.config');
     if (isNetworkFile) {
-        const wildcardCorsRegex = /['"]Access-Control-Allow-Origin['"]\s*:\s*['"]\*['"]/i;
-        const corsWildcardCall = /cors\(\s*\{\s*origin\s*:\s*['"]\*['"]/i;
-        if (wildcardCorsRegex.test(cleanContent) || corsWildcardCall.test(cleanContent)) {
-            let lineNum = 1;
-            lines.forEach((l, idx) => {
-                if (wildcardCorsRegex.test(l) || corsWildcardCall.test(l))
-                    lineNum = idx + 1;
-            });
+        // A bare "*" is safe for public APIs (browsers never send cookies to it). The exploitable case is
+        // any-origin access WITH credentials: cors({ origin: true|'*', credentials: true }) or reflecting
+        // the request Origin header back while Access-Control-Allow-Credentials is true.
+        // The any-origin setting and the credentials flag must sit in the same config / response (within 8 lines),
+        // so an unrelated `credentials: true` elsewhere in a server file does not pair with a public "*" endpoint.
+        const credentialsRe = /credentials\s*:\s*true|['"]Access-Control-Allow-Credentials['"]\s*[:,]\s*['"]true['"]/i;
+        const anyOriginLine = /\borigin\s*:\s*(?:true|['"]\*['"])|['"]Access-Control-Allow-Origin['"]\s*[:,]\s*(?:['"]\*['"]|(?:req|request)\.headers(?:\.get\(\s*['"]origin['"]\s*\)|\.origin|\[\s*['"]origin['"]\s*\])|origin\b)/i;
+        const corsIdx = credentialsRe.test(cleanContent) && !/allowedOrigins|ALLOWED_ORIGINS|allowlist|whitelist|\.includes\(\s*origin\s*\)/i.test(cleanContent)
+            ? lines.findIndex((l, i) => anyOriginLine.test(l) && credentialsRe.test(lines.slice(Math.max(0, i - 8), i + 9).join('\n')))
+            : -1;
+        if (corsIdx !== -1) {
+            const lineNum = corsIdx + 1;
             const findingId = `real-find-${Date.now()}-${findingCounter.count++}`;
             const snippet = extractSnippet(lines, lineNum);
             const diffPatch = `--- a/${file.path}\n+++ b/${file.path}\n@@ -${lineNum},3 +${lineNum},5 @@\n- headers.set('Access-Control-Allow-Origin', '*');\n+ const allowedOrigins = [process.env.NEXT_PUBLIC_APP_URL || 'https://yourdomain.com'];\n+ const origin = request.headers.get('origin');\n+ if (origin && allowedOrigins.includes(origin)) headers.set('Access-Control-Allow-Origin', origin);`;
@@ -200,7 +208,7 @@ export function evaluateInfraRules(file: CodeFile, lines: string[], cleanContent
                 id: findingId,
                 ruleId: 3004,
                 type: 'INFRA_DATABASE',
-                title: 'Permissive Wildcard CORS ("*") Allows Arbitrary Cross-Origin Requests',
+                title: 'Permissive CORS ("*" or Reflected Origin) Combined With Credentials',
                 severity: 'HIGH',
                 category: 'API & Network',
                 filePath: file.path,
@@ -208,7 +216,7 @@ export function evaluateInfraRules(file: CodeFile, lines: string[], cleanContent
                 snippet,
                 reproductionSteps: [
                     `Inspect CORS headers in "${file.path}" at line ${lineNum}.`,
-                    `Notice header "Access-Control-Allow-Origin: *" configured without origin whitelist.`,
+                    `Notice any origin (wildcard or the reflected Origin header) is allowed while credentials are enabled.`,
                     `Allows malicious third-party websites to forge API requests and read authenticated API responses.`,
                     `Validate request origin against a dynamic whitelist of approved frontend origins.`
                 ],
@@ -232,14 +240,13 @@ export function evaluateInfraRules(file: CodeFile, lines: string[], cleanContent
             lowerPath.includes('/swagger') ||
             lowerPath.includes('/test-env');
         if (isDebugPath) {
-            const hasProdGuard = cleanContent.includes('process.env.NODE_ENV !== \'production\'') ||
-                cleanContent.includes('process.env.NODE_ENV === \'development\'') ||
-                cleanContent.includes('isAdmin') ||
-                cleanContent.includes('authorizeAdmin');
-            if (!hasProdGuard) {
-                const lineNum = 1;
+            // Any environment gate or authentication check in the route counts as a guard
+            const hasProdGuard = /NODE_ENV|VERCEL_ENV|isAdmin|authorizeAdmin|requireAdmin|getUser\(|getSession\(|getServerSession|auth\(\)|currentUser\(|verify(?:Token|Jwt|Session)|notFound\(\)|authorization/i.test(cleanContent);
+            const handlerIdx = lines.findIndex(l => /export\s+(?:default\s+)?(?:async\s+)?function\s*(?:GET|POST|PUT|PATCH|DELETE|handler)?\b|export\s+const\s+(?:GET|POST)\s*=/.test(l));
+            if (!hasProdGuard && handlerIdx !== -1) {
+                const lineNum = handlerIdx + 1;
                 const findingId = `real-find-${Date.now()}-${findingCounter.count++}`;
-                const snippet = extractSnippet(lines, 1);
+                const snippet = extractSnippet(lines, lineNum);
                 const diffPatch = `--- a/${file.path}\n+++ b/${file.path}\n@@ -1,4 +1,7 @@\n export async function GET(request: Request) {\n+  if (process.env.NODE_ENV === 'production') {\n+    return new Response(JSON.stringify({ error: 'Endpoint not available in production' }), { status: 404 });\n+  }\n   return Response.json({ status: 'ok', debug: true });\n }`;
                 findings.push({
                     id: findingId,
@@ -312,11 +319,27 @@ export function evaluateInfraRules(file: CodeFile, lines: string[], cleanContent
     // =========================================================================
     // RULE 3007 (INFRA-07): Kubernetes Deployment Missing Container Resource Limits
     // =========================================================================
-    const isK8sYaml = (lowerPath.endsWith('.yaml') || lowerPath.endsWith('.yml')) &&
-        (cleanContent.includes('kind: Deployment') || cleanContent.includes('kind: Pod') || cleanContent.includes('kind: StatefulSet'));
-    if (isK8sYaml && cleanContent.includes('containers:') && !cleanContent.includes('resources:') && !cleanContent.includes('limits:')) {
-        const matchLineIdx = lines.findIndex(l => l.includes('containers:'));
-        const lineNum = matchLineIdx !== -1 ? matchLineIdx + 1 : 1;
+    // Checked per YAML document: a Service or ConfigMap in the same file must not mask (or trigger) the workload.
+    // Helm templates that render resources from values ({{ toYaml .Values.resources }}) count as declaring them.
+    const isYaml = lowerPath.endsWith('.yaml') || lowerPath.endsWith('.yml');
+    let k8sContainersIdx = -1;
+    if (isYaml) {
+        let docStart = 0;
+        for (let i = 0; i <= lines.length && k8sContainersIdx === -1; i++) {
+            if (i === lines.length || /^---\s*$/.test(lines[i])) {
+                const doc = lines.slice(docStart, i);
+                const docText = doc.join('\n');
+                if (/^kind:\s*(?:Deployment|StatefulSet|DaemonSet|Pod|Job|CronJob|ReplicaSet)\s*$/m.test(docText) &&
+                    /^\s*containers:/m.test(docText) && !/^\s*resources:/m.test(docText)) {
+                    k8sContainersIdx = docStart + doc.findIndex(l => /^\s*containers:/.test(l));
+                }
+                docStart = i + 1;
+            }
+        }
+    }
+    if (k8sContainersIdx !== -1) {
+        const matchLineIdx = k8sContainersIdx;
+        const lineNum = matchLineIdx + 1;
         const findingId = `real-find-${Date.now()}-${findingCounter.count++}`;
         const snippet = extractSnippet(lines, lineNum);
         const diffPatch = `--- a/${file.path}\n+++ b/${file.path}\n@@ -${lineNum},5 +${lineNum},11 @@\n       containers:\n       - name: app\n         image: registry.example.com/app:latest\n+        resources:\n+          limits:\n+            cpu: "500m"\n+            memory: "512Mi"\n+          requests:\n+            cpu: "100m"\n+            memory: "128Mi"`;
@@ -325,7 +348,7 @@ export function evaluateInfraRules(file: CodeFile, lines: string[], cleanContent
             ruleId: 3007,
             type: 'INFRA_DATABASE',
             title: 'Kubernetes Workload Manifest Missing CPU/Memory Resource Limits (DoS Risk)',
-            severity: 'HIGH',
+            severity: 'LOW',
             category: 'Cloud Infrastructure',
             filePath: file.path,
             lineRange: `L${lineNum}`,
@@ -341,62 +364,43 @@ export function evaluateInfraRules(file: CodeFile, lines: string[], cleanContent
             owner: 'DevOps & SRE',
             falsePositive: false
         });
-        logs.push(`[${ts}] ☁️ [INFRA-07] HIGH: Kubernetes manifest lacks container resource limits in ${file.path}:${lineNum}`);
+        logs.push(`[${ts}] ☁️ [INFRA-07] LOW: Kubernetes manifest lacks container resource limits in ${file.path}:${lineNum}`);
     }
-    // =========================================================================
-    // RULE 3008 (INFRA-08): Production Container Manifest Missing Health Check Probe
-    // =========================================================================
     const isProdDockerfile = lowerPath.includes('dockerfile') && !lowerPath.includes('dev') && !lowerPath.includes('test');
-    if (isProdDockerfile && !cleanContent.includes('HEALTHCHECK') && cleanContent.includes('EXPOSE')) {
-        const matchLineIdx = lines.findIndex(l => l.includes('EXPOSE'));
-        const lineNum = matchLineIdx !== -1 ? matchLineIdx + 1 : 1;
-        const findingId = `real-find-${Date.now()}-${findingCounter.count++}`;
-        const snippet = extractSnippet(lines, lineNum);
-        const diffPatch = `--- a/${file.path}\n+++ b/${file.path}\n@@ -${lineNum},3 +${lineNum},5 @@\n EXPOSE 3000\n+\n+HEALTHCHECK --interval=30s --timeout=5s --start-period=5s --retries=3 CMD wget -qO- http://localhost:3000/api/health || exit 1`;
-        findings.push({
-            id: findingId,
-            ruleId: 3008,
-            type: 'INFRA_DATABASE',
-            title: 'Production Dockerfile Missing Automated Health Check (HEALTHCHECK) Directive',
-            severity: 'MEDIUM',
-            category: 'Cloud Infrastructure',
-            filePath: file.path,
-            lineRange: `L${lineNum}`,
-            snippet,
-            reproductionSteps: [
-                `Scanned Dockerfile container definition at ${file.path}:${lineNum}.`,
-                'Detected production image with exposed network port but without a HEALTHCHECK instruction.',
-                'Orchestrators (Kubernetes, AWS ECS, Docker Swarm) cannot accurately detect deadlocks, crashed processes, or unready services without a container health check.'
-            ],
-            remediationPrompt: `Add HEALTHCHECK instruction to ${file.path} (e.g. HEALTHCHECK --interval=30s --timeout=5s CMD wget -qO- http://localhost:3000/api/health || exit 1) or configure livenessProbe in deployment manifests.`,
-            diffPatch,
-            status: 'OPEN',
-            owner: 'DevOps & SRE',
-            falsePositive: false
-        });
-        logs.push(`[${ts}] ☁️ [INFRA-08] MEDIUM: Dockerfile missing HEALTHCHECK directive in ${file.path}:${lineNum}`);
-    }
     // =========================================================================
     // RULE 3009 (INFRA-09): Serverless Connection Pool Exhaustion in Next.js / Prisma
     // =========================================================================
-    const isPrismaOrDbInit = (lowerPath.includes('lib/') || lowerPath.includes('db') || lowerPath.includes('prisma')) && /\.(?:ts|js)$/i.test(lowerPath);
-    if (isPrismaOrDbInit && cleanContent.includes('new PrismaClient()') && !cleanContent.includes('globalThis')) {
-        const matchLineIdx = lines.findIndex(l => l.includes('new PrismaClient()'));
-        const lineNum = matchLineIdx !== -1 ? matchLineIdx + 1 : 1;
+    // A module-level `new PrismaClient()` is reused across warm invocations; the pool-exhaustion bug is a client
+    // constructed inside a request handler / function body (one new pool per request, never disconnected).
+    const isJsModule = /\.(?:[cm]?[jt]sx?)$/i.test(lowerPath);
+    // Prisma's documented singleton factory (`const prismaClientSingleton = () => new PrismaClient()` cached on globalThis) is fine
+    // Request-serving modules only (route handlers, API routes, server actions, Express/Lambda handlers); seed and
+    // migration scripts that build one client in main() run once.
+    const isRequestModule = /(?:^|\/)(?:app\/.*\/route|pages\/api\/.*|middleware)\.[cm]?[jt]sx?$/.test(lowerPath) ||
+        /['"]use server['"]|\b(?:app|router)\.(?:get|post|put|patch|delete|all|use)\s*\(|export\s+(?:const|async\s+function|function)\s+handler\b/.test(cleanContent);
+    const prismaPerRequestIdx = !isJsModule || !isRequestModule || /globalThis|global\.\w*prisma/i.test(cleanContent) ? -1 : lines.findIndex((l, i) => {
+        if (!/new\s+PrismaClient\s*\(/.test(l) || /globalThis|global\./.test(l) || !/^\s+/.test(l)) return false;
+        // indented: make sure we are inside a function, not a multi-line top-level expression
+        const before = lines.slice(Math.max(0, i - 15), i).join('\n');
+        return /(?:async\s+)?function\b[^{]*\{[^}]*$|=>\s*\{[^}]*$/.test(before) && !/\$disconnect\(/.test(lines.slice(i, i + 25).join('\n'));
+    });
+    if (prismaPerRequestIdx !== -1) {
+        const matchLineIdx = prismaPerRequestIdx;
+        const lineNum = matchLineIdx + 1;
         const snippet = extractSnippet(lines, lineNum);
         findings.push({
             id: `real-find-${Date.now()}-${findingCounter.count++}`,
             ruleId: 3009,
             type: 'INFRA_DATABASE',
-            title: 'Serverless Connection Pool Exhaustion Hazard (Prisma Missing Global Singleton)',
-            severity: 'CRITICAL',
+            title: 'Serverless Connection Pool Exhaustion Hazard (PrismaClient Constructed Per Request)',
+            severity: 'MEDIUM',
             category: 'Serverless & Database Reliability',
             filePath: file.path,
             lineRange: `L${lineNum}`,
             snippet,
             reproductionSteps: [
                 `Scanned database initialization at ${file.path}:${lineNum}.`,
-                'Detected new PrismaClient() instantiated without globalThis caching, causing connection pool exhaustion across serverless function re-invocations.'
+                'Detected new PrismaClient() constructed inside a function body: every call opens a fresh connection pool that is never reused or disconnected, exhausting database connections under load.'
             ],
             remediationPrompt: `Instantiate PrismaClient via globalThis singleton pattern in ${file.path} to reuse database connection pools across serverless lambdas.`,
             diffPatch: `--- a/${file.path}\n+++ b/${file.path}\n@@ -${lineNum},1 +${lineNum},4 @@\n-export const prisma = new PrismaClient();\n+const globalForPrisma = globalThis as unknown as { prisma: PrismaClient };\n+export const prisma = globalForPrisma.prisma || new PrismaClient();\n+if (process.env.NODE_ENV !== 'production') globalForPrisma.prisma = prisma;`,
@@ -404,42 +408,13 @@ export function evaluateInfraRules(file: CodeFile, lines: string[], cleanContent
             owner: 'Database Lead',
             falsePositive: false
         });
-        logs.push(`[${ts}] ☁️ [INFRA-09] CRITICAL: PrismaClient missing globalThis singleton in ${file.path}:${lineNum}`);
-    }
-    // =========================================================================
-    // RULE 3010 (INFRA-10): Serverless Function Execution Timeout & Memory Misconfiguration
-    // =========================================================================
-    const isServerlessHeavyRoute = lowerPath.includes('app/api/') && (cleanContent.includes('streamText') || cleanContent.includes('openai.chat') || cleanContent.includes('exportPdf'));
-    if (isServerlessHeavyRoute && !cleanContent.includes('maxDuration')) {
-        const matchLineIdx = lines.findIndex(l => /export\s+async\s+function\s+(?:POST|GET)/.test(l));
-        const lineNum = matchLineIdx !== -1 ? matchLineIdx + 1 : 1;
-        const snippet = extractSnippet(lines, lineNum);
-        findings.push({
-            id: `real-find-${Date.now()}-${findingCounter.count++}`,
-            ruleId: 3010,
-            type: 'INFRA_DATABASE',
-            title: 'Missing maxDuration Timeout Declaration on Long-Running Serverless Route',
-            severity: 'HIGH',
-            category: 'Cloud & Serverless Infrastructure',
-            filePath: file.path,
-            lineRange: `L${lineNum}`,
-            snippet,
-            reproductionSteps: [
-                `Scanned API route handler at ${file.path}:${lineNum}.`,
-                'Detected heavy compute, AI streaming, or PDF export route without export const maxDuration declaration, risking premature 504 gateway timeout on Vercel/AWS Lambda.'
-            ],
-            remediationPrompt: `Export maxDuration configuration: export const maxDuration = 60; in ${file.path} to prevent 10s serverless termination.`,
-            diffPatch: `--- a/${file.path}\n+++ b/${file.path}\n@@ -1,2 +1,3 @@\n+export const maxDuration = 60;\n export const dynamic = 'force-dynamic';`,
-            status: 'OPEN',
-            owner: 'DevOps & SRE',
-            falsePositive: false
-        });
-        logs.push(`[${ts}] ☁️ [INFRA-10] HIGH: Serverless route missing maxDuration in ${file.path}:${lineNum}`);
+        logs.push(`[${ts}] ☁️ [INFRA-09] MEDIUM: PrismaClient missing globalThis singleton in ${file.path}:${lineNum}`);
     }
     // =========================================================================
     // RULE 3011 (INFRA-11): Unencrypted Database & Cache In-Transit (Missing SSL / rediss://)
     // =========================================================================
-    const unencryptedRedisRegex = /['"]redis:\/\/(?!localhost|127\.0\.0\.1|test)[^'"]+['"]/i;
+    // Remote hosts only: loopback and single-label Docker/Kubernetes service names ("redis", "cache") stay on a private network.
+    const unencryptedRedisRegex = /['"]redis:\/\/(?:[^@'"\s/]*@)?(?!localhost\b|127\.0\.0\.1\b|test\b)[\w-]+\.[\w.-]+[^'"]*['"]/i;
     if (unencryptedRedisRegex.test(cleanContent)) {
         const matchLineIdx = lines.findIndex(l => !l.trim().startsWith('//') && unencryptedRedisRegex.test(l));
         if (matchLineIdx !== -1) {
@@ -450,7 +425,7 @@ export function evaluateInfraRules(file: CodeFile, lines: string[], cleanContent
                 ruleId: 3011,
                 type: 'INFRA_DATABASE',
                 title: 'Unencrypted Cache Connection URI (Missing rediss:// TLS Protocol)',
-                severity: 'CRITICAL',
+                severity: 'HIGH',
                 category: 'Transport Layer Security & Privacy',
                 filePath: file.path,
                 lineRange: `L${lineNum}`,
@@ -471,16 +446,19 @@ export function evaluateInfraRules(file: CodeFile, lines: string[], cleanContent
     // RULE 3012 (INFRA-12): S3 / R2 Bucket Public ACL Misconfiguration
     // =========================================================================
     const isCloudStorageConfig = lowerPath.includes('s3') || lowerPath.includes('bucket') || lowerPath.includes('storage') || lowerPath.endsWith('.tf');
-    if (isCloudStorageConfig && (cleanContent.includes('public-read') || cleanContent.includes('BlockPublicAcls = false'))) {
-        const matchLineIdx = lines.findIndex(l => l.includes('public-read') || l.includes('BlockPublicAcls = false'));
-        const lineNum = matchLineIdx !== -1 ? matchLineIdx + 1 : 1;
+    // An actual ACL assignment / disabled public-access block, not any mention of the string "public-read"
+    const publicAclLine = /\b(?:acl|ACL)\s*[:=]\s*['"]public-read(?:-write)?['"]|\bblock_public_acls\s*=\s*false\b|\bBlockPublicAcls\s*[:=]\s*false\b/;
+    const publicAclIdx = isCloudStorageConfig ? lines.findIndex(l => publicAclLine.test(l)) : -1;
+    if (publicAclIdx !== -1) {
+        const matchLineIdx = publicAclIdx;
+        const lineNum = matchLineIdx + 1;
         const snippet = extractSnippet(lines, lineNum);
         findings.push({
             id: `real-find-${Date.now()}-${findingCounter.count++}`,
             ruleId: 3012,
             type: 'INFRA_DATABASE',
             title: 'Public Read ACL Detected on Cloud Storage Bucket Configuration',
-            severity: 'CRITICAL',
+            severity: 'HIGH',
             category: 'Cloud Storage Security',
             filePath: file.path,
             lineRange: `L${lineNum}`,
@@ -496,35 +474,7 @@ export function evaluateInfraRules(file: CodeFile, lines: string[], cleanContent
         });
         logs.push(`[${ts}] ☁️ [INFRA-12] CRITICAL: Storage bucket public ACL in ${file.path}:${lineNum}`);
     }
-    // =========================================================================
-    // RULE 3013 (INFRA-13): Container Read-Only Root Filesystem (Docker read_only: true)
-    // =========================================================================
     const isComposeFile = lowerPath.includes('docker-compose') || lowerPath.includes('compose.yaml');
-    if (isComposeFile && cleanContent.includes('services:') && !cleanContent.includes('read_only: true')) {
-        const matchLineIdx = lines.findIndex(l => l.includes('image:') || l.includes('build:'));
-        const lineNum = matchLineIdx !== -1 ? matchLineIdx + 1 : 1;
-        const snippet = extractSnippet(lines, lineNum);
-        findings.push({
-            id: `real-find-${Date.now()}-${findingCounter.count++}`,
-            ruleId: 3013,
-            type: 'INFRA_DATABASE',
-            title: 'Container Compose Definition Missing Read-Only Root Filesystem Guard',
-            severity: 'HIGH',
-            category: 'Container Hardening',
-            filePath: file.path,
-            lineRange: `L${lineNum}`,
-            snippet,
-            reproductionSteps: [
-                `Scanned Docker Compose configuration at ${file.path}:${lineNum}.`,
-                'Detected container service running with writable root filesystem without read_only: true constraint.'
-            ],
-            remediationPrompt: `Add read_only: true and mount temporary writable directories via tmpfs in ${file.path}:${lineNum}.`,
-            status: 'OPEN',
-            owner: 'DevOps & SRE',
-            falsePositive: false
-        });
-        logs.push(`[${ts}] ☁️ [INFRA-13] HIGH: Container missing read_only filesystem in ${file.path}:${lineNum}`);
-    }
     // =========================================================================
     // RULE 3016 (INFRA-16): Production Process Missing Graceful Shutdown (SIGTERM/SIGINT)
     // =========================================================================

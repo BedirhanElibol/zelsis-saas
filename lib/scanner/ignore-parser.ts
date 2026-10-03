@@ -18,6 +18,14 @@ const ALIAS_RULE_IDS: Record<string, number[]> = {
  */
 const PREFIX_OFFSETS: ReadonlyArray<readonly [RegExp, readonly number[]]> = [
   [/^SEC-?(\d+)$/i, [0]],
+  [/^NEXT-SB-?(\d+)$/i, [28000]],
+  [/^NODE-WEB-?(\d+)$/i, [28100]],
+  [/^AI-APP-?(\d+)$/i, [28200]],
+  [/^GHA-?(\d+)$/i, [28250]],
+  [/^LLM-V2-?(\d+)$/i, [28300]],
+  [/^PRIV-?(\d+)$/i, [28400]],
+  [/^CLOUD-V2-?(\d+)$/i, [28500]],
+  [/^A11Y-?(\d+)$/i, [28600]],
   [/^SAAS-?(\d+)$/i, [23000]],
   [/^JS-SEC-?(\d+)$/i, [24000]],
   [/^CORE-?(\d+)$/i, [24100]],

@@ -16,5 +16,6 @@ export const REVIEWED_TRUE_POSITIVES: Record<number, string> = {
   9502: 'GitHub Actions referenced by mutable tag instead of commit SHA',
   12605: 'Third-party GitHub Action referenced by mutable tag',
   23003: 'nextjs-subscription-payments: SECURITY DEFINER handle_new_user() without search_path',
-  23008: 'nextjs-subscription-payments pins next 14.2.3, affected by CVE-2025-29927'
+  28005: 'supabase-js test migration: FOR ALL policy on storage.objects checks only bucket_id, so anyone can overwrite files',
+  23008:'nextjs-subscription-payments pins next 14.2.3, affected by CVE-2025-29927'
 };

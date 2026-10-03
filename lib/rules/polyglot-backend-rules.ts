@@ -9,6 +9,8 @@ export interface PolyglotBackendRuleResult {
     findings: Finding[];
     logs: string[];
 }
+/** PHP request input: superglobals, Laravel Request / request() helper, Cookie facade. */
+const PHP_REQUEST_SOURCE = /\$_(?:GET|POST|REQUEST|COOKIE)\b|\$request->(?:input|get|query|post|cookie|getContent|all|header)\s*\(|\$request->\w+\b(?!\s*\()|\brequest\s*\(\s*['")]|Request::(?:input|get|query|cookie)\s*\(|Cookie::get\s*\(/;
 function extractSnippet(lines: string[], lineNum: number): string {
     const targetIdx = Math.max(0, lineNum - 1);
     const start = Math.max(0, targetIdx - 2);
@@ -87,9 +89,14 @@ export function evaluatePolyglotBackendRules(file: CodeFile, lines: string[], cl
             logs.push(`[${ts}] 🔒 [PHP AUDIT] CRITICAL: Local File Inclusion in ${file.path}:${lineNum}`);
         }
         // PHP-03: Command Injection via shell execution
-        const phpCmdRegex = /(?:exec|shell_exec|system|passthru|proc_open|popen)\s*\(\s*(?:\$_(?:GET|POST|REQUEST)|\$[a-zA-Z0-9_]+\s*\.)/i;
-        if (phpCmdRegex.test(cleanContent)) {
-            const matchLineIdx = lines.findIndex(l => !l.trim().startsWith('//') && !l.trim().startsWith('#') && phpCmdRegex.test(l));
+        // Global shell functions only (not $pdo->exec / Foo::system), with request input or an unescaped
+        // variable concatenated / interpolated into the command string.
+        const phpCmdRegex = /(?<![\w>:$])(?:exec|shell_exec|system|passthru|proc_open|popen)\s*\(\s*(.*)/i;
+        const phpCmdTainted = (arg: string) => !/escapeshell(?:arg|cmd)\s*\(/i.test(arg) &&
+            (PHP_REQUEST_SOURCE.test(arg) || /^(?:"[^"]*"|'[^']*')\s*\.\s*\$\w+|^\$\w+\s*\.|^"[^"]*\$\w+/.test(arg));
+        const phpCmdIdx = lines.findIndex(l => !l.trim().startsWith('//') && !l.trim().startsWith('#') && !l.trim().startsWith('*') && phpCmdRegex.test(l) && phpCmdTainted((phpCmdRegex.exec(l) as RegExpExecArray)[1]));
+        if (phpCmdIdx !== -1) {
+            const matchLineIdx = phpCmdIdx;
             const lineNum = matchLineIdx !== -1 ? matchLineIdx + 1 : 1;
             const snippet = extractSnippet(lines, lineNum);
             findings.push({
@@ -114,9 +121,24 @@ export function evaluatePolyglotBackendRules(file: CodeFile, lines: string[], cl
             logs.push(`[${ts}] 🔒 [PHP AUDIT] CRITICAL: Command Injection in ${file.path}:${lineNum}`);
         }
         // PHP-04: Insecure Deserialization via unserialize()
-        const phpUnserializeRegex = /\bunserialize\s*\(\s*(?:\$_(?:GET|POST|REQUEST|COOKIE)|\$[a-zA-Z0-9_]+)/i;
-        if (phpUnserializeRegex.test(cleanContent)) {
-            const matchLineIdx = lines.findIndex(l => !l.trim().startsWith('//') && !l.trim().startsWith('#') && phpUnserializeRegex.test(l));
+        // Only request-controlled input (directly or via a variable assigned from it), and not when
+        // object instantiation is disabled with ['allowed_classes' => false].
+        const phpUnserializeRegex = /(?<![\w>:$])unserialize\s*\(\s*(.*)/i;
+        const phpRequestVars = new Set<string>();
+        for (let pass = 0; pass < 2; pass++) {
+            for (const l of lines) {
+                const m = /^\s*\$(\w+)\s*=\s*(.*)/.exec(l);
+                if (m && (PHP_REQUEST_SOURCE.test(m[2]) || [...m[2].matchAll(/\$(\w+)/g)].some((v) => phpRequestVars.has(v[1])))) phpRequestVars.add(m[1]);
+            }
+        }
+        const phpUnserializeIdx = lines.findIndex(l => {
+            if (l.trim().startsWith('//') || l.trim().startsWith('#') || l.trim().startsWith('*') || !phpUnserializeRegex.test(l)) return false;
+            const arg = (phpUnserializeRegex.exec(l) as RegExpExecArray)[1];
+            if (/allowed_classes['"]\s*=>\s*false/i.test(arg)) return false;
+            return PHP_REQUEST_SOURCE.test(arg) || [...arg.matchAll(/\$(\w+)/g)].some((v) => phpRequestVars.has(v[1]));
+        });
+        if (phpUnserializeIdx !== -1) {
+            const matchLineIdx = phpUnserializeIdx;
             const lineNum = matchLineIdx !== -1 ? matchLineIdx + 1 : 1;
             const snippet = extractSnippet(lines, lineNum);
             findings.push({
@@ -141,9 +163,11 @@ export function evaluatePolyglotBackendRules(file: CodeFile, lines: string[], cl
             logs.push(`[${ts}] 🔒 [PHP AUDIT] CRITICAL: PHP Insecure Deserialization in ${file.path}:${lineNum}`);
         }
         // PHP-05: Reflected Cross-Site Scripting (XSS)
-        const phpXssRegex = /(?:echo|print)\s+(?:\$_(?:GET|POST|REQUEST|COOKIE)\[[^\]]+\]|\$[a-zA-Z0-9_]+)/i;
-        if (phpXssRegex.test(cleanContent) && !/htmlspecialchars|htmlentities|strip_tags/i.test(cleanContent)) {
-            const matchLineIdx = lines.findIndex(l => !l.trim().startsWith('//') && !l.trim().startsWith('#') && phpXssRegex.test(l));
+        // A request superglobal echoed straight into the response on the same statement, with no encoder on that line
+        const phpXssRegex = /(?:\becho\b|\bprint\b|<\?=)[^;]*\$_(?:GET|POST|REQUEST|COOKIE)\s*\[/i;
+        const phpXssLine = lines.findIndex(l => !l.trim().startsWith('//') && !l.trim().startsWith('#') && phpXssRegex.test(l) && !/htmlspecialchars|htmlentities|strip_tags|esc_html|esc_attr|\be\(|intval|\(int\)|json_encode|urlencode/i.test(l));
+        if (phpXssLine !== -1) {
+            const matchLineIdx = phpXssLine;
             const lineNum = matchLineIdx !== -1 ? matchLineIdx + 1 : 1;
             const snippet = extractSnippet(lines, lineNum);
             findings.push({
@@ -282,9 +306,14 @@ export function evaluatePolyglotBackendRules(file: CodeFile, lines: string[], cl
             logs.push(`[${ts}] 🔒 [JAVA AUDIT] CRITICAL: Log4Shell Pattern in ${file.path}:${lineNum}`);
         }
         // JAVA-05: Broken / Deprecated Cryptographic Ciphers & Hashes
-        const javaWeakCryptoRegex = /Cipher\.getInstance\s*\(\s*["'](?:DES|RC4|Blowfish|DESede|AES\/ECB)[^"']*["']\)|MessageDigest\.getInstance\s*\(\s*["'](?:MD5|SHA-1)["']\)/i;
-        if (javaWeakCryptoRegex.test(cleanContent)) {
-            const matchLineIdx = lines.findIndex(l => !l.trim().startsWith('//') && !l.trim().startsWith('*') && javaWeakCryptoRegex.test(l));
+        // Broken ciphers / ECB (plain "AES" defaults to ECB) always; MD5 / SHA-1 digests only next to
+        // password handling, since checksums, ETags and cache keys use them legitimately.
+        const javaWeakCipherRegex = /Cipher\.getInstance\s*\(\s*["'](?:(?:DES|RC4|ARCFOUR|RC2|Blowfish|DESede)(?:\/[^"']*)?|AES|[^"']*\/ECB\/[^"']*)["']\s*\)/i;
+        const javaWeakDigestRegex = /MessageDigest\.getInstance\s*\(\s*["'](?:MD5|SHA-?1)["']\s*\)/i;
+        const javaWeakCryptoIdx = lines.findIndex((l, i) => !l.trim().startsWith('//') && !l.trim().startsWith('*') &&
+            (javaWeakCipherRegex.test(l) || (javaWeakDigestRegex.test(l) && /passw(?:or)?d|\bpwd\b/i.test(lines.slice(Math.max(0, i - 3), i + 4).join('\n')))));
+        if (javaWeakCryptoIdx !== -1) {
+            const matchLineIdx = javaWeakCryptoIdx;
             const lineNum = matchLineIdx !== -1 ? matchLineIdx + 1 : 1;
             const snippet = extractSnippet(lines, lineNum);
             findings.push({
@@ -342,9 +371,13 @@ export function evaluatePolyglotBackendRules(file: CodeFile, lines: string[], cl
             logs.push(`[${ts}] 🔒 [C# AUDIT] CRITICAL: C# SQL Injection in ${file.path}:${lineNum}`);
         }
         // CS-02: Weak Cryptographic Algorithms (MD5, SHA1, DES)
-        const csWeakCryptoRegex = /(?:MD5\.Create|SHA1\.Create|DESCryptoServiceProvider|RC2CryptoServiceProvider|TripleDESCryptoServiceProvider)\s*\(/i;
-        if (csWeakCryptoRegex.test(cleanContent)) {
-            const matchLineIdx = lines.findIndex(l => !l.trim().startsWith('//') && !l.trim().startsWith('*') && csWeakCryptoRegex.test(l));
+        // Broken ciphers always; MD5 / SHA1 only next to password handling (checksums and ETags are fine).
+        const csWeakCipherRegex = /(?:DESCryptoServiceProvider|RC2CryptoServiceProvider|TripleDESCryptoServiceProvider|\bDES\.Create|\bRC2\.Create)\s*\(/;
+        const csWeakHashRegex = /(?:\bMD5\.(?:Create|HashData)|\bSHA1\.(?:Create|HashData)|MD5CryptoServiceProvider|SHA1CryptoServiceProvider|SHA1Managed)\s*\(/;
+        const csWeakCryptoIdx = lines.findIndex((l, i) => !l.trim().startsWith('//') && !l.trim().startsWith('*') &&
+            (csWeakCipherRegex.test(l) || (csWeakHashRegex.test(l) && /passw(?:or)?d|\bpwd\b/i.test(lines.slice(Math.max(0, i - 3), i + 4).join('\n')))));
+        if (csWeakCryptoIdx !== -1) {
+            const matchLineIdx = csWeakCryptoIdx;
             const lineNum = matchLineIdx !== -1 ? matchLineIdx + 1 : 1;
             const snippet = extractSnippet(lines, lineNum);
             findings.push({
@@ -402,9 +435,12 @@ export function evaluatePolyglotBackendRules(file: CodeFile, lines: string[], cl
     const isRuby = lowerPath.endsWith('.rb') || lowerPath.endsWith('.erb') || lowerPath.endsWith('.rake');
     if (isRuby) {
         // RUBY-01: Ruby ActiveRecord SQL Injection
-        const rubySqliRegex = /(?:find_by_sql|\.where|\.order|\.having|\.pluck)\s*\(\s*(?:["'][^"']*\b(?:SELECT|FROM|WHERE|ORDER|GROUP)\b[^"']*#\{|["'][^"']*#\{params\[)/i;
-        if (rubySqliRegex.test(cleanContent)) {
-            const matchLineIdx = lines.findIndex(l => !l.trim().startsWith('#') && rubySqliRegex.test(l));
+        // A value interpolated into the SQL fragment (after =, <, >, LIKE, IN) or params interpolated anywhere.
+        // `where("#{table_name}.id = ?", id)` (identifier interpolation with a bound value) stays quiet.
+        const rubySqliRegex = /(?:\bfind_by_sql|\bcount_by_sql|\.(?:where|not|order|reorder|having|pluck|joins|group|select|from|find_by|exists\?|delete_all|update_all|lock))\s*\(?\s*"[^"]*?(?:(?:=|<>|!=|<|>|\bLIKE|\bIN)\s*\(?\s*'?%?#\{|#\{params\[)/i;
+        const rubySqliIdx = lines.findIndex(l => !l.trim().startsWith('#') && rubySqliRegex.test(l));
+        if (rubySqliIdx !== -1) {
+            const matchLineIdx = rubySqliIdx;
             const lineNum = matchLineIdx !== -1 ? matchLineIdx + 1 : 1;
             const snippet = extractSnippet(lines, lineNum);
             findings.push({
@@ -457,8 +493,9 @@ export function evaluatePolyglotBackendRules(file: CodeFile, lines: string[], cl
         }
         // RUBY-03: Ruby Remote Code Execution via eval
         const rubyEvalRegex = /(?:eval|Kernel\.eval)\s*\(\s*(?:params\[|#\{params\[)/i;
-        if (rubyEvalRegex.test(cleanContent)) {
-            const matchLineIdx = lines.findIndex(l => !l.trim().startsWith('#') && rubyEvalRegex.test(l));
+        const rubyEvalIdx = lines.findIndex(l => !l.trim().startsWith('#') && rubyEvalRegex.test(l));
+        if (rubyEvalIdx !== -1) {
+            const matchLineIdx = rubyEvalIdx;
             const lineNum = matchLineIdx !== -1 ? matchLineIdx + 1 : 1;
             const snippet = extractSnippet(lines, lineNum);
             findings.push({

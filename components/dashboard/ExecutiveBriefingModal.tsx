@@ -252,7 +252,7 @@ export const ExecutiveBriefingModal: React.FC<ExecutiveBriefingModalProps> = ({
                 <button
                   type="button"
                   onClick={handleExportPdf}
-                  className="btn btn-primary text-xs px-4 py-2.5 font-bold flex items-center justify-center gap-2 bg-white text-black hover:bg-neutral-200 rounded-xl transition-all shadow-sm flex-1 sm:flex-none"
+                  className="btn btn-primary text-xs px-4 py-2.5 font-bold flex items-center justify-center gap-2 bg-emerald-500 text-black hover:bg-emerald-400 rounded-xl transition-all shadow-sm flex-1 sm:flex-none"
                 >
                   <Printer size={14} />
                   <span>Export PDF Report</span>
@@ -261,7 +261,7 @@ export const ExecutiveBriefingModal: React.FC<ExecutiveBriefingModalProps> = ({
                 <button
                   type="button"
                   onClick={() => onOpenCheckout?.('Pro')}
-                  className="btn btn-primary text-xs px-4 py-2.5 font-bold flex items-center justify-center gap-2 bg-white/10 text-zinc-400 hover:bg-white hover:text-black rounded-xl transition-all border border-white/10 flex-1 sm:flex-none"
+                  className="btn btn-primary text-xs px-4 py-2.5 font-bold flex items-center justify-center gap-2 bg-white/10 text-zinc-400 hover:bg-emerald-500 hover:text-black rounded-xl transition-all border border-white/10 flex-1 sm:flex-none"
                   title="Upgrade to Pro to export PDF reports"
                 >
                   <Lock size={14} />

@@ -6,6 +6,7 @@ import { MOCK_PROJECTS } from '@/data/demo-data';
 import { FolderGit2, Plus, ArrowRight, Play, ExternalLink, ShieldCheck, Trash2, Layers, Lock, X } from 'lucide-react';
 import { NewProjectModal } from '@/components/projects/NewProjectModal';
 import { UserProfile } from '@/components/auth/AuthModal';
+import { priceLabel } from '@/data/pricing-plans';
 
 interface ProjectsViewProps {
   projects: Project[];
@@ -217,7 +218,7 @@ export const ProjectsView: React.FC<ProjectsViewProps> = ({
             </div>
             <button
               onClick={() => setIsModalOpen(true)}
-              className="btn btn-primary px-4 py-2 text-xs font-bold uppercase tracking-wider bg-white text-black hover:bg-neutral-200"
+              className="btn btn-primary px-4 py-2 text-xs font-bold uppercase tracking-wider bg-emerald-500 text-black hover:bg-emerald-400"
             >
               Connect First App
             </button>
@@ -333,10 +334,12 @@ export const ProjectsView: React.FC<ProjectsViewProps> = ({
         >
           <div className="bg-[#141414] border border-white/20 rounded-2xl w-full max-w-md p-6 sm:p-8 flex flex-col gap-5 shadow-2xl relative">
             <button
+              type="button"
+              aria-label="Close"
               onClick={() => setIsQuotaModalOpen(false)}
               className="absolute top-4 right-4 p-1.5 rounded-lg text-[#71717A] hover:text-white hover:bg-white/10 transition-colors cursor-pointer"
             >
-              <X size={16} />
+              <X size={16} aria-hidden="true" />
             </button>
 
             <div className="w-12 h-12 rounded-xl bg-amber-500/10 border border-amber-500/30 text-amber-400 flex items-center justify-center">
@@ -369,7 +372,7 @@ export const ProjectsView: React.FC<ProjectsViewProps> = ({
                 className="w-full sm:flex-1 py-3 px-4 rounded-xl bg-white text-black font-extrabold text-xs uppercase tracking-wider hover:bg-neutral-200 transition-all flex items-center justify-center gap-2 cursor-pointer font-mono"
               >
                 <ArrowRight size={14} />
-                <span>Upgrade to Pro ($19/mo)</span>
+                <span>Upgrade to Pro ({priceLabel('Pro')})</span>
               </button>
               <button
                 type="button"
