@@ -27,7 +27,7 @@ export async function sendEmail(options: SendEmailOptions): Promise<SendEmailRes
     return { success: false, error: 'RESEND_API_KEY is not configured' };
   }
 
-  const defaultFrom = process.env.RESEND_FROM_EMAIL?.trim() || 'ShipGuard <onboarding@resend.dev>';
+  const defaultFrom = process.env.RESEND_FROM_EMAIL?.trim() || 'Zelsis <onboarding@resend.dev>';
   const from = options.from || defaultFrom;
   const to = Array.isArray(options.to) ? options.to : [options.to];
 
@@ -67,7 +67,7 @@ export async function sendEmail(options: SendEmailOptions): Promise<SendEmailRes
 }
 
 /**
- * Base Dark Luxury HTML template for ShipGuard system emails.
+ * Base Dark Luxury HTML template for Zelsis system emails.
  */
 function wrapHtmlTemplate({ title, contentHtml }: { title: string; contentHtml: string }): string {
   const appUrl = getConfiguredAppUrl();
@@ -91,7 +91,7 @@ function wrapHtmlTemplate({ title, contentHtml }: { title: string; contentHtml: 
                 <tr>
                   <td>
                     <a href="${appUrl}" style="text-decoration:none;display:inline-flex;align-items:center;gap:8px;">
-                      <span style="font-size:16px;font-weight:800;letter-spacing:-0.5px;color:#FFFFFF;">SHIPGUARD</span>
+                      <span style="font-size:16px;font-weight:800;letter-spacing:-0.5px;color:#FFFFFF;">ZELSIS</span>
                       <span style="font-size:10px;font-family:ui-monospace,SFMono-Regular,Menlo,Monaco,Consolas,'Liberation Mono','Courier New',monospace;font-weight:700;background-color:rgba(16,185,129,0.15);color:#34D399;border:1px solid rgba(16,185,129,0.3);padding:2px 6px;border-radius:999px;margin-left:6px;text-transform:uppercase;">Gate</span>
                     </a>
                   </td>
@@ -108,8 +108,8 @@ function wrapHtmlTemplate({ title, contentHtml }: { title: string; contentHtml: 
           <!-- Footer -->
           <tr>
             <td style="padding:20px 32px;background-color:#0E0E0E;border-top:1px solid rgba(255,255,255,0.06);font-size:11px;color:#71717A;text-align:center;line-height:1.5;">
-              <p style="margin:0 0 6px 0;">ShipGuard — Automated AI & Code Deployment Gate</p>
-              <p style="margin:0;"><a href="${appUrl}" style="color:#A1A1AA;text-decoration:underline;">shipguard-saas.vercel.app</a></p>
+              <p style="margin:0 0 6px 0;">Zelsis — Automated AI & Code Deployment Gate</p>
+              <p style="margin:0;"><a href="${appUrl}" style="color:#A1A1AA;text-decoration:underline;">${appUrl.replace(/^https?:\/\//, '')}</a></p>
             </td>
           </tr>
         </table>
@@ -131,7 +131,7 @@ export async function sendWaitlistWelcomeEmail(email: string, frameworkInterest?
     : '';
 
   const html = wrapHtmlTemplate({
-    title: 'ShipGuard Erken Erişim Bekleme Listesindesiniz',
+    title: 'Zelsis Erken Erişim Bekleme Listesindesiniz',
     contentHtml: `
       <h1 style="margin:0 0 16px 0;font-size:20px;font-weight:700;color:#FFFFFF;letter-spacing:-0.3px;">
         Erken Erişim Sırasına Alındınız
@@ -140,7 +140,7 @@ export async function sendWaitlistWelcomeEmail(email: string, frameworkInterest?
         Merhaba,
       </p>
       <p style="margin:0 0 12px 0;">
-        ShipGuard erken erişim bekleme listesine kaydınız başarıyla tamamlandı. Dağıtım öncesi güvenlik, erişilebilirlik ve VibePolish kontrolleri sağlayan platformumuzun yeni sürümüne ilk erişen ekiplerden biri olacaksınız.
+        Zelsis erken erişim bekleme listesine kaydınız başarıyla tamamlandı. Dağıtım öncesi güvenlik, erişilebilirlik ve VibePolish kontrolleri sağlayan platformumuzun yeni sürümüne ilk erişen ekiplerden biri olacaksınız.
       </p>
       ${frameworkNote}
       <p style="margin:20px 0 0 0;font-size:12px;color:#71717A;">
@@ -149,11 +149,11 @@ export async function sendWaitlistWelcomeEmail(email: string, frameworkInterest?
     `,
   });
 
-  const text = `ShipGuard Erken Erişim Sırasına Alındınız\n\nMerhaba,\n\nShipGuard erken erişim bekleme listesine kaydınız başarıyla tamamlandı. Dağıtım öncesi güvenlik ve kalite kontrolleri hazır olduğunda size özel davet göndereceğiz.\n\nShipGuard Ekibi`;
+  const text = `Zelsis Erken Erişim Sırasına Alındınız\n\nMerhaba,\n\nZelsis erken erişim bekleme listesine kaydınız başarıyla tamamlandı. Dağıtım öncesi güvenlik ve kalite kontrolleri hazır olduğunda size özel davet göndereceğiz.\n\nZelsis Ekibi`;
 
   return sendEmail({
     to: email,
-    subject: 'ShipGuard Erken Erişim Sırasına Alındınız',
+    subject: 'Zelsis Erken Erişim Sırasına Alındınız',
     html,
     text,
   });
@@ -177,7 +177,7 @@ export async function sendWorkspaceInviteEmail(params: {
         Ekip Çalışma Alanına Davet Edildiniz
       </h1>
       <p style="margin:0 0 16px 0;">
-        <strong style="color:#FFFFFF;">${orgName}</strong> ekibi sizi ShipGuard üzerinde 
+        <strong style="color:#FFFFFF;">${orgName}</strong> ekibi sizi Zelsis üzerinde 
         <strong style="color:#34D399;text-transform:uppercase;font-family:ui-monospace,monospace;font-size:12px;">${role}</strong> 
         rolüyle çalışma alanına katılmaya davet etti.
       </p>
@@ -198,11 +198,11 @@ export async function sendWorkspaceInviteEmail(params: {
     `,
   });
 
-  const text = `${orgName} ekibi sizi ShipGuard üzerinde ${role} rolüyle çalışma alanına katılmaya davet etti.\n\nDaveti kabul etmek için bağlantı:\n${inviteUrl}\n\nBu bağlantı 7 gün boyunca geçerlidir.`;
+  const text = `${orgName} ekibi sizi Zelsis üzerinde ${role} rolüyle çalışma alanına katılmaya davet etti.\n\nDaveti kabul etmek için bağlantı:\n${inviteUrl}\n\nBu bağlantı 7 gün boyunca geçerlidir.`;
 
   return sendEmail({
     to: toEmail,
-    subject: `${orgName} Çalışma Alanına Davet Edildiniz — ShipGuard`,
+    subject: `${orgName} Çalışma Alanına Davet Edildiniz — Zelsis`,
     html,
     text,
   });

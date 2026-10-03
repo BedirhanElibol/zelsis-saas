@@ -26,7 +26,7 @@ test('sendEmail dispatches POST to api.resend.com with proper headers and payloa
   const origKey = process.env.RESEND_API_KEY;
   const origFrom = process.env.RESEND_FROM_EMAIL;
   process.env.RESEND_API_KEY = 're_test_key_12345';
-  process.env.RESEND_FROM_EMAIL = 'ShipGuard <alerts@shipguard.app>';
+  process.env.RESEND_FROM_EMAIL = 'Zelsis <alerts@zelsis.dev>';
 
   let interceptedUrl = '';
   let interceptedHeaders: Record<string, string> = {};
@@ -56,7 +56,7 @@ test('sendEmail dispatches POST to api.resend.com with proper headers and payloa
     assert.equal(interceptedHeaders['Authorization'], 'Bearer re_test_key_12345');
     assert.equal(interceptedHeaders['Content-Type'], 'application/json');
     assert.deepEqual(interceptedBody.to, ['recipient@company.com']);
-    assert.equal(interceptedBody.from, 'ShipGuard <alerts@shipguard.app>');
+    assert.equal(interceptedBody.from, 'Zelsis <alerts@zelsis.dev>');
     assert.equal(interceptedBody.subject, 'Security Alert');
     assert.equal(interceptedBody.html, '<h1>Alert</h1>');
   } finally {
@@ -84,7 +84,7 @@ test('sendWaitlistWelcomeEmail formats HTML template and dispatches', async () =
     assert.equal(res.success, true);
     assert.deepEqual(interceptedBody.to, ['newuser@example.com']);
     assert.match(interceptedBody.subject ?? '', /Erken Erişim/i);
-    assert.match(interceptedBody.html ?? '', /SHIPGUARD/);
+    assert.match(interceptedBody.html ?? '', /ZELSIS/);
     assert.match(interceptedBody.html ?? '', /Next\.js/);
   } finally {
     fetchMock.mock.restore();
@@ -117,6 +117,7 @@ test('sendWorkspaceInviteEmail formats invitation with role and inviteUrl', asyn
     assert.match(interceptedBody.subject ?? '', /Acme Corp/);
     assert.match(interceptedBody.html ?? '', /token123/);
     assert.match(interceptedBody.html ?? '', /admin/i);
+    assert.match(interceptedBody.html ?? '', /Zelsis üzerinde/);
   } finally {
     fetchMock.mock.restore();
     if (origKey !== undefined) process.env.RESEND_API_KEY = origKey;
