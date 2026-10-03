@@ -3,6 +3,7 @@ import type { Metadata } from 'next';
 import Link from 'next/link';
 import { ShieldCheck, ArrowLeft } from 'lucide-react';
 import { CONTACT_EMAIL, contactMailto } from '@/lib/contact';
+import { CODE_RETENTION_STATEMENT } from '@/lib/data-retention';
 
 export const metadata: Metadata = {
   title: 'Privacy Policy & Data Protection',
@@ -67,7 +68,7 @@ export default function PrivacyPolicyPage() {
           <section className="flex flex-col gap-2">
             <h2 className="text-base font-bold text-[#FFFFFF]">2. Zero Codebase Retention Architecture</h2>
             <p>
-              Source code submitted for static security analysis, secret detection, and architectural hygiene checks is processed in ephemeral serverless execution environments. <strong>We never store, index, sell, or train public AI/LLM models on your proprietary source code.</strong> As soon as the static security evaluation completes, in-memory buffers are permanently purged.
+              Source code submitted for static security analysis, secret detection, and architectural hygiene checks is processed in ephemeral serverless execution environments. <strong>{CODE_RETENTION_STATEMENT}</strong> Finding metadata (rule, file path, line, severity, status) stays in your scan history until you delete the project or your account. We never index, sell, or train public AI/LLM models on your proprietary source code.
             </p>
           </section>
 

@@ -17,6 +17,7 @@ import { normalizeRepoUrl } from '@/lib/github-api';
 import { ScanPreviewCard, ScanPreviewResult } from '@/components/saas/ScanPreviewCard';
 import benchmark from '@/data/benchmark-summary.generated.json';
 import { HeroGateMock } from './HeroGateMock';
+import { CODE_RETENTION_STATEMENT } from '@/lib/data-retention';
 
 interface SaasHeroProps {
   onOpenDashboard?: (repoUrl?: string) => void;
@@ -89,7 +90,8 @@ export const SaasHero: React.FC<SaasHeroProps> = ({ onOpenDashboard }) => {
       <div className="relative z-10 max-w-6xl mx-auto w-full flex flex-col items-center text-center">
         {/* Plain elements: the headline is the LCP, so it must not wait for hydration to fade in */}
         <h1 className="text-4xl sm:text-6xl lg:text-7xl font-extrabold text-[#EDEDED] tracking-tight leading-[1.06] max-w-4xl mb-6 [text-wrap:balance]">
-          Find the security holes in your app <span className="text-emerald-400">before your users do.</span>
+          Built for Next.js + Supabase apps:<br />
+          <span className="text-emerald-400">RLS, service-role leaks, Server Actions, webhooks, AI/MCP agents</span>
         </h1>
         <p className="text-base sm:text-lg lg:text-xl text-[#A1A1AA] max-w-3xl mx-auto leading-relaxed mt-6 mb-10 font-sans font-normal">
           Zelsis scans your repository for leaked secrets, open Supabase RLS policies, injection, broken auth and vulnerable dependencies, then fails the release when something critical slips in. Paste a public repo and see the results in seconds.
@@ -163,7 +165,7 @@ export const SaasHero: React.FC<SaasHeroProps> = ({ onOpenDashboard }) => {
         >
           <div className="flex items-center gap-2">
             <span className="w-1.5 h-1.5 rounded-full bg-white/40" />
-            <span>Repo never stored, only findings</span>
+            <span>{CODE_RETENTION_STATEMENT}</span>
           </div>
           <div className="flex items-center gap-2">
             <span className="w-1.5 h-1.5 rounded-full bg-white/40" />
@@ -230,8 +232,9 @@ export const SaasHero: React.FC<SaasHeroProps> = ({ onOpenDashboard }) => {
           <div className="flex flex-wrap items-center justify-center gap-6 sm:gap-8 text-xs font-mono text-zinc-400">
             <span className="hover:text-white transition-colors">Next.js 15 (App Router)</span>
             <span className="hover:text-white transition-colors">TypeScript 5.x</span>
-            <span className="hover:text-white transition-colors">Python / FastAPI</span>
-            <span className="hover:text-white transition-colors">Go Microservices</span>
+            <a href="https://github.com/fastapi/full-stack-fastapi-template" target="_blank" rel="noopener noreferrer" className="hover:text-white transition-colors underline decoration-white/20 underline-offset-4">Python / FastAPI</a>
+            <a href="https://github.com/django/djangoproject.com" target="_blank" rel="noopener noreferrer" className="hover:text-white transition-colors underline decoration-white/20 underline-offset-4">Django</a>
+            <a href="https://github.com/gothinkster/golang-gin-realworld-example-app" target="_blank" rel="noopener noreferrer" className="hover:text-white transition-colors underline decoration-white/20 underline-offset-4">Go / Gin</a>
             <span className="hover:text-white transition-colors">Docker &amp; K8s</span>
             <span className="hover:text-white transition-colors">Swift &amp; Kotlin (Mobile)</span>
           </div>

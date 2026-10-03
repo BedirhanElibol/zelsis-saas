@@ -26,7 +26,7 @@ interface ProductCapability {
   image: string;
   alt: string;
   tag: string;
-  architecturePills: string[];
+  architecturePills: React.ReactNode[];
   bulletPoints: string[];
 }
 
@@ -50,7 +50,12 @@ export const ProductCapabilities: React.FC = () => {
       architecturePills: [
         'OWASP Top 10 (2025/2026)',
         'PostgreSQL Row Level Security',
-        'Next.js, Django, FastAPI & Go',
+        <span key="stack">
+          <a href="https://github.com/vercel/nextjs-subscription-payments" target="_blank" rel="noreferrer" className="hover:text-emerald-400 hover:underline transition-colors">Next.js</a>,{' '}
+          <a href="https://github.com/django/djangoproject.com" target="_blank" rel="noreferrer" className="hover:text-emerald-400 hover:underline transition-colors">Django</a>,{' '}
+          <a href="https://github.com/fastapi/full-stack-fastapi-template" target="_blank" rel="noreferrer" className="hover:text-emerald-400 hover:underline transition-colors">FastAPI</a> &amp;{' '}
+          <a href="https://github.com/gothinkster/golang-gin-realworld-example-app" target="_blank" rel="noreferrer" className="hover:text-emerald-400 hover:underline transition-colors">Go</a>
+        </span>,
         'Docker & K8s Security Context'
       ],
       bulletPoints: [

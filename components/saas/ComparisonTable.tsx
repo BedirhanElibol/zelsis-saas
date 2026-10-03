@@ -11,6 +11,7 @@ const AuthModal = dynamic(() => import('@/components/auth/AuthModal').then((m) =
 import { formatCount, RULE_COUNTS } from '@/lib/rule-status';
 import { ENTERPRISE_SEAT_LIMIT, PLAN_PRICES, priceLabel, SUPPORT_TERMS, ZELSIS_PRICING_PLANS } from '@/data/pricing-plans';
 import { contactMailto } from '@/lib/contact';
+import { CODE_RETENTION_STATEMENT, CODE_SNIPPET_RETENTION_DAYS } from '@/lib/data-retention';
 
 interface ComparisonItem {
   name: string;
@@ -159,10 +160,10 @@ export const ComparisonTable: React.FC = () => {
         },
         {
           name: 'Source Code Retention',
-          description: 'Repositories are scanned in memory; only findings are saved',
-          free: 'Source not stored; findings keep short snippets',
-          pro: 'Source not stored; findings keep short snippets',
-          enterprise: 'Source not stored; findings keep short snippets'
+          description: CODE_RETENTION_STATEMENT,
+          free: `Source not stored; snippets erased after ${CODE_SNIPPET_RETENTION_DAYS} days`,
+          pro: `Source not stored; snippets erased after ${CODE_SNIPPET_RETENTION_DAYS} days`,
+          enterprise: `Source not stored; snippets erased after ${CODE_SNIPPET_RETENTION_DAYS} days`
         }
       ]
     },
@@ -255,8 +256,8 @@ export const ComparisonTable: React.FC = () => {
           enterprise: 'Included'
         },
         {
-          name: 'White-label SOC 2 Report',
-          description: 'PDF report with your company name and logo, findings mapped to SOC 2 Trust Services Criteria',
+          name: 'SOC 2 control-mapping appendix (PDF)',
+          description: 'PDF report with your company name and logo, findings mapped to SOC 2 Trust Services Criteria. Zelsis is not a SOC 2 auditor; this maps findings to controls.',
           free: false,
           pro: false,
           enterprise: 'Included'
