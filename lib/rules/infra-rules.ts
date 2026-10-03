@@ -192,10 +192,12 @@ export function evaluateInfraRules(file: CodeFile, lines: string[], cleanContent
         // A bare "*" is safe for public APIs (browsers never send cookies to it). The exploitable case is
         // any-origin access WITH credentials: cors({ origin: true|'*', credentials: true }) or reflecting
         // the request Origin header back while Access-Control-Allow-Credentials is true.
-        const allowsCredentials = /credentials\s*:\s*true|['"]Access-Control-Allow-Credentials['"]\s*[:,]\s*['"]true['"]/i.test(cleanContent);
+        // The any-origin setting and the credentials flag must sit in the same config / response (within 8 lines),
+        // so an unrelated `credentials: true` elsewhere in a server file does not pair with a public "*" endpoint.
+        const credentialsRe = /credentials\s*:\s*true|['"]Access-Control-Allow-Credentials['"]\s*[:,]\s*['"]true['"]/i;
         const anyOriginLine = /\borigin\s*:\s*(?:true|['"]\*['"])|['"]Access-Control-Allow-Origin['"]\s*[:,]\s*(?:['"]\*['"]|(?:req|request)\.headers(?:\.get\(\s*['"]origin['"]\s*\)|\.origin|\[\s*['"]origin['"]\s*\])|origin\b)/i;
-        const corsIdx = allowsCredentials && !/allowedOrigins|ALLOWED_ORIGINS|allowlist|whitelist|\.includes\(\s*origin\s*\)/i.test(cleanContent)
-            ? lines.findIndex(l => anyOriginLine.test(l))
+        const corsIdx = credentialsRe.test(cleanContent) && !/allowedOrigins|ALLOWED_ORIGINS|allowlist|whitelist|\.includes\(\s*origin\s*\)/i.test(cleanContent)
+            ? lines.findIndex((l, i) => anyOriginLine.test(l) && credentialsRe.test(lines.slice(Math.max(0, i - 8), i + 9).join('\n')))
             : -1;
         if (corsIdx !== -1) {
             const lineNum = corsIdx + 1;
@@ -346,7 +348,7 @@ export function evaluateInfraRules(file: CodeFile, lines: string[], cleanContent
             ruleId: 3007,
             type: 'INFRA_DATABASE',
             title: 'Kubernetes Workload Manifest Missing CPU/Memory Resource Limits (DoS Risk)',
-            severity: 'MEDIUM',
+            severity: 'LOW',
             category: 'Cloud Infrastructure',
             filePath: file.path,
             lineRange: `L${lineNum}`,
@@ -362,7 +364,7 @@ export function evaluateInfraRules(file: CodeFile, lines: string[], cleanContent
             owner: 'DevOps & SRE',
             falsePositive: false
         });
-        logs.push(`[${ts}] ☁️ [INFRA-07] HIGH: Kubernetes manifest lacks container resource limits in ${file.path}:${lineNum}`);
+        logs.push(`[${ts}] ☁️ [INFRA-07] LOW: Kubernetes manifest lacks container resource limits in ${file.path}:${lineNum}`);
     }
     const isProdDockerfile = lowerPath.includes('dockerfile') && !lowerPath.includes('dev') && !lowerPath.includes('test');
     // =========================================================================
@@ -372,7 +374,11 @@ export function evaluateInfraRules(file: CodeFile, lines: string[], cleanContent
     // constructed inside a request handler / function body (one new pool per request, never disconnected).
     const isJsModule = /\.(?:[cm]?[jt]sx?)$/i.test(lowerPath);
     // Prisma's documented singleton factory (`const prismaClientSingleton = () => new PrismaClient()` cached on globalThis) is fine
-    const prismaPerRequestIdx = !isJsModule || /globalThis|global\.\w*prisma/i.test(cleanContent) ? -1 : lines.findIndex((l, i) => {
+    // Request-serving modules only (route handlers, API routes, server actions, Express/Lambda handlers); seed and
+    // migration scripts that build one client in main() run once.
+    const isRequestModule = /(?:^|\/)(?:app\/.*\/route|pages\/api\/.*|middleware)\.[cm]?[jt]sx?$/.test(lowerPath) ||
+        /['"]use server['"]|\b(?:app|router)\.(?:get|post|put|patch|delete|all|use)\s*\(|export\s+(?:const|async\s+function|function)\s+handler\b/.test(cleanContent);
+    const prismaPerRequestIdx = !isJsModule || !isRequestModule || /globalThis|global\.\w*prisma/i.test(cleanContent) ? -1 : lines.findIndex((l, i) => {
         if (!/new\s+PrismaClient\s*\(/.test(l) || /globalThis|global\./.test(l) || !/^\s+/.test(l)) return false;
         // indented: make sure we are inside a function, not a multi-line top-level expression
         const before = lines.slice(Math.max(0, i - 15), i).join('\n');
@@ -387,7 +393,7 @@ export function evaluateInfraRules(file: CodeFile, lines: string[], cleanContent
             ruleId: 3009,
             type: 'INFRA_DATABASE',
             title: 'Serverless Connection Pool Exhaustion Hazard (PrismaClient Constructed Per Request)',
-            severity: 'HIGH',
+            severity: 'MEDIUM',
             category: 'Serverless & Database Reliability',
             filePath: file.path,
             lineRange: `L${lineNum}`,
@@ -402,7 +408,7 @@ export function evaluateInfraRules(file: CodeFile, lines: string[], cleanContent
             owner: 'Database Lead',
             falsePositive: false
         });
-        logs.push(`[${ts}] ☁️ [INFRA-09] CRITICAL: PrismaClient missing globalThis singleton in ${file.path}:${lineNum}`);
+        logs.push(`[${ts}] ☁️ [INFRA-09] MEDIUM: PrismaClient missing globalThis singleton in ${file.path}:${lineNum}`);
     }
     // =========================================================================
     // RULE 3011 (INFRA-11): Unencrypted Database & Cache In-Transit (Missing SSL / rediss://)

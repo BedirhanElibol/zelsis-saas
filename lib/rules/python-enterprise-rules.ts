@@ -78,10 +78,22 @@ export function evaluatePythonEnterpriseRules(file: CodeFile, lines: string[], c
         logs.push(`[${ts}] [PYTHON AUDIT] Found PY-SEC-02: Insecure PyYAML load() Without SafeLoader at ${file.path}:${lineNum}`);
     }
     // PY-SEC-03: Subprocess Execution with shell=True
-    const reg_8803 = /(?:subprocess\.(?:Popen|run|call|check_output|check_call)\s*\([\s\S]*?shell\s*=\s*True|os\.(?:system|popen)\s*\()/i;
-    if (reg_8803.test(cleanContent)) {
-        const linePattern = /(?:subprocess\.(?:Popen|run|call|check_output|check_call)|shell\s*=\s*True|os\.(?:system|popen))/i;
-        const matchLineIdx = lines.findIndex(l => !l.trim().startsWith('#') && !l.trim().startsWith('"""') && linePattern.test(l));
+    // Only a shell command assembled from runtime values (f-string, %, .format, +) is injectable; constant commands are not
+    const idx_8803 = (() => {
+        const dynamicCmd = /^\s*\(\s*(?:[fF]['"][^'"]*\{|['"][^'"]*['"]\s*(?:%|\.format\s*\(|\+))/;
+        const sub = /subprocess\.(?:Popen|run|call|check_output|check_call)\s*\(/;
+        const osCall = /(?<![\w.])os\.(?:system|popen)\s*(?=\()/;
+        return pyFindLine(lines, /subprocess\.(?:Popen|run|call|check_output|check_call)\s*\(|(?<![\w.])os\.(?:system|popen)\s*\(/, (l, i) => {
+            if (sub.test(l)) {
+                const call = callText(lines, i, sub);
+                return /\bshell\s*=\s*True\b/.test(call) && dynamicCmd.test(call.replace(sub, '('));
+            }
+            const m = osCall.exec(l);
+            return !!m && dynamicCmd.test(l.slice(m.index + m[0].length));
+        });
+    })();
+    if (idx_8803 !== -1) {
+        const matchLineIdx = idx_8803;
         const lineNum = matchLineIdx !== -1 ? matchLineIdx + 1 : 1;
         const rawSnippet = matchLineIdx !== -1 ? lines[matchLineIdx].trim() : lines.find(l => !l.trim().startsWith('#'))?.trim() || "Subprocess Execution with shell=True";
         findings.push({
@@ -89,7 +101,7 @@ export function evaluatePythonEnterpriseRules(file: CodeFile, lines: string[], c
             ruleId: 8803,
             type: 'SECURITY',
             title: "PY-SEC-03: Subprocess Execution with shell=True",
-            severity: "CRITICAL",
+            severity: "HIGH",
             category: "Command Injection",
             filePath: file.path,
             lineRange: `L${lineNum}`,
@@ -105,10 +117,10 @@ export function evaluatePythonEnterpriseRules(file: CodeFile, lines: string[], c
         logs.push(`[${ts}] [PYTHON AUDIT] Found PY-SEC-03: Subprocess Execution with shell=True at ${file.path}:${lineNum}`);
     }
     // PY-SEC-04: Python SQL Injection via String Interpolation (f-string / format / %)
-    const reg_8804 = /(?:(?:cursor|conn|db|session)\.execute\s*\(\s*(?:f['"]|['"][^'"]*%\s*\(|['"][^'"]*\.format\()|text\s*\(\s*f['"]|f["']\s*(?:SELECT|INSERT|UPDATE|DELETE)\s+[^"']*(?:\{|%))/i;
-    if (reg_8804.test(cleanContent)) {
-        const linePattern = /(?:execute|text|SELECT|INSERT|UPDATE|DELETE)/i;
-        const matchLineIdx = lines.findIndex(l => !l.trim().startsWith('#') && !l.trim().startsWith('"""') && linePattern.test(l));
+    // f-string SQL passed straight to execute()/text() with a value interpolated after WHERE/SET/VALUES/LIKE/=/IN (identifier-only interpolation is left alone)
+    const idx_8804 = pyFindLine(lines, /(?:\.execute(?:many)?|(?<![\w.])text|sa\.text|sqlalchemy\.text)\s*\(\s*[fF](?:"[^"]*\b(?:SELECT|INSERT|UPDATE|DELETE)\b[^"]*(?:\bWHERE\b|\bSET\b|\bVALUES\b|\bLIKE\b|=|\bIN\s*\()[^"]*\{[^"]*"|'[^']*\b(?:SELECT|INSERT|UPDATE|DELETE)\b[^']*(?:\bWHERE\b|\bSET\b|\bVALUES\b|\bLIKE\b|=|\bIN\s*\()[^']*\{[^']*')/i);
+    if (idx_8804 !== -1) {
+        const matchLineIdx = idx_8804;
         const lineNum = matchLineIdx !== -1 ? matchLineIdx + 1 : 1;
         const rawSnippet = matchLineIdx !== -1 ? lines[matchLineIdx].trim() : lines.find(l => !l.trim().startsWith('#'))?.trim() || "Python SQL Injection via String Interpolation (f-string / format / %)";
         findings.push({
@@ -116,7 +128,7 @@ export function evaluatePythonEnterpriseRules(file: CodeFile, lines: string[], c
             ruleId: 8804,
             type: 'SECURITY',
             title: "PY-SEC-04: Python SQL Injection via String Interpolation (f-string / format / %)",
-            severity: "CRITICAL",
+            severity: "HIGH",
             category: "SQL Injection",
             filePath: file.path,
             lineRange: `L${lineNum}`,
@@ -132,10 +144,12 @@ export function evaluatePythonEnterpriseRules(file: CodeFile, lines: string[], c
         logs.push(`[${ts}] [PYTHON AUDIT] Found PY-SEC-04: Python SQL Injection via String Interpolation (f-string / format / %) at ${file.path}:${lineNum}`);
     }
     // PY-SEC-05: Django / Flask DEBUG Mode Enabled in Production Settings
-    const reg_8805 = /(?:(?:^|\s)DEBUG\s*=\s*True\b|app\.run\s*\([^)]*debug\s*=\s*True)/m;
-    if (reg_8805.test(cleanContent)) {
-        const linePattern = /(?:DEBUG\s*=\s*True|debug\s*=\s*True)/i;
-        const matchLineIdx = lines.findIndex(l => !l.trim().startsWith('#') && !l.trim().startsWith('"""') && linePattern.test(l));
+    // Module-level DEBUG = True in a Django settings module that is not a dev/local/test variant
+    // (Flask app.run(debug=True) is the dev server only and is not flagged)
+    const isDjangoSettings = /(?:^|\/|_)settings(?:\/[\w-]+)?\.py$|(?:^|\/)(?:prod|production)(?:_settings)?\.py$/.test(lowerPath) && !isDevSettingsPath(lowerPath);
+    const idx_8805 = isDjangoSettings ? pyFindLine(lines, /^\s*DEBUG\s*=\s*True\b/) : -1;
+    if (idx_8805 !== -1) {
+        const matchLineIdx = idx_8805;
         const lineNum = matchLineIdx !== -1 ? matchLineIdx + 1 : 1;
         const rawSnippet = matchLineIdx !== -1 ? lines[matchLineIdx].trim() : lines.find(l => !l.trim().startsWith('#'))?.trim() || "Django / Flask DEBUG Mode Enabled in Production Settings";
         findings.push({
@@ -143,7 +157,7 @@ export function evaluatePythonEnterpriseRules(file: CodeFile, lines: string[], c
             ruleId: 8805,
             type: 'SECURITY',
             title: "PY-SEC-05: Django / Flask DEBUG Mode Enabled in Production Settings",
-            severity: "HIGH",
+            severity: "MEDIUM",
             category: "Information Disclosure",
             filePath: file.path,
             lineRange: `L${lineNum}`,
@@ -245,10 +259,13 @@ export function evaluatePythonEnterpriseRules(file: CodeFile, lines: string[], c
         logs.push(`[${ts}] [PYTHON AUDIT] Found PY-SEC-08: Insecure Celery Task Serializer (Pickle Serialization) at ${file.path}:${lineNum}`);
     }
     // PY-SEC-09: Hardcoded Secret Key in Flask / Django Settings
-    const reg_8809 = /(?:SECRET_KEY|JWT_SECRET|API_KEY)\s*=\s*['"][a-zA-Z0-9!@#$%^&*()_+=-]{8,}['"]/i;
-    if (reg_8809.test(cleanContent)) {
-        const linePattern = /(?:SECRET_KEY|JWT_SECRET|API_KEY)\s*=\s*['"][a-zA-Z0-9!@#$%^&*()_+=-]{8,}['"]/i;
-        const matchLineIdx = lines.findIndex(l => !l.trim().startsWith('#') && !l.trim().startsWith('"""') && linePattern.test(l));
+    // Settings-level signing secret assigned a real-looking literal (placeholders and dev/test settings are skipped)
+    const idx_8809 = isDevSettingsPath(lowerPath) ? -1 : pyFindLine(lines, /^\s*(?:SECRET_KEY|JWT_SECRET(?:_KEY)?)\s*(?::\s*str\s*)?=\s*['"]([^'"\s]{16,})['"]\s*$/, (l) => {
+        const value = /=\s*['"]([^'"\s]{16,})['"]/.exec(l)![1];
+        return !/change|replace|example|your|dummy|placeholder|xxx|\{|\$|<|test|sample/i.test(value);
+    });
+    if (idx_8809 !== -1) {
+        const matchLineIdx = idx_8809;
         const lineNum = matchLineIdx !== -1 ? matchLineIdx + 1 : 1;
         const rawSnippet = matchLineIdx !== -1 ? lines[matchLineIdx].trim() : lines.find(l => !l.trim().startsWith('#'))?.trim() || "Hardcoded Secret Key in Flask / Django Settings";
         findings.push({
@@ -256,7 +273,7 @@ export function evaluatePythonEnterpriseRules(file: CodeFile, lines: string[], c
             ruleId: 8809,
             type: 'SECURITY',
             title: "PY-SEC-09: Hardcoded Secret Key in Flask / Django Settings",
-            severity: "CRITICAL",
+            severity: "HIGH",
             category: "Hardcoded Secrets",
             filePath: file.path,
             lineRange: `L${lineNum}`,
@@ -338,10 +355,10 @@ export function evaluatePythonEnterpriseRules(file: CodeFile, lines: string[], c
         logs.push(`[${ts}] [PYTHON AUDIT] Found PY-SEC-11: Dynamic Code Execution via eval() or exec() at ${file.path}:${lineNum}`);
     }
     // PY-SEC-12: Weak Cryptographic Hash Algorithm (MD5 / SHA-1)
-    const reg_8812 = /hashlib\.(?:md5|sha1)\s*\(/i;
-    if (reg_8812.test(cleanContent)) {
-        const linePattern = /hashlib\.(?:md5|sha1)\s*\(/i;
-        const matchLineIdx = lines.findIndex(l => !l.trim().startsWith('#') && !l.trim().startsWith('"""') && linePattern.test(l));
+    // MD5/SHA-1 is fine for cache keys and ETags; only hashing a password with it is flagged
+    const idx_8812 = pyFindLine(lines, /hashlib\.(?:md5|sha1)\s*\([^)]*\b(?:password|passwd|pwd)\b/i, (l) => !/usedforsecurity\s*=\s*False/.test(l));
+    if (idx_8812 !== -1) {
+        const matchLineIdx = idx_8812;
         const lineNum = matchLineIdx !== -1 ? matchLineIdx + 1 : 1;
         const rawSnippet = matchLineIdx !== -1 ? lines[matchLineIdx].trim() : lines.find(l => !l.trim().startsWith('#'))?.trim() || "Weak Cryptographic Hash Algorithm (MD5 / SHA-1)";
         findings.push({
@@ -479,10 +496,18 @@ export function evaluatePythonEnterpriseRules(file: CodeFile, lines: string[], c
         logs.push(`[${ts}] [PYTHON AUDIT] Found PY-SEC-16: Path Traversal via Unsanitized File Access at ${file.path}:${lineNum}`);
     }
     // PY-SEC-17: CSRF Protection Disabled (@csrf_exempt / WTF_CSRF_ENABLED = False)
-    const reg_8817 = /@csrf_exempt\b|WTF_CSRF_ENABLED\s*=\s*False\b/i;
-    if (reg_8817.test(cleanContent)) {
-        const linePattern = /@csrf_exempt|WTF_CSRF_ENABLED\s*=\s*False/i;
-        const matchLineIdx = lines.findIndex(l => !l.trim().startsWith('#') && !l.trim().startsWith('"""') && linePattern.test(l));
+    // Webhook / callback views that authenticate the sender (signature, HMAC, token) legitimately skip CSRF; test configs too
+    const idx_8817 = isDevSettingsPath(lowerPath) ? -1 : pyFindLine(lines, /^\s*@csrf_exempt\b|^\s*WTF_CSRF_ENABLED\s*=\s*False\b|app\.config\s*\[\s*['"]WTF_CSRF_ENABLED['"]\s*\]\s*=\s*False\b/, (l, i) => {
+        if (/WTF_CSRF_ENABLED/.test(l)) return !/\bTest|TESTING/.test(lines.slice(Math.max(0, i - 20), i).join('\n'));
+        let def = i + 1;
+        while (def < lines.length && /^\s*@/.test(lines[def])) def++;
+        if (def >= lines.length || !/^\s*(?:async\s+)?def\s+\w+|^\s*class\s+\w+/.test(lines[def])) return false;
+        if (/webhook|hook|callback|ipn|notify|notification|stripe|paypal|github|slack|twilio/i.test(lines[def])) return false;
+        const [from, to] = pyBlockRange(lines, def);
+        return !/signature|hmac|construct_event|verify|authorization|api_key|token/i.test(lines.slice(from, to + 1).join('\n'));
+    });
+    if (idx_8817 !== -1) {
+        const matchLineIdx = idx_8817;
         const lineNum = matchLineIdx !== -1 ? matchLineIdx + 1 : 1;
         const rawSnippet = matchLineIdx !== -1 ? lines[matchLineIdx].trim() : lines.find(l => !l.trim().startsWith('#'))?.trim() || "CSRF Protection Disabled (@csrf_exempt / WTF_CSRF_ENABLED = False)";
         findings.push({
@@ -490,7 +515,7 @@ export function evaluatePythonEnterpriseRules(file: CodeFile, lines: string[], c
             ruleId: 8817,
             type: 'SECURITY',
             title: "PY-SEC-17: CSRF Protection Disabled (@csrf_exempt / WTF_CSRF_ENABLED = False)",
-            severity: "HIGH",
+            severity: "MEDIUM",
             category: "Broken Authentication",
             filePath: file.path,
             lineRange: `L${lineNum}`,
@@ -610,10 +635,10 @@ export function evaluatePythonEnterpriseRules(file: CodeFile, lines: string[], c
         logs.push(`[${ts}] [PYTHON AUDIT] Found PY-SEC-21: Paramiko SSH Host Key Auto-Add Policy (AutoAddPolicy) at ${file.path}:${lineNum}`);
     }
     // PY-SEC-22: Flask / Django Session Cookie Missing Secure or HttpOnly Flags
-    const reg_8822 = /SESSION_COOKIE_HTTPONLY\s*=\s*False|SESSION_COOKIE_SECURE\s*=\s*False/i;
-    if (reg_8822.test(cleanContent)) {
-        const linePattern = /SESSION_COOKIE_HTTPONLY|SESSION_COOKIE_SECURE/i;
-        const matchLineIdx = lines.findIndex(l => !l.trim().startsWith('#') && !l.trim().startsWith('"""') && linePattern.test(l));
+    // HttpOnly off is wrong anywhere; Secure off is expected in local/dev settings (plain-http localhost), so those are skipped
+    const idx_8822 = isDevSettingsPath(lowerPath) ? -1 : pyFindLine(lines, /^\s*SESSION_COOKIE_(?:HTTPONLY|SECURE)\s*=\s*False\b|['"]SESSION_COOKIE_(?:HTTPONLY|SECURE)['"]\s*\]\s*=\s*False\b/);
+    if (idx_8822 !== -1) {
+        const matchLineIdx = idx_8822;
         const lineNum = matchLineIdx !== -1 ? matchLineIdx + 1 : 1;
         const rawSnippet = matchLineIdx !== -1 ? lines[matchLineIdx].trim() : lines.find(l => !l.trim().startsWith('#'))?.trim() || "Flask / Django Session Cookie Missing Secure or HttpOnly Flags";
         findings.push({
@@ -636,38 +661,11 @@ export function evaluatePythonEnterpriseRules(file: CodeFile, lines: string[], c
         });
         logs.push(`[${ts}] [PYTHON AUDIT] Found PY-SEC-22: Flask / Django Session Cookie Missing Secure or HttpOnly Flags at ${file.path}:${lineNum}`);
     }
-    // PY-SEC-23: Insecure Server Binding to All Network Interfaces (0.0.0.0)
-    const reg_8823 = /(?:host|bind)\s*=\s*['"]0\.0\.0\.0['"]/i;
-    if (reg_8823.test(cleanContent)) {
-        const linePattern = /(?:host|bind)\s*=\s*['"]0\.0\.0\.0['"]/i;
-        const matchLineIdx = lines.findIndex(l => !l.trim().startsWith('#') && !l.trim().startsWith('"""') && linePattern.test(l));
-        const lineNum = matchLineIdx !== -1 ? matchLineIdx + 1 : 1;
-        const rawSnippet = matchLineIdx !== -1 ? lines[matchLineIdx].trim() : lines.find(l => !l.trim().startsWith('#'))?.trim() || "Insecure Server Binding to All Network Interfaces (0.0.0.0)";
-        findings.push({
-            id: `py8823-${Date.now()}-${findingCounter.count++}`,
-            ruleId: 8823,
-            type: 'SECURITY',
-            title: "PY-SEC-23: Insecure Server Binding to All Network Interfaces (0.0.0.0)",
-            severity: "MEDIUM",
-            category: "Network Security",
-            filePath: file.path,
-            lineRange: `L${lineNum}`,
-            snippet: rawSnippet,
-            reproductionSteps: [
-                `Audited Python source in ${file.path}:${lineNum}.`,
-                "Detected security violation: Binding debug servers or internal admin listeners to 0.0.0.0 exposes internal ports to external network interfaces."
-            ],
-            remediationPrompt: "Bind local development servers to 127.0.0.1 or configure a reverse proxy for external exposure.",
-            status: 'OPEN',
-            falsePositive: false
-        });
-        logs.push(`[${ts}] [PYTHON AUDIT] Found PY-SEC-23: Insecure Server Binding to All Network Interfaces (0.0.0.0) at ${file.path}:${lineNum}`);
-    }
     // PY-SEC-24: Use of Assert Statement for Security or Authorization Checks
-    const reg_8824 = /assert\s+(?:user\.|role\.|is_admin|token|auth|permission|request\.)/i;
-    if (reg_8824.test(cleanContent)) {
-        const linePattern = /assert\s+(?:user\.|role\.|is_admin|token|auth|permission)/i;
-        const matchLineIdx = lines.findIndex(l => !l.trim().startsWith('#') && !l.trim().startsWith('"""') && linePattern.test(l));
+    // Only asserts that ARE the authorization decision (admin/staff/permission/role checks); `assert x is not None` type narrowing is left alone
+    const idx_8824 = pyFindLine(lines, /^\s*assert\s+(?:not\s+)?[\w.]*(?:\.(?:is_admin|is_superuser|is_staff)\b|\.has_perms?\s*\(|\bis_admin\b|\.role\s*(?:==|in)\s|\bhas_permission\s*\()/);
+    if (idx_8824 !== -1) {
+        const matchLineIdx = idx_8824;
         const lineNum = matchLineIdx !== -1 ? matchLineIdx + 1 : 1;
         const rawSnippet = matchLineIdx !== -1 ? lines[matchLineIdx].trim() : lines.find(l => !l.trim().startsWith('#'))?.trim() || "Use of Assert Statement for Security or Authorization Checks";
         findings.push({
@@ -675,7 +673,7 @@ export function evaluatePythonEnterpriseRules(file: CodeFile, lines: string[], c
             ruleId: 8824,
             type: 'SECURITY',
             title: "PY-SEC-24: Use of Assert Statement for Security or Authorization Checks",
-            severity: "HIGH",
+            severity: "MEDIUM",
             category: "Access Control",
             filePath: file.path,
             lineRange: `L${lineNum}`,
@@ -807,10 +805,9 @@ export function evaluatePythonEnterpriseRules(file: CodeFile, lines: string[], c
         logs.push(`[${ts}] [PYTHON AUDIT] Found PY-SEC-28: Hardcoded AWS Access Key ID in Python Source at ${file.path}:${lineNum}`);
     }
     // PY-SEC-29: Unvalidated Open Redirect via Dynamic Request URL
-    const reg_8829 = /(?:redirect|HttpResponseRedirect)\s*\(\s*request\.(?:args|GET|values|json)\[['"](?:next|url|redirect_to)['"]\]/i;
-    if (reg_8829.test(cleanContent)) {
-        const linePattern = /(?:redirect|HttpResponseRedirect)\s*\(/i;
-        const matchLineIdx = lines.findIndex(l => !l.trim().startsWith('#') && !l.trim().startsWith('"""') && linePattern.test(l));
+    const idx_8829 = pyFindLine(lines, /(?:redirect|HttpResponseRedirect|RedirectResponse)\s*\(\s*(?:url\s*=\s*)?request\.(?:args|GET|values|query_params)(?:\[['"](?:next|url|redirect_to|return_to|redirect)['"]\]|\.get\s*\(\s*['"](?:next|url|redirect_to|return_to|redirect)['"])/i);
+    if (idx_8829 !== -1) {
+        const matchLineIdx = idx_8829;
         const lineNum = matchLineIdx !== -1 ? matchLineIdx + 1 : 1;
         const rawSnippet = matchLineIdx !== -1 ? lines[matchLineIdx].trim() : lines.find(l => !l.trim().startsWith('#'))?.trim() || "Unvalidated Open Redirect via Dynamic Request URL";
         findings.push({
@@ -924,10 +921,10 @@ export function evaluatePythonEnterpriseRules(file: CodeFile, lines: string[], c
         logs.push(`[${ts}] [PYTHON AUDIT] Found PY-SEC-32: Insecure LDAP Search Filter String Interpolation at ${file.path}:${lineNum}`);
     }
     // PY-SEC-33: Catastrophic Backtracking Regular Expression (ReDoS)
-    const reg_8833 = /re\.compile\s*\(\s*['"][^'"]*\([^)]+[+*]\)[+*]/i;
-    if (reg_8833.test(cleanContent)) {
-        const linePattern = /re\.compile/i;
-        const matchLineIdx = lines.findIndex(l => !l.trim().startsWith('#') && !l.trim().startsWith('"""') && linePattern.test(l));
+    // Nested quantifier over a single token, e.g. (a+)+, ([a-z]+)*, (\w+)+, (.*)*: the classic exponential-backtracking shape
+    const idx_8833 = pyFindLine(lines, /re\.(?:compile|match|search|fullmatch|findall|sub)\s*\(\s*r?['"][^'"]*\((?:\?:)?(?:\[[^\]]+\]|\\[wdsWDS]|\.|[A-Za-z0-9])[+*]\)[+*{]/);
+    if (idx_8833 !== -1) {
+        const matchLineIdx = idx_8833;
         const lineNum = matchLineIdx !== -1 ? matchLineIdx + 1 : 1;
         const rawSnippet = matchLineIdx !== -1 ? lines[matchLineIdx].trim() : lines.find(l => !l.trim().startsWith('#'))?.trim() || "Catastrophic Backtracking Regular Expression (ReDoS)";
         findings.push({
@@ -977,10 +974,10 @@ export function evaluatePythonEnterpriseRules(file: CodeFile, lines: string[], c
         logs.push(`[${ts}] [PYTHON AUDIT] Found PY-SEC-34: Hardcoded Private Key in Python Source Code at ${file.path}:${lineNum}`);
     }
     // PY-SEC-35: Broad Exception Handling Swallowing Critical Errors (except: pass)
-    const reg_8835 = /except(?:\s+Exception)?\s*:\s*(?:pass|continue)\b/i;
-    if (reg_8835.test(cleanContent)) {
-        const linePattern = /except(?:\s+Exception)?\s*:\s*(?:pass|continue)/i;
-        const matchLineIdx = lines.findIndex(l => !l.trim().startsWith('#') && !l.trim().startsWith('"""') && linePattern.test(l));
+    // Bare `except:` that silently passes also swallows KeyboardInterrupt / SystemExit; `except Exception: pass` (best-effort cleanup) is left alone
+    const idx_8835 = pyFindLine(lines, /^\s*except\s*:\s*(?:pass\b|$)/, (l, i) => /:\s*pass\b/.test(l) || /^\s*pass\s*$/.test(lines.slice(i + 1).find((x) => x.trim() !== '') ?? ''));
+    if (idx_8835 !== -1) {
+        const matchLineIdx = idx_8835;
         const lineNum = matchLineIdx !== -1 ? matchLineIdx + 1 : 1;
         const rawSnippet = matchLineIdx !== -1 ? lines[matchLineIdx].trim() : lines.find(l => !l.trim().startsWith('#'))?.trim() || "Broad Exception Handling Swallowing Critical Errors (except: pass)";
         findings.push({
@@ -988,7 +985,7 @@ export function evaluatePythonEnterpriseRules(file: CodeFile, lines: string[], c
             ruleId: 8835,
             type: 'SECURITY',
             title: "PY-SEC-35: Broad Exception Handling Swallowing Critical Errors (except: pass)",
-            severity: "MEDIUM",
+            severity: "LOW",
             category: "Error Handling",
             filePath: file.path,
             lineRange: `L${lineNum}`,
@@ -1004,10 +1001,10 @@ export function evaluatePythonEnterpriseRules(file: CodeFile, lines: string[], c
         logs.push(`[${ts}] [PYTHON AUDIT] Found PY-SEC-35: Broad Exception Handling Swallowing Critical Errors (except: pass) at ${file.path}:${lineNum}`);
     }
     // PY-SEC-36: Django SECURE_HSTS_SECONDS Not Configured or Disabled
-    const reg_8836 = /SECURE_HSTS_SECONDS\s*=\s*0\b/i;
-    if (reg_8836.test(cleanContent)) {
-        const linePattern = /SECURE_HSTS_SECONDS\s*=\s*0/i;
-        const matchLineIdx = lines.findIndex(l => !l.trim().startsWith('#') && !l.trim().startsWith('"""') && linePattern.test(l));
+    // Explicitly disabling HSTS outside dev/local/test settings
+    const idx_8836 = isDevSettingsPath(lowerPath) ? -1 : pyFindLine(lines, /^\s*SECURE_HSTS_SECONDS\s*=\s*0\s*$/);
+    if (idx_8836 !== -1) {
+        const matchLineIdx = idx_8836;
         const lineNum = matchLineIdx !== -1 ? matchLineIdx + 1 : 1;
         const rawSnippet = matchLineIdx !== -1 ? lines[matchLineIdx].trim() : lines.find(l => !l.trim().startsWith('#'))?.trim() || "Django SECURE_HSTS_SECONDS Not Configured or Disabled";
         findings.push({
@@ -1029,33 +1026,6 @@ export function evaluatePythonEnterpriseRules(file: CodeFile, lines: string[], c
             falsePositive: false
         });
         logs.push(`[${ts}] [PYTHON AUDIT] Found PY-SEC-36: Django SECURE_HSTS_SECONDS Not Configured or Disabled at ${file.path}:${lineNum}`);
-    }
-    // PY-SEC-37: Django SECURE_SSL_REDIRECT Disabled in Production
-    const reg_8837 = /SECURE_SSL_REDIRECT\s*=\s*False\b/i;
-    if (reg_8837.test(cleanContent)) {
-        const linePattern = /SECURE_SSL_REDIRECT\s*=\s*False/i;
-        const matchLineIdx = lines.findIndex(l => !l.trim().startsWith('#') && !l.trim().startsWith('"""') && linePattern.test(l));
-        const lineNum = matchLineIdx !== -1 ? matchLineIdx + 1 : 1;
-        const rawSnippet = matchLineIdx !== -1 ? lines[matchLineIdx].trim() : lines.find(l => !l.trim().startsWith('#'))?.trim() || "Django SECURE_SSL_REDIRECT Disabled in Production";
-        findings.push({
-            id: `py8837-${Date.now()}-${findingCounter.count++}`,
-            ruleId: 8837,
-            type: 'SECURITY',
-            title: "PY-SEC-37: Django SECURE_SSL_REDIRECT Disabled in Production",
-            severity: "MEDIUM",
-            category: "Transport Security",
-            filePath: file.path,
-            lineRange: `L${lineNum}`,
-            snippet: rawSnippet,
-            reproductionSteps: [
-                `Audited Python source in ${file.path}:${lineNum}.`,
-                "Detected security violation: Setting SECURE_SSL_REDIRECT = False allows unencrypted HTTP connections to access application endpoints."
-            ],
-            remediationPrompt: "Set SECURE_SSL_REDIRECT = True in production settings.py.",
-            status: 'OPEN',
-            falsePositive: false
-        });
-        logs.push(`[${ts}] [PYTHON AUDIT] Found PY-SEC-37: Django SECURE_SSL_REDIRECT Disabled in Production at ${file.path}:${lineNum}`);
     }
     // PY-SEC-38: Insecure FTPLib Usage Without TLS (Plaintext FTP)
     const idx_8838 = pyFindLine(lines, /from\s+ftplib\s+import\s+[^\n]*\bFTP\b/.test(cleanContent) ? /(?:ftplib\.|(?<![\w.]))FTP\s*\(/ : /ftplib\.FTP\s*\(/);
@@ -1258,10 +1228,11 @@ export function evaluatePythonEnterpriseRules(file: CodeFile, lines: string[], c
         logs.push(`[${ts}] [PYTHON AUDIT] Found PY-SEC-44: JWT Signature Verification Disabled in PyJWT at ${file.path}:${lineNum}`);
     }
     // PY-SEC-45: Missing Request Timeout on Python Requests / HTTPX Calls
-    const reg_8845 = /requests\.(?:get|post|put|delete|patch)\s*\([^)]*(?!timeout\s*=)[^)]*\)/i;
-    if (reg_8845.test(cleanContent)) {
-        const linePattern = /requests\.(?:get|post|put|delete|patch)\s*\(/i;
-        const matchLineIdx = lines.findIndex(l => !l.trim().startsWith('#') && !l.trim().startsWith('"""') && linePattern.test(l));
+    // `requests` has no default timeout (httpx does), so a module-level requests call without timeout= can hang forever
+    const reqCall_8845 = /(?<![\w.])requests\.(?:get|post|put|delete|patch|head|request)\s*\(/;
+    const idx_8845 = pyFindLine(lines, reqCall_8845, (_l, i) => !/\btimeout\s*=|\*\*\w+/.test(callText(lines, i, reqCall_8845)));
+    if (idx_8845 !== -1) {
+        const matchLineIdx = idx_8845;
         const lineNum = matchLineIdx !== -1 ? matchLineIdx + 1 : 1;
         const rawSnippet = matchLineIdx !== -1 ? lines[matchLineIdx].trim() : lines.find(l => !l.trim().startsWith('#'))?.trim() || "Missing Request Timeout on Python Requests / HTTPX Calls";
         findings.push({
@@ -1269,7 +1240,7 @@ export function evaluatePythonEnterpriseRules(file: CodeFile, lines: string[], c
             ruleId: 8845,
             type: 'SECURITY',
             title: "PY-SEC-45: Missing Request Timeout on Python Requests / HTTPX Calls",
-            severity: "MEDIUM",
+            severity: "LOW",
             category: "Denial of Service",
             filePath: file.path,
             lineRange: `L${lineNum}`,
@@ -1310,65 +1281,11 @@ export function evaluatePythonEnterpriseRules(file: CodeFile, lines: string[], c
         });
         logs.push(`[${ts}] [PYTHON AUDIT] Found PY-SEC-46: Unrestricted File Upload Without Extension or Content Validation at ${file.path}:${lineNum}`);
     }
-    // PY-SEC-47: Insecure Socket Binding with SO_REUSEADDR on Multi-User Host
-    const reg_8847 = /setsockopt\s*\([^)]*SO_REUSEADDR\s*,\s*1\s*\)/i;
-    if (reg_8847.test(cleanContent)) {
-        const linePattern = /SO_REUSEADDR/i;
-        const matchLineIdx = lines.findIndex(l => !l.trim().startsWith('#') && !l.trim().startsWith('"""') && linePattern.test(l));
-        const lineNum = matchLineIdx !== -1 ? matchLineIdx + 1 : 1;
-        const rawSnippet = matchLineIdx !== -1 ? lines[matchLineIdx].trim() : lines.find(l => !l.trim().startsWith('#'))?.trim() || "Insecure Socket Binding with SO_REUSEADDR on Multi-User Host";
-        findings.push({
-            id: `py8847-${Date.now()}-${findingCounter.count++}`,
-            ruleId: 8847,
-            type: 'SECURITY',
-            title: "PY-SEC-47: Insecure Socket Binding with SO_REUSEADDR on Multi-User Host",
-            severity: "LOW",
-            category: "Network Security",
-            filePath: file.path,
-            lineRange: `L${lineNum}`,
-            snippet: rawSnippet,
-            reproductionSteps: [
-                `Audited Python source in ${file.path}:${lineNum}.`,
-                "Detected security violation: Setting SO_REUSEADDR on listening sockets in shared environments can allow port hijacking by other local users."
-            ],
-            remediationPrompt: "Avoid SO_REUSEADDR on multi-user systems or use SO_REUSEPORT with strict UID verification.",
-            status: 'OPEN',
-            falsePositive: false
-        });
-        logs.push(`[${ts}] [PYTHON AUDIT] Found PY-SEC-47: Insecure Socket Binding with SO_REUSEADDR on Multi-User Host at ${file.path}:${lineNum}`);
-    }
-    // PY-SEC-48: GraphQL Query Depth Limit Unconfigured in Strawberry / Graphene
-    const reg_8848 = /(?:strawberry|graphene)\.Schema\s*\([^)]*query\s*=[^)]*\)/i;
-    if (reg_8848.test(cleanContent)) {
-        const linePattern = /(?:strawberry|graphene)\.Schema/i;
-        const matchLineIdx = lines.findIndex(l => !l.trim().startsWith('#') && !l.trim().startsWith('"""') && linePattern.test(l));
-        const lineNum = matchLineIdx !== -1 ? matchLineIdx + 1 : 1;
-        const rawSnippet = matchLineIdx !== -1 ? lines[matchLineIdx].trim() : lines.find(l => !l.trim().startsWith('#'))?.trim() || "GraphQL Query Depth Limit Unconfigured in Strawberry / Graphene";
-        findings.push({
-            id: `py8848-${Date.now()}-${findingCounter.count++}`,
-            ruleId: 8848,
-            type: 'SECURITY',
-            title: "PY-SEC-48: GraphQL Query Depth Limit Unconfigured in Strawberry / Graphene",
-            severity: "MEDIUM",
-            category: "Denial of Service",
-            filePath: file.path,
-            lineRange: `L${lineNum}`,
-            snippet: rawSnippet,
-            reproductionSteps: [
-                `Audited Python source in ${file.path}:${lineNum}.`,
-                "Detected security violation: GraphQL endpoints without query depth or complexity limits are vulnerable to deeply nested DoS queries."
-            ],
-            remediationPrompt: "Configure query depth and complexity limits on GraphQL schema executors.",
-            status: 'OPEN',
-            falsePositive: false
-        });
-        logs.push(`[${ts}] [PYTHON AUDIT] Found PY-SEC-48: GraphQL Query Depth Limit Unconfigured in Strawberry / Graphene at ${file.path}:${lineNum}`);
-    }
     // PY-SEC-49: Django SESSION_COOKIE_AGE Overly Permissive (> 30 Days)
-    const reg_8849 = /SESSION_COOKIE_AGE\s*=\s*(?:[3-9]\d{7,}|\d{8,})/i;
-    if (reg_8849.test(cleanContent)) {
-        const linePattern = /SESSION_COOKIE_AGE/i;
-        const matchLineIdx = lines.findIndex(l => !l.trim().startsWith('#') && !l.trim().startsWith('"""') && linePattern.test(l));
+    // Literal age above 30 days (2,592,000 s)
+    const idx_8849 = pyFindLine(lines, /^\s*SESSION_COOKIE_AGE\s*=\s*(\d[\d_]*)\s*$/, (l) => Number(/=\s*(\d[\d_]*)/.exec(l)![1].replace(/_/g, '')) > 2592000);
+    if (idx_8849 !== -1) {
+        const matchLineIdx = idx_8849;
         const lineNum = matchLineIdx !== -1 ? matchLineIdx + 1 : 1;
         const rawSnippet = matchLineIdx !== -1 ? lines[matchLineIdx].trim() : lines.find(l => !l.trim().startsWith('#'))?.trim() || "Django SESSION_COOKIE_AGE Overly Permissive (> 30 Days)";
         findings.push({
@@ -1418,6 +1335,11 @@ export function evaluatePythonEnterpriseRules(file: CodeFile, lines: string[], c
         logs.push(`[${ts}] [PYTHON AUDIT] Found PY-SEC-50: Insecure Multiprocessing Manager Without Authentication Key at ${file.path}:${lineNum}`);
     }
     return { findings, logs };
+}
+
+/** Settings / config modules meant for local development or tests (dev-only values are expected there). */
+function isDevSettingsPath(lowerPath: string): boolean {
+    return /(?:^|\/|_)(?:dev|develop|development|local|test|tests|testing|ci)(?:_settings|_config)?\.py$|settings_(?:dev|local|test)\.py$|(?:^|\/)(?:examples?|docs?|samples?)\//.test(lowerPath);
 }
 
 /** A Python source line that is code (not blank, not a # comment). */

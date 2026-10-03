@@ -10,13 +10,14 @@ import { ruleMaturity } from './scanner/rule-maturity';
 /** [kept, dropped] rule pairs that report the same issue (rule packs overlap). */
 const SAME_ISSUE_RULES: ReadonlyArray<readonly [number, number]> = [
   [7004, 3002], // Dockerfile without USER: CLOUD-04 (reviewed true positive) over the infra-pack duplicate
-  [8404, 6013], // DB pool without max size: CHAOS-04 over DB-PERF-13 (pool acquisition timeout), same client config line
   [8901, 7013], [8901, 12201], // privileged pod
   [8321, 12204], // hostNetwork
   [8301, 11003], [8301, 7040], // SSH open to the world
   [8329, 8909], // capabilities ALL
   [26, 8501], [26, 8503], // Apollo server config, same line
   [28251, 9501], [28251, 7323], [9501, 7323], // pull_request_target running PR-head code
+  [3001, 6010], // public-schema table without RLS
+  [9704, 8143], // webhook handler without signature verification
 ];
 import { RULE_ENGINES } from './scanner/rule-engines';
 import { evaluateBuiltinRules } from './scanner/builtin-rules';

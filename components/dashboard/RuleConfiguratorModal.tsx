@@ -21,10 +21,10 @@ const TUNABLE_RULES = [
   { id: 8, name: 'Wildcard CORS (Access-Control-Allow-Origin: *)', category: 'SECURITY', severity: 'HIGH' },
   { id: 16, name: 'Unsanitized innerHTML mutation (XSS risk)', category: 'SECURITY', severity: 'HIGH' },
   { id: 101, name: 'Missing Content-Security-Policy header', category: 'SECURITY', severity: 'CRITICAL' },
-  { id: 102, name: 'Missing HSTS header', category: 'SECURITY', severity: 'HIGH' },
-  { id: 1001, name: 'Generic purple-blue neon gradient', category: 'VIBEPOLISH', severity: 'MEDIUM' },
-  { id: 201, name: 'Decorative floating hero pill badge', category: 'VIBEPOLISH', severity: 'MEDIUM' },
-  { id: 202, name: 'Paired dual CTA buttons in hero', category: 'VIBEPOLISH', severity: 'LOW' }
+  { id: 102, name: 'Missing HSTS header', category: 'SECURITY', severity: 'MEDIUM' },
+  { id: 28602, name: 'Icon-only button or link without an accessible name', category: 'VIBEPOLISH', severity: 'MEDIUM' },
+  { id: 28601, name: 'Image without alt text', category: 'VIBEPOLISH', severity: 'MEDIUM' },
+  { id: 1244, name: 'Viewport blocks zoom (user-scalable=no)', category: 'VIBEPOLISH', severity: 'HIGH' }
 ] as const;
 
 export const RuleConfiguratorModal: React.FC<RuleConfiguratorModalProps> = ({

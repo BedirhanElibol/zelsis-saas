@@ -135,14 +135,14 @@ export function generateAuditPdfReport(project: Project, options: AuditReportOpt
       <div class="kpi-val">${criticals.length + highs.length === 0 ? '100% Passed' : `${criticals.length + highs.length} Open`}</div>
     </div>
     <div class="kpi-card">
-      <div style="color: #a1a1aa; font-size: 12px;">VIBEPOLISH UI MATRIX</div>
-      <div class="kpi-val">${(project?.uiClicheCount ?? 0) === 0 ? '100% Clean' : `${project?.uiClicheCount} Open`}</div>
+      <div style="color: #a1a1aa; font-size: 12px;">UI QUALITY &amp; ACCESSIBILITY</div>
+      <div class="kpi-val">${(project?.uiClicheCount ?? 0) === 0 ? 'No open issues' : `${project?.uiClicheCount} Open`}</div>
     </div>
   </div>
 
   <div class="section">
     <h2>Audit Findings Inventory (${openFindings.length} Open Issues)</h2>
-    ${openFindings.length === 0 ? '<p style="color: #10b981;">🎉 All security pre-flight checks and VibePolish &amp; AI Anti-Pattern rules cleared with 100/100 Readiness Score.</p>' : ''}
+    ${openFindings.length === 0 ? '<p style="color: #10b981;">🎉 All security pre-flight, UI quality and accessibility checks cleared with 100/100 Readiness Score.</p>' : ''}
     ${openFindings.map(f => `
       <div class="finding-card">
         <div style="display: flex; justify-content: space-between; font-weight: bold; margin-bottom: 6px;">

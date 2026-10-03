@@ -54,7 +54,7 @@ export function evaluateCryptoKmsRules(file: CodeFile, lines: string[], cleanCon
             ruleId: 13302,
             type: 'SECURITY',
             title: "CRYPTO-02: Missing Automated Master Key Rotation Schedule Exceeding 90 Days",
-            severity: "MEDIUM",
+            severity: "LOW",
             category: "Key Lifecycle",
             filePath: file.path,
             lineRange: `L${lineNum}`,

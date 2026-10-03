@@ -16,12 +16,10 @@ export const KpiCards: React.FC<KpiCardsProps> = ({ project, onNavigatePillar })
   const criticals = openFindings.filter((f) => f && f.severity === 'CRITICAL').length;
   const highs = openFindings.filter((f) => f && f.severity === 'HIGH').length;
 
-  const openUiCliches = openFindings.filter(
+  // Real count of open UI quality / accessibility findings; no invented "rules passed" baseline.
+  const openUiIssues = openFindings.filter(
     (f) => f && (f.type === 'VIBEPOLISH' || f.category?.includes('UI') || f.category?.includes('Visual'))
   ).length;
-  const totalUiBaseline = Math.max(30, openUiCliches);
-  const clearedUiRules = Math.max(0, totalUiBaseline - openUiCliches);
-  const uiPercent = Math.round((clearedUiRules / totalUiBaseline) * 100);
 
   const openSlop = openFindings.filter(
     (f) => f && (f.category?.includes('Architecture') || f.category?.includes('Slop') || f.category?.includes('Code'))
@@ -119,34 +117,34 @@ export const KpiCards: React.FC<KpiCardsProps> = ({ project, onNavigatePillar })
         </div>
       </div>
 
-      {/* Scorecard 3: Design & UX Polish */}
+      {/* Scorecard 3: UI Quality & Accessibility (open finding count) */}
       <div
         onClick={() => onNavigatePillar('vibepolish')}
         className="bg-[#141414] border border-white/10 rounded-xl hover:border-white/20 p-3.5 sm:p-5 flex flex-col justify-between cursor-pointer transition-all duration-200 group"
       >
         <div className="flex items-center justify-between mb-2 sm:mb-3">
           <span className="text-[0.62rem] sm:text-[0.68rem] font-mono font-semibold text-[#A1A1AA] tracking-wider uppercase truncate">
-            DESIGN &amp; UX POLISH
+            UI QUALITY &amp; A11Y
           </span>
           <Palette size={14} className="text-white/80 group-hover:scale-105 transition-transform shrink-0" />
         </div>
 
         <div className="flex items-baseline gap-1.5 sm:gap-2">
-          <span className="text-2xl sm:text-3xl font-extrabold text-white font-mono">
-            <NumberFlow value={uiPercent} />
+          <span className={`text-2xl sm:text-3xl font-extrabold font-mono ${openUiIssues > 0 ? 'text-[#F59E0B]' : 'text-white'}`}>
+            <NumberFlow value={openUiIssues} />
           </span>
-          <span className="text-[10px] sm:text-xs font-mono text-[#A1A1AA]">%</span>
+          <span className="text-[10px] sm:text-xs font-mono text-[#A1A1AA]">open</span>
         </div>
 
         <div className="w-full h-1 bg-white/[0.06] rounded-full mt-2 sm:mt-3 overflow-hidden">
           <div
-            className="h-full bg-white transition-all duration-700 rounded-full"
-            style={{ width: `${uiPercent}%` }}
+            className={`h-full transition-all duration-700 rounded-full ${openUiIssues > 0 ? 'bg-[#F59E0B]' : 'bg-white'}`}
+            style={{ width: '100%' }}
           />
         </div>
 
-        <div className={`text-[0.68rem] sm:text-[0.72rem] font-bold mt-2 sm:mt-3 flex items-center justify-between font-mono ${openUiCliches > 0 ? 'text-[#F59E0B]' : 'text-zinc-400'}`}>
-          <span className="truncate">{openUiCliches > 0 ? `${openUiCliches} UI Risks` : 'Cleared'}</span>
+        <div className={`text-[0.68rem] sm:text-[0.72rem] font-bold mt-2 sm:mt-3 flex items-center justify-between font-mono ${openUiIssues > 0 ? 'text-[#F59E0B]' : 'text-zinc-400'}`}>
+          <span className="truncate">{openUiIssues > 0 ? `${openUiIssues} UI ${openUiIssues === 1 ? 'issue' : 'issues'}` : 'No open UI issues'}</span>
           <span className="text-[0.68rem] text-white/80 opacity-0 group-hover:opacity-100 transition-opacity hidden sm:inline">
             Inspect &rarr;
           </span>

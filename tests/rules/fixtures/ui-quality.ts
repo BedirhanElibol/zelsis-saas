@@ -5,7 +5,7 @@ const f = (path: string, content: string): CodeFile[] => [{ path, content }];
 
 export const CASES: RuleCase[] = [
   {
-    ruleIds: [28601], name: 'UI-01 img without alt',
+    ruleIds: [28601], name: 'A11Y-01 img without alt',
     detects: f('components/team-card.tsx', `export function TeamCard({ member }: { member: Member }) {
   return (
     <div className="flex items-center gap-3">
@@ -26,7 +26,7 @@ export const CASES: RuleCase[] = [
 `)
   },
   {
-    ruleIds: [28602], name: 'UI-02 icon-only close button without accessible name',
+    ruleIds: [28602], name: 'A11Y-02 icon-only close button without accessible name',
     detects: f('components/settings-dialog.tsx', `import { X } from 'lucide-react';
 export function DialogHeader({ onClose }: { onClose: () => void }) {
   return (
@@ -57,7 +57,7 @@ export function DialogHeader({ onClose }: { onClose: () => void }) {
 `)
   },
   {
-    ruleIds: [28603], name: 'UI-03 positive tabIndex',
+    ruleIds: [28603], name: 'A11Y-03 positive tabIndex',
     detects: f('app/signup/form.tsx', `export function SignupForm() {
   return (
     <form>
@@ -78,7 +78,7 @@ export function DialogHeader({ onClose }: { onClose: () => void }) {
 `)
   },
   {
-    ruleIds: [28604], name: 'UI-04 aria-hidden on focusable element',
+    ruleIds: [28604], name: 'A11Y-04 aria-hidden on focusable element',
     detects: f('components/carousel.tsx', `export function CarouselNav({ next }: { next: () => void }) {
   return <button type="button" aria-hidden="true" onClick={next}>Next slide</button>;
 }
@@ -89,7 +89,7 @@ export function DialogHeader({ onClose }: { onClose: () => void }) {
 `)
   },
   {
-    ruleIds: [28605], name: 'UI-05 misspelled aria-labeledby',
+    ruleIds: [28605], name: 'A11Y-05 misspelled aria-labeledby',
     detects: f('components/pricing-table.tsx', `export function PricingTable() {
   return (
     <section aria-labeledby="pricing-title">
@@ -108,7 +108,7 @@ export function DialogHeader({ onClose }: { onClose: () => void }) {
 `)
   },
   {
-    ruleIds: [28606], name: 'UI-06 invalid ARIA role value',
+    ruleIds: [28606], name: 'A11Y-06 invalid ARIA role value',
     detects: f('components/sidebar.tsx', `export function Sidebar({ children }: { children: React.ReactNode }) {
   return <div role="sidebar" className="w-64 border-r">{children}</div>;
 }
@@ -119,7 +119,7 @@ export function DialogHeader({ onClose }: { onClose: () => void }) {
 `)
   },
   {
-    ruleIds: [28607], name: 'UI-07 anchor with href="#" used as button',
+    ruleIds: [28607], name: 'A11Y-07 anchor with href="#" used as button',
     detects: f('components/account-menu.tsx', `export function AccountMenu({ onSignOut }: { onSignOut: () => void }) {
   return (
     <a href="#" onClick={(e) => { e.preventDefault(); onSignOut(); }} className="text-sm">
@@ -138,18 +138,18 @@ export function DialogHeader({ onClose }: { onClose: () => void }) {
 `)
   },
   {
-    ruleIds: [28608], name: 'UI-08 iframe without title',
-    detects: f('app/demo/page.tsx', `export default function DemoPage() {
+    ruleIds: [28608], name: 'A11Y-08 iframe without title',
+    detects: f('app/product-tour/page.tsx', `export default function ProductTourPage() {
   return <iframe src="https://www.youtube.com/embed/abc123" className="aspect-video w-full" allowFullScreen />;
 }
 `),
-    ignores: f('app/demo/page.tsx', `export default function DemoPage() {
+    ignores: f('app/product-tour/page.tsx', `export default function ProductTourPage() {
   return <iframe src="https://www.youtube.com/embed/abc123" title="Product demo video" className="aspect-video w-full" allowFullScreen />;
 }
 `)
   },
   {
-    ruleIds: [28609], name: 'UI-09 password field with autocomplete off',
+    ruleIds: [28609], name: 'A11Y-09 password field with autocomplete off',
     detects: f('app/login/login-form.tsx', `export function LoginForm() {
   return (
     <form action={login}>
@@ -170,7 +170,7 @@ export function DialogHeader({ onClose }: { onClose: () => void }) {
 `)
   },
   {
-    ruleIds: [28610], name: 'UI-10 paste blocked on confirm field',
+    ruleIds: [28610], name: 'A11Y-10 paste blocked on confirm field',
     detects: f('app/signup/confirm-email.tsx', `export function ConfirmEmail() {
   return (
     <input
@@ -193,7 +193,7 @@ export function DialogHeader({ onClose }: { onClose: () => void }) {
 `)
   },
   {
-    ruleIds: [28611], name: 'UI-11 marquee element',
+    ruleIds: [28611], name: 'A11Y-11 marquee element',
     detects: f('public/announcement.html', `<div class="banner">
   <marquee>Black Friday: 50% off all plans</marquee>
 </div>
@@ -204,7 +204,7 @@ export function DialogHeader({ onClose }: { onClose: () => void }) {
 `)
   },
   {
-    ruleIds: [28612], name: 'UI-12 label not associated with its input',
+    ruleIds: [28612], name: 'A11Y-12 label not associated with its input',
     detects: f('components/profile-form.tsx', `export function ProfileForm() {
   return (
     <div className="grid gap-2">
@@ -225,7 +225,7 @@ export function DialogHeader({ onClose }: { onClose: () => void }) {
 `)
   },
   {
-    ruleIds: [28614], name: 'UI-14 role=button without tabIndex',
+    ruleIds: [28614], name: 'A11Y-14 role=button without tabIndex',
     detects: f('components/plan-picker.tsx', `export function PlanOption({ onSelect }: { onSelect: () => void }) {
   return (
     <div role="button" onClick={onSelect} onKeyDown={(e) => e.key === 'Enter' && onSelect()} className="card">
@@ -244,7 +244,7 @@ export function DialogHeader({ onClose }: { onClose: () => void }) {
 `)
   },
   {
-    ruleIds: [28615], name: 'UI-15 role=button clickable without key handler',
+    ruleIds: [28615], name: 'A11Y-15 role=button clickable without key handler',
     detects: f('components/plan-picker.tsx', `export function PlanOption({ onSelect }: { onSelect: () => void }) {
   return (
     <div role="button" tabIndex={0} onClick={onSelect} className="card">
@@ -269,7 +269,7 @@ export function DialogHeader({ onClose }: { onClose: () => void }) {
 `)
   },
   {
-    ruleIds: [28616], name: 'UI-16 svg role=img without name',
+    ruleIds: [28616], name: 'A11Y-16 svg role=img without name',
     detects: f('components/logo.tsx', `export function Logo() {
   return (
     <svg role="img" viewBox="0 0 24 24" className="h-6 w-6">
@@ -288,7 +288,7 @@ export function DialogHeader({ onClose }: { onClose: () => void }) {
 `)
   },
   {
-    ruleIds: [28617], name: 'UI-17 invalid autocomplete token',
+    ruleIds: [28617], name: 'A11Y-17 invalid autocomplete token',
     detects: f('app/checkout/address-form.tsx', `export function AddressForm() {
   return (
     <form>
@@ -309,7 +309,7 @@ export function DialogHeader({ onClose }: { onClose: () => void }) {
 `)
   },
   {
-    ruleIds: [28618], name: 'UI-18 meta refresh with delay',
+    ruleIds: [28618], name: 'A11Y-18 meta refresh with delay',
     detects: f('public/moved.html', `<!doctype html>
 <html lang="en">
 <head>
@@ -328,7 +328,7 @@ export function DialogHeader({ onClose }: { onClose: () => void }) {
 `)
   },
   {
-    ruleIds: [28619], name: 'UI-19 "click here" link text',
+    ruleIds: [28619], name: 'A11Y-19 "click here" link text',
     detects: f('app/billing/page.tsx', `import Link from 'next/link';
 export default function BillingPage() {
   return (
@@ -349,7 +349,7 @@ export default function BillingPage() {
 `)
   },
   {
-    ruleIds: [28620], name: 'UI-20 aria-label on generic div',
+    ruleIds: [28620], name: 'A11Y-20 aria-label on generic div',
     detects: f('components/rating.tsx', `export function Rating({ value }: { value: number }) {
   return <div aria-label={\`Rated \${value} out of 5\`} className="flex">{'★'.repeat(value)}</div>;
 }
@@ -360,7 +360,7 @@ export default function BillingPage() {
 `)
   },
   {
-    ruleIds: [28621], name: 'UI-21 autoplaying audio without controls',
+    ruleIds: [28621], name: 'A11Y-21 autoplaying audio without controls',
     detects: f('components/welcome-sound.tsx', `export function WelcomeSound() {
   return <audio src="/sounds/welcome.mp3" autoPlay />;
 }
@@ -371,7 +371,7 @@ export default function BillingPage() {
 `)
   },
   {
-    ruleIds: [28622], name: 'UI-22 invalid html lang value',
+    ruleIds: [28622], name: 'A11Y-22 invalid html lang value',
     detects: f('app/layout.tsx', `export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
     <html lang="english">
@@ -390,7 +390,7 @@ export default function BillingPage() {
 `)
   },
   {
-    ruleIds: [28623], name: 'UI-23 onBlur refocus keyboard trap',
+    ruleIds: [28623], name: 'A11Y-23 onBlur refocus keyboard trap',
     detects: f('components/coupon-input.tsx', `export function CouponInput({ isValid }: { isValid: (v: string) => boolean }) {
   return (
     <input

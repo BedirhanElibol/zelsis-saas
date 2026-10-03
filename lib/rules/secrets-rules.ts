@@ -2845,7 +2845,7 @@ export function evaluateSecretRules(file: CodeFile, lines: string[], rawContentO
                 ruleId: 5100,
                 type: 'SECURITY',
                 title: 'SEC-SECRET-100: Generic High-Entropy Hex/Base64 API Key',
-                severity: 'CRITICAL',
+                severity: 'HIGH',
                 category: "Secret Isolation",
                 filePath: file.path,
                 lineRange: `L${lineNum}`,

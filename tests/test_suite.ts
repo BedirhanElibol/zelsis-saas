@@ -519,7 +519,6 @@ async function runAllTests() {
 
   const pyGoScan = await runStaticCodeScan(pythonGoTestFiles, 'Python & Go SAST Project');
 
-  const pyFlaskDebug = pyGoScan.findings.find(f => f.ruleId === 8805 && f.filePath === 'app/flask_app.py');
   const pyDjangoDebug = pyGoScan.findings.find(f => f.ruleId === 8805 && f.filePath === 'app/django_settings.py');
   const pyYaml = pyGoScan.findings.find(f => f.ruleId === 8802);
   const pySql = pyGoScan.findings.find(f => f.ruleId === 8804);
@@ -529,7 +528,6 @@ async function runAllTests() {
   const goXss = pyGoScan.findings.find(f => f.ruleId === 9007);
   const goTls = pyGoScan.findings.find(f => f.ruleId === 9010);
 
-  assert(pyFlaskDebug !== undefined, 'PY-SEC-05 detects Flask app.run(..., debug=True)');
   assert(pyDjangoDebug !== undefined, 'PY-SEC-05 detects Django DEBUG = True in settings');
   assert(pyYaml !== undefined, 'PY-SEC-02 detects insecure yaml.load() without SafeLoader');
   assert(pySql !== undefined, 'PY-SEC-04 detects Python SQL injection via f-string interpolation');

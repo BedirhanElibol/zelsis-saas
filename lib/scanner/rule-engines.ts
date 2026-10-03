@@ -401,6 +401,6 @@ export const RULE_ENGINES: ReadonlyArray<{ evaluate: RuleEngine; scanRawContent?
   { evaluate: evaluatePrivacyDataRules },
   // Cloud, IaC, Kubernetes and container misconfiguration (CLOUD-V2-01.., Rule IDs 28501-28599)
   { evaluate: evaluateCloudIacV2Rules },
-  // Measurable UI quality: WCAG 2.2 accessibility and UX defects in JSX/HTML (UI-01.., Rule IDs 28601-28699)
+  // Measurable UI quality: WCAG 2.2 accessibility and UX defects in JSX/HTML (A11Y-01.., Rule IDs 28601-28699)
   { evaluate: evaluateUiQualityRules },
 ];

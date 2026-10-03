@@ -2,6 +2,8 @@
  * Zelsis Master evaluateGoMicroservicesRules Engine (50 Rules)
  * Rules GO-01 to GO-50 (Rule IDs 9001 to 9050).
  * Zero artificial sentinels. Real regex patterns with exact line detection.
+ * Removed as unsound (ids never reused): 9011 (idiomatic defer Close), 9026 (every goroutine), 9030
+ * (Unscoped is intentional), 9036 (absence), 9043 (RE2 cannot backtrack), 9044 (net/http strips CRLF).
  */
 import { Finding } from "@/data/schema";
 import { CodeFile } from "../scanner-engine";
@@ -326,33 +328,6 @@ export function evaluateGoMicroservicesRules(file: CodeFile, lines: string[], cl
         });
         logs.push(`[${ts}] [GO AUDIT] Found GO-10: Insecure TLS Configuration with InsecureSkipVerify: true at ${file.path}:${lineNum}`);
     }
-    // GO-11: Critical I/O Error Ignored on Defer Close / Remove Operations
-    const reg_9011 = /defer\s+(?:file|f|db|tx)\.Close\s*\(\s*\)/i;
-    if (reg_9011.test(cleanContent)) {
-        const linePattern = /defer\s+(?:file|f|db|tx)\.Close/i;
-        const matchLineIdx = lines.findIndex(l => !l.trim().startsWith('//') && linePattern.test(l));
-        const lineNum = matchLineIdx !== -1 ? matchLineIdx + 1 : 1;
-        const rawSnippet = matchLineIdx !== -1 ? lines[matchLineIdx].trim() : lines.find(l => !l.trim().startsWith('//'))?.trim() || "Critical I/O Error Ignored on Defer Close / Remove Operations";
-        findings.push({
-            id: `go9011-${Date.now()}-${findingCounter.count++}`,
-            ruleId: 9011,
-            type: 'INFRA_DATABASE',
-            title: "GO-11: Critical I/O Error Ignored on Defer Close / Remove Operations",
-            severity: "LOW",
-            category: "Reliability",
-            filePath: file.path,
-            lineRange: `L${lineNum}`,
-            snippet: rawSnippet,
-            reproductionSteps: [
-                `Audited Go source in ${file.path}:${lineNum}.`,
-                "Detected microservice resilience/security violation: Ignoring error return on defer file.Close() or file write operations can hide disk write failures and data corruption."
-            ],
-            remediationPrompt: "Handle close errors or call file.Sync() before deferring close.",
-            status: 'OPEN',
-            falsePositive: false
-        });
-        logs.push(`[${ts}] [GO AUDIT] Found GO-11: Critical I/O Error Ignored on Defer Close / Remove Operations at ${file.path}:${lineNum}`);
-    }
     // GO-13: Server-Side Request Forgery (SSRF) via Dynamic HTTP Call
     const idx_9013 = (() => {
         const tainted = goRequestVars(lines);
@@ -468,7 +443,7 @@ export function evaluateGoMicroservicesRules(file: CodeFile, lines: string[], cl
             ruleId: 9016,
             type: 'INFRA_DATABASE',
             title: "GO-16: Unsafe Pointer Usage (unsafe.Pointer)",
-            severity: "MEDIUM",
+            severity: "LOW",
             category: "Memory Safety",
             filePath: file.path,
             lineRange: `L${lineNum}`,
@@ -537,10 +512,11 @@ export function evaluateGoMicroservicesRules(file: CodeFile, lines: string[], cl
         logs.push(`[${ts}] [GO AUDIT] Found GO-18: Gin Framework Running in Debug Mode in Production at ${file.path}:${lineNum}`);
     }
     // GO-19: Open Redirect via http.Redirect with Unsanitized User Input
-    const reg_9019 = /http\.Redirect\s*\(\s*[a-zA-Z0-9_.]+\s*,\s*[a-zA-Z0-9_.]+\s*,\s*r\.URL\.Query\(\)\.Get\(/i;
-    if (reg_9019.test(cleanContent)) {
-        const linePattern = /http\.Redirect/i;
-        const matchLineIdx = lines.findIndex(l => !l.trim().startsWith('//') && linePattern.test(l));
+    // The redirect target comes straight from the query string / form (no allow-list or relative-path check)
+    const reg_9019 = /http\.Redirect\s*\(\s*\w+\s*,\s*\w+\s*,\s*\w+\.(?:URL\.Query\(\)\.Get|FormValue)\s*\(/;
+    const idx_9019 = goFindLine(lines, reg_9019);
+    if (idx_9019 !== -1) {
+        const matchLineIdx = idx_9019;
         const lineNum = matchLineIdx !== -1 ? matchLineIdx + 1 : 1;
         const rawSnippet = matchLineIdx !== -1 ? lines[matchLineIdx].trim() : lines.find(l => !l.trim().startsWith('//'))?.trim() || "Open Redirect via http.Redirect with Unsanitized User Input";
         findings.push({
@@ -707,38 +683,16 @@ export function evaluateGoMicroservicesRules(file: CodeFile, lines: string[], cl
         });
         logs.push(`[${ts}] [GO AUDIT] Found GO-24: Archive Path Traversal (Zip Slip / Tar Slip in Go) at ${file.path}:${lineNum}`);
     }
-    // GO-26: Unhandled Goroutine Panic Crashing Process (Missing recover)
-    const reg_9026 = /go\s+func\s*\([^)]*\)\s*\{(?!.*recover\s*\(\s*\))/i;
-    if (reg_9026.test(cleanContent)) {
-        const linePattern = /go\s+func/i;
-        const matchLineIdx = lines.findIndex(l => !l.trim().startsWith('//') && linePattern.test(l));
-        const lineNum = matchLineIdx !== -1 ? matchLineIdx + 1 : 1;
-        const rawSnippet = matchLineIdx !== -1 ? lines[matchLineIdx].trim() : lines.find(l => !l.trim().startsWith('//'))?.trim() || "Unhandled Goroutine Panic Crashing Process (Missing recover)";
-        findings.push({
-            id: `go9026-${Date.now()}-${findingCounter.count++}`,
-            ruleId: 9026,
-            type: 'INFRA_DATABASE',
-            title: "GO-26: Unhandled Goroutine Panic Crashing Process (Missing recover)",
-            severity: "MEDIUM",
-            category: "Availability",
-            filePath: file.path,
-            lineRange: `L${lineNum}`,
-            snippet: rawSnippet,
-            reproductionSteps: [
-                `Audited Go source in ${file.path}:${lineNum}.`,
-                "Detected microservice resilience/security violation: Spawning background goroutines without defer recover() causes the entire server process to crash on unhandled panics."
-            ],
-            remediationPrompt: "Add panic recovery handler inside spawned background goroutine.",
-            status: 'OPEN',
-            falsePositive: false
-        });
-        logs.push(`[${ts}] [GO AUDIT] Found GO-26: Unhandled Goroutine Panic Crashing Process (Missing recover) at ${file.path}:${lineNum}`);
-    }
     // GO-27: Nil Pointer Dereference on Unchecked Error Return
-    const reg_9027 = /([a-zA-Z0-9_]+),\s*err\s*:=\s*[a-zA-Z0-9_.]+\([^)]*\)[\s\S]{1,60}?\1\.[a-zA-Z0-9_]+/i;
-    if (reg_9027.test(cleanContent)) {
-        const linePattern = /err\s*:=/i;
-        const matchLineIdx = lines.findIndex(l => !l.trim().startsWith('//') && linePattern.test(l));
+    // `v, err := f()` and the very next statement dereferences v without looking at err
+    const reg_9027 = /^\s*([A-Za-z_]\w*)\s*,\s*err\s*:?=\s*[\w.]+\([^()]*\)\s*$/;
+    const idx_9027 = goFindLine(lines, reg_9027, (l, i) => {
+        const v = reg_9027.exec(l)![1];
+        const next = lines.slice(i + 1).find(n => n.trim() !== '') ?? '';
+        return !/\berr\b/.test(next) && new RegExp('\\b' + v + '\\.\\w').test(next);
+    });
+    if (idx_9027 !== -1) {
+        const matchLineIdx = idx_9027;
         const lineNum = matchLineIdx !== -1 ? matchLineIdx + 1 : 1;
         const rawSnippet = matchLineIdx !== -1 ? lines[matchLineIdx].trim() : lines.find(l => !l.trim().startsWith('//'))?.trim() || "Nil Pointer Dereference on Unchecked Error Return";
         findings.push({
@@ -790,38 +744,11 @@ export function evaluateGoMicroservicesRules(file: CodeFile, lines: string[], cl
         });
         logs.push(`[${ts}] [GO AUDIT] Found GO-29: Sensitive Information Leak via Insecure Log Output in Go at ${file.path}:${lineNum}`);
     }
-    // GO-30: GORM Unscoped Query Disabling Soft-Delete Protection
-    const reg_9030 = /(?:db|tx)\.Unscoped\s*\(\s*\)\.(?:Delete|Find|Where)/i;
-    if (reg_9030.test(cleanContent)) {
-        const linePattern = /\.Unscoped\s*\(\s*\)/i;
-        const matchLineIdx = lines.findIndex(l => !l.trim().startsWith('//') && linePattern.test(l));
-        const lineNum = matchLineIdx !== -1 ? matchLineIdx + 1 : 1;
-        const rawSnippet = matchLineIdx !== -1 ? lines[matchLineIdx].trim() : lines.find(l => !l.trim().startsWith('//'))?.trim() || "GORM Unscoped Query Disabling Soft-Delete Protection";
-        findings.push({
-            id: `go9030-${Date.now()}-${findingCounter.count++}`,
-            ruleId: 9030,
-            type: 'INFRA_DATABASE',
-            title: "GO-30: GORM Unscoped Query Disabling Soft-Delete Protection",
-            severity: "MEDIUM",
-            category: "Data Integrity",
-            filePath: file.path,
-            lineRange: `L${lineNum}`,
-            snippet: rawSnippet,
-            reproductionSteps: [
-                `Audited Go source in ${file.path}:${lineNum}.`,
-                "Detected microservice resilience/security violation: Calling db.Unscoped() bypasses GORM soft-delete protection, risking accidental permanent record deletion."
-            ],
-            remediationPrompt: "Remove db.Unscoped() to respect soft-delete DeletedAt timestamps.",
-            status: 'OPEN',
-            falsePositive: false
-        });
-        logs.push(`[${ts}] [GO AUDIT] Found GO-30: GORM Unscoped Query Disabling Soft-Delete Protection at ${file.path}:${lineNum}`);
-    }
     // GO-32: Insecure Cookie Configuration Missing HttpOnly or Secure Flag
-    const reg_9032 = /&http\.Cookie\s*\{[\s\S]*?(?:HttpOnly\s*:\s*false|Secure\s*:\s*false)/i;
-    if (reg_9032.test(cleanContent)) {
-        const linePattern = /&http\.Cookie/i;
-        const matchLineIdx = lines.findIndex(l => !l.trim().startsWith('//') && linePattern.test(l));
+    // An http.Cookie literal that explicitly turns HttpOnly or Secure off; points at the `false` line
+    const reg_9032 = /http\.Cookie\s*\{[^}]*?\b(?:HttpOnly|Secure)\s*:\s*false\b/.exec(cleanContent);
+    if (reg_9032) {
+        const matchLineIdx = cleanContent.slice(0, reg_9032.index + reg_9032[0].length).split('\n').length - 1;
         const lineNum = matchLineIdx !== -1 ? matchLineIdx + 1 : 1;
         const rawSnippet = matchLineIdx !== -1 ? lines[matchLineIdx].trim() : lines.find(l => !l.trim().startsWith('//'))?.trim() || "Insecure Cookie Configuration Missing HttpOnly or Secure Flag";
         findings.push({
@@ -936,38 +863,12 @@ export function evaluateGoMicroservicesRules(file: CodeFile, lines: string[], cl
         });
         logs.push(`[${ts}] [GO AUDIT] Found GO-35: Cgo Memory Leak or Missing C.free Call at ${file.path}:${lineNum}`);
     }
-    // GO-36: Missing Rate Limiting on Authentication Handlers in Go
-    const reg_9036 = /func\s+[a-zA-Z0-9_]*(?:Login|SignIn|Authenticate|Token)Handler[\s\S]*?(?!rate\.NewLimiter)/i;
-    if (reg_9036.test(cleanContent)) {
-        const linePattern = /func\s+[a-zA-Z0-9_]*(?:Login|SignIn|Authenticate)/i;
-        const matchLineIdx = lines.findIndex(l => !l.trim().startsWith('//') && linePattern.test(l));
-        const lineNum = matchLineIdx !== -1 ? matchLineIdx + 1 : 1;
-        const rawSnippet = matchLineIdx !== -1 ? lines[matchLineIdx].trim() : lines.find(l => !l.trim().startsWith('//'))?.trim() || "Missing Rate Limiting on Authentication Handlers in Go";
-        findings.push({
-            id: `go9036-${Date.now()}-${findingCounter.count++}`,
-            ruleId: 9036,
-            type: 'INFRA_DATABASE',
-            title: "GO-36: Missing Rate Limiting on Authentication Handlers in Go",
-            severity: "MEDIUM",
-            category: "Denial of Service",
-            filePath: file.path,
-            lineRange: `L${lineNum}`,
-            snippet: rawSnippet,
-            reproductionSteps: [
-                `Audited Go source in ${file.path}:${lineNum}.`,
-                "Detected microservice resilience/security violation: Login and token endpoints without rate limiting are susceptible to credential stuffing and brute force attacks."
-            ],
-            remediationPrompt: "Add rate limiting middleware to authentication route handlers.",
-            status: 'OPEN',
-            falsePositive: false
-        });
-        logs.push(`[${ts}] [GO AUDIT] Found GO-36: Missing Rate Limiting on Authentication Handlers in Go at ${file.path}:${lineNum}`);
-    }
     // GO-37: Context Leak via Missing defer cancel() Call
-    const reg_9037 = /context\.(?:WithCancel|WithTimeout|WithDeadline)\s*\([\s\S]*?(?!defer\s+cancel\s*\(\s*\))/i;
-    if (reg_9037.test(cleanContent)) {
-        const linePattern = /context\.(?:WithCancel|WithTimeout|WithDeadline)/i;
-        const matchLineIdx = lines.findIndex(l => !l.trim().startsWith('//') && linePattern.test(l));
+    // The cancel func of a derived context is discarded (`ctx, _ := context.WithTimeout(...)`): go vet lostcancel
+    const reg_9037 = /,\s*_\s*:?=\s*context\.(?:WithCancel|WithTimeout|WithDeadline)(?:Cause)?\s*\(/;
+    const idx_9037 = goFindLine(lines, reg_9037);
+    if (idx_9037 !== -1) {
+        const matchLineIdx = idx_9037;
         const lineNum = matchLineIdx !== -1 ? matchLineIdx + 1 : 1;
         const rawSnippet = matchLineIdx !== -1 ? lines[matchLineIdx].trim() : lines.find(l => !l.trim().startsWith('//'))?.trim() || "Context Leak via Missing defer cancel() Call";
         findings.push({
@@ -975,7 +876,7 @@ export function evaluateGoMicroservicesRules(file: CodeFile, lines: string[], cl
             ruleId: 9037,
             type: 'INFRA_DATABASE',
             title: "GO-37: Context Leak via Missing defer cancel() Call",
-            severity: "MEDIUM",
+            severity: "LOW",
             category: "Resource Leakage",
             filePath: file.path,
             lineRange: `L${lineNum}`,
@@ -1049,10 +950,10 @@ export function evaluateGoMicroservicesRules(file: CodeFile, lines: string[], cl
         logs.push(`[${ts}] [GO AUDIT] Found GO-39: Insecure gRPC Connection via grpc.WithInsecure() at ${file.path}:${lineNum}`);
     }
     // GO-40: Insecure Temporary File Creation via Path Concatenation
-    const reg_9040 = /os\.Create\s*\(\s*(?:os\.TempDir\(\)|filepath\.Join\(os\.TempDir)/i;
-    if (reg_9040.test(cleanContent)) {
-        const linePattern = /os\.Create\s*\(.*TempDir/i;
-        const matchLineIdx = lines.findIndex(l => !l.trim().startsWith('//') && linePattern.test(l));
+    const reg_9040 = /os\.(?:Create|OpenFile)\s*\(\s*(?:os\.TempDir\(\)|filepath\.Join\(\s*os\.TempDir\(\)|path\.Join\(\s*os\.TempDir\(\)|"\/tmp\/)/;
+    const idx_9040 = goFindLine(lines, reg_9040);
+    if (idx_9040 !== -1) {
+        const matchLineIdx = idx_9040;
         const lineNum = matchLineIdx !== -1 ? matchLineIdx + 1 : 1;
         const rawSnippet = matchLineIdx !== -1 ? lines[matchLineIdx].trim() : lines.find(l => !l.trim().startsWith('//'))?.trim() || "Insecure Temporary File Creation via Path Concatenation";
         findings.push({
@@ -1060,7 +961,7 @@ export function evaluateGoMicroservicesRules(file: CodeFile, lines: string[], cl
             ruleId: 9040,
             type: 'INFRA_DATABASE',
             title: "GO-40: Insecure Temporary File Creation via Path Concatenation",
-            severity: "MEDIUM",
+            severity: "LOW",
             category: "Race Condition",
             filePath: file.path,
             lineRange: `L${lineNum}`,
@@ -1127,60 +1028,6 @@ export function evaluateGoMicroservicesRules(file: CodeFile, lines: string[], cl
         });
         logs.push(`[${ts}] [GO AUDIT] Found GO-42: XPath Injection via Unsanitized Query Strings in Go at ${file.path}:${lineNum}`);
     }
-    // GO-43: Catastrophic Backtracking Regular Expression in Go Source
-    const reg_9043 = /regexp\.(?:MustCompile|Compile)\s*\(\s*`[^`]*\([^)]+[+*]\)[+*]/i;
-    if (reg_9043.test(cleanContent)) {
-        const linePattern = /regexp\.(?:MustCompile|Compile)/i;
-        const matchLineIdx = lines.findIndex(l => !l.trim().startsWith('//') && linePattern.test(l));
-        const lineNum = matchLineIdx !== -1 ? matchLineIdx + 1 : 1;
-        const rawSnippet = matchLineIdx !== -1 ? lines[matchLineIdx].trim() : lines.find(l => !l.trim().startsWith('//'))?.trim() || "Catastrophic Backtracking Regular Expression in Go Source";
-        findings.push({
-            id: `go9043-${Date.now()}-${findingCounter.count++}`,
-            ruleId: 9043,
-            type: 'INFRA_DATABASE',
-            title: "GO-43: Catastrophic Backtracking Regular Expression in Go Source",
-            severity: "MEDIUM",
-            category: "Regular Expression Denial of Service",
-            filePath: file.path,
-            lineRange: `L${lineNum}`,
-            snippet: rawSnippet,
-            reproductionSteps: [
-                `Audited Go source in ${file.path}:${lineNum}.`,
-                "Detected microservice resilience/security violation: Nested quantifiers in regexp patterns evaluate with exponential complexity on crafted inputs."
-            ],
-            remediationPrompt: "Refactor regexp pattern to eliminate nested quantifier groups.",
-            status: 'OPEN',
-            falsePositive: false
-        });
-        logs.push(`[${ts}] [GO AUDIT] Found GO-43: Catastrophic Backtracking Regular Expression in Go Source at ${file.path}:${lineNum}`);
-    }
-    // GO-44: HTTP Header Injection / Response Splitting via CRLF
-    const reg_9044 = /w\.Header\(\)\.Set\s*\([^,]+,\s*r\.URL\.Query\(\)/i;
-    if (reg_9044.test(cleanContent)) {
-        const linePattern = /w\.Header\(\)\.Set/i;
-        const matchLineIdx = lines.findIndex(l => !l.trim().startsWith('//') && linePattern.test(l));
-        const lineNum = matchLineIdx !== -1 ? matchLineIdx + 1 : 1;
-        const rawSnippet = matchLineIdx !== -1 ? lines[matchLineIdx].trim() : lines.find(l => !l.trim().startsWith('//'))?.trim() || "HTTP Header Injection / Response Splitting via CRLF";
-        findings.push({
-            id: `go9044-${Date.now()}-${findingCounter.count++}`,
-            ruleId: 9044,
-            type: 'INFRA_DATABASE',
-            title: "GO-44: HTTP Header Injection / Response Splitting via CRLF",
-            severity: "MEDIUM",
-            category: "Header Injection",
-            filePath: file.path,
-            lineRange: `L${lineNum}`,
-            snippet: rawSnippet,
-            reproductionSteps: [
-                `Audited Go source in ${file.path}:${lineNum}.`,
-                "Detected microservice resilience/security violation: Setting HTTP response headers directly from user inputs without stripping \\r\\n characters allows header injection."
-            ],
-            remediationPrompt: "Sanitize header values by removing CR and LF characters.",
-            status: 'OPEN',
-            falsePositive: false
-        });
-        logs.push(`[${ts}] [GO AUDIT] Found GO-44: HTTP Header Injection / Response Splitting via CRLF at ${file.path}:${lineNum}`);
-    }
     // GO-45: Unsafe Deserialization via Gob Decoder on Untrusted Data
     const idx_9045 = goFindLine(lines, /gob\.NewDecoder\s*\(\s*(?:r|req|c\.Request)\.Body\s*\)/);
     if (idx_9045 !== -1) {
@@ -1234,10 +1081,10 @@ export function evaluateGoMicroservicesRules(file: CodeFile, lines: string[], cl
         logs.push(`[${ts}] [GO AUDIT] Found GO-46: Deprecated TLS Minimum Version (TLS 1.0 / TLS 1.1) at ${file.path}:${lineNum}`);
     }
     // GO-49: Unbuffered Channel Deadlock Risk in Single Goroutine Flow
-    const reg_9049 = /ch\s*:=\s*make\(chan\s+[a-zA-Z0-9_]+\)[\s\S]{1,40}?ch\s*<-/i;
-    if (reg_9049.test(cleanContent)) {
-        const linePattern = /make\(chan/i;
-        const matchLineIdx = lines.findIndex(l => !l.trim().startsWith('//') && linePattern.test(l));
+    // Unbuffered channel created and sent on by the next statement of the same goroutine: blocks forever
+    const reg_9049 = /(?:^|\n)[ \t]*([A-Za-z_]\w*)\s*:=\s*make\(\s*chan\s+[^,()\n]+\)[ \t]*\n[ \t]*\1\s*<-/.exec(cleanContent);
+    if (reg_9049) {
+        const matchLineIdx = cleanContent.slice(0, reg_9049.index + reg_9049[0].indexOf('make(')).split('\n').length - 1;
         const lineNum = matchLineIdx !== -1 ? matchLineIdx + 1 : 1;
         const rawSnippet = matchLineIdx !== -1 ? lines[matchLineIdx].trim() : lines.find(l => !l.trim().startsWith('//'))?.trim() || "Unbuffered Channel Deadlock Risk in Single Goroutine Flow";
         findings.push({

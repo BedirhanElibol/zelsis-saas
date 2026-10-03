@@ -1,10 +1,10 @@
 {
  "summary": {
-  "implementedRules": 998,
-  "testedRules": 701,
-  "preciseLocationRules": 973,
+  "implementedRules": 792,
+  "testedRules": 783,
+  "preciseLocationRules": 789,
   "catalogEntries": 1922,
-  "catalogOnlyNotImplemented": 1224,
+  "catalogOnlyNotImplemented": 1401,
   "catalogPlaceholderMetadata": 1810
  },
  "catalogOnly": [
@@ -102,32 +102,74 @@
   1248,
   1249,
   1250,
+  6002,
+  6004,
+  6006,
+  6007,
+  6008,
+  6011,
   6012,
+  6013,
+  6014,
   6016,
+  6018,
+  6019,
+  6020,
+  6021,
   6022,
+  6023,
   6024,
+  6025,
   6026,
+  6027,
+  6028,
   6030,
+  6031,
+  6032,
+  6033,
+  6035,
+  6036,
   6037,
   6039,
+  6040,
   6041,
   6042,
   6044,
+  6045,
   6046,
   6047,
+  6048,
   6049,
   6050,
   7001,
+  7002,
+  7003,
   7008,
   7009,
+  7010,
+  7011,
   7012,
+  7014,
   7016,
+  7017,
+  7018,
+  7019,
   7021,
   7022,
   7023,
+  7024,
   7025,
+  7028,
+  7032,
   7033,
+  7034,
+  7035,
+  7039,
+  7045,
   7046,
+  7047,
+  7048,
+  7050,
   7107,
   7108,
   7109,
@@ -159,22 +201,65 @@
   7148,
   7149,
   7150,
+  7201,
+  7202,
+  7204,
+  7205,
+  7206,
+  7208,
+  7209,
   7210,
+  7211,
   7212,
   7214,
+  7216,
+  7217,
+  7222,
+  7224,
+  7225,
+  7227,
+  7228,
   7229,
+  7231,
   7232,
   7233,
+  7234,
+  7236,
   7238,
   7239,
+  7240,
+  7241,
+  7244,
+  7248,
   7303,
+  7309,
+  7310,
   7311,
   7312,
+  7315,
   7316,
+  7318,
+  7321,
+  7324,
+  7327,
+  7328,
+  7330,
   7331,
   7333,
   7335,
+  7336,
+  7337,
+  7338,
+  7340,
+  7341,
+  7342,
+  7343,
+  7344,
+  7345,
+  7346,
+  7347,
   7348,
+  7350,
   8001,
   8002,
   8003,
@@ -182,18 +267,27 @@
   8006,
   8007,
   8009,
+  8010,
   8011,
   8012,
   8013,
+  8014,
+  8015,
   8016,
+  8018,
   8019,
   8020,
   8021,
+  8022,
+  8023,
   8024,
+  8025,
   8026,
   8027,
   8028,
+  8029,
   8030,
+  8031,
   8032,
   8033,
   8034,
@@ -201,43 +295,72 @@
   8036,
   8037,
   8038,
+  8039,
+  8040,
+  8041,
+  8042,
   8043,
+  8044,
   8045,
+  8046,
   8047,
+  8048,
+  8049,
   8050,
   8051,
+  8052,
   8053,
+  8054,
+  8055,
   8057,
+  8058,
+  8059,
+  8060,
   8101,
   8106,
   8107,
   8108,
+  8112,
   8114,
   8115,
   8116,
   8119,
+  8121,
+  8123,
+  8125,
   8126,
+  8127,
   8128,
+  8129,
   8130,
+  8132,
+  8133,
   8134,
   8135,
   8136,
   8137,
   8138,
+  8140,
+  8141,
   8144,
   8145,
   8146,
   8147,
+  8148,
   8149,
   8151,
+  8152,
   8153,
+  8154,
   8155,
   8202,
   8203,
   8204,
   8205,
+  8206,
   8208,
   8209,
+  8210,
   8211,
   8212,
   8213,
@@ -247,26 +370,57 @@
   8218,
   8219,
   8220,
+  8221,
+  8222,
+  8223,
   8224,
   8226,
+  8227,
+  8228,
+  8229,
+  8230,
   8231,
+  8232,
   8233,
+  8234,
+  8235,
+  8236,
   8237,
   8238,
+  8239,
   8240,
   8241,
   8242,
+  8243,
+  8244,
+  8245,
   8246,
+  8247,
+  8248,
+  8249,
   8250,
+  8308,
   8311,
   8313,
   8315,
+  8316,
   8317,
   8318,
+  8319,
   8325,
+  8326,
+  8327,
+  8330,
   8334,
+  8336,
+  8337,
   8339,
+  8340,
+  8341,
+  8343,
+  8346,
   8347,
+  8350,
   8401,
   8402,
   8403,
@@ -305,9 +459,13 @@
   8446,
   8447,
   8448,
+  8505,
+  8508,
   8511,
+  8512,
   8513,
   8514,
+  8518,
   8519,
   8520,
   8521,
@@ -342,6 +500,10 @@
   8550,
   8601,
   8603,
+  8604,
+  8608,
+  8609,
+  8610,
   8611,
   8612,
   8613,
@@ -383,14 +545,29 @@
   8649,
   8650,
   8704,
+  8823,
+  8837,
+  8847,
+  8848,
+  8903,
+  8906,
+  8907,
   8910,
   9004,
+  9011,
   9012,
   9025,
+  9026,
   9028,
+  9030,
   9031,
+  9036,
+  9043,
+  9044,
   9047,
   9048,
+  9101,
+  9103,
   9105,
   9206,
   9207,
@@ -1321,7 +1498,7 @@
    "severity": "HIGH",
    "source": "lib/rules/security-rules.ts",
    "preciseLocation": true,
-   "tested": false,
+   "tested": true,
    "inCatalog": false
   },
   {
@@ -1402,16 +1579,6 @@
    "source": "lib/rules/security-rules.ts",
    "preciseLocation": true,
    "tested": true,
-   "inCatalog": false
-  },
-  {
-   "ruleId": 30,
-   "code": "RULE-30",
-   "title": "Sensitive Cookie Loose Parent Domain Scope (Wildcard Domain Leak)",
-   "severity": "MEDIUM",
-   "source": "lib/rules/security-rules.ts",
-   "preciseLocation": true,
-   "tested": false,
    "inCatalog": false
   },
   {
@@ -1565,23 +1732,13 @@
    "inCatalog": false
   },
   {
-   "ruleId": 48,
-   "code": "UI-48",
-   "title": "Dynamic Variable Injection Missing Fallback",
-   "severity": "HIGH",
-   "source": "lib/scanner/builtin-rules.ts",
-   "preciseLocation": true,
-   "tested": false,
-   "inCatalog": false
-  },
-  {
    "ruleId": 61,
    "code": "UI-61",
    "title": "Naive Fixed-Character Text Splitter",
-   "severity": "MEDIUM",
+   "severity": "LOW",
    "source": "lib/scanner/builtin-rules.ts",
    "preciseLocation": true,
-   "tested": false,
+   "tested": true,
    "inCatalog": false
   },
   {
@@ -1608,80 +1765,60 @@
    "ruleId": 102,
    "code": "SEC-WEB-02",
    "title": "Absence of HSTS Strict Transport Security Header",
-   "severity": "HIGH",
+   "severity": "MEDIUM",
    "source": "lib/scanner/builtin-rules.ts",
    "preciseLocation": true,
-   "tested": false,
+   "tested": true,
    "inCatalog": false
   },
   {
    "ruleId": 103,
    "code": "SEC-WEB-03",
    "title": "Clickjacking Exposure (Missing X-Frame-Options Header)",
-   "severity": "HIGH",
+   "severity": "MEDIUM",
    "source": "lib/scanner/builtin-rules.ts",
    "preciseLocation": true,
-   "tested": false,
+   "tested": true,
    "inCatalog": false
   },
   {
    "ruleId": 104,
    "code": "SEC-WEB-04",
    "title": "MIME Sniffing Vulnerability (Missing X-Content-Type-Options)",
-   "severity": "MEDIUM",
+   "severity": "LOW",
    "source": "lib/scanner/builtin-rules.ts",
    "preciseLocation": true,
-   "tested": false,
+   "tested": true,
    "inCatalog": false
   },
   {
    "ruleId": 106,
    "code": "UI-106",
    "title": "Empty Silent Catch Block",
-   "severity": "HIGH",
+   "severity": "LOW",
    "source": "lib/scanner/builtin-rules.ts",
    "preciseLocation": true,
-   "tested": false,
+   "tested": true,
    "inCatalog": false
   },
   {
    "ruleId": 111,
    "code": "UI-111",
    "title": "TypeScript ",
-   "severity": "MEDIUM",
+   "severity": "LOW",
    "source": "lib/scanner/builtin-rules.ts",
    "preciseLocation": true,
-   "tested": false,
-   "inCatalog": false
-  },
-  {
-   "ruleId": 115,
-   "code": "UI-115",
-   "title": "Monolithic Overly Long Source File (>500 Lines)",
-   "severity": "MEDIUM",
-   "source": "lib/scanner/builtin-rules.ts",
-   "preciseLocation": true,
-   "tested": false,
+   "tested": true,
    "inCatalog": false
   },
   {
    "ruleId": 117,
    "code": "UI-117",
    "title": "Uncleaned Event Listener Memory Leak",
-   "severity": "HIGH",
-   "source": "lib/scanner/builtin-rules.ts",
-   "preciseLocation": true,
-   "tested": false,
-   "inCatalog": false
-  },
-  {
-   "ruleId": 134,
-   "code": "UI-134",
-   "title": "Unvirtualized Long List (Missing Virtual Scrolling)",
    "severity": "MEDIUM",
    "source": "lib/scanner/builtin-rules.ts",
    "preciseLocation": true,
-   "tested": false,
+   "tested": true,
    "inCatalog": false
   },
   {
@@ -1692,46 +1829,6 @@
    "source": "lib/scanner/builtin-rules.ts",
    "preciseLocation": true,
    "tested": true,
-   "inCatalog": false
-  },
-  {
-   "ruleId": 160,
-   "code": "UI-160",
-   "title": "Missing Automated Budget Circuit Breaker",
-   "severity": "LOW",
-   "source": "lib/scanner/builtin-rules.ts",
-   "preciseLocation": true,
-   "tested": false,
-   "inCatalog": false
-  },
-  {
-   "ruleId": 185,
-   "code": "UI-185",
-   "title": "Missing User Feedback Component",
-   "severity": "MEDIUM",
-   "source": "lib/scanner/builtin-rules.ts",
-   "preciseLocation": true,
-   "tested": false,
-   "inCatalog": false
-  },
-  {
-   "ruleId": 195,
-   "code": "UI-195",
-   "title": "Exposing Raw Hyper-parameters to End Users",
-   "severity": "LOW",
-   "source": "lib/scanner/builtin-rules.ts",
-   "preciseLocation": true,
-   "tested": false,
-   "inCatalog": false
-  },
-  {
-   "ruleId": 197,
-   "code": "UI-197",
-   "title": "Unpinned Generic Model Tag (Missing Date-Pinned Model Version)",
-   "severity": "MEDIUM",
-   "source": "lib/scanner/builtin-rules.ts",
-   "preciseLocation": true,
-   "tested": false,
    "inCatalog": false
   },
   {
@@ -1775,86 +1872,6 @@
    "inCatalog": true
   },
   {
-   "ruleId": 1001,
-   "code": "UI-01",
-   "title": "Generic Purple-Blue Neon Gradient Cliché",
-   "severity": "MEDIUM",
-   "source": "lib/scanner/builtin-rules.ts",
-   "preciseLocation": true,
-   "tested": false,
-   "inCatalog": false
-  },
-  {
-   "ruleId": 1003,
-   "code": "UI-03",
-   "title": "Overused Sparkle / Magic Wand Icon Cliché",
-   "severity": "LOW",
-   "source": "lib/scanner/builtin-rules.ts",
-   "preciseLocation": true,
-   "tested": false,
-   "inCatalog": false
-  },
-  {
-   "ruleId": 1004,
-   "code": "UI-04",
-   "title": "Absence of Empty State Component Fallback",
-   "severity": "LOW",
-   "source": "lib/scanner/builtin-rules.ts",
-   "preciseLocation": true,
-   "tested": false,
-   "inCatalog": false
-  },
-  {
-   "ruleId": 1006,
-   "code": "UI-06",
-   "title": "Pulsating Status Dot & Glowing Badge Cliché (AI Slop Anti-Pattern)",
-   "severity": "LOW",
-   "source": "lib/scanner/builtin-rules.ts",
-   "preciseLocation": true,
-   "tested": false,
-   "inCatalog": false
-  },
-  {
-   "ruleId": 1007,
-   "code": "UI-07",
-   "title": "Conversational Chat-Wrapper Lock-In Trap",
-   "severity": "HIGH",
-   "source": "lib/scanner/builtin-rules.ts",
-   "preciseLocation": true,
-   "tested": false,
-   "inCatalog": false
-  },
-  {
-   "ruleId": 1008,
-   "code": "UI-08",
-   "title": "Repetitive Checkmark Icon Flooding (AI Slop Anti-Pattern)",
-   "severity": "LOW",
-   "source": "lib/scanner/builtin-rules.ts",
-   "preciseLocation": true,
-   "tested": false,
-   "inCatalog": false
-  },
-  {
-   "ruleId": 1011,
-   "code": "UI-11",
-   "title": "Uninformative ",
-   "severity": "MEDIUM",
-   "source": "lib/scanner/builtin-rules.ts",
-   "preciseLocation": true,
-   "tested": false,
-   "inCatalog": false
-  },
-  {
-   "ruleId": 1021,
-   "code": "UI-21",
-   "title": "Cliché Fluff & Filler Prefaces",
-   "severity": "MEDIUM",
-   "source": "lib/scanner/builtin-rules.ts",
-   "preciseLocation": true,
-   "tested": false,
-   "inCatalog": false
-  },
-  {
    "ruleId": 1023,
    "code": "UI-23",
    "title": "Robotic Apology / Refusal Boilerplate",
@@ -1871,7 +1888,7 @@
    "severity": "MEDIUM",
    "source": "lib/rules/frontend-rules.ts",
    "preciseLocation": true,
-   "tested": false,
+   "tested": true,
    "inCatalog": false
   },
   {
@@ -1885,23 +1902,13 @@
    "inCatalog": false
   },
   {
-   "ruleId": 1028,
-   "code": "RULE-1028",
-   "title": "",
-   "severity": "UNKNOWN",
-   "source": "lib/rules/frontend-rules.ts",
-   "preciseLocation": true,
-   "tested": false,
-   "inCatalog": false
-  },
-  {
    "ruleId": 1029,
    "code": "RULE-1029",
    "title": "WCAG 2.2 AA: Non-Semantic Clickable Container Missing Keyboard Accessibility",
-   "severity": "HIGH",
+   "severity": "MEDIUM",
    "source": "lib/rules/frontend-rules.ts",
    "preciseLocation": true,
-   "tested": false,
+   "tested": true,
    "inCatalog": false
   },
   {
@@ -1911,17 +1918,7 @@
    "severity": "MEDIUM",
    "source": "lib/rules/frontend-rules.ts",
    "preciseLocation": true,
-   "tested": false,
-   "inCatalog": false
-  },
-  {
-   "ruleId": 1032,
-   "code": "UI-32",
-   "title": "Excessive Meta-Announcement Preface Cliché",
-   "severity": "LOW",
-   "source": "lib/scanner/builtin-rules.ts",
-   "preciseLocation": true,
-   "tested": false,
+   "tested": true,
    "inCatalog": false
   },
   {
@@ -1931,57 +1928,27 @@
    "severity": "LOW",
    "source": "lib/rules/frontend-rules.ts",
    "preciseLocation": true,
-   "tested": false,
+   "tested": true,
    "inCatalog": false
   },
   {
    "ruleId": 1034,
    "code": "RULE-1034",
    "title": "Synchronous Render-Blocking Script Tag Detected in Document Head",
-   "severity": "MEDIUM",
+   "severity": "LOW",
    "source": "lib/rules/frontend-rules.ts",
    "preciseLocation": true,
-   "tested": false,
-   "inCatalog": false
-  },
-  {
-   "ruleId": 1041,
-   "code": "UI-41",
-   "title": "Monolithic System Prompt Inflation",
-   "severity": "MEDIUM",
-   "source": "lib/scanner/builtin-rules.ts",
-   "preciseLocation": true,
-   "tested": false,
+   "tested": true,
    "inCatalog": false
   },
   {
    "ruleId": 1044,
    "code": "RULE-1044",
-   "title": "Interactive Element Touch Target Below WCAG 2.2 AA Minimum (<44x44px)",
-   "severity": "MEDIUM",
+   "title": "Interactive Element Touch Target Below WCAG 2.2 AA Minimum (<24x24px)",
+   "severity": "LOW",
    "source": "lib/rules/frontend-rules.ts",
    "preciseLocation": true,
-   "tested": false,
-   "inCatalog": false
-  },
-  {
-   "ruleId": 1127,
-   "code": "RULE-1127",
-   "title": "Bloated Monolithic Library Barrel Import (Missing optimizePackageImports)",
-   "severity": "MEDIUM",
-   "source": "lib/rules/frontend-rules.ts",
-   "preciseLocation": true,
-   "tested": false,
-   "inCatalog": false
-  },
-  {
-   "ruleId": 1129,
-   "code": "RULE-1129",
-   "title": "Disabled Button Pointer-Events Trap (Keyboard & Screen Reader Hazard)",
-   "severity": "MEDIUM",
-   "source": "lib/rules/frontend-rules.ts",
-   "preciseLocation": true,
-   "tested": false,
+   "tested": true,
    "inCatalog": false
   },
   {
@@ -2237,8 +2204,8 @@
   {
    "ruleId": 1244,
    "code": "UI-INTERACT-44",
-   "title": "Broken Zoom Affordance on Pinch Gestures",
-   "severity": "LOW",
+   "title": "Viewport Blocks Zoom (WCAG 1.4.4 Resize Text)",
+   "severity": "HIGH",
    "source": "lib/rules/interaction-rules.ts",
    "preciseLocation": true,
    "tested": true,
@@ -2378,7 +2345,7 @@
    "ruleId": 3007,
    "code": "RULE-3007",
    "title": "Kubernetes Workload Manifest Missing CPU/Memory Resource Limits (DoS Risk)",
-   "severity": "MEDIUM",
+   "severity": "LOW",
    "source": "lib/rules/infra-rules.ts",
    "preciseLocation": true,
    "tested": true,
@@ -2388,7 +2355,7 @@
    "ruleId": 3009,
    "code": "RULE-3009",
    "title": "Serverless Connection Pool Exhaustion Hazard (PrismaClient Constructed Per Request)",
-   "severity": "HIGH",
+   "severity": "MEDIUM",
    "source": "lib/rules/infra-rules.ts",
    "preciseLocation": true,
    "tested": true,
@@ -3498,7 +3465,7 @@
    "ruleId": 5100,
    "code": "SEC-SECRET-100",
    "title": "Generic High-Entropy Hex/Base64 API Key",
-   "severity": "CRITICAL",
+   "severity": "HIGH",
    "source": "lib/rules/secrets-rules.ts",
    "preciseLocation": true,
    "tested": true,
@@ -3508,40 +3475,20 @@
    "ruleId": 6001,
    "code": "DB-PERF-01",
    "title": "Prisma / ORM N+1 Query in Loop",
-   "severity": "HIGH",
+   "severity": "MEDIUM",
    "source": "lib/rules/database-rules.ts",
    "preciseLocation": true,
-   "tested": false,
-   "inCatalog": true
-  },
-  {
-   "ruleId": 6002,
-   "code": "DB-PERF-02",
-   "title": "Missing Index on Foreign Key Columns",
-   "severity": "HIGH",
-   "source": "lib/rules/database-rules.ts",
-   "preciseLocation": true,
-   "tested": false,
+   "tested": true,
    "inCatalog": true
   },
   {
    "ruleId": 6003,
    "code": "DB-PERF-03",
    "title": "Deep Offset Pagination Performance Trap",
-   "severity": "MEDIUM",
+   "severity": "LOW",
    "source": "lib/rules/database-rules.ts",
    "preciseLocation": true,
-   "tested": false,
-   "inCatalog": true
-  },
-  {
-   "ruleId": 6004,
-   "code": "DB-PERF-04",
-   "title": "Unbounded SELECT * Full Table Scan",
-   "severity": "HIGH",
-   "source": "lib/rules/database-rules.ts",
-   "preciseLocation": true,
-   "tested": false,
+   "tested": true,
    "inCatalog": true
   },
   {
@@ -3552,36 +3499,6 @@
    "source": "lib/rules/database-rules.ts",
    "preciseLocation": true,
    "tested": true,
-   "inCatalog": true
-  },
-  {
-   "ruleId": 6006,
-   "code": "DB-PERF-06",
-   "title": "Missing Composite Index on Multi-Column Filters",
-   "severity": "MEDIUM",
-   "source": "lib/rules/database-rules.ts",
-   "preciseLocation": true,
-   "tested": false,
-   "inCatalog": true
-  },
-  {
-   "ruleId": 6007,
-   "code": "DB-PERF-07",
-   "title": "Unindexed Leading Wildcard LIKE Query",
-   "severity": "MEDIUM",
-   "source": "lib/rules/database-rules.ts",
-   "preciseLocation": true,
-   "tested": false,
-   "inCatalog": true
-  },
-  {
-   "ruleId": 6008,
-   "code": "DB-PERF-08",
-   "title": "Missing ON DELETE Strategy on Foreign Key Constraints",
-   "severity": "HIGH",
-   "source": "lib/rules/database-rules.ts",
-   "preciseLocation": true,
-   "tested": false,
    "inCatalog": true
   },
   {
@@ -3600,38 +3517,8 @@
    "title": "PostgreSQL Public Table Missing Row Level Security (RLS)",
    "severity": "CRITICAL",
    "source": "lib/rules/database-rules.ts",
-   "preciseLocation": false,
+   "preciseLocation": true,
    "tested": true,
-   "inCatalog": true
-  },
-  {
-   "ruleId": 6011,
-   "code": "DB-PERF-11",
-   "title": "Non-Deterministic findFirst without OrderBy",
-   "severity": "MEDIUM",
-   "source": "lib/rules/database-rules.ts",
-   "preciseLocation": true,
-   "tested": false,
-   "inCatalog": true
-  },
-  {
-   "ruleId": 6013,
-   "code": "DB-PERF-13",
-   "title": "Missing Connection Pool Acquisition Timeout",
-   "severity": "MEDIUM",
-   "source": "lib/rules/database-rules.ts",
-   "preciseLocation": true,
-   "tested": false,
-   "inCatalog": true
-  },
-  {
-   "ruleId": 6014,
-   "code": "DB-PERF-14",
-   "title": "Unindexed UUID Primary Key Fragmenting B-Tree",
-   "severity": "MEDIUM",
-   "source": "lib/rules/database-rules.ts",
-   "preciseLocation": true,
-   "tested": false,
    "inCatalog": true
   },
   {
@@ -3648,90 +3535,10 @@
    "ruleId": 6017,
    "code": "DB-PERF-17",
    "title": "Redundant Duplicate Indexes on Same Column Prefix",
-   "severity": "MEDIUM",
+   "severity": "LOW",
    "source": "lib/rules/database-rules.ts",
    "preciseLocation": true,
-   "tested": false,
-   "inCatalog": true
-  },
-  {
-   "ruleId": 6018,
-   "code": "DB-PERF-18",
-   "title": "Unbounded JSONB Column Bloat Without Size Cap",
-   "severity": "MEDIUM",
-   "source": "lib/rules/database-rules.ts",
-   "preciseLocation": true,
-   "tested": false,
-   "inCatalog": true
-  },
-  {
-   "ruleId": 6019,
-   "code": "DB-PERF-19",
-   "title": "Missing Statement Timeout on Production Database",
-   "severity": "MEDIUM",
-   "source": "lib/rules/database-rules.ts",
-   "preciseLocation": true,
-   "tested": false,
-   "inCatalog": true
-  },
-  {
-   "ruleId": 6020,
-   "code": "DB-PERF-20",
-   "title": "Case-Insensitive Query Missing Functional Index",
-   "severity": "MEDIUM",
-   "source": "lib/rules/database-rules.ts",
-   "preciseLocation": true,
-   "tested": false,
-   "inCatalog": true
-  },
-  {
-   "ruleId": 6021,
-   "code": "DB-PERF-21",
-   "title": "Uncached Read-Heavy System Settings Queries",
-   "severity": "MEDIUM",
-   "source": "lib/rules/database-rules.ts",
-   "preciseLocation": true,
-   "tested": false,
-   "inCatalog": true
-  },
-  {
-   "ruleId": 6023,
-   "code": "DB-PERF-23",
-   "title": "Un-indexed Array Containment Query (@>)",
-   "severity": "MEDIUM",
-   "source": "lib/rules/database-rules.ts",
-   "preciseLocation": true,
-   "tested": false,
-   "inCatalog": true
-  },
-  {
-   "ruleId": 6025,
-   "code": "DB-PERF-25",
-   "title": "Missing Optimistic Concurrency Version Column",
-   "severity": "MEDIUM",
-   "source": "lib/rules/database-rules.ts",
-   "preciseLocation": true,
-   "tested": false,
-   "inCatalog": true
-  },
-  {
-   "ruleId": 6027,
-   "code": "DB-PERF-27",
-   "title": "Direct COUNT(*) Query on Giant Table",
-   "severity": "MEDIUM",
-   "source": "lib/rules/database-rules.ts",
-   "preciseLocation": true,
-   "tested": false,
-   "inCatalog": true
-  },
-  {
-   "ruleId": 6028,
-   "code": "DB-PERF-28",
-   "title": "Missing pg_stat_statements Query Monitoring",
-   "severity": "MEDIUM",
-   "source": "lib/rules/database-rules.ts",
-   "preciseLocation": true,
-   "tested": false,
+   "tested": true,
    "inCatalog": true
   },
   {
@@ -3745,36 +3552,6 @@
    "inCatalog": true
   },
   {
-   "ruleId": 6031,
-   "code": "DB-PERF-31",
-   "title": "Implicit Type Coercion Preventing Index Scan",
-   "severity": "MEDIUM",
-   "source": "lib/rules/database-rules.ts",
-   "preciseLocation": true,
-   "tested": false,
-   "inCatalog": true
-  },
-  {
-   "ruleId": 6032,
-   "code": "DB-PERF-32",
-   "title": "Unindexed Soft-Delete (deleted_at) Queries",
-   "severity": "MEDIUM",
-   "source": "lib/rules/database-rules.ts",
-   "preciseLocation": true,
-   "tested": false,
-   "inCatalog": true
-  },
-  {
-   "ruleId": 6033,
-   "code": "DB-PERF-33",
-   "title": "Missing Foreign Key Cascade Delete Lock Warning",
-   "severity": "HIGH",
-   "source": "lib/rules/database-rules.ts",
-   "preciseLocation": true,
-   "tested": false,
-   "inCatalog": true
-  },
-  {
    "ruleId": 6034,
    "code": "DB-PERF-34",
    "title": "Unbounded In-Memory Array Sorting in ORM",
@@ -3782,26 +3559,6 @@
    "source": "lib/rules/database-rules.ts",
    "preciseLocation": true,
    "tested": true,
-   "inCatalog": true
-  },
-  {
-   "ruleId": 6035,
-   "code": "DB-PERF-35",
-   "title": "Missing Database Backup Automated Verification",
-   "severity": "LOW",
-   "source": "lib/rules/database-rules.ts",
-   "preciseLocation": true,
-   "tested": false,
-   "inCatalog": true
-  },
-  {
-   "ruleId": 6036,
-   "code": "DB-PERF-36",
-   "title": "Prisma include Over-Fetching Nested Graphs",
-   "severity": "HIGH",
-   "source": "lib/rules/database-rules.ts",
-   "preciseLocation": true,
-   "tested": false,
    "inCatalog": true
   },
   {
@@ -3815,16 +3572,6 @@
    "inCatalog": true
   },
   {
-   "ruleId": 6040,
-   "code": "DB-PERF-40",
-   "title": "Unindexed Date Range Query Bottleneck",
-   "severity": "MEDIUM",
-   "source": "lib/rules/database-rules.ts",
-   "preciseLocation": true,
-   "tested": false,
-   "inCatalog": true
-  },
-  {
    "ruleId": 6043,
    "code": "DB-PERF-43",
    "title": "Unprepared Dynamic SQL Query Injections",
@@ -3835,26 +3582,6 @@
    "inCatalog": true
   },
   {
-   "ruleId": 6045,
-   "code": "DB-PERF-45",
-   "title": "Unindexed Enum Column Filtering",
-   "severity": "MEDIUM",
-   "source": "lib/rules/database-rules.ts",
-   "preciseLocation": true,
-   "tested": false,
-   "inCatalog": true
-  },
-  {
-   "ruleId": 6048,
-   "code": "DB-PERF-48",
-   "title": "Missing SSL/TLS Enforcement on Production DB Connections",
-   "severity": "MEDIUM",
-   "source": "lib/rules/database-rules.ts",
-   "preciseLocation": true,
-   "tested": false,
-   "inCatalog": true
-  },
-  {
    "ruleId": 6051,
    "code": "DB-PERF-51",
    "title": "Migration Takes a Blocking Table Lock on an Existing Table",
@@ -3862,26 +3589,6 @@
    "source": "lib/rules/database-rules.ts",
    "preciseLocation": true,
    "tested": true,
-   "inCatalog": true
-  },
-  {
-   "ruleId": 7002,
-   "code": "CLOUD-02",
-   "title": "Serverless Lambda Memory Starvation (<256MB)",
-   "severity": "MEDIUM",
-   "source": "lib/rules/cloud-native-rules.ts",
-   "preciseLocation": true,
-   "tested": false,
-   "inCatalog": true
-  },
-  {
-   "ruleId": 7003,
-   "code": "CLOUD-03",
-   "title": "Serverless Over-Provisioned Memory Waste (>4096MB)",
-   "severity": "LOW",
-   "source": "lib/rules/cloud-native-rules.ts",
-   "preciseLocation": true,
-   "tested": false,
    "inCatalog": true
   },
   {
@@ -3908,10 +3615,10 @@
    "ruleId": 7006,
    "code": "CLOUD-06",
    "title": "Docker Secret Leak via Build ARG or ENV",
-   "severity": "CRITICAL",
+   "severity": "HIGH",
    "source": "lib/rules/cloud-native-rules.ts",
    "preciseLocation": true,
-   "tested": false,
+   "tested": true,
    "inCatalog": true
   },
   {
@@ -3921,27 +3628,7 @@
    "severity": "LOW",
    "source": "lib/rules/cloud-native-rules.ts",
    "preciseLocation": true,
-   "tested": false,
-   "inCatalog": true
-  },
-  {
-   "ruleId": 7010,
-   "code": "CLOUD-10",
-   "title": "Missing Lifecycle Expiration on Temporary Storage",
-   "severity": "LOW",
-   "source": "lib/rules/cloud-native-rules.ts",
-   "preciseLocation": true,
-   "tested": false,
-   "inCatalog": true
-  },
-  {
-   "ruleId": 7011,
-   "code": "CLOUD-11",
-   "title": "Kubernetes Pod Missing CPU & Memory Requests/Limits",
-   "severity": "HIGH",
-   "source": "lib/rules/cloud-native-rules.ts",
-   "preciseLocation": true,
-   "tested": false,
+   "tested": true,
    "inCatalog": true
   },
   {
@@ -3955,53 +3642,13 @@
    "inCatalog": true
   },
   {
-   "ruleId": 7014,
-   "code": "CLOUD-14",
-   "title": "Missing NetworkPolicy Restricting Pod Egress",
-   "severity": "MEDIUM",
-   "source": "lib/rules/cloud-native-rules.ts",
-   "preciseLocation": true,
-   "tested": false,
-   "inCatalog": true
-  },
-  {
    "ruleId": 7015,
    "code": "CLOUD-15",
    "title": "Lambda Cold Start Heavy Module Initialization",
-   "severity": "MEDIUM",
+   "severity": "LOW",
    "source": "lib/rules/cloud-native-rules.ts",
    "preciseLocation": true,
-   "tested": false,
-   "inCatalog": true
-  },
-  {
-   "ruleId": 7017,
-   "code": "CLOUD-17",
-   "title": "Missing Exponential Backoff on Cloud SDK Invocations",
-   "severity": "MEDIUM",
-   "source": "lib/rules/cloud-native-rules.ts",
-   "preciseLocation": true,
-   "tested": false,
-   "inCatalog": true
-  },
-  {
-   "ruleId": 7018,
-   "code": "CLOUD-18",
-   "title": "Hardcoded Cloud Provider Endpoint or Region",
-   "severity": "MEDIUM",
-   "source": "lib/rules/cloud-native-rules.ts",
-   "preciseLocation": true,
-   "tested": false,
-   "inCatalog": true
-  },
-  {
-   "ruleId": 7019,
-   "code": "CLOUD-19",
-   "title": "Serverless Function Exceeding Bundle Size Limit (>50MB)",
-   "severity": "MEDIUM",
-   "source": "lib/rules/cloud-native-rules.ts",
-   "preciseLocation": true,
-   "tested": false,
+   "tested": true,
    "inCatalog": true
   },
   {
@@ -4012,16 +3659,6 @@
    "source": "lib/rules/cloud-native-rules.ts",
    "preciseLocation": true,
    "tested": true,
-   "inCatalog": true
-  },
-  {
-   "ruleId": 7024,
-   "code": "CLOUD-24",
-   "title": "Serverless Route Missing Cache-Control on Edge CDN",
-   "severity": "LOW",
-   "source": "lib/rules/cloud-native-rules.ts",
-   "preciseLocation": true,
-   "tested": false,
    "inCatalog": true
   },
   {
@@ -4045,23 +3682,13 @@
    "inCatalog": true
   },
   {
-   "ruleId": 7028,
-   "code": "CLOUD-28",
-   "title": "Unencrypted CloudWatch / Sentry Log Stream",
-   "severity": "MEDIUM",
-   "source": "lib/rules/cloud-native-rules.ts",
-   "preciseLocation": true,
-   "tested": false,
-   "inCatalog": true
-  },
-  {
    "ruleId": 7029,
    "code": "CLOUD-29",
    "title": "Indefinite CloudWatch Log Retention Period",
    "severity": "LOW",
    "source": "lib/rules/cloud-native-rules.ts",
    "preciseLocation": true,
-   "tested": false,
+   "tested": true,
    "inCatalog": true
   },
   {
@@ -4082,36 +3709,6 @@
    "source": "lib/rules/cloud-native-rules.ts",
    "preciseLocation": true,
    "tested": true,
-   "inCatalog": true
-  },
-  {
-   "ruleId": 7032,
-   "code": "CLOUD-32",
-   "title": "Docker HEALTHCHECK Directive Omitted in Production",
-   "severity": "MEDIUM",
-   "source": "lib/rules/cloud-native-rules.ts",
-   "preciseLocation": true,
-   "tested": false,
-   "inCatalog": true
-  },
-  {
-   "ruleId": 7034,
-   "code": "CLOUD-34",
-   "title": "AWS Lambda Provisioned Concurrency Missing Auto-Scaling",
-   "severity": "MEDIUM",
-   "source": "lib/rules/cloud-native-rules.ts",
-   "preciseLocation": true,
-   "tested": false,
-   "inCatalog": true
-  },
-  {
-   "ruleId": 7035,
-   "code": "CLOUD-35",
-   "title": "Serverless WebSocket Connection State Leaks",
-   "severity": "MEDIUM",
-   "source": "lib/rules/cloud-native-rules.ts",
-   "preciseLocation": true,
-   "tested": false,
    "inCatalog": true
   },
   {
@@ -4138,20 +3735,10 @@
    "ruleId": 7038,
    "code": "CLOUD-38",
    "title": "ECR Container Repository Tag Mutability Enabled",
-   "severity": "MEDIUM",
+   "severity": "LOW",
    "source": "lib/rules/cloud-native-rules.ts",
    "preciseLocation": true,
-   "tested": false,
-   "inCatalog": true
-  },
-  {
-   "ruleId": 7039,
-   "code": "CLOUD-39",
-   "title": "Missing VPC Flow Logs on Production Subnets",
-   "severity": "MEDIUM",
-   "source": "lib/rules/cloud-native-rules.ts",
-   "preciseLocation": true,
-   "tested": false,
+   "tested": true,
    "inCatalog": true
   },
   {
@@ -4171,7 +3758,7 @@
    "severity": "MEDIUM",
    "source": "lib/rules/cloud-native-rules.ts",
    "preciseLocation": true,
-   "tested": false,
+   "tested": true,
    "inCatalog": true
   },
   {
@@ -4205,53 +3792,13 @@
    "inCatalog": true
   },
   {
-   "ruleId": 7045,
-   "code": "CLOUD-45",
-   "title": "Lambda Event Source Mapping Missing Batch Window",
-   "severity": "MEDIUM",
-   "source": "lib/rules/cloud-native-rules.ts",
-   "preciseLocation": true,
-   "tested": false,
-   "inCatalog": true
-  },
-  {
-   "ruleId": 7047,
-   "code": "CLOUD-47",
-   "title": "Missing CloudFront Origin Shield on Cross-Region Traffic",
-   "severity": "LOW",
-   "source": "lib/rules/cloud-native-rules.ts",
-   "preciseLocation": true,
-   "tested": false,
-   "inCatalog": true
-  },
-  {
-   "ruleId": 7048,
-   "code": "CLOUD-48",
-   "title": "AWS SQS Missing Server-Side Encryption (KmsMasterKeyId)",
-   "severity": "MEDIUM",
-   "source": "lib/rules/cloud-native-rules.ts",
-   "preciseLocation": true,
-   "tested": false,
-   "inCatalog": true
-  },
-  {
    "ruleId": 7049,
    "code": "CLOUD-49",
    "title": "Kubernetes Service Account Automatic Token Mounting",
-   "severity": "MEDIUM",
-   "source": "lib/rules/cloud-native-rules.ts",
-   "preciseLocation": true,
-   "tested": false,
-   "inCatalog": true
-  },
-  {
-   "ruleId": 7050,
-   "code": "CLOUD-50",
-   "title": "Serverless Environment Variable Value Exceeding 4KB Limit",
    "severity": "LOW",
    "source": "lib/rules/cloud-native-rules.ts",
    "preciseLocation": true,
-   "tested": false,
+   "tested": true,
    "inCatalog": true
   },
   {
@@ -4268,7 +3815,7 @@
    "ruleId": 7102,
    "code": "WEB-PERF-02",
    "title": "Unsized Image or Video Element Causing Layout Shift",
-   "severity": "MEDIUM",
+   "severity": "LOW",
    "source": "lib/rules/web-vitals-rules.ts",
    "preciseLocation": true,
    "tested": true,
@@ -4445,26 +3992,6 @@
    "inCatalog": true
   },
   {
-   "ruleId": 7201,
-   "code": "API-01",
-   "title": "Mutating Payment/Order Endpoint Missing Idempotency Key",
-   "severity": "MEDIUM",
-   "source": "lib/rules/api-rules.ts",
-   "preciseLocation": true,
-   "tested": false,
-   "inCatalog": true
-  },
-  {
-   "ruleId": 7202,
-   "code": "API-02",
-   "title": "Unversioned Public REST API Route Handler",
-   "severity": "LOW",
-   "source": "lib/rules/api-rules.ts",
-   "preciseLocation": true,
-   "tested": false,
-   "inCatalog": true
-  },
-  {
    "ruleId": 7203,
    "code": "API-03",
    "title": "Collection Endpoint Missing Pagination Boundary",
@@ -4475,36 +4002,6 @@
    "inCatalog": true
   },
   {
-   "ruleId": 7204,
-   "code": "API-04",
-   "title": "Body Parser Missing Maximum Request Payload Limit",
-   "severity": "HIGH",
-   "source": "lib/rules/api-rules.ts",
-   "preciseLocation": true,
-   "tested": false,
-   "inCatalog": true
-  },
-  {
-   "ruleId": 7205,
-   "code": "API-05",
-   "title": "Non-Standard Error Response Violating RFC 7807",
-   "severity": "MEDIUM",
-   "source": "lib/rules/api-rules.ts",
-   "preciseLocation": true,
-   "tested": false,
-   "inCatalog": true
-  },
-  {
-   "ruleId": 7206,
-   "code": "API-06",
-   "title": "Inconsistent Property Casing in API Schema",
-   "severity": "LOW",
-   "source": "lib/rules/api-rules.ts",
-   "preciseLocation": true,
-   "tested": false,
-   "inCatalog": true
-  },
-  {
    "ruleId": 7207,
    "code": "API-07",
    "title": "Health Check Endpoint Exposing Internal System Credentials",
@@ -4512,36 +4009,6 @@
    "source": "lib/rules/api-rules.ts",
    "preciseLocation": true,
    "tested": true,
-   "inCatalog": true
-  },
-  {
-   "ruleId": 7208,
-   "code": "API-08",
-   "title": "Missing ",
-   "severity": "MEDIUM",
-   "source": "lib/rules/api-rules.ts",
-   "preciseLocation": true,
-   "tested": false,
-   "inCatalog": true
-  },
-  {
-   "ruleId": 7209,
-   "code": "API-09",
-   "title": "CORS Preflight (OPTIONS) Missing Access-Control-Max-Age",
-   "severity": "LOW",
-   "source": "lib/rules/api-rules.ts",
-   "preciseLocation": true,
-   "tested": false,
-   "inCatalog": true
-  },
-  {
-   "ruleId": 7211,
-   "code": "API-11",
-   "title": "Missing Content-Type Validation on POST/PUT Endpoints",
-   "severity": "LOW",
-   "source": "lib/rules/api-rules.ts",
-   "preciseLocation": true,
-   "tested": false,
    "inCatalog": true
   },
   {
@@ -4565,26 +4032,6 @@
    "inCatalog": true
   },
   {
-   "ruleId": 7216,
-   "code": "API-16",
-   "title": "Missing ETag Header on Cacheable Entity Endpoints",
-   "severity": "LOW",
-   "source": "lib/rules/api-rules.ts",
-   "preciseLocation": true,
-   "tested": false,
-   "inCatalog": true
-  },
-  {
-   "ruleId": 7217,
-   "code": "API-17",
-   "title": "Missing If-Match Header for Optimistic Concurrency Control",
-   "severity": "LOW",
-   "source": "lib/rules/api-rules.ts",
-   "preciseLocation": true,
-   "tested": false,
-   "inCatalog": true
-  },
-  {
    "ruleId": 7218,
    "code": "API-18",
    "title": "Unauthenticated Debug or Metric Endpoint in Production",
@@ -4598,10 +4045,10 @@
    "ruleId": 7219,
    "code": "API-19",
    "title": "Wildcard Allowed Methods in CORS (Access-Control-Allow-Methods: ",
-   "severity": "MEDIUM",
+   "severity": "LOW",
    "source": "lib/rules/api-rules.ts",
    "preciseLocation": true,
-   "tested": false,
+   "tested": true,
    "inCatalog": true
   },
   {
@@ -4625,16 +4072,6 @@
    "inCatalog": true
   },
   {
-   "ruleId": 7222,
-   "code": "API-22",
-   "title": "Webhook Receiver Missing Replay Attack Protection (Timestamp Check)",
-   "severity": "HIGH",
-   "source": "lib/rules/api-rules.ts",
-   "preciseLocation": true,
-   "tested": false,
-   "inCatalog": true
-  },
-  {
    "ruleId": 7223,
    "code": "API-23",
    "title": "Webhook Delivery Missing Cryptographic HMAC Signature",
@@ -4645,53 +4082,13 @@
    "inCatalog": true
   },
   {
-   "ruleId": 7224,
-   "code": "API-24",
-   "title": "Missing Strict Type Validation on Webhook Event Type",
-   "severity": "MEDIUM",
-   "source": "lib/rules/api-rules.ts",
-   "preciseLocation": true,
-   "tested": false,
-   "inCatalog": true
-  },
-  {
-   "ruleId": 7225,
-   "code": "API-25",
-   "title": "Missing Correlation ID (X-Request-ID) in API Responses",
-   "severity": "LOW",
-   "source": "lib/rules/api-rules.ts",
-   "preciseLocation": false,
-   "tested": false,
-   "inCatalog": true
-  },
-  {
    "ruleId": 7226,
    "code": "API-26",
    "title": "Unbounded Query Filter Parameters Exposing Full Table Scans",
    "severity": "MEDIUM",
    "source": "lib/rules/api-rules.ts",
    "preciseLocation": true,
-   "tested": false,
-   "inCatalog": true
-  },
-  {
-   "ruleId": 7227,
-   "code": "API-27",
-   "title": "Missing Deprecation Notice on Sunsetting API Endpoints",
-   "severity": "LOW",
-   "source": "lib/rules/api-rules.ts",
-   "preciseLocation": true,
-   "tested": false,
-   "inCatalog": true
-  },
-  {
-   "ruleId": 7228,
-   "code": "API-28",
-   "title": "GraphQL Schema Exposing Introspection in Production",
-   "severity": "MEDIUM",
-   "source": "lib/rules/api-rules.ts",
-   "preciseLocation": true,
-   "tested": false,
+   "tested": true,
    "inCatalog": true
   },
   {
@@ -4705,26 +4102,6 @@
    "inCatalog": true
   },
   {
-   "ruleId": 7231,
-   "code": "API-31",
-   "title": "Accept-Encoding Missing Support for Brotli (br)",
-   "severity": "LOW",
-   "source": "lib/rules/api-rules.ts",
-   "preciseLocation": true,
-   "tested": false,
-   "inCatalog": true
-  },
-  {
-   "ruleId": 7234,
-   "code": "API-34",
-   "title": "Missing Content-Security-Policy on API JSON Endpoints",
-   "severity": "LOW",
-   "source": "lib/rules/api-rules.ts",
-   "preciseLocation": true,
-   "tested": false,
-   "inCatalog": true
-  },
-  {
    "ruleId": 7235,
    "code": "API-35",
    "title": "Unsanitized User-Controlled Filename in Content-Disposition",
@@ -4735,43 +4112,13 @@
    "inCatalog": true
   },
   {
-   "ruleId": 7236,
-   "code": "API-36",
-   "title": "Missing Vary Header on Content-Negotiated Responses",
-   "severity": "LOW",
-   "source": "lib/rules/api-rules.ts",
-   "preciseLocation": true,
-   "tested": false,
-   "inCatalog": true
-  },
-  {
    "ruleId": 7237,
    "code": "API-37",
    "title": "Exposing Internal Database Errors in 400 Bad Request",
    "severity": "MEDIUM",
    "source": "lib/rules/api-rules.ts",
    "preciseLocation": true,
-   "tested": false,
-   "inCatalog": true
-  },
-  {
-   "ruleId": 7240,
-   "code": "API-40",
-   "title": "Missing 204 No Content Status on Successful Empty Response",
-   "severity": "LOW",
-   "source": "lib/rules/api-rules.ts",
-   "preciseLocation": true,
-   "tested": false,
-   "inCatalog": true
-  },
-  {
-   "ruleId": 7241,
-   "code": "API-41",
-   "title": "Missing 201 Created Status on Successful Resource Creation",
-   "severity": "LOW",
-   "source": "lib/rules/api-rules.ts",
-   "preciseLocation": true,
-   "tested": false,
+   "tested": true,
    "inCatalog": true
   },
   {
@@ -4792,16 +4139,6 @@
    "source": "lib/rules/api-rules.ts",
    "preciseLocation": true,
    "tested": true,
-   "inCatalog": true
-  },
-  {
-   "ruleId": 7244,
-   "code": "API-44",
-   "title": "Missing Heartbeat / Ping-Pong Keepalive on Long-Lived WebSockets",
-   "severity": "MEDIUM",
-   "source": "lib/rules/api-rules.ts",
-   "preciseLocation": true,
-   "tested": false,
    "inCatalog": true
   },
   {
@@ -4835,16 +4172,6 @@
    "inCatalog": true
   },
   {
-   "ruleId": 7248,
-   "code": "API-48",
-   "title": "Missing OpenAPI / Swagger Contract Documentation",
-   "severity": "LOW",
-   "source": "lib/rules/api-rules.ts",
-   "preciseLocation": true,
-   "tested": false,
-   "inCatalog": true
-  },
-  {
    "ruleId": 7249,
    "code": "API-49",
    "title": "Unsafe URL Redirection in OAuth Callback Handler",
@@ -4861,17 +4188,17 @@
    "severity": "LOW",
    "source": "lib/rules/api-rules.ts",
    "preciseLocation": true,
-   "tested": false,
+   "tested": true,
    "inCatalog": true
   },
   {
    "ruleId": 7301,
    "code": "SUPPLY-01",
    "title": "Wildcard Package Dependency Version (",
-   "severity": "HIGH",
+   "severity": "MEDIUM",
    "source": "lib/rules/supply-chain-rules.ts",
    "preciseLocation": true,
-   "tested": false,
+   "tested": true,
    "inCatalog": true
   },
   {
@@ -4935,33 +4262,13 @@
    "inCatalog": true
   },
   {
-   "ruleId": 7309,
-   "code": "SUPPLY-09",
-   "title": "Deprecated Package Import: ",
-   "severity": "MEDIUM",
-   "source": "lib/rules/supply-chain-rules.ts",
-   "preciseLocation": true,
-   "tested": false,
-   "inCatalog": true
-  },
-  {
-   "ruleId": 7310,
-   "code": "SUPPLY-10",
-   "title": "Missing Software Bill of Materials (SBOM) Generation in CI",
-   "severity": "LOW",
-   "source": "lib/rules/supply-chain-rules.ts",
-   "preciseLocation": true,
-   "tested": false,
-   "inCatalog": true
-  },
-  {
    "ruleId": 7313,
    "code": "SUPPLY-13",
    "title": "Deprecated Cryptography Package Import: ",
-   "severity": "MEDIUM",
+   "severity": "LOW",
    "source": "lib/rules/supply-chain-rules.ts",
    "preciseLocation": true,
-   "tested": false,
+   "tested": true,
    "inCatalog": true
   },
   {
@@ -4975,16 +4282,6 @@
    "inCatalog": true
   },
   {
-   "ruleId": 7315,
-   "code": "SUPPLY-15",
-   "title": "Missing Hash Verification in pip requirements.txt",
-   "severity": "MEDIUM",
-   "source": "lib/rules/supply-chain-rules.ts",
-   "preciseLocation": true,
-   "tested": false,
-   "inCatalog": true
-  },
-  {
    "ruleId": 7317,
    "code": "SUPPLY-17",
    "title": "Insecure Package Registry URL (HTTP instead of HTTPS)",
@@ -4992,16 +4289,6 @@
    "source": "lib/rules/supply-chain-rules.ts",
    "preciseLocation": true,
    "tested": true,
-   "inCatalog": true
-  },
-  {
-   "ruleId": 7318,
-   "code": "SUPPLY-18",
-   "title": "Pre-release Alpha/Beta Dependency in Production",
-   "severity": "MEDIUM",
-   "source": "lib/rules/supply-chain-rules.ts",
-   "preciseLocation": true,
-   "tested": false,
    "inCatalog": true
   },
   {
@@ -5018,20 +4305,10 @@
    "ruleId": 7320,
    "code": "SUPPLY-20",
    "title": "Unmaintained / Abandoned Package Import (left-pad)",
-   "severity": "MEDIUM",
-   "source": "lib/rules/supply-chain-rules.ts",
-   "preciseLocation": true,
-   "tested": false,
-   "inCatalog": true
-  },
-  {
-   "ruleId": 7321,
-   "code": "SUPPLY-21",
-   "title": "Missing Automated Dependency Update Bot Configuration",
    "severity": "LOW",
    "source": "lib/rules/supply-chain-rules.ts",
    "preciseLocation": true,
-   "tested": false,
+   "tested": true,
    "inCatalog": true
   },
   {
@@ -5055,16 +4332,6 @@
    "inCatalog": true
   },
   {
-   "ruleId": 7324,
-   "code": "SUPPLY-24",
-   "title": "Missing Strict Package Manager Engine Lock",
-   "severity": "LOW",
-   "source": "lib/rules/supply-chain-rules.ts",
-   "preciseLocation": true,
-   "tested": false,
-   "inCatalog": true
-  },
-  {
    "ruleId": 7325,
    "code": "SUPPLY-25",
    "title": "Vulnerable Prototype Pollution in Deprecated ",
@@ -5085,26 +4352,6 @@
    "inCatalog": true
   },
   {
-   "ruleId": 7327,
-   "code": "SUPPLY-27",
-   "title": "Unused Dependencies Retained in package.json",
-   "severity": "LOW",
-   "source": "lib/rules/supply-chain-rules.ts",
-   "preciseLocation": true,
-   "tested": false,
-   "inCatalog": true
-  },
-  {
-   "ruleId": 7328,
-   "code": "SUPPLY-28",
-   "title": "Missing License Compliance Verification in CI",
-   "severity": "MEDIUM",
-   "source": "lib/rules/supply-chain-rules.ts",
-   "preciseLocation": false,
-   "tested": false,
-   "inCatalog": true
-  },
-  {
    "ruleId": 7329,
    "code": "SUPPLY-29",
    "title": "Over-Permissive GitHub Actions GITHUB_TOKEN Default",
@@ -5115,63 +4362,23 @@
    "inCatalog": true
   },
   {
-   "ruleId": 7330,
-   "code": "SUPPLY-30",
-   "title": "Dangerous Inline Bash Script in CI Without ShellCheck",
-   "severity": "LOW",
-   "source": "lib/rules/supply-chain-rules.ts",
-   "preciseLocation": true,
-   "tested": false,
-   "inCatalog": true
-  },
-  {
    "ruleId": 7332,
    "code": "SUPPLY-32",
    "title": "Insecure Gradle / Maven Dependency Without Checksum",
    "severity": "MEDIUM",
    "source": "lib/rules/supply-chain-rules.ts",
    "preciseLocation": true,
-   "tested": false,
+   "tested": true,
    "inCatalog": true
   },
   {
    "ruleId": 7334,
    "code": "SUPPLY-34",
    "title": "Direct Dependency on Native Binary Compilers in Runtime",
-   "severity": "MEDIUM",
-   "source": "lib/rules/supply-chain-rules.ts",
-   "preciseLocation": true,
-   "tested": false,
-   "inCatalog": true
-  },
-  {
-   "ruleId": 7336,
-   "code": "SUPPLY-36",
-   "title": "Unpinned Action in Third-Party Marketplace Step",
-   "severity": "MEDIUM",
-   "source": "lib/rules/supply-chain-rules.ts",
-   "preciseLocation": true,
-   "tested": false,
-   "inCatalog": true
-  },
-  {
-   "ruleId": 7337,
-   "code": "SUPPLY-37",
-   "title": "Missing Vulnerability Disclosure Policy (SECURITY.md)",
    "severity": "LOW",
    "source": "lib/rules/supply-chain-rules.ts",
    "preciseLocation": true,
-   "tested": false,
-   "inCatalog": true
-  },
-  {
-   "ruleId": 7338,
-   "code": "SUPPLY-38",
-   "title": "Public NPM Package Missing 2FA Requirement",
-   "severity": "HIGH",
-   "source": "lib/rules/supply-chain-rules.ts",
-   "preciseLocation": true,
-   "tested": false,
+   "tested": true,
    "inCatalog": true
   },
   {
@@ -5185,103 +4392,13 @@
    "inCatalog": true
   },
   {
-   "ruleId": 7340,
-   "code": "SUPPLY-40",
-   "title": "Missing Snyk or Dependabot Auto-Merge Safeguard",
-   "severity": "MEDIUM",
-   "source": "lib/rules/supply-chain-rules.ts",
-   "preciseLocation": false,
-   "tested": false,
-   "inCatalog": true
-  },
-  {
-   "ruleId": 7341,
-   "code": "SUPPLY-41",
-   "title": "Using Unpinned Node.js Alpine Package Repository",
-   "severity": "LOW",
-   "source": "lib/rules/supply-chain-rules.ts",
-   "preciseLocation": true,
-   "tested": false,
-   "inCatalog": true
-  },
-  {
-   "ruleId": 7342,
-   "code": "SUPPLY-42",
-   "title": "Missing Lockfile in Submodule Repository",
-   "severity": "MEDIUM",
-   "source": "lib/rules/supply-chain-rules.ts",
-   "preciseLocation": false,
-   "tested": false,
-   "inCatalog": true
-  },
-  {
-   "ruleId": 7343,
-   "code": "SUPPLY-43",
-   "title": "Outdated Babel Core in Modern Next.js Project",
-   "severity": "LOW",
-   "source": "lib/rules/supply-chain-rules.ts",
-   "preciseLocation": false,
-   "tested": false,
-   "inCatalog": true
-  },
-  {
-   "ruleId": 7344,
-   "code": "SUPPLY-44",
-   "title": "Unverified Third-Party Analytics SDK Bundle",
-   "severity": "MEDIUM",
-   "source": "lib/rules/supply-chain-rules.ts",
-   "preciseLocation": true,
-   "tested": false,
-   "inCatalog": true
-  },
-  {
-   "ruleId": 7345,
-   "code": "SUPPLY-45",
-   "title": "Dependency Overrides (pnpm.overrides) Suppressing Security Patch",
-   "severity": "MEDIUM",
-   "source": "lib/rules/supply-chain-rules.ts",
-   "preciseLocation": true,
-   "tested": false,
-   "inCatalog": true
-  },
-  {
-   "ruleId": 7346,
-   "code": "SUPPLY-46",
-   "title": "Unsigned Git Commits in Production Release Branch",
-   "severity": "LOW",
-   "source": "lib/rules/supply-chain-rules.ts",
-   "preciseLocation": false,
-   "tested": false,
-   "inCatalog": true
-  },
-  {
-   "ruleId": 7347,
-   "code": "SUPPLY-47",
-   "title": "Missing .npmignore Leading to Secret Exposure in NPM Tarball",
-   "severity": "HIGH",
-   "source": "lib/rules/supply-chain-rules.ts",
-   "preciseLocation": true,
-   "tested": false,
-   "inCatalog": true
-  },
-  {
    "ruleId": 7349,
    "code": "SUPPLY-49",
    "title": "Over-Permissive File Permissions in Published NPM Tarball",
    "severity": "LOW",
    "source": "lib/rules/supply-chain-rules.ts",
    "preciseLocation": true,
-   "tested": false,
-   "inCatalog": true
-  },
-  {
-   "ruleId": 7350,
-   "code": "SUPPLY-50",
-   "title": "Third-Party Component Library with Deprecated React 19 Peer Dependency",
-   "severity": "MEDIUM",
-   "source": "lib/rules/supply-chain-rules.ts",
-   "preciseLocation": true,
-   "tested": false,
+   "tested": true,
    "inCatalog": true
   },
   {
@@ -5305,36 +4422,6 @@
    "inCatalog": true
   },
   {
-   "ruleId": 8010,
-   "code": "LLM-SEC-10",
-   "title": "Unrestricted Model Fine-Tuning Hyperparameter Override",
-   "severity": "MEDIUM",
-   "source": "lib/rules/ai-safety-rules.ts",
-   "preciseLocation": true,
-   "tested": false,
-   "inCatalog": true
-  },
-  {
-   "ruleId": 8014,
-   "code": "LLM-SEC-14",
-   "title": "Missing Content Moderation on User-Facing AI Generations",
-   "severity": "HIGH",
-   "source": "lib/rules/ai-safety-rules.ts",
-   "preciseLocation": true,
-   "tested": false,
-   "inCatalog": true
-  },
-  {
-   "ruleId": 8015,
-   "code": "LLM-SEC-15",
-   "title": "Unbounded LLM Output Buffer in Server-Side Rendering",
-   "severity": "MEDIUM",
-   "source": "lib/rules/ai-safety-rules.ts",
-   "preciseLocation": true,
-   "tested": false,
-   "inCatalog": true
-  },
-  {
    "ruleId": 8017,
    "code": "LLM-SEC-17",
    "title": "Hardcoded Model Provider API Keys in Client-Side Bundles",
@@ -5342,176 +4429,6 @@
    "source": "lib/rules/ai-safety-rules.ts",
    "preciseLocation": true,
    "tested": true,
-   "inCatalog": true
-  },
-  {
-   "ruleId": 8018,
-   "code": "LLM-SEC-18",
-   "title": "Lack of Hallucination Verification on High-Stakes Numerical Claims",
-   "severity": "MEDIUM",
-   "source": "lib/rules/ai-safety-rules.ts",
-   "preciseLocation": true,
-   "tested": false,
-   "inCatalog": true
-  },
-  {
-   "ruleId": 8022,
-   "code": "LLM-SEC-22",
-   "title": "Lack of Audit Logging on Model Prompt and Response Exchanges",
-   "severity": "MEDIUM",
-   "source": "lib/rules/ai-safety-rules.ts",
-   "preciseLocation": false,
-   "tested": false,
-   "inCatalog": true
-  },
-  {
-   "ruleId": 8023,
-   "code": "LLM-SEC-23",
-   "title": "Unchecked Fallback to Less Capable or Deprecated Model",
-   "severity": "MEDIUM",
-   "source": "lib/rules/ai-safety-rules.ts",
-   "preciseLocation": true,
-   "tested": false,
-   "inCatalog": true
-  },
-  {
-   "ruleId": 8025,
-   "code": "LLM-SEC-25",
-   "title": "Poisoned Embedding Generation via Unsanitized Unicode Characters",
-   "severity": "MEDIUM",
-   "source": "lib/rules/ai-safety-rules.ts",
-   "preciseLocation": true,
-   "tested": false,
-   "inCatalog": true
-  },
-  {
-   "ruleId": 8029,
-   "code": "LLM-SEC-29",
-   "title": "Lack of User Attribution on AI-Generated Modifications",
-   "severity": "LOW",
-   "source": "lib/rules/ai-safety-rules.ts",
-   "preciseLocation": true,
-   "tested": false,
-   "inCatalog": true
-  },
-  {
-   "ruleId": 8031,
-   "code": "LLM-SEC-31",
-   "title": "Insecure Memory Persistence in Conversational AI Sessions",
-   "severity": "MEDIUM",
-   "source": "lib/rules/ai-safety-rules.ts",
-   "preciseLocation": true,
-   "tested": false,
-   "inCatalog": true
-  },
-  {
-   "ruleId": 8039,
-   "code": "LLM-SEC-39",
-   "title": "Unverified Markdown Hyperlink Rendering in AI Chat UI",
-   "severity": "LOW",
-   "source": "lib/rules/ai-safety-rules.ts",
-   "preciseLocation": true,
-   "tested": false,
-   "inCatalog": true
-  },
-  {
-   "ruleId": 8040,
-   "code": "LLM-SEC-40",
-   "title": "Missing Differential Token Budgeting Across Subscription Tiers",
-   "severity": "MEDIUM",
-   "source": "lib/rules/ai-safety-rules.ts",
-   "preciseLocation": true,
-   "tested": false,
-   "inCatalog": true
-  },
-  {
-   "ruleId": 8041,
-   "code": "LLM-SEC-41",
-   "title": "Lack of Adversarial Red-Teaming for Custom System Prompts",
-   "severity": "MEDIUM",
-   "source": "lib/rules/ai-safety-rules.ts",
-   "preciseLocation": false,
-   "tested": false,
-   "inCatalog": true
-  },
-  {
-   "ruleId": 8042,
-   "code": "LLM-SEC-42",
-   "title": "Insecure LLM Streaming Connection Without Heartbeat",
-   "severity": "LOW",
-   "source": "lib/rules/ai-safety-rules.ts",
-   "preciseLocation": true,
-   "tested": false,
-   "inCatalog": true
-  },
-  {
-   "ruleId": 8044,
-   "code": "LLM-SEC-44",
-   "title": "Lack of Deterministic Schema Enforcement on JSON Outputs",
-   "severity": "HIGH",
-   "source": "lib/rules/ai-safety-rules.ts",
-   "preciseLocation": true,
-   "tested": false,
-   "inCatalog": true
-  },
-  {
-   "ruleId": 8046,
-   "code": "LLM-SEC-46",
-   "title": "Unencrypted Ephemeral Scratchpad Files in Agent Containers",
-   "severity": "MEDIUM",
-   "source": "lib/rules/ai-safety-rules.ts",
-   "preciseLocation": true,
-   "tested": false,
-   "inCatalog": true
-  },
-  {
-   "ruleId": 8048,
-   "code": "LLM-SEC-48",
-   "title": "Missing Token Truncation Warning on Large Document Summarization",
-   "severity": "LOW",
-   "source": "lib/rules/ai-safety-rules.ts",
-   "preciseLocation": true,
-   "tested": false,
-   "inCatalog": true
-  },
-  {
-   "ruleId": 8049,
-   "code": "LLM-SEC-49",
-   "title": "Lack of Seed Determinism in Critical Regulatory Calculations",
-   "severity": "MEDIUM",
-   "source": "lib/rules/ai-safety-rules.ts",
-   "preciseLocation": true,
-   "tested": false,
-   "inCatalog": true
-  },
-  {
-   "ruleId": 8052,
-   "code": "LLM-SEC-52",
-   "title": "Insecure Storage of Model Evaluation Golden Datasets",
-   "severity": "MEDIUM",
-   "source": "lib/rules/ai-safety-rules.ts",
-   "preciseLocation": false,
-   "tested": false,
-   "inCatalog": true
-  },
-  {
-   "ruleId": 8054,
-   "code": "LLM-SEC-54",
-   "title": "Unchecked Recursive Summarization Drifts (Telephone Effect)",
-   "severity": "LOW",
-   "source": "lib/rules/ai-safety-rules.ts",
-   "preciseLocation": true,
-   "tested": false,
-   "inCatalog": true
-  },
-  {
-   "ruleId": 8055,
-   "code": "LLM-SEC-55",
-   "title": "Missing Cost Budget Alerts on Enterprise LLM API Keys",
-   "severity": "MEDIUM",
-   "source": "lib/rules/ai-safety-rules.ts",
-   "preciseLocation": true,
-   "tested": false,
    "inCatalog": true
   },
   {
@@ -5525,40 +4442,10 @@
    "inCatalog": true
   },
   {
-   "ruleId": 8058,
-   "code": "LLM-SEC-58",
-   "title": "Missing LLM System Prompt Versioning in Version Control",
-   "severity": "LOW",
-   "source": "lib/rules/ai-safety-rules.ts",
-   "preciseLocation": true,
-   "tested": false,
-   "inCatalog": true
-  },
-  {
-   "ruleId": 8059,
-   "code": "LLM-SEC-59",
-   "title": "Lack of Grounding Metadata in RAG Search Results",
-   "severity": "MEDIUM",
-   "source": "lib/rules/ai-safety-rules.ts",
-   "preciseLocation": true,
-   "tested": false,
-   "inCatalog": true
-  },
-  {
-   "ruleId": 8060,
-   "code": "LLM-SEC-60",
-   "title": "Unchecked High-Frequency Polling of AI Job Status Endpoints",
-   "severity": "LOW",
-   "source": "lib/rules/ai-safety-rules.ts",
-   "preciseLocation": true,
-   "tested": false,
-   "inCatalog": true
-  },
-  {
    "ruleId": 8073,
    "code": "LLM-COST-03",
    "title": "Uncached Vector Embedding Loop (Compounding API Cost)",
-   "severity": "MEDIUM",
+   "severity": "LOW",
    "source": "lib/rules/llm-cost-governance-rules.ts",
    "preciseLocation": true,
    "tested": true,
@@ -5578,10 +4465,10 @@
    "ruleId": 8102,
    "code": "ZERO-AUTH-02",
    "title": "Excessive JWT Token Expiration Lifespan (>1 Hour)",
-   "severity": "HIGH",
+   "severity": "MEDIUM",
    "source": "lib/rules/zero-trust-rules.ts",
    "preciseLocation": true,
-   "tested": false,
+   "tested": true,
    "inCatalog": true
   },
   {
@@ -5645,16 +4532,6 @@
    "inCatalog": true
   },
   {
-   "ruleId": 8112,
-   "code": "ZERO-AUTH-12",
-   "title": "Missing Device Fingerprint / IP Anomaly Detection on Session Resume",
-   "severity": "MEDIUM",
-   "source": "lib/rules/zero-trust-rules.ts",
-   "preciseLocation": true,
-   "tested": false,
-   "inCatalog": true
-  },
-  {
    "ruleId": 8113,
    "code": "ZERO-AUTH-13",
    "title": "Permissive CORS Credentials with Wildcard Origins",
@@ -5671,7 +4548,7 @@
    "severity": "MEDIUM",
    "source": "lib/rules/zero-trust-rules.ts",
    "preciseLocation": true,
-   "tested": false,
+   "tested": true,
    "inCatalog": true
   },
   {
@@ -5695,16 +4572,6 @@
    "inCatalog": true
   },
   {
-   "ruleId": 8121,
-   "code": "ZERO-AUTH-21",
-   "title": "Unrestricted API Key Scope (Full Account Access by Default)",
-   "severity": "HIGH",
-   "source": "lib/rules/zero-trust-rules.ts",
-   "preciseLocation": true,
-   "tested": false,
-   "inCatalog": true
-  },
-  {
    "ruleId": 8122,
    "code": "ZERO-AUTH-22",
    "title": "Lack of Constant-Time Password Hash Verification",
@@ -5712,16 +4579,6 @@
    "source": "lib/rules/zero-trust-rules.ts",
    "preciseLocation": true,
    "tested": true,
-   "inCatalog": true
-  },
-  {
-   "ruleId": 8123,
-   "code": "ZERO-AUTH-23",
-   "title": "Missing Secure Context Requirement on WebAuthn Credentials",
-   "severity": "HIGH",
-   "source": "lib/rules/zero-trust-rules.ts",
-   "preciseLocation": true,
-   "tested": false,
    "inCatalog": true
   },
   {
@@ -5735,36 +4592,6 @@
    "inCatalog": true
   },
   {
-   "ruleId": 8125,
-   "code": "ZERO-AUTH-25",
-   "title": "Missing Audit Trail for Administrative Privilege Changes",
-   "severity": "MEDIUM",
-   "source": "lib/rules/zero-trust-rules.ts",
-   "preciseLocation": true,
-   "tested": false,
-   "inCatalog": true
-  },
-  {
-   "ruleId": 8127,
-   "code": "ZERO-AUTH-27",
-   "title": "Missing Certificate Pinning on High-Risk External API Calls",
-   "severity": "MEDIUM",
-   "source": "lib/rules/zero-trust-rules.ts",
-   "preciseLocation": true,
-   "tested": false,
-   "inCatalog": true
-  },
-  {
-   "ruleId": 8129,
-   "code": "ZERO-AUTH-29",
-   "title": "Missing Account Lockout after Consecutive Authentication Failures",
-   "severity": "MEDIUM",
-   "source": "lib/rules/zero-trust-rules.ts",
-   "preciseLocation": true,
-   "tested": false,
-   "inCatalog": true
-  },
-  {
    "ruleId": 8131,
    "code": "ZERO-AUTH-31",
    "title": "Insecure JWT Storage in Browser LocalStorage",
@@ -5772,26 +4599,6 @@
    "source": "lib/rules/zero-trust-rules.ts",
    "preciseLocation": true,
    "tested": true,
-   "inCatalog": true
-  },
-  {
-   "ruleId": 8132,
-   "code": "ZERO-AUTH-32",
-   "title": "Missing Re-Authentication for API Key Generation",
-   "severity": "MEDIUM",
-   "source": "lib/rules/zero-trust-rules.ts",
-   "preciseLocation": false,
-   "tested": false,
-   "inCatalog": true
-  },
-  {
-   "ruleId": 8133,
-   "code": "ZERO-AUTH-33",
-   "title": "Unchecked Client IP Forwarding Header Spoofing",
-   "severity": "HIGH",
-   "source": "lib/rules/zero-trust-rules.ts",
-   "preciseLocation": true,
-   "tested": false,
    "inCatalog": true
   },
   {
@@ -5805,53 +4612,23 @@
    "inCatalog": true
   },
   {
-   "ruleId": 8140,
-   "code": "ZERO-AUTH-40",
-   "title": "Missing Concurrent Session Limits for Privileged Accounts",
-   "severity": "MEDIUM",
-   "source": "lib/rules/zero-trust-rules.ts",
-   "preciseLocation": true,
-   "tested": false,
-   "inCatalog": true
-  },
-  {
-   "ruleId": 8141,
-   "code": "ZERO-AUTH-41",
-   "title": "Lack of Token Introspection on OAuth Resource Servers",
-   "severity": "MEDIUM",
-   "source": "lib/rules/zero-trust-rules.ts",
-   "preciseLocation": true,
-   "tested": false,
-   "inCatalog": true
-  },
-  {
    "ruleId": 8142,
    "code": "ZERO-AUTH-42",
    "title": "Unprotected GraphQL Introspection in Production Environments",
    "severity": "LOW",
    "source": "lib/rules/zero-trust-rules.ts",
    "preciseLocation": true,
-   "tested": false,
+   "tested": true,
    "inCatalog": true
   },
   {
    "ruleId": 8143,
    "code": "ZERO-AUTH-43",
    "title": "Missing Identity Verification on Webhook Receiver Endpoints",
-   "severity": "CRITICAL",
+   "severity": "HIGH",
    "source": "lib/rules/zero-trust-rules.ts",
-   "preciseLocation": false,
+   "preciseLocation": true,
    "tested": true,
-   "inCatalog": true
-  },
-  {
-   "ruleId": 8148,
-   "code": "ZERO-AUTH-48",
-   "title": "Lack of User-Agent and IP Logging on High-Privilege API Requests",
-   "severity": "LOW",
-   "source": "lib/rules/zero-trust-rules.ts",
-   "preciseLocation": false,
-   "tested": false,
    "inCatalog": true
   },
   {
@@ -5865,26 +4642,6 @@
    "inCatalog": true
   },
   {
-   "ruleId": 8152,
-   "code": "ZERO-AUTH-52",
-   "title": "Lack of Service Account Key Expiration & Mandatory Rotation",
-   "severity": "MEDIUM",
-   "source": "lib/rules/zero-trust-rules.ts",
-   "preciseLocation": true,
-   "tested": false,
-   "inCatalog": true
-  },
-  {
-   "ruleId": 8154,
-   "code": "ZERO-AUTH-54",
-   "title": "Insecure Session Invalidation across Multiple Browser Tabs",
-   "severity": "LOW",
-   "source": "lib/rules/zero-trust-rules.ts",
-   "preciseLocation": true,
-   "tested": false,
-   "inCatalog": true
-  },
-  {
    "ruleId": 8201,
    "code": "PRIVACY-01",
    "title": "Plaintext PII Logged to Standard Output / Console",
@@ -5892,16 +4649,6 @@
    "source": "lib/rules/privacy-compliance-rules.ts",
    "preciseLocation": true,
    "tested": true,
-   "inCatalog": true
-  },
-  {
-   "ruleId": 8206,
-   "code": "PRIVACY-06",
-   "title": "Storage of Personal Data Beyond Defined Retention Schedules",
-   "severity": "MEDIUM",
-   "source": "lib/rules/privacy-compliance-rules.ts",
-   "preciseLocation": true,
-   "tested": false,
    "inCatalog": true
   },
   {
@@ -5915,16 +4662,6 @@
    "inCatalog": true
   },
   {
-   "ruleId": 8210,
-   "code": "PRIVACY-10",
-   "title": "Missing Data Processing Agreement (DPA) Status on Vendors",
-   "severity": "MEDIUM",
-   "source": "lib/rules/privacy-compliance-rules.ts",
-   "preciseLocation": false,
-   "tested": false,
-   "inCatalog": true
-  },
-  {
    "ruleId": 8215,
    "code": "PRIVACY-15",
    "title": "Unprotected Exposure of Customer PII in URL Query Strings",
@@ -5935,36 +4672,6 @@
    "inCatalog": true
   },
   {
-   "ruleId": 8221,
-   "code": "PRIVACY-21",
-   "title": "Unencrypted Ephemeral Caching of PII in In-Memory Stores",
-   "severity": "MEDIUM",
-   "source": "lib/rules/privacy-compliance-rules.ts",
-   "preciseLocation": true,
-   "tested": false,
-   "inCatalog": true
-  },
-  {
-   "ruleId": 8222,
-   "code": "PRIVACY-22",
-   "title": "Lack of Regular Data Protection Impact Assessments (DPIA)",
-   "severity": "MEDIUM",
-   "source": "lib/rules/privacy-compliance-rules.ts",
-   "preciseLocation": false,
-   "tested": false,
-   "inCatalog": true
-  },
-  {
-   "ruleId": 8223,
-   "code": "PRIVACY-23",
-   "title": "Missing Secure Destruction Protocol for Physical and Cloud Media",
-   "severity": "MEDIUM",
-   "source": "lib/rules/privacy-compliance-rules.ts",
-   "preciseLocation": true,
-   "tested": false,
-   "inCatalog": true
-  },
-  {
    "ruleId": 8225,
    "code": "PRIVACY-25",
    "title": "Insecure Session Recording Tools Capturing Form Input PII",
@@ -5972,156 +4679,6 @@
    "source": "lib/rules/privacy-compliance-rules.ts",
    "preciseLocation": true,
    "tested": true,
-   "inCatalog": true
-  },
-  {
-   "ruleId": 8227,
-   "code": "PRIVACY-27",
-   "title": "Unredacted Customer Financial Identifiers in Invoices and Receipts",
-   "severity": "MEDIUM",
-   "source": "lib/rules/privacy-compliance-rules.ts",
-   "preciseLocation": true,
-   "tested": false,
-   "inCatalog": true
-  },
-  {
-   "ruleId": 8228,
-   "code": "PRIVACY-28",
-   "title": "Missing Privacy Notice Updates on Material Policy Changes",
-   "severity": "LOW",
-   "source": "lib/rules/privacy-compliance-rules.ts",
-   "preciseLocation": true,
-   "tested": false,
-   "inCatalog": true
-  },
-  {
-   "ruleId": 8229,
-   "code": "PRIVACY-29",
-   "title": "Unverified Third-Party Social Login Data Harvesting",
-   "severity": "MEDIUM",
-   "source": "lib/rules/privacy-compliance-rules.ts",
-   "preciseLocation": true,
-   "tested": false,
-   "inCatalog": true
-  },
-  {
-   "ruleId": 8230,
-   "code": "PRIVACY-30",
-   "title": "Lack of Anonymization in Analytics and Business Intelligence",
-   "severity": "MEDIUM",
-   "source": "lib/rules/privacy-compliance-rules.ts",
-   "preciseLocation": true,
-   "tested": false,
-   "inCatalog": true
-  },
-  {
-   "ruleId": 8232,
-   "code": "PRIVACY-32",
-   "title": "Missing Record of Processing Activities (ROPA / GDPR Art. 30)",
-   "severity": "MEDIUM",
-   "source": "lib/rules/privacy-compliance-rules.ts",
-   "preciseLocation": false,
-   "tested": false,
-   "inCatalog": true
-  },
-  {
-   "ruleId": 8234,
-   "code": "PRIVACY-34",
-   "title": "Missing Privacy Impact Review on Mergers and Acquisitions",
-   "severity": "LOW",
-   "source": "lib/rules/privacy-compliance-rules.ts",
-   "preciseLocation": true,
-   "tested": false,
-   "inCatalog": true
-  },
-  {
-   "ruleId": 8235,
-   "code": "PRIVACY-35",
-   "title": "Unprotected Telemetry Endpoints Accepting Unvalidated Customer Payloads",
-   "severity": "MEDIUM",
-   "source": "lib/rules/privacy-compliance-rules.ts",
-   "preciseLocation": false,
-   "tested": false,
-   "inCatalog": true
-  },
-  {
-   "ruleId": 8236,
-   "code": "PRIVACY-36",
-   "title": "Missing Purpose Limitation Enforcement in Database Query Logic",
-   "severity": "MEDIUM",
-   "source": "lib/rules/privacy-compliance-rules.ts",
-   "preciseLocation": true,
-   "tested": false,
-   "inCatalog": true
-  },
-  {
-   "ruleId": 8239,
-   "code": "PRIVACY-39",
-   "title": "Unverified Consent for Push Notifications and Web Workers",
-   "severity": "LOW",
-   "source": "lib/rules/privacy-compliance-rules.ts",
-   "preciseLocation": true,
-   "tested": false,
-   "inCatalog": true
-  },
-  {
-   "ruleId": 8243,
-   "code": "PRIVACY-43",
-   "title": "Missing Privacy-Preserving Defaults in Default User Profiles",
-   "severity": "MEDIUM",
-   "source": "lib/rules/privacy-compliance-rules.ts",
-   "preciseLocation": true,
-   "tested": false,
-   "inCatalog": true
-  },
-  {
-   "ruleId": 8244,
-   "code": "PRIVACY-44",
-   "title": "Unchecked Data Retention on Failed Payment Transaction Logs",
-   "severity": "LOW",
-   "source": "lib/rules/privacy-compliance-rules.ts",
-   "preciseLocation": true,
-   "tested": false,
-   "inCatalog": true
-  },
-  {
-   "ruleId": 8245,
-   "code": "PRIVACY-45",
-   "title": "Missing DPO Contact Information in Public Privacy Notices",
-   "severity": "LOW",
-   "source": "lib/rules/privacy-compliance-rules.ts",
-   "preciseLocation": false,
-   "tested": false,
-   "inCatalog": true
-  },
-  {
-   "ruleId": 8247,
-   "code": "PRIVACY-47",
-   "title": "Missing Cross-Device Tracking Disclosures in Privacy Policy",
-   "severity": "LOW",
-   "source": "lib/rules/privacy-compliance-rules.ts",
-   "preciseLocation": true,
-   "tested": false,
-   "inCatalog": true
-  },
-  {
-   "ruleId": 8248,
-   "code": "PRIVACY-48",
-   "title": "Unencrypted Local Caching of Customer PII in Progressive Web Apps",
-   "severity": "MEDIUM",
-   "source": "lib/rules/privacy-compliance-rules.ts",
-   "preciseLocation": true,
-   "tested": false,
-   "inCatalog": true
-  },
-  {
-   "ruleId": 8249,
-   "code": "PRIVACY-49",
-   "title": "Missing Data Processing Location Information in Vendor Inquiries",
-   "severity": "LOW",
-   "source": "lib/rules/privacy-compliance-rules.ts",
-   "preciseLocation": false,
-   "tested": false,
    "inCatalog": true
   },
   {
@@ -6195,16 +4752,6 @@
    "inCatalog": true
   },
   {
-   "ruleId": 8308,
-   "code": "IAC-08",
-   "title": "VPC Flow Logs Disabled on Production Network Subnets",
-   "severity": "MEDIUM",
-   "source": "lib/rules/iac-rules.ts",
-   "preciseLocation": true,
-   "tested": false,
-   "inCatalog": true
-  },
-  {
    "ruleId": 8309,
    "code": "IAC-09",
    "title": "RDS Database Instance Missing Automated Backup Retention",
@@ -6242,26 +4789,6 @@
    "source": "lib/rules/iac-rules.ts",
    "preciseLocation": false,
    "tested": true,
-   "inCatalog": true
-  },
-  {
-   "ruleId": 8316,
-   "code": "IAC-16",
-   "title": "AWS S3 Bucket Missing Default Server-Side Encryption Rule",
-   "severity": "HIGH",
-   "source": "lib/rules/iac-rules.ts",
-   "preciseLocation": true,
-   "tested": false,
-   "inCatalog": true
-  },
-  {
-   "ruleId": 8319,
-   "code": "IAC-19",
-   "title": "Terraform State Backend Missing State Locking (DynamoDB)",
-   "severity": "MEDIUM",
-   "source": "lib/rules/iac-rules.ts",
-   "preciseLocation": true,
-   "tested": false,
    "inCatalog": true
   },
   {
@@ -6315,26 +4842,6 @@
    "inCatalog": true
   },
   {
-   "ruleId": 8326,
-   "code": "IAC-26",
-   "title": "AWS Lambda Function Missing VPC Configuration for DB Access",
-   "severity": "MEDIUM",
-   "source": "lib/rules/iac-rules.ts",
-   "preciseLocation": true,
-   "tested": false,
-   "inCatalog": true
-  },
-  {
-   "ruleId": 8327,
-   "code": "IAC-27",
-   "title": "Terraform AWS Provider Missing Default Resource Tags",
-   "severity": "LOW",
-   "source": "lib/rules/iac-rules.ts",
-   "preciseLocation": true,
-   "tested": false,
-   "inCatalog": true
-  },
-  {
    "ruleId": 8328,
    "code": "IAC-28",
    "title": "AWS Elastic Load Balancer (ALB) Dropping HTTP to HTTPS Redirection",
@@ -6352,16 +4859,6 @@
    "source": "lib/rules/iac-rules.ts",
    "preciseLocation": true,
    "tested": true,
-   "inCatalog": true
-  },
-  {
-   "ruleId": 8330,
-   "code": "IAC-30",
-   "title": "AWS Secrets Manager Secret Missing KMS Customer-Managed Key",
-   "severity": "MEDIUM",
-   "source": "lib/rules/iac-rules.ts",
-   "preciseLocation": true,
-   "tested": false,
    "inCatalog": true
   },
   {
@@ -6405,26 +4902,6 @@
    "inCatalog": true
   },
   {
-   "ruleId": 8336,
-   "code": "IAC-36",
-   "title": "Terraform AWS Security Group Egress Open to All Protocols and Ports",
-   "severity": "MEDIUM",
-   "source": "lib/rules/iac-rules.ts",
-   "preciseLocation": true,
-   "tested": false,
-   "inCatalog": true
-  },
-  {
-   "ruleId": 8337,
-   "code": "IAC-37",
-   "title": "Kubernetes StatefulSet Missing VolumeClaimTemplate Storage Limits",
-   "severity": "MEDIUM",
-   "source": "lib/rules/iac-rules.ts",
-   "preciseLocation": true,
-   "tested": false,
-   "inCatalog": true
-  },
-  {
    "ruleId": 8338,
    "code": "IAC-38",
    "title": "AWS EKS Cluster Endpoint Publicly Accessible Without CIDR Whitelist",
@@ -6435,26 +4912,6 @@
    "inCatalog": true
   },
   {
-   "ruleId": 8340,
-   "code": "IAC-40",
-   "title": "AWS SNS Topic Missing KMS Customer-Managed Key Encryption",
-   "severity": "MEDIUM",
-   "source": "lib/rules/iac-rules.ts",
-   "preciseLocation": true,
-   "tested": false,
-   "inCatalog": true
-  },
-  {
-   "ruleId": 8341,
-   "code": "IAC-41",
-   "title": "Kubernetes Pod Missing Seccomp Profile Configuration",
-   "severity": "MEDIUM",
-   "source": "lib/rules/iac-rules.ts",
-   "preciseLocation": true,
-   "tested": false,
-   "inCatalog": true
-  },
-  {
    "ruleId": 8342,
    "code": "IAC-42",
    "title": "AWS Lambda Function Runtime Using Deprecated Node.js or Python",
@@ -6462,16 +4919,6 @@
    "source": "lib/rules/iac-rules.ts",
    "preciseLocation": true,
    "tested": true,
-   "inCatalog": true
-  },
-  {
-   "ruleId": 8343,
-   "code": "IAC-43",
-   "title": "Terraform AWS API Gateway Missing Access Logging",
-   "severity": "MEDIUM",
-   "source": "lib/rules/iac-rules.ts",
-   "preciseLocation": true,
-   "tested": false,
    "inCatalog": true
   },
   {
@@ -6495,16 +4942,6 @@
    "inCatalog": true
   },
   {
-   "ruleId": 8346,
-   "code": "IAC-46",
-   "title": "AWS Backup Plan Missing Production Vault Association",
-   "severity": "MEDIUM",
-   "source": "lib/rules/iac-rules.ts",
-   "preciseLocation": true,
-   "tested": false,
-   "inCatalog": true
-  },
-  {
    "ruleId": 8348,
    "code": "IAC-48",
    "title": "Terraform AWS EC2 Instance Missing IMDSv2 Enforcement",
@@ -6518,20 +4955,10 @@
    "ruleId": 8349,
    "code": "IAC-49",
    "title": "Kubernetes Pod Tolerating All Taints (*)",
-   "severity": "MEDIUM",
-   "source": "lib/rules/iac-rules.ts",
-   "preciseLocation": true,
-   "tested": false,
-   "inCatalog": true
-  },
-  {
-   "ruleId": 8350,
-   "code": "IAC-50",
-   "title": "AWS Route 53 Hosted Zone Missing DNSSEC Verification",
    "severity": "LOW",
    "source": "lib/rules/iac-rules.ts",
    "preciseLocation": true,
-   "tested": false,
+   "tested": true,
    "inCatalog": true
   },
   {
@@ -6675,16 +5102,6 @@
    "inCatalog": true
   },
   {
-   "ruleId": 8505,
-   "code": "GQL-05",
-   "title": "Circular Fragment Reference Hazard",
-   "severity": "LOW",
-   "source": "lib/rules/graphql-security-rules.ts",
-   "preciseLocation": true,
-   "tested": false,
-   "inCatalog": true
-  },
-  {
    "ruleId": 8506,
    "code": "GQL-06",
    "title": "Missing Field-Level Authorization Directive",
@@ -6698,20 +5115,10 @@
    "ruleId": 8507,
    "code": "GQL-07",
    "title": "GraphQL Playground / GraphiQL Exposed in Production",
-   "severity": "MEDIUM",
+   "severity": "LOW",
    "source": "lib/rules/graphql-security-rules.ts",
    "preciseLocation": true,
-   "tested": false,
-   "inCatalog": true
-  },
-  {
-   "ruleId": 8508,
-   "code": "GQL-08",
-   "title": "Internal Error Stack Trace Leakage in formatError",
-   "severity": "MEDIUM",
-   "source": "lib/rules/graphql-security-rules.ts",
-   "preciseLocation": true,
-   "tested": false,
+   "tested": true,
    "inCatalog": true
   },
   {
@@ -6732,16 +5139,6 @@
    "source": "lib/rules/graphql-security-rules.ts",
    "preciseLocation": true,
    "tested": true,
-   "inCatalog": true
-  },
-  {
-   "ruleId": 8512,
-   "code": "GQL-12",
-   "title": "Rate Limiting by HTTP Endpoint Only Instead of Operation",
-   "severity": "MEDIUM",
-   "source": "lib/rules/graphql-security-rules.ts",
-   "preciseLocation": false,
-   "tested": false,
    "inCatalog": true
   },
   {
@@ -6775,16 +5172,6 @@
    "inCatalog": true
   },
   {
-   "ruleId": 8518,
-   "code": "GQL-18",
-   "title": "Field Suggestion Engine Enabled in Production",
-   "severity": "LOW",
-   "source": "lib/rules/graphql-security-rules.ts",
-   "preciseLocation": true,
-   "tested": false,
-   "inCatalog": true
-  },
-  {
    "ruleId": 8602,
    "code": "NEXT15-02",
    "title": "Client Component Props Exposing Server Secrets",
@@ -6792,16 +5179,6 @@
    "source": "lib/rules/modern-fullstack-rules.ts",
    "preciseLocation": true,
    "tested": true,
-   "inCatalog": true
-  },
-  {
-   "ruleId": 8604,
-   "code": "NEXT15-04",
-   "title": "Uncached Dynamic Route Render Explosion (force-dynamic)",
-   "severity": "MEDIUM",
-   "source": "lib/rules/modern-fullstack-rules.ts",
-   "preciseLocation": true,
-   "tested": false,
    "inCatalog": true
   },
   {
@@ -6832,36 +5209,6 @@
    "source": "lib/rules/modern-fullstack-rules.ts",
    "preciseLocation": true,
    "tested": true,
-   "inCatalog": true
-  },
-  {
-   "ruleId": 8608,
-   "code": "NEXT15-08",
-   "title": "Parallel Route Missing default.tsx Fallback",
-   "severity": "MEDIUM",
-   "source": "lib/rules/modern-fullstack-rules.ts",
-   "preciseLocation": false,
-   "tested": false,
-   "inCatalog": true
-  },
-  {
-   "ruleId": 8609,
-   "code": "NEXT15-09",
-   "title": "React 19 useActionState Missing Double-Submit Guard",
-   "severity": "LOW",
-   "source": "lib/rules/modern-fullstack-rules.ts",
-   "preciseLocation": true,
-   "tested": false,
-   "inCatalog": true
-  },
-  {
-   "ruleId": 8610,
-   "code": "NEXT15-10",
-   "title": "Next.js 15 Dynamic APIs (cookies, headers) Accessed Synchronously",
-   "severity": "CRITICAL",
-   "source": "lib/rules/modern-fullstack-rules.ts",
-   "preciseLocation": true,
-   "tested": false,
    "inCatalog": true
   },
   {
@@ -6978,17 +5325,17 @@
    "ruleId": 8803,
    "code": "PY-SEC-03",
    "title": "Subprocess Execution with shell=True",
-   "severity": "CRITICAL",
+   "severity": "HIGH",
    "source": "lib/rules/python-enterprise-rules.ts",
    "preciseLocation": true,
-   "tested": false,
+   "tested": true,
    "inCatalog": true
   },
   {
    "ruleId": 8804,
    "code": "PY-SEC-04",
    "title": "Python SQL Injection via String Interpolation (f-string / format / %)",
-   "severity": "CRITICAL",
+   "severity": "HIGH",
    "source": "lib/rules/python-enterprise-rules.ts",
    "preciseLocation": true,
    "tested": true,
@@ -6998,7 +5345,7 @@
    "ruleId": 8805,
    "code": "PY-SEC-05",
    "title": "Django / Flask DEBUG Mode Enabled in Production Settings",
-   "severity": "HIGH",
+   "severity": "MEDIUM",
    "source": "lib/rules/python-enterprise-rules.ts",
    "preciseLocation": true,
    "tested": true,
@@ -7038,7 +5385,7 @@
    "ruleId": 8809,
    "code": "PY-SEC-09",
    "title": "Hardcoded Secret Key in Flask / Django Settings",
-   "severity": "CRITICAL",
+   "severity": "HIGH",
    "source": "lib/rules/python-enterprise-rules.ts",
    "preciseLocation": true,
    "tested": true,
@@ -7071,7 +5418,7 @@
    "severity": "HIGH",
    "source": "lib/rules/python-enterprise-rules.ts",
    "preciseLocation": true,
-   "tested": false,
+   "tested": true,
    "inCatalog": true
   },
   {
@@ -7118,10 +5465,10 @@
    "ruleId": 8817,
    "code": "PY-SEC-17",
    "title": "CSRF Protection Disabled (@csrf_exempt / WTF_CSRF_ENABLED = False)",
-   "severity": "HIGH",
+   "severity": "MEDIUM",
    "source": "lib/rules/python-enterprise-rules.ts",
    "preciseLocation": true,
-   "tested": false,
+   "tested": true,
    "inCatalog": true
   },
   {
@@ -7171,27 +5518,17 @@
    "severity": "MEDIUM",
    "source": "lib/rules/python-enterprise-rules.ts",
    "preciseLocation": true,
-   "tested": false,
-   "inCatalog": true
-  },
-  {
-   "ruleId": 8823,
-   "code": "PY-SEC-23",
-   "title": "Insecure Server Binding to All Network Interfaces (0.0.0.0)",
-   "severity": "MEDIUM",
-   "source": "lib/rules/python-enterprise-rules.ts",
-   "preciseLocation": true,
-   "tested": false,
+   "tested": true,
    "inCatalog": true
   },
   {
    "ruleId": 8824,
    "code": "PY-SEC-24",
    "title": "Use of Assert Statement for Security or Authorization Checks",
-   "severity": "HIGH",
+   "severity": "MEDIUM",
    "source": "lib/rules/python-enterprise-rules.ts",
    "preciseLocation": true,
-   "tested": false,
+   "tested": true,
    "inCatalog": true
   },
   {
@@ -7241,7 +5578,7 @@
    "severity": "MEDIUM",
    "source": "lib/rules/python-enterprise-rules.ts",
    "preciseLocation": true,
-   "tested": false,
+   "tested": true,
    "inCatalog": true
   },
   {
@@ -7281,7 +5618,7 @@
    "severity": "MEDIUM",
    "source": "lib/rules/python-enterprise-rules.ts",
    "preciseLocation": true,
-   "tested": false,
+   "tested": true,
    "inCatalog": true
   },
   {
@@ -7298,10 +5635,10 @@
    "ruleId": 8835,
    "code": "PY-SEC-35",
    "title": "Broad Exception Handling Swallowing Critical Errors (except: pass)",
-   "severity": "MEDIUM",
+   "severity": "LOW",
    "source": "lib/rules/python-enterprise-rules.ts",
    "preciseLocation": true,
-   "tested": false,
+   "tested": true,
    "inCatalog": true
   },
   {
@@ -7311,17 +5648,7 @@
    "severity": "MEDIUM",
    "source": "lib/rules/python-enterprise-rules.ts",
    "preciseLocation": true,
-   "tested": false,
-   "inCatalog": true
-  },
-  {
-   "ruleId": 8837,
-   "code": "PY-SEC-37",
-   "title": "Django SECURE_SSL_REDIRECT Disabled in Production",
-   "severity": "MEDIUM",
-   "source": "lib/rules/python-enterprise-rules.ts",
-   "preciseLocation": true,
-   "tested": false,
+   "tested": true,
    "inCatalog": true
   },
   {
@@ -7398,10 +5725,10 @@
    "ruleId": 8845,
    "code": "PY-SEC-45",
    "title": "Missing Request Timeout on Python Requests / HTTPX Calls",
-   "severity": "MEDIUM",
+   "severity": "LOW",
    "source": "lib/rules/python-enterprise-rules.ts",
    "preciseLocation": true,
-   "tested": false,
+   "tested": true,
    "inCatalog": true
   },
   {
@@ -7415,33 +5742,13 @@
    "inCatalog": true
   },
   {
-   "ruleId": 8847,
-   "code": "PY-SEC-47",
-   "title": "Insecure Socket Binding with SO_REUSEADDR on Multi-User Host",
-   "severity": "LOW",
-   "source": "lib/rules/python-enterprise-rules.ts",
-   "preciseLocation": true,
-   "tested": false,
-   "inCatalog": true
-  },
-  {
-   "ruleId": 8848,
-   "code": "PY-SEC-48",
-   "title": "GraphQL Query Depth Limit Unconfigured in Strawberry / Graphene",
-   "severity": "MEDIUM",
-   "source": "lib/rules/python-enterprise-rules.ts",
-   "preciseLocation": true,
-   "tested": false,
-   "inCatalog": true
-  },
-  {
    "ruleId": 8849,
    "code": "PY-SEC-49",
    "title": "Django SESSION_COOKIE_AGE Overly Permissive (> 30 Days)",
    "severity": "LOW",
    "source": "lib/rules/python-enterprise-rules.ts",
    "preciseLocation": true,
-   "tested": false,
+   "tested": true,
    "inCatalog": true
   },
   {
@@ -7468,20 +5775,10 @@
    "ruleId": 8902,
    "code": "K8S-02",
    "title": "Container Allowed to Run as Root User",
-   "severity": "HIGH",
+   "severity": "MEDIUM",
    "source": "lib/rules/k8s-hardening-rules.ts",
    "preciseLocation": true,
    "tested": true,
-   "inCatalog": true
-  },
-  {
-   "ruleId": 8903,
-   "code": "K8S-03",
-   "title": "Missing CPU and Memory Resource Limits",
-   "severity": "HIGH",
-   "source": "lib/rules/k8s-hardening-rules.ts",
-   "preciseLocation": true,
-   "tested": false,
    "inCatalog": true
   },
   {
@@ -7502,26 +5799,6 @@
    "source": "lib/rules/k8s-hardening-rules.ts",
    "preciseLocation": true,
    "tested": true,
-   "inCatalog": true
-  },
-  {
-   "ruleId": 8906,
-   "code": "K8S-06",
-   "title": "Missing Pod Disruption Budget (PDB) on Critical Deployments",
-   "severity": "MEDIUM",
-   "source": "lib/rules/k8s-hardening-rules.ts",
-   "preciseLocation": true,
-   "tested": false,
-   "inCatalog": true
-  },
-  {
-   "ruleId": 8907,
-   "code": "K8S-07",
-   "title": "Missing Liveness and Readiness Health Probes",
-   "severity": "HIGH",
-   "source": "lib/rules/k8s-hardening-rules.ts",
-   "preciseLocation": false,
-   "tested": false,
    "inCatalog": true
   },
   {
@@ -7635,16 +5912,6 @@
    "inCatalog": true
   },
   {
-   "ruleId": 9011,
-   "code": "GO-11",
-   "title": "Critical I/O Error Ignored on Defer Close / Remove Operations",
-   "severity": "LOW",
-   "source": "lib/rules/go-microservices-rules.ts",
-   "preciseLocation": true,
-   "tested": false,
-   "inCatalog": true
-  },
-  {
    "ruleId": 9013,
    "code": "GO-13",
    "title": "Server-Side Request Forgery (SSRF) via Dynamic HTTP Call",
@@ -7678,10 +5945,10 @@
    "ruleId": 9016,
    "code": "GO-16",
    "title": "Unsafe Pointer Usage (unsafe.Pointer)",
-   "severity": "MEDIUM",
+   "severity": "LOW",
    "source": "lib/rules/go-microservices-rules.ts",
    "preciseLocation": true,
-   "tested": false,
+   "tested": true,
    "inCatalog": true
   },
   {
@@ -7711,7 +5978,7 @@
    "severity": "MEDIUM",
    "source": "lib/rules/go-microservices-rules.ts",
    "preciseLocation": true,
-   "tested": false,
+   "tested": true,
    "inCatalog": true
   },
   {
@@ -7765,23 +6032,13 @@
    "inCatalog": true
   },
   {
-   "ruleId": 9026,
-   "code": "GO-26",
-   "title": "Unhandled Goroutine Panic Crashing Process (Missing recover)",
-   "severity": "MEDIUM",
-   "source": "lib/rules/go-microservices-rules.ts",
-   "preciseLocation": true,
-   "tested": false,
-   "inCatalog": true
-  },
-  {
    "ruleId": 9027,
    "code": "GO-27",
    "title": "Nil Pointer Dereference on Unchecked Error Return",
    "severity": "MEDIUM",
    "source": "lib/rules/go-microservices-rules.ts",
    "preciseLocation": true,
-   "tested": false,
+   "tested": true,
    "inCatalog": true
   },
   {
@@ -7795,23 +6052,13 @@
    "inCatalog": true
   },
   {
-   "ruleId": 9030,
-   "code": "GO-30",
-   "title": "GORM Unscoped Query Disabling Soft-Delete Protection",
-   "severity": "MEDIUM",
-   "source": "lib/rules/go-microservices-rules.ts",
-   "preciseLocation": true,
-   "tested": false,
-   "inCatalog": true
-  },
-  {
    "ruleId": 9032,
    "code": "GO-32",
    "title": "Insecure Cookie Configuration Missing HttpOnly or Secure Flag",
    "severity": "MEDIUM",
    "source": "lib/rules/go-microservices-rules.ts",
    "preciseLocation": true,
-   "tested": false,
+   "tested": true,
    "inCatalog": true
   },
   {
@@ -7845,23 +6092,13 @@
    "inCatalog": true
   },
   {
-   "ruleId": 9036,
-   "code": "GO-36",
-   "title": "Missing Rate Limiting on Authentication Handlers in Go",
-   "severity": "MEDIUM",
-   "source": "lib/rules/go-microservices-rules.ts",
-   "preciseLocation": true,
-   "tested": false,
-   "inCatalog": true
-  },
-  {
    "ruleId": 9037,
    "code": "GO-37",
    "title": "Context Leak via Missing defer cancel() Call",
-   "severity": "MEDIUM",
+   "severity": "LOW",
    "source": "lib/rules/go-microservices-rules.ts",
    "preciseLocation": true,
-   "tested": false,
+   "tested": true,
    "inCatalog": true
   },
   {
@@ -7888,10 +6125,10 @@
    "ruleId": 9040,
    "code": "GO-40",
    "title": "Insecure Temporary File Creation via Path Concatenation",
-   "severity": "MEDIUM",
+   "severity": "LOW",
    "source": "lib/rules/go-microservices-rules.ts",
    "preciseLocation": true,
-   "tested": false,
+   "tested": true,
    "inCatalog": true
   },
   {
@@ -7912,26 +6149,6 @@
    "source": "lib/rules/go-microservices-rules.ts",
    "preciseLocation": true,
    "tested": true,
-   "inCatalog": true
-  },
-  {
-   "ruleId": 9043,
-   "code": "GO-43",
-   "title": "Catastrophic Backtracking Regular Expression in Go Source",
-   "severity": "MEDIUM",
-   "source": "lib/rules/go-microservices-rules.ts",
-   "preciseLocation": true,
-   "tested": false,
-   "inCatalog": true
-  },
-  {
-   "ruleId": 9044,
-   "code": "GO-44",
-   "title": "HTTP Header Injection / Response Splitting via CRLF",
-   "severity": "MEDIUM",
-   "source": "lib/rules/go-microservices-rules.ts",
-   "preciseLocation": true,
-   "tested": false,
    "inCatalog": true
   },
   {
@@ -7961,7 +6178,7 @@
    "severity": "MEDIUM",
    "source": "lib/rules/go-microservices-rules.ts",
    "preciseLocation": true,
-   "tested": false,
+   "tested": true,
    "inCatalog": true
   },
   {
@@ -7975,16 +6192,6 @@
    "inCatalog": true
   },
   {
-   "ruleId": 9101,
-   "code": "TENANT-01",
-   "title": "Cross-Tenant Query Missing Tenant ID Filter Clause",
-   "severity": "CRITICAL",
-   "source": "lib/rules/tenant-isolation-rules.ts",
-   "preciseLocation": true,
-   "tested": true,
-   "inCatalog": true
-  },
-  {
    "ruleId": 9102,
    "code": "TENANT-02",
    "title": "Tenant Context Leaked Across Async Execution Store",
@@ -7992,16 +6199,6 @@
    "source": "lib/rules/tenant-isolation-rules.ts",
    "preciseLocation": true,
    "tested": true,
-   "inCatalog": true
-  },
-  {
-   "ruleId": 9103,
-   "code": "TENANT-03",
-   "title": "Missing Tenant Schema Isolation Check on Database Migration",
-   "severity": "HIGH",
-   "source": "lib/rules/tenant-isolation-rules.ts",
-   "preciseLocation": true,
-   "tested": false,
    "inCatalog": true
   },
   {
@@ -8418,7 +6615,7 @@
    "ruleId": 10305,
    "code": "PG-05",
    "title": "Deadlock Risk from Non-Deterministic Lock Acquisition Order",
-   "severity": "MEDIUM",
+   "severity": "LOW",
    "source": "lib/rules/pgvector-postgres-rules.ts",
    "preciseLocation": true,
    "tested": true,
@@ -8438,7 +6635,7 @@
    "ruleId": 10405,
    "code": "WAF-05",
    "title": "Unchecked HTTP Request Body Size Exceeding Edge WAF Inspection Buffer",
-   "severity": "MEDIUM",
+   "severity": "LOW",
    "source": "lib/rules/waf-edge-rules.ts",
    "preciseLocation": true,
    "tested": true,
@@ -8518,7 +6715,7 @@
    "ruleId": 10802,
    "code": "ISO-02",
    "title": "Privileged Access Rights Granted Without Documented Approval (A.5.18)",
-   "severity": "HIGH",
+   "severity": "MEDIUM",
    "source": "lib/rules/iso27001-compliance-rules.ts",
    "preciseLocation": true,
    "tested": true,
@@ -8528,10 +6725,10 @@
    "ruleId": 10902,
    "code": "OAUTH-02",
    "title": "Permissive Wildcard Redirect URI in OAuth Client Configuration",
-   "severity": "CRITICAL",
+   "severity": "HIGH",
    "source": "lib/rules/oauth-oidc-rules.ts",
    "preciseLocation": true,
-   "tested": false,
+   "tested": true,
    "inCatalog": true
   },
   {
@@ -8601,7 +6798,7 @@
    "severity": "MEDIUM",
    "source": "lib/rules/terraform-iac-rules.ts",
    "preciseLocation": true,
-   "tested": false,
+   "tested": true,
    "inCatalog": true
   },
   {
@@ -8738,10 +6935,10 @@
    "ruleId": 12205,
    "code": "CONTAINER-05",
    "title": "Exposed Docker Daemon Unix Socket Inside Container",
-   "severity": "CRITICAL",
+   "severity": "MEDIUM",
    "source": "lib/rules/container-security-rules.ts",
    "preciseLocation": true,
-   "tested": false,
+   "tested": true,
    "inCatalog": true
   },
   {
@@ -8948,7 +7145,7 @@
    "ruleId": 13302,
    "code": "CRYPTO-02",
    "title": "Missing Automated Master Key Rotation Schedule Exceeding 90 Days",
-   "severity": "MEDIUM",
+   "severity": "LOW",
    "source": "lib/rules/crypto-kms-rules.ts",
    "preciseLocation": true,
    "tested": true,
@@ -9015,30 +7212,10 @@
    "inCatalog": false
   },
   {
-   "ruleId": 13802,
-   "code": "ASVS-02",
-   "title": "ASVS V3.2 Session Management: Permitting Session Fixation or Insecure Cookie Flags",
-   "severity": "CRITICAL",
-   "source": "lib/rules/owasp-asvs-rules.ts",
-   "preciseLocation": true,
-   "tested": false,
-   "inCatalog": false
-  },
-  {
-   "ruleId": 13803,
-   "code": "ASVS-03",
-   "title": "ASVS V4.1 Access Control: Insecure Direct Object References (IDOR) on Tenant APIs",
-   "severity": "CRITICAL",
-   "source": "lib/rules/owasp-asvs-rules.ts",
-   "preciseLocation": true,
-   "tested": false,
-   "inCatalog": false
-  },
-  {
    "ruleId": 13805,
    "code": "ASVS-05",
    "title": "ASVS V6.2 Cryptographic Storage: Using Insecure Random Salt or Low Iteration Counts",
-   "severity": "HIGH",
+   "severity": "MEDIUM",
    "source": "lib/rules/owasp-asvs-rules.ts",
    "preciseLocation": true,
    "tested": true,
@@ -9062,26 +7239,6 @@
    "source": "lib/rules/ebpf-observability-rules.ts",
    "preciseLocation": true,
    "tested": true,
-   "inCatalog": false
-  },
-  {
-   "ruleId": 14303,
-   "code": "APIDEF-03",
-   "title": "API3:2023 Broken Object Property Level Authorization: Mass Assignment",
-   "severity": "CRITICAL",
-   "source": "lib/rules/owasp-api-security-rules.ts",
-   "preciseLocation": true,
-   "tested": false,
-   "inCatalog": false
-  },
-  {
-   "ruleId": 14305,
-   "code": "APIDEF-05",
-   "title": "API5:2023 Broken Function Level Authorization: Admin Routes Missing Scope Check",
-   "severity": "CRITICAL",
-   "source": "lib/rules/owasp-api-security-rules.ts",
-   "preciseLocation": true,
-   "tested": false,
    "inCatalog": false
   },
   {
@@ -9241,7 +7398,7 @@
    "severity": "HIGH",
    "source": "lib/rules/polyglot-backend-rules.ts",
    "preciseLocation": true,
-   "tested": false,
+   "tested": true,
    "inCatalog": true
   },
   {
@@ -9825,16 +7982,6 @@
    "inCatalog": false
   },
   {
-   "ruleId": 27231,
-   "code": "RULE-27231",
-   "title": "Reverse Tab-Nabbing Security Hazard (target=",
-   "severity": "MEDIUM",
-   "source": "lib/rules/frontend-rules.ts",
-   "preciseLocation": true,
-   "tested": false,
-   "inCatalog": false
-  },
-  {
    "ruleId": 27241,
    "code": "REDIS-SEC-02",
    "title": "Publicly Exposed Redis Port Without Password Authentication",
@@ -9842,26 +7989,6 @@
    "source": "lib/rules/multi-database-rules.ts",
    "preciseLocation": true,
    "tested": true,
-   "inCatalog": false
-  },
-  {
-   "ruleId": 27251,
-   "code": "SEC-WEB-05",
-   "title": "Insecure External Link Target Blank (Tab-Nabbing Risk)",
-   "severity": "MEDIUM",
-   "source": "lib/scanner/builtin-rules.ts",
-   "preciseLocation": true,
-   "tested": false,
-   "inCatalog": false
-  },
-  {
-   "ruleId": 27252,
-   "code": "UI-100",
-   "title": "Missing Request AbortSignal Listener",
-   "severity": "MEDIUM",
-   "source": "lib/scanner/builtin-rules.ts",
-   "preciseLocation": true,
-   "tested": false,
    "inCatalog": false
   },
   {
@@ -10991,17 +9118,17 @@
    "severity": "MEDIUM",
    "source": "lib/rules/ui-quality-rules.ts",
    "preciseLocation": true,
-   "tested": false,
+   "tested": true,
    "inCatalog": false
   },
   {
    "ruleId": 28602,
    "code": "RULE-28602",
-   "title": "${isButton ? ",
+   "title": "Button or Link Without an Accessible Name (Icon-Only or Empty)",
    "severity": "MEDIUM",
    "source": "lib/rules/ui-quality-rules.ts",
    "preciseLocation": true,
-   "tested": false,
+   "tested": true,
    "inCatalog": false
   },
   {
@@ -11011,7 +9138,7 @@
    "severity": "LOW",
    "source": "lib/rules/ui-quality-rules.ts",
    "preciseLocation": true,
-   "tested": false,
+   "tested": true,
    "inCatalog": false
   },
   {
@@ -11021,7 +9148,7 @@
    "severity": "MEDIUM",
    "source": "lib/rules/ui-quality-rules.ts",
    "preciseLocation": true,
-   "tested": false,
+   "tested": true,
    "inCatalog": false
   },
   {
@@ -11031,17 +9158,17 @@
    "severity": "MEDIUM",
    "source": "lib/rules/ui-quality-rules.ts",
    "preciseLocation": true,
-   "tested": false,
+   "tested": true,
    "inCatalog": false
   },
   {
    "ruleId": 28606,
    "code": "RULE-28606",
-   "title": "",
+   "title": "Invalid or Abstract ARIA Role",
    "severity": "MEDIUM",
    "source": "lib/rules/ui-quality-rules.ts",
    "preciseLocation": true,
-   "tested": false,
+   "tested": true,
    "inCatalog": false
   },
   {
@@ -11051,7 +9178,7 @@
    "severity": "MEDIUM",
    "source": "lib/rules/ui-quality-rules.ts",
    "preciseLocation": true,
-   "tested": false,
+   "tested": true,
    "inCatalog": false
   },
   {
@@ -11061,7 +9188,7 @@
    "severity": "MEDIUM",
    "source": "lib/rules/ui-quality-rules.ts",
    "preciseLocation": true,
-   "tested": false,
+   "tested": true,
    "inCatalog": false
   },
   {
@@ -11071,7 +9198,7 @@
    "severity": "LOW",
    "source": "lib/rules/ui-quality-rules.ts",
    "preciseLocation": true,
-   "tested": false,
+   "tested": true,
    "inCatalog": false
   },
   {
@@ -11081,17 +9208,17 @@
    "severity": "MEDIUM",
    "source": "lib/rules/ui-quality-rules.ts",
    "preciseLocation": true,
-   "tested": false,
+   "tested": true,
    "inCatalog": false
   },
   {
    "ruleId": 28611,
    "code": "RULE-28611",
-   "title": "Deprecated Moving Content Element <${n}>",
+   "title": "Deprecated Moving Content Element (<marquee> / <blink>)",
    "severity": "LOW",
    "source": "lib/rules/ui-quality-rules.ts",
    "preciseLocation": true,
-   "tested": false,
+   "tested": true,
    "inCatalog": false
   },
   {
@@ -11101,37 +9228,27 @@
    "severity": "LOW",
    "source": "lib/rules/ui-quality-rules.ts",
    "preciseLocation": true,
-   "tested": false,
-   "inCatalog": false
-  },
-  {
-   "ruleId": 28613,
-   "code": "RULE-28613",
-   "title": "Heading Level Skipped (<h${prev}> to <h${level}>)",
-   "severity": "LOW",
-   "source": "lib/rules/ui-quality-rules.ts",
-   "preciseLocation": true,
-   "tested": false,
+   "tested": true,
    "inCatalog": false
   },
   {
    "ruleId": 28614,
    "code": "RULE-28614",
-   "title": "role=",
+   "title": "Widget Role on an Element That Cannot Receive Focus",
    "severity": "MEDIUM",
    "source": "lib/rules/ui-quality-rules.ts",
    "preciseLocation": true,
-   "tested": false,
+   "tested": true,
    "inCatalog": false
   },
   {
    "ruleId": 28615,
    "code": "RULE-28615",
-   "title": "Custom ${sRole === ",
+   "title": "Custom Button or Link Handles Click but Not Keyboard",
    "severity": "MEDIUM",
    "source": "lib/rules/ui-quality-rules.ts",
    "preciseLocation": true,
-   "tested": false,
+   "tested": true,
    "inCatalog": false
   },
   {
@@ -11141,7 +9258,7 @@
    "severity": "LOW",
    "source": "lib/rules/ui-quality-rules.ts",
    "preciseLocation": true,
-   "tested": false,
+   "tested": true,
    "inCatalog": false
   },
   {
@@ -11151,7 +9268,7 @@
    "severity": "LOW",
    "source": "lib/rules/ui-quality-rules.ts",
    "preciseLocation": true,
-   "tested": false,
+   "tested": true,
    "inCatalog": false
   },
   {
@@ -11161,7 +9278,7 @@
    "severity": "MEDIUM",
    "source": "lib/rules/ui-quality-rules.ts",
    "preciseLocation": true,
-   "tested": false,
+   "tested": true,
    "inCatalog": false
   },
   {
@@ -11171,7 +9288,7 @@
    "severity": "LOW",
    "source": "lib/rules/ui-quality-rules.ts",
    "preciseLocation": true,
-   "tested": false,
+   "tested": true,
    "inCatalog": false
   },
   {
@@ -11181,7 +9298,7 @@
    "severity": "LOW",
    "source": "lib/rules/ui-quality-rules.ts",
    "preciseLocation": true,
-   "tested": false,
+   "tested": true,
    "inCatalog": false
   },
   {
@@ -11191,7 +9308,7 @@
    "severity": "MEDIUM",
    "source": "lib/rules/ui-quality-rules.ts",
    "preciseLocation": true,
-   "tested": false,
+   "tested": true,
    "inCatalog": false
   },
   {
@@ -11201,7 +9318,7 @@
    "severity": "LOW",
    "source": "lib/rules/ui-quality-rules.ts",
    "preciseLocation": true,
-   "tested": false,
+   "tested": true,
    "inCatalog": false
   },
   {
@@ -11211,7 +9328,7 @@
    "severity": "HIGH",
    "source": "lib/rules/ui-quality-rules.ts",
    "preciseLocation": true,
-   "tested": false,
+   "tested": true,
    "inCatalog": false
   }
  ]

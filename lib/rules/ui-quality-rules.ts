@@ -1,15 +1,15 @@
 /**
- * Measurable UI quality: WCAG 2.2 accessibility and UX defects detectable in JSX/HTML (UI-01.., Rule IDs 28601-28699).
+ * Measurable UI quality: WCAG 2.2 accessibility and UX defects detectable in JSX/HTML (A11Y-01.., Rule IDs 28601-28699).
  *
  * Every rule maps to a WCAG 2.2 success criterion and to an established checker (axe-core, eslint-plugin-jsx-a11y,
  * Lighthouse). Each fires on one concrete element, never on a whole-file absence. Elements with spread props
  * ({...props}) are skipped by every rule that depends on an attribute being missing.
  *
- * UI-13 (28613, heading level skipped) was dropped: axe classes heading-order as best practice, not a WCAG failure,
+ * A11Y-13 (28613, heading level skipped) was dropped: axe classes heading-order as best practice, not a WCAG failure,
  * and it fired ~26 times across maintained benchmark repos.
  *
  * Deliberately NOT here because a surviving rule already covers it: <html> without lang (7138), viewport zoom lock
- * (1244), <video autoPlay> without muted (1232), autoFocus (1204), target=_blank without rel (27231, 274),
+ * (1244), <video autoPlay> without muted (1232), autoFocus (1204), target=_blank without rel (274),
  * <div onClick> without role/tabIndex (1029), unlabelled <input> and outline-none (1026), tiny touch targets (1044).
  */
 import type { Finding } from '@/data/schema';
@@ -249,56 +249,56 @@ export function evaluateUiQualityRules(file: CodeFile, lines: string[], cleanCon
     const native = /^[a-z][a-z0-9-]*$/.test(t.name);
     const n = t.name;
 
-    // UI-01: <img> without alt (WCAG 1.1.1, axe image-alt, jsx-a11y alt-text)
+    // A11Y-01: <img> without alt (WCAG 1.1.1, axe image-alt, jsx-a11y alt-text)
     if (n === 'img' && !t.spread && !has(t, 'alt', 'aria-label', 'aria-labelledby') && !/^(?:presentation|none)$/.test(strOf(t, 'role') ?? '')) {
-      add({ ruleId: 28601, code: 'UI-01', severity: 'MEDIUM', offset: t.start, wcag: '1.1.1 Non-text Content',
+      add({ ruleId: 28601, code: 'A11Y-01', severity: 'MEDIUM', offset: t.start, wcag: '1.1.1 Non-text Content',
         title: 'Image Missing alt Text',
         why: 'An <img> without an alt attribute is announced by screen readers as its file name (or skipped with no context).',
         fix: 'Add alt="<what the image shows>" for meaningful images, or alt="" for purely decorative ones.' });
     }
 
-    // UI-02: button / link with no accessible name (empty, or only an unlabelled icon)
+    // A11Y-02: button / link with no accessible name (empty, or only an unlabelled icon)
     const isButton = n === 'button' || (n === 'Button' && !has(t, 'aschild'));
     const isLink = (n === 'a' && has(t, 'href')) || (n === 'Link' && has(t, 'href', 'to'));
     if ((isButton || isLink) && !t.spread && !hasName(t) && !has(t, 'children', 'dangerouslysetinnerhtml')) {
       if (!(t.selfClosing && !native)) {
         const inner = innerOf(src, t);
         if (inner !== null && (inner.trim() === '' || iconOnly(inner, icons))) {
-          add({ ruleId: 28602, code: 'UI-02', severity: 'MEDIUM', offset: t.start, wcag: '4.1.2 Name, Role, Value / 2.4.4 Link Purpose',
-            title: `${isButton ? 'Button' : 'Link'} Without an Accessible Name (Icon-Only or Empty)`,
+          add({ ruleId: 28602, code: 'A11Y-02', severity: 'MEDIUM', offset: t.start, wcag: '4.1.2 Name, Role, Value / 2.4.4 Link Purpose',
+            title: 'Button or Link Without an Accessible Name (Icon-Only or Empty)',
             why: `This ${isButton ? 'button' : 'link'} contains no text, only an icon or nothing, and has no aria-label, so screen readers announce just "${isButton ? 'button' : 'link'}".`,
             fix: 'Add aria-label="<action>" to the element, or a visually hidden label (<span className="sr-only">Close</span>) next to the icon, and mark the icon aria-hidden.' });
         }
       }
     }
 
-    // UI-03: positive tabIndex (WCAG 2.4.3, axe tabindex, jsx-a11y tabindex-no-positive)
+    // A11Y-03: positive tabIndex (WCAG 2.4.3, axe tabindex, jsx-a11y tabindex-no-positive)
     const tabIdx = strOf(t, 'tabindex');
     if (tabIdx !== undefined && /^\d+$/.test(tabIdx) && Number(tabIdx) > 0) {
-      add({ ruleId: 28603, code: 'UI-03', severity: 'LOW', offset: t.start, wcag: '2.4.3 Focus Order',
+      add({ ruleId: 28603, code: 'A11Y-03', severity: 'LOW', offset: t.start, wcag: '2.4.3 Focus Order',
         title: 'Positive tabIndex Overrides Natural Focus Order',
         why: `tabIndex=${tabIdx} moves this element ahead of every other control on the page, so keyboard focus jumps out of reading order.`,
         fix: 'Use tabIndex={0} (or no tabIndex on native controls) and order the DOM to match the visual order.' });
     }
 
-    // UI-04: aria-hidden on a focusable element (axe aria-hidden-focus, jsx-a11y no-aria-hidden-on-focusable)
+    // A11Y-04: aria-hidden on a focusable element (axe aria-hidden-focus, jsx-a11y no-aria-hidden-on-focusable)
     if (native && isTrue(t, 'aria-hidden')) {
       const negTab = tabIdx !== undefined && /^-\d+$/.test(tabIdx);
       const focusable = (FOCUSABLE_NATIVE.test(n) || (n === 'a' && has(t, 'href')) || (n === 'input' && strOf(t, 'type') !== 'hidden') ||
         (tabIdx !== undefined && /^\d+$/.test(tabIdx))) && !negTab && !has(t, 'disabled', 'hidden', 'inert');
       if (focusable) {
-        add({ ruleId: 28604, code: 'UI-04', severity: 'MEDIUM', offset: t.start, wcag: '4.1.2 Name, Role, Value',
+        add({ ruleId: 28604, code: 'A11Y-04', severity: 'MEDIUM', offset: t.start, wcag: '4.1.2 Name, Role, Value',
           title: 'aria-hidden on a Focusable Element',
           why: `<${n} aria-hidden="true"> can still receive keyboard focus, but screen readers announce nothing for it: a silent, "ghost" tab stop.`,
           fix: 'Remove aria-hidden, or also take the element out of the tab order (tabIndex={-1}, disabled, or inert) if it is truly decorative.' });
       }
     }
 
-    // UI-05: misspelled / non-existent aria-* attribute (axe aria-valid-attr, jsx-a11y aria-props)
+    // A11Y-05: misspelled / non-existent aria-* attribute (axe aria-valid-attr, jsx-a11y aria-props)
     for (const name of t.attrs.keys()) {
       if (!name.startsWith('aria-')) continue;
       if (!ARIA_ATTRS.has(name.slice(5))) {
-        add({ ruleId: 28605, code: 'UI-05', severity: 'MEDIUM', offset: t.start, wcag: '4.1.2 Name, Role, Value',
+        add({ ruleId: 28605, code: 'A11Y-05', severity: 'MEDIUM', offset: t.start, wcag: '4.1.2 Name, Role, Value',
           title: 'Invalid ARIA Attribute Name',
           why: `"${name}" is not an ARIA attribute${name === 'aria-labeledby' ? ' (the spec spelling is aria-labelledby)' : ''}, so browsers ignore it and the element loses the label or state it was meant to have.`,
           fix: `Correct the attribute to a valid ARIA 1.2 name${name === 'aria-labeledby' ? ' (aria-labelledby)' : ''}.` });
@@ -306,14 +306,14 @@ export function evaluateUiQualityRules(file: CodeFile, lines: string[], cleanCon
       }
     }
 
-    // UI-06: invalid or abstract ARIA role on a native element (axe aria-roles, jsx-a11y aria-role)
+    // A11Y-06: invalid or abstract ARIA role on a native element (axe aria-roles, jsx-a11y aria-role)
     const role = native ? strOf(t, 'role') : undefined;
     if (role !== undefined && role.trim() !== '') {
       const tokens = role.trim().toLowerCase().split(/\s+/);
       if (!tokens.some((r) => ROLES.has(r) || r.startsWith('doc-'))) {
         const abstract = tokens.find((r) => ABSTRACT_ROLES.has(r));
-        add({ ruleId: 28606, code: 'UI-06', severity: 'MEDIUM', offset: t.start, wcag: '4.1.2 Name, Role, Value',
-          title: abstract ? 'Abstract ARIA Role Used on an Element' : 'Unknown ARIA Role Value',
+        add({ ruleId: 28606, code: 'A11Y-06', severity: 'MEDIUM', offset: t.start, wcag: '4.1.2 Name, Role, Value',
+          title: 'Invalid or Abstract ARIA Role',
           why: abstract
             ? `role="${role}" is an abstract ARIA role; authors must not use it and assistive technology ignores it.`
             : `role="${role}" is not an ARIA role, so the element is exposed with no (or the wrong) semantics.`,
@@ -321,13 +321,13 @@ export function evaluateUiQualityRules(file: CodeFile, lines: string[], cleanCon
       }
     }
 
-    // UI-07: <a> used as a button (axe/jsx-a11y anchor-is-valid)
+    // A11Y-07: <a> used as a button (axe/jsx-a11y anchor-is-valid)
     if (n === 'a' && has(t, 'onclick') && !t.spread && !has(t, 'routerlink', 'to', 'xlink:href')) {
       const href = strOf(t, 'href');
       const hrefRaw = rawOf(t, 'href');
       const bad = !has(t, 'href') || href === '#' || /^["'{`\s]*javascript:/i.test(hrefRaw) || /^javascript:/i.test(href ?? '');
       if (bad) {
-        add({ ruleId: 28607, code: 'UI-07', severity: 'MEDIUM', offset: t.start, wcag: '2.1.1 Keyboard / 4.1.2 Name, Role, Value',
+        add({ ruleId: 28607, code: 'A11Y-07', severity: 'MEDIUM', offset: t.start, wcag: '2.1.1 Keyboard / 4.1.2 Name, Role, Value',
           title: 'Anchor Used as a Button (onClick With No Real href)',
           why: !has(t, 'href')
             ? 'An <a> without href is not focusable, so keyboard users can never trigger this onClick.'
@@ -336,45 +336,45 @@ export function evaluateUiQualityRules(file: CodeFile, lines: string[], cleanCon
       }
     }
 
-    // UI-08: <iframe> without title (axe frame-title, jsx-a11y iframe-has-title)
+    // A11Y-08: <iframe> without title (axe frame-title, jsx-a11y iframe-has-title)
     if (n === 'iframe' && !t.spread && !hasName(t) && !isTrue(t, 'aria-hidden') && !has(t, 'hidden')) {
-      add({ ruleId: 28608, code: 'UI-08', severity: 'MEDIUM', offset: t.start, wcag: '4.1.2 Name, Role, Value',
+      add({ ruleId: 28608, code: 'A11Y-08', severity: 'MEDIUM', offset: t.start, wcag: '4.1.2 Name, Role, Value',
         title: 'iframe Missing title',
         why: 'Screen readers list frames by title; an untitled <iframe> is announced only as "frame" with no hint of its content.',
         fix: 'Add title="<short description>" (e.g. title="Product demo video") to the iframe.' });
     }
 
-    // UI-09: autocomplete="off" on a password field (WCAG 3.3.8 Accessible Authentication)
+    // A11Y-09: autocomplete="off" on a password field (WCAG 3.3.8 Accessible Authentication)
     if ((n === 'input' || n === 'Input') && strOf(t, 'type') === 'password' && strOf(t, 'autocomplete') === 'off') {
-      add({ ruleId: 28609, code: 'UI-09', severity: 'LOW', offset: t.start, wcag: '3.3.8 Accessible Authentication (Minimum)',
+      add({ ruleId: 28609, code: 'A11Y-09', severity: 'LOW', offset: t.start, wcag: '3.3.8 Accessible Authentication (Minimum)',
         title: 'Password Field Disables Password Managers (autocomplete="off")',
         why: 'autocomplete="off" on a password field tells password managers not to fill it, forcing users to memorise or retype the password.',
         fix: 'Use autoComplete="current-password" on sign-in and autoComplete="new-password" on sign-up / change-password fields.' });
     }
 
-    // UI-10: paste blocked on an input (WCAG 3.3.8; blocks password managers and copy-paste of codes)
+    // A11Y-10: paste blocked on an input (WCAG 3.3.8; blocks password managers and copy-paste of codes)
     if (/^(?:input|Input|textarea|Textarea)$/.test(n) && /preventDefault\s*\(|return\s+false/.test(rawOf(t, 'onpaste'))) {
-      add({ ruleId: 28610, code: 'UI-10', severity: 'MEDIUM', offset: t.start, wcag: '3.3.8 Accessible Authentication (Minimum)',
+      add({ ruleId: 28610, code: 'A11Y-10', severity: 'MEDIUM', offset: t.start, wcag: '3.3.8 Accessible Authentication (Minimum)',
         title: 'Paste Blocked on Input Field',
         why: 'An onPaste handler that calls preventDefault stops users pasting passwords, one-time codes or emails, breaking password managers and assistive input.',
         fix: 'Remove the onPaste handler; validate the value after input instead of blocking paste.' });
     }
 
-    // UI-11: <marquee> / <blink> (WCAG 2.2.2, axe marquee/blink, jsx-a11y no-distracting-elements)
+    // A11Y-11: <marquee> / <blink> (WCAG 2.2.2, axe marquee/blink, jsx-a11y no-distracting-elements)
     if (n === 'marquee' || n === 'blink') {
-      add({ ruleId: 28611, code: 'UI-11', severity: 'LOW', offset: t.start, wcag: '2.2.2 Pause, Stop, Hide',
-        title: `Deprecated Moving Content Element <${n}>`,
+      add({ ruleId: 28611, code: 'A11Y-11', severity: 'LOW', offset: t.start, wcag: '2.2.2 Pause, Stop, Hide',
+        title: 'Deprecated Moving Content Element (<marquee> / <blink>)',
         why: `<${n}> moves or flashes content with no way to pause it, which distracts users and is unreadable for many low-vision users.`,
         fix: 'Replace it with static content (or a CSS animation that respects prefers-reduced-motion and has a pause control).' });
     }
 
-    // UI-12: <label> not associated with any control (jsx-a11y label-has-associated-control)
+    // A11Y-12: <label> not associated with any control (jsx-a11y label-has-associated-control)
     if (n === 'label' && !t.spread && !has(t, 'htmlfor', 'for', 'id')) {
       const inner = innerOf(src, t);
       if (inner !== null && inner.trim() !== '' && !/children|\{\s*\.\.\./.test(inner)) {
         const tagNames = [...inner.matchAll(/<([A-Za-z][\w.]*)/g)].map((m) => m[1]);
         if (tagNames.every((x) => /^(?:span|strong|b|em|i|small|abbr|br|sup|sub|code)$/.test(x)) && !/\{[^}]*</.test(inner)) {
-          add({ ruleId: 28612, code: 'UI-12', severity: 'LOW', offset: t.start, wcag: '1.3.1 Info and Relationships / 3.3.2 Labels or Instructions',
+          add({ ruleId: 28612, code: 'A11Y-12', severity: 'LOW', offset: t.start, wcag: '1.3.1 Info and Relationships / 3.3.2 Labels or Instructions',
             title: '<label> Not Associated With a Form Control',
             why: 'This <label> has no htmlFor and wraps no control, so its text is not the accessible name of any input and clicking it does nothing.',
             fix: 'Add htmlFor="<input id>" pointing at the control (and give the control that id), or wrap the control inside the label.' });
@@ -382,97 +382,97 @@ export function evaluateUiQualityRules(file: CodeFile, lines: string[], cleanCon
       }
     }
 
-    // UI-14 / UI-15: widget role on a static element that is not keyboard operable
+    // A11Y-14 / A11Y-15: widget role on a static element that is not keyboard operable
     const sRole = native && STATIC_ELEMENT.test(n) ? (strOf(t, 'role') ?? '').toLowerCase() : '';
     if (WIDGET_ROLES.test(sRole) && !t.spread && strOf(t, 'aria-disabled') !== 'true' && !isTrue(t, 'aria-hidden') && !has(t, 'contenteditable')) {
       if (!has(t, 'tabindex')) {
-        add({ ruleId: 28614, code: 'UI-14', severity: 'MEDIUM', offset: t.start, wcag: '2.1.1 Keyboard',
-          title: `role="${sRole}" on an Element That Cannot Receive Focus`,
+        add({ ruleId: 28614, code: 'A11Y-14', severity: 'MEDIUM', offset: t.start, wcag: '2.1.1 Keyboard',
+          title: 'Widget Role on an Element That Cannot Receive Focus',
           why: `<${n} role="${sRole}"> is announced as a ${sRole} but has no tabIndex, so keyboard users cannot reach or activate it.`,
           fix: `Use a native ${sRole === 'link' ? '<a href>' : '<button type="button">'} instead, or add tabIndex={0} plus Enter/Space key handling.` });
       } else if (has(t, 'onclick') && !has(t, 'onkeydown', 'onkeyup', 'onkeypress') && (sRole === 'button' || sRole === 'link')) {
-        add({ ruleId: 28615, code: 'UI-15', severity: 'MEDIUM', offset: t.start, wcag: '2.1.1 Keyboard',
-          title: `Custom ${sRole === 'button' ? 'Button' : 'Link'} Handles Click but Not Keyboard`,
+        add({ ruleId: 28615, code: 'A11Y-15', severity: 'MEDIUM', offset: t.start, wcag: '2.1.1 Keyboard',
+          title: 'Custom Button or Link Handles Click but Not Keyboard',
           why: `<${n} role="${sRole}"> is focusable and clickable, but without a key handler Enter${sRole === 'button' ? '/Space do' : ' does'} nothing for keyboard users.`,
           fix: `Use a native ${sRole === 'link' ? '<a href>' : '<button type="button">'}, or add onKeyDown handling Enter${sRole === 'button' ? ' and Space' : ''}.` });
       }
     }
 
-    // UI-16: <svg role="img"> with no accessible name (axe svg-img-alt)
+    // A11Y-16: <svg role="img"> with no accessible name (axe svg-img-alt)
     if (n === 'svg' && (strOf(t, 'role') ?? '') === 'img' && !t.spread && !hasName(t) && !isTrue(t, 'aria-hidden')) {
       const inner = innerOf(src, t);
       if (inner !== null && !/<title\b/.test(inner)) {
-        add({ ruleId: 28616, code: 'UI-16', severity: 'LOW', offset: t.start, wcag: '1.1.1 Non-text Content',
+        add({ ruleId: 28616, code: 'A11Y-16', severity: 'LOW', offset: t.start, wcag: '1.1.1 Non-text Content',
           title: 'SVG Image Missing an Accessible Name',
           why: '<svg role="img"> is exposed as an image but has no aria-label, aria-labelledby or <title>, so it is announced as an unnamed graphic.',
           fix: 'Add aria-label="<description>" or a <title> as the first child; if decorative, drop role="img" and set aria-hidden="true".' });
       }
     }
 
-    // UI-17: invalid autocomplete token (WCAG 1.3.5, axe autocomplete-valid, jsx-a11y autocomplete-valid)
+    // A11Y-17: invalid autocomplete token (WCAG 1.3.5, axe autocomplete-valid, jsx-a11y autocomplete-valid)
     const ac = /^(?:input|Input|select|textarea)$/.test(n) ? strOf(t, 'autocomplete') : undefined;
     if (ac !== undefined && ac.trim() !== '' && !AUTOCOMPLETE_DISABLE_HACKS.has(ac.trim().toLowerCase())) {
       const tokens = ac.trim().toLowerCase().split(/\s+/);
       if (!tokens.every((x) => AUTOCOMPLETE_FIELDS.has(x) || /^section-\S+$/.test(x))) {
-        add({ ruleId: 28617, code: 'UI-17', severity: 'LOW', offset: t.start, wcag: '1.3.5 Identify Input Purpose',
+        add({ ruleId: 28617, code: 'A11Y-17', severity: 'LOW', offset: t.start, wcag: '1.3.5 Identify Input Purpose',
           title: 'Invalid autocomplete Token',
           why: `autocomplete="${ac}" is not a value from the HTML autofill list, so browsers, password managers and assistive tech cannot identify the field's purpose.`,
           fix: 'Use a standard token such as email, username, current-password, new-password, one-time-code, given-name, tel or postal-code.' });
       }
     }
 
-    // UI-18: <meta http-equiv="refresh"> with a delay (WCAG 2.2.1, axe meta-refresh)
+    // A11Y-18: <meta http-equiv="refresh"> with a delay (WCAG 2.2.1, axe meta-refresh)
     if (n === 'meta' && /^refresh$/i.test(strOf(t, 'http-equiv') ?? strOf(t, 'httpequiv') ?? '')) {
       const delay = /^\s*(\d+)/.exec(strOf(t, 'content') ?? '');
       if (delay && Number(delay[1]) > 0) {
-        add({ ruleId: 28618, code: 'UI-18', severity: 'MEDIUM', offset: t.start, wcag: '2.2.1 Timing Adjustable',
+        add({ ruleId: 28618, code: 'A11Y-18', severity: 'MEDIUM', offset: t.start, wcag: '2.2.1 Timing Adjustable',
           title: 'Timed Page Refresh / Redirect via meta refresh',
           why: `The page reloads or redirects after ${delay[1]}s with no way to stop it, interrupting screen-reader users and anyone still reading.`,
           fix: 'Redirect server-side (HTTP 301/302 or Next.js redirect()), or let the user trigger the refresh.' });
       }
     }
 
-    // UI-19: ambiguous link text (WCAG 2.4.4, jsx-a11y anchor-ambiguous-text)
+    // A11Y-19: ambiguous link text (WCAG 2.4.4, jsx-a11y anchor-ambiguous-text)
     if (isLink && !hasName(t) && !t.selfClosing) {
       const inner = innerOf(src, t);
       if (inner !== null && /^(?:click here|here|link|a link)$/i.test(inner.replace(/<[^>]*>/g, '').trim().replace(/[.!:]+$/, ''))) {
-        add({ ruleId: 28619, code: 'UI-19', severity: 'LOW', offset: t.start, wcag: '2.4.4 Link Purpose (In Context)',
+        add({ ruleId: 28619, code: 'A11Y-19', severity: 'LOW', offset: t.start, wcag: '2.4.4 Link Purpose (In Context)',
           title: 'Ambiguous Link Text ("click here")',
           why: 'Screen-reader users often navigate by a list of links; "click here" / "here" / "link" says nothing about where the link goes.',
           fix: 'Make the link text describe its destination (e.g. "Read the pricing FAQ"), or add an aria-label that does.' });
       }
     }
 
-    // UI-20: aria-label on a generic <div>/<span> with no role (ARIA 1.2 prohibits naming generic; axe aria-prohibited-attr)
+    // A11Y-20: aria-label on a generic <div>/<span> with no role (ARIA 1.2 prohibits naming generic; axe aria-prohibited-attr)
     if ((n === 'div' || n === 'span') && has(t, 'aria-label') && !has(t, 'role', 'tabindex') && !t.spread) {
-      add({ ruleId: 28620, code: 'UI-20', severity: 'LOW', offset: t.start, wcag: '4.1.2 Name, Role, Value',
+      add({ ruleId: 28620, code: 'A11Y-20', severity: 'LOW', offset: t.start, wcag: '4.1.2 Name, Role, Value',
         title: 'aria-label on a Generic Element Is Ignored',
         why: `ARIA 1.2 prohibits naming a role-less <${n}>; most screen readers do not announce this aria-label at all.`,
         fix: 'Put the text in visible or sr-only content, or give the element a role that supports naming (e.g. role="img", role="group", role="region").' });
     }
 
-    // UI-21: <audio autoPlay> without controls or muted (WCAG 1.4.2 Audio Control)
+    // A11Y-21: <audio autoPlay> without controls or muted (WCAG 1.4.2 Audio Control)
     if (n === 'audio' && has(t, 'autoplay') && strOf(t, 'autoplay') !== 'false' && !has(t, 'controls', 'muted')) {
-      add({ ruleId: 28621, code: 'UI-21', severity: 'MEDIUM', offset: t.start, wcag: '1.4.2 Audio Control',
+      add({ ruleId: 28621, code: 'A11Y-21', severity: 'MEDIUM', offset: t.start, wcag: '1.4.2 Audio Control',
         title: 'Auto-Playing Audio Without Controls',
         why: 'Audio that starts on load with no visible controls drowns out screen-reader speech and cannot be paused or muted independently.',
         fix: 'Remove autoPlay, or add controls (and start muted) so users can stop the audio.' });
     }
 
-    // UI-22: invalid <html lang> value (WCAG 3.1.1, axe html-lang-valid, jsx-a11y lang)
+    // A11Y-22: invalid <html lang> value (WCAG 3.1.1, axe html-lang-valid, jsx-a11y lang)
     if (n === 'html') {
       const lang = strOf(t, 'lang');
       if (lang !== undefined && !/[{%<$]/.test(lang) && !/^[a-z]{2,3}(?:-[a-z0-9]{1,8})*$/i.test(lang.trim())) {
-        add({ ruleId: 28622, code: 'UI-22', severity: 'LOW', offset: t.start, wcag: '3.1.1 Language of Page',
+        add({ ruleId: 28622, code: 'A11Y-22', severity: 'LOW', offset: t.start, wcag: '3.1.1 Language of Page',
           title: 'Invalid lang Value on <html>',
           why: `lang="${lang}" is not a BCP 47 language tag, so screen readers fall back to a default voice and mispronounce the page.`,
           fix: 'Use a valid language tag such as lang="en", lang="en-US" or lang="tr".' });
       }
     }
 
-    // UI-23: onBlur handler that pulls focus back to the element (WCAG 2.1.2 No Keyboard Trap)
+    // A11Y-23: onBlur handler that pulls focus back to the element (WCAG 2.1.2 No Keyboard Trap)
     if (/(?:\b(?:e|ev|evt|event)\.(?:target|currentTarget)|\bthis)\.focus\s*\(/.test(rawOf(t, 'onblur'))) {
-      add({ ruleId: 28623, code: 'UI-23', severity: 'HIGH', offset: t.start, wcag: '2.1.2 No Keyboard Trap',
+      add({ ruleId: 28623, code: 'A11Y-23', severity: 'HIGH', offset: t.start, wcag: '2.1.2 No Keyboard Trap',
         title: 'Keyboard Trap: onBlur Forces Focus Back Into the Field',
         why: 'Refocusing the element in its own blur handler makes it impossible to Tab away, trapping keyboard and screen-reader users on the page.',
         fix: 'Show the validation message and mark the field aria-invalid instead of re-focusing it; let focus move on.' });

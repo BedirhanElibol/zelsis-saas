@@ -18,11 +18,11 @@ describe('rule maturity', () => {
   });
 
   it('tags findings from rules proven noisy on the clean benchmark corpus', async () => {
-    assert.ok(isExperimentalRule(9101), 'TENANT-01 fires on clean repos and was not reviewed as a true positive');
+    assert.ok(isExperimentalRule(8803), 'PY-SEC-03 fired on clean repos and was not reviewed as a true positive');
     const result = await runStaticCodeScan([
-      { path: 'app/api/docs/route.ts', content: 'export async function GET() {\n  return Response.json(await prisma.doc.findMany({ where: { id: 1 } }));\n}\n' }
+      { path: 'app/services/backup.py', content: 'import subprocess\n\n\ndef archive_upload(filename):\n    subprocess.run(f"tar -czf /backups/{filename}.tgz /uploads/{filename}", shell=True, check=True)\n' }
     ], 'x');
-    const tenant = result.findings.find((f) => f.ruleId === 9101);
+    const tenant = result.findings.find((f) => f.ruleId === 8803);
     assert.ok(tenant, 'experimental findings are still reported');
     assert.equal(tenant.maturity, 'experimental');
     assert.equal(result.experimentalCount, result.findings.filter((f) => f.maturity === 'experimental').length);

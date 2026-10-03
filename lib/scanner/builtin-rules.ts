@@ -217,7 +217,7 @@ export function evaluateBuiltinRules(ctx: BuiltinRuleContext): void {
           ruleId: 102,
           type: 'SECURITY',
           title: 'SEC-WEB-02: Absence of HSTS Strict Transport Security Header',
-          severity: 'HIGH',
+          severity: 'MEDIUM',
           category: 'Network & TLS',
           filePath: 'Live Web Target (HTTP Headers)',
           lineRange: 'Header Deficit',
@@ -231,7 +231,7 @@ export function evaluateBuiltinRules(ctx: BuiltinRuleContext): void {
           owner: 'DevOps Lead',
           falsePositive: false
         });
-        logs.push(`[${new Date().toLocaleTimeString()}] [HIGH] SEC-WEB-02 Missing HSTS Header on Live Web Target`);
+        logs.push(`[${new Date().toLocaleTimeString()}] [MEDIUM] SEC-WEB-02 Missing HSTS Header on Live Web Target`);
       }
 
       // Rule 103: Missing X-Frame-Options (Clickjacking)
@@ -242,7 +242,7 @@ export function evaluateBuiltinRules(ctx: BuiltinRuleContext): void {
           ruleId: 103,
           type: 'SECURITY',
           title: 'SEC-WEB-03: Clickjacking Exposure (Missing X-Frame-Options Header)',
-          severity: 'HIGH',
+          severity: 'MEDIUM',
           category: 'Frame Isolation',
           filePath: 'Live Web Target (HTTP Headers)',
           lineRange: 'Header Deficit',
@@ -256,7 +256,7 @@ export function evaluateBuiltinRules(ctx: BuiltinRuleContext): void {
           owner: 'Security Architect',
           falsePositive: false
         });
-        logs.push(`[${new Date().toLocaleTimeString()}] [HIGH] SEC-WEB-03 Clickjacking risk: Missing X-Frame-Options header`);
+        logs.push(`[${new Date().toLocaleTimeString()}] [MEDIUM] SEC-WEB-03 Clickjacking risk: Missing X-Frame-Options header`);
       }
 
       // Rule 104: Missing X-Content-Type-Options (MIME Sniffing)
@@ -266,7 +266,7 @@ export function evaluateBuiltinRules(ctx: BuiltinRuleContext): void {
           ruleId: 104,
           type: 'SECURITY',
           title: 'SEC-WEB-04: MIME Sniffing Vulnerability (Missing X-Content-Type-Options)',
-          severity: 'MEDIUM',
+          severity: 'LOW',
           category: 'Content Protection',
           filePath: 'Live Web Target (HTTP Headers)',
           lineRange: 'Header Deficit',
@@ -280,7 +280,7 @@ export function evaluateBuiltinRules(ctx: BuiltinRuleContext): void {
           owner: 'DevOps Lead',
           falsePositive: false
         });
-        logs.push(`[${new Date().toLocaleTimeString()}] [MEDIUM] SEC-WEB-04 Missing X-Content-Type-Options: nosniff`);
+        logs.push(`[${new Date().toLocaleTimeString()}] [LOW] SEC-WEB-04 Missing X-Content-Type-Options: nosniff`);
       }
 
       // LIVE-01..07: exposed .env/.git, TLS, HTTP redirect, cookie flags (lib/scanner/live-checks.ts)
@@ -295,228 +295,12 @@ export function evaluateBuiltinRules(ctx: BuiltinRuleContext): void {
     }
   }
 
-  // Live Web Deployment Security Rule 4: Insecure target="_blank" Link
-  if (file.path.includes('live-deployment') && file.content.includes('target="_blank"') && !file.content.includes('rel="noopener')) {
-    addFinding({
-      id: `real-find-${Date.now()}-${findingCounter++}`,
-      ruleId: 27251,
-      type: 'SECURITY',
-      title: 'SEC-WEB-05: Insecure External Link Target Blank (Tab-Nabbing Risk)',
-      severity: 'MEDIUM',
-      category: 'HTML Security',
-      filePath: file.path,
-      lineRange: 'L1',
-      snippet: '<a href="..." target="_blank">',
-      reproductionSteps: [
-        'Scanned HTML links on target web page.',
-        'Detected target="_blank" links missing rel="noopener noreferrer".'
-      ],
-      remediationPrompt: `Add rel="noopener noreferrer" to all target="_blank" links in HTML to prevent window.opener hijacking.`,
-      status: 'OPEN',
-      owner: 'Frontend Lead',
-      falsePositive: false
-    });
-    logs.push(`[${new Date().toLocaleTimeString()}] [MEDIUM] SEC-WEB-04 Insecure target="_blank" link detected`);
-  }
-
-  // VibePolish UI-01: Generic Purple-Blue Gradient Cliché
-  if (/bg-gradient-to-[rblt]\s+from-(purple|violet|indigo)-[0-9]{3}/i.test(file.content) || file.content.includes('from-purple-600 to-blue-500')) {
-    const matchLineIdx = lines.findIndex(l => /from-(purple|violet|indigo)/i.test(l));
-    const lineNum = matchLineIdx !== -1 ? matchLineIdx + 1 : 1;
-    addFinding({
-      id: `real-find-${Date.now()}-${findingCounter++}`,
-      ruleId: 1001,
-      type: 'VIBEPOLISH',
-      title: 'UI-01: Generic Purple-Blue Neon Gradient Cliché',
-      severity: 'MEDIUM',
-      category: 'Color & Background',
-      filePath: file.path,
-      lineRange: `L${lineNum}`,
-      snippet: lines[matchLineIdx] || 'bg-gradient-to-r from-purple-600 to-blue-500',
-      reproductionSteps: [`Scanned CSS classes in ${file.path}:${lineNum}.`, 'Detected high-contrast raw purple/neon gradient.'],
-      remediationPrompt: `Replace generic purple-blue linear gradients in ${file.path} with semantic flat color tokens (primary, destructive, muted) or subtle monochromatic dark surfaces.`,
-      status: 'OPEN',
-      owner: 'UI Architect',
-      falsePositive: false
-    });
-    logs.push(`[${new Date().toLocaleTimeString()}] [RULE] VIBEPOLISH UI-01: Purple-blue gradient detected (${file.path}:${lineNum})`);
-  }
-
-  // VibePolish UI-03: Sparkle / Magic Wand Icon Overuse
-  if (file.content.includes('Sparkles') || file.content.includes('Wand2') || file.content.includes('✨')) {
-    const matchLineIdx = lines.findIndex(l => l.includes('Sparkles') || l.includes('Wand2') || l.includes('✨'));
-    const lineNum = matchLineIdx !== -1 ? matchLineIdx + 1 : 1;
-    addFinding({
-      id: `real-find-${Date.now()}-${findingCounter++}`,
-      ruleId: 1003,
-      type: 'VIBEPOLISH',
-      title: 'UI-03: Overused Sparkle / Magic Wand Icon Cliché',
-      severity: 'LOW',
-      category: 'Icons & Micro-copy',
-      filePath: file.path,
-      lineRange: `L${lineNum}`,
-      snippet: lines[matchLineIdx] || '<Sparkles className="w-4 h-4" />',
-      reproductionSteps: [`Scanned component icons in ${file.path}:${lineNum}.`, 'Detected generic Sparkle icon placed on AI buttons/inputs.'],
-      remediationPrompt: `Remove generic Sparkle/Magic Wand icons in ${file.path}. Replace with descriptive action micro-copy (e.g. "Summarize", "Filter", "Analyze").`,
-      status: 'OPEN',
-      owner: 'UI Architect',
-      falsePositive: false
-    });
-    logs.push(`[${new Date().toLocaleTimeString()}] [RULE] VIBEPOLISH UI-03: Sparkle icon overuse detected (${file.path}:${lineNum})`);
-  }
-
-  // VibePolish UI-04: Absence of Empty State Component Fallback (Frontend components only, excluding persistent layout chrome)
-  const isFrontendComponent = file.path.endsWith('.tsx') || file.path.endsWith('.jsx');
-  const isStructuralChrome = /layout\.[tj]sx$|header\.[tj]sx$|nav\.[tj]sx$|navbar\.[tj]sx$|footer\.[tj]sx$|sidebar\.[tj]sx$/i.test(file.path);
-  // Only lists of loaded data can be empty: mapping a static array of nav items or features cannot
-  const loadsData = /\b(?:await\s|useQuery|useSWR|useSuspenseQuery|useInfiniteQuery|fetch\(|prisma\.|supabase\s*\.from|\.select\()/.test(file.content);
-  const handlesEmpty = /\.length\s*(?:===?\s*0|!==?\s*0|>\s*0|\?|&&)|!\s*[\w.?]+\.length\b|EmptyState|EmptyPlaceholder|isEmpty|no data|No \w+ (?:found|yet)/i.test(file.content);
-  if (isFrontendComponent && !isStructuralChrome && loadsData && file.content.includes('.map(') && !handlesEmpty) {
-    addFinding({
-      id: `real-find-${Date.now()}-${findingCounter++}`,
-      ruleId: 1004,
-      type: 'VIBEPOLISH',
-      title: 'UI-04: Absence of Empty State Component Fallback',
-      severity: 'LOW',
-      category: 'Layout & Onboarding',
-      filePath: file.path,
-      lineRange: 'L1-L50',
-      snippet: 'items.map((item) => <Card key={item.id} ... />)',
-      reproductionSteps: [`Scanned list rendering in ${file.path}.`, 'Detected list mapping without empty state / starter prompt fallback.'],
-      remediationPrompt: `Add an Empty State component with starter prompts / demo data in ${file.path} when items array is empty.`,
-      status: 'OPEN',
-      owner: 'Frontend Team',
-      falsePositive: false
-    });
-    logs.push(`[${new Date().toLocaleTimeString()}] [RULE] VIBEPOLISH UI-04: Missing Empty State component detected (${file.path})`);
-  }
-
-  // Note: VibePolish UI-05 is canonically evaluated via CLICHE-76 in evaluateAiClicheRules to prevent duplicate reporting.
-
-  // VibePolish UI-06: Pulsating Status Dot & Glowing Badge Cliché (AI Slop Pattern)
-  const hasPulsingDotSlop = /rounded-full\s+bg-emerald-[45]00[^"']*animate-pulse/i.test(file.content) ||
-    /animate-pulse[^"']*rounded-full\s+bg-emerald-[45]00/i.test(file.content);
-  const isLiveRunner = /ScanRunnerView|TerminalLogWindow/i.test(file.path);
-  if (isFrontendComponent && !isLiveRunner && hasPulsingDotSlop) {
-    const matchLineIdx = lines.findIndex(l => /animate-pulse/i.test(l) && /bg-emerald/i.test(l));
-    const lineNum = matchLineIdx !== -1 ? matchLineIdx + 1 : 1;
-    addFinding({
-      id: `real-find-${Date.now()}-${findingCounter++}`,
-      ruleId: 1006,
-      type: 'VIBEPOLISH',
-      title: 'UI-06: Pulsating Status Dot & Glowing Badge Cliché (AI Slop Anti-Pattern)',
-      severity: 'LOW',
-      category: 'Visual Polish & Motion',
-      filePath: file.path,
-      lineRange: `L${lineNum}`,
-      snippet: lines[matchLineIdx] || '<span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />',
-      reproductionSteps: [
-        `Scanned status badges and header pills in ${file.path}:${lineNum}.`,
-        'Detected pulsating green indicator dot inside static component or card.'
-      ],
-      remediationPrompt: `Remove distracting pulsating green animation dots in static badges in ${file.path}. Use static, high-contrast, monochromatic or muted status badges for a professional, distraction-free interface.`,
-      status: 'OPEN',
-      owner: 'Frontend Team',
-      falsePositive: false
-    });
-    logs.push(`[${new Date().toLocaleTimeString()}] [RULE] VIBEPOLISH UI-06: Pulsing status dot cliché detected (${file.path}:${lineNum})`);
-  }
-
-  // VibePolish UI-08: Repetitive Checkmark Icon Flooding (AI Slop Pattern)
-  const hasCheckmarkFlooding = /<(?:CheckCircle2|CheckCircle)\b[^>]*className="[^"]*text-emerald-400[^"]*shrink-0/i.test(file.content) &&
-    /\.map\s*\(/.test(file.content) &&
-    file.content.includes('<li');
-  if (isFrontendComponent && hasCheckmarkFlooding) {
-    const matchLineIdx = lines.findIndex(l => /<(?:CheckCircle2|CheckCircle)\b/i.test(l) && /<li/i.test(l));
-    const lineNum = matchLineIdx !== -1 ? matchLineIdx + 1 : 1;
-    addFinding({
-      id: `real-find-${Date.now()}-${findingCounter++}`,
-      ruleId: 1008,
-      type: 'VIBEPOLISH',
-      title: 'UI-08: Repetitive Checkmark Icon Flooding (AI Slop Anti-Pattern)',
-      severity: 'LOW',
-      category: 'Visual Hierarchy & Typography',
-      filePath: file.path,
-      lineRange: `L${lineNum}`,
-      snippet: lines[matchLineIdx] || '<CheckCircle2 size={16} className="text-emerald-400 shrink-0" />',
-      reproductionSteps: [
-        `Scanned feature list elements in ${file.path}:${lineNum}.`,
-        'Detected repetitive CheckCircle icons prepended to every single list item.'
-      ],
-      remediationPrompt: `Replace repetitive CheckCircle icons in ${file.path} with clean typography dashes (e.g. "—"), subtle numbered steps, or distinct architectural micro-cards.`,
-      status: 'OPEN',
-      owner: 'UI Architect',
-      falsePositive: false
-    });
-    logs.push(`[${new Date().toLocaleTimeString()}] [RULE] VIBEPOLISH UI-08: Repetitive checkmark flooding detected (${file.path}:${lineNum})`);
-  }
-
-  // VibePolish UI-07: Conversational Chat-Wrapper Lock-In Trap
-  if (file.content.includes('messages.map') && !file.content.includes('Canvas') && !file.content.includes('Artifact') && !file.content.includes('Table')) {
-    addFinding({
-      id: `real-find-${Date.now()}-${findingCounter++}`,
-      ruleId: 1007,
-      type: 'VIBEPOLISH',
-      title: 'UI-07: Conversational Chat-Wrapper Lock-In Trap',
-      severity: 'HIGH',
-      category: 'UX Architecture',
-      filePath: file.path,
-      lineRange: 'L1-L80',
-      snippet: '<div className="chat-messages">{messages.map(...)}</div>',
-      reproductionSteps: [`Scanned interface structure in ${file.path}.`, 'Detected full chat wrapper without structured side canvas or inline editable tables.'],
-      remediationPrompt: `Refactor ${file.path} into a hybrid layout: introduce a side Artifacts/Canvas view or inline structured tables alongside chat.`,
-      status: 'OPEN',
-      owner: 'UX Architect',
-      falsePositive: false
-    });
-    logs.push(`[${new Date().toLocaleTimeString()}] [RULE] VIBEPOLISH UI-07: Chat-wrapper lock-in detected (${file.path})`);
-  }
-
-  // VibePolish UI-11: Uninformative "AI Thinking..." Spinner
-  if (file.content.includes('AI is thinking') || file.content.includes('Thinking...') || (file.content.includes('Spinner') && !file.content.includes('step'))) {
-    const matchLineIdx = lines.findIndex(l => l.includes('thinking') || l.includes('Thinking'));
-    const lineNum = matchLineIdx !== -1 ? matchLineIdx + 1 : 1;
-    addFinding({
-      id: `real-find-${Date.now()}-${findingCounter++}`,
-      ruleId: 1011,
-      type: 'VIBEPOLISH',
-      title: 'UI-11: Uninformative "AI Thinking..." Spinner',
-      severity: 'MEDIUM',
-      category: 'State & Feedback',
-      filePath: file.path,
-      lineRange: `L${lineNum}`,
-      snippet: lines[matchLineIdx] || '<span>AI is thinking...</span>',
-      reproductionSteps: [`Scanned loading state in ${file.path}:${lineNum}.`, 'Detected vague "Thinking..." spinner without step-by-step agent status progress.'],
-      remediationPrompt: `Replace vague "Thinking..." text in ${file.path} with a transparent Stepper component showing live agent execution steps (e.g. "Scanning database tables...", "Synthesizing audit findings...").`,
-      status: 'OPEN',
-      owner: 'Frontend Team',
-      falsePositive: false
-    });
-    logs.push(`[${new Date().toLocaleTimeString()}] [RULE] VIBEPOLISH UI-11: Vague AI spinner detected (${file.path}:${lineNum})`);
-  }
-
-  // VibePolish UI-21: Cliché Fluff & Filler Prefaces
-  if (/in today'?s fast-paced/i.test(file.content) || /it'?s important to remember/i.test(file.content)) {
-    const matchLineIdx = lines.findIndex(l => /fast-paced|important to remember/i.test(l));
-    const lineNum = matchLineIdx !== -1 ? matchLineIdx + 1 : 1;
-    addFinding({
-      id: `real-find-${Date.now()}-${findingCounter++}`,
-      ruleId: 1021,
-      type: 'VIBEPOLISH',
-      title: 'UI-21: Cliché Fluff & Filler Prefaces',
-      severity: 'MEDIUM',
-      category: 'Text & Copywriting',
-      filePath: file.path,
-      lineRange: `L${lineNum}`,
-      snippet: lines[matchLineIdx] || "In today's fast-paced digital world...",
-      reproductionSteps: [`Scanned text prompts in ${file.path}:${lineNum}.`, 'Detected LLM fluff starter phrase ("In today\'s fast-paced...").'],
-      remediationPrompt: `Add strict system prompt constraints in ${file.path} banning fluff intros ("In today's fast-paced digital world..."). Force direct-to-answer responses.`,
-      status: 'OPEN',
-      owner: 'Prompt Engineer',
-      falsePositive: false
-    });
-    logs.push(`[${new Date().toLocaleTimeString()}] [RULE] VIBEPOLISH UI-21: Cliché filler text detected (${file.path}:${lineNum})`);
-  }
+  // Removed as unsound (ids are never reused):
+  // 27251 file-level L1 tab-nabbing check (browsers imply rel=noopener for target=_blank);
+  // 1001/1003/1004/1006/1008/1011/1021/1032 opinion / taste heuristics (codes clashed with ui-quality-rules UI-xx);
+  // 1007, 1041, 115, 134, 160, 185 absence-of-X / file-level heuristics (made-up component names, line counts);
+  // 48 any single-brace text in a file mentioning "template"; 27252 keyed on made-up agentRunner/executeAgent names;
+  // 195 any top_p mention in a .tsx file; 197 two hard-coded model strings (aliases are a documented choice).
 
   // VibePolish UI-23: Robotic AI Apologies (As an AI language model...)
   if (file.content.includes('As an AI language model') || file.content.includes('As an AI assistant')) {
@@ -541,100 +325,24 @@ export function evaluateBuiltinRules(ctx: BuiltinRuleContext): void {
     logs.push(`[${new Date().toLocaleTimeString()}] [RULE] VIBEPOLISH UI-23: Robotic AI apology boilerplate detected (${file.path}:${lineNum})`);
   }
 
-  // VibePolish UI-32: Excessive Meta-Announcement Statements
-  if (/below (you can find|is the response|is the analysis)/i.test(file.content) || /here is the requested/i.test(file.content)) {
-    const matchLineIdx = lines.findIndex(l => /below|here is the/i.test(l));
-    const lineNum = matchLineIdx !== -1 ? matchLineIdx + 1 : 1;
-    addFinding({
-      id: `real-find-${Date.now()}-${findingCounter++}`,
-      ruleId: 1032,
-      type: 'VIBEPOLISH',
-      title: 'UI-32: Excessive Meta-Announcement Preface Cliché',
-      severity: 'LOW',
-      category: 'Text & Copywriting',
-      filePath: file.path,
-      lineRange: `L${lineNum}`,
-      snippet: lines[matchLineIdx] || 'Here is the requested analysis below:',
-      reproductionSteps: [`Scanned text templates in ${file.path}:${lineNum}.`, 'Detected meta-announcement prefix ("Below you can find...").'],
-      remediationPrompt: `Strip meta-announcement intros in ${file.path} via system prompt rule or regex post-processor. Jump straight into payload data.`,
-      status: 'OPEN',
-      owner: 'Prompt Engineer',
-      falsePositive: false
-    });
-    logs.push(`[${new Date().toLocaleTimeString()}] [RULE] VIBEPOLISH UI-32: Meta-announcement text detected (${file.path}:${lineNum})`);
-  }
-
-
-  // VibePolish UI-41: Monolithic System Prompt Inflation
-  if (file.content.includes('system') && file.content.length > 5000 && (file.content.match(/role:\s*['"]system['"]/g) || []).length === 1) {
-    addFinding({
-      id: `real-find-${Date.now()}-${findingCounter++}`,
-      ruleId: 1041,
-      type: 'VIBEPOLISH',
-      title: 'UI-41: Monolithic System Prompt Inflation',
-      severity: 'MEDIUM',
-      category: 'Prompt Architecture',
-      filePath: file.path,
-      lineRange: 'L1-L100',
-      snippet: 'const systemPrompt = `DO NOT... DO NOT... ALWAYS... YOU ARE AN AI... (5000+ chars)`',
-      reproductionSteps: [`Scanned prompt architecture in ${file.path}.`, 'Detected monolithic, bloated system prompt exceeding 5000 chars without step-based modular injection.'],
-      remediationPrompt: `Refactor system prompt in ${file.path} into modular sub-prompts. Inject rules dynamically per execution step.`,
-      status: 'OPEN',
-      owner: 'Prompt Engineer',
-      falsePositive: false
-    });
-    logs.push(`[${new Date().toLocaleTimeString()}] [RULE] VIBEPOLISH UI-41: System prompt inflation detected (${file.path})`);
-  }
-
-  // VibePolish UI-48: Dynamic Variable Injection Failures (Exclude config files, dotfiles, test files, and non-JS/TS backend languages)
-  const isConfigFileOrDotfile = lowerFilePath.includes('.vscode/') || lowerFilePath.includes('.github/') || lowerFilePath.endsWith('.json') || lowerFilePath.endsWith('.toml') || lowerFilePath.endsWith('.yaml') || lowerFilePath.endsWith('.yml');
-  const isTestOrDocFile =
-    lowerFilePath.includes('/test/') || lowerFilePath.includes('/tests/') || lowerFilePath.includes('/spec/') ||
-    lowerFilePath.startsWith('test/') || lowerFilePath.startsWith('tests/') || lowerFilePath.startsWith('spec/') ||
-    lowerFilePath.includes('__tests__/') || /\.(?:test|spec)\.[a-zA-Z0-9]+$/i.test(lowerFilePath) ||
-    /(?:^|\/)(?:test_[^/]+|[^/]+_test)\.[a-zA-Z0-9]+$/i.test(lowerFilePath) ||
-    lowerFilePath.endsWith('.md') || lowerFilePath.endsWith('.mdx');
-  const isNonJsBackend = /\.(?:go|rs|c|cpp|cc|cxx|h|hpp|java|kt|kts|cs|swift|rb|sh|bash|zsh|ps1)$/i.test(lowerFilePath);
-  const hasSingleBracePlaceholder = /(?<!\{)\{[a-zA-Z0-9_]+\}(?!\})/.test(file.content);
-  if (!isConfigFileOrDotfile && !isTestOrDocFile && !isNonJsBackend && hasSingleBracePlaceholder && !file.content.includes('??') && file.content.includes('template')) {
-    const matchLineIdx = lines.findIndex(l => /(?<!\{)\{[a-zA-Z0-9_]+\}(?!\})/.test(l));
-    const lineNum = matchLineIdx !== -1 ? matchLineIdx + 1 : 1;
-    addFinding({
-      id: `real-find-${Date.now()}-${findingCounter++}`,
-      ruleId: 48,
-      type: 'VIBEPOLISH',
-      title: 'UI-48: Dynamic Variable Injection Missing Fallback',
-      severity: 'HIGH',
-      category: 'Variables & Templates',
-      filePath: file.path,
-      lineRange: `L${lineNum}`,
-      snippet: lines[matchLineIdx] || 'Hello {username}, welcome to your account.',
-      reproductionSteps: [`Scanned string template interpolation in ${file.path}:${lineNum}.`, 'Detected variable placeholder without fallback check (risk of printing {undefined} / {null}).'],
-      remediationPrompt: `Add strict type validation or nullish coalescing (e.g. username ?? "User") to template interpolation in ${file.path}.`,
-      status: 'OPEN',
-      owner: 'Prompt Engineer',
-      falsePositive: false
-    });
-    logs.push(`[${new Date().toLocaleTimeString()}] [RULE] VIBEPOLISH UI-48: Variable injection missing fallback detected (${file.path}:${lineNum})`);
-  }
-
-
-  // VibePolish UI-61: Naive Fixed-Character Chunking
-  if (file.content.includes('CharacterTextSplitter') || (file.content.includes('chunkSize') && !file.content.includes('Semantic') && !file.content.includes('Recursive'))) {
-    const matchLineIdx = lines.findIndex(l => l.includes('CharacterTextSplitter') || l.includes('chunkSize'));
-    const lineNum = matchLineIdx !== -1 ? matchLineIdx + 1 : 1;
+  // VibePolish UI-61: LangChain CharacterTextSplitter (single fixed separator). RecursiveCharacterTextSplitter,
+  // the documented default for generic text, is not matched (the lookbehind rejects the "Recursive" prefix).
+  const naiveSplitterRe = /(?<![A-Za-z0-9_])CharacterTextSplitter\s*\(/;
+  const naiveSplitterIdx = lines.findIndex(l => naiveSplitterRe.test(l));
+  if (naiveSplitterIdx !== -1) {
+    const lineNum = naiveSplitterIdx + 1;
     addFinding({
       id: `real-find-${Date.now()}-${findingCounter++}`,
       ruleId: 61,
       type: 'VIBEPOLISH',
       title: 'UI-61: Naive Fixed-Character Text Splitter',
-      severity: 'MEDIUM',
+      severity: 'LOW',
       category: 'RAG Architecture',
       filePath: file.path,
       lineRange: `L${lineNum}`,
-      snippet: lines[matchLineIdx] || 'new CharacterTextSplitter({ chunkSize: 1000, chunkOverlap: 200 })',
-      reproductionSteps: [`Scanned RAG pipeline in ${file.path}:${lineNum}.`, 'Detected naive fixed-character text splitter slicing sentences/tables mid-word.'],
-      remediationPrompt: `Replace naive CharacterTextSplitter in ${file.path} with SemanticChunking or RecursiveCharacterTextSplitter respecting document AST structure.`,
+      snippet: lines[naiveSplitterIdx],
+      reproductionSteps: [`Scanned RAG pipeline in ${file.path}:${lineNum}.`, 'Detected CharacterTextSplitter, which splits on one fixed separator and leaves oversized chunks unsplit instead of falling back to paragraph, sentence and word boundaries.'],
+      remediationPrompt: `Replace CharacterTextSplitter in ${file.path} with RecursiveCharacterTextSplitter (or a structure-aware splitter for Markdown / code) so chunks respect paragraph and sentence boundaries.`,
       status: 'OPEN',
       owner: 'AI Architect',
       falsePositive: false
@@ -642,72 +350,51 @@ export function evaluateBuiltinRules(ctx: BuiltinRuleContext): void {
     logs.push(`[${new Date().toLocaleTimeString()}] [RULE] VIBEPOLISH UI-61: Naive text chunking detected (${file.path}:${lineNum})`);
   }
 
-
-
-
-  // VibePolish UI-100: Missing User Request Abort Signal
-  if ((file.content.includes('agentRunner') || file.content.includes('executeAgent')) && !file.content.includes('AbortController') && !file.content.includes('signal')) {
-    const matchLineIdx = lines.findIndex(l => l.includes('agentRunner') || l.includes('executeAgent'));
-    const lineNum = matchLineIdx !== -1 ? matchLineIdx + 1 : 1;
-    addFinding({
-      id: `real-find-${Date.now()}-${findingCounter++}`,
-      ruleId: 27252,
-      type: 'VIBEPOLISH',
-      title: 'UI-100: Missing Request AbortSignal Listener',
-      severity: 'MEDIUM',
-      category: 'Execution & Sandbox',
-      filePath: file.path,
-      lineRange: `L${lineNum}`,
-      snippet: lines[matchLineIdx] || 'export async function runAgent(prompt: string) { ... }',
-      reproductionSteps: [`Scanned long-running agent execution route in ${file.path}:${lineNum}.`, 'Detected long-running agent handler without AbortSignal / AbortController cancellation handler.'],
-      remediationPrompt: `Add AbortController / AbortSignal support to agent route in ${file.path} to allow instant user cancellation of runaway agent tasks.`,
-      status: 'OPEN',
-      owner: 'Backend Team',
-      falsePositive: false
-    });
-    logs.push(`[${new Date().toLocaleTimeString()}] [RULE] VIBEPOLISH UI-100: Missing AbortController signal listener detected (${file.path}:${lineNum})`);
-  }
-
-  // VibePolish UI-106: Empty Silent Catch Block
-  if (!isCompiledBundle && (/catch\s*\([a-zA-Z0-9_]*\)\s*\{\s*\}/.test(file.content) || file.content.includes('catch (e) {}') || file.content.includes('catch {}'))) {
-    const matchLineIdx = lines.findIndex(l => /catch\s*\([a-zA-Z0-9_]*\)\s*\{\s*\}/.test(l) || l.includes('catch (e) {}') || l.includes('catch {}'));
-    const lineNum = matchLineIdx !== -1 ? matchLineIdx + 1 : 1;
+  // VibePolish UI-106: Empty Silent Catch Block. Checked on the raw source so a catch whose body is only an
+  // explanatory comment (`catch { /* optional feature */ }`) counts as intentional and is not reported.
+  const isJsSource = /\.(?:[cm]?[jt]sx?)$/.test(lowerFilePath) && !lowerFilePath.endsWith('.d.ts');
+  const emptyCatch = !isCompiledBundle && isJsSource ? /\bcatch\s*(?:\(\s*[A-Za-z_$][\w$]*\s*(?::\s*\w+\s*)?\))?\s*\{\s*\}/.exec(rawContent) : null;
+  if (emptyCatch) {
+    const rawLines = rawContent.split('\n');
+    const matchLineIdx = rawContent.slice(0, emptyCatch.index).split('\n').length - 1;
+    const lineNum = matchLineIdx + 1;
     addFinding({
       id: `real-find-${Date.now()}-${findingCounter++}`,
       ruleId: 106,
       type: 'VIBEPOLISH',
       title: 'UI-106: Empty Silent Catch Block',
-      severity: 'HIGH',
+      severity: 'LOW',
       category: 'Code Quality & Refactoring',
       filePath: file.path,
       lineRange: `L${lineNum}`,
-      snippet: lines[matchLineIdx] || 'try { ... } catch (e) {}',
-      reproductionSteps: [`Scanned try-catch blocks in ${file.path}:${lineNum}.`, 'Detected empty catch block swallowing runtime errors without logging or rethrowing.'],
-      remediationPrompt: `Remove empty catch block in ${file.path}. Log caught error with context and error ID or rethrow to error handling boundary.`,
+      snippet: (rawLines[matchLineIdx] || '').trim() || 'try { ... } catch (e) {}',
+      reproductionSteps: [`Scanned try-catch blocks in ${file.path}:${lineNum}.`, 'Detected an empty catch block with no comment, log or rethrow: failures in the try block disappear silently.'],
+      remediationPrompt: `Handle the error in ${file.path}:${lineNum}: log it with context, rethrow it, or add a comment explaining why ignoring it is safe.`,
       status: 'OPEN',
       owner: 'Frontend Team',
       falsePositive: false
     });
-    logs.push(`[${new Date().toLocaleTimeString()}] [HIGH] UI-106 Empty catch block detected (${file.path}:${lineNum})`);
+    logs.push(`[${new Date().toLocaleTimeString()}] [LOW] UI-106 Empty catch block detected (${file.path}:${lineNum})`);
   }
 
-  // VibePolish UI-111: TypeScript Any Type Safety Escape
-  const anyMatches = (file.content.match(/:\s*any\b|as\s+any\b/g) || []).length;
+  // VibePolish UI-111: TypeScript Any Type Safety Escape (comment-stripped code, TypeScript sources only)
+  const anyTypeRe = /:\s*any\b|\bas\s+any\b/;
+  const anyMatches = /\.tsx?$/.test(lowerFilePath) && !lowerFilePath.endsWith('.d.ts') ? (cleanContent.match(new RegExp(anyTypeRe.source, 'g')) || []).length : 0;
   if (anyMatches > 5) {
-    const matchLineIdx = lines.findIndex(l => /:\s*any\b|as\s+any\b/.test(l));
+    const matchLineIdx = cleanContent.split('\n').findIndex(l => anyTypeRe.test(l));
     const lineNum = matchLineIdx !== -1 ? matchLineIdx + 1 : 1;
     addFinding({
       id: `real-find-${Date.now()}-${findingCounter++}`,
       ruleId: 111,
       type: 'VIBEPOLISH',
       title: 'UI-111: TypeScript "any" Type Escape',
-      severity: 'MEDIUM',
+      severity: 'LOW',
       category: 'TypeScript & Types',
       filePath: file.path,
       lineRange: `L${lineNum}`,
-      snippet: lines[matchLineIdx] || 'const data: unknown = response.json();',
-      reproductionSteps: [`Scanned TypeScript type definitions in ${file.path}.`, `Detected ${anyMatches} occurrences of "any" type bypassing type safety.`],
-      remediationPrompt: `Replace "any" types in ${file.path} with strict Zod interfaces or unknown + type guard functions.`,
+      snippet: lines[matchLineIdx] || 'const data: any = await response.json();',
+      reproductionSteps: [`Scanned TypeScript type annotations in ${file.path}:${lineNum}.`, `Detected ${anyMatches} explicit "any" annotations or casts bypassing type checking in this file.`],
+      remediationPrompt: `Replace "any" types in ${file.path} with real interfaces, Zod-inferred types, or unknown plus a type guard.`,
       status: 'OPEN',
       owner: 'Frontend Team',
       falsePositive: false
@@ -715,79 +402,33 @@ export function evaluateBuiltinRules(ctx: BuiltinRuleContext): void {
     logs.push(`[${new Date().toLocaleTimeString()}] [RULE] VIBEPOLISH UI-111: Excessive 'any' type usage detected (${file.path})`);
   }
 
-  // VibePolish UI-115: Monolithic File Overuse (>500 Lines for atomic components, >1200 Lines for composite views/pages)
-  const isCompositeViewOrPage = /View\.[tj]sx$|page\.[tj]sx$|Modal\.[tj]sx$|Table\.[tj]sx$/i.test(file.path);
-  const maxLinesAllowed = isCompositeViewOrPage ? 1200 : 500;
-  if (lines.length > maxLinesAllowed && (file.path.endsWith('.tsx') || file.path.endsWith('.jsx'))) {
-    addFinding({
-      id: `real-find-${Date.now()}-${findingCounter++}`,
-      ruleId: 115,
-      type: 'VIBEPOLISH',
-      title: 'UI-115: Monolithic Overly Long Source File (>500 Lines)',
-      severity: 'MEDIUM',
-      category: 'Code Architecture',
-      filePath: file.path,
-      lineRange: `L1-L${lines.length}`,
-      snippet: `// ${file.path} contains ${lines.length} lines of code`,
-      reproductionSteps: [`Scanned file line count for ${file.path}.`, `Detected monolithic component containing ${lines.length} lines without sub-component extraction.`],
-      remediationPrompt: `Decompose monolithic file ${file.path} (${lines.length} lines) into smaller modular sub-components (max 250 lines per file).`,
-      status: 'OPEN',
-      owner: 'Frontend Team',
-      falsePositive: false
-    });
-    logs.push(`[${new Date().toLocaleTimeString()}] [RULE] VIBEPOLISH UI-115: Monolithic long file detected (${file.path})`);
-  }
-
-  // VibePolish UI-117: Uncleaned Event Listener Memory Leaks (Focus on components/hooks, skip third-party vendor & bootstrap entry files)
-  const isVendorOrLib = isCompiledBundle || /(?:^|\/)(?:vendor|libs?|external|third_party|dist|bundles|node_modules)\//i.test(lowerFilePath);
-  const isBootstrapOrEntry = /(?:boot|client-app|main|index|entry|setup)\.[a-zA-Z0-9]+$/i.test(lowerFilePath);
-  const isComponentOrHook = lowerFilePath.includes('/components/') || lowerFilePath.includes('/hooks/') || lowerFilePath.includes('/views/') || file.content.includes('useEffect') || file.content.includes('componentDidMount');
-  if (!isVendorOrLib && !isBootstrapOrEntry && isComponentOrHook && file.content.includes('addEventListener(') && !file.content.includes('removeEventListener(')) {
-    const matchLineIdx = lines.findIndex(l => l.includes('addEventListener('));
-    const lineNum = matchLineIdx !== -1 ? matchLineIdx + 1 : 1;
+  // VibePolish UI-117: global (window / document) listener added in a React effect and never removed.
+  // Listeners on elements are collected with the element; `{ once: true }` and AbortSignal-based cleanup count as removal.
+  const isVendorOrLib = isCompiledBundle || /(?:^|\/)(?:vendor|external|third_party|dist|bundles|node_modules)\//i.test(lowerFilePath);
+  const globalListenerRe = /\b(?:window|document)\.addEventListener\s*\(/;
+  const leakIdx = !isVendorOrLib && isJsSource && /\buseEffect\s*\(/.test(cleanContent) && !/removeEventListener\s*\(|\bAbortController\b|\bsignal\s*[:,}]/.test(cleanContent)
+    ? cleanContent.split('\n').findIndex(l => globalListenerRe.test(l) && !/\bonce\s*:\s*true\b/.test(l))
+    : -1;
+  if (leakIdx !== -1) {
+    const lineNum = leakIdx + 1;
     addFinding({
       id: `real-find-${Date.now()}-${findingCounter++}`,
       ruleId: 117,
       type: 'VIBEPOLISH',
       title: 'UI-117: Uncleaned Event Listener Memory Leak',
-      severity: 'HIGH',
+      severity: 'MEDIUM',
       category: 'Database & Performance',
       filePath: file.path,
       lineRange: `L${lineNum}`,
-      snippet: lines[matchLineIdx] || 'window.addEventListener("resize", handleResize);',
-      reproductionSteps: [`Scanned event listener bindings in ${file.path}:${lineNum}.`, 'Detected addEventListener call without matching removeEventListener in cleanup handler.'],
-      remediationPrompt: `Add cleanup function returning removeEventListener in useEffect hook in ${file.path} to prevent memory leaks.`,
+      snippet: lines[leakIdx],
+      reproductionSteps: [`Scanned event listener bindings in ${file.path}:${lineNum}.`, 'Detected a window/document listener registered in a component effect with no removeEventListener or AbortSignal cleanup: every mount adds another handler that keeps the unmounted component alive.'],
+      remediationPrompt: `Return a cleanup function from the useEffect in ${file.path} that calls removeEventListener with the same handler (or pass an AbortController signal and abort it).`,
       status: 'OPEN',
       owner: 'Frontend Team',
       falsePositive: false
     });
-    logs.push(`[${new Date().toLocaleTimeString()}] [HIGH] UI-117 Uncleaned event listener detected (${file.path}:${lineNum})`);
+    logs.push(`[${new Date().toLocaleTimeString()}] [MEDIUM] UI-117 Uncleaned event listener detected (${file.path}:${lineNum})`);
   }
-
-
-  // VibePolish UI-134: Unvirtualized Long List DOM Memory Leaks
-  if (file.content.includes('messages.map') && !file.content.includes('virtual') && !file.content.includes('useVirtualizer')) {
-    const matchLineIdx = lines.findIndex(l => l.includes('messages.map'));
-    const lineNum = matchLineIdx !== -1 ? matchLineIdx + 1 : 1;
-    addFinding({
-      id: `real-find-${Date.now()}-${findingCounter++}`,
-      ruleId: 134,
-      type: 'VIBEPOLISH',
-      title: 'UI-134: Unvirtualized Long List (Missing Virtual Scrolling)',
-      severity: 'MEDIUM',
-      category: 'Frontend Performance',
-      filePath: file.path,
-      lineRange: `L${lineNum}`,
-      snippet: lines[matchLineIdx] || 'messages.map(msg => <MessageCard key={msg.id} ... />)',
-      reproductionSteps: [`Scanned chat list rendering in ${file.path}:${lineNum}.`, 'Detected unvirtualized message history list rendering all items simultaneously to DOM.'],
-      remediationPrompt: `Implement Virtual Scrolling using @tanstack/react-virtual in ${file.path} to render only visible message items.`,
-      status: 'OPEN',
-      owner: 'Frontend Team',
-      falsePositive: false
-    });
-    logs.push(`[${new Date().toLocaleTimeString()}] [RULE] VIBEPOLISH UI-134: Unvirtualized long list detected (${file.path}:${lineNum})`);
-  }
-
 
   // VibePolish UI-141: Unbounded Token Usage Waste
   if (file.content.includes('chat.completions.create') && !file.content.includes('max_tokens') && !file.content.includes('maxTokens')) {
@@ -812,102 +453,6 @@ export function evaluateBuiltinRules(ctx: BuiltinRuleContext): void {
     logs.push(`[${new Date().toLocaleTimeString()}] [RULE] VIBEPOLISH UI-141: Unbounded max_tokens parameter detected (${file.path}:${lineNum})`);
   }
 
-
-  // VibePolish UI-160: Missing Spend Circuit Breaker
-  if (file.content.includes('OpenAI(') && !file.content.includes('budget') && !file.content.includes('circuitBreaker') && !file.content.includes('maxMonthlySpend')) {
-    const matchLineIdx = lines.findIndex(l => l.includes('OpenAI('));
-    const lineNum = matchLineIdx !== -1 ? matchLineIdx + 1 : 1;
-    addFinding({
-      id: `real-find-${Date.now()}-${findingCounter++}`,
-      ruleId: 160,
-      type: 'VIBEPOLISH',
-      title: 'UI-160: Missing Automated Budget Circuit Breaker',
-      severity: 'LOW',
-      category: 'FinOps & Circuit Breakers',
-      filePath: file.path,
-      lineRange: `L${lineNum}`,
-      snippet: lines[matchLineIdx] || 'const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });',
-      reproductionSteps: [`Scanned AI SDK initialization in ${file.path}:${lineNum}.`, 'Detected LLM client initialization without hard budget limit circuit breaker or spending spike guardrails.'],
-      remediationPrompt: `Add FinOps Circuit Breaker middleware in ${file.path} to instantly halt API calls if hourly/daily spending spikes exceed safety thresholds.`,
-      status: 'OPEN',
-      owner: 'DevOps / FinOps Team',
-      falsePositive: false
-    });
-    logs.push(`[${new Date().toLocaleTimeString()}] [LOW] UI-160 Missing budget circuit breaker detected (${file.path}:${lineNum})`);
-  }
-
-  // VibePolish UI-185: Missing User Feedback Component
-  if (file.content.includes('MessageCard') || file.content.includes('AIResponseView')) {
-    if (!file.content.includes('onFeedback') && !file.content.includes('thumbsUp') && !file.content.includes('rateResponse')) {
-      const matchLineIdx = lines.findIndex(l => l.includes('MessageCard') || l.includes('AIResponseView'));
-      const lineNum = matchLineIdx !== -1 ? matchLineIdx + 1 : 1;
-      addFinding({
-        id: `real-find-${Date.now()}-${findingCounter++}`,
-        ruleId: 185,
-        type: 'VIBEPOLISH',
-        title: 'UI-185: Missing User Feedback Component',
-        severity: 'MEDIUM',
-        category: 'User Feedback & AB Testing',
-        filePath: file.path,
-        lineRange: `L${lineNum}`,
-        snippet: lines[matchLineIdx] || 'export function MessageCard({ content }: MessageCardProps) { ... }',
-        reproductionSteps: [`Scanned AI output UI component in ${file.path}:${lineNum}.`, 'Detected response display component without Thumbs Up/Down or tagged feedback trigger.'],
-        remediationPrompt: `Add 1-click feedback widget with tags ("Too long", "Inaccurate", "Incomplete") to ${file.path} to feed closed-loop evaluations.`,
-        status: 'OPEN',
-        owner: 'Frontend Team',
-        falsePositive: false
-      });
-      logs.push(`[${new Date().toLocaleTimeString()}] [RULE] VIBEPOLISH UI-185: Missing user feedback component detected (${file.path}:${lineNum})`);
-    }
-  }
-
-  // VibePolish UI-195: Exposing Raw Model Parameters
-  if (file.content.includes('top_p') || file.content.includes('presence_penalty') || file.content.includes('frequency_penalty')) {
-    if (file.path.endsWith('.tsx') || file.path.endsWith('.jsx')) {
-      const matchLineIdx = lines.findIndex(l => /top_p|presence_penalty|frequency_penalty/.test(l));
-      const lineNum = matchLineIdx !== -1 ? matchLineIdx + 1 : 1;
-      addFinding({
-        id: `real-find-${Date.now()}-${findingCounter++}`,
-        ruleId: 195,
-        type: 'VIBEPOLISH',
-        title: 'UI-195: Exposing Raw Hyper-parameters to End Users',
-        severity: 'LOW',
-        category: 'User Experience & Retention',
-        filePath: file.path,
-        lineRange: `L${lineNum}`,
-        snippet: lines[matchLineIdx] || '<input type="range" name="top_p" ... />',
-        reproductionSteps: [`Scanned user settings UI in ${file.path}:${lineNum}.`, 'Detected raw LLM hyperparameters (top_p / presence_penalty) exposed directly to end-user UI.'],
-        remediationPrompt: `Hide raw hyperparameter inputs in ${file.path} behind user-friendly presets ("Creative", "Precise", "Balanced").`,
-        status: 'OPEN',
-        owner: 'UX Team',
-        falsePositive: false
-      });
-      logs.push(`[${new Date().toLocaleTimeString()}] [RULE] VIBEPOLISH UI-195: Raw hyper-parameter input detected (${file.path}:${lineNum})`);
-    }
-  }
-
-  // VibePolish UI-197: Unpinned Generic Model Alias
-  if (file.content.includes('model: "gpt-4o"') || file.content.includes('model: "claude-3-5-sonnet"')) {
-    const matchLineIdx = lines.findIndex(l => l.includes('model: "gpt-4o"') || l.includes('model: "claude-3-5-sonnet"'));
-    const lineNum = matchLineIdx !== -1 ? matchLineIdx + 1 : 1;
-    addFinding({
-      id: `real-find-${Date.now()}-${findingCounter++}`,
-      ruleId: 197,
-      type: 'VIBEPOLISH',
-      title: 'UI-197: Unpinned Generic Model Tag (Missing Date-Pinned Model Version)',
-      severity: 'MEDIUM',
-      category: 'LLM Provider & Versioning',
-      filePath: file.path,
-      lineRange: `L${lineNum}`,
-      snippet: lines[matchLineIdx] || 'model: "gpt-4o"',
-      reproductionSteps: [`Scanned model configuration in ${file.path}:${lineNum}.`, 'Detected unpinned generic model alias ("gpt-4o") vulnerable to silent breaking changes on upstream model updates.'],
-      remediationPrompt: `Pin explicit snapshot version in ${file.path} (e.g. "gpt-4o-2024-08-06" or "claude-3-5-sonnet-20241022") to guarantee output consistency.`,
-      status: 'OPEN',
-      owner: 'Backend Team',
-      falsePositive: false
-    });
-    logs.push(`[${new Date().toLocaleTimeString()}] [RULE] VIBEPOLISH UI-197: Unpinned model alias detected (${file.path}:${lineNum})`);
-  }
 
   ctx.counter.count = findingCounter;
 }

@@ -39,7 +39,7 @@ export function evaluatePgvectorPostgresRules(file: CodeFile, lines: string[], c
             ruleId: 10305,
             type: 'INFRA_DATABASE',
             title: "PG-05: Deadlock Risk from Non-Deterministic Lock Acquisition Order",
-            severity: "MEDIUM",
+            severity: "LOW",
             category: "Concurrency & Locks",
             filePath: file.path,
             lineRange: `L${lineNum}`,

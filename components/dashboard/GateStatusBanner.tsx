@@ -202,7 +202,7 @@ export const GateStatusBanner: React.FC<GateStatusBannerProps> = ({
               {highs.length} High
             </span>
             <span className="text-[#A1A1AA]">
-              {uiCliches.length} UI Clichés
+              {uiCliches.length} UI Issues
             </span>
           </p>
         </div>

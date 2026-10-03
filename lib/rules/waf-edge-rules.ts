@@ -61,7 +61,7 @@ export function evaluateWafEdgeRules(file: CodeFile, lines: string[], cleanConte
             ruleId: 10405,
             type: 'SECURITY',
             title: "WAF-05: Unchecked HTTP Request Body Size Exceeding Edge WAF Inspection Buffer",
-            severity: "MEDIUM",
+            severity: "LOW",
             category: "Inspection Evasion",
             filePath: file.path,
             lineRange: `L${lineNum}`,

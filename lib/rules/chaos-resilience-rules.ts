@@ -251,6 +251,8 @@ export function evaluateChaosResilienceRules(file: CodeFile, lines: string[], cl
     const chaos35Idx = findInBlocks(lines, /\buse(?:Layout)?Effect\s*\(/, (block) => {
         const body = block.join('\n');
         if (/removeEventListener|\bsignal\b|once\s*:\s*true/.test(body)) return -1;
+        // Any returned cleanup (`return unsubscribe`, `return () => off()`) or an effect cut off at the scan cap
+        if (/\breturn\s+[^\s;]/.test(body) || !/^\s*\}/.test(block[block.length - 1] ?? '')) return -1;
         return block.findIndex(l => /\bwindow\.addEventListener\s*\(/.test(l));
     }, 40);
     if (chaos35Idx !== -1) {

@@ -91,7 +91,7 @@ export const RuleKnowledgeBaseModal: React.FC<RuleKnowledgeBaseModalProps> = ({
       compliance: 'SOC2 Trust Principles / OWASP A01:2021',
       penaltyExposure: '',
       description: 'Supabase / PostgreSQL Row Level Security policies configured with USING (true) allow any authenticated or unauthenticated client to read/modify arbitrary database records.',
-      vulnerableSnippet: `CREATE POLICY "Allow Owner" ON profiles FOR SELECT USING (auth.uid() = user_id);`,
+      vulnerableSnippet: `CREATE POLICY "Allow all" ON profiles FOR SELECT USING (true);`,
       remediatedSnippet: `CREATE POLICY "Allow Owner Only" ON profiles FOR SELECT USING (auth.uid() = user_id);`
     },
     {
@@ -106,70 +106,37 @@ export const RuleKnowledgeBaseModal: React.FC<RuleKnowledgeBaseModalProps> = ({
       remediatedSnippet: `Content-Security-Policy: default-src 'self'; script-src 'self' 'nonce-...'`
     },
     {
-      id: 'UI-01',
-      title: 'Generic Neon Gradient Cliché',
+      id: 'A11Y-02',
+      title: 'Icon-Only Button Without an Accessible Name',
       category: 'VIBEPOLISH',
       severity: 'MEDIUM',
-      compliance: 'Maestro Premium Design Token System',
+      compliance: 'WCAG 2.2 SC 4.1.2 Name, Role, Value',
       penaltyExposure: '',
-      description: 'High-contrast raw linear gradients look generic and unpolished across dark mode interfaces.',
-      vulnerableSnippet: `<div className="bg-gradient-to-r from-indigo-600 to-blue-500">`,
-      remediatedSnippet: `<div className="bg-[#141414] border border-white/10 shadow-xl">`
+      description: 'A button or link that contains only an icon is announced as "button" with no purpose, so screen reader and voice-control users cannot tell what it does.',
+      vulnerableSnippet: `<button onClick={onClose}><X className="h-4 w-4" /></button>`,
+      remediatedSnippet: `<button onClick={onClose} aria-label="Close dialog"><X className="h-4 w-4" aria-hidden="true" /></button>`
     },
     {
-      id: 'UI-04',
-      title: 'Absence of Empty State Fallback',
+      id: 'A11Y-01',
+      title: 'Image Without Alt Text',
       category: 'VIBEPOLISH',
       severity: 'MEDIUM',
-      compliance: 'WCAG 2.2 / Usability Heuristics',
+      compliance: 'WCAG 2.2 SC 1.1.1 Non-text Content',
       penaltyExposure: '',
-      description: 'Rendering list mappings (.map()) without an empty state component leads to blank or confusing UI layouts when data arrays are empty.',
-      vulnerableSnippet: `{items.map(item => <Card key={item.id} />)}`,
-      remediatedSnippet: `{items.length === 0 ? <EmptyState prompt="No items found" /> : items.map(...)}`
+      description: 'Images without an alt attribute are read out as their file name. Informative images need a description; decorative ones need alt="".',
+      vulnerableSnippet: `<img src={product.imageUrl} className="rounded-lg" />`,
+      remediatedSnippet: `<img src={product.imageUrl} alt={product.name} className="rounded-lg" />`
     },
     {
-      id: 'UI-05',
-      title: 'Decorative Eyebrow & Heading Icon Prepending',
+      id: 'UI-INTERACT-44',
+      title: 'Viewport Blocks Zoom',
       category: 'VIBEPOLISH',
-      severity: 'MEDIUM',
-      compliance: 'Design System & Typography Hierarchy Standards',
+      severity: 'HIGH',
+      compliance: 'WCAG 2.2 SC 1.4.4 Resize Text',
       penaltyExposure: '',
-      description: 'Prepending decorative Lucide icons (<Terminal />, <Layers />, <Scale />) to uppercase section eyebrow badges or headings is a hallmark of AI template slop.',
-      vulnerableSnippet: `<div className="badge"><Terminal size={14} /> <span>OPERATIONAL ARCHITECTURE</span></div>`,
-      remediatedSnippet: `<div className="text-xs font-mono uppercase tracking-widest text-zinc-400">OPERATIONAL ARCHITECTURE</div>`
-    },
-    {
-      id: 'UI-06',
-      title: 'Pulsating Status Dot & Glowing Badge Cliché',
-      category: 'VIBEPOLISH',
-      severity: 'LOW',
-      compliance: 'Interface Motion & Clarity Guidelines',
-      penaltyExposure: '',
-      description: 'Adding pulsing neon green animation dots (animate-pulse) to static marketing cards or badges introduces visual fatigue and looks like an automated template.',
-      vulnerableSnippet: `<span className="badge"><span className="w-2 h-2 rounded-full bg-` + `emerald-400 animate-` + `pulse" /> Active</span>`,
-      remediatedSnippet: `<span className="px-2.5 py-0.5 rounded text-xs font-mono text-zinc-300 bg-white/10 border border-white/10">Active</span>`
-    },
-    {
-      id: 'UI-08',
-      title: 'Repetitive Checkmark Icon Flooding',
-      category: 'VIBEPOLISH',
-      severity: 'LOW',
-      compliance: 'Visual Scannability & List Ergonomics',
-      penaltyExposure: '',
-      description: 'Flooding every single feature item in lists or trust bars with repeated green CheckCircle2 icons creates cognitive clutter.',
-      vulnerableSnippet: `<ul>{features.map(f => <li><CheckCircle2 className="text-emerald-400" /> {f}</li>)}</ul>`,
-      remediatedSnippet: `<ul>{features.map(f => <li><span className="text-zinc-600 font-mono">—</span> {f}</li>)}</ul>`
-    },
-    {
-      id: 'CLICHE-01',
-      title: 'Decorative Hero Badge Pill',
-      category: 'AI CLICHÉ',
-      severity: 'LOW',
-      compliance: 'AI Web Design Cliché Guide',
-      penaltyExposure: '',
-      description: 'Small glowing badge/pill component placed above hero title (✨ Build the Future). Hallmark of generic AI landing page templates.',
-      vulnerableSnippet: `<span className="badge">✨ Introducing</span>`,
-      remediatedSnippet: `<!-- Remove decorative badge or use only for real product releases -->`
+      description: 'user-scalable=no or maximum-scale=1 stops low-vision users from pinch-zooming the page.',
+      vulnerableSnippet: `<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no" />`,
+      remediatedSnippet: `<meta name="viewport" content="width=device-width, initial-scale=1" />`
     },
     {
       id: 'CLICHE-07',

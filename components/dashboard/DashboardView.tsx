@@ -118,7 +118,7 @@ Resolve all ${openFindings.length} open vulnerabilities:
 
 ${openFindings.map((f, i) => `${i + 1}. [${f.severity}] ${f.title} (${f.filePath})\nRemediation: ${f.remediationPrompt}`).join('\n\n')}
 
-Enforce strict OWASP Top 10 compliance, eliminate AI design clichés, and provide verified drop-in code fixes.`;
+Enforce strict OWASP Top 10 compliance, fix the listed UI quality and accessibility (WCAG 2.2 AA) issues, and provide verified drop-in code fixes.`;
     navigator.clipboard.writeText(prompt);
     setCopiedMaster(true);
     showToast('AI prompt copied to clipboard', '[COPIED]');

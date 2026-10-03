@@ -106,6 +106,14 @@ describe('test fixture files', () => {
   });
 });
 
+describe('new rule packs accept their codes in .zelsisignore', () => {
+  it('maps each code prefix to its id range', async () => {
+    const { parseZelsisIgnore } = await import('../../lib/scanner-engine');
+    const cases: [string, number][] = [['NEXT-SB-01', 28001], ['NODE-WEB-25', 28125], ['AI-APP-07', 28207], ['GHA-01', 28251], ['LLM-V2-16', 28316], ['PRIV-14', 28414], ['CLOUD-V2-25', 28525], ['A11Y-23', 28623]];
+    for (const [code, id] of cases) assert.ok(parseZelsisIgnore(code).ignoredRuleIds.has(id), `${code} -> ${id}`);
+  });
+});
+
 describe('SAAS rule suppression', () => {
   it('.zelsisignore accepts SAAS-xx codes', async () => {
     const { parseZelsisIgnore } = await import('../../lib/scanner-engine');

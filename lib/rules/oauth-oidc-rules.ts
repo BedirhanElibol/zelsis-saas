@@ -25,15 +25,18 @@ export function evaluateOauthOidcRules(file: CodeFile, lines: string[], cleanCon
     }
     const ts = new Date().toLocaleTimeString();
     // OAUTH-02: Permissive Wildcard Redirect URI in OAuth Client Configuration
-    if ((/redirect_uri/i.test(cleanContent))) {
-        const matchLineIdx = locateMatchLine(lines, [/redirect_uri/i], l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('*'));
-        const lineNum = matchLineIdx !== -1 ? matchLineIdx + 1 : 1;
+    // Only a registered redirect URI (redirect_uri(s) / redirectUri(s) config value or list entry) that holds
+    // a `*` wildcard: an attacker-controlled sub-domain or path then receives the authorization code.
+    const wildcardRedirect = /\bredirect_?ur(?:i|l)s?["']?\s*[:=]\s*\[?[^\]\n;]*?["'`](?:https?:\/\/)?[^"'`\s]*\*[^"'`\s]*["'`]/i.exec(cleanContent);
+    if (wildcardRedirect) {
+        const matchLineIdx = cleanContent.slice(0, wildcardRedirect.index + wildcardRedirect[0].length).split('\n').length - 1;
+        const lineNum = matchLineIdx + 1;
         findings.push({
             id: `oauth10902-${Date.now()}-${findingCounter.count++}`,
             ruleId: 10902,
             type: 'SECURITY',
             title: "OAUTH-02: Permissive Wildcard Redirect URI in OAuth Client Configuration",
-            severity: "CRITICAL",
+            severity: "HIGH",
             category: "Redirect Validation",
             filePath: file.path,
             lineRange: `L${lineNum}`,

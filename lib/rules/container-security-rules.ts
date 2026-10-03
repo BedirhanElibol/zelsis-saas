@@ -132,15 +132,20 @@ export function evaluateContainerSecurityRules(file: CodeFile, lines: string[], 
         logs.push(`[${ts}] [CONTAINER AUDIT] Found CONTAINER-04: Host Network Namespace Sharing Permitting Network Sniffing at ${file.path}:${lineNum}`);
     }
     // CONTAINER-05: Exposed Docker Daemon Unix Socket Inside Container
-    if ((/\/var\/run\/docker\.sock/i.test(cleanContent) && !/isolatedDockerDaemon/i.test(cleanContent))) {
-        const matchLineIdx = locateMatchLine(lines, [/\/var\/run\/docker\.sock/i], l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('#') && !l.trim().startsWith('*'));
-        const lineNum = matchLineIdx !== -1 ? matchLineIdx + 1 : 1;
+    // Only an actual bind mount of the host socket: compose short/long volume syntax, docker run -v / --volume /
+    // --mount source=, or a Kubernetes hostPath. Mentions in docs, client code (DOCKER_HOST) or comments are not mounts.
+    const dockerSockMount = /(?:^\s*-\s*["']?|^\s*source:\s*["']?|\s-v\s+["']?|--volume[=\s]+["']?|source=)\/var\/run\/docker\.sock(?:["':,\s]|$)/;
+    const hostPathSock = /^\s*path:\s*["']?\/var\/run\/docker\.sock["']?\s*$/;
+    const dockerSockIdx = lines.findIndex(l => !l.trim().startsWith('#') && (dockerSockMount.test(l) || (hostPathSock.test(l) && /\bhostPath:/.test(cleanContent))));
+    if (dockerSockIdx !== -1) {
+        const matchLineIdx = dockerSockIdx;
+        const lineNum = matchLineIdx + 1;
         findings.push({
             id: `container12205-${Date.now()}-${findingCounter.count++}`,
             ruleId: 12205,
             type: 'INFRA_DATABASE',
             title: "CONTAINER-05: Exposed Docker Daemon Unix Socket Inside Container",
-            severity: "CRITICAL",
+            severity: "MEDIUM",
             category: "Daemon Security",
             filePath: file.path,
             lineRange: `L${lineNum}`,

@@ -61,7 +61,7 @@ export function evaluateK8sHardeningRules(file: CodeFile, lines: string[], clean
             ruleId: 8902,
             type: 'INFRA_DATABASE',
             title: "K8S-02: Container Allowed to Run as Root User",
-            severity: "HIGH",
+            severity: "MEDIUM",
             category: "User Privilege",
             filePath: file.path,
             lineRange: `L${lineNum}`,
@@ -75,30 +75,6 @@ export function evaluateK8sHardeningRules(file: CodeFile, lines: string[], clean
             falsePositive: false
         });
         logs.push(`[${ts}] [K8S AUDIT] Found K8S-02: Container Allowed to Run as Root User at ${file.path}:${lineNum}`);
-    }
-    // K8S-03: Missing CPU and Memory Resource Limits
-    if (/containers\s*:/i.test(cleanContent) && !/limits\s*:[\s\S]*?cpu/i.test(cleanContent)) {
-        const matchLineIdx = locateMatchLine(lines, [/containers\s*:/i], l => !l.trim().startsWith('#'));
-        const lineNum = matchLineIdx !== -1 ? matchLineIdx + 1 : 1;
-        findings.push({
-            id: `k8s8903-${Date.now()}-${findingCounter.count++}`,
-            ruleId: 8903,
-            type: 'INFRA_DATABASE',
-            title: "K8S-03: Missing CPU and Memory Resource Limits",
-            severity: "HIGH",
-            category: "Resource Starvation",
-            filePath: file.path,
-            lineRange: `L${lineNum}`,
-            snippet: lines[matchLineIdx] || 'Kubernetes manifest item',
-            reproductionSteps: [
-                `Audited Kubernetes manifest in ${file.path}:${lineNum}.`,
-                'Detected configuration violation matching K8S-03.'
-            ],
-            remediationPrompt: "Add resources.limits and resources.requests for CPU and memory.",
-            status: 'OPEN',
-            falsePositive: false
-        });
-        logs.push(`[${ts}] [K8S AUDIT] Found K8S-03: Missing CPU and Memory Resource Limits at ${file.path}:${lineNum}`);
     }
     // K8S-04: Dangerous Host Path Volume Mount (/ or /etc or /var/run)
     // The `path:` of a hostPath volume (next lines, or inline `hostPath: { path: / }`) is the host root,
@@ -164,54 +140,6 @@ export function evaluateK8sHardeningRules(file: CodeFile, lines: string[], clean
             falsePositive: false
         });
         logs.push(`[${ts}] [K8S AUDIT] Found K8S-05: AutomountServiceAccountToken Enabled by Default at ${file.path}:${lineNum}`);
-    }
-    // K8S-06: Missing Pod Disruption Budget (PDB) on Critical Deployments
-    if ((/kind:\s*Deployment/i.test(cleanContent) && /replicas:\s*[2-9]/i.test(cleanContent) && !/PodDisruptionBudget/i.test(cleanContent))) {
-        const matchLineIdx = locateMatchLine(lines, [/kind:\s*Deployment/i, /replicas:\s*[2-9]/i], l => !l.trim().startsWith('#'));
-        const lineNum = matchLineIdx !== -1 ? matchLineIdx + 1 : 1;
-        findings.push({
-            id: `k8s8906-${Date.now()}-${findingCounter.count++}`,
-            ruleId: 8906,
-            type: 'INFRA_DATABASE',
-            title: "K8S-06: Missing Pod Disruption Budget (PDB) on Critical Deployments",
-            severity: "MEDIUM",
-            category: "High Availability",
-            filePath: file.path,
-            lineRange: `L${lineNum}`,
-            snippet: lines[matchLineIdx] || 'Kubernetes manifest item',
-            reproductionSteps: [
-                `Audited Kubernetes manifest in ${file.path}:${lineNum}.`,
-                'Detected configuration violation matching K8S-06.'
-            ],
-            remediationPrompt: "Create a PodDisruptionBudget manifest for the production deployment.",
-            status: 'OPEN',
-            falsePositive: false
-        });
-        logs.push(`[${ts}] [K8S AUDIT] Found K8S-06: Missing Pod Disruption Budget (PDB) on Critical Deployments at ${file.path}:${lineNum}`);
-    }
-    // K8S-07: Missing Liveness and Readiness Health Probes
-    if (cleanContent.includes('kind: Deployment')) {
-        const matchLineIdx = lines.findIndex(l => !l.trim().startsWith('#'));
-        const lineNum = matchLineIdx !== -1 ? matchLineIdx + 1 : 1;
-        findings.push({
-            id: `k8s8907-${Date.now()}-${findingCounter.count++}`,
-            ruleId: 8907,
-            type: 'INFRA_DATABASE',
-            title: "K8S-07: Missing Liveness and Readiness Health Probes",
-            severity: "HIGH",
-            category: "Pod Reliability",
-            filePath: file.path,
-            lineRange: `L${lineNum}`,
-            snippet: lines[matchLineIdx] || 'Kubernetes manifest item',
-            reproductionSteps: [
-                `Audited Kubernetes manifest in ${file.path}:${lineNum}.`,
-                'Detected configuration violation matching K8S-07.'
-            ],
-            remediationPrompt: "Add livenessProbe and readinessProbe to container configuration.",
-            status: 'OPEN',
-            falsePositive: false
-        });
-        logs.push(`[${ts}] [K8S AUDIT] Found K8S-07: Missing Liveness and Readiness Health Probes at ${file.path}:${lineNum}`);
     }
     // K8S-08: Writable Root Filesystem (readOnlyRootFilesystem: false)
     if (/readOnlyRootFilesystem\s*:\s*false/i.test(cleanContent)) {

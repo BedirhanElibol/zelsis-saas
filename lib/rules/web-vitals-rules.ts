@@ -55,7 +55,7 @@ export function evaluateWebVitalsRules(file: CodeFile, lines: string[], cleanCon
             ruleId: 7102,
             type: 'VIBEPOLISH',
             title: "WEB-PERF-02: Unsized Image or Video Element Causing Layout Shift",
-            severity: 'MEDIUM',
+            severity: 'LOW',
             category: "Cumulative Layout Shift (CLS)",
             filePath: file.path,
             lineRange: `L${lineNum}`,

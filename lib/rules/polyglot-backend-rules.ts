@@ -163,9 +163,11 @@ export function evaluatePolyglotBackendRules(file: CodeFile, lines: string[], cl
             logs.push(`[${ts}] 🔒 [PHP AUDIT] CRITICAL: PHP Insecure Deserialization in ${file.path}:${lineNum}`);
         }
         // PHP-05: Reflected Cross-Site Scripting (XSS)
-        const phpXssRegex = /(?:echo|print)\s+(?:\$_(?:GET|POST|REQUEST|COOKIE)\[[^\]]+\]|\$[a-zA-Z0-9_]+)/i;
-        if (phpXssRegex.test(cleanContent) && !/htmlspecialchars|htmlentities|strip_tags/i.test(cleanContent)) {
-            const matchLineIdx = lines.findIndex(l => !l.trim().startsWith('//') && !l.trim().startsWith('#') && phpXssRegex.test(l));
+        // A request superglobal echoed straight into the response on the same statement, with no encoder on that line
+        const phpXssRegex = /(?:\becho\b|\bprint\b|<\?=)[^;]*\$_(?:GET|POST|REQUEST|COOKIE)\s*\[/i;
+        const phpXssLine = lines.findIndex(l => !l.trim().startsWith('//') && !l.trim().startsWith('#') && phpXssRegex.test(l) && !/htmlspecialchars|htmlentities|strip_tags|esc_html|esc_attr|\be\(|intval|\(int\)|json_encode|urlencode/i.test(l));
+        if (phpXssLine !== -1) {
+            const matchLineIdx = phpXssLine;
             const lineNum = matchLineIdx !== -1 ? matchLineIdx + 1 : 1;
             const snippet = extractSnippet(lines, lineNum);
             findings.push({

@@ -4,7 +4,6 @@
  */
 import { Finding } from "@/data/schema";
 import { CodeFile } from "../scanner-engine";
-import { locateMatchLine } from './shared/locate';
 import { hclBlocks, hclLine, openIngressLine, stripHashComments } from './iac-rules';
 export interface TerraformIacRuleResult {
     findings: Finding[];
@@ -130,8 +129,21 @@ export function evaluateTerraformIacRules(file: CodeFile, lines: string[], clean
         logs.push(`[${ts}] [TF AUDIT] Found TF-04: Hardcoded Cloud Provider Access Keys in Terraform Files at ${file.path}:${lineNum}`);
     }
     // TF-05: Unversioned Terraform Provider / Module References (Floating Dependencies)
-    if ((/module\s+['"][a-zA-Z0-9_-]+['"][\s\S]*?source\s*=\s*['"][^'"]+['"]/i.test(cleanContent) && !/version|ref=/i.test(cleanContent))) {
-        const matchLineIdx = locateMatchLine(lines, [/module\s+['"][a-zA-Z0-9_-]+['"][\s\S]*?source\s*=\s*['"][^'"]+['"]/i], l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('#') && !l.trim().startsWith('*'));
+    // Per module block: a registry source (ns/name/provider) with no `version`, or a git source with no ?ref=; local ./ sources need no pin
+    const tf05Line = (() => {
+        if (!isTf) return -1;
+        for (const b of hclBlocks(tf, /module\s+"[\w-]+"/)) {
+            const src = /^\s*source\s*=\s*"([^"]+)"/m.exec(b.body);
+            if (!src) continue;
+            const s = src[1];
+            const registry = /^(?:[\w.-]+\/)?[\w-]+\/[\w-]+\/[\w-]+$/.test(s) && !/^\.{1,2}\//.test(s);
+            const git = /^(?:git::|git@|github\.com\/|bitbucket\.org\/)/.test(s);
+            if ((registry && !/^\s*version\s*=/m.test(b.body)) || (git && !/[?&]ref=/.test(s))) return hclLine(tf, b, /^\s*source\s*=/m);
+        }
+        return -1;
+    })();
+    if (tf05Line !== -1) {
+        const matchLineIdx = tf05Line;
         const lineNum = matchLineIdx !== -1 ? matchLineIdx + 1 : 1;
         findings.push({
             id: `tf11005-${Date.now()}-${findingCounter.count++}`,

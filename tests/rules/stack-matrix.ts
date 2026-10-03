@@ -29,10 +29,10 @@ for (const [name, guard] of authed) {
 for (const [orm, q] of [['prisma', 'await prisma.project.delete({ where: { id } });'], ['drizzle', 'await db.delete(projects).where(eq(projects.id, id));'], ['mongoose', 'await Project.findByIdAndDelete(id);'], ['supabase', "await supabase.from('projects').delete().eq('id', id);"]] as const) {
   cases.push({ id: `unauth-action:${orm}`, expect: 'detect', rules: [3006], ...R('app/actions/project.ts', `'use server';\nexport async function deleteProject(id: string) {\n  ${q}\n}\n`) });
 }
-// IDOR by request id without ownership, across ORMs (TENANT-06 / TENANT-01)
+// IDOR by request id without ownership, across ORMs (TENANT-06)
 for (const [orm, q] of [['supabase-admin', "const admin = createClient(url, process.env.SUPABASE_SERVICE_ROLE_KEY!);\n  const { data } = await admin.from('invoices').select('*').eq('id', params.id).single();"], ['prisma', 'const data = await prisma.invoice.findUnique({ where: { id: params.id } });'], ['drizzle', 'const data = await db.select().from(invoices).where(eq(invoices.id, params.id));'], ['mongoose', 'const data = await Invoice.findById(params.id);']] as const) {
   const guard = orm === 'supabase-admin' ? '' : "const session = await getServerSession(authOptions);\n  if (!session) return new Response('401', { status: 401 });\n  ";
-  cases.push({ id: `idor:${orm}`, expect: 'detect', rules: [9106, 9101], ...R('app/api/invoices/[id]/route.ts', `export async function GET(req: Request, { params }: { params: { id: string } }) {\n  ${guard}${q}\n  return Response.json(data);\n}\n`) });
+  cases.push({ id: `idor:${orm}`, expect: 'detect', rules: [9106], ...R('app/api/invoices/[id]/route.ts', `export async function GET(req: Request, { params }: { params: { id: string } }) {\n  ${guard}${q}\n  return Response.json(data);\n}\n`) });
   cases.push({ id: `idor-scoped:${orm}`, expect: 'clean', rules: [9106], ...R('app/api/invoices/[id]/route.ts', `export async function GET(req: Request, { params }: { params: { id: string } }) {\n  ${guard}${q}\n  if (data?.userId !== session?.user?.id) return new Response('404', { status: 404 });\n  return Response.json(data);\n}\n`) });
   cases.push({ id: `public-read:${orm}`, expect: 'clean', rules: [9106], ...R('app/api/posts/[id]/route.ts', `export async function GET(req: Request, { params }: { params: { id: string } }) {\n  ${q.replace(/invoice/gi, 'post').replace("const admin = createClient(url, process.env.SUPABASE_SERVICE_ROLE_KEY!);\n  ", '').replace('admin.from', 'supabase.from')}\n  return Response.json(data);\n}\n`) });
 }

@@ -1,6 +1,9 @@
 /**
  * Zelsis Master evaluateGraphqlSecurityRules Engine (50 Rules)
  * Rules GQL-01 to GQL-50 (Rule IDs 8501 to 8550).
+ * Removed as unsound (ids never reused): 8505 (matched any reuse of a fragment; cycles are rejected by GraphQL
+ * validation), 8508 (formatError returning the error is the default shape), 8512 (absence-of-X, line 1),
+ * 8518 (hideFieldSuggestions is not a real server option).
  */
 import { Finding } from "@/data/schema";
 import { CodeFile } from "../scanner-engine";
@@ -127,31 +130,6 @@ export function evaluateGraphqlSecurityRules(file: CodeFile, lines: string[], cl
         });
         logs.push(`[${ts}] 🛡️ GRAPHQL-SEC GQL-04: Batch Request & Query Multiplexing Amplification Attack in ${file.path}:${lineNum}`);
     }
-    // GQL-05: Circular Fragment Reference Hazard
-    if (cleanContent.includes('fragment ') && /fragment\s+([a-zA-Z0-9_]+)[\s\S]*?\.\.\.\1/i.test(cleanContent)) {
-        const matchLineIdx = locateMatchLine(lines, [/fragment\s+([a-zA-Z0-9_]+)[\s\S]*?\.\.\.\1/i], l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('*'));
-        const lineNum = matchLineIdx !== -1 ? matchLineIdx + 1 : 1;
-        findings.push({
-            id: `gql8505-${Date.now()}-${findingCounter.count++}`,
-            ruleId: 8505,
-            type: 'SECURITY',
-            title: "GQL-05: Circular Fragment Reference Hazard",
-            severity: 'LOW',
-            category: "Parser Denial of Service",
-            filePath: file.path,
-            lineRange: `L${lineNum}`,
-            snippet: lines[matchLineIdx] || 'GraphQL operation configuration',
-            reproductionSteps: [
-                `Audited GraphQL schema and resolvers in ${file.path}:${lineNum}.`,
-                'Detected security violation matching GQL-05.'
-            ],
-            remediationPrompt: "Enforce circular fragment validation rules during schema build.",
-            status: 'OPEN',
-            owner: 'Backend Architect',
-            falsePositive: false
-        });
-        logs.push(`[${ts}] 🛡️ GRAPHQL-SEC GQL-05: Circular Fragment Reference Hazard in ${file.path}:${lineNum}`);
-    }
     // GQL-06: Missing Field-Level Authorization Directive
     if (isGqlRelated && /(?:passwordHash|ssn|stripeCustomerId|creditCardNumber)\s*:\s*String/i.test(cleanContent) && !/@auth|@hasRole|@private/i.test(cleanContent)) {
         const matchLineIdx = locateMatchLine(lines, [/(?:passwordHash|ssn|stripeCustomerId|creditCardNumber)\s*:\s*String/i], l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('*'));
@@ -186,7 +164,7 @@ export function evaluateGraphqlSecurityRules(file: CodeFile, lines: string[], cl
             ruleId: 8507,
             type: 'SECURITY',
             title: "GQL-07: GraphQL Playground / GraphiQL Exposed in Production",
-            severity: 'MEDIUM',
+            severity: 'LOW',
             category: "Information Disclosure",
             filePath: file.path,
             lineRange: `L${lineNum}`,
@@ -201,31 +179,6 @@ export function evaluateGraphqlSecurityRules(file: CodeFile, lines: string[], cl
             falsePositive: false
         });
         logs.push(`[${ts}] 🛡️ GRAPHQL-SEC GQL-07: GraphQL Playground / GraphiQL Exposed in Production in ${file.path}:${lineNum}`);
-    }
-    // GQL-08: Internal Error Stack Trace Leakage in formatError
-    if (isGqlRelated && /formatError\s*:\s*\([^)]*\)\s*=>[^{]*err(?:\.message)?/i.test(cleanContent) && !/process\.env\.NODE_ENV|maskError/i.test(cleanContent)) {
-        const matchLineIdx = locateMatchLine(lines, [/formatError\s*:\s*\([^)]*\)\s*=>[^{]*err(?:\.message)?/i], l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('*'));
-        const lineNum = matchLineIdx !== -1 ? matchLineIdx + 1 : 1;
-        findings.push({
-            id: `gql8508-${Date.now()}-${findingCounter.count++}`,
-            ruleId: 8508,
-            type: 'SECURITY',
-            title: "GQL-08: Internal Error Stack Trace Leakage in formatError",
-            severity: 'MEDIUM',
-            category: "Information Disclosure",
-            filePath: file.path,
-            lineRange: `L${lineNum}`,
-            snippet: lines[matchLineIdx] || 'GraphQL operation configuration',
-            reproductionSteps: [
-                `Audited GraphQL schema and resolvers in ${file.path}:${lineNum}.`,
-                'Detected security violation matching GQL-08.'
-            ],
-            remediationPrompt: "Sanitize formatError outputs in production to avoid leaking internal DB stack traces.",
-            status: 'OPEN',
-            owner: 'Backend Architect',
-            falsePositive: false
-        });
-        logs.push(`[${ts}] 🛡️ GRAPHQL-SEC GQL-08: Internal Error Stack Trace Leakage in formatError in ${file.path}:${lineNum}`);
     }
     // GQL-09: Unbounded List Pagination in Resolvers
     if ((isGqlRelated || isGqlResolverCode) && /first|limit/i.test(cleanContent) && /async\s+resolve\s*\([^)]*args[^)]*\)[\s\S]*?take\s*:\s*args\.(?:first|limit)/i.test(cleanContent) && !/Math\.min|clamp/i.test(cleanContent)) {
@@ -276,31 +229,6 @@ export function evaluateGraphqlSecurityRules(file: CodeFile, lines: string[], cl
             falsePositive: false
         });
         logs.push(`[${ts}] 🛡️ GRAPHQL-SEC GQL-10: Missing CSRF Protection on GraphQL Mutations in ${file.path}:${lineNum}`);
-    }
-    // GQL-12: Rate Limiting by HTTP Endpoint Only Instead of Operation
-    if (isGqlRelated && !/operationName|complexityRateLimiter/i.test(cleanContent)) {
-        const matchLineIdx = lines.findIndex(l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('*'));
-        const lineNum = matchLineIdx !== -1 ? matchLineIdx + 1 : 1;
-        findings.push({
-            id: `gql8512-${Date.now()}-${findingCounter.count++}`,
-            ruleId: 8512,
-            type: 'SECURITY',
-            title: "GQL-12: Rate Limiting by HTTP Endpoint Only Instead of Operation",
-            severity: 'MEDIUM',
-            category: "Abuse Prevention",
-            filePath: file.path,
-            lineRange: `L${lineNum}`,
-            snippet: lines[matchLineIdx] || 'GraphQL operation configuration',
-            reproductionSteps: [
-                `Audited GraphQL schema and resolvers in ${file.path}:${lineNum}.`,
-                'Detected security violation matching GQL-12.'
-            ],
-            remediationPrompt: "Apply operation-level cost rate limiting instead of generic HTTP endpoint throttling.",
-            status: 'OPEN',
-            owner: 'Backend Architect',
-            falsePositive: false
-        });
-        logs.push(`[${ts}] 🛡️ GRAPHQL-SEC GQL-12: Rate Limiting by HTTP Endpoint Only Instead of Operation in ${file.path}:${lineNum}`);
     }
     // GQL-15: Unrestricted Multipart GraphQL File Upload
     if (isGqlRelated && /graphqlUploadExpress/i.test(cleanContent) && !/maxFileSize|maxFiles/i.test(cleanContent)) {
@@ -376,31 +304,6 @@ export function evaluateGraphqlSecurityRules(file: CodeFile, lines: string[], cl
             falsePositive: false
         });
         logs.push(`[${ts}] 🛡️ GRAPHQL-SEC GQL-17: GraphQL Resolver Raw SQL Injection in ${file.path}:${lineNum}`);
-    }
-    // GQL-18: Field Suggestion Engine Enabled in Production
-    if (isGqlRelated && /hideFieldSuggestions\s*:\s*false/i.test(cleanContent)) {
-        const matchLineIdx = locateMatchLine(lines, [/hideFieldSuggestions\s*:\s*false/i], l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('*'));
-        const lineNum = matchLineIdx !== -1 ? matchLineIdx + 1 : 1;
-        findings.push({
-            id: `gql8518-${Date.now()}-${findingCounter.count++}`,
-            ruleId: 8518,
-            type: 'SECURITY',
-            title: "GQL-18: Field Suggestion Engine Enabled in Production",
-            severity: 'LOW',
-            category: "Information Disclosure",
-            filePath: file.path,
-            lineRange: `L${lineNum}`,
-            snippet: lines[matchLineIdx] || 'GraphQL operation configuration',
-            reproductionSteps: [
-                `Audited GraphQL schema and resolvers in ${file.path}:${lineNum}.`,
-                'Detected security violation matching GQL-18.'
-            ],
-            remediationPrompt: "Set hideFieldSuggestions: true in production to prevent schema enumeration.",
-            status: 'OPEN',
-            owner: 'Backend Architect',
-            falsePositive: false
-        });
-        logs.push(`[${ts}] 🛡️ GRAPHQL-SEC GQL-18: Field Suggestion Engine Enabled in Production in ${file.path}:${lineNum}`);
     }
     return { findings, logs };
 }
