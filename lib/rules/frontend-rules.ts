@@ -42,8 +42,14 @@ export function evaluateFrontendRules(file: CodeFile, lines: string[], cleanCont
     const offsetLine = (offset: number) => cleanContent.slice(0, offset).split('\n').length - 1;
     const focusableTags = Array.from(cleanContent.matchAll(/<(input|textarea|select|button|a)\b[\s\S]*?(?:\/>|(?<!=)>)/g))
         .filter((m) => !/\{\s*\.\.\./.test(m[0]));
+    const replacementFocus = /\b(?:focus|focus-visible|focus-within):(?:ring|border|shadow|outline-(?!none)|bg-|underline)|(?:^|[\s"'`])ring-\d/;
+    // Input groups draw the focus ring on the wrapper (focus-within:) and strip the inner outline: the parent tag counts.
+    const parentTag = (offset: number) => {
+        const opens = Array.from(cleanContent.slice(Math.max(0, offset - 600), offset).matchAll(/<[a-zA-Z][^<>]*?(?<!\/)>/g));
+        return opens.length ? opens[opens.length - 1][0] : '';
+    };
     const outlineTag = focusableTags.find((m) => /(?:^|[\s"'`])(?:focus:|focus-visible:)?outline-none\b/.test(m[0]) &&
-        !/\b(?:focus|focus-visible|focus-within):(?:ring|border|shadow|outline-(?!none)|bg-|underline)|(?:^|[\s"'`])ring-\d/.test(m[0]));
+        !replacementFocus.test(m[0]) && !/\bfocus-within:(?:ring|border|shadow|outline-(?!none))/.test(parentTag(m.index ?? 0)));
     const outlineNoneViolation = !!outlineTag;
     const labelRanges = Array.from(cleanContent.matchAll(/<label\b[^>]*>[\s\S]*?<\/label>/g)).map((m) => [m.index ?? 0, (m.index ?? 0) + m[0].length]);
     const unlabelledTag = focusableTags.find((m) => /^<(?:input|textarea|select)\b/.test(m[0]) &&
@@ -150,11 +156,13 @@ export function evaluateFrontendRules(file: CodeFile, lines: string[], cleanCont
     // =========================================================================
     if (isJsxTsx) {
         // Per element (multi-line tags included): a static element with onClick and no role, tabIndex or key handler.
-        // aria-hidden elements, {...spread} props and handlers that only stop event propagation are skipped.
+        // aria-hidden elements, {...spread} props and handlers that only stop event propagation are skipped, and so are
+        // modal backdrops (click outside to dismiss: e.target === e.currentTarget), a mouse shortcut for Escape.
         const clickableTag = Array.from(cleanContent.matchAll(/<(?:div|span|section|article|li|p|img)\b[\s\S]*?(?:\/>|(?<!=)>)/g)).find((m) =>
             /\sonClick\s*=/.test(m[0]) &&
             !/\s(?:role|tabIndex|onKeyDown|onKeyUp|onKeyPress|aria-hidden)\s*=|\{\s*\.\.\./.test(m[0]) &&
-            !/onClick\s*=\s*\{\s*\(?\s*(\w+)\s*\)?\s*=>\s*\{?\s*\1\.stopPropagation\(\)\s*;?\s*\}?\s*\}/.test(m[0]));
+            !/onClick\s*=\s*\{\s*\(?\s*(\w+)\s*\)?\s*=>\s*\{?\s*\1\.stopPropagation\(\)\s*;?\s*\}?\s*\}/.test(m[0]) &&
+            !/\b(\w+)\.target\s*===?\s*\1\.currentTarget\b/.test(m[0]));
         if (clickableTag) {
             const matchLineIdx = offsetLine(clickableTag.index ?? 0);
             {
