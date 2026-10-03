@@ -17,6 +17,7 @@ const SAME_ISSUE_RULES: ReadonlyArray<readonly [number, number]> = [
   [26, 8501], [26, 8503], // Apollo server config, same line
   [28251, 9501], [28251, 7323], [9501, 7323], // pull_request_target running PR-head code
   [3001, 6010], // public-schema table without RLS
+  [3, 45], [3, 28801], // permissive USING (true) / WITH CHECK (true) policy
   [9704, 8143], // webhook handler without signature verification
 ];
 import { RULE_ENGINES } from './scanner/rule-engines';

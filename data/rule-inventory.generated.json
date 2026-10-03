@@ -1,8 +1,8 @@
 {
  "summary": {
-  "implementedRules": 801,
-  "testedRules": 792,
-  "preciseLocationRules": 798,
+  "implementedRules": 817,
+  "testedRules": 809,
+  "preciseLocationRules": 814,
   "catalogEntries": 1922,
   "catalogOnlyNotImplemented": 1401,
   "catalogPlaceholderMetadata": 1810
@@ -7498,7 +7498,7 @@
    "severity": "HIGH",
    "source": "lib/rules/polyglot-backend-rules.ts",
    "preciseLocation": true,
-   "tested": false,
+   "tested": true,
    "inCatalog": true
   },
   {
@@ -9417,6 +9417,166 @@
    "title": "Destructive Agent Tool Runs Without Human Approval",
    "severity": "MEDIUM",
    "source": "lib/rules/next-ai-v3-rules.ts",
+   "preciseLocation": true,
+   "tested": true,
+   "inCatalog": false
+  },
+  {
+   "ruleId": 28801,
+   "code": "RULE-28801",
+   "title": "RLS Policy Lets Any Client Modify Every Row (USING (true))",
+   "severity": "HIGH",
+   "source": "lib/rules/missed-vulns-rules.ts",
+   "preciseLocation": true,
+   "tested": true,
+   "inCatalog": false
+  },
+  {
+   "ruleId": 28802,
+   "code": "RULE-28802",
+   "title": "Firebase Rules Open Data to Everyone: allow Without Any Condition",
+   "severity": "CRITICAL",
+   "source": "lib/rules/missed-vulns-rules.ts",
+   "preciseLocation": true,
+   "tested": true,
+   "inCatalog": false
+  },
+  {
+   "ruleId": 28803,
+   "code": "RULE-28803",
+   "title": "Firebase Realtime Database Rules Open to the Public",
+   "severity": "CRITICAL",
+   "source": "lib/rules/missed-vulns-rules.ts",
+   "preciseLocation": true,
+   "tested": true,
+   "inCatalog": false
+  },
+  {
+   "ruleId": 28804,
+   "code": "RULE-28804",
+   "title": "Request Body Written to the Database As-Is (Mass Assignment)",
+   "severity": "HIGH",
+   "source": "lib/rules/missed-vulns-rules.ts",
+   "preciseLocation": true,
+   "tested": true,
+   "inCatalog": false
+  },
+  {
+   "ruleId": 28805,
+   "code": "RULE-28805",
+   "title": "Authorization Decided by a Client-Controlled Cookie or Query Parameter",
+   "severity": "HIGH",
+   "source": "lib/rules/missed-vulns-rules.ts",
+   "preciseLocation": true,
+   "tested": true,
+   "inCatalog": false
+  },
+  {
+   "ruleId": 28806,
+   "code": "RULE-28806",
+   "title": "Admin Check Trusts a Custom Request Header",
+   "severity": "MEDIUM",
+   "source": "lib/rules/missed-vulns-rules.ts",
+   "preciseLocation": true,
+   "tested": true,
+   "inCatalog": false
+  },
+  {
+   "ruleId": 28807,
+   "code": "RULE-28807",
+   "title": "Server Secret Returned in an HTTP Response",
+   "severity": "CRITICAL",
+   "source": "lib/rules/missed-vulns-rules.ts",
+   "preciseLocation": true,
+   "tested": true,
+   "inCatalog": false
+  },
+  {
+   "ruleId": 28808,
+   "code": "RULE-28808",
+   "title": "Hardcoded Session / Auth Signing Secret",
+   "severity": "HIGH",
+   "source": "lib/rules/missed-vulns-rules.ts",
+   "preciseLocation": true,
+   "tested": true,
+   "inCatalog": false
+  },
+  {
+   "ruleId": 28809,
+   "code": "RULE-28809",
+   "title": "Upload Saved Under the Client-Supplied File Name",
+   "severity": "HIGH",
+   "source": "lib/rules/missed-vulns-rules.ts",
+   "preciseLocation": true,
+   "tested": true,
+   "inCatalog": false
+  },
+  {
+   "ruleId": 28810,
+   "code": "RULE-28810",
+   "title": "Server-Side Template Injection: Request Input Compiled as a Template",
+   "severity": "CRITICAL",
+   "source": "lib/rules/missed-vulns-rules.ts",
+   "preciseLocation": true,
+   "tested": true,
+   "inCatalog": false
+  },
+  {
+   "ruleId": 28811,
+   "code": "RULE-28811",
+   "title": "Credentials Sent With postMessage to Any Origin (\\",
+   "severity": "HIGH",
+   "source": "lib/rules/missed-vulns-rules.ts",
+   "preciseLocation": true,
+   "tested": true,
+   "inCatalog": false
+  },
+  {
+   "ruleId": 28812,
+   "code": "RULE-28812",
+   "title": "Predictable Math.random() in an OTP / Token Generator",
+   "severity": "HIGH",
+   "source": "lib/rules/missed-vulns-rules.ts",
+   "preciseLocation": true,
+   "tested": true,
+   "inCatalog": false
+  },
+  {
+   "ruleId": 28813,
+   "code": "RULE-28813",
+   "title": "Flask Debug Server Exposed on All Interfaces",
+   "severity": "HIGH",
+   "source": "lib/rules/missed-vulns-rules.ts",
+   "preciseLocation": true,
+   "tested": true,
+   "inCatalog": false
+  },
+  {
+   "ruleId": 28814,
+   "code": "RULE-28814",
+   "title": "Supabase .or() Filter Built From User Input (PostgREST Filter Injection)",
+   "severity": "MEDIUM",
+   "source": "lib/rules/missed-vulns-rules.ts",
+   "preciseLocation": true,
+   "tested": true,
+   "inCatalog": false
+  },
+  {
+   "ruleId": 28815,
+   "code": "RULE-28815",
+   "title": "Privilege Field Stored in User-Editable Supabase user_metadata",
+   "severity": "MEDIUM",
+   "source": "lib/rules/missed-vulns-rules.ts",
+   "preciseLocation": true,
+   "tested": true,
+   "inCatalog": false
+  },
+  {
+   "ruleId": 28816,
+   "code": "RULE-28816",
+   "title": "Storage Upload Path Is Only the Client File Name",
+   "severity": "MEDIUM",
+   "source": "lib/rules/missed-vulns-rules.ts",
    "preciseLocation": true,
    "tested": true,
    "inCatalog": false

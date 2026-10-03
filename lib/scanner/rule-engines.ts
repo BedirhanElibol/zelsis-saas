@@ -108,6 +108,7 @@ import { evaluateStrixPentestRules } from '../rules/strix-pentest-rules';
 import { evaluateNoAiSlopRules } from '../rules/no-ai-slop-rules';
 import { evaluateLlmCostGovernanceRules } from '../rules/llm-cost-governance-rules';
 import { evaluateRubyRailsRules } from '../rules/ruby-rails-rules';
+import { evaluateMissedVulnsRules } from '../rules/missed-vulns-rules';
 import { evaluatePhpLaravelRules } from '../rules/php-laravel-rules';
 import { evaluateJavaSpringRules } from '../rules/java-spring-rules';
 import { evaluateDotnetCsharpRules } from '../rules/dotnet-csharp-rules';
@@ -409,4 +410,6 @@ export const RULE_ENGINES: ReadonlyArray<{ evaluate: RuleEngine; scanRawContent?
   { evaluate: evaluateSaasV3Rules },
   // Next.js cache isolation, server-to-client data leaks, destructive AI tools (NEXTAI-01.., Rule IDs 28751-28799)
   { evaluate: evaluateNextAiV3Rules },
+  // False-negative hunt: open RLS/Firebase rules, mass assignment, client-set roles, leaked secrets, uploads (GAP-01.., Rule IDs 28801-28899)
+  { evaluate: evaluateMissedVulnsRules },
 ];

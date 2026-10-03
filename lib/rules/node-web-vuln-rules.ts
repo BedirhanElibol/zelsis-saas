@@ -401,7 +401,7 @@ export function evaluateNodeWebVulnRules(file: CodeFile, lines: string[], cleanC
   }
 
   // NODE-WEB-23: static file middleware serving the project root (exposes .env, source, package.json)
-  scan(/static|serveStatic|\broot\s*:/, () => /\b(?:express\.static|serveStatic|koaStatic)\s*\(\s*(?:__dirname|process\.cwd\(\)|['"]\.\/?['"]|path\.(?:join|resolve)\(\s*(?:__dirname|process\.cwd\(\))\s*(?:,\s*['"]\.\.?\/?['"]\s*)?\))\s*[,)]|\bserveStatic\s*\(\s*\{\s*root\s*:\s*['"]\.\/?['"]\s*[,}]/,
+  scan(/static|serveStatic|\broot\s*:/, () => /\b(?:express\.static|serveStatic|koaStatic)\s*\(\s*(?:__dirname|process\.cwd\(\)|['"]\.\/?['"]|path\.(?:join|resolve)\(\s*(?:__dirname|process\.cwd\(\))\s*(?:,\s*['"]\.\.?\/?['"]\s*)?\)|__dirname\s*\+\s*['"]\/\.\.\/?['"])\s*[,)]|\bserveStatic\s*\(\s*\{\s*root\s*:\s*['"]\.\/?['"]\s*[,}]/,
     (i) => add({ ruleId: 28123, code: 'NODE-WEB-23', severity: 'HIGH', category: 'Information Disclosure', lineIdx: i,
       title: 'Static File Server Exposes the Project Directory (.env, Source Code)',
       why: 'Serving the application directory publishes every file in it: GET /.env, /package.json or /server.js return secrets and source to anyone.',
