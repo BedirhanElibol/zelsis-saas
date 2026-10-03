@@ -61,13 +61,23 @@ jobs:
       - name: Trigger Zelsis Audit Gate
         id: zelsis
         run: |
-          RESPONSE=$(curl -s -X POST "${appUrl}/api/v1/gate-check" \\
+          REF=""
+          BASE=""
+          if [ "\${{ github.event_name }}" = "pull_request" ]; then
+            REF="\${{ github.event.pull_request.head.sha }}"
+            BASE="\${{ github.event.pull_request.base.sha }}"
+          fi
+
+          RESPONSE=$(curl -s -w "\\n%{http_code}" -X POST "${appUrl}/api/v1/gate-check" \\
             -H "Content-Type: application/json" \\
-            -d '{"repoUrl": "${targetRepo}"}')
+            -d "{\\"repoUrl\\": \\"${targetRepo}\\", \\"ref\\": \\"$REF\\", \\"base\\": \\"$BASE\\"}")
           
-          echo "GATE_STATUS=$(echo $RESPONSE | jq -r .gateStatus)" >> $GITHUB_ENV
-          echo "SCORE=$(echo $RESPONSE | jq -r .readinessScore)" >> $GITHUB_ENV
-          echo "CRITICAL_COUNT=$(echo $RESPONSE | jq -r .criticalCount)" >> $GITHUB_ENV
+          HTTP_CODE=$(echo "$RESPONSE" | tail -n1)
+          BODY=$(echo "$RESPONSE" | sed '$d')
+
+          echo "GATE_STATUS=$(echo $BODY | jq -r .gateStatus)" >> $GITHUB_ENV
+          echo "SCORE=$(echo $BODY | jq -r .readinessScore)" >> $GITHUB_ENV
+          echo "CRITICAL_COUNT=$(echo $BODY | jq -r .criticalCount)" >> $GITHUB_ENV
 
       - name: Post PR Gate Status Comment
         if: github.event_name == 'pull_request'

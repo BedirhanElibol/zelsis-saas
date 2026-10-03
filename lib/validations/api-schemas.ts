@@ -107,6 +107,8 @@ export const GateCheckRequestSchema = z
   .object({
     repoUrl: z.string().max(2048).optional(),
     targetUrl: z.string().max(2048).optional(),
+    ref: z.string().max(256).optional(),
+    base: z.string().max(256).optional(),
     githubToken: z.string().max(256).optional(),
     slackWebhookUrl: z
       .string()

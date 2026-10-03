@@ -63,11 +63,36 @@ jobs:
         env:
           ZELSIS_API_KEY: \${{ secrets.ZELSIS_API_KEY }}
         run: |
-          RESPONSE=$(curl -s -X POST "${appUrl}/api/v1/gate-check" \\
+          REF=""
+          BASE=""
+          if [ "\${{ github.event_name }}" = "pull_request" ]; then
+            REF="\${{ github.event.pull_request.head.sha }}"
+            BASE="\${{ github.event.pull_request.base.sha }}"
+          fi
+
+          FAIL_OPEN="\${{ vars.ZELSIS_FAIL_OPEN || 'false' }}"
+
+          RESPONSE=$(curl -s -w "\\n%{http_code}" -X POST "${appUrl}/api/v1/gate-check" \\
             -H "Content-Type: application/json" \\
             -H "x-api-key: $ZELSIS_API_KEY" \\
-            -d '{"repoUrl": "\${{ github.server_url }}/\${{ github.repository }}"}')
-          echo "$RESPONSE" > zelsis-report.json
+            -d '{"repoUrl": "\${{ github.server_url }}/\${{ github.repository }}", "ref": "'$REF'", "base": "'$BASE'"}')
+            
+          HTTP_CODE=$(echo "$RESPONSE" | tail -n1)
+          BODY=$(echo "$RESPONSE" | sed '$d')
+
+          if [ "$HTTP_CODE" -ge 500 ] || [ -z "$BODY" ] || ! echo "$BODY" | jq -e . >/dev/null 2>&1; then
+            echo "❌ Zelsis API unreachable or returned invalid response."
+            if [ "$FAIL_OPEN" = "true" ]; then
+              echo "⚠️ Fail-open strategy is enabled. Passing the gate."
+              echo '{"gateStatus": "PASSED", "readinessScore": 100}' > zelsis-report.json
+              exit 0
+            else
+              echo "🛑 Failing the workflow."
+              exit 1
+            fi
+          fi
+
+          echo "$BODY" > zelsis-report.json
           STATUS=$(jq -r '.gateStatus // "ERROR"' zelsis-report.json)
           SCORE=$(jq -r '.readinessScore // 0' zelsis-report.json)
           echo "Gate: $STATUS, score: $SCORE/100" >> $GITHUB_STEP_SUMMARY
