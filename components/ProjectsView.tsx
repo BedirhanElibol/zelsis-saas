@@ -334,10 +334,12 @@ export const ProjectsView: React.FC<ProjectsViewProps> = ({
         >
           <div className="bg-[#141414] border border-white/20 rounded-2xl w-full max-w-md p-6 sm:p-8 flex flex-col gap-5 shadow-2xl relative">
             <button
+              type="button"
+              aria-label="Close"
               onClick={() => setIsQuotaModalOpen(false)}
               className="absolute top-4 right-4 p-1.5 rounded-lg text-[#71717A] hover:text-white hover:bg-white/10 transition-colors cursor-pointer"
             >
-              <X size={16} />
+              <X size={16} aria-hidden="true" />
             </button>
 
             <div className="w-12 h-12 rounded-xl bg-amber-500/10 border border-amber-500/30 text-amber-400 flex items-center justify-center">

@@ -38,9 +38,10 @@ export const UserAvatar: React.FC<UserAvatarProps> = ({
       <div
         style={{ width: `${size}px`, height: `${size}px` }}
         className={`rounded-full bg-white/10 border border-white/20 flex items-center justify-center font-bold text-white shrink-0 select-none ${className}`}
+        role="img"
         aria-label={effectiveAlt}
       >
-        <span style={{ fontSize: `${Math.max(10, Math.floor(size * 0.38))}px` }}>
+        <span aria-hidden="true" style={{ fontSize: `${Math.max(10, Math.floor(size * 0.38))}px` }}>
           {cleanInitial}
         </span>
       </div>

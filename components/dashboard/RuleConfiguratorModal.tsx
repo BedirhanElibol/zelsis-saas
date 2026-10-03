@@ -84,10 +84,12 @@ export const RuleConfiguratorModal: React.FC<RuleConfiguratorModalProps> = ({
             </div>
 
             <button
+              type="button"
+              aria-label="Close"
               onClick={onClose}
               className="p-1.5 rounded-lg bg-white/5 hover:bg-white/10 text-gray-400 hover:text-white transition-colors"
             >
-              <X size={18} />
+              <X size={18} aria-hidden="true" />
             </button>
           </div>
 

@@ -189,18 +189,28 @@ export const Sidebar: React.FC<SidebarProps> = ({
 
   const renderFooter = () => {
     const validity = getSubscriptionValidity(user);
+    const openSettings = () => {
+      if (onCloseMobile) onCloseMobile();
+      if (onNavigateSettings) onNavigateSettings();
+      else onNavigate('settings');
+    };
 
     return (
       <div className="pt-4 border-t border-white/10 mt-6">
         {user && user.isLoggedIn ? (
           <div className="p-2.5 rounded-xl bg-[#141414] border border-white/10 hover:border-white/20 transition-all flex items-center justify-between gap-2 shadow-sm">
             <div
-              onClick={() => {
-                if (onCloseMobile) onCloseMobile();
-                if (onNavigateSettings) onNavigateSettings();
-                else onNavigate('settings');
+              role="button"
+              tabIndex={0}
+              aria-label="Account settings"
+              onClick={openSettings}
+              onKeyDown={(e) => {
+                if (e.key === 'Enter' || e.key === ' ') {
+                  e.preventDefault();
+                  openSettings();
+                }
               }}
-              className="flex items-center gap-2.5 min-w-0 flex-1 cursor-pointer select-none group"
+              className="flex items-center gap-2.5 min-w-0 flex-1 cursor-pointer select-none group rounded-lg focus-visible:ring-2 focus-visible:ring-emerald-500 focus-visible:outline-none"
             >
               <UserAvatar
                 src={user.avatarUrl}

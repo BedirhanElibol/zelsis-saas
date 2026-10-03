@@ -147,10 +147,12 @@ export const ConnectTargetModal: React.FC<ConnectTargetModalProps> = ({
     >
       <div className="bg-[#141414] border border-white/10 rounded-2xl w-full max-w-lg p-6 sm:p-8 relative shadow-lg">
         <button
+          type="button"
+          aria-label="Close"
           onClick={onClose}
           className="absolute top-4 right-4 text-[#A1A1AA] hover:text-white"
         >
-          <X size={20} />
+          <X size={20} aria-hidden="true" />
         </button>
 
         <div className="flex items-center gap-3 mb-4">

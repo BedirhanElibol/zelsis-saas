@@ -85,8 +85,16 @@ export const KpiCards: React.FC<KpiCardsProps> = ({ project, onNavigatePillar })
 
       {/* Scorecard 2: Security Pre-Flight */}
       <div
+        role="button"
+        tabIndex={0}
         onClick={() => onNavigatePillar('security')}
-        className="bg-[#141414] border border-white/10 rounded-xl hover:border-white/20 p-3.5 sm:p-5 flex flex-col justify-between cursor-pointer transition-all duration-200 group"
+        onKeyDown={(e) => {
+          if (e.key === 'Enter' || e.key === ' ') {
+            e.preventDefault();
+            onNavigatePillar('security');
+          }
+        }}
+        className="bg-[#141414] border border-white/10 rounded-xl hover:border-white/20 p-3.5 sm:p-5 flex flex-col justify-between cursor-pointer transition-all duration-200 group focus-visible:ring-2 focus-visible:ring-emerald-500 focus-visible:outline-none"
       >
         <div className="flex items-center justify-between mb-2 sm:mb-3">
           <span className="text-[0.62rem] sm:text-[0.68rem] font-mono font-semibold text-[#A1A1AA] tracking-wider uppercase truncate">
@@ -119,8 +127,16 @@ export const KpiCards: React.FC<KpiCardsProps> = ({ project, onNavigatePillar })
 
       {/* Scorecard 3: UI Quality & Accessibility (open finding count) */}
       <div
+        role="button"
+        tabIndex={0}
         onClick={() => onNavigatePillar('vibepolish')}
-        className="bg-[#141414] border border-white/10 rounded-xl hover:border-white/20 p-3.5 sm:p-5 flex flex-col justify-between cursor-pointer transition-all duration-200 group"
+        onKeyDown={(e) => {
+          if (e.key === 'Enter' || e.key === ' ') {
+            e.preventDefault();
+            onNavigatePillar('vibepolish');
+          }
+        }}
+        className="bg-[#141414] border border-white/10 rounded-xl hover:border-white/20 p-3.5 sm:p-5 flex flex-col justify-between cursor-pointer transition-all duration-200 group focus-visible:ring-2 focus-visible:ring-emerald-500 focus-visible:outline-none"
       >
         <div className="flex items-center justify-between mb-2 sm:mb-3">
           <span className="text-[0.62rem] sm:text-[0.68rem] font-mono font-semibold text-[#A1A1AA] tracking-wider uppercase truncate">
@@ -153,8 +169,16 @@ export const KpiCards: React.FC<KpiCardsProps> = ({ project, onNavigatePillar })
 
       {/* Scorecard 4: Master Quality Matrix */}
       <div
+        role="button"
+        tabIndex={0}
         onClick={() => onNavigatePillar('aimaster')}
-        className="bg-[#141414] border border-white/10 rounded-xl hover:border-white/20 p-3.5 sm:p-5 flex flex-col justify-between cursor-pointer transition-all duration-200 group"
+        onKeyDown={(e) => {
+          if (e.key === 'Enter' || e.key === ' ') {
+            e.preventDefault();
+            onNavigatePillar('aimaster');
+          }
+        }}
+        className="bg-[#141414] border border-white/10 rounded-xl hover:border-white/20 p-3.5 sm:p-5 flex flex-col justify-between cursor-pointer transition-all duration-200 group focus-visible:ring-2 focus-visible:ring-emerald-500 focus-visible:outline-none"
       >
         <div className="flex items-center justify-between mb-2 sm:mb-3">
           <span className="text-[0.62rem] sm:text-[0.68rem] font-mono font-semibold text-[#A1A1AA] tracking-wider uppercase truncate">
