@@ -16,7 +16,7 @@ const ALIAS_RULE_IDS: Record<string, number[]> = {
  * Rule-code prefixes mapped to rule id offsets: `<PREFIX>-<n>` suppresses `offset + n` for each offset.
  * Order matters: the first matching pattern wins.
  */
-const PREFIX_OFFSETS: ReadonlyArray<readonly [RegExp, readonly number[]]> = [
+export const PREFIX_OFFSETS: ReadonlyArray<readonly [RegExp, readonly number[]]> = [
   [/^SEC-?(\d+)$/i, [0]],
   [/^NEXT-SB-?(\d+)$/i, [28000]],
   [/^NODE-WEB-?(\d+)$/i, [28100]],

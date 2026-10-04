@@ -87,6 +87,14 @@ export const Sidebar: React.FC<SidebarProps> = ({
     { id: 'settings', label: 'Security Policies', icon: Settings },
   ];
 
+  const labsNav = [
+    { id: 'lab-bundle', label: 'Bundle Cost Analyzer', icon: Activity },
+    { id: 'lab-pentest', label: 'PenTest Payloads', icon: ShieldAlert },
+    { id: 'lab-briefing', label: 'Executive Briefing', icon: FileText },
+    { id: 'lab-geoip', label: 'Geo IP Tracker', icon: CheckSquare },
+    { id: 'lab-contrast', label: 'Theme Auditor', icon: Palette },
+  ];
+
   const handleNavClick = (id: string) => {
     if (id === 'portal') {
       if (user?.email) {
@@ -184,6 +192,36 @@ export const Sidebar: React.FC<SidebarProps> = ({
           );
         })}
       </div>
+
+      <div className="h-[1px] bg-white/[0.08] my-1" />
+
+      {/* Navigation Group 4: Labs */}
+      <details className="group">
+        <summary className="flex items-center justify-between px-3 py-2 cursor-pointer list-none select-none text-[0.68rem] font-extrabold text-[#A1A1AA] font-mono tracking-[0.1em] uppercase hover:text-white transition-colors">
+          <span>Labs (beta)</span>
+          <span className="text-[10px] transform transition-transform group-open:rotate-180">▼</span>
+        </summary>
+        <div className="flex flex-col gap-1 mt-2 pl-2 border-l border-white/5 ml-3">
+          {labsNav.map((item) => {
+            const Icon = item.icon;
+            const isActive = activeNav === item.id;
+            return (
+              <button
+                key={item.id}
+                onClick={() => handleNavClick(item.id)}
+                className={`flex items-center gap-3 px-3 py-2 rounded-lg text-xs font-bold transition-all w-full text-left ${
+                  isActive
+                    ? 'bg-white/5 text-white border border-white/10 shadow-sm'
+                    : 'text-[#A1A1AA] hover:text-[#EDEDED] hover:bg-white/[0.04] border border-transparent'
+                }`}
+              >
+                <Icon size={14} />
+                <span>{item.label}</span>
+              </button>
+            );
+          })}
+        </div>
+      </details>
     </div>
   );
 

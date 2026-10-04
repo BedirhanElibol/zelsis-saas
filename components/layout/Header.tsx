@@ -179,6 +179,14 @@ export const Header: React.FC<HeaderProps> = ({
             </button>
           )}
 
+          <a
+            href="/docs"
+            className="hidden sm:flex items-center gap-1.5 text-xs text-[#A1A1AA] hover:text-white transition-colors shrink-0 min-h-11 ml-2"
+            title="Documentation"
+          >
+            <span className="font-mono">Docs</span>
+          </a>
+
           {/* Project & Organization Selectors */}
           <div className="flex items-center gap-1.5 sm:gap-2 min-w-0">
             {/* Active Workspace Badge (Clean & Transparent) */}

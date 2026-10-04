@@ -8,11 +8,11 @@ import { SeverityChart } from './SeverityChart';
 import { FindingsTable } from '../findings/FindingsTable';
 import { InteractiveAnalyzer } from '../InteractiveAnalyzer';
 import { VulnerabilityPlayground } from './VulnerabilityPlayground';
-import { BundleCostAnalyzer } from './BundleCostAnalyzer';
 import { ScaLicenseRiskCard } from './ScaLicenseRiskCard';
 import { QuickChartWidget } from './QuickChartWidget';
 import { DashboardModals, ActiveModalType } from './DashboardModals';
 import { GateStatusBanner } from './GateStatusBanner';
+import { OnboardingChecklist } from './OnboardingChecklist';
 import { DemoShowcaseBanner } from '../OverviewView';
 import { generateAuditPdfReport } from '@/lib/pdf-exporter';
 import { ShieldCheck, Code, Server } from 'lucide-react';
@@ -150,6 +150,9 @@ Enforce strict OWASP Top 10 compliance, fix the listed UI quality and accessibil
         />
       </ComponentErrorBoundary>
 
+      {/* Onboarding Checklist */}
+      <OnboardingChecklist project={safeProject} />
+
       {/* Swiss Navigation Tabs Bar */}
       <div className="flex flex-col xl:flex-row xl:items-center justify-between gap-4 border-b border-white/10 pb-3">
         <div className="flex flex-wrap items-center gap-1.5 p-1 bg-[#141414] border border-white/10 rounded-xl w-fit">
@@ -234,8 +237,7 @@ Enforce strict OWASP Top 10 compliance, fix the listed UI quality and accessibil
       {/* Tab 3: Deep Diagnostics, Performance & Telemetry */}
       {activeTab === 'diagnostics' && (
         <div className="flex flex-col gap-6">
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-            <BundleCostAnalyzer filesCount={(safeProject.findings?.length || 0) + 15} />
+          <div className="grid grid-cols-1 gap-6">
             <ComponentErrorBoundary componentName="ScaLicenseRiskCard" resetKeys={[safeProject?.id]}>
               <ScaLicenseRiskCard />
             </ComponentErrorBoundary>

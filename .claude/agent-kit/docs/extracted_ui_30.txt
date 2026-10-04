@@ -1,0 +1,190 @@
+--- PAGE 1 ---
+TASARIM & PROMPT DENETIM LISTESI
+Siteni Yapay Zekâya Yaptırdığını Ele Veren 30 Klişe
+Claude, ChatGPT, v0 veya Lovable gibi yapay zekâ araçlarıyla web sitesi üretirken standart şablon hissini yok etmek ve
+özgün tasarımlar elde etmek için kontrol listesi ve prompt yönergesi.
+💡 Projelerinizde Doğrudan Kullanabileceğiniz Negatif Prompt:
+"Aşağıdaki klişeleri KESİNLİKLE kullanma: Bento kutu ızgaraları, 3'lü standart özellik kartları,
+mor-siyah ambient glow/neon geçişler, Lucide parıltı ikonları, 'X değil Y' kalıpları, uydurma
+testimonial'lar, her satır başı yeşil tik, aşırı 999px hap butonlar, sahte terminal pencereleri
+ve Inter/Geist harici özgün tipografi ve organik grid kullan." 
+🎨 1. Renk Paleti ve Arka Plan Hataları
+# KLIŞE / HATA NEDEN YAPAY ZEKÂ HISSI
+VERIYOR? ÖNERILEN ÇÖZÜM / PROMPT
+01 Sert Renk Geçişleri Yüksek kontrastlı, çiğ ve
+uyumsuz doğrusal renk
+geçişleri (linear gradients).
+Monokrom tonlar, düşük doygunluklu
+mesh gradientler veya katmanlı açık/koyu
+kontrast.
+03 Bembeyaz Arka Plan (#FFF) Ham #ffffff zemin, tasarımı
+şablon ve derinliksiz gösterir.
+Hafif kırık beyazlar (#faf9f6, #f8fafc) veya
+çok hafif sıcak gri tonları kullanın.
+04 Gökkuşağı Geçişi Başlık veya kart kenarlarında
+kullanılan çok renkli spektrum
+border'lar.
+En fazla 2 uyumlu marka rengiyle
+sınırlandırılmış degrade.
+20 Mor-Siyah Renk Paleti Her AI SaaS temasının
+varsayılan olarak #000 + mor/
+indigo seçmesi.
+Sektöre özel kurumsal renkler (lacivert,
+zümrüt yeşili, antrasit, toprak tonları).
+22 Bulanık Işık Lekesi (Blur Glow) Sayfa köşelerinde havada
+duran devasa mor/mavi radyal
+blur baloncukları.
+Yapısal gölgelendirmeler, temiz çizgi
+ayraçlar veya net ışık odakları.
+23 Noktalı Arka Plan (Dot Grid) Her teknoloji sitesinin zeminine
+atılan standart CSS dot/grid
+deseni.
+Temiz düz zeminler, hafif gürültü (noise)
+dokusu veya asimetrik çizgiler.
+29 Neon Renkler Göz yoran fosforlu yeşil, mor ve
+camgöbeği (cyan) tonlarının
+aşırı kullanımı.
+Doygunluğu düşürülmüş (muted/
+desaturated) profesyonel vurgu renkleri.
+30 Klişe Pastel Tonlar Özellikle "soft" sitelerde
+kullanılan jenerik bebek mavisi/
+toz pembe kartlar.
+Derinlikli nötr renkler ve net hiyerarşi
+oluşturan kontrastlar.
+Sayfa 1 / 3
+--- PAGE 2 ---
+📐 2. Düzen (Layout), Kart ve Bileşen Yapıları
+🔤 3. Tipografi ve Metin Kurgusu Klişeleri
+# KLIŞE / HATA NEDEN YAPAY ZEKÂ HISSI
+VERIYOR? ÖNERILEN ÇÖZÜM / PROMPT
+05 Her Şeye Gölge Verme Her kart, buton ve input'un
+altında gereksiz blur drop-
+shadow bulunması.
+1px ince border'lar (border-subtle) ve düz
+(flat) temiz yüzeyler.
+06 Yan Yana 3 Kart Tüm özelliklerin (Features)
+istisnasız yan yana 3 eşit
+kutuda sunulması.
+Farklı boyutlarda hiyerarşik grid'ler,
+interaktif sekmeler veya timeline akışı.
+08 Buzlu Cam Efekti
+(Glassmorphism)
+Aşırı backdrop-filter:
+blur() ve yarı saydam beyaz
+katmanlar.
+Opak yüzeyler, net renk blokları ve
+okunabilirliği yüksek paneller.
+11 Solda Renkli Şerit Her uyarı veya kartın soluna
+otomatik eklenen 4px renkli
+dikey çizgi.
+Arka plan tonu farkı veya ikon rozetleri ile
+durum belirtme.
+13 Aşırı Bento Kutu Düzeni İçerik uysun uymasın her
+projeye zorla uygulanan Apple
+tarzı bento grid.
+İçeriğin doğasına uygun doğal akışlı
+sütunlar ve dinamik liste yapıları.
+17 Klişe Üçlü Fiyat Tablosu Ortadaki "Popular" kutusunun
+mor glow ve büyütülmüş haliyle
+3 sütun.
+Kullanıcı ihtiyacına göre kademeli
+kaydırıcı (slider) veya fonksiyonel
+hesaplayıcı.
+19 Aşırı Yuvarlak Köşeler Butonlarda border-radius:
+9999px, kartlarda devasa 32px
+ovallikler.
+Daha oturaklı ve modern 6px - 10px
+yarıçaplı hafif kavisler.
+# KLIŞE / HATA NEDEN YAPAY ZEKÂ HISSI
+VERIYOR? ÖNERILEN ÇÖZÜM / PROMPT
+09 Uzun Tire (—) Kullanımı LLM'lerin açıklamalarda
+istisnasız her yere 'em-dash'
+ekleme takıntısı.
+Daha sade, doğal cümle akışları ve
+doğrudan nokta/virgül kullanımı.
+10 Hep Aynı Fontlar (Inter/Geist) Tüm yapay zekâ çıktılarında
+varsayılan Inter, Geist veya
+Space Grotesk.
+Markaya özel font eşleşmeleri (Plus
+Jakarta, Outfit, Cabinet, Serif başlıklar).
+12 Uydurma Müşteri Yorumları "Loved by builders", "Sarah K. -
+Head of Product" gibi jenerik
+sahte yorumlar.
+Gerçek kullanıcı metinleri veya yorum
+alanı yerine doğrudan metrikler/rakamlar.
+15 "X değil, Y" Slogan Kalıbı "Bu bir not uygulaması değil,
+ikinci beyniniz." gibi klişe
+formüller.
+Doğrudan değer önerisi (Value
+Proposition) sunan net ve dürüst başlıklar.
+Sayfa 2 / 3
+--- PAGE 3 ---
+✨ 4. Görsel, İkon ve İnteraktif Detaylar
+# KLIŞE / HATA NEDEN YAPAY ZEKÂ HISSI
+VERIYOR? ÖNERILEN ÇÖZÜM / PROMPT
+16 Her Satırda Tik İşareti (✓) Tüm maddelerin başına konan
+yeşil/mavi SVG tik işaretleri.
+Tipografik hiyerarşi, alt başlıklar veya mini
+etiketler (badges).
+# KLIŞE / HATA NEDEN YAPAY ZEKÂ HISSI
+VERIYOR? ÖNERILEN ÇÖZÜM / PROMPT
+02 Standart Lucide İkonları Her projenin istisnasız aynı 10
+Lucide SVG ikonunu
+kullanması.
+Projeye özel ikon setleri (Tabler, Phosphor,
+Heroicons Solid, özel vektör).
+07 Metin İçi Emojiler Her başlık ve kartın başına 🚀,
+✨, 💡, 🔥 emojilerinin
+doldurulması.
+Emojileri kaldırıp profesyonel mikro-ikonlar
+veya tipografik vurgu kullanın.
+14 Süs Olsun Diye Terminal Alakasız projelerde bile npx
+create-app yazan siyah
+terminal mockup'ı.
+Gerçek UI ekran alıntıları, interaktif
+demolar veya ürün akış şemaları.
+18 Gerçek Ürün Görseli Yokluğu Görsel yerine soyut "Watch
+Demo" butonları veya boş gri
+placeholder kutuları.
+Yüksek çözünürlüklü gerçek arayüz
+prototipleri veya somut ürün
+illüstrasyonları.
+21 Yüklenirken Boşluk (Layout
+Shift)
+Veri yüklenirken veya ilk açılışta
+ekranın boş beyaz kalması /
+zıplaması.
+Shimmer/Skeleton yükleme animasyonları
+ve reaktif fallback bileşenleri.
+24 Her Yerde Parıltı (Sparkle) İkonu AI ile ilgili her butona
+yapıştırılan 4 köşeli yıldız ikonu
+(✨).
+İşlevsel eylem ikonları veya doğrudan
+açıklayıcı buton metinleri.
+25 Kıpırdayan / Titreyen Oklar "Get Started ->" butonundaki
+okun sürekli sağa sola
+zıplaması.
+Sakin mikro-etkileşimler (sadece hover
+anında hafif 2px translasyon).
+26 Kullanım Şartları Sayfasının
+Olmaması
+Footer'a sadece href="#"
+linkleri konulup yasal sayfaların
+üretilmemesi.
+Eksiksiz Terms of Service sayfası ve
+şeffaf yasal çerçeve.
+27 Gizlilik Politikası (Privacy)
+Yokluğu
+Yapay zekanın footer'a
+formalite icabı koyup içini boş
+bıraktığı sayfalar.
+GDPR/KVKK uyumlu gerçek veri işleme
+ve gizlilik sözleşmesi.
+28 Üstüne Gelince Her Şeyin
+Oynaması
+Her öğede aşırı transform:
+scale(1.05) ve abartılı hover
+karmaşası.
+Hafif renk/border geçişleri ile sınırlı, gözü
+yormayan ölçülü mikro-etkileşimler.
+Sayfa 3 / 3
