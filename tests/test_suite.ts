@@ -945,20 +945,20 @@ async function runAllTests() {
   console.log('\n--- 18. Testing Canonical Subscription Tiers & Quota Parity (Free, Pro, Enterprise) ---');
 
   // 18.1 Free Scan Limit & Enforced Cap
-  assert(FREE_SCAN_LIMIT === 3, 'Free tier scan limit is strictly 3');
+  assert(FREE_SCAN_LIMIT === Infinity, 'Free tier scan limit is now Infinity');
 
-  const underQuota = { scansUsed: 2, scansLimit: 3, projectsUsed: 1, projectsLimit: 1, aiPromptsUsed: 0, aiPromptsLimit: 1, billingCycleReset: '2099-01-01' };
-  const atQuota = { scansUsed: 3, scansLimit: 3, projectsUsed: 1, projectsLimit: 1, aiPromptsUsed: 1, aiPromptsLimit: 1, billingCycleReset: '2099-01-01' };
+  const underQuota = { scansUsed: 2, scansLimit: Infinity, projectsUsed: 1, projectsLimit: 3, aiPromptsUsed: 0, aiPromptsLimit: 5, billingCycleReset: '2099-01-01' };
+  const atQuota = { scansUsed: 3, scansLimit: Infinity, projectsUsed: 1, projectsLimit: 3, aiPromptsUsed: 1, aiPromptsLimit: 5, billingCycleReset: '2099-01-01' };
   
-  assert(checkScanQuota(underQuota, 'Free').allowed === true, 'Free tier allows scans when under limit (2/3)');
-  assert(checkScanQuota(atQuota, 'Free').allowed === false, 'Free tier strictly blocks scans when at limit (3/3)');
+  assert(checkScanQuota(underQuota, 'Free').allowed === true, 'Free tier allows scans (unlimited)');
+  assert(checkScanQuota(atQuota, 'Free').allowed === true, 'Free tier allows scans (unlimited)');
 
   // 18.2 Unlimited Scans for Pro and Enterprise
   assert(checkScanQuota(atQuota, 'Pro').allowed === true, 'Pro tier allows unlimited scans despite scan counts');
   assert(checkScanQuota(atQuota, 'Enterprise').allowed === true, 'Enterprise tier allows unlimited scans');
 
   // 18.3 Feature Gate Parity
-  assert(isPrivateRepoAllowed('Free') === false, 'Free tier forbids private repositories');
+  assert(isPrivateRepoAllowed('Free') === true, 'Free tier allows private repositories');
   assert(isPrivateRepoAllowed('Pro') === true, 'Pro tier allows private repositories');
   assert(isPrivateRepoAllowed('Enterprise') === true, 'Enterprise tier allows private repositories');
 

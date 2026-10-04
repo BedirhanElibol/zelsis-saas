@@ -12,7 +12,7 @@ import { validateSafeTargetUrl } from '@/lib/ssrf-guard';
 import { hasFixPromptAccess } from '@/lib/subscription-utils';
 import { getEffectivePlanTier, getOrgPolicy } from '@/lib/organization';
 import { LOCKED_FIX_TEXT } from '@/lib/fix-gate';
-import { calculateGateStatus, gateSeverity, gatingFindings } from '@/lib/scanner/scoring';
+import { calculateGateStatus, gatingFindings } from '@/lib/scanner/scoring';
 
 // F-31: Bounded execution duration for static code scans (bounded to 30s for serverless SLA)
 export const maxDuration = 30;
@@ -94,6 +94,7 @@ export async function POST(req: NextRequest) {
       return validation.response;
     }
 
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const body = validation.data as any;
     const rawRepoUrl = (body.repoUrl || body.targetUrl || '').trim();
 
@@ -177,8 +178,9 @@ export async function POST(req: NextRequest) {
       }
     }
 
-    let shouldDeductQuota = false;
-    let currentScansUsed = 0;
+    const shouldDeductQuota = false;
+    const currentScansUsed = 0;
+    let isPrivateProject = false;
 
     if (authenticatedUserId && serviceRoleKey) {
       try {
@@ -195,26 +197,7 @@ export async function POST(req: NextRequest) {
         orgPolicy = await getOrgPolicy(adminClient, authenticatedUserId);
 
         if (sub) {
-          const monthlyQuota = sub.monthly_scan_quota ?? 3;
-          const scansUsed = sub.scans_used_this_month ?? 0;
-
-          if (userTier === 'Free' && scansUsed >= monthlyQuota) {
-            return NextResponse.json(
-              {
-                status: 'ERROR',
-                gateStatus: 'FAILED',
-                error: `Monthly scan quota reached (${scansUsed}/${monthlyQuota} scans used). Upgrade to Zelsis Pro for unlimited automated audits.`,
-                timestamp: new Date().toISOString()
-              },
-              { status: 402 }
-            );
-          }
-
-          // F-40: Defer quota deduction until after the scan completes successfully
-          if (userTier === 'Free') {
-            shouldDeductQuota = true;
-            currentScansUsed = scansUsed;
-          }
+          // Scans are unlimited for all tiers now
         }
       } catch (subErr) {
         logger.warn('[Gate Check] Quota check notice:', subErr);
@@ -265,6 +248,7 @@ export async function POST(req: NextRequest) {
         headers: forwardHeaders,
         body: JSON.stringify({
           repoUrl: rawRepoUrl,
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
           targetName: (body as any).repoName || rawRepoUrl,
           githubToken,
           slackWebhookUrl,
@@ -336,6 +320,7 @@ export async function POST(req: NextRequest) {
     } else if (isGithubTarget) {
       logger.info(`[Gate Check] Initiating GitHub repository audit for ${rawRepoUrl}`);
       const liveData = await fetchGithubRepositoryData(rawRepoUrl, githubToken, undefined, undefined, body.ref, body.base);
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       changedFiles = (liveData as any)?.changedFiles || null;
 
       if (liveData?.error === 'REPO_NOT_FOUND') {
@@ -380,17 +365,53 @@ export async function POST(req: NextRequest) {
         );
       }
 
-      if (liveData?.isPrivate && userTier === 'Free') {
-        return NextResponse.json(
-          {
-            status: 'ERROR',
-            gateStatus: 'FAILED',
-            readinessScore: 0,
-            error: 'Private repository scans are part of Zelsis Pro. Use an API key from a Pro or Enterprise account to gate private repositories.',
-            timestamp: new Date().toISOString()
-          },
-          { status: 402 }
-        );
+      if (liveData?.isPrivate) {
+        isPrivateProject = true;
+        
+        if (userTier === 'Free') {
+          if (authenticatedUserId && serviceRoleKey) {
+            const adminClient = createClient(supabaseUrl, serviceRoleKey, { auth: { persistSession: false } });
+            
+            const { data: existingProj } = await adminClient
+              .from('projects')
+              .select('id')
+              .eq('user_id', authenticatedUserId)
+              .eq('repo_url', rawRepoUrl)
+              .maybeSingle();
+
+            if (!existingProj) {
+              const { count } = await adminClient
+                .from('projects')
+                .select('*', { count: 'exact', head: true })
+                .eq('user_id', authenticatedUserId)
+                .eq('is_private', true);
+
+              if (count !== null && count >= 3) {
+                return NextResponse.json(
+                  {
+                    status: 'ERROR',
+                    gateStatus: 'FAILED',
+                    readinessScore: 0,
+                    error: 'Free tier limit reached: You can only have up to 3 private repositories. Upgrade to Zelsis Pro for unlimited private repositories.',
+                    timestamp: new Date().toISOString()
+                  },
+                  { status: 402 }
+                );
+              }
+            }
+          } else {
+            return NextResponse.json(
+              {
+                status: 'ERROR',
+                gateStatus: 'FAILED',
+                readinessScore: 0,
+                error: 'Private repository scans require authentication. Provide a valid API key or session token.',
+                timestamp: new Date().toISOString()
+              },
+              { status: 401 }
+            );
+          }
+        }
       }
 
       filesToScan = liveData?.files || [];
@@ -429,6 +450,7 @@ export async function POST(req: NextRequest) {
             .select('rule_id, file_path')
             .eq('project_id', existingProj.id);
           if (dismissalsData) {
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
             dismissals = dismissalsData.map((d: any) => ({ ruleId: d.rule_id, filePath: d.file_path }));
           }
         }
@@ -470,7 +492,8 @@ export async function POST(req: NextRequest) {
                 name: targetName,
                 repo_url: rawRepoUrl,
                 readiness_score: result.score,
-                gate_status: result.gateStatus
+                gate_status: result.gateStatus,
+                is_private: isPrivateProject
               })
               .select('id')
               .maybeSingle();
@@ -600,7 +623,7 @@ export async function POST(req: NextRequest) {
         }
       }
     );
-  } catch (error: any) {
+  } catch (error: any) { // eslint-disable-line @typescript-eslint/no-explicit-any
     logger.error('[Gate Check] Internal execution error:', error);
     return NextResponse.json(
       {
