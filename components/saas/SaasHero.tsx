@@ -93,9 +93,7 @@ export const SaasHero: React.FC<SaasHeroProps> = ({ onOpenDashboard }) => {
           Find the security holes in your app <span className="text-emerald-400">before your users do.</span>
         </h1>
         <p className="text-base sm:text-lg lg:text-xl text-[#A1A1AA] max-w-3xl mx-auto leading-relaxed mt-6 mb-10 font-sans font-normal">
-          <strong className="text-zinc-200">Built for Next.js + Supabase apps:</strong><br />
-          RLS, service-role leaks, Server Actions, webhooks, AI/MCP agents<br /><br />
-          Zelsis scans your repository for leaked secrets, open Supabase RLS policies, injection, broken auth and vulnerable dependencies, then fails the release when something critical slips in. Paste a public repo and see the results in seconds.
+          Stop fatal production regressions before they merge. Zelsis automatically evaluates critical OWASP security vulnerabilities, database RLS leaks, UI/UX accessibility, and cloud container configurations in memory before code reaches production.
         </p>
 
         {/* Direct Repository Scan Command Bar */}
