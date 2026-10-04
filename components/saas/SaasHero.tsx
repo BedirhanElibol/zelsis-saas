@@ -90,7 +90,7 @@ export const SaasHero: React.FC<SaasHeroProps> = ({ onOpenDashboard }) => {
       <div className="relative z-10 max-w-6xl mx-auto w-full flex flex-col items-center text-center">
         {/* Plain elements: the headline is the LCP, so it must not wait for hydration to fade in */}
         <h1 className="text-4xl sm:text-6xl lg:text-7xl font-extrabold text-[#EDEDED] tracking-tight leading-[1.06] max-w-4xl mb-6 [text-wrap:balance]">
-          Find the security holes in your app <span className="text-emerald-400">before your users do.</span>
+          Catch critical flaws in your app <span className="text-emerald-400">before your users do.</span>
         </h1>
         <p className="text-base sm:text-lg lg:text-xl text-[#A1A1AA] max-w-3xl mx-auto leading-relaxed mt-6 mb-10 font-sans font-normal">
           Stop fatal production regressions before they merge. Zelsis automatically evaluates critical OWASP security vulnerabilities, database RLS leaks, UI/UX accessibility, and cloud container configurations in memory before code reaches production.
