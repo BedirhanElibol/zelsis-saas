@@ -1,15 +1,15 @@
 'use client';
 
 import React, { useState } from 'react';
-import { motion } from 'framer-motion';
+
 import { 
-  GitPullRequest, 
-  ShieldAlert, 
-  FileCheck, 
-  ArrowRight, 
-  Cpu, 
-  Lock, 
-  ExternalLink 
+   
+   
+   
+   
+   
+   
+   
 } from 'lucide-react';
 import { getConfiguredAppUrl } from '@/lib/app-url';
 import { CODE_RETENTION_STATEMENT } from '@/lib/data-retention';
@@ -81,7 +81,7 @@ $ curl -X POST ${getConfiguredAppUrl()}/api/v1/gate-check \\
         {/* Section Header */}
         <div className="flex flex-col gap-4 text-center max-w-3xl mx-auto">
           <div className="inline-flex items-center justify-center text-xs font-mono uppercase tracking-widest text-emerald-400">
-            <span>How it works</span>
+            <span>How It Works</span>
           </div>
           <h2 className="text-3xl sm:text-5xl font-extrabold text-[#EDEDED] tracking-tight">
             From repository to release decision

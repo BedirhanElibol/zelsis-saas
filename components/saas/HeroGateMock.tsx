@@ -1,4 +1,4 @@
-import { Sparkles } from 'lucide-react';
+
 
 type Severity = 'CRITICAL' | 'HIGH' | 'MEDIUM';
 
@@ -61,7 +61,6 @@ export function HeroGateMock() {
               <div className="text-xs font-mono text-zinc-400 truncate">{f.location}</div>
             </div>
             <span className="hidden md:inline-flex shrink-0 items-center gap-1.5 text-xs text-emerald-400 border border-emerald-500/30 bg-emerald-500/10 rounded px-2 py-1">
-              <Sparkles size={12} aria-hidden="true" />
               Fix prompt
             </span>
           </li>
