@@ -59,6 +59,7 @@ export const ProjectSchema = z.object({
   findings: z.array(FindingSchema),
   scanHistory: z.array(z.any()).optional(),
   organizationId: z.string().optional(),
+  isPrivate: z.boolean().optional(),
 });
 
 

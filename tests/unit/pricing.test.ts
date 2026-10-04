@@ -15,6 +15,14 @@ test('plan cards use the shared monthly prices', () => {
   assert.equal(TIER_CONFIGS.Enterprise.priceMonthly, `$${PLAN_PRICES.Enterprise}/mo`);
 });
 
+test('free tier v2 limits are correctly configured', () => {
+  // Scans are unlimited (Infinity), 3 private projects, 5 AI fix prompts
+  assert.equal(TIER_CONFIGS.Free.scanLimit, Infinity);
+  assert.equal(TIER_CONFIGS.Free.projectLimit, 3);
+  assert.equal(TIER_CONFIGS.Free.aiPromptLimit, 5);
+  assert.equal(TIER_CONFIGS.Free.privateRepoAccess, true);
+});
+
 function listSources(dir: string): string[] {
   return readdirSync(join(root, dir)).flatMap((name) => {
     const rel = `${dir}/${name}`;

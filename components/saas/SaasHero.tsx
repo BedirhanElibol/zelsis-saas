@@ -3,11 +3,11 @@
 import React, { useState } from 'react';
 import { m } from 'framer-motion';
 import { 
-  ShieldCheck, 
+   
   ArrowRight, 
   Terminal, 
-  Play, 
-  CheckCircle2, 
+   
+   
   ExternalLink,
   Lock,
   Loader2
@@ -90,8 +90,7 @@ export const SaasHero: React.FC<SaasHeroProps> = ({ onOpenDashboard }) => {
       <div className="relative z-10 max-w-6xl mx-auto w-full flex flex-col items-center text-center">
         {/* Plain elements: the headline is the LCP, so it must not wait for hydration to fade in */}
         <h1 className="text-4xl sm:text-6xl lg:text-7xl font-extrabold text-[#EDEDED] tracking-tight leading-[1.06] max-w-4xl mb-6 [text-wrap:balance]">
-          Built for Next.js + Supabase apps:<br />
-          <span className="text-emerald-400">RLS, service-role leaks, Server Actions, webhooks, AI/MCP agents</span>
+          Find the security holes in your app <span className="text-emerald-400">before your users do.</span>
         </h1>
         <p className="text-base sm:text-lg lg:text-xl text-[#A1A1AA] max-w-3xl mx-auto leading-relaxed mt-6 mb-10 font-sans font-normal">
           Zelsis scans your repository for leaked secrets, open Supabase RLS policies, injection, broken auth and vulnerable dependencies, then fails the release when something critical slips in. Paste a public repo and see the results in seconds.

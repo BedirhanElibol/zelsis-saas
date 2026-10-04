@@ -1,9 +1,9 @@
 import { PlanUsageQuota, UserTier } from '@/data/schema';
 import { priceLabel, SUPPORT_TERMS } from '@/data/pricing-plans';
 
-export const FREE_SCAN_LIMIT = 3;
-export const FREE_PROJECT_LIMIT = 1;
-export const FREE_AI_PROMPT_LIMIT = 1;
+export const FREE_SCAN_LIMIT = Infinity;
+export const FREE_PROJECT_LIMIT = 3;
+export const FREE_AI_PROMPT_LIMIT = 5;
 
 export interface TierFeatureConfig {
   tier: UserTier;
@@ -30,7 +30,7 @@ export const TIER_CONFIGS: Record<UserTier, TierFeatureConfig> = {
     scanLimit: FREE_SCAN_LIMIT,
     projectLimit: FREE_PROJECT_LIMIT,
     aiPromptLimit: FREE_AI_PROMPT_LIMIT,
-    privateRepoAccess: false,
+    privateRepoAccess: true,
     pdfExportAccess: false,
     cicdIntegration: false,
     customRules: false,
@@ -225,7 +225,7 @@ export function checkProjectQuota(projectsCount: number, tier: UserTier = 'Free'
 }
 
 export function isPrivateRepoAllowed(tier: UserTier = 'Free'): boolean {
-  return tier !== 'Free';
+  return true;
 }
 
 export function isPdfExportAllowed(tier: UserTier = 'Free'): boolean {

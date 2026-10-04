@@ -42,10 +42,10 @@ export const ZELSIS_PRICING_PLANS: PricingPlanItem[] = [
     isPopular: false,
     description: 'Release-gate scans for hobbyists and public open-source repositories.',
     features: [
-      '3 scans / month (Strict Cap)',
-      '1 connected public repository',
+      'Unlimited scans for public repositories',
+      '3 private repositories',
       `All ${formatCount(RULE_COUNTS.gating)} active rules`,
-      '1 AI fix prompt trial',
+      '5 AI fix prompts / month',
       SUPPORT_TERMS.Free,
     ],
     buttonText: 'Start Free',
