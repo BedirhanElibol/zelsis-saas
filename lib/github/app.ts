@@ -113,7 +113,7 @@ export async function postOrUpdatePRComment(
     issue_number: issueNumber,
   });
 
-  const zelsisComment = comments.find(c => c.body?.includes('<!-- Zelsis Security Gate -->'));
+  const zelsisComment = comments.find((c: any) => c.body?.includes('<!-- Zelsis Security Gate -->'));
 
   const finalBody = `<!-- Zelsis Security Gate -->\n${body}`;
 
