@@ -130,6 +130,8 @@ import { evaluatePythonV4Rules } from '../rules/python-v4-rules';
 import { evaluateBackendV4Rules } from '../rules/backend-v4-rules';
 import { evaluateConfigV4Rules } from '../rules/config-v4-rules';
 
+import { evaluateAstFlowRules } from '../rules/ast-flow-rules';
+
 export type RuleEngine = (
   file: CodeFile,
   lines: string[],
@@ -425,4 +427,6 @@ export const RULE_ENGINES: ReadonlyArray<{ evaluate: RuleEngine; scanRawContent?
   { evaluate: evaluateBackendV4Rules },
   // Cloud, IaC, container, CI/CD and platform config (CFG-01.., Rule IDs 29201-29299)
   { evaluate: evaluateConfigV4Rules },
+  // AST analysis (Babel): route auth/ownership flow and taint for JS/TS (AST-01.., Rule IDs 29301-29399)
+  { evaluate: evaluateAstFlowRules },
 ];

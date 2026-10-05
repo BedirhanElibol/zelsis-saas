@@ -33,6 +33,7 @@ export const PREFIX_OFFSETS: ReadonlyArray<readonly [RegExp, readonly number[]]>
   [/^PYF-?(\d+)$/i, [29000]],
   [/^BEF-?(\d+)$/i, [29100]],
   [/^CFG-?(\d+)$/i, [29200]],
+  [/^AST-?(\d+)$/i, [29300]],
   [/^SAAS-?(\d+)$/i, [23000]],
   [/^JS-SEC-?(\d+)$/i, [24000]],
   [/^CORE-?(\d+)$/i, [24100]],

@@ -18,6 +18,8 @@ const SAME_ISSUE_RULES: ReadonlyArray<readonly [number, number]> = [
   [28251, 9501], [28251, 7323], [9501, 7323], // pull_request_target running PR-head code
   [3001, 6010], // public-schema table without RLS
   [3, 45], [3, 28801], // permissive USING (true) / WITH CHECK (true) policy
+  // AST flow rules prove the path; keep them over the line-based rule in the same file
+  [29301, 9106], [29302, 15], [29302, 28920], [29303, 3021], [29303, 6043], [29303, 18104], [29307, 41], [29308, 16],
   [9704, 8143], // webhook handler without signature verification
 ];
 import { RULE_ENGINES } from './scanner/rule-engines';

@@ -1,8 +1,8 @@
 {
  "summary": {
-  "implementedRules": 817,
-  "testedRules": 809,
-  "preciseLocationRules": 814,
+  "implementedRules": 863,
+  "testedRules": 855,
+  "preciseLocationRules": 860,
   "catalogEntries": 1922,
   "catalogOnlyNotImplemented": 1401,
   "catalogPlaceholderMetadata": 1810
@@ -9577,6 +9577,466 @@
    "title": "Storage Upload Path Is Only the Client File Name",
    "severity": "MEDIUM",
    "source": "lib/rules/missed-vulns-rules.ts",
+   "preciseLocation": true,
+   "tested": true,
+   "inCatalog": false
+  },
+  {
+   "ruleId": 28901,
+   "code": "RULE-28901",
+   "title": "Open Redirect: Framework Redirect Helper Sends Users to a Request-Supplied URL (CWE-601)",
+   "severity": "MEDIUM",
+   "source": "lib/rules/js-frameworks-v4-rules.ts",
+   "preciseLocation": true,
+   "tested": true,
+   "inCatalog": false
+  },
+  {
+   "ruleId": 28902,
+   "code": "RULE-28902",
+   "title": "SSRF: NextResponse.rewrite Proxies to a Request-Supplied URL (CWE-918)",
+   "severity": "HIGH",
+   "source": "lib/rules/js-frameworks-v4-rules.ts",
+   "preciseLocation": true,
+   "tested": true,
+   "inCatalog": false
+  },
+  {
+   "ruleId": 28903,
+   "code": "RULE-28903",
+   "title": "Password Reset / Verification Link Built From the Host Header (CWE-640)",
+   "severity": "HIGH",
+   "source": "lib/rules/js-frameworks-v4-rules.ts",
+   "preciseLocation": true,
+   "tested": true,
+   "inCatalog": false
+  },
+  {
+   "ruleId": 28904,
+   "code": "RULE-28904",
+   "title": "Reflected XSS: Request Input Interpolated Into a text/html Response (CWE-79)",
+   "severity": "HIGH",
+   "source": "lib/rules/js-frameworks-v4-rules.ts",
+   "preciseLocation": true,
+   "tested": true,
+   "inCatalog": false
+  },
+  {
+   "ruleId": 28905,
+   "code": "RULE-28905",
+   "title": "NoSQL / ORM Operator Injection: Parsed Request Body Used as the Query Filter (CWE-943)",
+   "severity": "HIGH",
+   "source": "lib/rules/js-frameworks-v4-rules.ts",
+   "preciseLocation": true,
+   "tested": true,
+   "inCatalog": false
+  },
+  {
+   "ruleId": 28906,
+   "code": "RULE-28906",
+   "title": "Token Lookup Accepts an Object From the Request (Operator Injection Auth Bypass, CWE-943)",
+   "severity": "HIGH",
+   "source": "lib/rules/js-frameworks-v4-rules.ts",
+   "preciseLocation": true,
+   "tested": true,
+   "inCatalog": false
+  },
+  {
+   "ruleId": 28907,
+   "code": "RULE-28907",
+   "title": "Regular Expression Built From Request Input (ReDoS / Regex Injection, CWE-1333)",
+   "severity": "MEDIUM",
+   "source": "lib/rules/js-frameworks-v4-rules.ts",
+   "preciseLocation": true,
+   "tested": true,
+   "inCatalog": false
+  },
+  {
+   "ruleId": 28908,
+   "code": "RULE-28908",
+   "title": "DOM XSS: URL Fragment / Query Written to an HTML Sink (CWE-79)",
+   "severity": "HIGH",
+   "source": "lib/rules/js-frameworks-v4-rules.ts",
+   "preciseLocation": true,
+   "tested": true,
+   "inCatalog": false
+  },
+  {
+   "ruleId": 28909,
+   "code": "RULE-28909",
+   "title": "DOM Open Redirect / javascript: URL: Navigation Target Taken From the Query String (CWE-601, CWE-79)",
+   "severity": "HIGH",
+   "source": "lib/rules/js-frameworks-v4-rules.ts",
+   "preciseLocation": true,
+   "tested": true,
+   "inCatalog": false
+  },
+  {
+   "ruleId": 28910,
+   "code": "RULE-28910",
+   "title": "XSS: URL Parameter Rendered Through a Raw-HTML Binding (v-html / {@html} / set:html / __html)",
+   "severity": "HIGH",
+   "source": "lib/rules/js-frameworks-v4-rules.ts",
+   "preciseLocation": true,
+   "tested": true,
+   "inCatalog": false
+  },
+  {
+   "ruleId": 28911,
+   "code": "RULE-28911",
+   "title": "Every Proxy Hop Trusted: Client Can Spoof req.ip via X-Forwarded-For (CWE-348)",
+   "severity": "MEDIUM",
+   "source": "lib/rules/js-frameworks-v4-rules.ts",
+   "preciseLocation": true,
+   "tested": true,
+   "inCatalog": false
+  },
+  {
+   "ruleId": 28912,
+   "code": "RULE-28912",
+   "title": "Entire process.env Exposed to the Browser (Bundle define / Props / Response)",
+   "severity": "HIGH",
+   "source": "lib/rules/js-frameworks-v4-rules.ts",
+   "preciseLocation": true,
+   "tested": true,
+   "inCatalog": false
+  },
+  {
+   "ruleId": 28913,
+   "code": "RULE-28913",
+   "title": "Server Secret Exposed Through a Client-Bundled Env Variable (${m[1]})",
+   "severity": "HIGH",
+   "source": "lib/rules/js-frameworks-v4-rules.ts",
+   "preciseLocation": true,
+   "tested": true,
+   "inCatalog": false
+  },
+  {
+   "ruleId": 28914,
+   "code": "RULE-28914",
+   "title": "Secret Placed in Nuxt runtimeConfig.public (${k[2]})",
+   "severity": "HIGH",
+   "source": "lib/rules/js-frameworks-v4-rules.ts",
+   "preciseLocation": true,
+   "tested": true,
+   "inCatalog": false
+  },
+  {
+   "ruleId": 28915,
+   "code": "RULE-28915",
+   "title": "SvelteKit CSRF Origin Check Disabled",
+   "severity": "MEDIUM",
+   "source": "lib/rules/js-frameworks-v4-rules.ts",
+   "preciseLocation": true,
+   "tested": true,
+   "inCatalog": false
+  },
+  {
+   "ruleId": 28916,
+   "code": "RULE-28916",
+   "title": "Auth.js redirect Callback Returns Any URL (Open Redirect After Sign-In)",
+   "severity": "MEDIUM",
+   "source": "lib/rules/js-frameworks-v4-rules.ts",
+   "preciseLocation": true,
+   "tested": true,
+   "inCatalog": false
+  },
+  {
+   "ruleId": 28917,
+   "code": "RULE-28917",
+   "title": "JWT Verified With ignoreExpiration: true (Tokens Never Expire)",
+   "severity": "MEDIUM",
+   "source": "lib/rules/js-frameworks-v4-rules.ts",
+   "preciseLocation": true,
+   "tested": true,
+   "inCatalog": false
+  },
+  {
+   "ruleId": 28918,
+   "code": "RULE-28918",
+   "title": "Template Engine HTML Auto-Escaping Disabled (Stored / Reflected XSS)",
+   "severity": "MEDIUM",
+   "source": "lib/rules/js-frameworks-v4-rules.ts",
+   "preciseLocation": true,
+   "tested": true,
+   "inCatalog": false
+  },
+  {
+   "ruleId": 28919,
+   "code": "RULE-28919",
+   "title": "Prototype Pollution in Hand-Rolled Deep Merge / Path Setter (${fn.name}, CWE-1321)",
+   "severity": "MEDIUM",
+   "source": "lib/rules/js-frameworks-v4-rules.ts",
+   "preciseLocation": true,
+   "tested": true,
+   "inCatalog": false
+  },
+  {
+   "ruleId": 28920,
+   "code": "RULE-28920",
+   "title": "Server Action Updates / Deletes Records Without Verifying the Caller (${b.name})",
+   "severity": "HIGH",
+   "source": "lib/rules/js-frameworks-v4-rules.ts",
+   "preciseLocation": true,
+   "tested": true,
+   "inCatalog": false
+  },
+  {
+   "ruleId": 28921,
+   "code": "RULE-28921",
+   "title": "Draft / Preview Mode Enabled Without Checking a Secret",
+   "severity": "MEDIUM",
+   "source": "lib/rules/js-frameworks-v4-rules.ts",
+   "preciseLocation": true,
+   "tested": true,
+   "inCatalog": false
+  },
+  {
+   "ruleId": 28922,
+   "code": "RULE-28922",
+   "title": "Server State Embedded in an Inline <script> With Plain JSON.stringify",
+   "severity": "MEDIUM",
+   "source": "lib/rules/js-frameworks-v4-rules.ts",
+   "preciseLocation": true,
+   "tested": true,
+   "inCatalog": false
+  },
+  {
+   "ruleId": 28923,
+   "code": "RULE-28923",
+   "title": "CORS Reflects Any Origin With Credentials (origin: true + credentials: true, CWE-942)",
+   "severity": "HIGH",
+   "source": "lib/rules/js-frameworks-v4-rules.ts",
+   "preciseLocation": true,
+   "tested": true,
+   "inCatalog": false
+  },
+  {
+   "ruleId": 28924,
+   "code": "RULE-28924",
+   "title": "Origin Allow-List Bypassable (Unanchored Regex / includes / endsWith / startsWith)",
+   "severity": "UNKNOWN",
+   "source": "lib/rules/js-frameworks-v4-rules.ts",
+   "preciseLocation": true,
+   "tested": true,
+   "inCatalog": false
+  },
+  {
+   "ruleId": 28925,
+   "code": "RULE-28925",
+   "title": "Hardcoded Session / JWT Signing Secret in Framework Auth Configuration (CWE-798)",
+   "severity": "HIGH",
+   "source": "lib/rules/js-frameworks-v4-rules.ts",
+   "preciseLocation": true,
+   "tested": true,
+   "inCatalog": false
+  },
+  {
+   "ruleId": 28926,
+   "code": "RULE-28926",
+   "title": "Server Trusts JWT Claims Decoded Without Verifying the Signature (CWE-345)",
+   "severity": "HIGH",
+   "source": "lib/rules/js-frameworks-v4-rules.ts",
+   "preciseLocation": true,
+   "tested": true,
+   "inCatalog": false
+  },
+  {
+   "ruleId": 28927,
+   "code": "RULE-28927",
+   "title": "Apollo Server CSRF Prevention Disabled",
+   "severity": "MEDIUM",
+   "source": "lib/rules/js-frameworks-v4-rules.ts",
+   "preciseLocation": true,
+   "tested": true,
+   "inCatalog": false
+  },
+  {
+   "ruleId": 28928,
+   "code": "RULE-28928",
+   "title": "SQL Injection: Request Input in a TypeORM orderBy / groupBy / select Expression (CWE-89)",
+   "severity": "HIGH",
+   "source": "lib/rules/js-frameworks-v4-rules.ts",
+   "preciseLocation": true,
+   "tested": true,
+   "inCatalog": false
+  },
+  {
+   "ruleId": 28929,
+   "code": "RULE-28929",
+   "title": "Electron Window Disables Web Security (Same-Origin Policy / Mixed Content)",
+   "severity": "HIGH",
+   "source": "lib/rules/js-frameworks-v4-rules.ts",
+   "preciseLocation": true,
+   "tested": true,
+   "inCatalog": false
+  },
+  {
+   "ruleId": 28930,
+   "code": "RULE-28930",
+   "title": "Electron Renderer Runs With Node Integration / Without Context Isolation",
+   "severity": "UNKNOWN",
+   "source": "lib/rules/js-frameworks-v4-rules.ts",
+   "preciseLocation": true,
+   "tested": true,
+   "inCatalog": false
+  },
+  {
+   "ruleId": 28931,
+   "code": "RULE-28931",
+   "title": "NODE_TLS_REJECT_UNAUTHORIZED = 0 Disables Certificate Checks for the Whole Process",
+   "severity": "HIGH",
+   "source": "lib/rules/js-frameworks-v4-rules.ts",
+   "preciseLocation": true,
+   "tested": true,
+   "inCatalog": false
+  },
+  {
+   "ruleId": 28932,
+   "code": "RULE-28932",
+   "title": "File or Directory Made World-Writable (CWE-732)",
+   "severity": "MEDIUM",
+   "source": "lib/rules/js-frameworks-v4-rules.ts",
+   "preciseLocation": true,
+   "tested": true,
+   "inCatalog": false
+  },
+  {
+   "ruleId": 28933,
+   "code": "RULE-28933",
+   "title": "Sandboxed srcdoc iframe Allows Scripts and Same-Origin (Sandbox Escape)",
+   "severity": "MEDIUM",
+   "source": "lib/rules/js-frameworks-v4-rules.ts",
+   "preciseLocation": true,
+   "tested": true,
+   "inCatalog": false
+  },
+  {
+   "ruleId": 28934,
+   "code": "RULE-28934",
+   "title": "Content-Security-Policy script-src Allows ",
+   "severity": "LOW",
+   "source": "lib/rules/js-frameworks-v4-rules.ts",
+   "preciseLocation": true,
+   "tested": true,
+   "inCatalog": false
+  },
+  {
+   "ruleId": 28935,
+   "code": "RULE-28935",
+   "title": "Password Check Uses an Unawaited Promise (Any Password Accepted)",
+   "severity": "HIGH",
+   "source": "lib/rules/js-frameworks-v4-rules.ts",
+   "preciseLocation": true,
+   "tested": true,
+   "inCatalog": false
+  },
+  {
+   "ruleId": 28936,
+   "code": "RULE-28936",
+   "title": "Auth Token Stored in a JavaScript-Readable Cookie",
+   "severity": "MEDIUM",
+   "source": "lib/rules/js-frameworks-v4-rules.ts",
+   "preciseLocation": true,
+   "tested": true,
+   "inCatalog": false
+  },
+  {
+   "ruleId": 28937,
+   "code": "RULE-28937",
+   "title": "Socket.IO User Identity Taken From Client Handshake Data (Impersonation)",
+   "severity": "HIGH",
+   "source": "lib/rules/js-frameworks-v4-rules.ts",
+   "preciseLocation": true,
+   "tested": true,
+   "inCatalog": false
+  },
+  {
+   "ruleId": 28938,
+   "code": "RULE-28938",
+   "title": "User Identity Parsed From a Plain (Unsigned) Cookie",
+   "severity": "HIGH",
+   "source": "lib/rules/js-frameworks-v4-rules.ts",
+   "preciseLocation": true,
+   "tested": true,
+   "inCatalog": false
+  },
+  {
+   "ruleId": 29301,
+   "code": "RULE-29301",
+   "title": "IDOR: Record Accessed by Request ID Without an Ownership Check",
+   "severity": "HIGH",
+   "source": "lib/rules/ast-flow-rules.ts",
+   "preciseLocation": true,
+   "tested": true,
+   "inCatalog": false
+  },
+  {
+   "ruleId": 29302,
+   "code": "RULE-29302",
+   "title": "Unauthenticated Mutation: Endpoint Modifies a Caller-Chosen Record",
+   "severity": "HIGH",
+   "source": "lib/rules/ast-flow-rules.ts",
+   "preciseLocation": true,
+   "tested": true,
+   "inCatalog": false
+  },
+  {
+   "ruleId": 29303,
+   "code": "RULE-29303",
+   "title": "SQL Injection: Request Input Reaches a Raw Query Through Variables (CWE-89)",
+   "severity": "CRITICAL",
+   "source": "lib/rules/ast-flow-rules.ts",
+   "preciseLocation": true,
+   "tested": true,
+   "inCatalog": false
+  },
+  {
+   "ruleId": 29304,
+   "code": "RULE-29304",
+   "title": "Command Injection: Request Input Reaches a Shell Command Through Variables (CWE-78)",
+   "severity": "CRITICAL",
+   "source": "lib/rules/ast-flow-rules.ts",
+   "preciseLocation": true,
+   "tested": true,
+   "inCatalog": false
+  },
+  {
+   "ruleId": 29305,
+   "code": "RULE-29305",
+   "title": "Path Traversal: Request Input Reaches a File System Path (CWE-22)",
+   "severity": "HIGH",
+   "source": "lib/rules/ast-flow-rules.ts",
+   "preciseLocation": true,
+   "tested": true,
+   "inCatalog": false
+  },
+  {
+   "ruleId": 29306,
+   "code": "RULE-29306",
+   "title": "SSRF: Request Input Chooses the Host of a Server-Side Request (CWE-918)",
+   "severity": "HIGH",
+   "source": "lib/rules/ast-flow-rules.ts",
+   "preciseLocation": true,
+   "tested": true,
+   "inCatalog": false
+  },
+  {
+   "ruleId": 29307,
+   "code": "RULE-29307",
+   "title": "Open Redirect: Request Input Chooses the Redirect Target (CWE-601)",
+   "severity": "MEDIUM",
+   "source": "lib/rules/ast-flow-rules.ts",
+   "preciseLocation": true,
+   "tested": true,
+   "inCatalog": false
+  },
+  {
+   "ruleId": 29308,
+   "code": "RULE-29308",
+   "title": "XSS: Request/URL Input Rendered as HTML (CWE-79)",
+   "severity": "HIGH",
+   "source": "lib/rules/ast-flow-rules.ts",
    "preciseLocation": true,
    "tested": true,
    "inCatalog": false
