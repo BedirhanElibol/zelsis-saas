@@ -2,22 +2,13 @@
 
 import React, { useState } from 'react';
 import { m } from 'framer-motion';
-import { 
-   
-  ArrowRight, 
-  Terminal, 
-   
-   
-  ExternalLink,
-  Lock,
-  Loader2
-} from 'lucide-react';
+import { ArrowRight, Terminal, ExternalLink, Lock, Loader2 } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import { normalizeRepoUrl } from '@/lib/github-api';
 import { ScanPreviewCard, ScanPreviewResult } from '@/components/saas/ScanPreviewCard';
 import benchmark from '@/data/benchmark-summary.generated.json';
 import { HeroGateMock } from './HeroGateMock';
-import { CODE_RETENTION_STATEMENT } from '@/lib/data-retention';
+import { CODE_RETENTION_SHORT } from '@/lib/data-retention';
 
 interface SaasHeroProps {
   onOpenDashboard?: (repoUrl?: string) => void;
@@ -90,10 +81,10 @@ export const SaasHero: React.FC<SaasHeroProps> = ({ onOpenDashboard }) => {
       <div className="relative z-10 max-w-6xl mx-auto w-full flex flex-col items-center text-center">
         {/* Plain elements: the headline is the LCP, so it must not wait for hydration to fade in */}
         <h1 className="text-4xl sm:text-6xl lg:text-7xl font-extrabold text-[#EDEDED] tracking-tight leading-[1.06] max-w-4xl mb-6 [text-wrap:balance]">
-          Catch critical flaws in your app <span className="text-emerald-400">before your users do.</span>
+          Find the flaws in your app <span className="text-emerald-400">before your users do.</span>
         </h1>
         <p className="text-base sm:text-lg lg:text-xl text-[#A1A1AA] max-w-3xl mx-auto leading-relaxed mt-6 mb-10 font-sans font-normal">
-          Stop fatal production regressions before they merge. Zelsis automatically evaluates critical OWASP security vulnerabilities, database RLS leaks, UI/UX accessibility, and cloud container configurations in memory before code reaches production.
+          Zelsis checks your repo for leaked keys, open Supabase RLS policies, broken auth, vulnerable dependencies, accessibility failures and risky cloud config, and blocks the pull request when something critical slips in. Paste a public repo and see the results in seconds.
         </p>
 
         {/* Direct Repository Scan Command Bar */}
@@ -164,7 +155,7 @@ export const SaasHero: React.FC<SaasHeroProps> = ({ onOpenDashboard }) => {
         >
           <div className="flex items-center gap-2">
             <span className="w-1.5 h-1.5 rounded-full bg-white/40" />
-            <span>{CODE_RETENTION_STATEMENT}</span>
+            <a href="/privacy" className="hover:text-white transition-colors">{CODE_RETENTION_SHORT}</a>
           </div>
           <div className="flex items-center gap-2">
             <span className="w-1.5 h-1.5 rounded-full bg-white/40" />

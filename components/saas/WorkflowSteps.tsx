@@ -1,16 +1,6 @@
 'use client';
 
 import React, { useState } from 'react';
-
-import { 
-   
-   
-   
-   
-   
-   
-   
-} from 'lucide-react';
 import { getConfiguredAppUrl } from '@/lib/app-url';
 import { CODE_RETENTION_STATEMENT } from '@/lib/data-retention';
 

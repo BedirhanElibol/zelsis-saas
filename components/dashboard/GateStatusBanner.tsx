@@ -372,20 +372,6 @@ export const GateStatusBanner: React.FC<GateStatusBannerProps> = ({
 
               <button
                 onClick={() => {
-                  onOpenModal('briefing');
-                  setIsToolsMenuOpen(false);
-                }}
-                className="w-full text-left px-3 py-2 rounded-lg text-white hover:bg-white/10 flex items-center gap-2.5 transition-colors cursor-pointer"
-              >
-                <Award size={14} className="text-zinc-400" />
-                <div className="flex flex-col">
-                  <span className="font-bold">Executive Briefing &amp; PDF</span>
-                  <span className="text-[10px] text-[#A1A1AA]">Export certified audit PDF &amp; CISO brief</span>
-                </div>
-              </button>
-
-              <button
-                onClick={() => {
                   onOpenModal('compare');
                   setIsToolsMenuOpen(false);
                 }}
@@ -437,20 +423,6 @@ export const GateStatusBanner: React.FC<GateStatusBannerProps> = ({
                 <div className="flex flex-col">
                   <span className="font-bold">Deployment Manifest</span>
                   <span className="text-[10px] text-[#A1A1AA]">Cryptographic release attestation</span>
-                </div>
-              </button>
-
-              <button
-                onClick={() => {
-                  onOpenModal('pentest');
-                  setIsToolsMenuOpen(false);
-                }}
-                className="w-full text-left px-3 py-2 rounded-lg text-white hover:bg-white/10 flex items-center gap-2.5 transition-colors cursor-pointer"
-              >
-                <ShieldAlert size={14} className="text-zinc-400" />
-                <div className="flex flex-col">
-                  <span className="font-bold">PenTest Payloads</span>
-                  <span className="text-[10px] text-[#A1A1AA]">PoC exploit validation suite</span>
                 </div>
               </button>
 

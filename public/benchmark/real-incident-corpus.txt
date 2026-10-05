@@ -1,0 +1,788 @@
+=== sb-service-role-client | components/admin/user-table.tsx | Supabase service_role in client (vibeappscanner CVE-2025-48757 patterns)
+'use client';
+import { createClient } from '@supabase/supabase-js';
+import { useEffect, useState } from 'react';
+
+const supabase = createClient(process.env.NEXT_PUBLIC_SUPABASE_URL!, process.env.NEXT_PUBLIC_SUPABASE_SERVICE_ROLE_KEY!); <<V
+
+export function UserTable() {
+  const [rows, setRows] = useState<any[]>([]);
+  useEffect(() => { supabase.from('profiles').select('*').then(({ data }) => setRows(data ?? [])); }, []);
+  return <ul>{rows.map((r) => <li key={r.id}>{r.email}</li>)}</ul>;
+}
+=== sb-service-role-use-client | app/dashboard/billing/client.tsx | service role key read in a 'use client' module
+'use client';
+import { createClient } from '@supabase/supabase-js';
+
+export const admin = createClient(process.env.NEXT_PUBLIC_SUPABASE_URL!, process.env.SUPABASE_SERVICE_ROLE_KEY!); <<V
+
+export async function loadInvoices() {
+  const { data } = await admin.from('invoices').select('*');
+  return data;
+}
+=== sb-table-no-rls | supabase/migrations/20250101000000_init.sql | CVE-2025-48757 Lovable: table created without RLS
+create table public.profiles ( <<V
+  id uuid primary key references auth.users(id),
+  email text not null,
+  full_name text,
+  phone text,
+  stripe_customer_id text
+);
+
+create table public.orders (
+  id bigserial primary key,
+  user_id uuid references auth.users(id),
+  amount integer not null
+);
+alter table public.orders enable row level security;
+=== sb-rls-using-true | supabase/migrations/20250102000000_policies.sql | permissive RLS policy using (true)
+alter table public.messages enable row level security;
+create policy "Users can read messages" on public.messages
+  for select using (true); <<V
+=== sb-rls-update-true | supabase/migrations/20250103000000_profiles.sql | permissive update policy lets anyone edit any profile
+alter table public.profiles enable row level security;
+create policy "update profiles" on public.profiles
+  for update to authenticated using (true) with check (true); <<V
+=== sb-public-bucket-sql | supabase/migrations/20250104000000_storage.sql | Tea app: ID/verification photos in public bucket
+insert into storage.buckets (id, name, public) values ('verification-selfies', 'verification-selfies', true); <<V
+=== sb-public-bucket-js | scripts/setup-storage.ts | public bucket for identity documents via SDK
+import { createClient } from '@supabase/supabase-js';
+const supabase = createClient(process.env.SUPABASE_URL!, process.env.SUPABASE_SERVICE_ROLE_KEY!);
+export async function setup() {
+  await supabase.storage.createBucket('id-documents', { public: true }); <<V
+}
+=== sb-getsession-server | app/api/account/delete/route.ts | getSession() trusted on the server (Supabase docs warn)
+import { createClient } from '@/lib/supabase/server';
+export async function POST() {
+  const supabase = await createClient();
+  const { data: { session } } = await supabase.auth.getSession(); <<V
+  if (!session) return new Response('Unauthorized', { status: 401 });
+  await supabase.from('accounts').delete().eq('owner_id', session.user.id);
+  return Response.json({ ok: true });
+}
+=== sb-user-metadata-role | app/admin/actions.ts | authorization on user_metadata (user-editable)
+'use server';
+import { createClient } from '@/lib/supabase/server';
+export async function banUser(userId: string) {
+  const supabase = await createClient();
+  const { data: { user } } = await supabase.auth.getUser();
+  if (user?.user_metadata.role !== 'admin') throw new Error('forbidden'); <<V
+  await supabase.from('profiles').update({ banned: true }).eq('id', userId);
+}
+=== sb-signup-role | app/(auth)/signup/actions.ts | role chosen at signup stored in user metadata
+'use server';
+import { createClient } from '@/lib/supabase/server';
+export async function signup(formData: FormData) {
+  const supabase = await createClient();
+  await supabase.auth.signUp({
+    email: String(formData.get('email')),
+    password: String(formData.get('password')),
+    options: { data: { role: formData.get('role') } }, <<V
+  });
+}
+=== sb-security-definer | supabase/migrations/20250105000000_fn.sql | SECURITY DEFINER without search_path callable by anon
+create or replace function public.delete_account(target uuid)
+returns void language plpgsql security definer as $$ <<V
+begin
+  delete from public.profiles where id = target;
+end;
+$$;
+grant execute on function public.delete_account(uuid) to anon, authenticated;
+=== sb-or-filter-injection | app/api/search/route.ts | PostgREST .or() filter injection from query string
+import { createClient } from '@/lib/supabase/server';
+export async function GET(req: Request) {
+  const q = new URL(req.url).searchParams.get('q') ?? '';
+  const supabase = await createClient();
+  const { data } = await supabase.from('posts').select('*').or(`title.ilike.%${q}%,body.ilike.%${q}%`); <<V
+  return Response.json(data);
+}
+=== sb-admin-idor | app/api/documents/[id]/route.ts | service-role client fetches by URL id, no owner filter
+import { supabaseAdmin } from '@/lib/supabase/admin';
+export async function GET(_req: Request, { params }: { params: Promise<{ id: string }> }) {
+  const { id } = await params;
+  const { data } = await supabaseAdmin.from('documents').select('*').eq('id', id).single(); <<V
+  return Response.json(data);
+}
+=== firestore-open | firestore.rules | Firebase rules open to the world
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    match /{document=**} {
+      allow read, write: if true; <<V
+    }
+  }
+}
+=== firestore-any-auth | firestore.rules | any signed-in user reads every document
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    match /{document=**} {
+      allow read, write: if request.auth != null; <<V
+    }
+  }
+}
+=== firebase-storage-open | storage.rules | Firebase storage public read/write
+rules_version = '2';
+service firebase.storage {
+  match /b/{bucket}/o {
+    match /{allPaths=**} {
+      allow read, write; <<V
+    }
+  }
+}
+=== firebase-rtdb-open | database.rules.json | Realtime DB rules true
+{
+  "rules": {
+    ".read": true, <<V
+    ".write": true
+  }
+}
+=== next-admin-route-noauth | app/api/admin/users/route.ts | CVE-2025-29927 class: admin route relies only on middleware
+import { prisma } from '@/lib/prisma';
+export async function GET() {
+  const users = await prisma.user.findMany(); <<V
+  return Response.json(users);
+}
+export async function DELETE(req: Request) {
+  const { id } = await req.json();
+  await prisma.user.delete({ where: { id } });
+  return Response.json({ ok: true });
+}
+=== next-server-action-noauth | app/projects/actions.ts | server action deletes by id without any auth
+'use server';
+import { prisma } from '@/lib/prisma';
+import { revalidatePath } from 'next/cache';
+export async function deleteProject(id: string) {
+  await prisma.project.delete({ where: { id } }); <<V
+  revalidatePath('/projects');
+}
+=== next-action-userid-param | app/settings/actions.ts | server action trusts userId argument (IDOR)
+'use server';
+import { prisma } from '@/lib/prisma';
+export async function updateProfile(userId: string, name: string) {
+  await prisma.user.update({ where: { id: userId }, data: { name } }); <<V
+}
+=== next-idor-route | app/api/invoices/[id]/route.ts | IDOR: authenticated but no ownership check
+import { auth } from '@/auth';
+import { prisma } from '@/lib/prisma';
+export async function GET(_req: Request, { params }: { params: Promise<{ id: string }> }) {
+  const session = await auth();
+  if (!session) return new Response(null, { status: 401 });
+  const { id } = await params;
+  const invoice = await prisma.invoice.findUnique({ where: { id } }); <<V
+  return Response.json(invoice);
+}
+=== mass-assign-prisma | app/api/me/route.ts | mass assignment: request body straight into update
+import { auth } from '@/auth';
+import { prisma } from '@/lib/prisma';
+export async function PATCH(req: Request) {
+  const session = await auth();
+  if (!session?.user) return new Response(null, { status: 401 });
+  const body = await req.json();
+  const user = await prisma.user.update({ where: { id: session.user.id }, data: body }); <<V
+  return Response.json(user);
+}
+=== mass-assign-supabase | app/api/profile/route.ts | mass assignment into profiles (role escalation)
+import { createClient } from '@/lib/supabase/server';
+export async function PUT(req: Request) {
+  const supabase = await createClient();
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) return new Response(null, { status: 401 });
+  const updates = await req.json();
+  const { data } = await supabase.from('profiles').update(updates).eq('id', user.id).select().single(); <<V
+  return Response.json(data);
+}
+=== mass-assign-mongoose | src/routes/users.js | findByIdAndUpdate(req.params.id, req.body)
+const router = require('express').Router();
+const User = require('../models/User');
+router.put('/:id', async (req, res) => {
+  const user = await User.findByIdAndUpdate(req.params.id, req.body, { new: true }); <<V
+  res.json(user);
+});
+module.exports = router;
+=== mass-assign-sequelize | src/controllers/userController.ts | User.create(req.body)
+import { Request, Response } from 'express';
+import { User } from '../models';
+export async function register(req: Request, res: Response) {
+  const user = await User.create(req.body); <<V
+  res.status(201).json(user);
+}
+=== open-redirect-callback | app/auth/callback/route.ts | auth callback redirects to ?next= (official template origin+next)
+import { NextResponse } from 'next/server';
+import { createClient } from '@/lib/supabase/server';
+export async function GET(request: Request) {
+  const { searchParams, origin } = new URL(request.url);
+  const code = searchParams.get('code');
+  const next = searchParams.get('next') ?? '/';
+  if (code) {
+    const supabase = await createClient();
+    await supabase.auth.exchangeCodeForSession(code);
+  }
+  return NextResponse.redirect(`${origin}${next}`); <<V
+}
+=== open-redirect-express | src/routes/auth.ts | express login redirects to returnTo
+import { Router } from 'express';
+const router = Router();
+router.post('/login', async (req, res) => {
+  req.session.userId = (await login(req.body)).id;
+  res.redirect(req.query.returnTo as string); <<V
+});
+export default router;
+=== ssrf-preview | app/api/link-preview/route.ts | SSRF in URL preview endpoint
+export async function GET(req: Request) {
+  const target = new URL(req.url).searchParams.get('url')!;
+  const res = await fetch(target); <<V
+  const html = await res.text();
+  const title = html.match(/<title>(.*?)<\/title>/)?.[1];
+  return Response.json({ title });
+}
+=== ssrf-axios | src/routes/proxy.js | SSRF via axios.get(req.query.url)
+const axios = require('axios');
+app.get('/api/image-proxy', async (req, res) => {
+  const response = await axios.get(req.query.url, { responseType: 'arraybuffer' }); <<V
+  res.set('Content-Type', response.headers['content-type']).send(response.data);
+});
+=== ssrf-python | app/routes/preview.py | SSRF in Flask
+import requests
+from flask import Flask, request, jsonify
+app = Flask(__name__)
+@app.route('/preview')
+def preview():
+    r = requests.get(request.args.get('url'), timeout=5) <<V
+    return jsonify(status=r.status_code, body=r.text[:500])
+=== ssrf-webhook-test | app/api/integrations/webhook-check/route.ts | user-configured webhook URL fetched server side
+import { auth } from '@/auth';
+export async function POST(req: Request) {
+  const session = await auth();
+  if (!session) return new Response(null, { status: 401 });
+  const { webhookUrl } = await req.json();
+  const r = await fetch(webhookUrl, { method: 'POST', body: JSON.stringify({ test: true }) }); <<V
+  return Response.json({ status: r.status });
+}
+=== jwt-decode-auth | lib/auth.ts | jwt.decode used for authentication
+import jwt from 'jsonwebtoken';
+export function getUserFromRequest(req: Request) {
+  const token = req.headers.get('authorization')?.replace('Bearer ', '');
+  if (!token) return null;
+  const payload = jwt.decode(token) as { sub: string; role: string }; <<V
+  return { id: payload.sub, role: payload.role };
+}
+=== jwt-none-alg | src/middleware/auth.ts | jwt.verify allows none algorithm
+import jwt from 'jsonwebtoken';
+export function verify(token: string) {
+  return jwt.verify(token, process.env.JWT_SECRET!, { algorithms: ['HS256', 'none'] }); <<V
+}
+=== jwt-secret-fallback | lib/session.ts | hardcoded JWT secret fallback
+import { SignJWT, jwtVerify } from 'jose';
+const secret = new TextEncoder().encode(process.env.JWT_SECRET || 'super-secret-key'); <<V
+export async function sign(payload: Record<string, unknown>) {
+  return new SignJWT(payload).setProtectedHeader({ alg: 'HS256' }).setExpirationTime('7d').sign(secret);
+}
+export async function verify(token: string) { return jwtVerify(token, secret); }
+=== jwt-python-noverify | app/core/security.py | PyJWT verify_signature False
+import jwt
+def current_user_id(token: str) -> str:
+    payload = jwt.decode(token, options={"verify_signature": False}) <<V
+    return payload["sub"]
+=== nextauth-secret-hardcoded | auth.ts | NextAuth secret hardcoded
+import NextAuth from 'next-auth';
+import GitHub from 'next-auth/providers/github';
+export const { handlers, auth, signIn, signOut } = NextAuth({
+  providers: [GitHub],
+  secret: 'my-nextauth-secret-123', <<V
+});
+=== nextauth-dangerous-linking | auth.ts | allowDangerousEmailAccountLinking on a provider
+import NextAuth from 'next-auth';
+import Google from 'next-auth/providers/google';
+import Credentials from 'next-auth/providers/credentials';
+export const { handlers, auth } = NextAuth({
+  providers: [
+    Google({ allowDangerousEmailAccountLinking: true }), <<V
+  ],
+});
+=== plaintext-password-compare | lib/auth/credentials.ts | plaintext password compare in authorize()
+import Credentials from 'next-auth/providers/credentials';
+import { prisma } from '@/lib/prisma';
+export const credentials = Credentials({
+  async authorize(creds) {
+    const user = await prisma.user.findUnique({ where: { email: String(creds.email) } });
+    if (user && user.password === creds.password) return user; <<V
+    return null;
+  },
+});
+=== hardcoded-admin-login | app/api/admin/login/route.ts | hardcoded admin credentials
+import { cookies } from 'next/headers';
+export async function POST(req: Request) {
+  const { email, password } = await req.json();
+  if (email === 'admin@myapp.com' && password === 'Admin123!') { <<V
+    (await cookies()).set('admin', '1');
+    return Response.json({ ok: true });
+  }
+  return new Response(null, { status: 401 });
+}
+=== md5-password | src/services/user.service.ts | MD5 password hashing
+import crypto from 'crypto';
+export function hashPassword(password: string) {
+  return crypto.createHash('md5').update(password).digest('hex'); <<V
+}
+=== reset-token-mathrandom | app/api/forgot-password/route.ts | password reset token from Math.random
+import { prisma } from '@/lib/prisma';
+export async function POST(req: Request) {
+  const { email } = await req.json();
+  const token = Math.random().toString(36).substring(2); <<V
+  await prisma.passwordReset.create({ data: { email, token, expires: new Date(Date.now() + 3600e3) } });
+  return Response.json({ ok: true });
+}
+=== otp-mathrandom | lib/otp.ts | OTP from Math.random
+export function generateOtp() {
+  return Math.floor(100000 + Math.random() * 900000).toString(); <<V
+}
+=== role-cookie | app/admin/page.tsx | admin gate on client-controlled cookie
+import { cookies } from 'next/headers';
+import { redirect } from 'next/navigation';
+export default async function AdminPage() {
+  const role = (await cookies()).get('role')?.value;
+  if (role !== 'admin') redirect('/'); <<V
+  return <AdminDashboard />;
+}
+=== role-header | app/api/admin/stats/route.ts | trusts x-user-role request header
+export async function GET(req: Request) {
+  if (req.headers.get('x-user-role') !== 'admin') { <<V
+    return new Response('Forbidden', { status: 403 });
+  }
+  return Response.json(await getStats());
+}
+=== role-query | src/routes/admin.js | admin flag from query string
+app.get('/admin/export', (req, res) => {
+  if (req.query.admin === 'true') { <<V
+    return res.json(exportAllUsers());
+  }
+  res.sendStatus(403);
+});
+=== debug-env | app/api/debug/route.ts | debug endpoint dumps process.env
+export async function GET() {
+  return Response.json({ env: process.env, time: Date.now() }); <<V
+}
+=== error-stack-leak | app/api/orders/route.ts | stack trace returned to client
+export async function POST(req: Request) {
+  try {
+    return Response.json(await createOrder(await req.json()));
+  } catch (err: any) {
+    return Response.json({ error: err.message, stack: err.stack }, { status: 500 }); <<V
+  }
+}
+=== cors-reflect-creds | src/server.ts | reflects Origin with credentials
+import express from 'express';
+const app = express();
+app.use((req, res, next) => {
+  res.setHeader('Access-Control-Allow-Origin', req.headers.origin || '*'); <<V
+  res.setHeader('Access-Control-Allow-Credentials', 'true');
+  next();
+});
+=== cors-origin-true | src/app.ts | cors({ origin: true, credentials: true })
+import express from 'express';
+import cors from 'cors';
+const app = express();
+app.use(cors({ origin: true, credentials: true })); <<V
+export default app;
+=== cors-next-config | next.config.js | CORS * with credentials in next.config headers
+module.exports = {
+  async headers() {
+    return [{
+      source: '/api/:path*',
+      headers: [
+        { key: 'Access-Control-Allow-Credentials', value: 'true' },
+        { key: 'Access-Control-Allow-Origin', value: '*' }, <<V
+      ],
+    }];
+  },
+};
+=== upload-path-traversal | app/api/upload/route.ts | upload saved with client file name
+import { writeFile } from 'fs/promises';
+import path from 'path';
+export async function POST(req: Request) {
+  const form = await req.formData();
+  const file = form.get('file') as File;
+  const bytes = Buffer.from(await file.arrayBuffer());
+  await writeFile(path.join(process.cwd(), 'public/uploads', file.name), bytes); <<V
+  return Response.json({ url: `/uploads/${file.name}` });
+}
+=== upload-multer-public | src/routes/upload.js | multer originalname into public dir, no filter
+const multer = require('multer');
+const storage = multer.diskStorage({
+  destination: 'public/uploads',
+  filename: (req, file, cb) => cb(null, file.originalname), <<V
+});
+const upload = multer({ storage });
+app.post('/avatar', upload.single('avatar'), (req, res) => res.json({ path: req.file.path }));
+=== upload-sb-user-path | app/api/avatar/route.ts | storage upload path from client name with upsert
+import { createClient } from '@/lib/supabase/server';
+export async function POST(req: Request) {
+  const supabase = await createClient();
+  const form = await req.formData();
+  const file = form.get('file') as File;
+  const { data } = await supabase.storage.from('avatars').upload(file.name, file, { upsert: true }); <<V
+  return Response.json(data);
+}
+=== stripe-webhook-nosig | app/api/webhooks/stripe/route.ts | Stripe webhook without signature verification
+import { prisma } from '@/lib/prisma';
+export async function POST(req: Request) {
+  const event = await req.json(); <<V
+  if (event.type === 'checkout.session.completed') {
+    await prisma.user.update({ where: { stripeCustomerId: event.data.object.customer }, data: { plan: 'pro' } });
+  }
+  return new Response('ok');
+}
+=== lemonsqueezy-nosig | app/api/webhooks/lemonsqueezy/route.ts | LemonSqueezy webhook trusts payload
+import { db } from '@/lib/db';
+export async function POST(req: Request) {
+  const payload = await req.json(); <<V
+  if (payload.meta.event_name === 'subscription_created') {
+    await db.subscription.create({ data: { userId: payload.meta.custom_data.user_id, status: 'active' } });
+  }
+  return Response.json({ received: true });
+}
+=== webhook-timing-compare | app/api/webhooks/polar/route.ts | HMAC compared with !==
+import crypto from 'crypto';
+export async function POST(req: Request) {
+  const raw = await req.text();
+  const signature = req.headers.get('webhook-signature');
+  const expected = crypto.createHmac('sha256', process.env.POLAR_WEBHOOK_SECRET!).update(raw).digest('hex');
+  if (signature !== expected) return new Response('bad sig', { status: 401 }); <<V
+  await handle(JSON.parse(raw));
+  return new Response('ok');
+}
+=== stripe-client-price | app/api/checkout/route.ts | Stripe Checkout amount from client
+import Stripe from 'stripe';
+const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!);
+export async function POST(req: Request) {
+  const { amount, name } = await req.json();
+  const session = await stripe.checkout.sessions.create({
+    mode: 'payment',
+    line_items: [{ quantity: 1, price_data: { currency: 'usd', unit_amount: amount, product_data: { name } } }], <<V
+    success_url: 'https://example.com/success',
+  });
+  return Response.json({ url: session.url });
+}
+=== clerk-public-api | middleware.ts | Clerk: whole /api marked public
+import { clerkMiddleware, createRouteMatcher } from '@clerk/nextjs/server';
+const isPublicRoute = createRouteMatcher(['/', '/sign-in(.*)', '/api(.*)']); <<V
+export default clerkMiddleware(async (auth, req) => {
+  if (!isPublicRoute(req)) await auth.protect();
+});
+=== cron-nosecret | app/api/cron/cleanup/route.ts | Vercel cron route without CRON_SECRET check
+import { prisma } from '@/lib/prisma';
+export async function GET() {
+  await prisma.session.deleteMany({ where: { expires: { lt: new Date() } } }); <<V
+  await prisma.user.deleteMany({ where: { deletedAt: { not: null } } });
+  return Response.json({ ok: true });
+}
+=== sqli-queryrawunsafe | app/api/products/route.ts | Prisma $queryRawUnsafe with interpolation
+import { prisma } from '@/lib/prisma';
+export async function GET(req: Request) {
+  const sort = new URL(req.url).searchParams.get('sort');
+  const rows = await prisma.$queryRawUnsafe(`SELECT * FROM "Product" ORDER BY ${sort}`); <<V
+  return Response.json(rows);
+}
+=== sqli-drizzle-raw | lib/db/queries.ts | drizzle sql.raw with user input
+import { sql } from 'drizzle-orm';
+import { db } from './index';
+export async function searchUsers(term: string) {
+  return db.execute(sql.raw(`SELECT id, email FROM users WHERE email LIKE '%${term}%'`)); <<V
+}
+=== sqli-knex-raw | src/repositories/report.repo.ts | knex.raw interpolation
+import knex from '../db';
+export async function report(req: any) {
+  return knex.raw(`SELECT * FROM orders WHERE status = '${req.query.status}'`); <<V
+}
+=== sqli-pg | src/db/users.js | pg pool.query string concatenation
+const { Pool } = require('pg');
+const pool = new Pool();
+async function findByEmail(email) {
+  const { rows } = await pool.query("SELECT * FROM users WHERE email = '" + email + "'"); <<V
+  return rows[0];
+}
+module.exports = { findByEmail };
+=== nosqli-login | src/routes/login.js | NoSQL injection in login
+app.post('/login', async (req, res) => {
+  const user = await User.findOne({ email: req.body.email, password: req.body.password }); <<V
+  if (!user) return res.status(401).end();
+  res.json({ token: sign(user) });
+});
+=== xss-dangerously | components/post-body.tsx | stored XSS via dangerouslySetInnerHTML
+export function PostBody({ post }: { post: { content: string } }) {
+  return <article dangerouslySetInnerHTML={{ __html: post.content }} />; <<V
+}
+=== xss-marked | components/markdown.tsx | marked output unsanitized
+import { marked } from 'marked';
+export function Markdown({ source }: { source: string }) {
+  return <div className="prose" dangerouslySetInnerHTML={{ __html: marked.parse(source) as string }} />; <<V
+}
+=== xss-href-user | components/profile-card.tsx | user-controlled URL in href (javascript:)
+export function ProfileCard({ profile }: { profile: { name: string; website: string } }) {
+  return <a href={profile.website} className="underline">{profile.name}</a>; <<V
+}
+=== cmdi-exec | app/api/thumbnail/route.ts | command injection via exec template
+import { exec } from 'child_process';
+export async function POST(req: Request) {
+  const { filename } = await req.json();
+  exec(`convert uploads/${filename} -resize 200x200 thumbs/${filename}`); <<V
+  return Response.json({ ok: true });
+}
+=== path-traversal-read | app/api/docs/route.ts | path traversal reading files by slug
+import { readFile } from 'fs/promises';
+import path from 'path';
+export async function GET(req: Request) {
+  const slug = new URL(req.url).searchParams.get('slug')!;
+  const md = await readFile(path.join(process.cwd(), 'content', slug + '.md'), 'utf8'); <<V
+  return new Response(md);
+}
+=== proto-pollution | src/routes/settings.js | lodash merge with req.body
+const _ = require('lodash');
+app.post('/settings', (req, res) => {
+  const settings = _.merge({}, defaultSettings, req.body); <<V
+  res.json(settings);
+});
+=== next-public-openai | components/chat.tsx | OpenAI key in NEXT_PUBLIC env used from client
+'use client';
+export async function ask(prompt: string) {
+  const res = await fetch('https://api.openai.com/v1/chat/completions', {
+    method: 'POST',
+    headers: { Authorization: `Bearer ${process.env.NEXT_PUBLIC_OPENAI_API_KEY}` }, <<V
+    body: JSON.stringify({ model: 'gpt-4o-mini', messages: [{ role: 'user', content: prompt }] }),
+  });
+  return res.json();
+}
+=== vite-openai-browser | src/lib/openai.ts | VITE_ secret + dangerouslyAllowBrowser
+import OpenAI from 'openai';
+export const openai = new OpenAI({ apiKey: import.meta.env.VITE_OPENAI_API_KEY, dangerouslyAllowBrowser: true }); <<V
+=== next-public-stripe-secret | .env.example | Stripe secret key under NEXT_PUBLIC_
+NEXT_PUBLIC_SUPABASE_URL=
+NEXT_PUBLIC_STRIPE_SECRET_KEY= <<V
+=== hardcoded-stripe-key | lib/stripe.ts | hardcoded live Stripe key
+import Stripe from 'stripe';
+export const stripe = new Stripe('{{FAKE_STRIPE_LIVE_KEY}}', { apiVersion: '2024-06-20' }); <<V
+=== graphql-introspection | src/graphql/server.ts | Apollo introspection forced on in production
+import { ApolloServer } from '@apollo/server';
+export const server = new ApolloServer({
+  typeDefs,
+  resolvers,
+  introspection: true, <<V
+});
+=== graphql-resolver-noauth | src/graphql/resolvers.ts | mutation resolver without context user check
+export const resolvers = {
+  Mutation: {
+    deleteUser: async (_: unknown, { id }: { id: string }, ctx: Context) => {
+      return ctx.prisma.user.delete({ where: { id } }); <<V
+    },
+  },
+};
+=== trpc-public-mutation | server/api/routers/post.ts | tRPC publicProcedure deletes by id
+import { z } from 'zod';
+import { createTRPCRouter, publicProcedure } from '@/server/api/trpc';
+export const postRouter = createTRPCRouter({
+  delete: publicProcedure.input(z.object({ id: z.string() })).mutation(async ({ ctx, input }) => { <<V
+    return ctx.db.post.delete({ where: { id: input.id } });
+  }),
+});
+=== fastapi-no-depends | app/api/routes/users.py | FastAPI delete route without auth dependency
+from fastapi import APIRouter, Depends
+from sqlalchemy.orm import Session
+from app.db import get_db
+from app.models import User
+router = APIRouter()
+
+@router.delete("/users/{user_id}")
+def delete_user(user_id: int, db: Session = Depends(get_db)): <<V
+    db.query(User).filter(User.id == user_id).delete()
+    db.commit()
+    return {"ok": True}
+=== fastapi-raw-sql | app/crud/items.py | SQLAlchemy text() f-string
+from sqlalchemy import text
+def search_items(db, name: str):
+    return db.execute(text(f"SELECT * FROM items WHERE name = '{name}'")).fetchall() <<V
+=== django-raw | shop/views.py | Django raw SQL with f-string
+from django.http import JsonResponse
+from .models import Product
+def search(request):
+    q = request.GET.get("q", "")
+    rows = Product.objects.raw(f"SELECT * FROM shop_product WHERE name LIKE '%{q}%'") <<V
+    return JsonResponse([p.name for p in rows], safe=False)
+=== django-debug | config/settings.py | DEBUG True + ALLOWED_HOSTS *
+SECRET_KEY = "django-insecure-8f$k2!x@p3m#q9w7e1r5t0y"
+DEBUG = True <<V
+ALLOWED_HOSTS = ["*"]
+=== django-csrf-exempt | payments/views.py | csrf_exempt on state-changing view
+from django.views.decorators.csrf import csrf_exempt
+from django.http import JsonResponse
+@csrf_exempt <<V
+def change_email(request):
+    request.user.email = request.POST["email"]
+    request.user.save()
+    return JsonResponse({"ok": True})
+=== drf-fields-all | accounts/serializers.py | DRF serializer exposes/accepts all User fields
+from rest_framework import serializers
+from django.contrib.auth.models import User
+class UserSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = User
+        fields = '__all__' <<V
+=== flask-debug | app.py | Flask debug server exposed
+from flask import Flask
+app = Flask(__name__)
+if __name__ == "__main__":
+    app.run(host="0.0.0.0", debug=True) <<V
+=== pickle-loads | app/api/session.py | pickle.loads on request data
+import pickle
+from flask import request
+@app.route("/restore", methods=["POST"])
+def restore():
+    state = pickle.loads(request.data) <<V
+    return str(state)
+=== yaml-load | app/config_upload.py | yaml.load on upload
+import yaml
+from flask import request
+@app.post("/import")
+def import_cfg():
+    cfg = yaml.load(request.files["file"].read(), Loader=yaml.Loader) <<V
+    return cfg
+=== cookie-httponly-false | app/api/login/route.ts | session token cookie readable by JS
+import { cookies } from 'next/headers';
+export async function POST(req: Request) {
+  const token = await login(await req.json());
+  (await cookies()).set('session', token, { httpOnly: false, secure: true, path: '/' }); <<V
+  return Response.json({ ok: true });
+}
+=== express-session-insecure | src/app.js | express-session hardcoded secret
+const session = require('express-session');
+app.use(session({
+  secret: 'keyboard cat', <<V
+  resave: false,
+  saveUninitialized: true,
+  cookie: { secure: false },
+}));
+=== express-static-root | src/server.js | static serving of project root (exposes .env)
+const express = require('express');
+const app = express();
+app.use(express.static(__dirname + '/..')); <<V
+app.listen(3000);
+=== express-static-dot | server.js | static serving of cwd
+const express = require('express');
+const app = express();
+app.use(express.static('.')); <<V
+app.listen(3000);
+=== images-remote-any | next.config.ts | next/image remotePatterns hostname **
+import type { NextConfig } from 'next';
+const config: NextConfig = {
+  images: {
+    remotePatterns: [{ protocol: 'https', hostname: '**' }], <<V
+  },
+};
+export default config;
+=== go-sqli | internal/store/user.go | Go fmt.Sprintf SQL
+package store
+import ("database/sql"; "fmt")
+func FindUser(db *sql.DB, name string) (*sql.Rows, error) {
+	return db.Query(fmt.Sprintf("SELECT * FROM users WHERE name = '%s'", name)) <<V
+}
+=== go-tls-skip | internal/client/http.go | InsecureSkipVerify
+package client
+import ("crypto/tls"; "net/http")
+var Client = &http.Client{Transport: &http.Transport{TLSClientConfig: &tls.Config{InsecureSkipVerify: true}}} <<V
+=== node-tls-reject | lib/http.ts | rejectUnauthorized false
+import https from 'https';
+export const agent = new https.Agent({ rejectUnauthorized: false }); <<V
+=== eval-user | app/api/calc/route.ts | eval on user expression
+export async function POST(req: Request) {
+  const { expr } = await req.json();
+  return Response.json({ result: eval(expr) }); <<V
+}
+=== regex-dos | app/api/filter/route.ts | RegExp from user input
+export async function GET(req: Request) {
+  const q = new URL(req.url).searchParams.get('q')!;
+  const re = new RegExp(q); <<V
+  return Response.json(items.filter((i) => re.test(i.name)));
+}
+=== ssti-ejs | src/routes/preview.js | ejs.render of user template
+const ejs = require('ejs');
+app.post('/preview', (req, res) => {
+  res.send(ejs.render(req.body.template, { user: req.user })); <<V
+});
+=== login-no-ratelimit | app/api/auth/login/route.ts | login without rate limiting
+import bcrypt from 'bcryptjs';
+import { prisma } from '@/lib/prisma';
+export async function POST(req: Request) {
+  const { email, password } = await req.json(); <<V
+  const user = await prisma.user.findUnique({ where: { email } });
+  if (!user || !(await bcrypt.compare(password, user.passwordHash))) return new Response(null, { status: 401 });
+  return Response.json({ token: await createSession(user.id) });
+}
+=== otp-verify-no-ratelimit | app/api/auth/verify-otp/route.ts | OTP verify without attempts limit
+import { prisma } from '@/lib/prisma';
+export async function POST(req: Request) {
+  const { phone, code } = await req.json(); <<V
+  const otp = await prisma.otp.findFirst({ where: { phone, code } });
+  if (!otp) return new Response(null, { status: 401 });
+  return Response.json({ token: await createSession(otp.userId) });
+}
+=== llm-sql | app/api/ask-db/route.ts | LLM output executed as SQL
+import { generateText } from 'ai';
+import { openai } from '@ai-sdk/openai';
+import { prisma } from '@/lib/prisma';
+export async function POST(req: Request) {
+  const { question } = await req.json();
+  const { text } = await generateText({ model: openai('gpt-4o'), prompt: `Write SQL for: ${question}` });
+  const rows = await prisma.$queryRawUnsafe(text); <<V
+  return Response.json(rows);
+}
+=== supabase-anon-insert-admin | app/api/invite/route.ts | service role key exposed in response
+export async function GET() {
+  return Response.json({ url: process.env.SUPABASE_URL, key: process.env.SUPABASE_SERVICE_ROLE_KEY }); <<V
+}
+=== laravel-guarded | app/Models/User.php | Laravel $guarded = []
+<?php
+namespace App\Models;
+use Illuminate\Foundation\Auth\User as Authenticatable;
+class User extends Authenticatable
+{
+    protected $guarded = []; <<V
+}
+=== rails-permit-all | app/controllers/users_controller.rb | params.permit!
+class UsersController < ApplicationController
+  def update
+    @user = User.find(params[:id])
+    @user.update(params[:user].permit!) <<V
+    redirect_to @user
+  end
+end
+=== zip-slip | src/services/import.ts | adm-zip extractAllTo of uploaded archive
+import AdmZip from 'adm-zip';
+export function importArchive(buffer: Buffer) {
+  const zip = new AdmZip(buffer);
+  zip.extractAllTo('/var/app/data', true); <<V
+}
+=== xxe | src/services/xml.ts | libxmljs noent
+import libxmljs from 'libxmljs';
+export function parse(xml: string) {
+  return libxmljs.parseXml(xml, { noent: true }); <<V
+}
+=== redirect-next-nav | app/login/actions.ts | server action redirect to form value
+'use server';
+import { redirect } from 'next/navigation';
+export async function login(formData: FormData) {
+  await signIn(formData);
+  redirect(String(formData.get('redirectTo'))); <<V
+}
+=== postmessage-star | components/embed-bridge.tsx | postMessage token with *
+'use client';
+export function sendToken(token: string) {
+  window.parent.postMessage({ type: 'auth', token }, '*'); <<V
+}
+=== ai-tool-shell | app/api/agent/route.ts | agent tool runs shell commands from model
+import { streamText, tool } from 'ai';
+import { execSync } from 'child_process';
+import { z } from 'zod';
+export async function POST(req: Request) {
+  const { messages } = await req.json();
+  return streamText({ model, messages, tools: { run: tool({ parameters: z.object({ cmd: z.string() }), execute: async ({ cmd }) => execSync(cmd).toString() }) } }).toDataStreamResponse(); <<V
+}

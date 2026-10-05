@@ -28,6 +28,14 @@ const ProjectsView = dynamic(() => import('@/components/ProjectsView').then(m =>
 const ScanHistoryView = dynamic(() => import('@/components/ScanHistoryView').then(m => m.ScanHistoryView), { ssr: false });
 const ProjectSettingsView = dynamic(() => import('@/components/ProjectSettingsView').then(m => m.ProjectSettingsView), { ssr: false });
 const CheckoutView = dynamic(() => import('@/components/checkout/CheckoutView').then(m => m.CheckoutView), { ssr: false });
+
+// Labs Views
+const BundleCostAnalyzer = dynamic(() => import('@/components/dashboard/BundleCostAnalyzer').then(m => m.BundleCostAnalyzer), { ssr: false });
+const PenTestPayloadGenerator = dynamic(() => import('@/components/dashboard/PenTestPayloadGenerator').then(m => m.PenTestPayloadGenerator), { ssr: false });
+const ExecutiveBriefingModal = dynamic(() => import('@/components/dashboard/ExecutiveBriefingModal').then(m => m.ExecutiveBriefingModal), { ssr: false });
+const GeoIpTracker = dynamic(() => import('@/components/dashboard/GeoIpTracker').then(m => m.GeoIpTracker), { ssr: false });
+const ThemeContrastAuditor = dynamic(() => import('@/components/dashboard/ThemeContrastAuditor').then(m => m.ThemeContrastAuditor), { ssr: false });
+
 import { safeSetStorageItem } from '@/lib/storage';
 import { ShieldCheck, Plus, Loader2, LogIn } from 'lucide-react';
 import { LifecycleBanner } from '@/components/dashboard/LifecycleBanner';
@@ -674,6 +682,55 @@ function DashboardContent() {
                     router.push('/');
                   }}
                 />
+              </ComponentErrorBoundary>
+            )}
+            {activeNav === 'lab-bundle' && (
+              <ComponentErrorBoundary componentName="BundleCostAnalyzerView">
+                <div className="p-6">
+                  <h1 className="text-2xl font-bold text-white mb-6">Bundle Cost Analyzer</h1>
+                  <BundleCostAnalyzer filesCount={(safeSelectedProject?.findings?.length || 0) + 15} />
+                </div>
+              </ComponentErrorBoundary>
+            )}
+
+            {activeNav === 'lab-pentest' && (
+              <ComponentErrorBoundary componentName="PenTestPayloadGeneratorView">
+                <PenTestPayloadGenerator
+                  isOpen={true}
+                  onClose={() => setActiveNav('dashboard')}
+                  findings={safeSelectedProject?.findings || []}
+                  targetUrl={safeSelectedProject?.repoUrl || 'https://example.com'}
+                />
+              </ComponentErrorBoundary>
+            )}
+
+            {activeNav === 'lab-briefing' && (
+              <ComponentErrorBoundary componentName="ExecutiveBriefingModalView">
+                <ExecutiveBriefingModal
+                  isOpen={true}
+                  onClose={() => setActiveNav('dashboard')}
+                  project={safeSelectedProject!}
+                  userTier={user?.tier}
+                  onOpenCheckout={handleOpenCheckoutModal}
+                />
+              </ComponentErrorBoundary>
+            )}
+
+            {activeNav === 'lab-geoip' && (
+              <ComponentErrorBoundary componentName="GeoIpTrackerView">
+                <div className="p-6">
+                  <h1 className="text-2xl font-bold text-white mb-6">Geo IP Tracker</h1>
+                  <GeoIpTracker />
+                </div>
+              </ComponentErrorBoundary>
+            )}
+
+            {activeNav === 'lab-contrast' && (
+              <ComponentErrorBoundary componentName="ThemeContrastAuditorView">
+                <div className="p-6">
+                  <h1 className="text-2xl font-bold text-white mb-6">Theme Contrast Auditor</h1>
+                  <ThemeContrastAuditor />
+                </div>
               </ComponentErrorBoundary>
             )}
         </>

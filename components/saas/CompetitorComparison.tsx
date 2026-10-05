@@ -1,78 +1,79 @@
-'use client';
-
 import React from 'react';
-import { Check, X, Minus } from 'lucide-react';
-import Link from 'next/link';
-import { priceLabel } from '@/data/pricing-plans';
+import { ENTERPRISE_SEAT_LIMIT, priceLabel } from '@/data/pricing-plans';
 
+/** Competitor prices: verify on each vendor's pricing page and update COMPARED_ON whenever they change. */
+const COMPARED_ON = 'October 2026';
+
+const ROWS: { label: string; zelsis: string; aikido: string; snyk: string; semgrep: string }[] = [
+  {
+    label: 'Paid plan',
+    zelsis: `${priceLabel('Pro')} flat per account; team of ${ENTERPRISE_SEAT_LIMIT} for ${priceLabel('Enterprise')}`,
+    aikido: '$300/mo flat for 10 users (Basic)',
+    snyk: 'Team from $25/mo',
+    semgrep: '$30/mo per contributor (Code or Supply Chain)',
+  },
+  {
+    label: 'Free plan',
+    zelsis: 'Unlimited public repo scans, 3 private repos',
+    aikido: '2 users, 10 repos',
+    snyk: '5 projects, 100 Code tests/mo',
+    semgrep: 'Up to 10 contributors and 10 private repos',
+  },
+  {
+    label: 'Focus',
+    zelsis: 'Next.js, Supabase and AI apps, plus accessibility and config checks',
+    aikido: 'All-in-one platform (code, cloud, runtime)',
+    snyk: 'Developer security platform',
+    semgrep: 'Customizable SAST and supply chain',
+  },
+];
+
+/** Honest price comparison against the tools buyers already know. */
 export function CompetitorComparison() {
   return (
     <section className="py-24 bg-[#0A0A0A] border-t border-white/5" id="compare">
-      <div className="max-w-7xl mx-auto px-6 lg:px-8">
-        <div className="max-w-3xl mb-16">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div className="max-w-3xl mb-12">
           <h2 className="text-3xl font-bold tracking-tight text-white sm:text-4xl">
-            Honest pricing. Flat fee per account.
+            Priced per account, not per developer.
           </h2>
           <p className="mt-4 text-lg text-zinc-400">
-            Developer tools should scale with your product, not punish you for adding team members.
-            Zelsis charges a flat rate per account, not per seat.
+            The established tools are excellent general-purpose platforms. Zelsis is narrower and cheaper: it goes deep on the
+            stack small teams ship with, at a flat price that does not grow with every teammate.
           </p>
         </div>
 
-        <div className="overflow-x-auto">
-          <table className="w-full text-left border-collapse">
+        <div className="overflow-x-auto -mx-4 px-4 sm:mx-0 sm:px-0">
+          <table className="w-full min-w-[720px] text-left border-collapse text-sm">
+            <caption className="sr-only">Zelsis compared with Aikido, Snyk and Semgrep</caption>
             <thead>
               <tr className="border-b border-white/10">
-                <th className="py-4 px-6 font-medium text-white bg-[#141414] rounded-tl-xl w-1/4">Features</th>
-                <th className="py-4 px-6 font-medium text-emerald-400 bg-emerald-500/5 border-x border-emerald-500/20 w-1/4">Zelsis</th>
-                <th className="py-4 px-6 font-medium text-white bg-[#141414] w-1/6">Aikido</th>
-                <th className="py-4 px-6 font-medium text-white bg-[#141414] w-1/6">Snyk</th>
-                <th className="py-4 px-6 font-medium text-white bg-[#141414] rounded-tr-xl w-1/6">Semgrep</th>
+                <th scope="col" className="py-4 px-5 font-medium text-white bg-[#141414] rounded-tl-xl">&nbsp;</th>
+                <th scope="col" className="py-4 px-5 font-medium text-emerald-400 bg-emerald-500/5 border-x border-emerald-500/20">Zelsis</th>
+                <th scope="col" className="py-4 px-5 font-medium text-white bg-[#141414]">Aikido</th>
+                <th scope="col" className="py-4 px-5 font-medium text-white bg-[#141414]">Snyk</th>
+                <th scope="col" className="py-4 px-5 font-medium text-white bg-[#141414] rounded-tr-xl">Semgrep</th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-white/5 text-sm">
-              <tr className="hover:bg-white/[0.02] transition-colors">
-                <td className="py-4 px-6 text-zinc-300 font-medium">Pricing Model</td>
-                <td className="py-4 px-6 text-white bg-emerald-500/[0.02] border-x border-emerald-500/10">
-                  Flat Fee (from {priceLabel('Pro')})
-                </td>
-                <td className="py-4 px-6 text-zinc-400">Per Seat (99 USD/mo)</td>
-                <td className="py-4 px-6 text-zinc-400">Per Seat (25 USD/mo)</td>
-                <td className="py-4 px-6 text-zinc-400">Per Developer (80 USD/mo)</td>
-              </tr>
-              <tr className="hover:bg-white/[0.02] transition-colors">
-                <td className="py-4 px-6 text-zinc-300 font-medium">Free Tier</td>
-                <td className="py-4 px-6 text-white bg-emerald-500/[0.02] border-x border-emerald-500/10">
-                  Full SAST (3 repos)
-                </td>
-                <td className="py-4 px-6 text-zinc-400">Free (2 devs, basic limits)</td>
-                <td className="py-4 px-6 text-zinc-400">Free (limits on tests)</td>
-                <td className="py-4 px-6 text-zinc-400">Community Edition</td>
-              </tr>
-              <tr className="hover:bg-white/[0.02] transition-colors">
-                <td className="py-4 px-6 text-zinc-300 font-medium">Next.js App Router Rules</td>
-                <td className="py-4 px-6 text-white bg-emerald-500/[0.02] border-x border-emerald-500/10">
-                  <Check className="w-5 h-5 text-emerald-500" />
-                </td>
-                <td className="py-4 px-6 text-zinc-500"><Minus className="w-5 h-5" /> Generic JS</td>
-                <td className="py-4 px-6 text-zinc-500"><Minus className="w-5 h-5" /> Generic JS</td>
-                <td className="py-4 px-6 text-zinc-500">Requires custom rules</td>
-              </tr>
-              <tr className="hover:bg-white/[0.02] transition-colors">
-                <td className="py-4 px-6 text-zinc-300 font-medium">Supabase Auth/RLS Rules</td>
-                <td className="py-4 px-6 text-white bg-emerald-500/[0.02] border-x border-emerald-500/10 rounded-b-xl">
-                  <Check className="w-5 h-5 text-emerald-500" />
-                </td>
-                <td className="py-4 px-6 text-zinc-500"><X className="w-5 h-5" /></td>
-                <td className="py-4 px-6 text-zinc-500"><X className="w-5 h-5" /></td>
-                <td className="py-4 px-6 text-zinc-500">Requires custom rules</td>
-              </tr>
+            <tbody className="divide-y divide-white/5">
+              {ROWS.map((row) => (
+                <tr key={row.label}>
+                  <th scope="row" className="py-4 px-5 text-zinc-300 font-medium">{row.label}</th>
+                  <td className="py-4 px-5 text-white bg-emerald-500/[0.03] border-x border-emerald-500/10">{row.zelsis}</td>
+                  <td className="py-4 px-5 text-zinc-400">{row.aikido}</td>
+                  <td className="py-4 px-5 text-zinc-400">{row.snyk}</td>
+                  <td className="py-4 px-5 text-zinc-400">{row.semgrep}</td>
+                </tr>
+              ))}
             </tbody>
           </table>
         </div>
-        
+
         <p className="mt-6 text-xs text-zinc-500">
-          * Prices gathered from official websites as of October 2026. Snyk and Semgrep have excellent generic engines; Zelsis specializes specifically in the Next.js and Supabase ecosystem. <Link href="https://aikido.dev/pricing" target="_blank" className="underline hover:text-zinc-300">Aikido Pricing</Link> | <Link href="https://snyk.io/plans/" target="_blank" className="underline hover:text-zinc-300">Snyk Pricing</Link> | <Link href="https://semgrep.dev/pricing/" target="_blank" className="underline hover:text-zinc-300">Semgrep Pricing</Link>.
+          Competitor prices from their public pricing pages, {COMPARED_ON}; they may have changed since.{' '}
+          <a href="https://www.aikido.dev/pricing" target="_blank" rel="noopener noreferrer" className="underline hover:text-zinc-300">Aikido</a>{' · '}
+          <a href="https://snyk.io/plans/" target="_blank" rel="noopener noreferrer" className="underline hover:text-zinc-300">Snyk</a>{' · '}
+          <a href="https://semgrep.dev/pricing" target="_blank" rel="noopener noreferrer" className="underline hover:text-zinc-300">Semgrep</a>
         </p>
       </div>
     </section>
