@@ -1,8 +1,8 @@
 {
  "summary": {
-  "implementedRules": 863,
-  "testedRules": 855,
-  "preciseLocationRules": 860,
+  "implementedRules": 868,
+  "testedRules": 860,
+  "preciseLocationRules": 865,
   "catalogEntries": 1922,
   "catalogOnlyNotImplemented": 1401,
   "catalogPlaceholderMetadata": 1810
@@ -9957,6 +9957,56 @@
    "title": "User Identity Parsed From a Plain (Unsigned) Cookie",
    "severity": "HIGH",
    "source": "lib/rules/js-frameworks-v4-rules.ts",
+   "preciseLocation": true,
+   "tested": true,
+   "inCatalog": false
+  },
+  {
+   "ruleId": 29002,
+   "code": "RULE-29002",
+   "title": "Django extra() SQL Injection",
+   "severity": "CRITICAL",
+   "source": "lib/rules/python-v4-rules.ts",
+   "preciseLocation": true,
+   "tested": true,
+   "inCatalog": false
+  },
+  {
+   "ruleId": 29003,
+   "code": "RULE-29003",
+   "title": "Django mark_safe XSS",
+   "severity": "HIGH",
+   "source": "lib/rules/python-v4-rules.ts",
+   "preciseLocation": true,
+   "tested": true,
+   "inCatalog": false
+  },
+  {
+   "ruleId": 29014,
+   "code": "RULE-29014",
+   "title": "FastAPI HTMLResponse XSS",
+   "severity": "HIGH",
+   "source": "lib/rules/python-v4-rules.ts",
+   "preciseLocation": true,
+   "tested": true,
+   "inCatalog": false
+  },
+  {
+   "ruleId": 29015,
+   "code": "RULE-29015",
+   "title": "Django HttpResponse XSS",
+   "severity": "HIGH",
+   "source": "lib/rules/python-v4-rules.ts",
+   "preciseLocation": true,
+   "tested": true,
+   "inCatalog": false
+  },
+  {
+   "ruleId": 29016,
+   "code": "RULE-29016",
+   "title": "Flask make_response XSS",
+   "severity": "HIGH",
+   "source": "lib/rules/python-v4-rules.ts",
    "preciseLocation": true,
    "tested": true,
    "inCatalog": false
