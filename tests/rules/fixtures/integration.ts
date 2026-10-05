@@ -6,6 +6,34 @@ const f = (path: string, content: string): CodeFile[] => [{ path, content }];
 /** Fixes made while integrating the rule waves (false positives found by scanning Zelsis itself). */
 export const CASES: RuleCase[] = [
   {
+    ruleIds: [24104],
+    name: 'CORE-04 XXE hardening that only runs behind a flag still leaves the parser open (WebGoat)',
+    detects: f('src/main/java/com/acme/xml/CommentParser.java', `package com.acme.xml;
+import javax.xml.XMLConstants;
+import javax.xml.stream.XMLInputFactory;
+public class CommentParser {
+  XMLStreamReader parse(String xml, boolean securityEnabled) throws Exception {
+    var xif = XMLInputFactory.newInstance();
+    if (securityEnabled) {
+      xif.setProperty(XMLConstants.ACCESS_EXTERNAL_DTD, "");
+    }
+    return xif.createXMLStreamReader(new StringReader(xml));
+  }
+}
+`),
+    ignores: f('src/main/java/com/acme/xml/CommentParser.java', `package com.acme.xml;
+import javax.xml.XMLConstants;
+import javax.xml.stream.XMLInputFactory;
+public class CommentParser {
+  XMLStreamReader parse(String xml) throws Exception {
+    var xif = XMLInputFactory.newInstance();
+    xif.setProperty(XMLConstants.ACCESS_EXTERNAL_DTD, "");
+    return xif.createXMLStreamReader(new StringReader(xml));
+  }
+}
+`)
+  },
+  {
     ruleIds: [1244],
     name: 'UI-INTERACT-44 meta viewport tag disables zoom; the same text in a docs string does not',
     detects: f('public/index.html', '<!doctype html>\n<html lang="en">\n<head>\n  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">\n</head>\n<body></body>\n</html>\n'),

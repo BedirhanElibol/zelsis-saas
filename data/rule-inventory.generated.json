@@ -1,8 +1,8 @@
 {
  "summary": {
-  "implementedRules": 868,
-  "testedRules": 860,
-  "preciseLocationRules": 865,
+  "implementedRules": 872,
+  "testedRules": 864,
+  "preciseLocationRules": 869,
   "catalogEntries": 1922,
   "catalogOnlyNotImplemented": 1401,
   "catalogPlaceholderMetadata": 1810
@@ -10007,6 +10007,46 @@
    "title": "Flask make_response XSS",
    "severity": "HIGH",
    "source": "lib/rules/python-v4-rules.ts",
+   "preciseLocation": true,
+   "tested": true,
+   "inCatalog": false
+  },
+  {
+   "ruleId": 29101,
+   "code": "RULE-29101",
+   "title": "Jackson Default Typing Lets JSON Pick the Class to Instantiate",
+   "severity": "HIGH",
+   "source": "lib/rules/backend-v4-rules.ts",
+   "preciseLocation": true,
+   "tested": true,
+   "inCatalog": false
+  },
+  {
+   "ruleId": 29102,
+   "code": "RULE-29102",
+   "title": "Go text/template Rendered Into an HTTP Response (No HTML Escaping)",
+   "severity": "HIGH",
+   "source": "lib/rules/backend-v4-rules.ts",
+   "preciseLocation": true,
+   "tested": true,
+   "inCatalog": false
+  },
+  {
+   "ruleId": 29104,
+   "code": "RULE-29104",
+   "title": "Blade {!! !!} Prints Request Input Without Escaping",
+   "severity": "HIGH",
+   "source": "lib/rules/backend-v4-rules.ts",
+   "preciseLocation": true,
+   "tested": true,
+   "inCatalog": false
+  },
+  {
+   "ruleId": 29105,
+   "code": "RULE-29105",
+   "title": "Rails Request Input Chooses the Class or Method to Call",
+   "severity": "CRITICAL",
+   "source": "lib/rules/backend-v4-rules.ts",
    "preciseLocation": true,
    "tested": true,
    "inCatalog": false

@@ -125,9 +125,23 @@ export function evaluatePolyglotCoreRules(file: CodeFile, lines: string[], clean
   }
 
   // CORE-04: XML parsers with external entities enabled
+  const javaXxeHardening = /disallow-doctype-decl|external-general-entities|IS_SUPPORTING_EXTERNAL_ENTITIES|SUPPORT_DTD|ACCESS_EXTERNAL_DTD|setExpandEntityReferences\s*\(\s*false|FEATURE_SECURE_PROCESSING/;
+  // Hardening that only runs inside an `if (...)` block (e.g. `if (securityEnabled)`) leaves the default path open.
+  const hardenedUnconditionally = () => {
+    const src = content.split('\n');
+    const indent = (s: string) => s.length - s.trimStart().length;
+    return src.some((line, i) => {
+      if (!javaXxeHardening.test(line)) return false;
+      for (let j = i - 1; j >= 0; j--) {
+        if (!src[j].trim() || indent(src[j]) >= indent(line)) continue;
+        return !/^\s*(?:\}\s*)?(?:if|else)\b/.test(src[j]);
+      }
+      return true;
+    });
+  };
   const xxeByLang: Partial<Record<Exclude<Lang, null>, () => boolean>> = {
     java: () => /(?:XMLInputFactory|DocumentBuilderFactory|SAXParserFactory|XMLReaderFactory|TransformerFactory)\.new(?:Instance|Factory|DefaultInstance)\s*\(|createXMLReader\s*\(/.test(content) &&
-      !/disallow-doctype-decl|external-general-entities|IS_SUPPORTING_EXTERNAL_ENTITIES|SUPPORT_DTD|ACCESS_EXTERNAL_DTD|setExpandEntityReferences\s*\(\s*false|FEATURE_SECURE_PROCESSING/.test(content),
+      !hardenedUnconditionally(),
     php: () => /LIBXML_NOENT|libxml_disable_entity_loader\s*\(\s*false|LIBXML_DTDLOAD/.test(content),
     csharp: () => /DtdProcessing\s*=\s*DtdProcessing\.Parse|XmlResolver\s*=\s*new\s+XmlUrlResolver|ProhibitDtd\s*=\s*false/.test(content),
     python: () => /resolve_entities\s*=\s*True|XMLParser\s*\([^)]*load_dtd\s*=\s*True|xml\.sax\.make_parser|feature_external_ges\s*,\s*True/.test(content)
