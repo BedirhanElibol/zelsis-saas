@@ -45,7 +45,7 @@ jobs:
           
           RESPONSE=$(curl -s -w "\n%{http_code}" -X POST "$ZELSIS_API_URL" \
             -H "Content-Type: application/json" \
-            -H "Authorization: Bearer ${{ secrets.GITHUB_TOKEN }}" \
+            -H "x-api-key: ${{ secrets.ZELSIS_API_KEY }}" -H "Authorization: Bearer ${{ secrets.GITHUB_TOKEN }}" \
             -d "{\"repoUrl\": \"${{ github.repository }}\", \"slackWebhookUrl\": \"$SLACK_WEBHOOK_URL\", \"discordWebhookUrl\": \"$DISCORD_WEBHOOK_URL\", \"ref\": \"$REF\", \"base\": \"$BASE\"}")
           
           HTTP_CODE=$(echo "$RESPONSE" | tail -n1)
@@ -54,8 +54,8 @@ jobs:
           echo "Audit HTTP Status: $HTTP_CODE"
           echo "Audit Response: $BODY"
           
-          if [ "$HTTP_CODE" -ge 500 ] || [ -z "$BODY" ] || ! echo "$BODY" | jq -e . >/dev/null 2>&1; then
-            echo "❌ Zelsis API unreachable or returned invalid response."
+          if [ "$HTTP_CODE" -ge 400 ] || [ -z "$BODY" ] || ! echo "$BODY" | jq -e . >/dev/null 2>&1; then
+            echo "❌ Zelsis rejected the request or is unreachable (HTTP $HTTP_CODE). For private repos, check the ZELSIS_API_KEY secret."
             if [ "$FAIL_OPEN" = "true" ]; then
               echo "⚠️ Fail-open strategy is enabled. Passing the gate."
               exit 0
