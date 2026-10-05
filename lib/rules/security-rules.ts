@@ -867,7 +867,9 @@ export function evaluateSecurityRules(file: CodeFile, lines: string[], cleanCont
     // Only paths built from request input: req.query/params/body directly, or a variable assigned / destructured from
     // it (or from searchParams / formData), reaching an fs read/write/delete call on the same line. A containment check
     // (path.basename, or resolve + startsWith on the result) anywhere in the file counts as the fix.
-    const fsCall = String.raw`(?:fs(?:\.promises)?|fsp|fsPromises)\.(?:readFile|readFileSync|createReadStream|writeFile|writeFileSync|createWriteStream|unlink|unlinkSync|rm|rmSync|appendFile|appendFileSync)\s*\(`;
+    // Named imports from fs / fs/promises (import { readFile } from 'fs/promises') are called without a prefix
+    const fsNamedImport = /import\s*\{[^}]*\b(?:readFile|writeFile|createReadStream|createWriteStream|unlink|rm|appendFile)\b[^}]*\}\s*from\s*['"](?:node:)?fs(?:\/promises)?['"]/.test(cleanContent);
+    const fsCall = String.raw`(?:(?:fs(?:\.promises)?|fsp|fsPromises)\.` + (fsNamedImport ? String.raw`|(?<![.\w$])` : '') + String.raw`)(?:readFile|readFileSync|createReadStream|writeFile|writeFileSync|createWriteStream|unlink|unlinkSync|rm|rmSync|appendFile|appendFileSync)\s*\(`;
     if (isCodeFile && new RegExp(fsCall).test(cleanContent)) {
         const pathVars = new Set<string>();
         for (const m of cleanContent.matchAll(/(?:const|let|var)\s+(\w+)\s*=\s*[^;\n]*(?:\breq(?:uest)?\.(?:query|body|params)\b|searchParams\.get\(|\bformData\.get\()/g)) pathVars.add(m[1]);

@@ -1,8 +1,8 @@
 {
  "summary": {
-  "implementedRules": 792,
-  "testedRules": 783,
-  "preciseLocationRules": 789,
+  "implementedRules": 817,
+  "testedRules": 809,
+  "preciseLocationRules": 814,
   "catalogEntries": 1922,
   "catalogOnlyNotImplemented": 1401,
   "catalogPlaceholderMetadata": 1810
@@ -7498,7 +7498,7 @@
    "severity": "HIGH",
    "source": "lib/rules/polyglot-backend-rules.ts",
    "preciseLocation": true,
-   "tested": false,
+   "tested": true,
    "inCatalog": true
   },
   {
@@ -9327,6 +9327,256 @@
    "title": "Keyboard Trap: onBlur Forces Focus Back Into the Field",
    "severity": "HIGH",
    "source": "lib/rules/ui-quality-rules.ts",
+   "preciseLocation": true,
+   "tested": true,
+   "inCatalog": false
+  },
+  {
+   "ruleId": 28701,
+   "code": "RULE-28701",
+   "title": "Webhook Signature Verified Over Re-Serialized JSON Instead of the Raw Body",
+   "severity": "MEDIUM",
+   "source": "lib/rules/saas-v3-rules.ts",
+   "preciseLocation": true,
+   "tested": true,
+   "inCatalog": false
+  },
+  {
+   "ruleId": 28702,
+   "code": "RULE-28702",
+   "title": "Payment Webhook Grants Credits Without Event-ID Deduplication",
+   "severity": "HIGH",
+   "source": "lib/rules/saas-v3-rules.ts",
+   "preciseLocation": true,
+   "tested": true,
+   "inCatalog": false
+  },
+  {
+   "ruleId": 28703,
+   "code": "RULE-28703",
+   "title": "Webhook HMAC Signs a Timestamp That Is Never Checked for Freshness",
+   "severity": "MEDIUM",
+   "source": "lib/rules/saas-v3-rules.ts",
+   "preciseLocation": true,
+   "tested": true,
+   "inCatalog": false
+  },
+  {
+   "ruleId": 28704,
+   "code": "RULE-28704",
+   "title": "postMessage Listener Trusts event.data Without Checking event.origin",
+   "severity": "HIGH",
+   "source": "lib/rules/saas-v3-rules.ts",
+   "preciseLocation": true,
+   "tested": true,
+   "inCatalog": false
+  },
+  {
+   "ruleId": 28705,
+   "code": "RULE-28705",
+   "title": "RLS Policy Authorizes Rows by the JWT Email Claim",
+   "severity": "MEDIUM",
+   "source": "lib/rules/saas-v3-rules.ts",
+   "preciseLocation": true,
+   "tested": true,
+   "inCatalog": false
+  },
+  {
+   "ruleId": 28706,
+   "code": "RULE-28706",
+   "title": "Next.js 16 Request Props Are Promises: params / searchParams Read Without await",
+   "severity": "MEDIUM",
+   "source": "lib/rules/saas-v3-rules.ts",
+   "preciseLocation": true,
+   "tested": true,
+   "inCatalog": false
+  },
+  {
+   "ruleId": 28751,
+   "code": "RULE-28751",
+   "title": "unstable_cache Callback Reads a Per-User Value Missing From the Cache Key",
+   "severity": "HIGH",
+   "source": "lib/rules/next-ai-v3-rules.ts",
+   "preciseLocation": true,
+   "tested": true,
+   "inCatalog": false
+  },
+  {
+   "ruleId": 28752,
+   "code": "RULE-28752",
+   "title": "Whole Database Row With Secret Columns Passed to a Client Component",
+   "severity": "HIGH",
+   "source": "lib/rules/next-ai-v3-rules.ts",
+   "preciseLocation": true,
+   "tested": true,
+   "inCatalog": false
+  },
+  {
+   "ruleId": 28753,
+   "code": "RULE-28753",
+   "title": "Destructive Agent Tool Runs Without Human Approval",
+   "severity": "MEDIUM",
+   "source": "lib/rules/next-ai-v3-rules.ts",
+   "preciseLocation": true,
+   "tested": true,
+   "inCatalog": false
+  },
+  {
+   "ruleId": 28801,
+   "code": "RULE-28801",
+   "title": "RLS Policy Lets Any Client Modify Every Row (USING (true))",
+   "severity": "HIGH",
+   "source": "lib/rules/missed-vulns-rules.ts",
+   "preciseLocation": true,
+   "tested": true,
+   "inCatalog": false
+  },
+  {
+   "ruleId": 28802,
+   "code": "RULE-28802",
+   "title": "Firebase Rules Open Data to Everyone: allow Without Any Condition",
+   "severity": "CRITICAL",
+   "source": "lib/rules/missed-vulns-rules.ts",
+   "preciseLocation": true,
+   "tested": true,
+   "inCatalog": false
+  },
+  {
+   "ruleId": 28803,
+   "code": "RULE-28803",
+   "title": "Firebase Realtime Database Rules Open to the Public",
+   "severity": "CRITICAL",
+   "source": "lib/rules/missed-vulns-rules.ts",
+   "preciseLocation": true,
+   "tested": true,
+   "inCatalog": false
+  },
+  {
+   "ruleId": 28804,
+   "code": "RULE-28804",
+   "title": "Request Body Written to the Database As-Is (Mass Assignment)",
+   "severity": "HIGH",
+   "source": "lib/rules/missed-vulns-rules.ts",
+   "preciseLocation": true,
+   "tested": true,
+   "inCatalog": false
+  },
+  {
+   "ruleId": 28805,
+   "code": "RULE-28805",
+   "title": "Authorization Decided by a Client-Controlled Cookie or Query Parameter",
+   "severity": "HIGH",
+   "source": "lib/rules/missed-vulns-rules.ts",
+   "preciseLocation": true,
+   "tested": true,
+   "inCatalog": false
+  },
+  {
+   "ruleId": 28806,
+   "code": "RULE-28806",
+   "title": "Admin Check Trusts a Custom Request Header",
+   "severity": "MEDIUM",
+   "source": "lib/rules/missed-vulns-rules.ts",
+   "preciseLocation": true,
+   "tested": true,
+   "inCatalog": false
+  },
+  {
+   "ruleId": 28807,
+   "code": "RULE-28807",
+   "title": "Server Secret Returned in an HTTP Response",
+   "severity": "CRITICAL",
+   "source": "lib/rules/missed-vulns-rules.ts",
+   "preciseLocation": true,
+   "tested": true,
+   "inCatalog": false
+  },
+  {
+   "ruleId": 28808,
+   "code": "RULE-28808",
+   "title": "Hardcoded Session / Auth Signing Secret",
+   "severity": "HIGH",
+   "source": "lib/rules/missed-vulns-rules.ts",
+   "preciseLocation": true,
+   "tested": true,
+   "inCatalog": false
+  },
+  {
+   "ruleId": 28809,
+   "code": "RULE-28809",
+   "title": "Upload Saved Under the Client-Supplied File Name",
+   "severity": "HIGH",
+   "source": "lib/rules/missed-vulns-rules.ts",
+   "preciseLocation": true,
+   "tested": true,
+   "inCatalog": false
+  },
+  {
+   "ruleId": 28810,
+   "code": "RULE-28810",
+   "title": "Server-Side Template Injection: Request Input Compiled as a Template",
+   "severity": "CRITICAL",
+   "source": "lib/rules/missed-vulns-rules.ts",
+   "preciseLocation": true,
+   "tested": true,
+   "inCatalog": false
+  },
+  {
+   "ruleId": 28811,
+   "code": "RULE-28811",
+   "title": "Credentials Sent With postMessage to Any Origin (\\",
+   "severity": "HIGH",
+   "source": "lib/rules/missed-vulns-rules.ts",
+   "preciseLocation": true,
+   "tested": true,
+   "inCatalog": false
+  },
+  {
+   "ruleId": 28812,
+   "code": "RULE-28812",
+   "title": "Predictable Math.random() in an OTP / Token Generator",
+   "severity": "HIGH",
+   "source": "lib/rules/missed-vulns-rules.ts",
+   "preciseLocation": true,
+   "tested": true,
+   "inCatalog": false
+  },
+  {
+   "ruleId": 28813,
+   "code": "RULE-28813",
+   "title": "Flask Debug Server Exposed on All Interfaces",
+   "severity": "HIGH",
+   "source": "lib/rules/missed-vulns-rules.ts",
+   "preciseLocation": true,
+   "tested": true,
+   "inCatalog": false
+  },
+  {
+   "ruleId": 28814,
+   "code": "RULE-28814",
+   "title": "Supabase .or() Filter Built From User Input (PostgREST Filter Injection)",
+   "severity": "MEDIUM",
+   "source": "lib/rules/missed-vulns-rules.ts",
+   "preciseLocation": true,
+   "tested": true,
+   "inCatalog": false
+  },
+  {
+   "ruleId": 28815,
+   "code": "RULE-28815",
+   "title": "Privilege Field Stored in User-Editable Supabase user_metadata",
+   "severity": "MEDIUM",
+   "source": "lib/rules/missed-vulns-rules.ts",
+   "preciseLocation": true,
+   "tested": true,
+   "inCatalog": false
+  },
+  {
+   "ruleId": 28816,
+   "code": "RULE-28816",
+   "title": "Storage Upload Path Is Only the Client File Name",
+   "severity": "MEDIUM",
+   "source": "lib/rules/missed-vulns-rules.ts",
    "preciseLocation": true,
    "tested": true,
    "inCatalog": false

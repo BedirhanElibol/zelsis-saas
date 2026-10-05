@@ -381,6 +381,59 @@ function fsSinks(arg: string, isPy: boolean): RegExp[] {
   ];
 }
 
+/**
+ * MCP resource read handlers (setRequestHandler(ReadResourceRequestSchema, ...), server.resource(...),
+ * registerResource(...)) whose requested URI, template variables or a value derived from them reaches an
+ * fs read without a containment check. Returns the sink line or -1.
+ */
+function mcpResourceFsRead(lines: string[]): number {
+  for (let i = 0; i < lines.length; i++) {
+    const l = lines[i];
+    let start = -1;
+    const taint = new Set<string>();
+    const exprs: string[] = [];
+    if (/setRequestHandler\s*\(\s*ReadResourceRequestSchema\b/.test(l)) {
+      for (let j = i; j < Math.min(lines.length, i + 4); j++) {
+        const h = lines[j].match(/async\s*\(\s*(\{[^)]*\}|[A-Za-z_$][\w$]*)/);
+        if (!h) continue;
+        start = j;
+        if (/^\{/.test(h[1])) for (const id of h[1].match(/[A-Za-z_$][\w$]*/g) || []) { if (id !== 'params') taint.add(id); }
+        else exprs.push(String.raw`\b${escapeRe(h[1])}\.params\.uri\b`);
+        break;
+      }
+    } else if (/\.(?:resource|registerResource)\s*\(/.test(l)) {
+      for (let j = i; j < Math.min(lines.length, i + 25); j++) {
+        const h = lines[j].match(/async\s*\(\s*([^)]*)\)/);
+        if (!h) continue;
+        start = j;
+        for (const id of h[1].replace(/:\s*[\w.<>[\]|]+/g, '').match(/[A-Za-z_$][\w$]*/g) || []) {
+          if (!/^(?:extra|ctx|context|_\w*)$/.test(id)) taint.add(id);
+        }
+        break;
+      }
+    }
+    if (start === -1 || (!taint.size && !exprs.length)) continue;
+    const body = [lines[start]];
+    const base = indentOf(lines[start]);
+    for (let k = start + 1; k < lines.length && k < start + 60; k++) {
+      if (lines[k].trim() && indentOf(lines[k]) <= base) break;
+      body.push(lines[k]);
+    }
+    const bodyText = body.join('\n');
+    if (/startsWith\(|path\.relative|\brelative\(|realpath|basename\(|includes\(\s*['"]\.\.['"]\)/.test(bodyText)) continue;
+    const src = () => [...exprs, ...[...taint].map((t) => String.raw`\b${escapeRe(t)}\b`)].join('|');
+    // one hop: const filePath = path.join(ROOT, uri.pathname) / fileURLToPath(uri) / new URL(request.params.uri).pathname
+    for (const b of body) {
+      const d = b.match(/\b(?:const|let)\s+([A-Za-z_$][\w$]*)\s*(?::[^=]+)?=\s*(.*)$/);
+      if (d && new RegExp(src()).test(d[2])) taint.add(d[1]);
+    }
+    const sinks = fsSinks(src(), false);
+    const off = body.findIndex((b) => sinks.some((re) => re.test(b)) || new RegExp(String.raw`\b(?:readFile|readFileSync|createReadStream)\s*\(\s*(?:new\s+URL\s*\(|fileURLToPath\s*\()\s*(?:${src()})`).test(b));
+    if (off !== -1) return start + off;
+  }
+  return -1;
+}
+
 function evaluateLlmApp(file: CodeFile, raw: string, cleanContent: string, hits: Hit[]): void {
   const isPy = /\.py$/i.test(file.path);
   const lines = cleanContent.split('\n');
@@ -498,6 +551,18 @@ function evaluateLlmApp(file: CodeFile, raw: string, cleanContent: string, hits:
             fix: 'Resolve the path against a fixed root and reject anything outside it (path.resolve(root, p) then check it startsWith(root + path.sep)), or accept file ids from an allowlist instead of raw paths.'
           });
         }
+      }
+    }
+    // AI-APP-05 (MCP resources): a resource read handler maps the client-chosen URI onto the file system
+    if (!fsHit && !isPy && /@modelcontextprotocol\/sdk|\bMcpServer\b/.test(cleanContent)) {
+      const idx = mcpResourceFsRead(codeLines);
+      if (idx !== -1) {
+        hits.push({
+          ruleId: 28205, code: 'AI-APP-05', severity: 'HIGH', category: 'AI & LLM Security', lineIdx: idx,
+          title: 'Agent / MCP Tool Reads or Writes a Model-Supplied File Path Unchecked',
+          why: 'The MCP resource handler turns the requested resource URI into a file path and reads it. The client (or a prompt-injected agent) chooses the URI, so file:///../../.env or a template variable such as ../../etc/passwd reads any file the server process can access.',
+          fix: 'Resolve the path against a fixed root and reject anything outside it (path.resolve(root, p) then check it startsWith(root + path.sep)), or serve resources from an explicit allowlist of files.'
+        });
       }
     }
   }

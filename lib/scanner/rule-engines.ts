@@ -108,6 +108,7 @@ import { evaluateStrixPentestRules } from '../rules/strix-pentest-rules';
 import { evaluateNoAiSlopRules } from '../rules/no-ai-slop-rules';
 import { evaluateLlmCostGovernanceRules } from '../rules/llm-cost-governance-rules';
 import { evaluateRubyRailsRules } from '../rules/ruby-rails-rules';
+import { evaluateMissedVulnsRules } from '../rules/missed-vulns-rules';
 import { evaluatePhpLaravelRules } from '../rules/php-laravel-rules';
 import { evaluateJavaSpringRules } from '../rules/java-spring-rules';
 import { evaluateDotnetCsharpRules } from '../rules/dotnet-csharp-rules';
@@ -121,6 +122,8 @@ import { evaluateLlmAppV2Rules } from '../rules/llm-app-v2-rules';
 import { evaluatePrivacyDataRules } from '../rules/privacy-data-rules';
 import { evaluateCloudIacV2Rules } from '../rules/cloud-iac-v2-rules';
 import { evaluateUiQualityRules } from '../rules/ui-quality-rules';
+import { evaluateSaasV3Rules } from '../rules/saas-v3-rules';
+import { evaluateNextAiV3Rules } from '../rules/next-ai-v3-rules';
 
 export type RuleEngine = (
   file: CodeFile,
@@ -403,4 +406,10 @@ export const RULE_ENGINES: ReadonlyArray<{ evaluate: RuleEngine; scanRawContent?
   { evaluate: evaluateCloudIacV2Rules },
   // Measurable UI quality: WCAG 2.2 accessibility and UX defects in JSX/HTML (A11Y-01.., Rule IDs 28601-28699)
   { evaluate: evaluateUiQualityRules },
+  // Webhook/payment integrity, postMessage origin, RLS identity, Next.js 16 request APIs (SAAS3-01.., Rule IDs 28701-28749)
+  { evaluate: evaluateSaasV3Rules },
+  // Next.js cache isolation, server-to-client data leaks, destructive AI tools (NEXTAI-01.., Rule IDs 28751-28799)
+  { evaluate: evaluateNextAiV3Rules },
+  // False-negative hunt: open RLS/Firebase rules, mass assignment, client-set roles, leaked secrets, uploads (GAP-01.., Rule IDs 28801-28899)
+  { evaluate: evaluateMissedVulnsRules },
 ];
