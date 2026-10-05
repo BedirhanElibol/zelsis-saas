@@ -42,6 +42,9 @@ export const Footer: React.FC = () => {
           <a href="#pricing" className="text-sm hover:text-white transition-colors py-1.5 inline-block">
             Pricing Plans
           </a>
+          <a href="/docs" className="text-sm hover:text-white transition-colors py-1.5 inline-block">
+            Documentation
+          </a>
         </div>
 
         {/* Col 3: SaaS Platform (4 cols) */}

@@ -465,7 +465,7 @@ export function evaluatePolyglotBackendRules(file: CodeFile, lines: string[], cl
             logs.push(`[${ts}] 🔒 [RUBY AUDIT] CRITICAL: Ruby SQL Injection in ${file.path}:${lineNum}`);
         }
         // RUBY-02: Ruby Mass Assignment via params.permit!
-        const rubyMassAssignmentRegex = /params(?:\[[^\]]+\]|\.[a-zA-Z0-9_]+(?:\([^)]*\))?)*\.permit!(?:\s|\(|$|;)/i;
+        const rubyMassAssignmentRegex = /params(?:\[[^\]]+\]|\.[a-zA-Z0-9_]+(?:\([^)]*\))?)*\.permit!(?:\s|\(|\)|,|$|;)/i;
         if (rubyMassAssignmentRegex.test(cleanContent)) {
             const matchLineIdx = lines.findIndex(l => !l.trim().startsWith('#') && rubyMassAssignmentRegex.test(l));
             const lineNum = matchLineIdx !== -1 ? matchLineIdx + 1 : 1;

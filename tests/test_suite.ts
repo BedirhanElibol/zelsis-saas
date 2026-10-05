@@ -655,7 +655,8 @@ async function runAllTests() {
   assert(matrixScan.findings.some(f => f.ruleId === 39), 'F-25/10: Unverified jwt.decode detected');
   assert(matrixScan.findings.some(f => f.ruleId === 38), 'F-25/11: Insecure Math.random token detected');
   assert(matrixScan.findings.some(f => f.ruleId === 40), 'F-25/12: Insecure cookie httpOnly: false detected');
-  assert(matrixScan.findings.some(f => f.ruleId === 41), 'F-25/13: Open Redirect detected');
+  // The AST flow rule (29307) replaces the line rule (41) in files where it proves the redirect path
+  assert(matrixScan.findings.some(f => f.ruleId === 41 || f.ruleId === 29307), 'F-25/13: Open Redirect detected');
   assert(matrixScan.findings.some(f => f.ruleId === 32), 'F-25/14: eval() dynamic code execution detected');
   assert(matrixScan.findings.some(f => f.ruleId === 44), 'F-25/15: CORS wildcard + credentials detected');
   assert(matrixScan.findings.some(f => f.ruleId === 45 || f.ruleId === 3), 'F-25/16: Permissive RLS USING (true) policy detected');
