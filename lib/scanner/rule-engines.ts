@@ -125,6 +125,11 @@ import { evaluateUiQualityRules } from '../rules/ui-quality-rules';
 import { evaluateSaasV3Rules } from '../rules/saas-v3-rules';
 import { evaluateNextAiV3Rules } from '../rules/next-ai-v3-rules';
 
+import { evaluateJsFrameworksV4Rules } from '../rules/js-frameworks-v4-rules';
+import { evaluatePythonV4Rules } from '../rules/python-v4-rules';
+import { evaluateBackendV4Rules } from '../rules/backend-v4-rules';
+import { evaluateConfigV4Rules } from '../rules/config-v4-rules';
+
 export type RuleEngine = (
   file: CodeFile,
   lines: string[],
@@ -412,4 +417,12 @@ export const RULE_ENGINES: ReadonlyArray<{ evaluate: RuleEngine; scanRawContent?
   { evaluate: evaluateNextAiV3Rules },
   // False-negative hunt: open RLS/Firebase rules, mass assignment, client-set roles, leaked secrets, uploads (GAP-01.., Rule IDs 28801-28899)
   { evaluate: evaluateMissedVulnsRules },
+  // JS/TS framework security (JSF-01.., Rule IDs 28901-28999)
+  { evaluate: evaluateJsFrameworksV4Rules },
+  // Python framework security (PYF-01.., Rule IDs 29001-29099)
+  { evaluate: evaluatePythonV4Rules },
+  // Go, Java, PHP, Ruby, .NET security (BEF-01.., Rule IDs 29101-29199)
+  { evaluate: evaluateBackendV4Rules },
+  // Cloud, IaC, container, CI/CD and platform config (CFG-01.., Rule IDs 29201-29299)
+  { evaluate: evaluateConfigV4Rules },
 ];
