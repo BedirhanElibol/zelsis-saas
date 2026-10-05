@@ -1,6 +1,8 @@
 import React, { useState } from 'react';
 import { Project } from '@/data/schema';
 import { CheckCircle2, Circle, Copy, Check } from 'lucide-react';
+import { buildGateWorkflow } from '@/lib/ci-gate-snippet';
+import { getConfiguredAppUrl } from '@/lib/app-url';
 
 interface OnboardingChecklistProps {
   project: Project;
@@ -27,17 +29,7 @@ export const OnboardingChecklist: React.FC<OnboardingChecklistProps> = ({ projec
       title: 'Add CI Gate',
       description: 'Block PRs that fail security or UI quality checks.',
       isComplete: false, // In a real app, this would check if the webhook/app is installed
-      snippet: `name: Zelsis Release Gate
-on: [pull_request]
-jobs:
-  audit:
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-      - name: Run Zelsis Scan
-        uses: zelsis/action-release-gate@v1
-        with:
-          api-key: \${{ secrets.ZELSIS_API_KEY }}`,
+      snippet: buildGateWorkflow({ appUrl: getConfiguredAppUrl(), projectName: project.name }),
     },
     {
       id: 'badge',
