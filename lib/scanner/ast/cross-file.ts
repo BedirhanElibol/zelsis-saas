@@ -9,6 +9,7 @@ import type { CodeFile } from '../types';
 import { isParsablePath, parseSource } from './parse';
 import { calleeName, isCall, isFunction, isMember, memberPath, unwrap, walk, type AstNode } from './walk';
 import { AUTH_FN } from './flow';
+import { isPinnedSpec, isVulnerableNext } from '../next-version';
 
 export interface CrossFileAuth {
   /** Module key (repo path without extension) -> exported function names that authenticate. */
@@ -247,6 +248,20 @@ export function middlewareAuthenticates(auth: MiddlewareAuth | null, routePath: 
   return true;
 }
 
+/** A pinned next@ that is open to CVE-2025-29927: one header skips middleware, so it protects nothing. */
+function middlewareBypassable(files: CodeFile[]): boolean {
+  return files.some((f) => {
+    if (!/(?:^|\/)package\.json$/.test(f.path.replace(/\\/g, '/')) || /node_modules\//.test(f.path)) return false;
+    try {
+      const pkg = JSON.parse(f.content || '{}');
+      const spec: unknown = pkg?.dependencies?.next ?? pkg?.devDependencies?.next;
+      return typeof spec === 'string' && isPinnedSpec(spec) && isVulnerableNext(spec);
+    } catch {
+      return false;
+    }
+  });
+}
+
 export function buildCrossFileAuth(files: CodeFile[]): CrossFileAuth {
-  return { authHelpers: buildAuthHelperIndex(files), middleware: readMiddlewareAuth(files) };
+  return { authHelpers: buildAuthHelperIndex(files), middleware: middlewareBypassable(files) ? null : readMiddlewareAuth(files) };
 }

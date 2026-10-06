@@ -3,6 +3,7 @@
  * High-impact mistakes in SaaS codebases across stacks (any auth, ORM, payment and LLM provider):
  * tenant data exposure, billing manipulation, auth trust errors and prompt injection.
  */
+import { isPinnedSpec, isVulnerableNext } from '../scanner/next-version';
 import { Finding } from '@/data/schema';
 import { CodeFile } from '../scanner-engine';
 import { PAYMENT_SDK } from './shared/stack-signals';
@@ -56,18 +57,6 @@ const isRequestDerived = (expr: string, req: ReturnType<typeof requestBindings>)
 
 const lineOf = (lines: string[], test: (l: string) => boolean) => Math.max(0, lines.findIndex(test));
 
-/** Next.js releases fixing CVE-2025-29927 (middleware bypass via x-middleware-subrequest). */
-const NEXT_MIDDLEWARE_FIXED: Record<number, [number, number]> = { 12: [3, 5], 13: [5, 9], 14: [2, 25], 15: [2, 3] };
-
-function isVulnerableNext(version: string): boolean {
-  const m = version.match(/(\d+)\.(\d+)\.(\d+)/);
-  if (!m) return false;
-  const [major, minor, patch] = m.slice(1).map(Number);
-  if (major === 11) return minor > 1 || (minor === 1 && patch >= 4);
-  const fixed = NEXT_MIDDLEWARE_FIXED[major];
-  if (!fixed) return false;
-  return minor < fixed[0] || (minor === fixed[0] && patch < fixed[1]);
-}
 
 export function evaluateSaasCoreRules(file: CodeFile, lines: string[], cleanContent: string, findingCounter: {
   count: number;
@@ -231,7 +220,7 @@ export function evaluateSaasCoreRules(file: CodeFile, lines: string[], cleanCont
       const pkg = JSON.parse(file.content || '{}');
       const spec: string | undefined = pkg?.dependencies?.next ?? pkg?.devDependencies?.next;
       if (typeof spec === 'string' && isVulnerableNext(spec)) {
-        const pinned = !/^\s*\^/.test(spec);
+        const pinned = isPinnedSpec(spec);
         hits.push({
           ruleId: 23008, code: 'SAAS-08', severity: pinned ? 'HIGH' : 'MEDIUM', type: 'SECURITY', category: 'Dependency Vulnerability',
           title: 'Next.js Version Vulnerable to Middleware Authorization Bypass (CVE-2025-29927)',
