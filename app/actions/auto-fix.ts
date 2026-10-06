@@ -4,22 +4,31 @@ import { createGitHubAppClient } from '@/lib/github/app';
 import { createClient } from '@supabase/supabase-js';
 import { Finding } from '@/data/schema';
 import { revalidatePath } from 'next/cache';
+import { z } from 'zod';
 
-export async function createFixPR(projectId: string, finding: Finding): Promise<{ success: boolean; prUrl?: string; error?: string }> {
-  // Try to authenticate
+/**
+ * Opens a fix PR through the caller's GitHub App installation.
+ * Server Actions are public POST endpoints, so the caller is authenticated and must own the project:
+ * the service-role client below would otherwise let anyone push a branch to any customer's repo.
+ */
+export async function createFixPR(projectId: string, finding: Finding, accessToken: string): Promise<{ success: boolean; prUrl?: string; error?: string }> {
   const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
   const serviceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
-  if (!url || !serviceRoleKey) throw new Error('Missing Supabase credentials');
-  
+  if (!url || !serviceRoleKey) return { success: false, error: 'Auto-fix is not configured.' };
+  if (!z.string().uuid().safeParse(projectId).success || !accessToken) return { success: false, error: 'Invalid request.' };
+
   const adminClient = createClient(url, serviceRoleKey, { auth: { persistSession: false } });
+  const { data: auth } = await adminClient.auth.getUser(accessToken);
+  if (!auth?.user) return { success: false, error: 'Please sign in again.' };
 
   const { data: projectData } = await adminClient
     .from('projects')
     .select('user_id, repo_url')
     .eq('id', projectId)
-    .single();
+    .eq('user_id', auth.user.id)
+    .maybeSingle();
 
-  if (!projectData) throw new Error('Project not found');
+  if (!projectData) return { success: false, error: 'Project not found.' };
   const { user_id, repo_url } = projectData;
 
   const { data: installData } = await adminClient
