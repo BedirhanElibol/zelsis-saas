@@ -9,6 +9,7 @@ import { hasFixPromptAccess } from '@/lib/subscription-utils';
 import { getEffectivePlanTier, getOrgPolicy } from '@/lib/organization';
 import { redactScanResultFixes } from '@/lib/fix-gate';
 import { getSupabaseAdmin } from '@/lib/supabase-admin';
+import { FREE_PROJECT_LIMIT } from '@/lib/quota-manager';
 import { recordRescanAlert } from '@/lib/rescan-alerts';
 
 export interface ExecuteScanJobOptions {
@@ -42,6 +43,28 @@ export class ScanJobError extends Error {
     this.status = status;
     this.headers = headers;
   }
+}
+
+/** True when a Free user already has FREE_PROJECT_LIMIT other private projects saved. */
+async function freePrivateLimitReached(
+  adminClient: ReturnType<typeof getSupabaseAdmin>,
+  userId: string | null | undefined,
+  repoUrl: string
+): Promise<boolean> {
+  if (!adminClient || !userId) return true;
+  const { data: existing } = await adminClient
+    .from('projects')
+    .select('id')
+    .eq('user_id', userId)
+    .eq('repo_url', repoUrl)
+    .maybeSingle();
+  if (existing) return false;
+  const { count } = await adminClient
+    .from('projects')
+    .select('id', { count: 'exact', head: true })
+    .eq('user_id', userId)
+    .eq('is_private', true);
+  return (count ?? 0) >= FREE_PROJECT_LIMIT;
 }
 
 export async function executeScanJob(options: ExecuteScanJobOptions): Promise<ScanJobExecutionResult> {
@@ -191,11 +214,12 @@ export async function executeScanJob(options: ExecuteScanJobOptions): Promise<Sc
         throw new ScanJobError(liveData.error, 404);
       }
 
-      if (liveData?.isPrivate && userTier === 'Free') {
+      // Free includes FREE_PROJECT_LIMIT private repositories (same limit as the CI gate); rescanning one already saved is fine
+      if (liveData?.isPrivate && userTier === 'Free' && await freePrivateLimitReached(adminClient, authenticatedUserId, rawRepoUrl)) {
         await updateJobState({
           status: 'FAILED',
           progress_percent: 0,
-          error_message: 'Private repository scans are part of Zelsis Pro.'
+          error_message: `Free plan includes ${FREE_PROJECT_LIMIT} private repositories. Upgrade to Zelsis Pro for unlimited private repositories.`
         });
         throw new ScanJobError('PLAN_REQUIRED', 402);
       }
