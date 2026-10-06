@@ -25,8 +25,8 @@
 - Scope: Modify only files relevant to the active prompt. Do not reformat adjacent untouched code.
 
 # 5. Git & GitHub Protocol
-- Push: Push verified commits to the active feature branch without asking. Never push to `main`/`master`.
-- Branch Protection: Don't commit directly to `main` or `master`; work on a feature branch (e.g., `feat/...`, `fix/...`).
+- Push: Push verified commits to the active feature branch without asking, and merge verified PRs into `main` without asking.
+- Branches: Work on a feature branch (e.g., `feat/...`, `fix/...`) and reach `main` through a PR.
 - Atomic Commits: Do not commit after every single file edit. Stage and commit only when a logical milestone is fully implemented and verified.
 - Commit Style: Use Conventional Commits (`feat(auth): ...`, `fix(ui): ...`). Keep commit descriptions under 72 characters.
 - Secret Prevention: Always check `git status` before committing to ensure no `.env` or sensitive credentials are inadvertently staged.
