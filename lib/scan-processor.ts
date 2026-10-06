@@ -118,6 +118,8 @@ export async function executeScanJob(options: ExecuteScanJobOptions): Promise<Sc
     const isWebTarget = isValidWebUrl(rawRepoUrl);
     let filesToScan: CodeFile[] = [];
     let resolvedTargetName = providedTargetName || rawRepoUrl;
+    // Visibility as reported by GitHub; null for website scans. Scheduled rescans skip private repos.
+    let repoIsPrivate: boolean | null = null;
 
     if (rawRepoUrl.toLowerCase() === 'local') {
       if (!canAccessLocalAudit()) {
@@ -157,6 +159,14 @@ export async function executeScanJob(options: ExecuteScanJobOptions): Promise<Sc
       // GitHub Repository Fetch
       const liveData = await fetchGithubRepositoryData(rawRepoUrl, githubToken);
 
+      // A scheduled rescan has no token: a repo GitHub hides from anonymous reads is private (or gone),
+      // so record that before failing and the weekly cron stops picking it up.
+      if (isRescan && adminClient && authenticatedUserId
+          && (liveData?.isPrivate || liveData?.error === 'PRIVATE_OR_UNAUTHENTICATED' || liveData?.error === 'REPO_NOT_FOUND')) {
+        await adminClient.from('projects').update({ is_private: true })
+          .eq('user_id', authenticatedUserId).eq('repo_url', rawRepoUrl);
+      }
+
       if (liveData?.error === 'RATE_LIMIT_EXCEEDED') {
         await updateJobState({
           status: 'FAILED',
@@ -191,6 +201,7 @@ export async function executeScanJob(options: ExecuteScanJobOptions): Promise<Sc
       }
 
       filesToScan = liveData?.files || [];
+      repoIsPrivate = liveData?.isPrivate === true;
       resolvedTargetName = liveData?.name || rawRepoUrl;
     }
 
@@ -264,6 +275,9 @@ export async function executeScanJob(options: ExecuteScanJobOptions): Promise<Sc
 
         if (existingProj?.id) {
           projectId = existingProj.id;
+          if (repoIsPrivate !== null) {
+            await adminClient.from('projects').update({ is_private: repoIsPrivate }).eq('id', existingProj.id);
+          }
         } else {
           const { data: newProj } = await adminClient
             .from('projects')
@@ -272,7 +286,8 @@ export async function executeScanJob(options: ExecuteScanJobOptions): Promise<Sc
               name: resolvedTargetName,
               repo_url: rawRepoUrl,
               readiness_score: result.score,
-              gate_status: result.gateStatus
+              gate_status: result.gateStatus,
+              ...(repoIsPrivate !== null ? { is_private: repoIsPrivate } : {})
             })
             .select('id')
             .maybeSingle();
