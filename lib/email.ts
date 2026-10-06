@@ -126,34 +126,34 @@ function wrapHtmlTemplate({ title, contentHtml }: { title: string; contentHtml: 
 export async function sendWaitlistWelcomeEmail(email: string, frameworkInterest?: string | null): Promise<SendEmailResult> {
   const frameworkNote = frameworkInterest
     ? `<div style="margin-top:16px;padding:12px 16px;background-color:rgba(255,255,255,0.03);border:1px solid rgba(255,255,255,0.08);border-radius:8px;font-family:ui-monospace,monospace;font-size:12px;color:#A1A1AA;">
-        <strong>İlgi Alanı:</strong> <span style="color:#10B981;">${frameworkInterest}</span>
+        <strong>Stack:</strong> <span style="color:#10B981;">${escapeHtml(frameworkInterest)}</span>
        </div>`
     : '';
 
   const html = wrapHtmlTemplate({
-    title: 'Zelsis Erken Erişim Bekleme Listesindesiniz',
+    title: "You're on the Zelsis early access list",
     contentHtml: `
       <h1 style="margin:0 0 16px 0;font-size:20px;font-weight:700;color:#FFFFFF;letter-spacing:-0.3px;">
-        Erken Erişim Sırasına Alındınız
+        You're on the early access list
       </h1>
       <p style="margin:0 0 12px 0;">
-        Merhaba,
+        Hi,
       </p>
       <p style="margin:0 0 12px 0;">
-        Zelsis erken erişim bekleme listesine kaydınız başarıyla tamamlandı. Dağıtım öncesi güvenlik, erişilebilirlik ve VibePolish kontrolleri sağlayan platformumuzun yeni sürümüne ilk erişen ekiplerden biri olacaksınız.
+        Thanks for joining the Zelsis early access list. Zelsis scans your repository before every release and blocks deploys that ship security holes.
       </p>
       ${frameworkNote}
       <p style="margin:20px 0 0 0;font-size:12px;color:#71717A;">
-        Hesabınız açıldığında ve davetiniz onaylandığında size bu adresten bilgi vereceğiz.
+        We'll email you at this address as soon as your access is ready.
       </p>
     `,
   });
 
-  const text = `Zelsis Erken Erişim Sırasına Alındınız\n\nMerhaba,\n\nZelsis erken erişim bekleme listesine kaydınız başarıyla tamamlandı. Dağıtım öncesi güvenlik ve kalite kontrolleri hazır olduğunda size özel davet göndereceğiz.\n\nZelsis Ekibi`;
+  const text = `You're on the Zelsis early access list\n\nHi,\n\nThanks for joining the Zelsis early access list. We'll email you at this address as soon as your access is ready.\n\nThe Zelsis team`;
 
   return sendEmail({
     to: email,
-    subject: 'Zelsis Erken Erişim Sırasına Alındınız',
+    subject: "You're on the Zelsis early access list",
     html,
     text,
   });
@@ -161,6 +161,7 @@ export async function sendWaitlistWelcomeEmail(email: string, frameworkInterest?
 
 /**
  * Sends an invitation email to a teammate to join an enterprise workspace.
+ * The workspace name is chosen by a user, so it is HTML-escaped.
  */
 export async function sendWorkspaceInviteEmail(params: {
   toEmail: string;
@@ -169,40 +170,41 @@ export async function sendWorkspaceInviteEmail(params: {
   inviteUrl: string;
 }): Promise<SendEmailResult> {
   const { toEmail, orgName, role, inviteUrl } = params;
+  const org = escapeHtml(orgName);
+  const url = escapeHtml(inviteUrl);
 
   const html = wrapHtmlTemplate({
-    title: `${orgName} Çalışma Alanına Davet Edildiniz`,
+    title: `You're invited to ${org} on Zelsis`,
     contentHtml: `
       <h1 style="margin:0 0 16px 0;font-size:20px;font-weight:700;color:#FFFFFF;letter-spacing:-0.3px;">
-        Ekip Çalışma Alanına Davet Edildiniz
+        You're invited to a team workspace
       </h1>
       <p style="margin:0 0 16px 0;">
-        <strong style="color:#FFFFFF;">${orgName}</strong> ekibi sizi Zelsis üzerinde 
-        <strong style="color:#34D399;text-transform:uppercase;font-family:ui-monospace,monospace;font-size:12px;">${role}</strong> 
-        rolüyle çalışma alanına katılmaya davet etti.
+        <strong style="color:#FFFFFF;">${org}</strong> invited you to join their Zelsis workspace as
+        <strong style="color:#34D399;text-transform:uppercase;font-family:ui-monospace,monospace;font-size:12px;">${escapeHtml(role)}</strong>.
       </p>
       <div style="margin:28px 0;text-align:center;">
-        <a href="${inviteUrl}" style="display:inline-block;background-color:#10B981;color:#000000;font-weight:700;font-size:13px;padding:12px 28px;border-radius:8px;text-decoration:none;letter-spacing:-0.2px;">
-          Daveti Kabul Et ve Katıl
+        <a href="${url}" style="display:inline-block;background-color:#10B981;color:#000000;font-weight:700;font-size:13px;padding:12px 28px;border-radius:8px;text-decoration:none;letter-spacing:-0.2px;">
+          Accept invitation
         </a>
       </div>
       <p style="margin:0 0 8px 0;font-size:12px;color:#71717A;">
-        Buton çalışmıyorsa aşağıdaki bağlantıyı tarayıcınıza yapıştırabilirsiniz:
+        If the button doesn't work, paste this link into your browser:
       </p>
       <p style="margin:0;font-size:11px;font-family:ui-monospace,monospace;color:#A1A1AA;word-break:break-all;">
-        ${inviteUrl}
+        ${url}
       </p>
       <p style="margin:20px 0 0 0;font-size:11px;color:#52525B;">
-        Bu davet bağlantısı tek kullanımlıktır ve 7 gün boyunca geçerlidir.
+        This invitation link can be used once and expires in 7 days.
       </p>
     `,
   });
 
-  const text = `${orgName} ekibi sizi Zelsis üzerinde ${role} rolüyle çalışma alanına katılmaya davet etti.\n\nDaveti kabul etmek için bağlantı:\n${inviteUrl}\n\nBu bağlantı 7 gün boyunca geçerlidir.`;
+  const text = `${orgName} invited you to join their Zelsis workspace as ${role}.\n\nAccept the invitation:\n${inviteUrl}\n\nThis link can be used once and expires in 7 days.`;
 
   return sendEmail({
     to: toEmail,
-    subject: `${orgName} Çalışma Alanına Davet Edildiniz — Zelsis`,
+    subject: `You're invited to ${orgName} on Zelsis`,
     html,
     text,
   });

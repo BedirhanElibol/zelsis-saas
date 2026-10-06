@@ -58,7 +58,7 @@ export const DemoShowcaseBanner: React.FC<DemoShowcaseBannerProps> = ({
           <div>
             <div className="flex items-center gap-2 mb-1.5 flex-wrap">
               <span className="px-2.5 py-0.5 rounded text-[10px] font-mono font-semibold bg-white/10 border border-white/15 text-zinc-200 tracking-wider uppercase">
-                Kayıtsız Hızlı Deneme / INTERACTIVE DEMO PREVIEW
+                Interactive demo preview
               </span>
             </div>
             <p className="text-xs sm:text-sm text-zinc-300 max-w-2xl leading-relaxed m-0">
@@ -103,7 +103,7 @@ export const DemoShowcaseBanner: React.FC<DemoShowcaseBannerProps> = ({
             className="btn btn-secondary text-xs font-mono font-bold px-4 py-2 rounded-lg border-white/10 hover:bg-white/5 text-white flex items-center gap-1.5 transition-colors shrink-0 disabled:opacity-50"
           >
             {isPending ? <Loader2 className="w-3 h-3 animate-spin" /> : <Play size={13} fill="currentColor" />}
-            <span>{isPending ? 'Starting...' : 'Hızlı Analiz (Quick Scan)'}</span>
+            <span>{isPending ? 'Starting...' : 'Quick Scan'}</span>
           </button>
         </form>
         <span className="text-[10px] text-zinc-400 font-mono ml-auto hidden sm:block">No account required</span>

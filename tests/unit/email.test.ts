@@ -83,7 +83,7 @@ test('sendWaitlistWelcomeEmail formats HTML template and dispatches', async () =
     const res = await sendWaitlistWelcomeEmail('newuser@example.com', 'Next.js');
     assert.equal(res.success, true);
     assert.deepEqual(interceptedBody.to, ['newuser@example.com']);
-    assert.match(interceptedBody.subject ?? '', /Erken Erişim/i);
+    assert.match(interceptedBody.subject ?? '', /early access/i);
     assert.match(interceptedBody.html ?? '', /ZELSIS/);
     assert.match(interceptedBody.html ?? '', /Next\.js/);
   } finally {
@@ -117,10 +117,29 @@ test('sendWorkspaceInviteEmail formats invitation with role and inviteUrl', asyn
     assert.match(interceptedBody.subject ?? '', /Acme Corp/);
     assert.match(interceptedBody.html ?? '', /token123/);
     assert.match(interceptedBody.html ?? '', /admin/i);
-    assert.match(interceptedBody.html ?? '', /Zelsis üzerinde/);
+    assert.match(interceptedBody.html ?? '', /Zelsis workspace/);
   } finally {
     fetchMock.mock.restore();
     if (origKey !== undefined) process.env.RESEND_API_KEY = origKey;
     else delete process.env.RESEND_API_KEY;
+  }
+});
+
+test('sendWorkspaceInviteEmail escapes the user-chosen workspace name', async () => {
+  const origKey = process.env.RESEND_API_KEY;
+  process.env.RESEND_API_KEY = 're_test';
+  let html = '';
+  const fetchMock = mock.method(globalThis, 'fetch', async (_url: unknown, init?: RequestInit) => {
+    html = JSON.parse(String(init?.body ?? '{}')).html ?? '';
+    return new Response(JSON.stringify({ id: 'x' }), { status: 200 });
+  });
+  try {
+    await sendWorkspaceInviteEmail({ toEmail: 'a@b.com', orgName: '<img src=x onerror=alert(1)>', role: 'member', inviteUrl: 'https://app.example/invite/t' });
+    assert.ok(!html.includes('<img src=x'));
+    assert.ok(html.includes('&lt;img src=x'));
+  } finally {
+    fetchMock.mock.restore();
+    if (origKey === undefined) delete process.env.RESEND_API_KEY;
+    else process.env.RESEND_API_KEY = origKey;
   }
 });
