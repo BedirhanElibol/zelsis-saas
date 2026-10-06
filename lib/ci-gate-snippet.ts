@@ -71,6 +71,8 @@ jobs:
           STATUS=$(jq -r '.gateStatus // "ERROR"' zelsis-report.json)
           SCORE=$(jq -r '.readinessScore // 0' zelsis-report.json)
           echo "Gate: $STATUS, score: $SCORE/100" >> $GITHUB_STEP_SUMMARY
+          # Shows each finding on its line in the pull request diff
+          jq -r '.annotations[]? // empty' zelsis-report.json
           ${failCheck}
 
       - name: Upload gate report

@@ -12,6 +12,7 @@ import { validateSafeTargetUrl } from '@/lib/ssrf-guard';
 import { hasFixPromptAccess } from '@/lib/subscription-utils';
 import { getEffectivePlanTier, getOrgPolicy } from '@/lib/organization';
 import { LOCKED_FIX_TEXT } from '@/lib/fix-gate';
+import { buildWorkflowAnnotations } from '@/lib/ci-annotations';
 import { calculateGateStatus, gatingFindings } from '@/lib/scanner/scoring';
 
 // F-31: Bounded execution duration for static code scans (bounded to 30s for serverless SLA)
@@ -584,6 +585,8 @@ export async function POST(req: NextRequest) {
           filesAnalyzed: filesToScan.length,
           openFindingsCount: result.findings.length
         },
+        // Workflow commands the CI job prints so each finding shows on its line in the PR diff (new findings only on PRs)
+        annotations: buildWorkflowAnnotations(newFindings),
         findings: changedFiles !== null ? {
           new: newFindings.map((f) => ({
             id: f.id,

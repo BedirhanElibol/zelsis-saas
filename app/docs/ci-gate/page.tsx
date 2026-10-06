@@ -31,6 +31,15 @@ export default function CIGatePage() {
       </section>
 
       <section className="space-y-4">
+        <h2 className="text-xl font-semibold text-white">Findings on the pull request diff</h2>
+        <p>
+          On a pull request the job only reports findings in files the PR changes, and each one appears on its line in the
+          &quot;Files changed&quot; tab: critical and high as errors, medium as warnings (up to 10 of each, the most severe
+          first). No GitHub App is needed; the job prints GitHub&apos;s standard annotation commands.
+        </p>
+      </section>
+
+      <section className="space-y-4">
         <h2 className="text-xl font-semibold text-white">When the Zelsis API is unreachable</h2>
         <ul className="list-disc pl-5 space-y-2">
           <li>
