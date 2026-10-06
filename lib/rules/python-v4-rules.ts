@@ -20,8 +20,21 @@ export function evaluatePythonV4Rules(file: CodeFile, lines: string[], cleanCont
   const isPython = file.path.endsWith('.py');
   if (!isPython) return { findings, logs };
 
+  const importsMarkup = /\bfrom\s+(?:markupsafe|jinja2|flask)\s+import\b[^\n]*\bMarkup\b|\b(?:markupsafe|jinja2|flask)\.Markup\b/.test(cleanContent);
+  // django-cors-headers echoes the caller's Origin when allow-all is combined with credentials
+  const corsCredentials = /^\s*CORS_ALLOW_CREDENTIALS\s*=\s*True\b/m.test(cleanContent);
+  const devSettings = /(?:^|\/)(?:dev|local|test|tests|testing)[\w-]*\.py$|\/tests?\//.test(file.path.toLowerCase());
+
   lines.forEach((l, i) => {
     if (/^\s*#/.test(l)) return;
+
+    if (corsCredentials && !devSettings && /^\s*CORS_(?:ALLOW_ALL_ORIGINS|ORIGIN_ALLOW_ALL)\s*=\s*True\b/.test(l)) {
+      add({ ruleId: 29017, code: 'PYF-17', title: 'Django CORS Allows Every Origin With Credentials', severity: 'HIGH', category: 'Security Misconfiguration', lineIdx: i, why: 'With CORS_ALLOW_ALL_ORIGINS and CORS_ALLOW_CREDENTIALS both on, django-cors-headers reflects any Origin, so any website can make logged-in requests and read the responses.', fix: 'Set CORS_ALLOWED_ORIGINS to your exact front-end origins and keep CORS_ALLOW_ALL_ORIGINS = False.' });
+    }
+    // Markup("...").format(x) and Markup("%s") % x escape their arguments; formatting inside the call does not
+    if (importsMarkup && /\bMarkup\(\s*(?:f['"][^'"]*\{|['"][^'"]*['"]\s*%|['"][^'"]*['"]\.format\(|[^)]*['"]\s*\+\s*\w)/.test(l) && !/\bescape\(/.test(l)) {
+      add({ ruleId: 29018, code: 'PYF-18', title: 'Markup() Wraps an Already-Formatted String (XSS)', severity: 'HIGH', category: 'Cross-Site Scripting', lineIdx: i, why: 'Formatting the string before wrapping it in Markup marks the interpolated value as safe HTML, so Jinja renders it unescaped.', fix: 'Format through Markup so arguments are escaped: Markup("<b>{}</b>").format(name), or use markupsafe.escape(name).' });
+    }
 
     if (/\.extra\([^)]*(?:where|select|tables)\s*=\s*[^)]*(?:f['"]|['"][^'"]*['"]\s*\%|['"][^'"]*['"]\.format\()/.test(l)) {
       add({ ruleId: 29002, code: 'PYF-02', title: 'Django extra() SQL Injection', severity: 'CRITICAL', category: 'Injection', lineIdx: i, why: 'Formatting strings into extra() clauses allows SQL injection.', fix: 'Use parameters for variables, or migrate to .annotate() / .filter().' });

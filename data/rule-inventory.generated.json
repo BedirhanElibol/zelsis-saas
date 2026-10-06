@@ -1,8 +1,8 @@
 {
  "summary": {
-  "implementedRules": 875,
-  "testedRules": 867,
-  "preciseLocationRules": 872,
+  "implementedRules": 884,
+  "testedRules": 876,
+  "preciseLocationRules": 881,
   "catalogEntries": 1922,
   "catalogOnlyNotImplemented": 1401,
   "catalogPlaceholderMetadata": 1810
@@ -1495,7 +1495,7 @@
    "ruleId": 20,
    "code": "RULE-20",
    "title": "Vulnerable Dependency or Wildcard Version in package.json",
-   "severity": "HIGH",
+   "severity": "UNKNOWN",
    "source": "lib/rules/security-rules.ts",
    "preciseLocation": true,
    "tested": true,
@@ -5325,7 +5325,7 @@
    "ruleId": 8803,
    "code": "PY-SEC-03",
    "title": "Subprocess Execution with shell=True",
-   "severity": "HIGH",
+   "severity": "UNKNOWN",
    "source": "lib/rules/python-enterprise-rules.ts",
    "preciseLocation": true,
    "tested": true,
@@ -10012,6 +10012,26 @@
    "inCatalog": false
   },
   {
+   "ruleId": 29017,
+   "code": "RULE-29017",
+   "title": "Django CORS Allows Every Origin With Credentials",
+   "severity": "HIGH",
+   "source": "lib/rules/python-v4-rules.ts",
+   "preciseLocation": true,
+   "tested": true,
+   "inCatalog": false
+  },
+  {
+   "ruleId": 29018,
+   "code": "RULE-29018",
+   "title": "Markup() Wraps an Already-Formatted String (XSS)",
+   "severity": "HIGH",
+   "source": "lib/rules/python-v4-rules.ts",
+   "preciseLocation": true,
+   "tested": true,
+   "inCatalog": false
+  },
+  {
    "ruleId": 29101,
    "code": "RULE-29101",
    "title": "Jackson Default Typing Lets JSON Pick the Class to Instantiate",
@@ -10052,6 +10072,46 @@
    "inCatalog": false
   },
   {
+   "ruleId": 29106,
+   "code": "RULE-29106",
+   "title": "Spring Request Input Evaluated as a SpEL Expression",
+   "severity": "CRITICAL",
+   "source": "lib/rules/backend-v4-rules.ts",
+   "preciseLocation": true,
+   "tested": true,
+   "inCatalog": false
+  },
+  {
+   "ruleId": 29107,
+   "code": "RULE-29107",
+   "title": "PHP extract() on Request Input Lets the Client Set Any Variable",
+   "severity": "HIGH",
+   "source": "lib/rules/backend-v4-rules.ts",
+   "preciseLocation": true,
+   "tested": true,
+   "inCatalog": false
+  },
+  {
+   "ruleId": 29108,
+   "code": "RULE-29108",
+   "title": "Rails send_file With a Path From params",
+   "severity": "HIGH",
+   "source": "lib/rules/backend-v4-rules.ts",
+   "preciseLocation": true,
+   "tested": true,
+   "inCatalog": false
+  },
+  {
+   "ruleId": 29109,
+   "code": "RULE-29109",
+   "title": "Laravel Raw SQL Expression Built From Request Input",
+   "severity": "CRITICAL",
+   "source": "lib/rules/backend-v4-rules.ts",
+   "preciseLocation": true,
+   "tested": true,
+   "inCatalog": false
+  },
+  {
    "ruleId": 29201,
    "code": "RULE-29201",
    "title": "Firebase Test-Mode Rule: Anyone Can Read and Write Until the Date Passes",
@@ -10075,6 +10135,36 @@
    "ruleId": 29203,
    "code": "RULE-29203",
    "title": "Supabase Auth Redirects Allowed to Any Subdomain of a Shared Hosting Domain",
+   "severity": "HIGH",
+   "source": "lib/rules/config-v4-rules.ts",
+   "preciseLocation": true,
+   "tested": true,
+   "inCatalog": false
+  },
+  {
+   "ruleId": 29204,
+   "code": "RULE-29204",
+   "title": "nginx alias Path Traversal (location ${open} without a trailing slash)",
+   "severity": "MEDIUM",
+   "source": "lib/rules/config-v4-rules.ts",
+   "preciseLocation": true,
+   "tested": true,
+   "inCatalog": false
+  },
+  {
+   "ruleId": 29205,
+   "code": "RULE-29205",
+   "title": "MongoDB Bound to All Interfaces Without Authorization",
+   "severity": "HIGH",
+   "source": "lib/rules/config-v4-rules.ts",
+   "preciseLocation": true,
+   "tested": true,
+   "inCatalog": false
+  },
+  {
+   "ruleId": 29206,
+   "code": "RULE-29206",
+   "title": "Elasticsearch Security Disabled on a Network-Reachable Node",
    "severity": "HIGH",
    "source": "lib/rules/config-v4-rules.ts",
    "preciseLocation": true,

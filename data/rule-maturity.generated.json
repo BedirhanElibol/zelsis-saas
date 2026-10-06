@@ -1,29 +1,7 @@
 {
  "generatedAt": "2026-10-03",
  "cleanRepos": 12,
- "experimental": [
-  {
-   "ruleId": 20,
-   "title": "Vulnerable Dependency or Wildcard Version in package.json",
-   "severity": "HIGH",
-   "cleanRepos": 1,
-   "cleanFindings": 1
-  },
-  {
-   "ruleId": 8803,
-   "title": "PY-SEC-03: Subprocess Execution with shell=True",
-   "severity": "HIGH",
-   "cleanRepos": 1,
-   "cleanFindings": 1
-  },
-  {
-   "ruleId": 27211,
-   "title": "SCA: CVE-2024-34351 - Next.js Server Actions Server-Side Request Forgery (SSRF) (next@13.3.2-canary.13)",
-   "severity": "HIGH",
-   "cleanRepos": 2,
-   "cleanFindings": 2
-  }
- ],
+ "experimental": [],
  "benchmarkProven": [
   25,
   32,

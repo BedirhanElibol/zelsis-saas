@@ -101,7 +101,8 @@ export function evaluatePythonEnterpriseRules(file: CodeFile, lines: string[], c
             ruleId: 8803,
             type: 'SECURITY',
             title: "PY-SEC-03: Subprocess Execution with shell=True",
-            severity: "HIGH",
+            // Injectable by any client only when the file handles web requests; paths and settings are operator-controlled
+            severity: /\brequest\.(?:GET|POST|args|form|json|values|query_params|data|files|cookies|headers)\b/.test(cleanContent) ? "HIGH" : "MEDIUM",
             category: "Command Injection",
             filePath: file.path,
             lineRange: `L${lineNum}`,

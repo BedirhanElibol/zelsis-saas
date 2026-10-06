@@ -1,4 +1,5 @@
 import type { CodeFile } from './types';
+import { buildCrossFileAuth, emptyCrossFileAuth, type CrossFileAuth } from './ast/cross-file';
 
 /**
  * Facts that span files, computed once before per-file rules run
@@ -28,6 +29,8 @@ export interface RepoContext {
    * keyed by lower-cased model, table and Drizzle variable name: `user` -> ['passwordHash'].
    */
   sensitiveColumnsByModel: Map<string, string[]>;
+  /** Exported auth helpers and the routes middleware.ts authenticates, for the AST flow rules. */
+  crossFileAuth: CrossFileAuth;
 }
 
 /** Normalises `"public"."fn"` / `public.fn` / `fn` to `fn`. */
@@ -69,7 +72,7 @@ export function buildRepoContext(files: CodeFile[]): RepoContext {
       if (/SET\s+search_path/i.test(m[0])) hardenedSqlFunctions.add(normalizeSqlName(m[1]));
     }
   }
-  return { hardenedSqlFunctions, rlsEnabledTables, exposesDatabaseToClients, hasHealthEndpoint, nextMajorVersion, ...collectServerClientFacts(files) };
+  return { hardenedSqlFunctions, rlsEnabledTables, exposesDatabaseToClients, hasHealthEndpoint, nextMajorVersion, ...collectServerClientFacts(files), crossFileAuth: buildCrossFileAuth(files) };
 }
 
 /** Column names that hold credentials or secrets (password hashes, tokens, API keys, TOTP seeds). */
@@ -125,4 +128,4 @@ function collectServerClientFacts(files: CodeFile[]): Pick<RepoContext, 'clientC
 }
 
 /** Without repo-wide knowledge, assume the database may be exposed (single-file scans keep RLS checks on). */
-export const emptyRepoContext = (): RepoContext => ({ hardenedSqlFunctions: new Set(), rlsEnabledTables: new Set(), exposesDatabaseToClients: true, hasHealthEndpoint: false, nextMajorVersion: null, clientComponentModules: new Set(), sensitiveColumnsByModel: new Map() });
+export const emptyRepoContext = (): RepoContext => ({ hardenedSqlFunctions: new Set(), rlsEnabledTables: new Set(), exposesDatabaseToClients: true, hasHealthEndpoint: false, nextMajorVersion: null, clientComponentModules: new Set(), sensitiveColumnsByModel: new Map(), crossFileAuth: emptyCrossFileAuth() });

@@ -124,8 +124,8 @@ const NPM_CVE_REGISTRY: Record<string, CveDefinition> = {
     },
     express: {
         cveId: "CVE-2024-29041",
-        cvss: 7.5,
-        severity: "HIGH",
+        cvss: 6.1,
+        severity: "MEDIUM",
         title: "Express Open Redirect & Malformed Route Path Bypass",
         description: "Express versions before 4.19.2 mishandle encoded redirect URLs, enabling external phishing and bypass of routing boundaries.",
         safeVersion: "^4.19.2",
@@ -164,11 +164,11 @@ const NPM_CVE_REGISTRY: Record<string, CveDefinition> = {
         cvss: 7.5,
         severity: "HIGH",
         title: "Next.js Server Actions Server-Side Request Forgery (SSRF)",
-        description: "Next.js versions prior to 14.1.1 mishandle Host headers during Server Action redirects, leading to SSRF.",
+        description: "Next.js 13.4.0 through 14.1.0 mishandle Host headers during Server Action redirects, leading to SSRF (Server Actions did not exist before 13.4).",
         safeVersion: "^14.2.0",
         isVulnerable: (ver) => {
             const v = parseSemVer(ver);
-            return v !== null && isLessThan(v, [14, 1, 1]);
+            return v !== null && !isLessThan(v, [13, 4, 0]) && isLessThan(v, [14, 1, 1]);
         }
     },
     cookie: {
