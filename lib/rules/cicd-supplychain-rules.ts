@@ -55,7 +55,7 @@ export function evaluateCicdSupplyChainRules(file: CodeFile, lines: string[], cl
         logs.push(`[${ts}] [CICD SEC] Found CICD-SEC-01: Dangerous pull_request_target Workflow with Untrusted Checkout at ${file.path}:${lineNum}`);
     }
     // CICD-SEC-02: Unpinned Third-Party Action Mutable Reference (@v1)
-    const unpinnedActionRegex = /^\s*-?\s*uses\s*:\s*['\"]?[\w.-]+\/[\w./-]+@(?![0-9a-f]{40}\b)[\w.-]+/i;
+    const unpinnedActionRegex = /^\s*-?\s*uses\s*:\s*['\"]?(?!(?:actions|github)\/)[\w.-]+\/[\w./-]+@(?![0-9a-f]{40}\b)[\w.-]+/i;
     if (/\.github\/workflows\/[^/]+\.ya?ml$/i.test(file.path) && lines.some(l => unpinnedActionRegex.test(l))) {
         const matchLineIdx = lines.findIndex(l => unpinnedActionRegex.test(l));
         const lineNum = matchLineIdx !== -1 ? matchLineIdx + 1 : 1;
@@ -64,7 +64,7 @@ export function evaluateCicdSupplyChainRules(file: CodeFile, lines: string[], cl
             ruleId: 9502,
             type: 'SECURITY',
             title: "CICD-SEC-02: Unpinned Third-Party Action Mutable Reference (@v1)",
-            severity: "HIGH",
+            severity: "MEDIUM",
             category: "Supply Chain Security",
             filePath: file.path,
             lineRange: `L${lineNum}`,

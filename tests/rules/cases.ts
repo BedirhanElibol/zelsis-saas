@@ -319,7 +319,13 @@ export const RULE_CASES: RuleCase[] = [
     ]
   },
   {
-    ruleIds: [7323, 9501, 9502],
+    ruleIds: [9502],
+    name: 'third-party GitHub Action pinned to a mutable tag',
+    detects: f('.github/workflows/deploy.yml', 'on: push\njobs:\n  deploy:\n    runs-on: ubuntu-latest\n    steps:\n      - uses: some-org/deploy-action@v2\n'),
+    ignores: f('.github/workflows/deploy.yml', 'on: push\njobs:\n  deploy:\n    runs-on: ubuntu-latest\n    steps:\n      - uses: actions/checkout@v4\n      - uses: some-org/deploy-action@0123456789abcdef0123456789abcdef01234567\n')
+  },
+  {
+    ruleIds: [7323, 9501],
     name: 'pull_request_target with untrusted checkout',
     detects: f('.github/workflows/ci.yml', 'on: pull_request_target\njobs:\n  build:\n    runs-on: ubuntu-latest\n    steps:\n      - uses: actions/checkout@v4\n        with:\n          ref: ${{ github.event.pull_request.head.sha }}\n      - run: npm ci && npm test\n'),
     ignores: f('.github/workflows/ci.yml', 'on: pull_request\npermissions:\n  contents: read\njobs:\n  build:\n    runs-on: ubuntu-latest\n    steps:\n      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683\n      - run: npm ci && npm test\n')

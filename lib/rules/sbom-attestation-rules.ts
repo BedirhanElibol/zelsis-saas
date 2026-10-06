@@ -59,7 +59,7 @@ export function evaluateSbomAttestationRules(file: CodeFile, lines: string[], cl
             ruleId: 12605,
             type: 'SECURITY',
             title: "SBOM-05: Unvetted Third-Party GitHub Actions in Production CI/CD Workflows",
-            severity: "HIGH",
+            severity: "MEDIUM",
             category: "Pipeline Security",
             filePath: file.path,
             lineRange: `L${lineNum}`,

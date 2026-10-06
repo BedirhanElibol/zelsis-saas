@@ -24,7 +24,7 @@ export function evaluateCloudNativeRules(file: CodeFile, lines: string[], cleanC
     // Comment-stripped lines (same numbering as `lines`) for line-level rules
     const cleanLines = cleanContent.split('\n');
     // CLOUD-04: Docker Container Running as Default Root User
-    if (file.path.toLowerCase().endsWith("dockerfile") && !/USER\s+[a-zA-Z0-9_-]+/i.test(cleanContent)) {
+    if (file.path.toLowerCase().endsWith("dockerfile") && !/(?:^|\/)\.devcontainer\//.test(lowerPath) && !/USER\s+[a-zA-Z0-9_-]+/i.test(cleanContent)) {
         const matchLineIdx = lines.findIndex(l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('*') && (/cloud-04|docker/i.test(l) || lines.indexOf(l) === 0));
         const lineNum = matchLineIdx !== -1 ? matchLineIdx + 1 : 1;
         findings.push({

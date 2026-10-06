@@ -96,8 +96,9 @@ export function evaluateSecurityRules(file: CodeFile, lines: string[], cleanCont
     }
     // Rule 16: Dangerously Set Inner HTML (XSS) (SEC-16)
     const isSafeMdxOrJsonLd = file.path.includes('mdx-components') || file.path.includes('syntax-highlight') || cleanContent.includes('application/ld+json');
-    if (!isSafeMdxOrJsonLd && (cleanContent.includes('dangerouslySetInnerHTML') || cleanContent.includes('innerHTML ='))) {
-        const matchLineIdx = lines.findIndex(l => !l.trim().startsWith('//') && !l.trim().startsWith('/*') && (l.includes('dangerouslySetInnerHTML') || l.includes('innerHTML')));
+    const innerHtmlLineIdx = lines.findIndex(l => !l.trim().startsWith('//') && !l.trim().startsWith('/*') && (l.includes('dangerouslySetInnerHTML') || l.includes('innerHTML')) && !/innerHTML\s*=\s*(?:(['"])(?:\\.|(?!\1).)*\1|`[^`$]*`)\s*;?\s*$/.test(l));
+    if (!isSafeMdxOrJsonLd && (cleanContent.includes('dangerouslySetInnerHTML') || cleanContent.includes('innerHTML =')) && innerHtmlLineIdx !== -1) {
+        const matchLineIdx = innerHtmlLineIdx;
         const lineNum = matchLineIdx !== -1 ? matchLineIdx + 1 : 1;
         findings.push({
             id: `real-find-${Date.now()}-${findingCounter.count++}`,
