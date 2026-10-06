@@ -1,89 +1,95 @@
+import { timingSafeEqual } from 'crypto';
 import { NextResponse } from 'next/server';
 import { getSupabaseAdmin } from '@/lib/supabase-admin';
 import { logger } from '@/lib/logger';
-import { getConfiguredAppUrl } from '@/lib/app-url';
-import { getEffectivePlanTier } from '@/lib/organization';
+import { getInternalBaseUrl, getInternalSecret } from '@/lib/internal-auth';
 
-export const maxDuration = 30; // Max allowed by Vercel for pro plans
+export const maxDuration = 30;
 export const dynamic = 'force-dynamic';
 
+// Each scan runs in its own process-job invocation; the cron only has to hand the request off.
+const DISPATCH_TIMEOUT_MS = 1500;
+
+function isAuthorizedCron(header: string | null): boolean {
+  const secret = process.env.CRON_SECRET?.trim();
+  if (!secret || !header) return false;
+  const expected = Buffer.from(`Bearer ${secret}`);
+  const received = Buffer.from(header);
+  return expected.length === received.length && timingSafeEqual(expected, received);
+}
+
 export async function GET(req: Request) {
-  const authHeader = req.headers.get('authorization');
-  if (authHeader !== `Bearer ${process.env.CRON_SECRET}`) {
+  if (!isAuthorizedCron(req.headers.get('authorization'))) {
     logger.warn('[Cron] Unauthorized attempt to trigger rescan');
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
   }
 
   const adminClient = getSupabaseAdmin();
-  if (!adminClient) {
-    return NextResponse.json({ error: 'Database connection failed' }, { status: 500 });
+  const internalSecret = getInternalSecret();
+  const baseUrl = getInternalBaseUrl();
+  if (!adminClient || !internalSecret || !baseUrl) {
+    logger.error('[Cron] Rescan is not configured (database, INTERNAL_API_SECRET or NEXT_PUBLIC_APP_URL missing)');
+    return NextResponse.json({ error: 'Rescan is not configured' }, { status: 500 });
   }
 
-  // Find all projects where weekly_rescan_enabled is true
   const { data: projects, error } = await adminClient
     .from('projects')
-    .select('id, user_id, repo_url, name, alert_new_cves_enabled')
-    .eq('weekly_rescan_enabled', true);
+    .select('id, user_id, repo_url, name')
+    .eq('weekly_rescan_enabled', true)
+    .like('repo_url', 'https://github.com/%')
+    // No GitHub token is stored server-side, so only public repos can be rescanned unattended.
+    .or('is_private.is.null,is_private.eq.false');
 
   if (error || !projects) {
     logger.error('[Cron] Failed to fetch projects for rescan:', error);
     return NextResponse.json({ error: 'Failed to fetch projects' }, { status: 500 });
   }
 
-  const results = [];
-  const internalSecret = process.env.ZELSIS_INTERNAL_SECRET || '';
-
   logger.info(`[Cron] Found ${projects.length} projects opted in for weekly rescan`);
 
-  for (const p of projects) {
+  const dispatches = projects.map(async (p) => {
+    const { data: jobRow, error: jobErr } = await adminClient
+      .from('scan_jobs')
+      .insert({
+        user_id: p.user_id,
+        project_id: p.id,
+        repo_url: p.repo_url,
+        status: 'QUEUED',
+        current_phase: 'Scheduled weekly rescan initiated'
+      })
+      .select('id')
+      .single();
+
+    if (jobErr || !jobRow) {
+      logger.warn(`[Cron] Failed to create scan_job for project ${p.id}:`, jobErr);
+      return null;
+    }
+
     try {
-      // Create a scan_job for the rescan
-      const { data: jobRow, error: jobErr } = await adminClient
-        .from('scan_jobs')
-        .insert({
-          user_id: p.user_id,
-          repo_url: p.repo_url,
-          status: 'QUEUED',
-          current_phase: 'Scheduled weekly rescan initiated'
-        })
-        .select('id')
-        .single();
-
-      if (jobErr || !jobRow) {
-        logger.warn(`[Cron] Failed to create scan_job for project ${p.id}:`, jobErr);
-        continue;
-      }
-
-      const userTier = await getEffectivePlanTier(adminClient, p.user_id);
-      const isFree = userTier === 'Free';
-
-      const payload = {
-        jobId: jobRow.id,
-        repoUrl: p.repo_url,
-        targetName: p.name,
-        authenticatedUserId: p.user_id,
-        userTier,
-        osvOnly: isFree,
-        isRescan: true,
-        // Optional: you can pass the alert flag if you want to conditionally alert
-        // But we will handle the check via diffing in executeScanJob
-      };
-
-      // Asynchronously trigger the scan processing so the cron doesn't time out
-      fetch(`${getConfiguredAppUrl()}/api/v1/scans/process-job`, {
+      await fetch(`${baseUrl}/api/v1/scans/process-job`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
           'x-zelsis-internal-secret': internalSecret
         },
-        body: JSON.stringify(payload)
-      }).catch(e => logger.error(`[Cron] Error triggering rescan job ${jobRow.id}:`, e));
-
-      results.push({ projectId: p.id, jobId: jobRow.id, type: isFree ? 'OSV_ONLY' : 'FULL' });
+        body: JSON.stringify({
+          jobId: jobRow.id,
+          repoUrl: p.repo_url,
+          targetName: p.name,
+          isRescan: true
+        }),
+        signal: AbortSignal.timeout(DISPATCH_TIMEOUT_MS)
+      });
     } catch (e) {
-      logger.error(`[Cron] Rescan trigger failed for project ${p.id}`, e);
+      // A timeout only means the scan is still running in its own invocation.
+      if (!(e instanceof Error && e.name === 'TimeoutError')) {
+        logger.error(`[Cron] Error triggering rescan job ${jobRow.id}:`, e);
+        return null;
+      }
     }
-  }
+    return { projectId: p.id, jobId: jobRow.id };
+  });
 
+  const results = (await Promise.all(dispatches)).filter(Boolean);
   return NextResponse.json({ success: true, triggered: results.length, jobs: results });
 }

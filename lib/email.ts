@@ -207,3 +207,77 @@ export async function sendWorkspaceInviteEmail(params: {
     text,
   });
 }
+
+function escapeHtml(value: string): string {
+  return value
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#39;');
+}
+
+/**
+ * Sent when a scheduled weekly rescan finds CRITICAL/HIGH findings that the previous scan did not have.
+ * Titles and paths come from the scanned repository, so every value is HTML-escaped.
+ */
+export async function sendNewFindingsAlertEmail(params: {
+  toEmail: string;
+  projectName: string;
+  repoUrl: string;
+  newCritical: number;
+  newHigh: number;
+  findings: { title: string; severity: string; filePath: string }[];
+}): Promise<SendEmailResult> {
+  const { toEmail, projectName, repoUrl, newCritical, newHigh, findings } = params;
+  const total = newCritical + newHigh;
+  const dashboardUrl = `${getConfiguredAppUrl()}/dashboard`;
+  const name = escapeHtml(projectName);
+
+  const rows = findings
+    .map((f) => {
+      const color = f.severity === 'CRITICAL' ? '#F87171' : '#FB923C';
+      return `<tr>
+        <td style="padding:8px 0;border-top:1px solid rgba(255,255,255,0.06);vertical-align:top;width:72px;">
+          <span style="font-family:ui-monospace,monospace;font-size:10px;font-weight:700;color:${color};">${escapeHtml(f.severity)}</span>
+        </td>
+        <td style="padding:8px 0;border-top:1px solid rgba(255,255,255,0.06);">
+          <div style="color:#FFFFFF;font-size:13px;">${escapeHtml(f.title)}</div>
+          <div style="font-family:ui-monospace,monospace;font-size:11px;color:#71717A;word-break:break-all;">${escapeHtml(f.filePath)}</div>
+        </td>
+      </tr>`;
+    })
+    .join('');
+
+  const html = wrapHtmlTemplate({
+    title: `New security findings in ${name}`,
+    contentHtml: `
+      <h1 style="margin:0 0 16px 0;font-size:20px;font-weight:700;color:#FFFFFF;letter-spacing:-0.3px;">
+        ${total} new finding${total === 1 ? '' : 's'} in ${name}
+      </h1>
+      <p style="margin:0 0 16px 0;">
+        This week's scheduled rescan found ${newCritical} critical and ${newHigh} high-severity
+        issue${total === 1 ? '' : 's'} that were not in the previous scan. New CVEs in your dependencies show up here too.
+      </p>
+      <table role="presentation" width="100%" border="0" cellspacing="0" cellpadding="0">${rows}</table>
+      <div style="margin:28px 0 8px 0;text-align:center;">
+        <a href="${dashboardUrl}" style="display:inline-block;background-color:#10B981;color:#000000;font-weight:700;font-size:13px;padding:12px 28px;border-radius:8px;text-decoration:none;">
+          Open the dashboard
+        </a>
+      </div>
+      <p style="margin:20px 0 0 0;font-size:11px;color:#52525B;">
+        You get this because weekly rescans are on for ${escapeHtml(repoUrl)}. Turn them off in the project's alert settings.
+      </p>
+    `,
+  });
+
+  const list = findings.map((f) => `- [${f.severity}] ${f.title} (${f.filePath})`).join('\n');
+  const text = `${total} new finding(s) in ${projectName}\n\nThis week's scheduled rescan found ${newCritical} critical and ${newHigh} high-severity issue(s) that were not in the previous scan.\n\n${list}\n\nDashboard: ${dashboardUrl}`;
+
+  return sendEmail({
+    to: toEmail,
+    subject: `[Zelsis] ${total} new security finding${total === 1 ? '' : 's'} in ${projectName}`,
+    html,
+    text,
+  });
+}

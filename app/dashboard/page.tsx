@@ -1,6 +1,7 @@
 'use client';
 
 import React, { Suspense, useState, useEffect } from 'react';
+import { RescanAlertsBanner } from '@/components/dashboard/RescanAlertsBanner';
 import dynamic from 'next/dynamic';
 import { Project, Finding, ScanHistoryItem, UserTier } from '@/data/schema';
 import { MOCK_PROJECTS } from '@/data/demo-data';
@@ -494,6 +495,8 @@ function DashboardContent() {
           </ComponentErrorBoundary>
         ) : (
           <>
+            {activeNav === 'dashboard' && <RescanAlertsBanner />}
+
             {activeNav === 'dashboard' && (
               <ComponentErrorBoundary componentName="DashboardView" resetKeys={[safeSelectedProject?.id, safeSelectedProject?.lastScanAt]}>
                 <DashboardView

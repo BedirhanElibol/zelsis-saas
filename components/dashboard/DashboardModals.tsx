@@ -51,6 +51,7 @@ export const DashboardModals: React.FC<DashboardModalsProps> = ({
       <NotificationSettingsModal
         isOpen={activeModal === 'notif'}
         onClose={onClose}
+        projectId={project.id}
         projectName={project.name}
         repoUrl={project.repoUrl}
       />
