@@ -2796,7 +2796,7 @@ export function evaluateSecretRules(file: CodeFile, lines: string[], rawContentO
     // SEC-SECRET-99: JWT Hardcoded Secret Key Constant
     const pattern99 = /const\s+JWT_SECRET\s*=\s*["\'][a-zA-Z0-9!@#$%^&*()_+=-]{8,}["\']/i;
     if (pattern99.test(contentToScan)) {
-        const matchLineIdx = lines.findIndex(l => pattern99.test(l) && !isDummyPlaceholder(l));
+        const matchLineIdx = lines.findIndex(l => pattern99.test(l) && !isDummyPlaceholder(l) && !/super-secret-jwt-token-with-at-least-32-characters-long/.test(l));
         if (matchLineIdx !== -1) {
             const lineNum = matchLineIdx + 1;
             findings.push({

@@ -50,6 +50,8 @@ export function evaluateInfraRules(file: CodeFile, lines: string[], cleanContent
         while ((match = tableRegex.exec(cleanContent)) !== null) {
             const rawTableName = (match[1] || '').replace(/["']/g, '');
             const simpleName = rawTableName.includes('.') ? rawTableName.split('.').pop()! : rawTableName;
+            // PostgREST exposes the public schema; auth.*, storage.*, extensions.* are not client-queryable tables
+            if (rawTableName.includes('.') && !/^public\./i.test(rawTableName)) continue;
             // Check if RLS is enabled for this table anywhere in the file
             const rlsPattern = new RegExp(`alter\\s+table\\s+(?:if\\s+exists\\s+)?(?:[a-zA-Z0-9_."]+\\.)?${simpleName}\\s+enable\\s+row\\s+level\\s+security`, 'i');
             if (!rlsPattern.test(cleanContent) && !context.rlsEnabledTables.has(normalizeSqlName(rawTableName))) {
@@ -586,7 +588,7 @@ export function evaluateInfraRules(file: CodeFile, lines: string[], cleanContent
                 ruleId: 3019,
                 type: 'INFRA_DATABASE',
                 title,
-                severity: 'HIGH',
+                severity: 'MEDIUM',
                 category: 'Container Security',
                 filePath: file.path,
                 lineRange: `L${lineNum}`,

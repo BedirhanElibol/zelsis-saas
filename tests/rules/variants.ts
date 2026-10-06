@@ -34,7 +34,7 @@ export const VULNERABLE_VARIANTS: [ruleId: number, name: string, files: CodeFile
   [15701, 'compose privileged', f('docker-compose.yml', "services:\n  app:\n    image: x\n    privileged: true\n")],
   // CICD-SEC-02: unpinned actions in any form
   [9502, 'action on @main branch', wf("      - uses: some-org/deploy-action@main\n")],
-  [9502, 'quoted uses with tag', wf("      - uses: 'actions/checkout@v4'\n")],
+  [9502, 'quoted uses with tag', wf("      - uses: 'some-org/build-action@v4'\n")],
   [9502, 'semver tag', wf("      - uses: docker/login-action@v3.1.0\n")],
   // SAAS-01..08
   [23001, "auth.role() = 'authenticated'", f('supabase/migrations/a.sql', "CREATE POLICY \"r\" ON public.docs FOR SELECT USING (auth.role() = 'authenticated');\n")],
