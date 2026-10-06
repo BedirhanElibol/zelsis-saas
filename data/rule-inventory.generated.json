@@ -1,8 +1,8 @@
 {
  "summary": {
-  "implementedRules": 884,
-  "testedRules": 876,
-  "preciseLocationRules": 881,
+  "implementedRules": 885,
+  "testedRules": 877,
+  "preciseLocationRules": 882,
   "catalogEntries": 1922,
   "catalogOnlyNotImplemented": 1401,
   "catalogPlaceholderMetadata": 1810
@@ -10245,6 +10245,16 @@
    "ruleId": 29308,
    "code": "RULE-29308",
    "title": "XSS: Request/URL Input Rendered as HTML (CWE-79)",
+   "severity": "HIGH",
+   "source": "lib/rules/ast-flow-rules.ts",
+   "preciseLocation": true,
+   "tested": true,
+   "inCatalog": false
+  },
+  {
+   "ruleId": 29309,
+   "code": "RULE-29309",
+   "title": "Unauthenticated Endpoint Writes to GitHub for a Caller-Chosen Repository",
    "severity": "HIGH",
    "source": "lib/rules/ast-flow-rules.ts",
    "preciseLocation": true,
