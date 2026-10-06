@@ -67,6 +67,8 @@ export interface Ctx {
   redirectGuard: boolean;
   queries: DbQuery[];
   mixes: AstNode[];
+  /** Writes to GitHub through an API client (PRs, branches, files): privileged once an app token is behind it. */
+  externalWrites?: { line: number; api: string; tainted: boolean }[];
 }
 
 export interface FlowResult { handlers: Ctx[]; sinks: SinkHit[]; parsedFunctions: number }
@@ -368,8 +370,13 @@ export function analyzeProgram(program: AstNode, path: string, source: string, c
     if (!hit && name === 'verify' && objPath && /^(?:jwt|jsonwebtoken|jose|JWT)$/.test(objPath[objPath.length - 1])) hit = true;
     if (!hit && objPath && objPath.includes('auth') && /^(?:getUser|getSession|getClaims|api)$/.test(name)) hit = true;
     if (!hit) return false;
-    // getUser(params.id) is a lookup, not authentication
-    return !(call.arguments || []).some((a: AstNode) => taintOf(a, scope) > 0 && !reqKindOf(a, scope));
+    // getUser(params.id) is a lookup, not authentication; getUser(accessToken) / verify(token) validates a credential
+    const isCredential = (a: AstNode): boolean => {
+      const u = unwrap(a);
+      const n = u.type === 'Identifier' ? u.name : isMember(u) ? propName(u) || '' : '';
+      return /token|jwt|bearer|credential/i.test(n);
+    };
+    return !(call.arguments || []).some((a: AstNode) => taintOf(a, scope) > 0 && !reqKindOf(a, scope) && !isCredential(a));
   }
 
   function isUserExpr(e: AstNode | null | undefined, scope: Scope, depth = 0): boolean {
@@ -931,6 +938,20 @@ export function analyzeProgram(program: AstNode, path: string, source: string, c
     }
   }
 
+  /** octokit.rest.pulls.create(...), github.repos.createOrUpdateFileContents(...), octokit.request('POST /repos/...') */
+  function recordExternalWrite(call: AstNode, scope: Scope, ctx: Ctx): void {
+    const callee = unwrap(call.callee);
+    if (!isMember(callee)) return;
+    const path = memberPath(callee);
+    if (!path || !/octokit|github/i.test(path[0])) return;
+    const method = path[path.length - 1];
+    const verb = method === 'request' ? (stringValue(call.arguments[0]) || '').split(' ')[0] : '';
+    const writes = /^(?:create|update|delete|merge|add|remove|set|replace|upload|dispatch)/.test(method) || /^(?:POST|PUT|PATCH|DELETE)$/.test(verb);
+    if (!writes) return;
+    const tainted = (call.arguments || []).some((a: AstNode) => taintOf(a.type === 'SpreadElement' ? a.argument : a, scope) > 0);
+    (ctx.externalWrites ??= []).push({ line: lineOf(call), api: path.join('.'), tainted });
+  }
+
   function handleCall(call: AstNode, scope: Scope, ctx: Ctx, parent: AstNode | null): void {
     const name = calleeName(call) || '';
     const callee = unwrap(call.callee);
@@ -945,6 +966,7 @@ export function analyzeProgram(program: AstNode, path: string, source: string, c
       if (/allow|whitelist|valid|safe|isPrivate|isInternal|ssrf|checkUrl|verifyUrl|assertUrl|isPublicUrl|isExternal/i.test(name)) ctx.urlGuard = true;
       if (name === 'startsWith' || /safe|valid|allow|sanitiz|isRelative|isLocal|isInternal|isSameOrigin/i.test(name)) ctx.redirectGuard = true;
     }
+    if (ctx.spec) recordExternalWrite(call, scope, ctx);
     handleLocalCall(call, scope, ctx);
     const outermost = !(parent && isMember(parent) && unwrap(parent.object) === call);
     let isQuery = false;
