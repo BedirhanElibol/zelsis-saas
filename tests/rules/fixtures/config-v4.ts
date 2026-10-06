@@ -55,4 +55,50 @@ site_url = "https://myapp.com"
 additional_redirect_urls = ["https://myapp.com/auth/callback", "https://myapp-*-acme.vercel.app/**"]
 `)
   },
+  {
+    ruleIds: [29204], name: 'CFG-04 nginx alias off-by-slash',
+    detects: f('deploy/nginx/site.conf', `server {
+  listen 80;
+  location /static {
+    alias /var/www/app/static/;
+  }
+}
+`),
+    ignores: f('deploy/nginx/site.conf', `server {
+  listen 80;
+  location /static/ {
+    alias /var/www/app/static/;
+  }
+  location /media {
+    root /var/www/app;
+  }
+}
+`)
+  },
+  {
+    ruleIds: [29205], name: 'CFG-05 MongoDB on 0.0.0.0 without authorization',
+    detects: f('deploy/mongod.conf', `net:
+  port: 27017
+  bindIp: 0.0.0.0
+storage:
+  dbPath: /data/db
+`),
+    ignores: f('deploy/mongod.conf', `net:
+  port: 27017
+  bindIp: 0.0.0.0
+security:
+  authorization: enabled
+`)
+  },
+  {
+    ruleIds: [29206], name: 'CFG-06 Elasticsearch security off on 0.0.0.0',
+    detects: f('config/elasticsearch.yml', `cluster.name: app
+network.host: 0.0.0.0
+xpack.security.enabled: false
+`),
+    ignores: f('config/elasticsearch.yml', `cluster.name: app
+network.host: 127.0.0.1
+xpack.security.enabled: false
+`)
+  },
 ];

@@ -65,6 +65,59 @@ export function evaluateBackendV4Rules(file: CodeFile, lines: string[], cleanCon
     });
   }
 
+  if (/\.(?:java|kt)$/.test(path) && /SpelExpressionParser|ExpressionParser\b/.test(cleanContent)) {
+    // BEF-06: request input parsed as a SpEL expression (T(java.lang.Runtime).getRuntime().exec(...))
+    const params = new Set<string>();
+    for (const m of cleanContent.matchAll(/@(?:RequestParam|PathVariable|RequestHeader|RequestBody)\b(?:\s*\([^)]*\))?\s+(?:final\s+)?String\s+(\w+)/g)) params.add(m[1]);
+    const idx = lines.findIndex((l) => {
+      const m = /\.parseExpression\s*\(\s*([^)]*)/.exec(l);
+      if (!m) return false;
+      const arg = m[1].trim();
+      return /\brequest\.get(?:Parameter|Header)\s*\(/.test(arg) || params.has(arg.split(/[\s+,]/)[0]);
+    });
+    if (idx !== -1) hits.push({
+      ruleId: 29106, code: 'BEF-06', severity: 'CRITICAL', category: 'Injection', lineIdx: idx,
+      title: 'Spring Request Input Evaluated as a SpEL Expression',
+      why: 'SpEL can call any Java type, so an expression like T(java.lang.Runtime).getRuntime().exec(...) from the request runs commands on the server.',
+      fix: 'Never parse request input as an expression; if you must, evaluate it with SimpleEvaluationContext.forReadOnlyDataBinding() and an allow-list.'
+    });
+  }
+
+  if (path.endsWith('.php')) {
+    // BEF-07: extract() of request input overwrites local variables ($isAdmin, $userId ...)
+    const extractIdx = lines.findIndex((l) => /\bextract\s*\(\s*(?:\$_(?:GET|POST|REQUEST|COOKIE)\b|\$request->(?:all|input|query|post)\s*\()/.test(l));
+    if (extractIdx !== -1) hits.push({
+      ruleId: 29107, code: 'BEF-07', severity: 'HIGH', category: 'Broken Access Control', lineIdx: extractIdx,
+      title: 'PHP extract() on Request Input Lets the Client Set Any Variable',
+      why: 'extract() turns every request key into a local variable, so ?is_admin=1 or ?user_id=2 overwrites or defines the variables your checks rely on.',
+      fix: 'Read the fields you need explicitly ($name = $_POST["name"] ?? "") or use a validated request object.'
+    });
+
+    // BEF-09: Laravel raw SQL fragment built from request input (bindings in the second argument are safe)
+    const rawSink = /(?:DB::raw|->(?:select|orderBy|having|groupBy)Raw)\s*\(\s*(.*)/;
+    const rawIdx = lines.findIndex((l) => {
+      const m = rawSink.exec(l);
+      return !!m && PHP_INPUT.test(m[1].split(/,\s*\[/)[0]);
+    });
+    if (rawIdx !== -1) hits.push({
+      ruleId: 29109, code: 'BEF-09', severity: 'CRITICAL', category: 'Injection', lineIdx: rawIdx,
+      title: 'Laravel Raw SQL Expression Built From Request Input',
+      why: 'DB::raw() and the *Raw() builders paste their first argument into the SQL unescaped, so request input there is SQL injection.',
+      fix: 'Pass values as bindings (->selectRaw("price * ?", [$rate])) and map column/sort names through an allow-list.'
+    });
+  }
+
+  if (path.endsWith('.rb')) {
+    // BEF-08: send_file with a request-controlled path
+    const idx = lines.findIndex((l) => /\bsend_file\b/.test(l) && RAILS_PARAMS.test(l) && !/File\.basename\s*\(/.test(l));
+    if (idx !== -1) hits.push({
+      ruleId: 29108, code: 'BEF-08', severity: 'HIGH', category: 'Path Traversal', lineIdx: idx,
+      title: 'Rails send_file With a Path From params',
+      why: 'A params value like ../../config/master.key reaches send_file, which streams any file the app user can read.',
+      fix: 'Look the file up by id (Attachment.find(params[:id]).path) or reduce the input to File.basename and check it against an allow-listed directory.'
+    });
+  }
+
   const ts = new Date().toLocaleTimeString();
   for (const h of hits) {
     const lineNum = h.lineIdx + 1;

@@ -87,4 +87,33 @@ import html
 def index():
     return make_response(f"Hello {html.escape(request.args.get('name', ''))}")
 `)
-  },];
+  },
+  {
+    ruleIds: [29017], name: 'PYF-17 Django CORS allow-all with credentials',
+    detects: f('mysite/settings.py', `
+INSTALLED_APPS = ["corsheaders"]
+CORS_ALLOW_ALL_ORIGINS = True
+CORS_ALLOW_CREDENTIALS = True
+`),
+    ignores: f('mysite/settings.py', `
+INSTALLED_APPS = ["corsheaders"]
+CORS_ALLOWED_ORIGINS = ["https://app.example.com"]
+CORS_ALLOW_CREDENTIALS = True
+`)
+  },
+  {
+    ruleIds: [29018], name: 'PYF-18 Markup wraps an f-string',
+    detects: f('app/views.py', `
+from markupsafe import Markup
+
+def greeting(user):
+    return Markup(f"<b>Hello {user.name}</b>")
+`),
+    ignores: f('app/views.py', `
+from markupsafe import Markup
+
+def greeting(user):
+    return Markup("<b>Hello {}</b>").format(user.name)
+`)
+  },
+];
