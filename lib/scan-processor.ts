@@ -9,6 +9,7 @@ import { hasFixPromptAccess } from '@/lib/subscription-utils';
 import { getEffectivePlanTier, getOrgPolicy } from '@/lib/organization';
 import { redactScanResultFixes } from '@/lib/fix-gate';
 import { getSupabaseAdmin } from '@/lib/supabase-admin';
+import { recordRescanAlert } from '@/lib/rescan-alerts';
 
 export interface ExecuteScanJobOptions {
   jobId: string;
@@ -19,6 +20,8 @@ export interface ExecuteScanJobOptions {
   userTier?: string;
   slackWebhookUrl?: string;
   discordWebhookUrl?: string;
+  /** Scheduled weekly rescan: not charged to the monthly quota, diffed for new-finding alerts. */
+  isRescan?: boolean;
 }
 
 export interface ScanJobExecutionResult {
@@ -52,6 +55,8 @@ export async function executeScanJob(options: ExecuteScanJobOptions): Promise<Sc
     slackWebhookUrl,
     discordWebhookUrl
   } = options;
+  const isRescan = options.isRescan === true;
+  let ownerEmail: string | null = null;
 
   if (!jobId || !rawRepoUrl) {
     throw new ScanJobError('Missing jobId or repoUrl', 400);
@@ -75,6 +80,7 @@ export async function executeScanJob(options: ExecuteScanJobOptions): Promise<Sc
         if (jobRow.user_id) {
           authenticatedUserId = jobRow.user_id;
           const { data: ownerData } = await adminClient.auth.admin.getUserById(jobRow.user_id);
+          ownerEmail = ownerData?.user?.email ?? null;
           // Own plan or a seat in an Enterprise workspace
           userTier = await getEffectivePlanTier(adminClient, jobRow.user_id, ownerData?.user?.email);
           orgPolicy = await getOrgPolicy(adminClient, jobRow.user_id);
@@ -280,7 +286,7 @@ export async function executeScanJob(options: ExecuteScanJobOptions): Promise<Sc
           .insert({
             project_id: projectId,
             user_id: authenticatedUserId,
-            trigger_type: 'WEB_UI_ASYNC',
+            trigger_type: isRescan ? 'SCHEDULED' : 'WEB_UI_ASYNC',
             readiness_score: result.score,
             gate_status: result.gateStatus,
             critical_count: result.criticalCount,
@@ -297,21 +303,38 @@ export async function executeScanJob(options: ExecuteScanJobOptions): Promise<Sc
           createdScanId = scanRow.id;
         }
 
-        // Deduct Quota Atomically upon Successful Completion
-        const { data: sub } = await adminClient
-          .from('subscriptions')
-          .select('scans_used_this_month')
-          .eq('user_id', authenticatedUserId)
-          .maybeSingle();
+        if (isRescan) {
+          try {
+            await recordRescanAlert({
+              adminClient,
+              jobId,
+              userId: authenticatedUserId,
+              userEmail: ownerEmail,
+              projectId,
+              projectName: resolvedTargetName,
+              repoUrl: rawRepoUrl,
+              findings: result.findings
+            });
+          } catch (alertErr) {
+            logger.warn(`[Process Job] Rescan alert notice for ${jobId}:`, alertErr);
+          }
+        } else {
+          // Deduct Quota Atomically upon Successful Completion (scheduled rescans are free)
+          const { data: sub } = await adminClient
+            .from('subscriptions')
+            .select('scans_used_this_month')
+            .eq('user_id', authenticatedUserId)
+            .maybeSingle();
 
-        const currentScans = sub?.scans_used_this_month ?? 0;
-        await adminClient
-          .from('subscriptions')
-          .update({
-            scans_used_this_month: currentScans + 1,
-            updated_at: new Date().toISOString()
-          })
-          .eq('user_id', authenticatedUserId);
+          const currentScans = sub?.scans_used_this_month ?? 0;
+          await adminClient
+            .from('subscriptions')
+            .update({
+              scans_used_this_month: currentScans + 1,
+              updated_at: new Date().toISOString()
+            })
+            .eq('user_id', authenticatedUserId);
+        }
       }
     }
 

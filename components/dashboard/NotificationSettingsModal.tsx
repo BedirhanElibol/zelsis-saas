@@ -2,12 +2,16 @@
 
 import React, { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { X, Bell, Send, CheckCircle2, AlertCircle, MessageSquare, Mail } from 'lucide-react';
+import { X, Bell, Send, CheckCircle2, AlertCircle, MessageSquare, Mail, CalendarClock } from 'lucide-react';
 import { getActiveUserAuth } from '@/lib/supabase-client';
+import { getProjectAlertSettings, updateProjectAlertSettings, type ProjectAlertSettings } from '@/app/actions/project-notifications';
+
+const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 
 interface NotificationSettingsModalProps {
   isOpen: boolean;
   onClose: () => void;
+  projectId: string;
   projectName: string;
   repoUrl: string;
 }
@@ -21,6 +25,7 @@ export function getNotificationStorageKey(projectName: string): string {
 export const NotificationSettingsModal: React.FC<NotificationSettingsModalProps> = ({
   isOpen,
   onClose,
+  projectId,
   projectName,
   repoUrl
 }) => {
@@ -30,6 +35,47 @@ export const NotificationSettingsModal: React.FC<NotificationSettingsModalProps>
   const [discordUrl, setDiscordUrl] = useState('');
   const [testStatus, setTestStatus] = useState<string | null>(null);
   const [isSending, setIsSending] = useState(false);
+  const [alertSettings, setAlertSettings] = useState<ProjectAlertSettings | null>(null);
+  const [alertNotice, setAlertNotice] = useState<string | null>(null);
+  const [isSavingAlerts, setIsSavingAlerts] = useState(false);
+  const canScheduleRescans = UUID_RE.test(projectId) && repoUrl.startsWith('https://github.com/');
+
+  // Load the server-side weekly rescan settings for saved GitHub projects
+  React.useEffect(() => {
+    if (!isOpen || !canScheduleRescans) return;
+    let cancelled = false;
+    setAlertNotice(null);
+    (async () => {
+      const { accessToken } = await getActiveUserAuth();
+      if (!accessToken) {
+        if (!cancelled) setAlertNotice('Sign in to schedule weekly rescans.');
+        return;
+      }
+      const res = await getProjectAlertSettings(projectId, accessToken);
+      if (cancelled) return;
+      if (res.status === 'success') setAlertSettings(res.settings);
+      else setAlertNotice(res.message);
+    })();
+    return () => { cancelled = true; };
+  }, [isOpen, canScheduleRescans, projectId]);
+
+  const saveAlertSettings = async (next: ProjectAlertSettings) => {
+    const previous = alertSettings;
+    setAlertSettings(next);
+    setIsSavingAlerts(true);
+    setAlertNotice(null);
+    const { accessToken } = await getActiveUserAuth();
+    const res = accessToken
+      ? await updateProjectAlertSettings(projectId, next, accessToken)
+      : { status: 'error' as const, message: 'Sign in to schedule weekly rescans.' };
+    setIsSavingAlerts(false);
+    if (res.status === 'success') {
+      setAlertNotice('Saved.');
+    } else {
+      setAlertSettings(previous);
+      setAlertNotice(res.message);
+    }
+  };
 
   // Restore saved webhook URLs when modal opens
   React.useEffect(() => {
@@ -164,6 +210,41 @@ export const NotificationSettingsModal: React.FC<NotificationSettingsModalProps>
               />
             </div>
           </div>
+
+          {/* Weekly rescan */}
+          {canScheduleRescans && (
+            <fieldset className="space-y-3 rounded-xl border border-white/10 bg-white/[0.02] p-4" disabled={!alertSettings || isSavingAlerts}>
+              <legend className="px-1 text-xs font-mono font-bold text-[#94A3B8] flex items-center gap-2">
+                <CalendarClock size={14} className="text-emerald-400" aria-hidden="true" />
+                <span>Weekly rescan</span>
+              </legend>
+              <label className="flex items-start gap-3 text-xs text-[#EDEDED] cursor-pointer">
+                <input
+                  type="checkbox"
+                  className="mt-0.5 accent-emerald-500"
+                  checked={alertSettings?.weeklyRescanEnabled ?? false}
+                  onChange={(e) => alertSettings && saveAlertSettings({ ...alertSettings, weeklyRescanEnabled: e.target.checked })}
+                />
+                <span>
+                  Rescan this repo every Monday
+                  <span className="block text-[#94A3B8]">Public GitHub repos only. Scheduled rescans do not count toward your monthly scans.</span>
+                </span>
+              </label>
+              <label className="flex items-start gap-3 text-xs text-[#EDEDED] cursor-pointer">
+                <input
+                  type="checkbox"
+                  className="mt-0.5 accent-emerald-500"
+                  checked={alertSettings?.alertNewCvesEnabled ?? false}
+                  onChange={(e) => alertSettings && saveAlertSettings({ ...alertSettings, alertNewCvesEnabled: e.target.checked })}
+                />
+                <span>
+                  Alert me about new critical and high findings
+                  <span className="block text-[#94A3B8]">Includes new CVEs in dependencies. Shown on the dashboard and sent by email.</span>
+                </span>
+              </label>
+              {alertNotice && <p role="status" className="text-xs font-mono text-[#94A3B8]">{alertNotice}</p>}
+            </fieldset>
+          )}
 
           {/* Status Message */}
           {testStatus && (
