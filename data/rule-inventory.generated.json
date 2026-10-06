@@ -1,8 +1,8 @@
 {
  "summary": {
-  "implementedRules": 872,
-  "testedRules": 864,
-  "preciseLocationRules": 869,
+  "implementedRules": 875,
+  "testedRules": 867,
+  "preciseLocationRules": 872,
   "catalogEntries": 1922,
   "catalogOnlyNotImplemented": 1401,
   "catalogPlaceholderMetadata": 1810
@@ -10047,6 +10047,36 @@
    "title": "Rails Request Input Chooses the Class or Method to Call",
    "severity": "CRITICAL",
    "source": "lib/rules/backend-v4-rules.ts",
+   "preciseLocation": true,
+   "tested": true,
+   "inCatalog": false
+  },
+  {
+   "ruleId": 29201,
+   "code": "RULE-29201",
+   "title": "Firebase Test-Mode Rule: Anyone Can Read and Write Until the Date Passes",
+   "severity": "HIGH",
+   "source": "lib/rules/config-v4-rules.ts",
+   "preciseLocation": true,
+   "tested": true,
+   "inCatalog": false
+  },
+  {
+   "ruleId": 29202,
+   "code": "RULE-29202",
+   "title": "nginx Directory Listing Enabled (autoindex on)",
+   "severity": "MEDIUM",
+   "source": "lib/rules/config-v4-rules.ts",
+   "preciseLocation": true,
+   "tested": true,
+   "inCatalog": false
+  },
+  {
+   "ruleId": 29203,
+   "code": "RULE-29203",
+   "title": "Supabase Auth Redirects Allowed to Any Subdomain of a Shared Hosting Domain",
+   "severity": "HIGH",
+   "source": "lib/rules/config-v4-rules.ts",
    "preciseLocation": true,
    "tested": true,
    "inCatalog": false
