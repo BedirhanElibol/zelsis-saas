@@ -49,6 +49,8 @@ export const ProjectSchema = z.object({
   framework: z.string(),
   providers: z.array(z.string()),
   lastScanAt: z.string(),
+  /** ISO time of the last scan (lastScanAt is a display string), used to tell which copy is newer. */
+  lastScanIso: z.string().optional(),
   readinessScore: z.number().min(0).max(100),
   gateStatus: GateStatusEnum,
   criticalCount: z.number(),

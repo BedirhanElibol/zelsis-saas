@@ -41,6 +41,44 @@ export function updateMatchingFindings(
   });
 }
 
+const findingKey = (f: Finding) => `${f.ruleId}|${f.filePath}|${f.title}`;
+
+/**
+ * Brings a project stored on this device up to date with the account's cloud copy when the cloud
+ * scanned it more recently (another device, a teammate, the weekly rescan). Findings the user
+ * triaged here (resolved / accepted risk) keep that status.
+ */
+export function refreshFromCloud(local: Project, cloud: Project): Project {
+  const cloudAt = Date.parse(cloud.lastScanIso ?? '');
+  if (!Number.isFinite(cloudAt)) return local;
+  const localAt = Date.parse(local.lastScanIso ?? '');
+  if (Number.isFinite(localAt) && localAt >= cloudAt) return local;
+  // A summary without its findings (scan job pruned) would wipe the detail kept here
+  const cloudOpen = cloud.criticalCount + cloud.highCount + cloud.mediumCount + cloud.lowCount;
+  if (cloud.findings.length === 0 && cloudOpen > 0) return local;
+
+  const triaged = new Map(local.findings.filter((f) => f.status !== 'OPEN').map((f) => [findingKey(f), f.status] as const));
+  const findings = cloud.findings.map((f) => {
+    const status = triaged.get(findingKey(f));
+    return status ? { ...f, status } : f;
+  });
+  const merged: Project = {
+    ...local,
+    lastScanAt: cloud.lastScanAt,
+    lastScanIso: cloud.lastScanIso,
+    isPrivate: cloud.isPrivate ?? local.isPrivate,
+    readinessScore: cloud.readinessScore,
+    gateStatus: cloud.gateStatus,
+    criticalCount: cloud.criticalCount,
+    highCount: cloud.highCount,
+    mediumCount: cloud.mediumCount,
+    lowCount: cloud.lowCount,
+    uiClicheCount: cloud.uiClicheCount,
+    findings,
+  };
+  return findings.some((f) => triaged.has(findingKey(f))) ? withRecalculatedFindings(merged, findings) : merged;
+}
+
 /** Last project in `next` that changed relative to `prev` and has the given id. */
 export function findUpdatedProject(prev: Project[], next: Project[], projectId: string): Project | null {
   let updated: Project | null = null;

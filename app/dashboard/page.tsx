@@ -470,6 +470,7 @@ function DashboardContent() {
                     framework: result.detectedFramework || currentTarget.framework,
                     providers: result.detectedProviders?.length ? result.detectedProviders : currentTarget.providers,
                     lastScanAt: new Date().toLocaleString(),
+                    lastScanIso: new Date().toISOString(),
                     scanHistory: [newScanHistoryItem, ...(currentTarget.scanHistory || [])].slice(0, 20)
                   };
                   setSelectedProject(updatedProject);
