@@ -116,3 +116,33 @@ test('audit is skipped when disabled, suppressed, or OSV is down', async () => {
   assert.equal(result.dependencyAudit?.status, 'unavailable');
   assert.ok(result.logs.some((l) => l.includes('NOT checked')));
 });
+
+test('DEP-01 for next@ absorbs the SAAS-08 middleware-bypass finding (same CVE counted once)', async () => {
+  const NEXT_BYPASS = {
+    id: 'GHSA-f82v-jwr5-mffw',
+    aliases: ['CVE-2025-29927'],
+    summary: 'Authorization Bypass in Next.js Middleware',
+    database_specific: { severity: 'CRITICAL' },
+    affected: [{ package: { ecosystem: 'npm', name: 'next' }, ranges: [{ events: [{ introduced: '15.0.0' }, { fixed: '15.2.3' }] }] }]
+  };
+  const fakeNextOsv = (async (url: string | URL, init?: RequestInit) => {
+    const u = String(url);
+    if (u.endsWith('/querybatch')) {
+      const body = JSON.parse(String(init?.body)) as { queries: { package: { name: string } }[] };
+      return new Response(JSON.stringify({ results: body.queries.map((q) => (q.package.name === 'next' ? { vulns: [{ id: NEXT_BYPASS.id }] } : {})) }), { status: 200 });
+    }
+    return new Response(JSON.stringify(NEXT_BYPASS), { status: 200 });
+  }) as typeof fetch;
+  const files = [
+    { path: 'package.json', content: '{"dependencies":{"next":"15.1.0"}}' },
+    { path: 'package-lock.json', content: lockfile({ next: { version: '15.1.0' } }) }
+  ];
+
+  const withAudit = await runStaticCodeScan(files.map((f) => ({ ...f })), 'next-dedupe', { dependencyAudit: { fetchImpl: fakeNextOsv } });
+  assert.equal(withAudit.findings.filter((f) => f.ruleId === 23008).length, 0);
+  assert.equal(withAudit.findings.filter((f) => f.ruleId === 26001).length, 1);
+
+  // Without the dependency audit SAAS-08 is the only signal and stays
+  const staticOnly = await runStaticCodeScan(files.map((f) => ({ ...f })), 'next-static');
+  assert.equal(staticOnly.findings.filter((f) => f.ruleId === 23008).length, 1);
+});

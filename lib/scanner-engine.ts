@@ -7,6 +7,9 @@ import { parseZelsisRc } from './scanner/rc-config';
 import { calculateGateStatus, calculateReadinessScore, gateSeverity, gatingFindings } from './scanner/scoring';
 import { ruleMaturity } from './scanner/rule-maturity';
 
+/** SAAS-08: next@ release affected by CVE-2025-29927. */
+const NEXT_MIDDLEWARE_CVE_RULE_ID = 23008;
+
 /** [kept, dropped] rule pairs that report the same issue (rule packs overlap). */
 const SAME_ISSUE_RULES: ReadonlyArray<readonly [number, number]> = [
   [7004, 3002], // Dockerfile without USER: CLOUD-04 (reviewed true positive) over the infra-pack duplicate
@@ -337,6 +340,13 @@ export async function runStaticCodeScan(files: CodeFile[], repoName: string = 'T
     const filesWithKeep = new Set(findings.filter((f) => f.ruleId === keep).map((f) => f.filePath));
     for (let k = findings.length - 1; k >= 0; k--) {
       if (findings[k].ruleId === drop && filesWithKeep.has(findings[k].filePath)) findings.splice(k, 1);
+    }
+  }
+  // SAAS-08 only fires on next@ releases affected by CVE-2025-29927, which OSV then lists inside DEP-01 for next:
+  // keep the one finding that carries every advisory (DEP-01 sits on the lockfile, so the file-based pairs above miss it)
+  if (!options.keepDuplicateRules && findings.some((f) => f.ruleId === OSV_RULE_ID && /^DEP-\d+: next@/.test(f.title))) {
+    for (let k = findings.length - 1; k >= 0; k--) {
+      if (findings[k].ruleId === NEXT_MIDDLEWARE_CVE_RULE_ID) findings.splice(k, 1);
     }
   }
 
