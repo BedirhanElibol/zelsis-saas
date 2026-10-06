@@ -213,6 +213,19 @@ app.use(session({
 `),
   },
   {
+    ruleIds: [28808], name: 'GAP-08 cookieParser literal secret vs. the name in an error message (express lib/response.js)',
+    detects: f('src/app.js', `const cookieParser = require('cookie-parser');
+app.use(cookieParser('s3cr3t-signing-key'));
+`),
+    ignores: f('lib/response.js', `res.cookie = function (name, value, options) {
+  var secret = this.req.secret;
+  if (signed && !secret) {
+    throw new Error('cookieParser("secret") required for signed cookies');
+  }
+};
+`),
+  },
+  {
     ruleIds: [28808], name: 'GAP-08 NextAuth literal secret',
     detects: f('auth.ts', `import NextAuth from 'next-auth';
 import GitHub from 'next-auth/providers/github';
