@@ -8,8 +8,8 @@ const ROWS: { label: string; zelsis: string; aikido: string; snyk: string; semgr
   {
     label: 'Paid plan',
     zelsis: `${priceLabel('Pro')} flat per account; team of ${ENTERPRISE_SEAT_LIMIT} for ${priceLabel('Enterprise')}`,
-    aikido: '$300/mo flat for 10 users (Basic)',
-    snyk: 'Team from $25/mo',
+    aikido: '$300/mo flat for 10 users and 100 repos (Basic)',
+    snyk: 'Team from $25/mo, up to 10 developers',
     semgrep: '$30/mo per contributor (Code or Supply Chain)',
   },
   {
