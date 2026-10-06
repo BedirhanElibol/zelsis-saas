@@ -58,6 +58,19 @@ export function evaluateAstFlowRules(file: CodeFile, lines: string[], cleanConte
         });
       }
     }
+    // AST-09: unauthenticated endpoint writes to GitHub (PR, branch, file) for a repo or record the caller picks
+    if (!h.authed && !h.guarded && !spec.wrapped && h.externalWrites?.length && isMutatingEntry(h, path, cleanContent)) {
+      const callerPicked = h.queries.some((q) => q.idTainted);
+      const w = h.externalWrites.find((x) => x.tainted) ?? (callerPicked ? h.externalWrites[0] : undefined);
+      if (w) {
+        hits.push({
+          ruleId: 29309, code: 'AST-09', severity: 'HIGH', category: 'Authentication & Access Control', line: w.line,
+          title: 'Unauthenticated Endpoint Writes to GitHub for a Caller-Chosen Repository',
+          why: `${handlerLabel(spec.kind, spec.name)} is reachable by anyone (${spec.kind === 'action' ? 'Server Actions are public POST endpoints' : 'no session, token or signature check on its path'}) and calls ${w.api} ${w.tainted ? 'with request-controlled arguments' : 'for a record selected by request input'}. With an app or installation token behind the client, any caller can push branches, files or pull requests to repositories that belong to other users.`,
+          fix: 'Authenticate the caller inside the handler (auth(), getServerSession, supabase.auth.getUser(token)) and load the repository only from a record the caller owns (where: { id, userId: user.id }).',
+        });
+      }
+    }
     // AST-02: state-changing endpoint, no authentication anywhere on its path, record chosen by the caller
     if (!h.authed && !h.guarded && !spec.wrapped && isMutatingEntry(h, path, cleanContent)) {
       const q = h.queries.find((x) => x.write && x.idTainted && !x.counterOnly && !(x.lib === 'supabase' && x.client !== 'admin') && !PUBLIC_FORM_MODEL.test(x.model));
