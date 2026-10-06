@@ -30,6 +30,7 @@ CREATE POLICY "Users can delete their own github installations"
 CREATE POLICY "Service role can manage all github installations"
     ON public.github_installations
     FOR ALL
+    TO service_role
     USING (true)
     WITH CHECK (true);
 
