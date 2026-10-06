@@ -410,6 +410,7 @@ export async function fetchCloudProjects(): Promise<Project[]> {
     if (error) console.warn('[Zelsis Supabase] Could not load cloud projects:', error.message);
     return [];
   }
+  const latestFindings = await fetchLatestFindings(supabase);
 
   return data.map((row) => ({
     id: row.id,
@@ -426,6 +427,26 @@ export async function fetchCloudProjects(): Promise<Project[]> {
     mediumCount: row.medium_count ?? 0,
     lowCount: row.low_count ?? 0,
     uiClicheCount: row.ui_cliche_count ?? 0,
-    findings: [],
+    findings: latestFindings.get(normalizeRepo(row.repo_url)) ?? [],
   }));
+}
+
+const normalizeRepo = (url?: string | null) => (url || '').toLowerCase().replace(/\/+$/, '').replace(/\.git$/, '').trim();
+
+/** Findings of the newest completed scan per repository (RLS limits scan_jobs to the caller's own rows). */
+async function fetchLatestFindings(supabase: SupabaseClient): Promise<Map<string, Project['findings']>> {
+  const byRepo = new Map<string, Project['findings']>();
+  const { data, error } = await supabase
+    .from('scan_jobs')
+    .select('repo_url, result_data, created_at')
+    .eq('status', 'COMPLETED')
+    .order('created_at', { ascending: false })
+    .limit(50);
+  if (error || !Array.isArray(data)) return byRepo;
+  for (const row of data) {
+    const key = normalizeRepo(row.repo_url);
+    const findings = (row.result_data as { findings?: unknown } | null)?.findings;
+    if (key && !byRepo.has(key) && Array.isArray(findings)) byRepo.set(key, findings as Project['findings']);
+  }
+  return byRepo;
 }

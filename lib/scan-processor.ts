@@ -273,11 +273,21 @@ export async function executeScanJob(options: ExecuteScanJobOptions): Promise<Sc
           .eq('repo_url', rawRepoUrl)
           .maybeSingle();
 
+        // The project row is what other devices and teammates see: keep its summary on the latest scan
+        const summary = {
+          readiness_score: result.score,
+          gate_status: result.gateStatus,
+          critical_count: result.criticalCount,
+          high_count: result.highCount,
+          medium_count: result.mediumCount,
+          low_count: result.lowCount,
+          ui_cliche_count: result.uiClicheCount,
+          last_scan_at: new Date().toISOString(),
+          ...(repoIsPrivate !== null ? { is_private: repoIsPrivate } : {})
+        };
         if (existingProj?.id) {
           projectId = existingProj.id;
-          if (repoIsPrivate !== null) {
-            await adminClient.from('projects').update({ is_private: repoIsPrivate }).eq('id', existingProj.id);
-          }
+          await adminClient.from('projects').update(summary).eq('id', existingProj.id);
         } else {
           const { data: newProj } = await adminClient
             .from('projects')
@@ -285,9 +295,7 @@ export async function executeScanJob(options: ExecuteScanJobOptions): Promise<Sc
               user_id: authenticatedUserId,
               name: resolvedTargetName,
               repo_url: rawRepoUrl,
-              readiness_score: result.score,
-              gate_status: result.gateStatus,
-              ...(repoIsPrivate !== null ? { is_private: repoIsPrivate } : {})
+              ...summary
             })
             .select('id')
             .maybeSingle();
