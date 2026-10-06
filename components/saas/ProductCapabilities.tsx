@@ -43,7 +43,7 @@ export const ProductCapabilities: React.FC = () => {
       title: 'Release rules that know your stack',
       subtitle: 'Continuous verification across OWASP Top 10, database isolation, and cloud architecture.',
       description:
-        'Audit your codebase against an extensive taxonomy of deterministic static & lexical rules. Enforce zero day-one OWASP Top 10 vulnerabilities, verify multi-database security policies, block wildcard CORS endpoints, and eliminate root container privilege escalation risks.',
+        'Audit your codebase against an extensive taxonomy of deterministic static & lexical rules. Catch known OWASP Top 10 patterns, check database security policies, flag wildcard CORS endpoints and containers that run as root before they ship.',
       image: '/images/security_rules.png',
       alt: 'Zelsis Release Gate Rule Catalog and Policy Configurator',
       tag: 'POLICY ENGINE',
