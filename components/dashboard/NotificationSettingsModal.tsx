@@ -6,12 +6,12 @@ import { X, Bell, Send, CheckCircle2, AlertCircle, MessageSquare, Mail, Calendar
 import { getActiveUserAuth } from '@/lib/supabase-client';
 import { getProjectAlertSettings, updateProjectAlertSettings, type ProjectAlertSettings } from '@/app/actions/project-notifications';
 
-const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+// A GitHub repo, as a full URL or owner/name (local uploads and websites cannot be rescanned)
+const GITHUB_REPO = /^(?:https:\/\/github\.com\/)?[\w.-]+\/[\w.-]+\/?$/;
 
 interface NotificationSettingsModalProps {
   isOpen: boolean;
   onClose: () => void;
-  projectId: string;
   projectName: string;
   repoUrl: string;
 }
@@ -25,7 +25,6 @@ export function getNotificationStorageKey(projectName: string): string {
 export const NotificationSettingsModal: React.FC<NotificationSettingsModalProps> = ({
   isOpen,
   onClose,
-  projectId,
   projectName,
   repoUrl
 }) => {
@@ -38,7 +37,7 @@ export const NotificationSettingsModal: React.FC<NotificationSettingsModalProps>
   const [alertSettings, setAlertSettings] = useState<ProjectAlertSettings | null>(null);
   const [alertNotice, setAlertNotice] = useState<string | null>(null);
   const [isSavingAlerts, setIsSavingAlerts] = useState(false);
-  const canScheduleRescans = UUID_RE.test(projectId) && repoUrl.startsWith('https://github.com/');
+  const canScheduleRescans = GITHUB_REPO.test(repoUrl.trim());
 
   // Load the server-side weekly rescan settings for saved GitHub projects
   React.useEffect(() => {
@@ -51,13 +50,13 @@ export const NotificationSettingsModal: React.FC<NotificationSettingsModalProps>
         if (!cancelled) setAlertNotice('Sign in to schedule weekly rescans.');
         return;
       }
-      const res = await getProjectAlertSettings(projectId, accessToken);
+      const res = await getProjectAlertSettings(repoUrl, accessToken);
       if (cancelled) return;
       if (res.status === 'success') setAlertSettings(res.settings);
       else setAlertNotice(res.message);
     })();
     return () => { cancelled = true; };
-  }, [isOpen, canScheduleRescans, projectId]);
+  }, [isOpen, canScheduleRescans, repoUrl]);
 
   const saveAlertSettings = async (next: ProjectAlertSettings) => {
     const previous = alertSettings;
@@ -66,7 +65,7 @@ export const NotificationSettingsModal: React.FC<NotificationSettingsModalProps>
     setAlertNotice(null);
     const { accessToken } = await getActiveUserAuth();
     const res = accessToken
-      ? await updateProjectAlertSettings(projectId, next, accessToken)
+      ? await updateProjectAlertSettings(repoUrl, next, accessToken)
       : { status: 'error' as const, message: 'Sign in to schedule weekly rescans.' };
     setIsSavingAlerts(false);
     if (res.status === 'success') {
@@ -159,7 +158,7 @@ export const NotificationSettingsModal: React.FC<NotificationSettingsModalProps>
                   Automated Gate Alerts Configuration
                 </h2>
                 <p className="text-xs text-[#94A3B8]">
-                  Configure MessageSquare &amp; Discord Webhook endpoints for {projectName}
+                  Weekly rescans and Slack &amp; Discord webhooks for {projectName}
                 </p>
               </div>
             </div>
@@ -179,12 +178,12 @@ export const NotificationSettingsModal: React.FC<NotificationSettingsModalProps>
             <div>
               <label htmlFor="slack-webhook-url-input" className="block text-xs font-mono font-bold text-[#94A3B8] mb-1.5 flex items-center gap-2">
                 <MessageSquare size={14} className="text-[#E01E5A]" />
-                <span>MessageSquare Webhook URL:</span>
+                <span>Slack Webhook URL:</span>
               </label>
               <input
                 id="slack-webhook-url-input"
                 name="slackWebhookUrl"
-                aria-label="MessageSquare Webhook URL"
+                aria-label="Slack Webhook URL"
                 type="text"
                 placeholder="https://hooks.slack.com/services/T00/B00/XXXX"
                 value={slackUrl}

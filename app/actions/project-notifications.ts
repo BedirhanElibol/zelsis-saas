@@ -30,44 +30,64 @@ function userClient(accessToken: string) {
   });
 }
 
+/** Projects are stored by their GitHub URL; the dashboard's local project ids never reach the database. */
+const RepoUrlSchema = z
+  .string()
+  .trim()
+  .transform((v) => (v.startsWith('https://github.com/') ? v : `https://github.com/${v.replace(/^\/+/, '')}`).replace(/\/+$/, '').replace(/\.git$/, ''))
+  .pipe(z.string().regex(/^https:\/\/github\.com\/[\w.-]+\/[\w.-]+$/));
+
+const NOT_SAVED = 'Scan this repository once while signed in, then turn on weekly rescans.';
+
+/** The signed-in caller's own row for this repo (RLS on projects also limits it to the owner). */
+async function ownProject(accessToken: string, repoUrl: string) {
+  const supabase = userClient(accessToken);
+  const url = RepoUrlSchema.safeParse(repoUrl);
+  if (!supabase || !url.success) return null;
+  const { data: auth } = await supabase.auth.getUser(accessToken);
+  if (!auth?.user) return null;
+  const { data } = await supabase
+    .from('projects')
+    .select('id, weekly_rescan_enabled, alert_new_cves_enabled')
+    .eq('user_id', auth.user.id)
+    .eq('repo_url', url.data)
+    .order('created_at', { ascending: true })
+    .limit(1)
+    .maybeSingle();
+  return data ? { supabase, project: data } : { supabase, project: null };
+}
+
 export async function getProjectAlertSettings(
-  projectId: string,
+  repoUrl: string,
   accessToken: string
 ): Promise<ProjectAlertSettingsResult> {
-  const id = ProjectIdSchema.safeParse(projectId);
-  const supabase = userClient(accessToken);
-  if (!id.success || !supabase) return { status: 'error', message: 'Sign in to manage alerts for this project.' };
-
-  const { data, error } = await supabase
-    .from('projects')
-    .select('weekly_rescan_enabled, alert_new_cves_enabled')
-    .eq('id', id.data)
-    .maybeSingle();
-  if (error || !data) return { status: 'error', message: 'Project not found.' };
-
+  const found = await ownProject(accessToken, repoUrl);
+  if (!found) return { status: 'error', message: 'Sign in to manage alerts for this project.' };
+  if (!found.project) return { status: 'error', message: NOT_SAVED };
   return {
     status: 'success',
-    settings: { weeklyRescanEnabled: data.weekly_rescan_enabled, alertNewCvesEnabled: data.alert_new_cves_enabled },
+    settings: { weeklyRescanEnabled: found.project.weekly_rescan_enabled, alertNewCvesEnabled: found.project.alert_new_cves_enabled },
   };
 }
 
 export async function updateProjectAlertSettings(
-  projectId: string,
+  repoUrl: string,
   settings: ProjectAlertSettings,
   accessToken: string
 ): Promise<ProjectAlertSettingsResult> {
-  const id = ProjectIdSchema.safeParse(projectId);
   const parsed = SettingsSchema.safeParse(settings);
-  const supabase = userClient(accessToken);
-  if (!id.success || !parsed.success || !supabase) return { status: 'error', message: 'Invalid alert settings.' };
+  if (!parsed.success) return { status: 'error', message: 'Invalid alert settings.' };
+  const found = await ownProject(accessToken, repoUrl);
+  if (!found) return { status: 'error', message: 'Sign in to manage alerts for this project.' };
+  if (!found.project) return { status: 'error', message: NOT_SAVED };
 
-  const { data, error } = await supabase
+  const { data, error } = await found.supabase
     .from('projects')
     .update({
       weekly_rescan_enabled: parsed.data.weeklyRescanEnabled,
       alert_new_cves_enabled: parsed.data.alertNewCvesEnabled,
     })
-    .eq('id', id.data)
+    .eq('id', found.project.id)
     .select('id')
     .maybeSingle();
 
