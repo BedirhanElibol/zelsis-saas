@@ -125,12 +125,12 @@ export function evaluateSecurityRules(file: CodeFile, lines: string[], cleanCont
     // deprecation (moment) and peerDependencies (compatibility ranges, not installs) are out of scope.
     if (lowerPath.endsWith('package.json')) {
         // Per release line: the first patched version of each major
-        const KNOWN_VULNERABLE_PACKAGES: Record<string, { fixed: Record<string, string>; reason: string }> = {
+        const KNOWN_VULNERABLE_PACKAGES: Record<string, { fixed: Record<string, string>; reason: string; severity?: 'MEDIUM' }> = {
             lodash: { fixed: { '4': '4.17.21' }, reason: 'prototype pollution and command injection in template (CVE-2020-8203, CVE-2021-23337)' },
             axios: { fixed: { '0': '0.28.0', '1': '1.7.4' }, reason: 'CSRF token leak to third-party hosts (CVE-2023-45857) and SSRF via path-relative URLs (CVE-2024-39338)' },
             minimist: { fixed: { '0': '0.2.4', '1': '1.2.6' }, reason: 'prototype pollution (CVE-2021-44906)' },
             jsonwebtoken: { fixed: { '8': '9.0.0' }, reason: 'insecure key / algorithm handling allowing signature bypass (CVE-2022-23529, CVE-2022-23540, CVE-2022-23541)' },
-            express: { fixed: { '4': '4.19.2' }, reason: 'open redirect in res.location / res.redirect (CVE-2024-29041)' }
+            express: { fixed: { '4': '4.19.2' }, reason: 'open redirect in res.location / res.redirect (CVE-2024-29041, CVSS 6.1)', severity: 'MEDIUM' }
         };
         const parseVer = (v: string): number[] | null => {
             const m = /^(\d+)\.(\d+)\.(\d+)/.exec(v);
@@ -174,7 +174,7 @@ export function evaluateSecurityRules(file: CodeFile, lines: string[], cleanCont
                 ruleId: 20,
                 type: 'SECURITY',
                 title: 'Vulnerable Dependency or Wildcard Version in package.json',
-                severity: 'HIGH',
+                severity: vulnDef.severity ?? 'HIGH',
                 category: 'Supply Chain & Deps',
                 filePath: file.path,
                 lineRange: `L${lineNum}`,

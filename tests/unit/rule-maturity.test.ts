@@ -17,15 +17,14 @@ describe('rule maturity', () => {
     assert.equal(calculateGateStatus([experimental, finding({})]), 'FAILED');
   });
 
-  it('tags findings from rules proven noisy on the clean benchmark corpus', async () => {
-    assert.ok(isExperimentalRule(8803), 'PY-SEC-03 fired on clean repos and was not reviewed as a true positive');
-    const result = await runStaticCodeScan([
-      { path: 'app/services/backup.py', content: 'import subprocess\n\n\ndef archive_upload(filename):\n    subprocess.run(f"tar -czf /backups/{filename}.tgz /uploads/{filename}", shell=True, check=True)\n' }
-    ], 'x');
-    const tenant = result.findings.find((f) => f.ruleId === 8803);
-    assert.ok(tenant, 'experimental findings are still reported');
-    assert.equal(tenant.maturity, 'experimental');
-    assert.equal(result.experimentalCount, result.findings.filter((f) => f.maturity === 'experimental').length);
+  it('the formerly noisy rules were fixed instead of staying experimental', async () => {
+    for (const id of [20, 8803, 27211]) assert.equal(isExperimentalRule(id), false, `rule ${id}`);
+    // PY-SEC-03 is HIGH only where a web request can reach the shell command
+    const scan = async (content: string) => (await runStaticCodeScan([{ path: 'app/services/backup.py', content }], 'x')).findings.find((f) => f.ruleId === 8803);
+    const operator = await scan('import subprocess\n\n\ndef archive(dir):\n    subprocess.run(f"tar -czf /backups/a.tgz {dir}", shell=True, check=True)\n');
+    const web = await scan('import subprocess\nfrom flask import request\n\n\ndef archive():\n    name = request.args["name"]\n    subprocess.run(f"tar -czf /backups/{name}.tgz /uploads", shell=True, check=True)\n');
+    assert.equal(operator?.severity, 'MEDIUM');
+    assert.equal(web?.severity, 'HIGH');
   });
 
   it('keeps reviewed true-positive and fixture-proven rules gating', () => {
