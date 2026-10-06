@@ -420,6 +420,7 @@ export async function fetchCloudProjects(): Promise<Project[]> {
     framework: row.framework || 'Auto-Detect',
     providers: Array.isArray(row.providers) ? row.providers : [],
     lastScanAt: row.last_scan_at ? new Date(row.last_scan_at).toLocaleString() : 'Never audited',
+    lastScanIso: row.last_scan_at || undefined,
     readinessScore: row.readiness_score ?? 100,
     gateStatus: row.gate_status || 'PASSED',
     criticalCount: row.critical_count ?? 0,

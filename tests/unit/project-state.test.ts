@@ -4,6 +4,7 @@ import type { Finding, Project } from '../../data/schema';
 import {
   findUpdatedProject,
   normalizeProject,
+  refreshFromCloud,
   serializeProjectsForStorage,
   updateMatchingFindings,
   withRecalculatedFindings
@@ -100,5 +101,33 @@ describe('serializeProjectsForStorage', () => {
     const stored = JSON.parse(serializeProjectsForStorage(projects, true, true));
     assert.equal(stored.length, 2);
     assert.deepEqual(Object.keys(stored[0].findings[0]).sort(), ['filePath', 'id', 'ruleId', 'severity', 'status', 'title', 'type']);
+  });
+});
+
+describe('refreshFromCloud', () => {
+  const cloud = (over: Partial<Project>) => project({ lastScanIso: '2026-10-06T10:00:00.000Z', lastScanAt: 'cloud', criticalCount: 0, highCount: 1, gateStatus: 'FAILED', findings: [finding({ id: 'c1', ruleId: 9, severity: 'HIGH' })], ...over });
+
+  it('takes a newer cloud scan, keeping the local id', () => {
+    const p = refreshFromCloud(project({ id: 'local-1', lastScanIso: '2026-10-05T10:00:00.000Z' }), cloud({}));
+    assert.equal(p.id, 'local-1');
+    assert.equal(p.lastScanAt, 'cloud');
+    assert.equal(p.findings[0].ruleId, 9);
+  });
+
+  it('keeps the local copy when it is as new or newer', () => {
+    const local = project({ lastScanIso: '2026-10-06T10:00:00.000Z' });
+    assert.equal(refreshFromCloud(local, cloud({})), local);
+  });
+
+  it('does not wipe local findings with a summary that has none', () => {
+    const local = project({ findings: [finding({})] });
+    assert.equal(refreshFromCloud(local, cloud({ findings: [] })), local);
+  });
+
+  it('keeps findings the user resolved on this device and recounts', () => {
+    const local = project({ findings: [finding({ id: 'l1', ruleId: 9, severity: 'HIGH', status: 'RESOLVED' })] });
+    const p = refreshFromCloud(local, cloud({}));
+    assert.equal(p.findings[0].status, 'RESOLVED');
+    assert.equal(p.highCount, 0);
   });
 });
