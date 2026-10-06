@@ -86,6 +86,7 @@ CREATE OR REPLACE FUNCTION public.lock_findings_for_update(p_project_id UUID)
 RETURNS SETOF UUID
 LANGUAGE sql
 SECURITY DEFINER
+SET search_path = public
 AS $$
     SELECT id FROM public.findings
     WHERE project_id = p_project_id

@@ -21,6 +21,10 @@ components/dashboard/VulnerabilityPlayground.tsx
 components/dashboard/RuleKnowledgeBaseModal.tsx
 components/InteractiveAnalyzer.tsx
 sql/05_seed_data.sql
+# Demo dashboard data and landing-page before/after examples quote vulnerable code as strings
+data/demo-data.ts
+data/landing-checks.ts
+components/dashboard/RuleConfiguratorModal.tsx
 
 # Rule inventory, maturity and benchmark data quote rule titles and the documented
 # flaws of vulnerable corpus repos as strings; the scripts that build them are dev-only.

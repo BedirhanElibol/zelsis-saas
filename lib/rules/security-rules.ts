@@ -44,7 +44,8 @@ export function evaluateSecurityRules(file: CodeFile, lines: string[], cleanCont
         logs.push(`[${ts}] 🛑 CRITICAL: SEC-01 Hardcoded Secret API Key in ${file.path}:${lineNum}`);
     }
     // Rule 3: Supabase Permissive Row Level Security (RLS) (SEC-03)
-    if (cleanContent.includes('USING (true)') || cleanContent.includes('FOR ALL USING (true)')) {
+    // Policies live in SQL; one scoped TO service_role only restates the service role's RLS bypass
+    if (/\.sql$/i.test(file.path) && cleanContent.split(';').some((stmt) => stmt.includes('USING (true)') && !/\bTO\s+service_role\b/i.test(stmt))) {
         const matchLineIdx = lines.findIndex(l => !l.trim().startsWith('--') && l.includes('USING (true)'));
         const lineNum = matchLineIdx !== -1 ? matchLineIdx + 1 : 1;
         findings.push({
@@ -203,7 +204,9 @@ export function evaluateSecurityRules(file: CodeFile, lines: string[], cleanCont
             const trimmed = line.trim();
             if (trimmed.startsWith('//') || trimmed.startsWith('*') || trimmed.startsWith('/*'))
                 continue;
-            if (logCallRegex.test(line) && sensitiveVarRegex.test(line) && !safeMaskRegex.test(line)) {
+            // A secret's name inside a plain string ('INTERNAL_API_SECRET is missing') is not its value
+            const codeOnly = line.replace(/'(?:\\.|[^'\\])*'|"(?:\\.|[^"\\])*"/g, "''");
+            if (logCallRegex.test(line) && sensitiveVarRegex.test(codeOnly) && !safeMaskRegex.test(line)) {
                 if (logMatchesInFile >= 5)
                     break; // Cap per file to avoid telemetry flooding
                 logMatchesInFile++;
@@ -1179,7 +1182,7 @@ export function evaluateSecurityRules(file: CodeFile, lines: string[], cleanCont
     // Rule 45 / SEC-45: Permissive Database Row Level Security (RLS) Bypass Policy
     if (cleanContent.includes('CREATE POLICY') && (cleanContent.includes('USING (true)') || cleanContent.includes('WITH CHECK (true)'))) {
         const rlsBypassRegex = /CREATE\s+POLICY\s+[^;]+(?:USING\s*\(\s*true\s*\)|WITH\s+CHECK\s*\(\s*true\s*\))/i;
-        if (rlsBypassRegex.test(cleanContent)) {
+        if (cleanContent.split(';').some((stmt) => rlsBypassRegex.test(stmt) && !/\bTO\s+service_role\b/i.test(stmt))) {
             const matchLineIdx = lines.findIndex(l => !l.trim().startsWith('--') && rlsBypassRegex.test(l));
             const lineNum = matchLineIdx !== -1 ? matchLineIdx + 1 : 1;
             const snippet = lines.slice(Math.max(0, lineNum - 2), Math.min(lines.length, lineNum + 2)).join('\n');

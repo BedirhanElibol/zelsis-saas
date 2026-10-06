@@ -118,6 +118,7 @@ CREATE OR REPLACE FUNCTION public.lock_profile_for_update(p_user_id UUID)
 RETURNS SETOF UUID
 LANGUAGE sql
 SECURITY DEFINER
+SET search_path = public
 AS $$
     SELECT id FROM public.profiles
     WHERE id = p_user_id

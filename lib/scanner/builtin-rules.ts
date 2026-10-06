@@ -58,7 +58,8 @@ export function evaluateBuiltinRules(ctx: BuiltinRuleContext): void {
   }
 
   // Rule 3: Supabase Permissive Row Level Security (RLS)
-  if (cleanContent.includes('USING (true)') || cleanContent.includes('FOR ALL USING (true)')) {
+  // Policies live in SQL; one scoped TO service_role only restates the service role's RLS bypass
+  if (/\.sql$/i.test(file.path) && cleanContent.split(';').some((stmt) => stmt.includes('USING (true)') && !/\bTO\s+service_role\b/i.test(stmt))) {
     const matchLineIdx = lines.findIndex(l => !l.trim().startsWith('--') && l.includes('USING (true)'));
     const lineNum = matchLineIdx !== -1 ? matchLineIdx + 1 : 1;
 

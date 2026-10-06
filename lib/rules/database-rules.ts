@@ -373,7 +373,8 @@ export function evaluateDatabaseRules(file: CodeFile, lines: string[], cleanCont
                 ruleId: 6051,
                 type: 'INFRA_DATABASE',
                 title: 'DB-PERF-51: Migration Takes a Blocking Table Lock on an Existing Table',
-                severity: 'HIGH',
+                // NOT NULL without DEFAULT fails outright on a populated table; a plain index only blocks writes while it builds
+                severity: /ADD\s+COLUMN/i.test(firstStatement) ? 'HIGH' : 'MEDIUM',
                 category: "Concurrency & Locks",
                 filePath: file.path,
                 lineRange: `L${lineNum}`,
