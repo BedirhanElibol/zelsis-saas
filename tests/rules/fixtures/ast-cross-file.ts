@@ -135,4 +135,21 @@ export const config = {
       { path: 'src/app/api/notes/[id]/route.ts', content: DELETE_NOTE },
     ],
   },
+  {
+    ruleIds: [29302], name: 'AST-02 middleware is not trusted on a next@ pinned to a CVE-2025-29927 release',
+    detects: [
+      { path: 'package.json', content: '{ "dependencies": { "next": "15.1.0", "next-auth": "4.24.7" } }' },
+      { path: 'middleware.ts', content: `export { default } from 'next-auth/middleware';
+export const config = { matcher: ['/api/notes/:path*'] };
+` },
+      { path: 'app/api/notes/[id]/route.ts', content: DELETE_NOTE },
+    ],
+    ignores: [
+      { path: 'package.json', content: '{ "dependencies": { "next": "15.2.3", "next-auth": "4.24.7" } }' },
+      { path: 'middleware.ts', content: `export { default } from 'next-auth/middleware';
+export const config = { matcher: ['/api/notes/:path*'] };
+` },
+      { path: 'app/api/notes/[id]/route.ts', content: DELETE_NOTE },
+    ],
+  },
 ];
