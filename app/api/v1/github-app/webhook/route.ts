@@ -1,3 +1,4 @@
+import { parseLineRange } from '@/lib/ci-annotations';
 import { NextResponse } from 'next/server';
 import crypto from 'crypto';
 import { createClient } from '@supabase/supabase-js';
@@ -233,16 +234,7 @@ export function splitFindings(findings: any[], changedFiles: string[]) {
 
 export function generateAnnotations(findings: any[]) {
   return findings.map(f => {
-    let startLine = 1;
-    let endLine = 1;
-    if (f.lineRange && f.lineRange.includes('-')) {
-      const parts = f.lineRange.split('-');
-      startLine = parseInt(parts[0], 10) || 1;
-      endLine = parseInt(parts[1], 10) || startLine;
-    } else if (f.lineRange) {
-      startLine = parseInt(f.lineRange, 10) || 1;
-      endLine = startLine;
-    }
+    const [startLine, endLine] = parseLineRange(f.lineRange) ?? [1, 1];
 
     let annotationLevel: 'notice' | 'warning' | 'failure' = 'notice';
     if (f.severity === 'CRITICAL' || f.severity === 'HIGH') annotationLevel = 'failure';
