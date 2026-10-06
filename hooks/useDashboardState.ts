@@ -15,7 +15,7 @@ import { getActiveUserAuth } from '@/lib/supabase-client';
 
 const VALID_NAVS = [
   'dashboard', 'projects', 'scans', 'security', 'compliance',
-  'infra', 'vibepolish', 'aicliche', 'aimaster', 'vibecare',
+  'infra', 'vibepolish', 'aimaster',
   'cicd', 'remediation', 'checkout', 'settings'
 ];
 

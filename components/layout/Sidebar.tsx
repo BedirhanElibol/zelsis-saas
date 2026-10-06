@@ -75,9 +75,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
     { id: 'compliance', label: 'Legal & Privacy Gate', icon: Scale },
     { id: 'infra', label: 'Infra & Database Gate', icon: Database },
     { id: 'vibepolish', label: 'Design & UX Polish', icon: Palette },
-    { id: 'aicliche', label: 'AI Anti-Pattern Audit', icon: Palette },
     { id: 'aimaster', label: 'Master Quality Matrix', icon: Layers },
-    { id: 'vibecare', label: 'VibeCare Health', icon: Activity },
   ];
 
   const managementNav = [

@@ -22,7 +22,6 @@ const ComplianceAuditView = dynamic(() => import('@/components/ComplianceAuditVi
 const InfraAuditView = dynamic(() => import('@/components/InfraAuditView').then(m => m.InfraAuditView), { ssr: false });
 const CicdAutomationView = dynamic(() => import('@/components/CicdAutomationView').then(m => m.CicdAutomationView), { ssr: false });
 const VibePolishView = dynamic(() => import('@/components/VibePolishView').then(m => m.VibePolishView), { ssr: false });
-const VibeCareView = dynamic(() => import('@/components/VibeCareView').then(m => m.VibeCareView), { ssr: false });
 const RemediationQueueView = dynamic(() => import('@/components/RemediationQueueView').then(m => m.RemediationQueueView), { ssr: false });
 const ProjectsView = dynamic(() => import('@/components/ProjectsView').then(m => m.ProjectsView), { ssr: false });
 const ScanHistoryView = dynamic(() => import('@/components/ScanHistoryView').then(m => m.ScanHistoryView), { ssr: false });
@@ -551,32 +550,12 @@ function DashboardContent() {
               </ComponentErrorBoundary>
             )}
 
-            {activeNav === 'aicliche' && (
-              <ComponentErrorBoundary componentName="AiClicheView">
-                <VibePolishView
-                  catalog="cliche"
-                  title="AI Anti-Pattern & Cliché Detector"
-                  description="Deep pattern analysis scanning for AI-generated design anti-patterns, generic layout locks, non-standard component trees, and trust-eroding visual tropes."
-                />
-              </ComponentErrorBoundary>
-            )}
-
             {activeNav === 'aimaster' && (
               <ComponentErrorBoundary componentName="AiMasterView">
                 <VibePolishView
                   catalog="all"
                   title="Master Quality & Resilience Matrix"
                   description="Full-stack architecture audit covering OWASP top vulnerabilities, RAG retrieval leakage, agent execution boundaries, token cost governance, and production SLA metrics."
-                />
-              </ComponentErrorBoundary>
-            )}
-
-            {activeNav === 'vibecare' && (
-              <ComponentErrorBoundary componentName="VibeCareView" resetKeys={[safeSelectedProject?.id]}>
-                <VibeCareView
-                  project={safeSelectedProject}
-                  user={user}
-                  onOpenCheckout={() => handleOpenCheckoutModal('Enterprise')}
                 />
               </ComponentErrorBoundary>
             )}
