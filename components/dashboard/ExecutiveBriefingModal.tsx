@@ -94,7 +94,7 @@ export const ExecutiveBriefingModal: React.FC<ExecutiveBriefingModalProps> = ({
                   Executive Briefing &amp; CISO Summary
                 </h2>
                 <p className="text-xs text-[#A1A1AA]">
-                  Synthesized release readiness certification for executive leadership &amp; SOC 2 auditors
+                  Release readiness summary from the latest scan, for leadership and auditors
                 </p>
               </div>
             </div>
@@ -168,7 +168,7 @@ export const ExecutiveBriefingModal: React.FC<ExecutiveBriefingModalProps> = ({
           </div>
 
           {/* 4-Pillar Scorecard Grid */}
-          <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+          <div className="grid grid-cols-3 gap-3">
             <div className="bg-[#0A0A0A] p-3 rounded-xl border border-white/10 text-center">
               <div className="text-lg font-extrabold font-mono text-red-400">{criticals.length}</div>
               <div className="text-[10px] text-[#A1A1AA] uppercase font-mono mt-0.5">Critical</div>
@@ -180,10 +180,6 @@ export const ExecutiveBriefingModal: React.FC<ExecutiveBriefingModalProps> = ({
             <div className="bg-[#0A0A0A] p-3 rounded-xl border border-white/10 text-center">
               <div className="text-lg font-extrabold font-mono text-blue-400">{mediums.length}</div>
               <div className="text-[10px] text-[#A1A1AA] uppercase font-mono mt-0.5">Medium Risk</div>
-            </div>
-            <div className="bg-[#0A0A0A] p-3 rounded-xl border border-white/10 text-center">
-              <div className="text-lg font-extrabold font-mono text-emerald-400">100%</div>
-              <div className="text-[10px] text-[#A1A1AA] uppercase font-mono mt-0.5">Permissive Lic</div>
             </div>
           </div>
 
@@ -234,7 +230,7 @@ export const ExecutiveBriefingModal: React.FC<ExecutiveBriefingModalProps> = ({
           {/* Footer Actions: Print/Export PDF + Copy Markdown + Close */}
           <div className="flex flex-col sm:flex-row items-center justify-between gap-3 pt-4 border-t border-white/10">
             <div className="text-[11px] font-mono text-zinc-400 text-center sm:text-left">
-              Official ISO-27001 / SOC 2 Ready Attestation
+              Generated from the latest Zelsis scan. Not a certification or audit opinion.
             </div>
 
             <div className="flex items-center gap-2.5 w-full sm:w-auto">

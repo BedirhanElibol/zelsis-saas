@@ -500,14 +500,9 @@ export function generateExecutiveReportHtml(project: Project): string {
     </table>
 
     <!-- Software Composition & Legal Radar -->
-    <div class="section-title">Software Supply Chain &amp; Compliance Attestation</div>
+    <div class="section-title">Scan Scope</div>
     <div style="background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 6px; padding: 12px 16px; margin-bottom: 20px; font-size: 8.5pt;">
-      <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px;">
-        <div>
-          <strong style="display: block; color: #09090b; margin-bottom: 2px;">License Composition</strong>
-          <span style="color: #059669; font-weight: 600;">✓ 100% Permissive (MIT / Apache-2.0)</span>
-          <div style="font-size: 7.5pt; color: #64748b;">Zero AGPL / GPL copyleft contamination</div>
-        </div>
+      <div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 12px;">
         <div>
           <strong style="display: block; color: #09090b; margin-bottom: 2px;">Framework Gate</strong>
           <span style="color: #09090b; font-weight: 600;">${escapeHtml(project.framework ?? 'Web Application')}</span>
@@ -515,8 +510,8 @@ export function generateExecutiveReportHtml(project: Project): string {
         </div>
         <div>
           <strong style="display: block; color: #09090b; margin-bottom: 2px;">Compliance Standard</strong>
-          <span style="color: #09090b; font-weight: 600;">SOC 2 / ISO 27001 Aligned</span>
-          <div style="font-size: 7.5pt; color: #64748b;">Automated release gate verification</div>
+          <span style="color: #09090b; font-weight: 600;">Findings mapped to SOC 2 controls</span>
+          <div style="font-size: 7.5pt; color: #64748b;">Not a certification or audit opinion</div>
         </div>
       </div>
     </div>
