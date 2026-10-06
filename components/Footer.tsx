@@ -52,7 +52,7 @@ export const Footer: React.FC = () => {
           <span className="text-xs font-bold text-[#EDEDED] tracking-widest uppercase mb-2 font-mono">
             ZELSIS PLATFORM
           </span>
-          <a href="/dashboard" className="text-sm text-white hover:underline transition-colors font-mono">
+          <a href="/dashboard" className="inline-flex items-center min-h-[24px] text-sm text-white hover:underline transition-colors font-mono">
             Open dashboard →
           </a>
           <span className="text-xs text-[#A1A1AA]">Deterministic Pre-Flight Vulnerability Clearance</span>
@@ -80,7 +80,7 @@ export const Footer: React.FC = () => {
                 window.dispatchEvent(new CustomEvent('zelsis:reopenConsent'));
               }
             }}
-            className="hover:text-white transition-colors cursor-pointer text-left"
+            className="inline-flex items-center min-h-[24px] hover:text-white transition-colors cursor-pointer text-left"
           >
             Cookie Settings
           </button>
