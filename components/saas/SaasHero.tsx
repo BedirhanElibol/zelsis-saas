@@ -159,7 +159,7 @@ export const SaasHero: React.FC<SaasHeroProps> = ({ onOpenDashboard }) => {
           </div>
           <div className="flex items-center gap-2">
             <span className="w-1.5 h-1.5 rounded-full bg-white/40" />
-            <a href="#benchmark" className="hover:text-white transition-colors">Measured on {benchmark.repos.length} real projects</a>
+            <a href="#benchmark" className="inline-flex items-center min-h-[24px] hover:text-white transition-colors">Measured on {benchmark.repos.length} real projects</a>
           </div>
           <div className="flex items-center gap-2">
             <span className="w-1.5 h-1.5 rounded-full bg-white/40" />
@@ -222,9 +222,9 @@ export const SaasHero: React.FC<SaasHeroProps> = ({ onOpenDashboard }) => {
           <div className="flex flex-wrap items-center justify-center gap-6 sm:gap-8 text-xs font-mono text-zinc-400">
             <span className="hover:text-white transition-colors">Next.js 15 (App Router)</span>
             <span className="hover:text-white transition-colors">TypeScript 5.x</span>
-            <a href="https://github.com/fastapi/full-stack-fastapi-template" target="_blank" rel="noopener noreferrer" className="hover:text-white transition-colors underline decoration-white/20 underline-offset-4">Python / FastAPI</a>
-            <a href="https://github.com/django/djangoproject.com" target="_blank" rel="noopener noreferrer" className="hover:text-white transition-colors underline decoration-white/20 underline-offset-4">Django</a>
-            <a href="https://github.com/gothinkster/golang-gin-realworld-example-app" target="_blank" rel="noopener noreferrer" className="hover:text-white transition-colors underline decoration-white/20 underline-offset-4">Go / Gin</a>
+            <a href="https://github.com/fastapi/full-stack-fastapi-template" target="_blank" rel="noopener noreferrer" className="inline-flex items-center min-h-[24px] hover:text-white transition-colors underline decoration-white/20 underline-offset-4">Python / FastAPI</a>
+            <a href="https://github.com/django/djangoproject.com" target="_blank" rel="noopener noreferrer" className="inline-flex items-center min-h-[24px] hover:text-white transition-colors underline decoration-white/20 underline-offset-4">Django</a>
+            <a href="https://github.com/gothinkster/golang-gin-realworld-example-app" target="_blank" rel="noopener noreferrer" className="inline-flex items-center min-h-[24px] hover:text-white transition-colors underline decoration-white/20 underline-offset-4">Go / Gin</a>
             <span className="hover:text-white transition-colors">Docker &amp; K8s</span>
             <span className="hover:text-white transition-colors">Swift &amp; Kotlin (Mobile)</span>
           </div>
