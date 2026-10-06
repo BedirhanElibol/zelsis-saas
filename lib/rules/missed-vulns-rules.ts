@@ -202,7 +202,9 @@ export function evaluateMissedVulnsRules(file: CodeFile, lines: string[], cleanC
         if (isComment(l)) return;
         const authSecret = usesAuthLib && /^\s*secret\s*:\s*['"][^'"]{3,}['"]\s*,?\s*$/.test(l);
         const ironPw = usesIron && /^\s*password\s*:\s*['"][^'"]{8,}['"]\s*,?\s*$/.test(l);
-        const cookieParser = /\bcookieParser\(\s*['"][^'"]{3,}['"]/.test(l);
+        // Skip mentions inside a string, e.g. express's error message 'cookieParser("secret") required for signed cookies'
+        const cpAt = l.search(/\bcookieParser\(\s*['"][^'"]{3,}['"]/);
+        const cookieParser = cpAt !== -1 && (l.slice(0, cpAt).match(/['"`]/g) || []).length % 2 === 0;
         const sessionSecret = /^\s*(?:secret|keys)\s*:\s*(?:\[\s*)?['"][^'"]{3,}['"]/.test(l) && lines.slice(Math.max(0, i - 6), i + 1).some((x) => /\b(?:session|cookieSession|expressSession)\s*\(\s*\{/.test(x));
         if (authSecret || ironPw || cookieParser || sessionSecret) {
           add({ ruleId: 28808, code: 'GAP-08', severity: 'HIGH', category: 'Secrets Management', lineIdx: i, title: 'Hardcoded Session / Auth Signing Secret', why, fix });
