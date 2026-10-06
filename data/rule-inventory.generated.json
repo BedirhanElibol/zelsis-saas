@@ -1,8 +1,8 @@
 {
  "summary": {
-  "implementedRules": 885,
-  "testedRules": 877,
-  "preciseLocationRules": 882,
+  "implementedRules": 888,
+  "testedRules": 880,
+  "preciseLocationRules": 885,
   "catalogEntries": 1922,
   "catalogOnlyNotImplemented": 1401,
   "catalogPlaceholderMetadata": 1810
@@ -10257,6 +10257,36 @@
    "title": "Unauthenticated Endpoint Writes to GitHub for a Caller-Chosen Repository",
    "severity": "HIGH",
    "source": "lib/rules/ast-flow-rules.ts",
+   "preciseLocation": true,
+   "tested": true,
+   "inCatalog": false
+  },
+  {
+   "ruleId": 29401,
+   "code": "RULE-29401",
+   "title": "Paid API Key Exposed to the Browser (${name})",
+   "severity": "HIGH",
+   "source": "lib/rules/saas-v5-rules.ts",
+   "preciseLocation": true,
+   "tested": true,
+   "inCatalog": false
+  },
+  {
+   "ruleId": 29402,
+   "code": "RULE-29402",
+   "title": "Clerk Webhook Accepted Without svix Signature Verification",
+   "severity": "HIGH",
+   "source": "lib/rules/saas-v5-rules.ts",
+   "preciseLocation": true,
+   "tested": true,
+   "inCatalog": false
+  },
+  {
+   "ruleId": 29403,
+   "code": "RULE-29403",
+   "title": "Production Browser Source Maps Enabled",
+   "severity": "MEDIUM",
+   "source": "lib/rules/saas-v5-rules.ts",
    "preciseLocation": true,
    "tested": true,
    "inCatalog": false
