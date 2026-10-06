@@ -112,7 +112,7 @@ const HTTP_METHODS = new Set(['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'HEAD', '
 const ROUTE_VERBS = new Set(['get', 'post', 'put', 'patch', 'delete', 'del', 'all']);
 const COMPARE_OPS = new Set(['===', '!==', '==', '!=']);
 
-const AUTH_FN = /^(?:auth|getServerSession|unstable_getServerSession|getServerAuthSession|getSession|getClaims|currentUser|getAuth|protect|authenticate|isAuthenticated|withAuth|getKindeServerSession|validateRequest|validateSession|verifySession|getToken|getIronSession|jwtVerify|requireAuth\w*|ensureAuth\w*|assertAuth\w*|checkAuth\w*|requireLogin|ensureLoggedIn|requireOrg\w*|(?:get|require|ensure|verify|validate|check|assert|load|fetch|read|use)\w*(?:User|Session|Auth|Viewer|Member|Account|Claims|Identity)(?:OrThrow|OrRedirect|OrNull|OrFail|Id|FromRequest|FromSession|FromCookies?|FromHeaders?)?)$/;
+export const AUTH_FN = /^(?:auth|getServerSession|unstable_getServerSession|getServerAuthSession|getSession|getClaims|currentUser|getAuth|protect|authenticate|isAuthenticated|withAuth|getKindeServerSession|validateRequest|validateSession|verifySession|getToken|getIronSession|jwtVerify|requireAuth\w*|ensureAuth\w*|assertAuth\w*|checkAuth\w*|requireLogin|ensureLoggedIn|requireOrg\w*|(?:get|require|ensure|verify|validate|check|assert|load|fetch|read|use)\w*(?:User|Session|Auth|Viewer|Member|Account|Claims|Identity)(?:OrThrow|OrRedirect|OrNull|OrFail|Id|FromRequest|FromSession|FromCookies?|FromHeaders?)?)$/;
 /** Request values that are secrets (one-time tokens, codes): a lookup by them is not an IDOR. */
 const SECRET_VALUE = /token|secret|code|nonce|otp|hash|signature|key|challenge|csrf/i;
 const LOGGING_CALL = /^(?:log|info|debug|warn|error|trace|track|capture\w*|identify|emit|json|stringify|send|set|push|add|fireAndForget)$/;
@@ -160,7 +160,13 @@ const HTTP_CLIENT_METHODS = new Set(['get', 'post', 'put', 'patch', 'delete', 'h
 const RESPONSE_OBJ = /^(?:res|reply|response|c|ctx|resp)$/;
 
 /** Walks a parsed Program and returns handler facts and taint sink hits. */
-export function analyzeProgram(program: AstNode, path: string, source: string): FlowResult {
+/** Facts from other files: imported helpers that authenticate, and Next.js middleware covering this route. */
+export interface CrossFileHints {
+  isAuthHelper(importSource: string, name: string): boolean;
+  middlewareAuthed: boolean;
+}
+
+export function analyzeProgram(program: AstNode, path: string, source: string, crossFile?: CrossFileHints): FlowResult {
   const normPath = path.replace(/\\/g, '/');
   const imports = new Map<string, string>();
   const localFns = new Map<string, AstNode>();
@@ -355,6 +361,10 @@ export function analyzeProgram(program: AstNode, path: string, source: string): 
     const callee = unwrap(call.callee);
     const objPath = isMember(callee) ? memberPath(callee.object) : null;
     let hit = AUTH_FN.test(name);
+    if (!hit && crossFile && callee.type === 'Identifier') {
+      const src = importedFrom(callee.name);
+      if (src && crossFile.isAuthHelper(src, callee.name)) hit = true;
+    }
     if (!hit && name === 'verify' && objPath && /^(?:jwt|jsonwebtoken|jose|JWT)$/.test(objPath[objPath.length - 1])) hit = true;
     if (!hit && objPath && objPath.includes('auth') && /^(?:getUser|getSession|getClaims|api)$/.test(name)) hit = true;
     if (!hit) return false;
@@ -812,7 +822,7 @@ export function analyzeProgram(program: AstNode, path: string, source: string): 
     }
     if (spec) {
       const hctx = newCtx(spec, lineOf(fn));
-      if (spec.wrapped || spec.middlewareAuth) hctx.authed = true;
+      if (spec.wrapped || spec.middlewareAuth || (crossFile?.middlewareAuthed && (spec.kind === 'route' || spec.kind === 'controller'))) hctx.authed = true;
       if (spec.adminProc) hctx.adminCheck = true;
       handlers.push(hctx);
       analyzeFunction(fn, paramBindingsFor(spec, fn), scope, hctx);

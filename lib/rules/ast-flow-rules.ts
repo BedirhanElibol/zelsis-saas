@@ -11,6 +11,8 @@ import type { CodeFile } from '../scanner-engine';
 import { isParsablePath, parseSource } from '../scanner/ast/parse';
 import { analyzeProgram, PUBLIC_FORM_MODEL, PUBLIC_READ_MODEL, type Ctx, type DbQuery, type SinkCode } from '../scanner/ast/flow';
 import { within } from '../scanner/ast/walk';
+import { middlewareAuthenticates, resolveImport, routePathOf } from '../scanner/ast/cross-file';
+import type { RepoContext } from '../scanner/repo-context';
 
 interface Hit { ruleId: number; code: string; title: string; severity: Finding['severity']; category: string; line: number; why: string; fix: string }
 
@@ -21,7 +23,7 @@ const PUBLIC_ACTION_NAME = /^(?:sign|log)_?(?:in|out|up)|register|reset|forgot|v
 
 export function evaluateAstFlowRules(file: CodeFile, lines: string[], cleanContent: string, findingCounter: {
   count: number;
-}): { findings: Finding[]; logs: string[] } {
+}, context?: RepoContext): { findings: Finding[]; logs: string[] } {
   const findings: Finding[] = [];
   const logs: string[] = [];
   const content = file.content || '';
@@ -31,7 +33,11 @@ export function evaluateAstFlowRules(file: CodeFile, lines: string[], cleanConte
 
   let result;
   try {
-    result = analyzeProgram(program, file.path, content);
+    const cross = context?.crossFileAuth;
+    result = analyzeProgram(program, file.path, content, cross && {
+      isAuthHelper: (src, name) => resolveImport(file.path, src).some((k) => !!cross.authHelpers.get(k)?.has(name)),
+      middlewareAuthed: middlewareAuthenticates(cross.middleware, routePathOf(file.path)),
+    });
   } catch {
     return { findings, logs };
   }
