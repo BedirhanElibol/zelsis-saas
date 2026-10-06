@@ -218,6 +218,16 @@ export function validateRequestBody<T>(
 
 export const AccessTokenSchema = z.string().min(20).max(4096);
 
+export const ApiKeyCreateSchema = z.object({
+  accessToken: AccessTokenSchema,
+  name: z.string().trim().min(2, 'Give the key a name, e.g. "GitHub Actions"').max(60),
+});
+
+export const ApiKeyRevokeSchema = z.object({
+  accessToken: AccessTokenSchema,
+  keyId: z.string().uuid(),
+});
+
 export const OrgNameSchema = z.object({
   accessToken: AccessTokenSchema,
   name: z.string().trim().min(2, 'Workspace name needs at least 2 characters').max(80),

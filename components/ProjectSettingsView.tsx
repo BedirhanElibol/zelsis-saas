@@ -6,6 +6,7 @@ import { Project } from '@/data/schema';
 import { UserProfile } from '@/components/auth/AuthModal';
 import { SubscriptionCard } from '@/components/settings/SubscriptionCard';
 import { TeamWorkspaceCard } from '@/components/settings/TeamWorkspaceCard';
+import { ApiKeysCard } from '@/components/settings/ApiKeysCard';
 import { RepoConfigCard } from '@/components/settings/RepoConfigCard';
 import { DangerZoneCard } from '@/components/settings/DangerZoneCard';
 
@@ -99,6 +100,9 @@ export const ProjectSettingsView: React.FC<ProjectSettingsViewProps> = ({
 
       {/* Enterprise team workspace: members, invites, org policy, report branding */}
       <TeamWorkspaceCard user={user} onOpenCheckout={onOpenCheckout} />
+
+      {/* API keys for the CI release gate (private repositories) */}
+      <ApiKeysCard />
 
       {/* Target Repo & GitHub PAT Configuration */}
       <RepoConfigCard

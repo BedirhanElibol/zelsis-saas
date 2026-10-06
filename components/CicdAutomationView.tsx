@@ -7,6 +7,7 @@ import { Project, UserTier } from '@/data/schema';
 import { getConfiguredAppUrl, getPublicAppUrl } from '@/lib/app-url';
 import { isCicdViewAllowed } from '@/lib/quota-manager';
 import { exportProjectSarifReport } from '@/lib/report-exporter';
+import { buildGateWorkflow } from '@/lib/ci-gate-snippet';
 
 interface CicdAutomationViewProps {
   projectName?: string;
@@ -43,68 +44,7 @@ export const CicdAutomationView: React.FC<CicdAutomationViewProps> = ({
         ? `if [ "$STATUS" != "PASSED" ] || [ "$SCORE" -lt ${minScore} ]; then echo "::error::Zelsis gate $STATUS (score $SCORE/100, minimum ${minScore})"; exit 1; fi`
         : `echo "Advisory mode: gate $STATUS (score $SCORE/100) does not block."`;
 
-    return `name: Zelsis Pre-Flight Release Gate
-
-on:
-  pull_request:
-    branches: [main, master, develop]
-  push:
-    branches: [main]
-
-permissions:
-  contents: read
-
-jobs:
-  zelsis-gate:
-    name: Zelsis Release Gate (${projectName})
-    runs-on: ubuntu-latest
-    steps:
-      - name: Run Zelsis gate check
-        env:
-          ZELSIS_API_KEY: \${{ secrets.ZELSIS_API_KEY }}
-        run: |
-          REF=""
-          BASE=""
-          if [ "\${{ github.event_name }}" = "pull_request" ]; then
-            REF="\${{ github.event.pull_request.head.sha }}"
-            BASE="\${{ github.event.pull_request.base.sha }}"
-          fi
-
-          FAIL_OPEN="\${{ vars.ZELSIS_FAIL_OPEN || 'false' }}"
-
-          RESPONSE=$(curl -s -w "\\n%{http_code}" -X POST "${appUrl}/api/v1/gate-check" \\
-            -H "Content-Type: application/json" \\
-            -H "x-api-key: $ZELSIS_API_KEY" \\
-            -d '{"repoUrl": "\${{ github.server_url }}/\${{ github.repository }}", "ref": "'$REF'", "base": "'$BASE'"}')
-            
-          HTTP_CODE=$(echo "$RESPONSE" | tail -n1)
-          BODY=$(echo "$RESPONSE" | sed '$d')
-
-          if [ "$HTTP_CODE" -ge 500 ] || [ -z "$BODY" ] || ! echo "$BODY" | jq -e . >/dev/null 2>&1; then
-            echo "❌ Zelsis API unreachable or returned invalid response."
-            if [ "$FAIL_OPEN" = "true" ]; then
-              echo "⚠️ Fail-open strategy is enabled. Passing the gate."
-              echo '{"gateStatus": "PASSED", "readinessScore": 100}' > zelsis-report.json
-              exit 0
-            else
-              echo "🛑 Failing the workflow."
-              exit 1
-            fi
-          fi
-
-          echo "$BODY" > zelsis-report.json
-          STATUS=$(jq -r '.gateStatus // "ERROR"' zelsis-report.json)
-          SCORE=$(jq -r '.readinessScore // 0' zelsis-report.json)
-          echo "Gate: $STATUS, score: $SCORE/100" >> $GITHUB_STEP_SUMMARY
-          ${failCheck}
-
-      - name: Upload gate report
-        if: always()
-        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
-        with:
-          name: zelsis-release-report
-          path: zelsis-report.json
-`;
+    return buildGateWorkflow({ appUrl, projectName, failCheck });
   };
 
   const generateZelsisConfig = () => {
