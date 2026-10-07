@@ -67,7 +67,10 @@ jobs:
           
           GATE_STATUS=$(echo "$BODY" | jq -r '.gateStatus // "FAILED"')
           READINESS_SCORE=$(echo "$BODY" | jq -r '.readinessScore // 0')
-          
+
+          # Shows each finding on its line in the pull request diff
+          echo "$BODY" | jq -r '.annotations[]? // empty'
+
           echo "--------------------------------------------------"
           echo "📊 Zelsis Gate Status: $GATE_STATUS"
           echo "📊 Production Readiness Score: $READINESS_SCORE%"
