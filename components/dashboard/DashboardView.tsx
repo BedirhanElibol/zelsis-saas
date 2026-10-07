@@ -143,6 +143,22 @@ Enforce strict OWASP Top 10 compliance, fix the listed UI quality and accessibil
         />
       )}
 
+      {/* A signed-in account with no projects yet sees the sample project: say so, so its score is not read as theirs */}
+      {user?.isLoggedIn && safeProject.id === MOCK_PROJECTS[0].id && (
+        <div role="status" className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 rounded-xl border border-amber-500/30 bg-amber-500/10 p-4">
+          <p className="text-sm text-[#EDEDED] m-0">
+            <strong className="text-amber-300">Sample data.</strong> This demo project shows what a Zelsis report looks like; none of it is from your code.
+          </p>
+          <button
+            type="button"
+            onClick={() => setIsConnectTargetOpen(true)}
+            className="shrink-0 min-h-[44px] px-4 rounded-xl bg-emerald-500 hover:bg-emerald-400 text-black text-sm font-bold"
+          >
+            Scan your repository
+          </button>
+        </div>
+      )}
+
       {/* Top Gate Status Banner */}
       <ComponentErrorBoundary componentName="GateStatusBanner" resetKeys={[safeProject?.id, safeProject?.gateStatus]}>
         <GateStatusBanner
