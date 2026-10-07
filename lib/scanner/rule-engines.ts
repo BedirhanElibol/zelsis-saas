@@ -130,6 +130,7 @@ import { evaluatePythonV4Rules } from '../rules/python-v4-rules';
 import { evaluateBackendV4Rules } from '../rules/backend-v4-rules';
 import { evaluateConfigV4Rules } from '../rules/config-v4-rules';
 import { evaluateSaasV5Rules } from '../rules/saas-v5-rules';
+import { evaluatePyGoFlowRules } from '../rules/py-go-flow-rules';
 
 import { evaluateAstFlowRules } from '../rules/ast-flow-rules';
 
@@ -430,6 +431,8 @@ export const RULE_ENGINES: ReadonlyArray<{ evaluate: RuleEngine; scanRawContent?
   { evaluate: evaluateConfigV4Rules },
   // SaaS stack leaks: public-env API keys, unsigned Clerk webhooks, public source maps (SAAS5-01.., Rule IDs 29401-29499)
   { evaluate: evaluateSaasV5Rules },
+  // Python / Go handler data flow: request input through assignments into shell, URL fetch and file sinks (FLOW-01.., Rule IDs 29501-29599)
+  { evaluate: evaluatePyGoFlowRules },
   // AST analysis (Babel): route auth/ownership flow and taint for JS/TS (AST-01.., Rule IDs 29301-29399)
   { evaluate: evaluateAstFlowRules },
 ];
