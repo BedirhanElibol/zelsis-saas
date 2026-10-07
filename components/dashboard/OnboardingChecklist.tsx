@@ -3,6 +3,7 @@ import { Project } from '@/data/schema';
 import { CheckCircle2, Circle, Copy, Check } from 'lucide-react';
 import { buildGateWorkflow } from '@/lib/ci-gate-snippet';
 import { getConfiguredAppUrl } from '@/lib/app-url';
+import { badgeUrlFor } from '@/lib/badge-url';
 
 interface OnboardingChecklistProps {
   project: Project;
@@ -36,7 +37,9 @@ export const OnboardingChecklist: React.FC<OnboardingChecklistProps> = ({ projec
       title: 'Add Status Badge',
       description: 'Show off your readiness score in your README.',
       isComplete: false,
-      snippet: `[![Zelsis Gate](https://img.shields.io/endpoint?url=https://shipguard-saas.vercel.app/api/badges/gate?projectId=${project.id})](https://shipguard-saas.vercel.app)`,
+      snippet: badgeUrlFor(project, getConfiguredAppUrl())
+        ? `[![Zelsis Gate](${badgeUrlFor(project, getConfiguredAppUrl())})](${getConfiguredAppUrl()})`
+        : 'Scan a public GitHub repository to get a badge for it.',
     },
   ];
 

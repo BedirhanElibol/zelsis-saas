@@ -12,6 +12,7 @@ import { ScaLicenseRiskCard } from './ScaLicenseRiskCard';
 import { QuickChartWidget } from './QuickChartWidget';
 import { DashboardModals, ActiveModalType } from './DashboardModals';
 import { GateStatusBanner } from './GateStatusBanner';
+import { gateSeverity, gatingFindings } from '@/lib/scanner/scoring';
 import { OnboardingChecklist } from './OnboardingChecklist';
 import { DemoShowcaseBanner } from '../OverviewView';
 import { generateAuditPdfReport } from '@/lib/pdf-exporter';
@@ -94,14 +95,21 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
     [safeProject.findings]
   );
 
-  const criticals = useMemo(
-    () => openFindings.filter((f) => f && f.severity === 'CRITICAL'),
+  // Same basis as the gate and the findings table: proven rules only, at the severity the gate uses.
+  // Counting unproven suggestions here showed "PASSED · 2 Critical" side by side.
+  const gateFindings = useMemo(
+    () => gatingFindings(openFindings.filter(Boolean)).filter((f) => f.maturity !== 'unproven'),
     [openFindings]
   );
 
+  const criticals = useMemo(
+    () => gateFindings.filter((f) => gateSeverity(f) === 'CRITICAL'),
+    [gateFindings]
+  );
+
   const highs = useMemo(
-    () => openFindings.filter((f) => f && f.severity === 'HIGH'),
-    [openFindings]
+    () => gateFindings.filter((f) => gateSeverity(f) === 'HIGH'),
+    [gateFindings]
   );
 
   const uiCliches = useMemo(

@@ -5,6 +5,7 @@ import Image from 'next/image';
 import { Terminal, GitPullRequest, ShieldCheck, Copy, CheckCircle2, Download, Settings2, Sliders, CheckSquare, AlertTriangle, Lock, ArrowRight, FileCode } from 'lucide-react';
 import { Project, UserTier } from '@/data/schema';
 import { getConfiguredAppUrl, getPublicAppUrl } from '@/lib/app-url';
+import { badgeUrlFor } from '@/lib/badge-url';
 import { isCicdViewAllowed } from '@/lib/quota-manager';
 import { exportProjectSarifReport } from '@/lib/report-exporter';
 import { buildGateWorkflow } from '@/lib/ci-gate-snippet';
@@ -68,7 +69,7 @@ export const CicdAutomationView: React.FC<CicdAutomationViewProps> = ({
   };
 
   const badgeAppUrl = getConfiguredAppUrl();
-  const badgeUrl = `${badgeAppUrl}/api/v1/badge?projectId=${encodeURIComponent(project?.id || 'demo')}`;
+  const badgeUrl = badgeUrlFor(project, badgeAppUrl) ?? `${badgeAppUrl}/api/v1/badge?status=PASSED&score=100&label=Zelsis%20Gate`;
   const badgeMarkdown = `[![Zelsis Gate](${badgeUrl})](${badgeAppUrl})`;
 
   const copyToClipboard = (text: string, setter: (val: boolean) => void) => {
@@ -205,7 +206,7 @@ export const CicdAutomationView: React.FC<CicdAutomationViewProps> = ({
               <span className="text-[10px] font-mono bg-blue-500/20 text-blue-300 px-2 py-0.5 rounded">Observation</span>
             </div>
             <p className="text-xs text-zinc-400 leading-relaxed m-0">
-              Never fails PR builds. Runs complete static AST audits and publishes an official Release Scorecard report directly as a PR comment.
+              Never fails PR builds. Runs the full audit, shows findings on their lines in the pull request diff and writes the score to the job summary.
             </p>
           </button>
         </div>

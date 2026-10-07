@@ -242,7 +242,7 @@ export const SubscriptionCard: React.FC<SubscriptionCardProps> = ({
                 </div>
                 <div className="flex items-center gap-2 p-2 rounded-lg bg-white/[0.02] border border-white/5">
                   <CheckCircle2 size={14} className="text-emerald-400 shrink-0" />
-                  <span className="font-medium">100% Local Privacy</span>
+                  <span className="font-medium">Source code never stored</span>
                 </div>
               </div>
             </div>
