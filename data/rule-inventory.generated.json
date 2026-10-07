@@ -1,8 +1,8 @@
 {
  "summary": {
-  "implementedRules": 888,
-  "testedRules": 880,
-  "preciseLocationRules": 885,
+  "implementedRules": 894,
+  "testedRules": 886,
+  "preciseLocationRules": 891,
   "catalogEntries": 1922,
   "catalogOnlyNotImplemented": 1401,
   "catalogPlaceholderMetadata": 1810
@@ -10287,6 +10287,66 @@
    "title": "Production Browser Source Maps Enabled",
    "severity": "MEDIUM",
    "source": "lib/rules/saas-v5-rules.ts",
+   "preciseLocation": true,
+   "tested": true,
+   "inCatalog": false
+  },
+  {
+   "ruleId": 29501,
+   "code": "RULE-29501",
+   "title": "Request Input Reaches a Shell Command (Python)",
+   "severity": "CRITICAL",
+   "source": "lib/rules/py-go-flow-rules.ts",
+   "preciseLocation": true,
+   "tested": true,
+   "inCatalog": false
+  },
+  {
+   "ruleId": 29502,
+   "code": "RULE-29502",
+   "title": "Request Input Chooses the URL the Server Fetches (Python)",
+   "severity": "HIGH",
+   "source": "lib/rules/py-go-flow-rules.ts",
+   "preciseLocation": true,
+   "tested": true,
+   "inCatalog": false
+  },
+  {
+   "ruleId": 29503,
+   "code": "RULE-29503",
+   "title": "Request Input Builds a File Path (Python)",
+   "severity": "HIGH",
+   "source": "lib/rules/py-go-flow-rules.ts",
+   "preciseLocation": true,
+   "tested": true,
+   "inCatalog": false
+  },
+  {
+   "ruleId": 29504,
+   "code": "RULE-29504",
+   "title": "Request Input Reaches a Shell Command (Go)",
+   "severity": "CRITICAL",
+   "source": "lib/rules/py-go-flow-rules.ts",
+   "preciseLocation": true,
+   "tested": true,
+   "inCatalog": false
+  },
+  {
+   "ruleId": 29505,
+   "code": "RULE-29505",
+   "title": "Request Input Chooses the URL the Server Fetches (Go)",
+   "severity": "HIGH",
+   "source": "lib/rules/py-go-flow-rules.ts",
+   "preciseLocation": true,
+   "tested": true,
+   "inCatalog": false
+  },
+  {
+   "ruleId": 29506,
+   "code": "RULE-29506",
+   "title": "Request Input Builds a File Path (Go)",
+   "severity": "HIGH",
+   "source": "lib/rules/py-go-flow-rules.ts",
    "preciseLocation": true,
    "tested": true,
    "inCatalog": false

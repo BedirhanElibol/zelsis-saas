@@ -119,7 +119,9 @@ export function evaluateApiRules(file: CodeFile, lines: string[], cleanContent: 
     // API-15: GET Endpoint Performing State-Mutating Actions
     const getFuncMatch = cleanContent.match(/export\s+async\s+function\s+GET[\s\S]*?(?=export\s+(?:async\s+)?function|$)/i);
     // Vercel Cron only sends GET; a handler gated on CRON_SECRET cannot be triggered by a browser, prefetcher or crawler
-    const cronGated = /\bCRON_SECRET\b|x-cron-secret/i.test(cleanContent) && /authorization|x-cron-secret/i.test(getFuncMatch?.[0] ?? '');
+    // The secret check may live in a shared helper (isAuthorizedCron / verifyCronSecret) imported by the route
+    const cronGated = /\bCRON_SECRET\b|x-cron-secret|\b(?:isAuthorizedCron|verifyCron\w*|isCronRequest)\b/i.test(cleanContent)
+      && /authorization|x-cron-secret|\b(?:isAuthorizedCron|verifyCron\w*|isCronRequest)\s*\(/i.test(getFuncMatch?.[0] ?? '');
     const getBody = getFuncMatch && !cronGated ? getFuncMatch[0] : '';
     const sanitizedGetBody = getBody.replace(/createHmac\s*\([^)]*\)\s*\.update\s*\([^)]*\)/gi, '').replace(/createHash\s*\([^)]*\)\s*\.update\s*\([^)]*\)/gi, '');
     if (/(?:app\/api|pages\/api)/i.test(lowerPath) && sanitizedGetBody && /(?:\.(?:from|table|collection)\s*\([^)]*\)\s*\.(?:delete|update|insert|upsert)\b|\bprisma\.\w+\.(?:delete|update|create|upsert)(?:Many)?\s*\(|\bdb\.(?:delete|update|insert)\s*\(|DELETE\s+FROM|UPDATE\s+\w+\s+SET|INSERT\s+INTO)/i.test(sanitizedGetBody)) {

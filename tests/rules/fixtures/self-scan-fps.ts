@@ -60,4 +60,21 @@ export async function GET(req: Request) {
 }
 `),
   },
+  {
+    ruleIds: [7215], name: 'GET cron route gated by a shared cron-auth helper is not flagged',
+    detects: f('app/api/purge/route.ts', `import { supabase } from '@/lib/db';
+export async function GET() {
+  await supabase.from('sessions').delete().lt('expires_at', new Date().toISOString());
+  return Response.json({ ok: true });
+}
+`),
+    ignores: f('app/api/cron/purge/route.ts', `import { supabase } from '@/lib/db';
+import { isAuthorizedCron } from '@/lib/cron-auth';
+export async function GET(req: Request) {
+  if (!isAuthorizedCron(req.headers.get('authorization'))) return new Response('Unauthorized', { status: 401 });
+  await supabase.from('sessions').delete().lt('expires_at', new Date().toISOString());
+  return Response.json({ ok: true });
+}
+`),
+  },
 ];
