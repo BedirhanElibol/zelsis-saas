@@ -1,5 +1,5 @@
 {
- "generatedAt": "2026-10-03",
+ "generatedAt": "2026-10-07",
  "corpus": [
   {
    "name": "vercel/nextjs-subscription-payments",
@@ -125,14 +125,14 @@
  "summary": {
   "cleanRepos": 12,
   "cleanReposGateFailed": 2,
-  "cleanHighCriticalFindings": 111,
-  "cleanGatingHighCriticalFindings": 107,
+  "cleanHighCriticalFindings": 23,
+  "cleanGatingHighCriticalFindings": 23,
   "documentedFlaws": 38,
-  "documentedFlawsDetected": 37,
-  "recall": 0.97,
-  "documentedFlawsBlockingGate": 36,
-  "rulesFiringOnClean": 58,
-  "experimentalRules": 3
+  "documentedFlawsDetected": 38,
+  "recall": 1,
+  "documentedFlawsBlockingGate": 37,
+  "rulesFiringOnClean": 54,
+  "experimentalRules": 0
  },
  "repos": [
   {
@@ -141,7 +141,7 @@
    "kind": "clean",
    "stack": "Next.js + Supabase + Stripe",
    "files": 67,
-   "scanMs": 237,
+   "scanMs": 724,
    "gate": "WARNING",
    "score": 77,
    "critical": 0,
@@ -158,15 +158,15 @@
    "kind": "clean",
    "stack": "Next.js + Prisma + Stripe + NextAuth",
    "files": 140,
-   "scanMs": 481,
+   "scanMs": 490,
    "gate": "WARNING",
    "score": 89,
    "critical": 0,
    "high": 1,
    "medium": 1,
    "low": 6,
-   "experimental": 1,
-   "allHighCritical": 2,
+   "experimental": 0,
+   "allHighCritical": 1,
    "detectedFramework": "Next.js"
   },
   {
@@ -175,14 +175,14 @@
    "kind": "clean",
    "stack": "FastAPI + React",
    "files": 204,
-   "scanMs": 931,
+   "scanMs": 809,
    "gate": "WARNING",
-   "score": 87,
+   "score": 85,
    "critical": 0,
    "high": 1,
-   "medium": 3,
-   "low": 4,
-   "experimental": 2,
+   "medium": 4,
+   "low": 5,
+   "experimental": 0,
    "allHighCritical": 1,
    "detectedFramework": "React"
   },
@@ -192,15 +192,15 @@
    "kind": "clean",
    "stack": "Express + Prisma",
    "files": 58,
-   "scanMs": 170,
+   "scanMs": 159,
    "gate": "FAILED",
-   "score": 38,
+   "score": 35,
    "critical": 2,
-   "high": 2,
-   "medium": 1,
+   "high": 1,
+   "medium": 5,
    "low": 1,
-   "experimental": 3,
-   "allHighCritical": 6,
+   "experimental": 0,
+   "allHighCritical": 3,
    "detectedFramework": "Express"
   },
   {
@@ -209,15 +209,15 @@
    "kind": "clean",
    "stack": "Go + Gin",
    "files": 27,
-   "scanMs": 214,
-   "gate": "WARNING",
-   "score": 86,
+   "scanMs": 138,
+   "gate": "PASSED",
+   "score": 98,
    "critical": 0,
-   "high": 2,
-   "medium": 0,
+   "high": 0,
+   "medium": 1,
    "low": 0,
    "experimental": 0,
-   "allHighCritical": 2,
+   "allHighCritical": 0,
    "detectedFramework": null
   },
   {
@@ -226,7 +226,7 @@
    "kind": "clean",
    "stack": "Laravel",
    "files": 40,
-   "scanMs": 102,
+   "scanMs": 68,
    "gate": "PASSED",
    "score": 100,
    "critical": 0,
@@ -243,15 +243,15 @@
    "kind": "clean",
    "stack": "Remix/React Router + Prisma + tRPC (production SaaS)",
    "files": 2481,
-   "scanMs": 14552,
+   "scanMs": 13704,
    "gate": "WARNING",
-   "score": 46,
+   "score": 29,
    "critical": 0,
-   "high": 57,
-   "medium": 41,
-   "low": 153,
-   "experimental": 10,
-   "allHighCritical": 57,
+   "high": 5,
+   "medium": 87,
+   "low": 155,
+   "experimental": 0,
+   "allHighCritical": 5,
    "detectedFramework": "React"
   },
   {
@@ -260,15 +260,15 @@
    "kind": "clean",
    "stack": "TypeScript SDK",
    "files": 471,
-   "scanMs": 3861,
+   "scanMs": 3834,
    "gate": "FAILED",
-   "score": 0,
-   "critical": 8,
-   "high": 2,
-   "medium": 1,
-   "low": 10,
-   "experimental": 4,
-   "allHighCritical": 10,
+   "score": 60,
+   "critical": 1,
+   "high": 1,
+   "medium": 2,
+   "low": 14,
+   "experimental": 0,
+   "allHighCritical": 2,
    "detectedFramework": "Next.js"
   },
   {
@@ -277,15 +277,15 @@
    "kind": "vulnerable",
    "stack": "Express + MongoDB",
    "files": 87,
-   "scanMs": 316,
+   "scanMs": 263,
    "gate": "FAILED",
    "score": 0,
    "critical": 6,
-   "high": 6,
-   "medium": 10,
+   "high": 5,
+   "medium": 11,
    "low": 10,
    "experimental": 0,
-   "allHighCritical": 12,
+   "allHighCritical": 11,
    "detectedFramework": "Express"
   },
   {
@@ -294,15 +294,15 @@
    "kind": "vulnerable",
    "stack": "Express + Sequelize",
    "files": 21,
-   "scanMs": 57,
+   "scanMs": 124,
    "gate": "FAILED",
    "score": 0,
-   "critical": 4,
-   "high": 2,
+   "critical": 6,
+   "high": 3,
    "medium": 3,
    "low": 0,
-   "experimental": 2,
-   "allHighCritical": 8,
+   "experimental": 0,
+   "allHighCritical": 9,
    "detectedFramework": "Express"
   },
   {
@@ -310,16 +310,16 @@
    "sha": "1618a611b173b4bf114028e6e02549950606e29d",
    "kind": "vulnerable",
    "stack": "Express + Angular + Sequelize",
-   "files": 962,
-   "scanMs": 8354,
+   "files": 965,
+   "scanMs": 6417,
    "gate": "FAILED",
    "score": 0,
    "critical": 47,
-   "high": 16,
-   "medium": 26,
-   "low": 48,
-   "experimental": 24,
-   "allHighCritical": 68,
+   "high": 27,
+   "medium": 33,
+   "low": 68,
+   "experimental": 0,
+   "allHighCritical": 74,
    "detectedFramework": "Express"
   },
   {
@@ -328,15 +328,15 @@
    "kind": "clean",
    "stack": "Java + Spring Boot",
    "files": 84,
-   "scanMs": 233,
+   "scanMs": 154,
    "gate": "WARNING",
-   "score": 48,
+   "score": 74,
    "critical": 0,
-   "high": 7,
-   "medium": 9,
-   "low": 20,
-   "experimental": 5,
-   "allHighCritical": 7,
+   "high": 1,
+   "medium": 12,
+   "low": 25,
+   "experimental": 0,
+   "allHighCritical": 1,
    "detectedFramework": "Spring Boot"
   },
   {
@@ -345,15 +345,15 @@
    "kind": "clean",
    "stack": "C# + ASP.NET Core",
    "files": 350,
-   "scanMs": 832,
+   "scanMs": 413,
    "gate": "WARNING",
-   "score": 61,
+   "score": 80,
    "critical": 0,
-   "high": 5,
-   "medium": 2,
+   "high": 2,
+   "medium": 3,
    "low": 0,
    "experimental": 0,
-   "allHighCritical": 5,
+   "allHighCritical": 2,
    "detectedFramework": null
   },
   {
@@ -362,15 +362,15 @@
    "kind": "clean",
    "stack": "Ruby on Rails (production service)",
    "files": 1698,
-   "scanMs": 5135,
+   "scanMs": 2948,
    "gate": "WARNING",
-   "score": 61,
+   "score": 67,
    "critical": 0,
-   "high": 5,
+   "high": 4,
    "medium": 2,
-   "low": 1,
-   "experimental": 2,
-   "allHighCritical": 5,
+   "low": 3,
+   "experimental": 0,
+   "allHighCritical": 4,
    "detectedFramework": "Ruby on Rails"
   },
   {
@@ -379,15 +379,15 @@
    "kind": "clean",
    "stack": "Python + Django (production site)",
    "files": 434,
-   "scanMs": 2435,
+   "scanMs": 1530,
    "gate": "WARNING",
-   "score": 48,
+   "score": 68,
    "critical": 0,
-   "high": 12,
-   "medium": 6,
-   "low": 17,
-   "experimental": 11,
-   "allHighCritical": 13,
+   "high": 1,
+   "medium": 12,
+   "low": 27,
+   "experimental": 0,
+   "allHighCritical": 1,
    "detectedFramework": "Django"
   },
   {
@@ -396,15 +396,15 @@
    "kind": "vulnerable",
    "stack": "Java + Spring",
    "files": 635,
-   "scanMs": 2274,
+   "scanMs": 1986,
    "gate": "FAILED",
    "score": 0,
    "critical": 15,
-   "high": 11,
-   "medium": 50,
-   "low": 130,
-   "experimental": 16,
-   "allHighCritical": 26,
+   "high": 7,
+   "medium": 52,
+   "low": 146,
+   "experimental": 0,
+   "allHighCritical": 22,
    "detectedFramework": "Spring Boot"
   },
   {
@@ -413,14 +413,14 @@
    "kind": "vulnerable",
    "stack": "Ruby on Rails",
    "files": 187,
-   "scanMs": 704,
+   "scanMs": 933,
    "gate": "FAILED",
    "score": 0,
-   "critical": 5,
-   "high": 13,
-   "medium": 2,
-   "low": 3,
-   "experimental": 2,
+   "critical": 7,
+   "high": 11,
+   "medium": 3,
+   "low": 5,
+   "experimental": 0,
    "allHighCritical": 18,
    "detectedFramework": "Ruby on Rails"
   },
@@ -430,15 +430,15 @@
    "kind": "vulnerable",
    "stack": "PHP",
    "files": 195,
-   "scanMs": 591,
+   "scanMs": 347,
    "gate": "FAILED",
    "score": 0,
    "critical": 56,
-   "high": 32,
-   "medium": 1,
+   "high": 25,
+   "medium": 3,
    "low": 0,
    "experimental": 0,
-   "allHighCritical": 88,
+   "allHighCritical": 81,
    "detectedFramework": null
   },
   {
@@ -447,15 +447,15 @@
    "kind": "vulnerable",
    "stack": "Python + Django",
    "files": 217,
-   "scanMs": 667,
+   "scanMs": 440,
    "gate": "FAILED",
    "score": 0,
    "critical": 14,
-   "high": 23,
-   "medium": 32,
-   "low": 37,
-   "experimental": 10,
-   "allHighCritical": 38,
+   "high": 26,
+   "medium": 39,
+   "low": 39,
+   "experimental": 0,
+   "allHighCritical": 40,
    "detectedFramework": null
   },
   {
@@ -464,15 +464,15 @@
    "kind": "vulnerable",
    "stack": "Python + aiohttp",
    "files": 30,
-   "scanMs": 444,
+   "scanMs": 943,
    "gate": "FAILED",
-   "score": 28,
+   "score": 31,
    "critical": 2,
-   "high": 4,
-   "medium": 2,
-   "low": 0,
-   "experimental": 1,
-   "allHighCritical": 6,
+   "high": 3,
+   "medium": 3,
+   "low": 1,
+   "experimental": 0,
+   "allHighCritical": 5,
    "detectedFramework": null
   }
  ],
@@ -505,7 +505,7 @@
    "blocksGate": true,
    "matchedBy": [
     "Open Redirect via Unvalidated Return URL (CWE-601)",
-    "Unvalidated Open Redirection Vulnerability (Open Redirect)"
+    "AST-07: Open Redirect: Request Input Chooses the Redirect Target (CWE-601)"
    ]
   },
   {
@@ -515,7 +515,8 @@
    "found": true,
    "blocksGate": true,
    "matchedBy": [
-    "Server-Side Request Forgery (SSRF) via Unvalidated Target URL"
+    "Server-Side Request Forgery (SSRF) via Unvalidated Target URL",
+    "AST-06: SSRF: Request Input Chooses the Host of a Server-Side Request (CWE-918)"
    ]
   },
   {
@@ -536,7 +537,7 @@
    "found": true,
    "blocksGate": true,
    "matchedBy": [
-    "SQL Injection: String Concatenation in Node.js Database Client Query"
+    "AST-03: SQL Injection: Request Input Reaches a Raw Query Through Variables (CWE-89)"
    ]
   },
   {
@@ -577,7 +578,7 @@
    "found": true,
    "blocksGate": false,
    "matchedBy": [
-    "Unvalidated Open Redirection Vulnerability (Open Redirect)"
+    "AST-07: Open Redirect: Request Input Chooses the Redirect Target (CWE-601)"
    ]
   },
   {
@@ -597,7 +598,7 @@
    "found": true,
    "blocksGate": true,
    "matchedBy": [
-    "SQL Injection: String Concatenation in Node.js Database Client Query"
+    "AST-03: SQL Injection: Request Input Reaches a Raw Query Through Variables (CWE-89)"
    ]
   },
   {
@@ -607,7 +608,7 @@
    "found": true,
    "blocksGate": true,
    "matchedBy": [
-    "SQL Injection: String Concatenation in Node.js Database Client Query"
+    "AST-03: SQL Injection: Request Input Reaches a Raw Query Through Variables (CWE-89)"
    ]
   },
   {
@@ -638,7 +639,8 @@
    "blocksGate": true,
    "matchedBy": [
     "SEC-SSRF-01: Server-Side Request Forgery (SSRF) in Outbound Fetch / Webhook Dispatch",
-    "Server-Side Request Forgery (SSRF) via Unvalidated Target URL"
+    "Server-Side Request Forgery (SSRF) via Unvalidated Target URL",
+    "AST-06: SSRF: Request Input Chooses the Host of a Server-Side Request (CWE-918)"
    ]
   },
   {
@@ -676,9 +678,11 @@
    "repo": "WebGoat/WebGoat",
    "flaw": "XXE: XMLInputFactory without disabling external entities",
    "file": "src/main/java/org/owasp/webgoat/lessons/xxe/CommentsCache.java",
-   "found": false,
-   "blocksGate": false,
-   "matchedBy": []
+   "found": true,
+   "blocksGate": true,
+   "matchedBy": [
+    "CORE-04: XML External Entity (XXE) Processing Enabled"
+   ]
   },
   {
    "repo": "OWASP/railsgoat",
@@ -914,28 +918,7 @@
   {
    "ruleId": 9502,
    "title": "CICD-SEC-02: Unpinned Third-Party Action Mutable Reference (@v1)",
-   "severity": "HIGH",
-   "cleanRepos": [
-    "gothinkster/golang-gin-realworld-example-app",
-    "documenso/documenso",
-    "spring-projects/spring-petclinic",
-    "dotnet-architecture/eShopOnWeb",
-    "django/djangoproject.com"
-   ],
-   "cleanFindings": 25,
-   "vulnerableRepos": [
-    "OWASP/NodeGoat",
-    "juice-shop/juice-shop",
-    "WebGoat/WebGoat",
-    "OWASP/railsgoat",
-    "digininja/DVWA",
-    "adeyosemanputra/pygoat"
-   ]
-  },
-  {
-   "ruleId": 12605,
-   "title": "SBOM-05: Unvetted Third-Party GitHub Actions in Production CI/CD Workflows",
-   "severity": "HIGH",
+   "severity": "MEDIUM",
    "cleanRepos": [
     "gothinkster/golang-gin-realworld-example-app",
     "documenso/documenso",
@@ -949,25 +932,6 @@
     "WebGoat/WebGoat",
     "OWASP/railsgoat",
     "digininja/DVWA"
-   ]
-  },
-  {
-   "ruleId": 7004,
-   "title": "CLOUD-04: Docker Container Running as Default Root User",
-   "severity": "HIGH",
-   "cleanRepos": [
-    "fastapi/full-stack-fastapi-template",
-    "spring-projects/spring-petclinic",
-    "dotnet-architecture/eShopOnWeb",
-    "rubygems/rubygems.org",
-    "django/djangoproject.com"
-   ],
-   "cleanFindings": 7,
-   "vulnerableRepos": [
-    "appsecco/dvna",
-    "OWASP/railsgoat",
-    "digininja/DVWA",
-    "adeyosemanputra/pygoat"
    ]
   },
   {
@@ -985,6 +949,24 @@
     "OWASP/NodeGoat",
     "juice-shop/juice-shop",
     "WebGoat/WebGoat",
+    "adeyosemanputra/pygoat"
+   ]
+  },
+  {
+   "ruleId": 7004,
+   "title": "CLOUD-04: Docker Container Running as Default Root User",
+   "severity": "HIGH",
+   "cleanRepos": [
+    "fastapi/full-stack-fastapi-template",
+    "dotnet-architecture/eShopOnWeb",
+    "rubygems/rubygems.org",
+    "django/djangoproject.com"
+   ],
+   "cleanFindings": 5,
+   "vulnerableRepos": [
+    "appsecco/dvna",
+    "OWASP/railsgoat",
+    "digininja/DVWA",
     "adeyosemanputra/pygoat"
    ]
   },
@@ -1031,25 +1013,6 @@
    ]
   },
   {
-   "ruleId": 16,
-   "title": "Unsanitized Direct InnerHTML DOM Mutation (XSS Risk)",
-   "severity": "HIGH",
-   "cleanRepos": [
-    "documenso/documenso",
-    "rubygems/rubygems.org",
-    "django/djangoproject.com"
-   ],
-   "cleanFindings": 9,
-   "vulnerableRepos": [
-    "juice-shop/juice-shop",
-    "WebGoat/WebGoat",
-    "OWASP/railsgoat",
-    "digininja/DVWA",
-    "adeyosemanputra/pygoat",
-    "anxolerd/dvpwa"
-   ]
-  },
-  {
    "ruleId": 12603,
    "title": "SBOM-03: SLSA Level 3 Provenance Attestation Missing in CI/CD Build Pipeline",
    "severity": "LOW",
@@ -1065,9 +1028,23 @@
    ]
   },
   {
+   "ruleId": 3002,
+   "title": "Dockerfile Executes as Root User (Container Privilege Escalation Risk)",
+   "severity": "HIGH",
+   "cleanRepos": [
+    "gothinkster/node-express-realworld-example-app",
+    "spring-projects/spring-petclinic",
+    "rubygems/rubygems.org"
+   ],
+   "cleanFindings": 3,
+   "vulnerableRepos": [
+    "OWASP/NodeGoat"
+   ]
+  },
+  {
    "ruleId": 3019,
    "title": "Docker Compose Database Port Exposed Directly on Host (0.0.0.0 Exposure Risk)",
-   "severity": "HIGH",
+   "severity": "MEDIUM",
    "cleanRepos": [
     "supabase/supabase-js",
     "spring-projects/spring-petclinic",
@@ -1094,7 +1071,7 @@
   {
    "ruleId": 6051,
    "title": "DB-PERF-51: Migration Takes a Blocking Table Lock on an Existing Table",
-   "severity": "HIGH",
+   "severity": "MEDIUM",
    "cleanRepos": [
     "gothinkster/node-express-realworld-example-app",
     "documenso/documenso"
@@ -1117,6 +1094,24 @@
     "WebGoat/WebGoat",
     "OWASP/railsgoat",
     "adeyosemanputra/pygoat"
+   ]
+  },
+  {
+   "ruleId": 16,
+   "title": "Unsanitized Direct InnerHTML DOM Mutation (XSS Risk)",
+   "severity": "HIGH",
+   "cleanRepos": [
+    "documenso/documenso",
+    "rubygems/rubygems.org"
+   ],
+   "cleanFindings": 7,
+   "vulnerableRepos": [
+    "juice-shop/juice-shop",
+    "WebGoat/WebGoat",
+    "OWASP/railsgoat",
+    "digininja/DVWA",
+    "adeyosemanputra/pygoat",
+    "anxolerd/dvpwa"
    ]
   },
   {
@@ -1220,20 +1215,6 @@
    "vulnerableRepos": []
   },
   {
-   "ruleId": 27211,
-   "title": "SCA: CVE-2024-34351 - Next.js Server Actions Server-Side Request Forgery (SSRF) (next@13.3.2-canary.13)",
-   "severity": "HIGH",
-   "cleanRepos": [
-    "shadcn-ui/taxonomy",
-    "gothinkster/node-express-realworld-example-app"
-   ],
-   "cleanFindings": 2,
-   "vulnerableRepos": [
-    "appsecco/dvna",
-    "juice-shop/juice-shop"
-   ]
-  },
-  {
    "ruleId": 1207,
    "title": "UI-INTERACT-07: Viewport Horizontal Overflow from w-screen",
    "severity": "LOW",
@@ -1274,16 +1255,6 @@
    "vulnerableRepos": [
     "WebGoat/WebGoat"
    ]
-  },
-  {
-   "ruleId": 3001,
-   "title": "PostgreSQL Table \"users\" Missing Row Level Security (RLS)",
-   "severity": "CRITICAL",
-   "cleanRepos": [
-    "supabase/supabase-js"
-   ],
-   "cleanFindings": 5,
-   "vulnerableRepos": []
   },
   {
    "ruleId": 1240,
@@ -1404,26 +1375,27 @@
    "vulnerableRepos": []
   },
   {
-   "ruleId": 3002,
-   "title": "Dockerfile Executes as Root User (Container Privilege Escalation Risk)",
-   "severity": "HIGH",
+   "ruleId": 20,
+   "title": "Vulnerable Dependency or Wildcard Version in package.json",
+   "severity": "MEDIUM",
    "cleanRepos": [
     "gothinkster/node-express-realworld-example-app"
    ],
    "cleanFindings": 1,
    "vulnerableRepos": [
-    "OWASP/NodeGoat"
+    "juice-shop/juice-shop"
    ]
   },
   {
-   "ruleId": 20,
-   "title": "Vulnerable Dependency or Wildcard Version in package.json",
-   "severity": "HIGH",
+   "ruleId": 27211,
+   "title": "SCA: CVE-2024-29041 - Express Open Redirect & Malformed Route Path Bypass (express@~4.18.1)",
+   "severity": "MEDIUM",
    "cleanRepos": [
     "gothinkster/node-express-realworld-example-app"
    ],
    "cleanFindings": 1,
    "vulnerableRepos": [
+    "appsecco/dvna",
     "juice-shop/juice-shop"
    ]
   },
@@ -1488,10 +1460,7 @@
     "documenso/documenso"
    ],
    "cleanFindings": 1,
-   "vulnerableRepos": [
-    "OWASP/NodeGoat",
-    "appsecco/dvna"
-   ]
+   "vulnerableRepos": []
   },
   {
    "ruleId": 28619,
@@ -1537,29 +1506,9 @@
    "vulnerableRepos": []
   },
   {
-   "ruleId": 45,
-   "title": "Permissive Database Row Level Security (RLS) Bypass Policy",
-   "severity": "CRITICAL",
-   "cleanRepos": [
-    "supabase/supabase-js"
-   ],
-   "cleanFindings": 1,
-   "vulnerableRepos": []
-  },
-  {
    "ruleId": 28005,
    "title": "NEXT-SB-05: Storage Policy Lets Any User Overwrite or Delete Every File in the Bucket",
    "severity": "HIGH",
-   "cleanRepos": [
-    "supabase/supabase-js"
-   ],
-   "cleanFindings": 1,
-   "vulnerableRepos": []
-  },
-  {
-   "ruleId": 5099,
-   "title": "SEC-SECRET-99: JWT Hardcoded Secret Key Constant",
-   "severity": "CRITICAL",
    "cleanRepos": [
     "supabase/supabase-js"
    ],
@@ -1605,7 +1554,7 @@
   {
    "ruleId": 8803,
    "title": "PY-SEC-03: Subprocess Execution with shell=True",
-   "severity": "HIGH",
+   "severity": "MEDIUM",
    "cleanRepos": [
     "django/djangoproject.com"
    ],
@@ -1661,6 +1610,17 @@
    ]
   },
   {
+   "ruleId": 29307,
+   "title": "AST-07: Open Redirect: Request Input Chooses the Redirect Target (CWE-601)",
+   "severity": "MEDIUM",
+   "cleanRepos": [],
+   "cleanFindings": 0,
+   "vulnerableRepos": [
+    "OWASP/NodeGoat",
+    "appsecco/dvna"
+   ]
+  },
+  {
    "ruleId": 27,
    "title": "Catastrophic Backtracking Regular Expression (ReDoS CWE-1333)",
    "severity": "HIGH",
@@ -1675,6 +1635,17 @@
    "ruleId": 34,
    "title": "Server-Side Request Forgery (SSRF) via Unvalidated Target URL",
    "severity": "CRITICAL",
+   "cleanRepos": [],
+   "cleanFindings": 0,
+   "vulnerableRepos": [
+    "OWASP/NodeGoat",
+    "juice-shop/juice-shop"
+   ]
+  },
+  {
+   "ruleId": 29306,
+   "title": "AST-06: SSRF: Request Input Chooses the Host of a Server-Side Request (CWE-918)",
+   "severity": "HIGH",
    "cleanRepos": [],
    "cleanFindings": 0,
    "vulnerableRepos": [
@@ -1714,14 +1685,13 @@
    ]
   },
   {
-   "ruleId": 3021,
-   "title": "SQL Injection: String Concatenation in Node.js Database Client Query",
-   "severity": "CRITICAL",
+   "ruleId": 28918,
+   "title": "JSF-18: Template Engine HTML Auto-Escaping Disabled (Stored / Reflected XSS)",
+   "severity": "MEDIUM",
    "cleanRepos": [],
    "cleanFindings": 0,
    "vulnerableRepos": [
-    "appsecco/dvna",
-    "juice-shop/juice-shop"
+    "OWASP/NodeGoat"
    ]
   },
   {
@@ -1742,6 +1712,28 @@
    "cleanFindings": 0,
    "vulnerableRepos": [
     "appsecco/dvna"
+   ]
+  },
+  {
+   "ruleId": 29303,
+   "title": "AST-03: SQL Injection: Request Input Reaches a Raw Query Through Variables (CWE-89)",
+   "severity": "CRITICAL",
+   "cleanRepos": [],
+   "cleanFindings": 0,
+   "vulnerableRepos": [
+    "appsecco/dvna",
+    "juice-shop/juice-shop"
+   ]
+  },
+  {
+   "ruleId": 28808,
+   "title": "GAP-08: Hardcoded Session / Auth Signing Secret",
+   "severity": "HIGH",
+   "cleanRepos": [],
+   "cleanFindings": 0,
+   "vulnerableRepos": [
+    "appsecco/dvna",
+    "juice-shop/juice-shop"
    ]
   },
   {
@@ -1778,6 +1770,26 @@
    "ruleId": 13103,
    "title": "SDP-03: Inbound Perimeter Firewall Ports Open to Public Internet",
    "severity": "CRITICAL",
+   "cleanRepos": [],
+   "cleanFindings": 0,
+   "vulnerableRepos": [
+    "juice-shop/juice-shop"
+   ]
+  },
+  {
+   "ruleId": 3021,
+   "title": "SQL Injection: String Concatenation in Node.js Database Client Query",
+   "severity": "CRITICAL",
+   "cleanRepos": [],
+   "cleanFindings": 0,
+   "vulnerableRepos": [
+    "juice-shop/juice-shop"
+   ]
+  },
+  {
+   "ruleId": 28911,
+   "title": "JSF-11: Every Proxy Hop Trusted: Client Can Spoof req.ip via X-Forwarded-For (CWE-348)",
+   "severity": "MEDIUM",
    "cleanRepos": [],
    "cleanFindings": 0,
    "vulnerableRepos": [
@@ -1889,6 +1901,16 @@
    ]
   },
   {
+   "ruleId": 29305,
+   "title": "AST-05: Path Traversal: Request Input Reaches a File System Path (CWE-22)",
+   "severity": "HIGH",
+   "cleanRepos": [],
+   "cleanFindings": 0,
+   "vulnerableRepos": [
+    "juice-shop/juice-shop"
+   ]
+  },
+  {
    "ruleId": 18012,
    "title": "JAVA-SEC-02: Hardcoded Password or Secret Key in Java Source Code",
    "severity": "HIGH",
@@ -1955,6 +1977,17 @@
    ]
   },
   {
+   "ruleId": 24104,
+   "title": "CORE-04: XML External Entity (XXE) Processing Enabled",
+   "severity": "HIGH",
+   "cleanRepos": [],
+   "cleanFindings": 0,
+   "vulnerableRepos": [
+    "WebGoat/WebGoat",
+    "adeyosemanputra/pygoat"
+   ]
+  },
+  {
    "ruleId": 28603,
    "title": "A11Y-03: Positive tabIndex Overrides Natural Focus Order",
    "severity": "LOW",
@@ -2002,6 +2035,16 @@
    "cleanFindings": 0,
    "vulnerableRepos": [
     "WebGoat/WebGoat"
+   ]
+  },
+  {
+   "ruleId": 29105,
+   "title": "BEF-05: Rails Request Input Chooses the Class or Method to Call",
+   "severity": "CRITICAL",
+   "cleanRepos": [],
+   "cleanFindings": 0,
+   "vulnerableRepos": [
+    "OWASP/railsgoat"
    ]
   },
   {
@@ -2142,6 +2185,16 @@
    ]
   },
   {
+   "ruleId": 28813,
+   "title": "GAP-13: Flask Debug Server Exposed on All Interfaces",
+   "severity": "HIGH",
+   "cleanRepos": [],
+   "cleanFindings": 0,
+   "vulnerableRepos": [
+    "adeyosemanputra/pygoat"
+   ]
+  },
+  {
    "ruleId": 8008,
    "title": "LLM-SEC-08: Insecure Deserialization of ML Weights (Pickle / PyTorch)",
    "severity": "MEDIUM",
@@ -2262,6 +2315,16 @@
    ]
   },
   {
+   "ruleId": 29503,
+   "title": "FLOW-03: Request Input Builds a File Path (Python)",
+   "severity": "HIGH",
+   "cleanRepos": [],
+   "cleanFindings": 0,
+   "vulnerableRepos": [
+    "adeyosemanputra/pygoat"
+   ]
+  },
+  {
    "ruleId": 21,
    "title": "Potential Secret or PII Log Leakage in Application Telemetry",
    "severity": "HIGH",
@@ -2282,8 +2345,8 @@
    ]
   },
   {
-   "ruleId": 24104,
-   "title": "CORE-04: XML External Entity (XXE) Processing Enabled",
+   "ruleId": 29502,
+   "title": "FLOW-02: Request Input Chooses the URL the Server Fetches (Python)",
    "severity": "HIGH",
    "cleanRepos": [],
    "cleanFindings": 0,
