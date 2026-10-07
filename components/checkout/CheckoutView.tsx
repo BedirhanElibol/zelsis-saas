@@ -223,6 +223,13 @@ export const CheckoutView: React.FC<CheckoutViewProps> = ({
   const isSelectedPlanPro = selectedPlan.id === 'zelsis-core';
   const isSelectedPlanEnterprise = selectedPlan.id === 'vibecare';
 
+  // The plan the account actually has (Enterprise includes Pro), shown when the selected plan is already covered
+  const activePlan: PricingPlanItem | undefined = isEnterpriseSubscriber
+    ? ZELSIS_PRICING_PLANS.find((p) => p.id === 'vibecare')
+    : isProSubscriber
+    ? ZELSIS_PRICING_PLANS.find((p) => p.id === 'zelsis-core')
+    : undefined;
+
   const isAlreadySubscribedToSelectedPlan =
     (isProSubscriber && isSelectedPlanPro) ||
     (isEnterpriseSubscriber && (isSelectedPlanPro || isSelectedPlanEnterprise));
@@ -518,14 +525,14 @@ export const CheckoutView: React.FC<CheckoutViewProps> = ({
                         <div className="flex items-center justify-between">
                           <div className="flex items-center gap-2">
                             <CheckCircle2 size={18} className="text-emerald-400" />
-                            <span className="text-sm font-extrabold text-white">Active Plan: {selectedPlan.name}</span>
+                            <span className="text-sm font-extrabold text-white">Active Plan: {(activePlan ?? selectedPlan).name}</span>
                           </div>
                           <span className="px-2.5 py-0.5 rounded-full text-[10px] font-mono font-bold bg-emerald-500/10 text-emerald-300 border border-emerald-500/30">
                             CURRENT TIER
                           </span>
                         </div>
                         <p className="text-xs text-[#CBD5E1] leading-relaxed">
-                          Your account currently has active clearance for <strong>{selectedPlan.name}</strong>. {currentUser?.expiresAt ? `Valid / renews on: ${formatDate(currentUser.expiresAt)}.` : 'Active monthly subscription.'} You do not need to re-purchase this plan.
+                          Your account currently has active clearance for <strong>{(activePlan ?? selectedPlan).name}</strong>. {currentUser?.expiresAt ? `Valid / renews on: ${formatDate(currentUser.expiresAt)}.` : 'Active monthly subscription.'} You do not need to re-purchase this plan.
                         </p>
                         <div className="flex flex-col sm:flex-row items-center gap-2.5 pt-2">
                           <a

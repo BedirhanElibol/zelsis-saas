@@ -28,35 +28,43 @@ export const AuditCompareModal: React.FC<AuditCompareModalProps> = ({
 
   if (!isOpen) return null;
 
-  // Read previous scan from scanHistory if available, or fallback gracefully to baseline
+  // history[0] is the latest scan; compare it with the one before. With a single scan there is nothing to compare,
+  // and the modal says so instead of inventing a baseline.
   const history = (project as any).scanHistory as ScanHistoryItem[] | undefined;
-  const pastScanItem = history && history.length > 1
-    ? history[1]
-    : history && history.length === 1
-    ? history[0]
-    : null;
+  const pastScanItem = history && history.length > 1 ? history[1] : null;
 
-  const previousScan = pastScanItem
-    ? {
-        date: pastScanItem.date,
-        score: pastScanItem.score,
-        gateStatus: pastScanItem.gateStatus,
-        criticals: pastScanItem.criticalCount,
-        highs: pastScanItem.highCount,
-        openFindings: pastScanItem.criticalCount + pastScanItem.highCount + pastScanItem.mediumCount,
-        isBaseline: false,
-        label: 'PREVIOUS AUDIT'
-      }
-    : {
-        date: 'Initial Baseline',
-        score: Math.max(0, project.readinessScore - 15),
-        gateStatus: (project.gateStatus === 'PASSED' ? 'PASSED' : 'FAILED') as 'PASSED' | 'FAILED' | 'WARNING',
-        criticals: project.criticalCount > 0 ? project.criticalCount + 1 : 1,
-        highs: project.highCount > 0 ? project.highCount + 2 : 2,
-        openFindings: project.findings.length + 3,
-        isBaseline: true,
-        label: 'PREVIOUS BASELINE'
-      };
+  if (!pastScanItem) {
+    return (
+      <div
+        onClick={(e) => { if (e.target === e.currentTarget) onClose(); }}
+        className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80"
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="audit-compare-title"
+      >
+        <div className="w-full max-w-md bg-[#141414] border border-white/10 rounded-2xl p-6 flex flex-col gap-4 shadow-2xl">
+          <h2 id="audit-compare-title" className="text-lg font-extrabold text-white">Nothing to compare yet</h2>
+          <p className="text-sm text-[#A1A1AA]">
+            {project.name} has one scan so far. Run the audit again after you fix something and this view will show what changed.
+          </p>
+          <button onClick={onClose} className="self-end min-h-[44px] px-4 rounded-xl bg-white/5 hover:bg-white/10 text-sm text-white">
+            Close
+          </button>
+        </div>
+      </div>
+    );
+  }
+
+  const previousScan = {
+    date: pastScanItem.date,
+    score: pastScanItem.score,
+    gateStatus: pastScanItem.gateStatus,
+    criticals: pastScanItem.criticalCount,
+    highs: pastScanItem.highCount,
+    openFindings: pastScanItem.criticalCount + pastScanItem.highCount + pastScanItem.mediumCount,
+    isBaseline: false,
+    label: 'PREVIOUS AUDIT'
+  };
 
   const currentScan = {
     date: project.lastScanAt || 'Current Live Audit',

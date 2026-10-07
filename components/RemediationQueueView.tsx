@@ -86,7 +86,7 @@ Remediation: ${f.remediationPrompt}`).join('\n\n')}`;
       {/* Open Items */}
       <div>
         <h2 style={{ fontSize: '1.1rem', fontWeight: 800, color: '#EDEDED', margin: '0 0 16px 0', display: 'flex', alignItems: 'center', gap: '8px' }}>
-          <span>Open Release Blockers ({openFindings.length})</span>
+          <span>Open Findings ({openFindings.length})</span>
         </h2>
 
         <div style={{ display: 'flex', flexDirection: 'column', gap: '14px' }}>

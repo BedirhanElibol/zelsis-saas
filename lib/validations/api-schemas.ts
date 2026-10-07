@@ -74,6 +74,8 @@ export const ProxyQuerySchema = z.object({
  */
 export const BadgeQuerySchema = z.object({
   projectId: z.string().max(128).optional(),
+  /** owner/name of a public GitHub repository scanned on Zelsis */
+  repo: z.string().regex(/^[\w.-]{1,100}\/[\w.-]{1,100}$/).optional(),
   scanId: z.string().uuid().optional(),
   sig: z.string().max(128).optional(),
   status: z

@@ -34,7 +34,7 @@ export async function GET(req: NextRequest) {
     return validation.response;
   }
 
-  const { projectId, scanId, sig, status: queryStatus, score: queryScore, label: queryLabel } = validation.data;
+  const { projectId, scanId, repo, sig, status: queryStatus, score: queryScore, label: queryLabel } = validation.data;
 
   let isVerified = false;
   let finalStatus = queryStatus;
@@ -45,7 +45,7 @@ export async function GET(req: NextRequest) {
   const serviceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
 
   // 3. Database-backed Verification (projectId or scanId)
-  if ((projectId || scanId) && supabaseUrl && serviceRoleKey) {
+  if ((projectId || scanId || repo) && supabaseUrl && serviceRoleKey) {
     try {
       const supabase = createClient(supabaseUrl, serviceRoleKey, { auth: { persistSession: false } });
 
@@ -70,6 +70,24 @@ export async function GET(req: NextRequest) {
           if (proj?.name) {
             finalLabel = proj.name;
           }
+        }
+      } else if (repo) {
+        // Public repositories only: a private repo's gate status must not be readable by its name
+        const { data: project } = await supabase
+          .from('projects')
+          .select('name, gate_status, readiness_score, last_scan_at')
+          .eq('repo_url', `https://github.com/${repo}`)
+          .eq('is_private', false)
+          .not('last_scan_at', 'is', null)
+          .order('last_scan_at', { ascending: false })
+          .limit(1)
+          .maybeSingle();
+
+        if (project) {
+          finalStatus = (project.gate_status as any) || 'FAILED';
+          finalScore = project.readiness_score ?? 0;
+          finalLabel = repo.split('/')[1] || 'Zelsis Gate';
+          isVerified = true;
         }
       } else if (projectId) {
         const { data: project } = await supabase
@@ -116,10 +134,11 @@ export async function GET(req: NextRequest) {
   let statusBg = isPassed ? '#10B981' : isWarning ? '#F59E0B' : '#EF4444';
   let rawStatusText = isPassed ? `PASSED ${finalScore}%` : isWarning ? `WARNING ${finalScore}%` : `FAILED (${finalScore}%)`;
 
-  // F-26: If not cryptographically or database verified, label clearly as UNVERIFIED to eliminate badge spoofing
-  if (!isVerified && !projectId && !scanId) {
+  // F-26: anything not verified by the database or a signature is shown as such, never as the caller's status.
+  // A project, scan or repo that was asked for but not found must not fall back to the default "PASSED 100".
+  if (!isVerified) {
     statusBg = '#6B7280';
-    rawStatusText = `UNVERIFIED ${finalScore}%`;
+    rawStatusText = projectId || scanId || repo ? 'NOT SCANNED' : `UNVERIFIED ${finalScore}%`;
   }
 
   // 6. Prevent SVG XML injection with rigorous XML entity escaping
