@@ -1,8 +1,8 @@
 {
  "summary": {
-  "implementedRules": 894,
-  "testedRules": 886,
-  "preciseLocationRules": 891,
+  "implementedRules": 896,
+  "testedRules": 888,
+  "preciseLocationRules": 893,
   "catalogEntries": 1922,
   "catalogOnlyNotImplemented": 1401,
   "catalogPlaceholderMetadata": 1810
@@ -9576,6 +9576,26 @@
    "code": "RULE-28816",
    "title": "Storage Upload Path Is Only the Client File Name",
    "severity": "MEDIUM",
+   "source": "lib/rules/missed-vulns-rules.ts",
+   "preciseLocation": true,
+   "tested": true,
+   "inCatalog": false
+  },
+  {
+   "ruleId": 28817,
+   "code": "RULE-28817",
+   "title": "RLS Policy Lets Anyone Read Every Row of ${table} (USING (true))",
+   "severity": "HIGH",
+   "source": "lib/rules/missed-vulns-rules.ts",
+   "preciseLocation": true,
+   "tested": true,
+   "inCatalog": false
+  },
+  {
+   "ruleId": 28818,
+   "code": "RULE-28818",
+   "title": "Clerk Middleware Marks Every API Route Public (${wide[1]})",
+   "severity": "HIGH",
    "source": "lib/rules/missed-vulns-rules.ts",
    "preciseLocation": true,
    "tested": true,
