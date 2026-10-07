@@ -8,6 +8,8 @@ export interface SendEmailOptions {
   text?: string;
   from?: string;
   replyTo?: string;
+  /** Extra MIME headers, e.g. List-Unsubscribe for lifecycle mail. */
+  headers?: Record<string, string>;
 }
 
 export interface SendEmailResult {
@@ -45,6 +47,7 @@ export async function sendEmail(options: SendEmailOptions): Promise<SendEmailRes
         html: options.html,
         text: options.text,
         reply_to: options.replyTo,
+        headers: options.headers,
       }),
       signal: AbortSignal.timeout(8000),
     });
@@ -281,5 +284,53 @@ export async function sendNewFindingsAlertEmail(params: {
     subject: `[Zelsis] ${total} new security finding${total === 1 ? '' : 's'} in ${projectName}`,
     html,
     text,
+  });
+}
+
+/**
+ * Sent once to a confirmed account that has not run a scan a day after signing up.
+ * Carries a one-click unsubscribe (RFC 8058) because it is not a reply to something the user just did.
+ */
+export async function sendFirstScanNudgeEmail(params: { toEmail: string; unsubscribeUrl: string }): Promise<SendEmailResult> {
+  const { toEmail, unsubscribeUrl } = params;
+  const appUrl = getConfiguredAppUrl();
+  const scanUrl = `${appUrl}/dashboard`;
+  const unsub = escapeHtml(unsubscribeUrl);
+
+  const html = wrapHtmlTemplate({
+    title: 'Run your first Zelsis scan',
+    contentHtml: `
+      <h1 style="margin:0 0 16px 0;font-size:20px;font-weight:700;color:#FFFFFF;letter-spacing:-0.3px;">
+        Your first scan takes about a minute
+      </h1>
+      <p style="margin:0 0 12px 0;">
+        Paste a GitHub repository and Zelsis checks it for leaked keys, open Supabase RLS policies, broken auth,
+        vulnerable dependencies and risky cloud config, with the exact file and line for each finding.
+      </p>
+      <p style="margin:0 0 12px 0;">
+        Public repositories are free and unlimited. On the free plan you can also scan up to three private repositories.
+      </p>
+      <div style="margin:28px 0;text-align:center;">
+        <a href="${scanUrl}" style="display:inline-block;background-color:#10B981;color:#000000;font-weight:700;font-size:13px;padding:12px 28px;border-radius:8px;text-decoration:none;">
+          Scan a repository
+        </a>
+      </div>
+      <p style="margin:20px 0 0 0;font-size:11px;color:#52525B;">
+        You get this once because you created a Zelsis account. <a href="${unsub}" style="color:#71717A;text-decoration:underline;">Unsubscribe from product emails</a>.
+      </p>
+    `,
+  });
+
+  const text = `Your first Zelsis scan takes about a minute.\n\nPaste a GitHub repository and Zelsis checks it for leaked keys, open Supabase RLS policies, broken auth, vulnerable dependencies and risky cloud config.\n\nScan a repository: ${scanUrl}\n\nUnsubscribe from product emails: ${unsubscribeUrl}`;
+
+  return sendEmail({
+    to: toEmail,
+    subject: 'Run your first Zelsis scan',
+    html,
+    text,
+    headers: {
+      'List-Unsubscribe': `<${unsubscribeUrl}>`,
+      'List-Unsubscribe-Post': 'List-Unsubscribe=One-Click',
+    },
   });
 }
