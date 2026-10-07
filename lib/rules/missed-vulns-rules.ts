@@ -16,6 +16,13 @@ export interface MissedVulnsRuleResult {
 
 interface Hit { ruleId: number; code: string; title: string; severity: Finding['severity']; category: string; lineIdx: number; why: string; fix: string }
 
+/** Table names that hold per-user or confidential rows; a public read on them is a leak, not a catalog. */
+export const PRIVATE_TABLE = /^(?:users?|accounts?|messages?|chats?|chat_messages|conversations?|notes?|documents?|files?|orders?|payments?|invoices?|transactions?|subscriptions?|customers?|emails?|addresses|secrets?|tokens?|api_keys?|sessions?|private_\w+|\w+_private)$/i;
+
+/** A SELECT USING (true) policy on a catalog table (products, prices): a deliberate public read. */
+export const isPublicCatalogRead = (stmt: string) => /\bFOR\s+SELECT\b/i.test(stmt)
+  && !PRIVATE_TABLE.test(stmt.match(/\bON\s+(?:"?\w+"?\.)?"?(\w+)"?/i)?.[1] || '');
+
 const lineAt = (content: string, offset: number) => content.slice(0, Math.max(0, offset)).split('\n').length - 1;
 const isComment = (l: string) => /^\s*(?:\/\/|\*|\/\*|#)/.test(l);
 
@@ -57,6 +64,21 @@ export function evaluateMissedVulnsRules(file: CodeFile, lines: string[], cleanC
         why: `This ${cmd} policy evaluates to true for every row, so anyone holding the public anon key (or any signed-in user) can ${cmd === 'DELETE' ? 'delete' : 'overwrite'} other users' rows straight from the browser through /rest/v1.`,
         fix: 'Scope the policy to the row owner: USING (auth.uid() = user_id) WITH CHECK (auth.uid() = user_id), or drop the policy and write from the server with the service role.' });
       if (++n >= 3) break;
+    }
+    // GAP-17: SELECT USING (true) on a table that holds private data (public read of products/prices is normal)
+    let r = 0;
+    for (const m of sql.matchAll(/CREATE\s+POLICY\b[^;]*;/gi)) {
+      const stmt = m[0];
+      if (!/\bFOR\s+SELECT\b/i.test(stmt) || /\bTO\s+(?:service_role|postgres|supabase_admin)\b/i.test(stmt)) continue;
+      const table = stmt.match(/\bON\s+(?:"?\w+"?\.)?"?(\w+)"?/i)?.[1] || '';
+      if (!PRIVATE_TABLE.test(table)) continue;
+      const t = stmt.search(/\bUSING\s*\(\s*true\s*\)/i);
+      if (t === -1) continue;
+      add({ ruleId: 28817, code: 'GAP-17', severity: 'HIGH', category: 'Row Level Security', lineIdx: lineAt(sql, m.index! + t),
+        title: `RLS Policy Lets Anyone Read Every Row of ${table} (USING (true))`,
+        why: `The SELECT policy on ${table} is true for every row, so anyone holding the public anon key can download all of it from the browser through /rest/v1.`,
+        fix: `Scope the read to the owner: USING (auth.uid() = user_id), or expose only public columns through a view.` });
+      if (++r >= 3) break;
     }
   }
 
@@ -323,6 +345,18 @@ export function evaluateMissedVulnsRules(file: CodeFile, lines: string[], cleanC
             fix: 'Prefix the object path with the user id and a random name: `${user.id}/${crypto.randomUUID()}.${ext}`, and scope the storage policy to that folder.' });
         }
       });
+    }
+
+    // GAP-18: Clerk middleware that lists the whole /api tree as public, so auth.protect() never runs for it
+    if (/\bclerkMiddleware\s*\(/.test(cleanContent)) {
+      for (const m of cleanContent.matchAll(/\b(?:const|let|var)\s+(\w*public\w*)\s*=\s*createRouteMatcher\s*\(\s*\[([^\]]*)\]/gi)) {
+        const wide = m[2].match(/['"](\/api(?:\(\.\*\)|\/\(\.\*\)|\/:path\*|\/\.\*)|\/\(api\|trpc\)\(\.\*\))['"]/);
+        if (!wide) continue;
+        add({ ruleId: 28818, code: 'GAP-18', severity: 'HIGH', category: 'Broken Access Control', lineIdx: lineAt(cleanContent, m.index! + m[0].indexOf(wide[0])),
+          title: `Clerk Middleware Marks Every API Route Public (${wide[1]})`,
+          why: `${m[1]} matches ${wide[1]}, so the middleware skips auth.protect() for every API route. Any handler that does not call auth() itself is open to anonymous requests.`,
+          fix: 'List only the routes that must be public (e.g. "/api/webhooks(.*)") and let every other API route go through auth.protect().' });
+      }
     }
   }
 

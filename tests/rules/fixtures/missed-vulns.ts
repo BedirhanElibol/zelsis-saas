@@ -456,4 +456,36 @@ export async function GET(req: Request) {
 }
 `),
   },
+  {
+    ruleIds: [28817], name: 'GAP-17 public read of a private table (lowercase using (true))',
+    detects: f('supabase/migrations/20250102000000_policies.sql', `alter table public.messages enable row level security;
+create policy "Users can read messages" on public.messages
+  for select using (true);
+`),
+    ignores: f('supabase/migrations/20250102000000_policies.sql', `create policy "Allow public read-only access." on products for select using (true);
+create policy "Allow public read-only access." on prices for select using (true);
+create policy "Read own messages" on public.messages for select using (auth.uid() = user_id);
+create policy "Service reads" on public.messages for select to service_role using (true);
+`),
+  },
+  {
+    ruleIds: [3], name: 'SEC-03 ignores a deliberate public catalog read',
+    detects: f('supabase/migrations/001.sql', 'CREATE POLICY "read all" ON public.orders FOR SELECT USING (true);\n'),
+    ignores: f('supabase/migrations/001.sql', 'CREATE POLICY "public read" ON public.products FOR SELECT USING (true);\n'),
+  },
+  {
+    ruleIds: [28818], name: 'GAP-18 Clerk middleware marks the whole /api tree public',
+    detects: f('middleware.ts', `import { clerkMiddleware, createRouteMatcher } from '@clerk/nextjs/server';
+const isPublicRoute = createRouteMatcher(['/', '/sign-in(.*)', '/api(.*)']);
+export default clerkMiddleware(async (auth, req) => {
+  if (!isPublicRoute(req)) await auth.protect();
+});
+`),
+    ignores: f('middleware.ts', `import { clerkMiddleware, createRouteMatcher } from '@clerk/nextjs/server';
+const isPublicRoute = createRouteMatcher(['/', '/sign-in(.*)', '/api/webhooks(.*)']);
+export default clerkMiddleware(async (auth, req) => {
+  if (!isPublicRoute(req)) await auth.protect();
+});
+`),
+  },
 ];

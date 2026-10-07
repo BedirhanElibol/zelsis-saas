@@ -1,6 +1,7 @@
 import type { Finding } from '@/data/schema';
 import type { CodeFile } from '../scanner-engine';
 import { AUTH_GUARD, isOutboundWebhookSender } from './shared/stack-signals';
+import { isPublicCatalogRead } from './missed-vulns-rules';
 export function evaluateSecurityRules(file: CodeFile, lines: string[], cleanContentOrCounter: string | {
     count: number;
 }, counterMaybe?: {
@@ -45,7 +46,7 @@ export function evaluateSecurityRules(file: CodeFile, lines: string[], cleanCont
     }
     // Rule 3: Supabase Permissive Row Level Security (RLS) (SEC-03)
     // Policies live in SQL; one scoped TO service_role only restates the service role's RLS bypass
-    if (/\.sql$/i.test(file.path) && cleanContent.split(';').some((stmt) => stmt.includes('USING (true)') && !/\bTO\s+service_role\b/i.test(stmt))) {
+    if (/\.sql$/i.test(file.path) && cleanContent.split(';').some((stmt) => stmt.includes('USING (true)') && !/\bTO\s+service_role\b/i.test(stmt) && !isPublicCatalogRead(stmt))) {
         const matchLineIdx = lines.findIndex(l => !l.trim().startsWith('--') && l.includes('USING (true)'));
         const lineNum = matchLineIdx !== -1 ? matchLineIdx + 1 : 1;
         findings.push({
