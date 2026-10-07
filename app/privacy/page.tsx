@@ -87,6 +87,7 @@ export default function PrivacyPolicyPage() {
             <ul className="list-disc list-inside space-y-1 text-[#AAAAAA]">
               <li><strong>Contractual Performance:</strong> Providing automated release gate services, processing repository audits, and managing developer subscriptions.</li>
               <li><strong>Legitimate Interests:</strong> Protecting platform security, preventing abuse or denial-of-service attacks, and optimizing scanner performance.</li>
+              <li><strong>Product Emails:</strong> One onboarding email about running your first scan, sent under our legitimate interest in helping you use the service you signed up for. Every such email has a one-click unsubscribe; security alerts you enable and team invites are sent separately.</li>
               <li><strong>Legal Compliance:</strong> Satisfying statutory taxation, financial accounting, and international reporting obligations.</li>
             </ul>
           </section>
@@ -118,6 +119,12 @@ export default function PrivacyPolicyPage() {
                     <td className="p-2.5">Global edge hosting, Serverless API execution &amp; CDN</td>
                     <td className="p-2.5">USA / Global Anycast Edge</td>
                     <td className="p-2.5 text-emerald-400">SOC 2 Type II, ISO 27001</td>
+                  </tr>
+                  <tr>
+                    <td className="p-2.5 text-white font-bold">Resend</td>
+                    <td className="p-2.5">Email delivery: security alerts, team invites, onboarding and waitlist emails</td>
+                    <td className="p-2.5">USA</td>
+                    <td className="p-2.5 text-emerald-400">SOC 2 Type II</td>
                   </tr>
                   <tr>
                     <td className="p-2.5 text-white font-bold">Polar Software Inc.</td>

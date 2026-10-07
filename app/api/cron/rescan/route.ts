@@ -1,22 +1,14 @@
-import { timingSafeEqual } from 'crypto';
 import { NextResponse } from 'next/server';
 import { getSupabaseAdmin } from '@/lib/supabase-admin';
 import { logger } from '@/lib/logger';
 import { getInternalBaseUrl, getInternalSecret } from '@/lib/internal-auth';
+import { isAuthorizedCron } from '@/lib/cron-auth';
 
 export const maxDuration = 30;
 export const dynamic = 'force-dynamic';
 
 // Each scan runs in its own process-job invocation; the cron only has to hand the request off.
 const DISPATCH_TIMEOUT_MS = 1500;
-
-function isAuthorizedCron(header: string | null): boolean {
-  const secret = process.env.CRON_SECRET?.trim();
-  if (!secret || !header) return false;
-  const expected = Buffer.from(`Bearer ${secret}`);
-  const received = Buffer.from(header);
-  return expected.length === received.length && timingSafeEqual(expected, received);
-}
 
 export async function GET(req: Request) {
   if (!isAuthorizedCron(req.headers.get('authorization'))) {
