@@ -1,0 +1,60 @@
+name: Benchmark Refresh
+
+# Re-runs the full benchmark on Linux (Windows checkouts of juice-shop hit path-length limits) and
+# opens a PR with the regenerated maturity list, benchmark summary and rule inventory.
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: write
+  pull-requests: write
+
+jobs:
+  refresh:
+    name: Regenerate benchmark data
+    runs-on: ubuntu-latest
+    timeout-minutes: 40
+    steps:
+      - name: Checkout
+        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
+
+      - name: Setup Node.js 22
+        uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4.4.0
+        with:
+          node-version: '22'
+          cache: 'npm'
+
+      - name: Cache benchmark corpus clones
+        uses: actions/cache@0057852bfaa89a56745cba8c7296529d2fc39830 # v4.3.0
+        with:
+          path: .cache/benchmark
+          key: benchmark-corpus-${{ hashFiles('scripts/benchmark/corpus.json') }}
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Run full benchmark
+        run: npx tsx scripts/benchmark/run.ts
+
+      - name: Regenerate rule inventory
+        run: npm run audit:rules
+
+      - name: Open a PR when the data changed
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          if git diff --quiet; then
+            echo "Benchmark data unchanged."
+            exit 0
+          fi
+          branch="chore/benchmark-refresh-${GITHUB_RUN_ID}"
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git checkout -b "$branch"
+          git add data/ docs/benchmark/
+          git commit -m "chore(benchmark): refresh benchmark and maturity data"
+          git push origin "$branch"
+          gh pr create --base main --head "$branch" \
+            --title "chore(benchmark): refresh benchmark and maturity data" \
+            --body "Full benchmark run on Linux (run ${GITHUB_RUN_ID}). Review the experimental list and clean-repo counts before merging." \
+            || echo "Branch $branch pushed; open the PR manually if Actions may not create PRs in this repo."
