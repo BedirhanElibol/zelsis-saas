@@ -48,3 +48,53 @@ test.describe('API guards', () => {
     expect(res.status()).toBe(401);
   });
 });
+
+test.describe('cron and email endpoints', () => {
+  for (const path of ['/api/cron/rescan', '/api/cron/lifecycle']) {
+    test(`${path} rejects calls without the cron secret`, async ({ request }) => {
+      const res = await request.get(path, { headers: { authorization: 'Bearer undefined' } });
+      expect(res.status()).toBe(401);
+    });
+  }
+
+  test('unsubscribe rejects a forged token without changing anything', async ({ request }) => {
+    const res = await request.get('/api/v1/email/unsubscribe?u=00000000-0000-0000-0000-000000000000&t=forged');
+    expect(res.status()).toBe(400);
+  });
+});
+
+test.describe('badge', () => {
+  test('an unknown project never renders as passing', async ({ request }) => {
+    const res = await request.get('/api/v1/badge?projectId=proj-does-not-exist');
+    expect(res.status()).toBe(200);
+    const svg = await res.text();
+    expect(svg).toContain('NOT SCANNED');
+    expect(svg).not.toContain('PASSED');
+  });
+});
+
+test.describe('public scan', () => {
+  test('landing preview scan returns a gate result for a public repo', async ({ request }) => {
+    test.setTimeout(90_000);
+    const res = await request.post('/api/v1/scans/preview', {
+      data: { repoUrl: 'https://github.com/vercel/nextjs-subscription-payments' },
+      timeout: 80_000
+    });
+    expect(res.status()).toBe(200);
+    const body = await res.json();
+    expect(['PASSED', 'WARNING', 'FAILED']).toContain(body.gateStatus);
+    expect(body.filesScanned).toBeGreaterThan(0);
+  });
+
+  test('gate-check returns line annotations for the PR diff', async ({ request }) => {
+    test.setTimeout(90_000);
+    const res = await request.post('/api/v1/gate-check', {
+      data: { repoUrl: 'https://github.com/gothinkster/node-express-realworld-example-app' },
+      timeout: 80_000
+    });
+    expect(res.ok()).toBeTruthy();
+    const body = await res.json();
+    expect(Array.isArray(body.annotations)).toBeTruthy();
+    for (const line of body.annotations) expect(line).toMatch(/^::(error|warning) file=[^\n]+,line=\d+/);
+  });
+});

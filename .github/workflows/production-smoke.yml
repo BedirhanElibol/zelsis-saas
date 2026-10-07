@@ -1,0 +1,43 @@
+name: Production Smoke
+
+# Read-only checks against the live site: pages load, auth/cron/unsubscribe guards reject bad calls,
+# badges never fake a pass, and the public scan + gate-check APIs answer. Runs daily and after main changes
+# (Vercel deploys main within a few minutes, so the push run waits before testing).
+on:
+  schedule:
+    - cron: '23 7 * * *'
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  smoke:
+    name: Live site smoke tests
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - name: Checkout
+        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
+
+      - name: Setup Node.js 22
+        uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4.4.0
+        with:
+          node-version: '22'
+          cache: 'npm'
+
+      - name: Install dependencies and Chromium
+        run: |
+          npm ci
+          npx playwright install --with-deps chromium
+
+      - name: Wait for the Vercel deploy of this commit
+        if: github.event_name == 'push'
+        run: sleep 240
+
+      - name: Run smoke tests against production
+        env:
+          E2E_BASE_URL: https://shipguard-saas.vercel.app
+        run: npx playwright test
