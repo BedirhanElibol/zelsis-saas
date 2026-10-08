@@ -488,4 +488,39 @@ export default clerkMiddleware(async (auth, req) => {
 });
 `),
   },
+  {
+    ruleIds: [28819], name: 'GAP-19 NextAuth links accounts by e-mail alone',
+    detects: f('auth.ts', `import NextAuth from 'next-auth';
+import Google from 'next-auth/providers/google';
+export const { handlers, auth } = NextAuth({
+  providers: [Google({ allowDangerousEmailAccountLinking: true })],
+});
+`),
+    ignores: f('auth.ts', `import NextAuth from 'next-auth';
+import Google from 'next-auth/providers/google';
+export const { handlers, auth } = NextAuth({
+  providers: [Google({ allowDangerousEmailAccountLinking: false })],
+});
+`),
+  },
+  {
+    ruleIds: [28820], name: 'GAP-20 Laravel $guarded = []',
+    detects: f('app/Models/User.php', `<?php
+namespace App\Models;
+use Illuminate\Foundation\Auth\User as Authenticatable;
+class User extends Authenticatable
+{
+    protected $guarded = [];
+}
+`),
+    ignores: f('app/Models/User.php', `<?php
+namespace App\Models;
+use Illuminate\Foundation\Auth\User as Authenticatable;
+class User extends Authenticatable
+{
+    protected $fillable = ['name', 'email', 'password'];
+    protected $guarded = ['is_admin'];
+}
+`),
+  },
 ];
