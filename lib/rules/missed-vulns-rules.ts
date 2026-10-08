@@ -375,6 +375,30 @@ export function evaluateMissedVulnsRules(file: CodeFile, lines: string[], cleanC
     });
   }
 
+  // GAP-19: Auth.js / NextAuth links an OAuth sign-in to an existing account by e-mail alone
+  if (isJs && /next-auth|@auth\//.test(cleanContent)) {
+    lines.forEach((l, i) => {
+      if (!isComment(l) && /\ballowDangerousEmailAccountLinking\s*:\s*true\b/.test(l)) {
+        add({ ruleId: 28819, code: 'GAP-19', severity: 'MEDIUM', category: 'Authentication', lineIdx: i,
+          title: 'OAuth Account Linked to an Existing User by E-mail Alone (allowDangerousEmailAccountLinking)',
+          why: 'A sign-in from this provider is merged into any existing account with the same e-mail. If the provider (or a second one) lets users set an unverified address, an attacker registers the victim\'s e-mail there and signs in as the victim.',
+          fix: 'Remove the flag and let users link providers from their settings page while signed in, or keep it only for providers that guarantee verified e-mails.' });
+      }
+    });
+  }
+
+  // GAP-20: Laravel model with mass assignment fully open
+  if (/\.php$/i.test(path) && /\bextends\s+(?:Model|Authenticatable)\b/.test(cleanContent)) {
+    lines.forEach((l, i) => {
+      if (!isComment(l) && /^\s*protected\s+\$guarded\s*=\s*\[\s*\]\s*;/.test(l)) {
+        add({ ruleId: 28820, code: 'GAP-20', severity: 'MEDIUM', category: 'Mass Assignment', lineIdx: i,
+          title: 'Laravel Model Allows Mass Assignment of Every Column ($guarded = [])',
+          why: 'Model::create($request->all()) or ->update($request->all()) then writes any column the client sends, such as is_admin, role or balance.',
+          fix: 'Declare $fillable with the columns users may set, and pass $request->validated() instead of $request->all().' });
+      }
+    });
+  }
+
   const ts = new Date().toLocaleTimeString();
   for (const h of hits) {
     const lineNum = h.lineIdx + 1;

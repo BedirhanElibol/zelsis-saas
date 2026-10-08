@@ -1,8 +1,8 @@
 {
  "summary": {
-  "implementedRules": 896,
-  "testedRules": 888,
-  "preciseLocationRules": 893,
+  "implementedRules": 898,
+  "testedRules": 890,
+  "preciseLocationRules": 895,
   "catalogEntries": 1922,
   "catalogOnlyNotImplemented": 1401,
   "catalogPlaceholderMetadata": 1810
@@ -9596,6 +9596,26 @@
    "code": "RULE-28818",
    "title": "Clerk Middleware Marks Every API Route Public (${wide[1]})",
    "severity": "HIGH",
+   "source": "lib/rules/missed-vulns-rules.ts",
+   "preciseLocation": true,
+   "tested": true,
+   "inCatalog": false
+  },
+  {
+   "ruleId": 28819,
+   "code": "RULE-28819",
+   "title": "OAuth Account Linked to an Existing User by E-mail Alone (allowDangerousEmailAccountLinking)",
+   "severity": "MEDIUM",
+   "source": "lib/rules/missed-vulns-rules.ts",
+   "preciseLocation": true,
+   "tested": true,
+   "inCatalog": false
+  },
+  {
+   "ruleId": 28820,
+   "code": "RULE-28820",
+   "title": "Laravel Model Allows Mass Assignment of Every Column ($guarded = [])",
+   "severity": "MEDIUM",
    "source": "lib/rules/missed-vulns-rules.ts",
    "preciseLocation": true,
    "tested": true,
