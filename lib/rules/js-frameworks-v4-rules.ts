@@ -513,6 +513,7 @@ export function evaluateJsFrameworksV4Rules(file: CodeFile, lines: string[], cle
       const honoJwt = /['"]hono\/jwt['"]/.test(c);
       const jose = /\b(?:SignJWT|jwtVerify)\b/.test(c);
       const betterAuth = /['"](?:better-auth|lucia)['"]/.test(c);
+      const authJs = /['"](?:next-auth|@auth\/[\w-]+)['"]/.test(c);
       const lit = String.raw`['"][^'"\s]{6,}['"]`;
       scan(/secret|keys|password|TextEncoder/, (i) => {
         const l = lines[i];
@@ -524,7 +525,8 @@ export function evaluateJsFrameworksV4Rules(file: CodeFile, lines: string[], cle
           jose && rx(String.raw`new\s+TextEncoder\(\s*\)\.encode\(\s*` + lit + String.raw`\s*\)`).test(l),
           rx(String.raw`\b(?:session|expressSession|cookieSession)\s*\(\s*\{[^}]*\b(?:secret|keys)\s*:\s*\[?\s*` + lit).test(l),
           rx(String.raw`getIronSession\s*(?:<[^>]*>)?\([^)]*\bpassword\s*:\s*` + lit).test(l),
-          betterAuth && rx(String.raw`^\s*secret\s*:\s*` + lit + String.raw`\s*,?\s*$`).test(l)
+          betterAuth && rx(String.raw`^\s*secret\s*:\s*` + lit + String.raw`\s*,?\s*$`).test(l),
+          authJs && rx(String.raw`(?:^|[{,]\s*)secret\s*:\s*` + lit).test(l)
         ];
         return checks.some(Boolean) ? /./ : null;
       }, (i) => add({ ruleId: 28925, code: 'JSF-25', severity: 'HIGH', category: 'Secrets Management', lineIdx: i,
@@ -536,7 +538,7 @@ export function evaluateJsFrameworksV4Rules(file: CodeFile, lines: string[], cle
     // JSF-26: JWT decoded without signature verification in server-side auth code
     if (/(?:^|\/)(?:middleware|proxy|hooks\.server|server|auth)\.[cm]?[jt]s$|(?:^|\/)(?:app\/.*\/route|pages\/api\/.*|server\/.*|src\/server\/.*|api\/.*|.*\.server)\.[cm]?[jt]s$|\+(?:page\.)?server\.[jt]s$/.test(path) &&
       !/jwtVerify|jwt\.verify|verifyToken|verifyJwt|verifyIdToken|\.verify\s*\(|getServerSession|\bauth\(\s*\)|getToken\s*\(|createRemoteJWKSet|clerk|\.auth\.getUser/i.test(c)) {
-      scan(/decodeJwt\s*\(|jwtDecode\s*\(|jwt_decode\s*\(/, () => /\b(?:decodeJwt|jwtDecode|jwt_decode)\s*(?:<[^>]*>)?\s*\(/,
+      scan(/decodeJwt|jwtDecode|jwt_decode/, () => /\b(?:decodeJwt|jwtDecode|jwt_decode)\s*(?:<[^>]*>)?\s*\(/,
         (i) => add({ ruleId: 28926, code: 'JSF-26', severity: 'HIGH', category: 'Authentication', lineIdx: i,
           title: 'Server Trusts JWT Claims Decoded Without Verifying the Signature (CWE-345)',
           why: 'decodeJwt / jwt-decode only base64-decode the payload; anyone can craft a token with role: "admin" or another user\'s sub and it is accepted here.',

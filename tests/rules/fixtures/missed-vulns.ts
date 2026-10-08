@@ -523,4 +523,38 @@ class User extends Authenticatable
 }
 `),
   },
+  {
+    ruleIds: [28821], name: 'GAP-21 storage SELECT policy opens a private bucket to every user',
+    detects: f('supabase/migrations/20250101_storage.sql', `create policy "read invoices" on storage.objects for select to authenticated
+  using (bucket_id = 'invoices');
+`),
+    ignores: f('supabase/migrations/20250101_storage.sql', `create policy "public avatars" on storage.objects for select using (bucket_id = 'avatars');
+create policy "own invoices" on storage.objects for select to authenticated
+  using (bucket_id = 'invoices' and (storage.foldername(name))[1] = auth.uid()::text);
+`),
+  },
+  {
+    ruleIds: [28925], name: 'JSF-25 hardcoded Auth.js secret',
+    detects: f('auth.ts', `import NextAuth from 'next-auth';
+export const { handlers, auth } = NextAuth({ secret: 'supersecret123', providers: [] });
+`),
+    ignores: f('auth.ts', `import NextAuth from 'next-auth';
+export const { handlers, auth } = NextAuth({ secret: process.env.AUTH_SECRET, providers: [] });
+`),
+  },
+  {
+    ruleIds: [28926], name: 'JSF-26 generic jwtDecode<T>() call trusted for a role check',
+    detects: f('lib/auth.ts', `import { jwtDecode } from 'jwt-decode';
+export function isAdmin(token: string) {
+  const claims = jwtDecode<{ role: string }>(token);
+  return claims.role === 'admin';
+}
+`),
+    ignores: f('lib/auth.ts', `import { jwtVerify } from 'jose';
+export async function isAdmin(token: string, key: Uint8Array) {
+  const { payload } = await jwtVerify<{ role: string }>(token, key);
+  return payload.role === 'admin';
+}
+`),
+  },
 ];

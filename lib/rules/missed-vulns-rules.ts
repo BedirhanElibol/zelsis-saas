@@ -19,6 +19,9 @@ interface Hit { ruleId: number; code: string; title: string; severity: Finding['
 /** Table names that hold per-user or confidential rows; a public read on them is a leak, not a catalog. */
 export const PRIVATE_TABLE = /^(?:users?|accounts?|messages?|chats?|chat_messages|conversations?|notes?|documents?|files?|orders?|payments?|invoices?|transactions?|subscriptions?|customers?|emails?|addresses|secrets?|tokens?|api_keys?|sessions?|private_\w+|\w+_private)$/i;
 
+/** Bucket names that signal per-user confidential files (avatars, images, public assets are meant to be readable). */
+const PRIVATE_BUCKET = /(?:^|[-_])(?:invoices?|receipts?|documents?|docs|private|contracts?|kyc|identity|ids|passports?|licen[cs]es?|medical|health|statements?|attachments?|backups?|exports?|reports?|resumes?|cvs?|payslips?|tax(?:es)?|secure|confidential|user[-_]?files)(?:$|[-_])/i;
+
 /** A SELECT USING (true) policy on a catalog table (products, prices): a deliberate public read. */
 export const isPublicCatalogRead = (stmt: string) => /\bFOR\s+SELECT\b/i.test(stmt)
   && !PRIVATE_TABLE.test(stmt.match(/\bON\s+(?:"?\w+"?\.)?"?(\w+)"?/i)?.[1] || '');
@@ -79,6 +82,20 @@ export function evaluateMissedVulnsRules(file: CodeFile, lines: string[], cleanC
         why: `The SELECT policy on ${table} is true for every row, so anyone holding the public anon key can download all of it from the browser through /rest/v1.`,
         fix: `Scope the read to the owner: USING (auth.uid() = user_id), or expose only public columns through a view.` });
       if (++r >= 3) break;
+    }
+    // GAP-21: storage SELECT policy that lets every caller read a private bucket (scoped by bucket_id only)
+    for (const m of sql.matchAll(/CREATE\s+POLICY\b[^;]*?\bON\s+"?storage"?\s*\.\s*"?objects"?\b([^;]*);/gi)) {
+      const rest = m[1];
+      if (!/\bFOR\s+SELECT\b/i.test(rest) || /\bTO\s+service_role\b/i.test(rest)) continue;
+      const using = rest.slice(Math.max(0, rest.search(/\bUSING\b/i)));
+      if (/auth\.(?:uid|jwt|email)\s*\(|\bowner(?:_id)?\b|foldername|\bselect\b|\b(?:is|has|can)_\w+\s*\(/i.test(using)) continue;
+      const bucket = rest.match(/\bbucket_id\s*=\s*'([\w-]+)'/i)?.[1] || '';
+      if (!PRIVATE_BUCKET.test(bucket)) continue;
+      add({ ruleId: 28821, code: 'GAP-21', severity: 'HIGH', category: 'Broken Access Control', lineIdx: lineAt(sql, m.index! + m[0].search(/\bbucket_id\b/i)),
+        title: `Storage Policy Lets Every Caller Read All Files in the "${bucket}" Bucket`,
+        why: `The SELECT policy on storage.objects only checks bucket_id = '${bucket}', so ${/\bTO\s+authenticated\b/i.test(rest) ? 'any signed-in user' : 'anyone with the anon key'} can list and download every other user's files in it.`,
+        fix: `Scope reads to the owner's folder: USING (bucket_id = '${bucket}' AND (storage.foldername(name))[1] = auth.uid()::text), and upload under \${user.id}/.` });
+      break;
     }
   }
 
