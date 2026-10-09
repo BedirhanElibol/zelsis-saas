@@ -119,6 +119,16 @@ export async function supabaseSignUp(email: string, password: string, name: stri
   }
 }
 
+export async function supabaseResendSignupEmail(email: string): Promise<{ success: boolean; message: string }> {
+  const supabase = getSupabase();
+  if (!supabase || !isSupabaseConfigured()) {
+    return { success: false, message: 'Authentication service is momentarily unavailable. Please try again.' };
+  }
+  const { error } = await supabase.auth.resend({ type: 'signup', email });
+  if (error) return { success: false, message: error.message };
+  return { success: true, message: `We sent a new confirmation link to ${email}.` };
+}
+
 export async function supabaseResetPassword(email: string): Promise<{ success: boolean; message: string }> {
   const supabase = getSupabase();
   if (!supabase || !isSupabaseConfigured()) {
