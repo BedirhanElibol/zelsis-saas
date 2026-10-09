@@ -6,7 +6,7 @@ import { CodeBlock, TestStep, ZelsisCatches, ScanCta } from '@/components/guides
 export const metadata: Metadata = {
   title: 'Stripe Charges 100x Less? Amount Must Be in Cents - Zelsis Guides',
   description:
-    'Stripe amount and unit_amount are integers in the smallest currency unit. Why $19.99 becomes $0.20 or an error, how to use Math.round(price * 100), and zero-decimal currencies.',
+    'Stripe amount and unit_amount are integers in the smallest currency unit. Why $17.99 becomes $0.18 or an error, how to use Math.round(price * 100), and zero-decimal currencies.',
 };
 
 const H2 = 'text-xl font-semibold text-white';
@@ -17,7 +17,7 @@ export default function StripeAmountCentsPage() {
     <article className="space-y-6">
       <h1 className="text-3xl font-bold text-white mb-2">Stripe charges 100x less: amount must be in cents</h1>
       <p className="text-zinc-400">
-        Your product costs $19.99, but the Stripe Checkout page shows $0.20, or the API rejects the request with an &quot;Invalid
+        Your product costs $17.99, but the Stripe Checkout page shows $0.18, or the API rejects the request with an &quot;Invalid
         integer&quot; error. Stripe does not take prices in dollars. It takes an integer number of the smallest currency unit: cents for
         USD and EUR.
       </p>
@@ -26,13 +26,13 @@ export default function StripeAmountCentsPage() {
         <h2 className={H2}>The cause</h2>
         <p className="text-zinc-300">
           The <code>amount</code> field on PaymentIntents and the <code>unit_amount</code> field on Prices and Checkout line items are
-          integers. <code>1999</code> means $19.99. Passing <code>19.99</code> fails because it is not an integer; passing{' '}
-          <code>20</code> (a rounded dollar value) charges 20 cents, which is 100 times less than you meant.
+          integers. <code>1799</code> means $17.99. Passing <code>17.99</code> fails because it is not an integer; passing{' '}
+          <code>18</code> (a rounded dollar value) charges 18 cents, which is 100 times less than you meant.
         </p>
         <CodeBlock
           tone="bad"
           label="Bad: price in dollars"
-          code={`const price = 19.99;
+          code={`const price = 17.99;
 
 await stripe.paymentIntents.create({
   amount: price,          // rejected: not an integer
@@ -45,7 +45,7 @@ await stripe.checkout.sessions.create({
     quantity: 1,
     price_data: {
       currency: 'usd',
-      unit_amount: Math.round(price), // 20 cents, not $19.99
+      unit_amount: Math.round(price), // 18 cents, not $17.99
       product_data: { name: 'Pro plan' },
     },
   }],
@@ -57,7 +57,7 @@ await stripe.checkout.sessions.create({
       <section className="space-y-3 border-t border-white/10 pt-6">
         <h2 className={H2}>The fix</h2>
         <p className="text-zinc-300">
-          Multiply by 100 and round. The rounding is not optional: floating point math gives <code>19.99 * 100 === 1998.9999999999998</code>,
+          Multiply by 100 and round. The rounding is not optional: floating point math gives <code>17.99 * 100 === 1798.9999999999998</code>,
           which Stripe rejects, and truncating with <code>Math.floor</code> or <code>| 0</code> would charge one cent too little.
         </p>
         <CodeBlock
@@ -68,7 +68,7 @@ await stripe.checkout.sessions.create({
 }
 
 await stripe.paymentIntents.create({
-  amount: toCents(19.99), // 1999
+  amount: toCents(17.99), // 1799
   currency: 'usd',
 });`}
         />
@@ -83,7 +83,7 @@ await stripe.paymentIntents.create({
           code={`const label = new Intl.NumberFormat('en-US', {
   style: 'currency',
   currency: 'USD',
-}).format(priceCents / 100); // "$19.99"`}
+}).format(priceCents / 100); // "$17.99"`}
         />
       </section>
 
@@ -111,8 +111,8 @@ function toStripeAmount(price: number, currency: string): number {
         <h2 className={H2}>Verify it</h2>
         <TestStep>
           In test mode, create a Checkout session or PaymentIntent for your most expensive and cheapest products and read the amount on the
-          hosted page or in the Dashboard. Add one assertion to your tests, for example that <code>toCents(19.99)</code> returns{' '}
-          <code>1999</code> and <code>toCents(0.29)</code> returns <code>29</code>.
+          hosted page or in the Dashboard. Add one assertion to your tests, for example that <code>toCents(17.99)</code> returns{' '}
+          <code>1799</code> and <code>toCents(0.29)</code> returns <code>29</code>.
         </TestStep>
       </section>
 

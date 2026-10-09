@@ -44,3 +44,7 @@ pnpm-lock.yaml
 dist/
 build/
 out/
+
+# SEO guides and the real-bugs page show deliberately buggy code as examples
+app/guides/
+app/docs/real-world-bugs/
