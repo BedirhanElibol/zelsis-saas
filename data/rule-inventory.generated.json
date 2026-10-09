@@ -1,8 +1,8 @@
 {
  "summary": {
-  "implementedRules": 1015,
-  "testedRules": 1007,
-  "preciseLocationRules": 1012,
+  "implementedRules": 1032,
+  "testedRules": 1024,
+  "preciseLocationRules": 1029,
   "catalogEntries": 1922,
   "catalogOnlyNotImplemented": 1401,
   "catalogPlaceholderMetadata": 1810
@@ -11557,6 +11557,176 @@
    "title": "${m[1].replace(/\\($/, ",
    "severity": "MEDIUM",
    "source": "lib/rules/logic-python-rules.ts",
+   "preciseLocation": true,
+   "tested": true,
+   "inCatalog": false
+  },
+  {
+   "ruleId": 29740,
+   "code": "RULE-29740",
+   "title": "Tailwind Class Built at Runtime (${x[1]}-\\${...}) Is Never Generated",
+   "severity": "MEDIUM",
+   "source": "lib/rules/logic-frontend-rules.ts",
+   "preciseLocation": true,
+   "tested": true,
+   "inCatalog": false
+  },
+  {
+   "ruleId": 29741,
+   "code": "RULE-29741",
+   "title": "${name} Typed and Read Synchronously (Next.js ${context?.nextMajorVersion}+)",
+   "severity": "UNKNOWN",
+   "source": "lib/rules/logic-frontend-rules.ts",
+   "preciseLocation": true,
+   "tested": true,
+   "inCatalog": false
+  },
+  {
+   "ruleId": 29742,
+   "code": "RULE-29742",
+   "title": "Form Field Uses ${small} on Mobile: iOS Zooms In on Focus",
+   "severity": "LOW",
+   "source": "lib/rules/logic-frontend-rules.ts",
+   "preciseLocation": true,
+   "tested": true,
+   "inCatalog": false
+  },
+  {
+   "ruleId": 29743,
+   "code": "RULE-29743",
+   "title": "useFormStatus() Called in ${decl[1] || decl[2]}, Which Renders the <form> Itself",
+   "severity": "MEDIUM",
+   "source": "lib/rules/logic-frontend-rules.ts",
+   "preciseLocation": true,
+   "tested": true,
+   "inCatalog": false
+  },
+  {
+   "ruleId": 29744,
+   "code": "RULE-29744",
+   "title": "${x[1]} Has No Title",
+   "severity": "LOW",
+   "source": "lib/rules/logic-frontend-rules.ts",
+   "preciseLocation": true,
+   "tested": true,
+   "inCatalog": false
+  },
+  {
+   "ruleId": 29745,
+   "code": "RULE-29745",
+   "title": "JSON.parse(localStorage...) Without try/catch",
+   "severity": "MEDIUM",
+   "source": "lib/rules/logic-frontend-rules.ts",
+   "preciseLocation": true,
+   "tested": true,
+   "inCatalog": false
+  },
+  {
+   "ruleId": 29746,
+   "code": "RULE-29746",
+   "title": "<Image fill> Inside a Parent Without position: relative",
+   "severity": "MEDIUM",
+   "source": "lib/rules/logic-frontend-rules.ts",
+   "preciseLocation": true,
+   "tested": true,
+   "inCatalog": false
+  },
+  {
+   "ruleId": 29747,
+   "code": "RULE-29747",
+   "title": "Element Only Appears on Hover (${shown})",
+   "severity": "LOW",
+   "source": "lib/rules/logic-frontend-rules.ts",
+   "preciseLocation": true,
+   "tested": true,
+   "inCatalog": false
+  },
+  {
+   "ruleId": 29748,
+   "code": "RULE-29748",
+   "title": "Edge Runtime Route Imports Node-Only ",
+   "severity": "HIGH",
+   "source": "lib/rules/logic-frontend-rules.ts",
+   "preciseLocation": true,
+   "tested": true,
+   "inCatalog": false
+  },
+  {
+   "ruleId": 29749,
+   "code": "RULE-29749",
+   "title": "Middleware Matcher Also Runs on _next/static Assets and Images",
+   "severity": "LOW",
+   "source": "lib/rules/logic-frontend-rules.ts",
+   "preciseLocation": true,
+   "tested": true,
+   "inCatalog": false
+  },
+  {
+   "ruleId": 29750,
+   "code": "RULE-29750",
+   "title": "<${x[1]} asChild> Has ${n} Children",
+   "severity": "HIGH",
+   "source": "lib/rules/logic-frontend-rules.ts",
+   "preciseLocation": true,
+   "tested": true,
+   "inCatalog": false
+  },
+  {
+   "ruleId": 29751,
+   "code": "RULE-29751",
+   "title": "<html> Lacks suppressHydrationWarning With next-themes",
+   "severity": "LOW",
+   "source": "lib/rules/logic-frontend-rules.ts",
+   "preciseLocation": true,
+   "tested": true,
+   "inCatalog": false
+  },
+  {
+   "ruleId": 29752,
+   "code": "RULE-29752",
+   "title": "Search Request in useEffect Can Show Results for an Old Query",
+   "severity": "MEDIUM",
+   "source": "lib/rules/logic-frontend-rules.ts",
+   "preciseLocation": true,
+   "tested": true,
+   "inCatalog": false
+  },
+  {
+   "ruleId": 29753,
+   "code": "RULE-29753",
+   "title": "useMutation Never Invalidates the Queries This File Shows",
+   "severity": "LOW",
+   "source": "lib/rules/logic-frontend-rules.ts",
+   "preciseLocation": true,
+   "tested": true,
+   "inCatalog": false
+  },
+  {
+   "ruleId": 29755,
+   "code": "RULE-29755",
+   "title": "Stripe ${x[1]} Is a Relative Path (${x[3]})",
+   "severity": "HIGH",
+   "source": "lib/rules/logic-frontend-rules.ts",
+   "preciseLocation": true,
+   "tested": true,
+   "inCatalog": false
+  },
+  {
+   "ruleId": 29756,
+   "code": "RULE-29756",
+   "title": "Destructuring a Reactive Object Loses Reactivity",
+   "severity": "MEDIUM",
+   "source": "lib/rules/logic-frontend-rules.ts",
+   "preciseLocation": true,
+   "tested": true,
+   "inCatalog": false
+  },
+  {
+   "ruleId": 29757,
+   "code": "RULE-29757",
+   "title": "Platform.OS Compared With ",
+   "severity": "MEDIUM",
+   "source": "lib/rules/logic-frontend-rules.ts",
    "preciseLocation": true,
    "tested": true,
    "inCatalog": false
