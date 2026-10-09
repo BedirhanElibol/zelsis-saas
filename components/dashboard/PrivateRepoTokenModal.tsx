@@ -1,8 +1,9 @@
 'use client';
 
+import { GithubTokenSteps } from '@/components/dashboard/GithubTokenSteps';
 import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Lock, Eye, EyeOff, Key, ExternalLink, X, ShieldAlert, ArrowRight } from 'lucide-react';
+import { Lock, Eye, EyeOff, Key, X, ShieldAlert, ArrowRight } from 'lucide-react';
 
 export interface PrivateRepoTokenModalProps {
   isOpen: boolean;
@@ -130,18 +131,10 @@ export const PrivateRepoTokenModal: React.FC<PrivateRepoTokenModalProps> = ({
               <span>GitHub Access Blocked (HTTP 404/403)</span>
             </div>
             <p className="text-[#A1A1AA] leading-relaxed text-[11px]">
-              This repository is private or requires authorization. Zelsis needs a GitHub Personal Access Token (PAT) with <strong className="text-white">Read-only Contents</strong> permission to fetch and audit your source code AST in-memory.
+              GitHub only shows this repository to people you allow. Give Zelsis read-only access with a token:
             </p>
-            <a
-              href="https://github.com/settings/tokens?type=beta"
-              target="_blank"
-              rel="noopener noreferrer"
-              className="text-white hover:text-neutral-300 font-mono text-[11px] underline underline-offset-4 flex items-center gap-1 w-fit pt-0.5 transition-colors"
-            >
-              <span>Generate Fine-grained PAT on GitHub (10 seconds)</span>
-              <ExternalLink size={11} />
-            </a>
           </div>
+          <GithubTokenSteps compact />
 
           {/* Error notice */}
           {error && (
