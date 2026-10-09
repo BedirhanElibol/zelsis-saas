@@ -2,8 +2,8 @@
 
 import React, { useState } from 'react';
 import { m, AnimatePresence } from 'framer-motion';
-import { X, Mail, Lock, User, Code, ArrowRight, CheckCircle2, KeyRound, AlertCircle, Eye, EyeOff } from 'lucide-react';
-import { supabaseSignIn, supabaseSignUp, supabaseResetPassword, supabaseSignInWithOAuth, isSupabaseConfigured } from '@/lib/supabase';
+import { X, Mail, Lock, User, Code, ArrowRight, CheckCircle2, KeyRound, AlertCircle, MailCheck, Eye, EyeOff } from 'lucide-react';
+import { supabaseSignIn, supabaseSignUp, supabaseResendSignupEmail, supabaseResetPassword, supabaseSignInWithOAuth, isSupabaseConfigured } from '@/lib/supabase';
 import { isPwnedPassword } from '@/lib/pwned-password';
 import { ZelsisLogo } from '@/components/ui/ZelsisLogo';
 import { useDialogFocus } from '@/hooks/useDialogFocus';
@@ -43,6 +43,9 @@ export const AuthModal: React.FC<AuthModalProps> = ({
   const [error, setError] = useState('');
   const [successMsg, setSuccessMsg] = useState('');
   const [loadingTarget, setLoadingTarget] = useState<'github' | 'google' | 'email' | null>(null);
+  // Set after an email signup that still needs confirmation; the modal then shows the check-your-inbox screen
+  const [verifyEmail, setVerifyEmail] = useState<string | null>(null);
+  const [resendCooldown, setResendCooldown] = useState(0);
 
   React.useEffect(() => {
     if (isOpen) {
@@ -53,8 +56,15 @@ export const AuthModal: React.FC<AuthModalProps> = ({
       setError('');
       setSuccessMsg('');
       setLoadingTarget(null);
+      setVerifyEmail(null);
     }
   }, [initialMode, isOpen]);
+
+  React.useEffect(() => {
+    if (resendCooldown <= 0) return;
+    const t = setTimeout(() => setResendCooldown((s) => s - 1), 1000);
+    return () => clearTimeout(t);
+  }, [resendCooldown]);
 
   React.useEffect(() => {
     const handleReset = () => setLoadingTarget(null);
@@ -142,13 +152,29 @@ export const AuthModal: React.FC<AuthModalProps> = ({
         setError(signUpErr);
       } else if (user) {
         if (requiresVerification) {
-          setSuccessMsg(`Account created! We've sent a verification link to ${email}. Please check your inbox.`);
-        }
-        onLoginSuccess(user);
-        if (!requiresVerification) {
+          // No session exists until the link is clicked, so keep the modal open on the inbox screen
+          setVerifyEmail(email.trim());
+          setResendCooldown(60);
+        } else {
+          onLoginSuccess(user);
           onClose();
         }
       }
+    }
+  };
+
+  const handleResend = async () => {
+    if (!verifyEmail || resendCooldown > 0) return;
+    setError('');
+    setSuccessMsg('');
+    setLoadingTarget('email');
+    const { success, message } = await supabaseResendSignupEmail(verifyEmail);
+    setLoadingTarget(null);
+    if (success) {
+      setSuccessMsg(message);
+      setResendCooldown(60);
+    } else {
+      setError(message);
     }
   };
 
@@ -228,6 +254,52 @@ export const AuthModal: React.FC<AuthModalProps> = ({
             <X size={18} />
           </button>
 
+          {verifyEmail ? (
+            <div className="flex flex-col items-center text-center gap-4">
+              <div className="w-14 h-14 rounded-full bg-emerald-500/10 border border-emerald-500/30 flex items-center justify-center">
+                <MailCheck size={26} className="text-emerald-400" />
+              </div>
+              <h2 id="auth-modal-title" className="text-xl font-extrabold text-[#EDEDED]">Check your email</h2>
+              <p className="text-sm text-[#A1A1AA]">
+                We sent a confirmation link to <strong className="text-white break-all">{verifyEmail}</strong>.
+                Click it to activate your account, then sign in.
+              </p>
+              <ul className="w-full text-left text-xs text-[#A1A1AA] bg-[#0A0A0A] border border-white/10 rounded-xl p-4 flex flex-col gap-2">
+                <li>• It usually arrives within a minute.</li>
+                <li>• Not there? Check your <strong className="text-white">Spam</strong>, <strong className="text-white">Junk</strong> or <strong className="text-white">Promotions</strong> folder and search for &quot;Zelsis&quot;.</li>
+                <li>• If you find it in spam, mark it as &quot;Not spam&quot; so future scan alerts reach your inbox.</li>
+              </ul>
+              {error && (
+                <div role="alert" className="w-full text-xs text-red-400 bg-red-500/10 border border-red-500/20 p-2.5 rounded-lg flex items-center justify-center gap-2">
+                  <AlertCircle size={14} className="shrink-0" />
+                  <span>{error}</span>
+                </div>
+              )}
+              {successMsg && (
+                <div role="status" className="w-full text-xs text-white bg-white/5 border border-white/10 p-2.5 rounded-lg flex items-center justify-center gap-2">
+                  <CheckCircle2 size={14} className="shrink-0" />
+                  <span>{successMsg}</span>
+                </div>
+              )}
+              <button
+                type="button"
+                onClick={handleResend}
+                disabled={resendCooldown > 0 || loadingTarget !== null}
+                className="w-full py-3 rounded-xl bg-white/5 hover:bg-white/10 border border-white/15 text-xs font-bold text-white transition-all disabled:opacity-50 min-h-[48px]"
+              >
+                {loadingTarget === 'email' ? 'Sending...' : resendCooldown > 0 ? `Resend email in ${resendCooldown}s` : 'Resend confirmation email'}
+              </button>
+              <div className="flex gap-4 text-xs">
+                <button type="button" onClick={() => { setVerifyEmail(null); setMode('signup'); setError(''); setSuccessMsg(''); }} className="text-[#A1A1AA] hover:text-white underline">
+                  Use a different email
+                </button>
+                <button type="button" onClick={() => { setVerifyEmail(null); setMode('signin'); setPassword(''); setError(''); setSuccessMsg(''); }} className="text-[#A1A1AA] hover:text-white underline">
+                  I confirmed, sign in
+                </button>
+              </div>
+            </div>
+          ) : (
+          <>
           {/* Header & Logo */}
           <div className="flex flex-col items-center text-center gap-2">
             <div className="mb-1">
@@ -455,6 +527,8 @@ export const AuthModal: React.FC<AuthModalProps> = ({
               {' '}&amp;{' '}
               <a href="/privacy" target="_blank" rel="noopener noreferrer" className="underline hover:text-white transition-colors">Privacy Policy</a>.
             </div>
+          )}
+          </>
           )}
         </m.div>
       </div>
