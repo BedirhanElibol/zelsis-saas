@@ -5,7 +5,7 @@ import { Finding, UserTier } from '@/data/schema';
 import { DEMO_AUDIT_FINDINGS } from '@/data/demo-data';
 import { BulkFixModal } from './BulkFixModal';
 import { DismissFindingModal } from './DismissFindingModal';
-import { Search, Filter, ArrowRight, Layers, Check, RotateCcw, Play, Copy, Lock, ShieldCheck, Database, Server, Sliders, AlertOctagon, GitCommit, ChevronDown, SearchX, ExternalLink, ShieldX } from 'lucide-react';
+import { Search, Filter, ArrowRight, Layers, Check, RotateCcw, Play, Copy, Lock, ShieldCheck, Database, Server, Sliders, AlertOctagon, GitCommit, ChevronDown, SearchX, ExternalLink, ShieldX, Bug } from 'lucide-react';
 import { ClipboardToastBadge, useClipboardToast } from '../ui/Toast';
 import { safeLower, safeString, safeTrim, safeReplace } from '@/lib/safe-utils';
 import { hasFixPromptAccess } from '@/lib/subscription-utils';
@@ -110,6 +110,7 @@ export const FindingsTable: React.FC<FindingsTableProps> = ({
     { id: 'LEGAL_COMPLIANCE', label: 'Legal & Privacy' },
     { id: 'INFRA_DATABASE', label: 'Infra & DB' },
     { id: 'VIBEPOLISH', label: 'VibePolish UI' },
+    { id: 'VIBECARE', label: 'Logic Bugs' },
   ];
 
   const getPillarBadgeStyle = (type: string, category?: string) => {
@@ -124,6 +125,8 @@ export const FindingsTable: React.FC<FindingsTableProps> = ({
       ? 'bg-emerald-500/10 text-emerald-400 border-emerald-500/30'
       : type === 'VIBEPOLISH'
       ? 'bg-teal-500/10 text-teal-400 border-teal-500/30'
+      : type === 'VIBECARE'
+      ? 'bg-violet-500/10 text-violet-300 border-violet-500/30'
       : 'bg-blue-500/10 text-blue-400 border-blue-500/30';
   };
 
@@ -183,7 +186,7 @@ export const FindingsTable: React.FC<FindingsTableProps> = ({
   return (
     <div className="bg-[#141414] border border-white/10 rounded-xl p-4 sm:p-6 flex flex-col gap-5 bg-[#141414] border-white/10">
       {/* Snyk-Grade Release Readiness Radar & Category Breakdown Cards */}
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
+      <div className="grid grid-cols-2 lg:grid-cols-5 gap-3">
         {/* Card 1: Security & OWASP */}
         <button
           type="button"
@@ -301,6 +304,35 @@ export const FindingsTable: React.FC<FindingsTableProps> = ({
           </div>
           <span className="text-[10px] text-zinc-400 truncate">
             Design tokens &amp; a11y gates
+          </span>
+        </button>
+        {/* Card 5: Logic bugs (reliability; never fails the gate) */}
+        <button
+          type="button"
+          onClick={() => setPillarFilter(pillarFilter === 'VIBECARE' ? 'ALL' : 'VIBECARE')}
+          className={`p-3.5 rounded-xl border text-left transition-all cursor-pointer flex flex-col justify-between gap-2.5 col-span-2 lg:col-span-1 ${
+            pillarFilter === 'VIBECARE'
+              ? 'bg-white/[0.08] border-white/30 shadow-sm'
+              : 'bg-[#0E0E10] border-white/10 hover:border-white/20 hover:bg-white/[0.02]'
+          }`}
+        >
+          <div className="flex items-center justify-between">
+            <span className="text-[11px] font-mono font-bold uppercase tracking-wider text-white flex items-center gap-1.5">
+              <Bug size={14} className="text-zinc-400" />
+              <span>Logic Bugs</span>
+            </span>
+            <span className="text-[10px] font-mono text-zinc-400 uppercase">Pillar</span>
+          </div>
+          <div className="flex items-baseline justify-between">
+            <span className="text-xl sm:text-2xl font-extrabold font-mono text-white">
+              {findings.filter(f => f.type === 'VIBECARE').length}
+            </span>
+            <span className="text-[10px] text-zinc-400 font-mono">
+              Reliability
+            </span>
+          </div>
+          <span className="text-[10px] text-zinc-400 truncate">
+            Bugs that break features
           </span>
         </button>
       </div>
@@ -581,6 +613,8 @@ export const FindingsTable: React.FC<FindingsTableProps> = ({
                         ? 'Legal & Privacy'
                         : item.type === 'VIBEPOLISH'
                         ? 'VibePolish UI'
+                        : item.type === 'VIBECARE'
+                        ? 'Logic Bug'
                         : item.type}
                     </span>
                   </div>
