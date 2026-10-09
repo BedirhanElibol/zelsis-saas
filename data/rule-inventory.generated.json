@@ -1,8 +1,8 @@
 {
  "summary": {
-  "implementedRules": 898,
-  "testedRules": 890,
-  "preciseLocationRules": 895,
+  "implementedRules": 900,
+  "testedRules": 892,
+  "preciseLocationRules": 897,
   "catalogEntries": 1922,
   "catalogOnlyNotImplemented": 1401,
   "catalogPlaceholderMetadata": 1810
@@ -9616,6 +9616,26 @@
    "code": "RULE-28820",
    "title": "Laravel Model Allows Mass Assignment of Every Column ($guarded = [])",
    "severity": "MEDIUM",
+   "source": "lib/rules/missed-vulns-rules.ts",
+   "preciseLocation": true,
+   "tested": true,
+   "inCatalog": false
+  },
+  {
+   "ruleId": 28821,
+   "code": "RULE-28821",
+   "title": "Storage Policy Lets Every Caller Read All Files in the ",
+   "severity": "HIGH",
+   "source": "lib/rules/missed-vulns-rules.ts",
+   "preciseLocation": true,
+   "tested": true,
+   "inCatalog": false
+  },
+  {
+   "ruleId": 28822,
+   "code": "RULE-28822",
+   "title": "Every Submitted Form Field Is Written to the Database (Object.fromEntries)",
+   "severity": "HIGH",
    "source": "lib/rules/missed-vulns-rules.ts",
    "preciseLocation": true,
    "tested": true,
