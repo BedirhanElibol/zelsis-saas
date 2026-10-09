@@ -53,12 +53,70 @@ function callArgs(src: string, open: number): { args: string[]; end: number } {
 
 const DB_WRITE = /\.(?:insert|update|upsert|delete)\s*\(/;
 
+/** Supabase / Postgres migration mistakes that break signup, user deletion or every query on a table. */
+function sqlLogicBugs(content: string): Hit[] {
+  const hits: Hit[] = [];
+  const sql = content.split('\n').map((l) => l.replace(/--.*$/, '')).join('\n');
+
+  for (const m of sql.matchAll(/CREATE\s+POLICY\b[^;]*;/gi)) {
+    const stmt = m[0];
+    // BUG-14: INSERT policies accept only WITH CHECK; USING makes the migration fail
+    if (/\bFOR\s+INSERT\b/i.test(stmt) && /\bUSING\s*\(/i.test(stmt)) {
+      hits.push({ ruleId: 29614, code: 'BUG-14', severity: 'HIGH', category: 'Logic Bug', lineIdx: lineAt(sql, m.index! + stmt.search(/\bUSING\s*\(/i)),
+        title: 'INSERT Policy Uses USING Instead of WITH CHECK (Migration Fails)',
+        why: 'Postgres rejects USING on an INSERT policy ("only WITH CHECK expression allowed for INSERT"), so this migration errors out and every statement after it in the file is never applied.',
+        fix: 'Write it as: create policy "..." on table for insert to authenticated with check (auth.uid() = user_id);' });
+    }
+    // BUG-16: owner check against the row's own generated id instead of the owner column
+    const table = stmt.match(/\bON\s+(?:"?\w+"?\.)?"?(\w+)"?/i)?.[1];
+    const cmp = stmt.search(/auth\.uid\(\)\s*=\s*"?id"?\b(?!\s*\.)|\b(?<![.\w])"?id"?\s*=\s*auth\.uid\(\)/i);
+    if (table && cmp !== -1) {
+      const def = new RegExp(String.raw`CREATE\s+TABLE\s+(?:IF\s+NOT\s+EXISTS\s+)?(?:"?\w+"?\.)?"?` + table + String.raw`"?\s*\(([\s\S]*?)\);`, 'i').exec(sql)?.[1] || '';
+      const cols = def.split(/,(?![^(]*\))/).map((x) => x.trim());
+      const generatedId = cols.some((x) => /^"?id"?\s+.*\b(?:default\s+(?:gen_random_uuid|uuid_generate_v4|extensions\.uuid_generate_v4)\s*\(|serial|bigserial|generated\s+(?:always|by\s+default)\s+as\s+identity)/i.test(x));
+      const ownerCol = cols.map((x) => /^"?(\w+)"?\s+uuid\b.*\breferences\s+auth\.users\b/i.exec(x)).find(Boolean);
+      if (generatedId && ownerCol && ownerCol[1].toLowerCase() !== 'id') {
+        hits.push({ ruleId: 29616, code: 'BUG-16', severity: 'HIGH', category: 'Logic Bug', lineIdx: lineAt(sql, m.index! + cmp),
+          title: `Policy Compares auth.uid() With ${table}.id Instead of ${ownerCol[1]}`,
+          why: `${table}.id is a generated row id, never a user id, so auth.uid() = id is false for every row: users cannot see or change their own ${table} and the feature looks empty.`,
+          fix: `Compare against the owner column: using (auth.uid() = ${ownerCol[1]}).` });
+      }
+    }
+  }
+
+  // BUG-15: auth.users trigger whose function is not SECURITY DEFINER: every signup fails
+  for (const t of sql.matchAll(/CREATE\s+(?:OR\s+REPLACE\s+)?TRIGGER\b[^;]*\bON\s+auth\.users\b[^;]*\bEXECUTE\s+(?:PROCEDURE|FUNCTION)\s+(?:"?(\w+)"?\.)?"?(\w+)"?\s*\(/gi)) {
+    const fn = t[2];
+    const def = new RegExp(String.raw`CREATE\s+(?:OR\s+REPLACE\s+)?FUNCTION\s+(?:"?\w+"?\.)?"?` + fn + String.raw`"?\s*\([^)]*\)([\s\S]*?)(\$\w*\$)[\s\S]*?\2([^;]*)`, 'i').exec(sql);
+    if (!def) continue;
+    const header = def[1] + ' ' + def[3];
+    if (/SECURITY\s+DEFINER/i.test(header)) continue;
+    if (!/\bINSERT\s+INTO\s+(?:"?public"?\.)?|\bUPDATE\s+(?:"?public"?\.)?\w+\s+SET\b/i.test(def[0])) continue;
+    hits.push({ ruleId: 29615, code: 'BUG-15', severity: 'HIGH', category: 'Logic Bug', lineIdx: lineAt(sql, def.index),
+      title: `Signup Trigger Function ${fn} Is Not SECURITY DEFINER (Every Signup Fails)`,
+      why: `The trigger runs as supabase_auth_admin, which has no rights on your public tables, so the insert inside ${fn} fails and Supabase Auth rejects every new user with "Database error saving new user".`,
+      fix: `Declare the function security definer set search_path = '' and use schema-qualified names: create function public.${fn}() returns trigger language plpgsql security definer set search_path = '' as $$ ... $$;` });
+  }
+
+  // BUG-17: foreign key to auth.users without ON DELETE: deleting the user fails
+  sql.split('\n').forEach((l, i) => {
+    if (/\breferences\s+auth\.users\b/i.test(l) && !/\bon\s+delete\b/i.test(l) && !/\bon\s+delete\b/i.test(sql.split('\n')[i + 1] || '')) {
+      hits.push({ ruleId: 29617, code: 'BUG-17', severity: 'MEDIUM', category: 'Logic Bug', lineIdx: i,
+        title: 'Foreign Key to auth.users Has No ON DELETE Rule (User Deletion Fails)',
+        why: 'With the default NO ACTION, deleting a user who owns rows here violates the foreign key, so auth.admin.deleteUser() and "Delete account" fail with "Database error deleting user".',
+        fix: 'Add on delete cascade (delete the rows with the user) or on delete set null (keep them anonymised): user_id uuid references auth.users(id) on delete cascade.' });
+    }
+  });
+  return hits;
+}
+
 export function evaluateLogicBugRules(file: CodeFile, lines: string[], cleanContent: string, findingCounter: {
   count: number;
 }): { findings: Finding[]; logs: string[] } {
   const findings: Finding[] = [];
   const logs: string[] = [];
   const path = file.path.replace(/\\/g, '/');
+  if (/\.sql$/i.test(path)) return emit(file, sqlLogicBugs(cleanContent), findingCounter);
   if (!/\.[cm]?[jt]sx?$/i.test(path) || /\.d\.ts$|(?:^|\/)node_modules\/|\.min\.js$|(?:^|\/)(?:tests?|__tests__|e2e)\/|\.(?:test|spec)\.[jt]sx?$/i.test(path)) {
     return { findings, logs };
   }
@@ -238,6 +296,48 @@ export function evaluateLogicBugRules(file: CodeFile, lines: string[], cleanCont
     }
   });
 
+  // BUG-18: Express response sent inside an if block without return; the handler goes on and responds again
+  if (/\bres\.(?:status|json|send)\s*\(/.test(c)) {
+    const sends = /^\s*res\.(?:status\(\s*\d+\s*\)\.)?(?:json|send|end|sendStatus|redirect)\s*\(/;
+    lines.forEach((l, i) => {
+      if (isComment(l)) return;
+      const inline = /^\s*if\s*\(.*\)\s*res\.(?:status\(\s*\d+\s*\)\.)?(?:json|send|end|sendStatus|redirect)\s*\(/.test(l);
+      const prev = lines.slice(0, i).reverse().find((x) => x.trim() && !isComment(x)) || '';
+      const nextIdx = lines.findIndex((x, k) => k > i && x.trim() && !isComment(x));
+      const blockForm = sends.test(l) && /\bif\s*\(.*\)\s*\{\s*$/.test(prev) && nextIdx !== -1 && /^\s*\}\s*$/.test(lines[nextIdx]);
+      if (!inline && !blockForm) return;
+      const after = lines.slice((blockForm ? nextIdx : i) + 1, i + 25);
+      const end = after.findIndex((x) => /^\s*\}\s*\)?\s*;?\s*$/.test(x) && x.search(/\S/) <= l.search(/\S/) - 4);
+      const scope = end === -1 ? after : after.slice(0, end);
+      if (scope.some((x) => !isComment(x) && /\bres\.(?:status|json|send|end|sendStatus|redirect|render)\s*\(/.test(x))) {
+        add({ ruleId: 29618, code: 'BUG-18', severity: 'HIGH', category: 'Logic Bug', lineIdx: i,
+          title: 'Response Sent Without return; Handler Continues and Responds Again',
+          why: 'res.json() does not stop the function. Execution continues past the validation, runs the rest of the handler (writing invalid data) and then responds again, crashing with "Cannot set headers after they are sent".',
+          fix: 'Return the response: if (!email) return res.status(400).json({ error: "email required" });' });
+      }
+    });
+  }
+
+  // BUG-19: Next.js route handler builds a response but does not return it
+  if (/(?:^|\/)(?:app|src\/app)\/.*route\.[cm]?[jt]s$|(?:^|\/)middleware\.[jt]s$/i.test(path)) {
+    lines.forEach((l, i) => {
+      if (!isComment(l) && /^\s*(?:NextResponse\.(?:json|redirect|rewrite)|Response\.(?:json|redirect)|new\s+(?:Next)?Response)\s*\(/.test(l)) {
+        const prev = lines.slice(0, i).reverse().find((x) => x.trim() && !isComment(x)) || '';
+        if (/(?:return|=|=>|\?|:|\(|,)\s*$/.test(prev)) return;
+        add({ ruleId: 29619, code: 'BUG-19', severity: 'HIGH', category: 'Logic Bug', lineIdx: i,
+          title: 'Route Handler Creates a Response but Never Returns It',
+          why: 'The response object is built and discarded, so the error/redirect never reaches the client and the handler keeps running with invalid input.',
+          fix: 'Return it: if (!body.name) return NextResponse.json({ error: "name required" }, { status: 400 });' });
+      }
+    });
+  }
+
+  return emit(file, hits, findingCounter);
+}
+
+function emit(file: CodeFile, hits: Hit[], findingCounter: { count: number }): { findings: Finding[]; logs: string[] } {
+  const findings: Finding[] = [];
+  const logs: string[] = [];
   const raw = file.content.split('\n');
   const ts = new Date().toLocaleTimeString();
   for (const h of hits) {
