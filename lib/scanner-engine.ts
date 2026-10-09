@@ -126,6 +126,8 @@ export async function runStaticCodeScan(files: CodeFile[], repoName: string = 'T
       lowerPath.startsWith('out/') || lowerPath.includes('/out/') ||
       lowerPath.startsWith('.next/') || lowerPath.includes('/.next/') ||
       lowerPath.includes('node_modules/') ||
+      // committed Python virtualenvs are third-party packages, not the app
+      /(?:^|\/)(?:\.?venv|env|\.tox|__pypackages__)\/(?:lib|lib64|scripts|bin|include)\/|(?:^|\/)site-packages\//.test(lowerPath) ||
       // F-39 Remediation: Skip minified bundles and third-party vendored assets to avoid noise
       lowerPath.endsWith('.min.js') ||
       lowerPath.endsWith('.min.css') ||

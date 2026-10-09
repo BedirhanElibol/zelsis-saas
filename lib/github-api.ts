@@ -622,6 +622,7 @@ export async function fetchGithubRepositoryData(
           (!item.size || item.size <= (isDependencyFile(item.path) ? 8000000 : 2000000)) &&
           (isDependencyFile(item.path) || /(\.(ts|tsx|js|jsx|json|css|sql|html|py|yml|yaml|toml|sh|ps1|c|cpp|cc|cxx|h|hpp|java|kt|kts|go|rs|php|cs|rb|swift|xml|plist|gradle|md|mdx|zelsisignore|shipguardignore)$)|(\.env(\.[a-zA-Z0-9_\-]+)?$)|((?:^|\/)(?:dockerfile|makefile|podfile)$)/i.test(item.path)) &&
           !item.path.includes('node_modules') &&
+          !/(?:^|\/)site-packages\/|(?:^|\/)\.?venv\/(?:lib|Lib|lib64|Scripts|bin|include)\//.test(item.path) &&
           !item.path.includes('.next') &&
           !item.path.includes('.git') &&
           !item.path.includes('dist/') &&
