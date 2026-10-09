@@ -116,7 +116,7 @@ export function evaluateBuiltinRules(ctx: BuiltinRuleContext): void {
 
   // Rule 16: Dangerously Set Inner HTML (XSS)
   const isCompiledBundle = file.path.includes('live-deployment/bundle-') || file.path.includes('/vendor/') || file.path.includes('node_modules');
-  const isSafeMdxOrJsonLd = isCompiledBundle || file.path.includes('mdx-components') || file.path.includes('syntax-highlight') || file.content.includes('application/ld+json');
+  const isSafeMdxOrJsonLd = isCompiledBundle || file.path.includes('mdx-components') || file.path.includes('syntax-highlight') || file.content.includes('application/ld+json') || (/\bTHEMES\b/.test(file.content) && /<style\b[\s\S]{0,80}dangerouslySetInnerHTML/.test(file.content));
   const innerHtmlLineIdx = lines.findIndex(l => !l.trim().startsWith('//') && !l.trim().startsWith('/*') && (l.includes('dangerouslySetInnerHTML') || l.includes('innerHTML')) && !/innerHTML\s*=\s*(?:(['"])(?:\\.|(?!\1).)*\1|`[^`$]*`)\s*;?\s*$/.test(l));
   if (!isSafeMdxOrJsonLd && (cleanContent.includes('dangerouslySetInnerHTML') || cleanContent.includes('innerHTML =')) && innerHtmlLineIdx !== -1) {
     const matchLineIdx = innerHtmlLineIdx;
