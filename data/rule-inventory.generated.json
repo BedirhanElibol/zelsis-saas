@@ -1,8 +1,8 @@
 {
  "summary": {
-  "implementedRules": 959,
-  "testedRules": 951,
-  "preciseLocationRules": 956,
+  "implementedRules": 999,
+  "testedRules": 991,
+  "preciseLocationRules": 996,
   "catalogEntries": 1922,
   "catalogOnlyNotImplemented": 1401,
   "catalogPlaceholderMetadata": 1810
@@ -10657,6 +10657,406 @@
    "title": "Route Handler Creates a Response but Never Returns It",
    "severity": "HIGH",
    "source": "lib/rules/logic-bug-rules.ts",
+   "preciseLocation": true,
+   "tested": true,
+   "inCatalog": false
+  },
+  {
+   "ruleId": 29620,
+   "code": "RULE-29620",
+   "title": "Hydration Mismatch: ${x[1].replace(/\\s*\\(\\s*\\)/, ",
+   "severity": "MEDIUM",
+   "source": "lib/rules/logic-react-next-rules.ts",
+   "preciseLocation": true,
+   "tested": true,
+   "inCatalog": false
+  },
+  {
+   "ruleId": 29621,
+   "code": "RULE-29621",
+   "title": "Hydration Mismatch: Date Formatted With the Runtime Time Zone During Render",
+   "severity": "MEDIUM",
+   "source": "lib/rules/logic-react-next-rules.ts",
+   "preciseLocation": true,
+   "tested": true,
+   "inCatalog": false
+  },
+  {
+   "ruleId": 29622,
+   "code": "RULE-29622",
+   "title": "${g} Read During Render Crashes Server Rendering",
+   "severity": "HIGH",
+   "source": "lib/rules/logic-react-next-rules.ts",
+   "preciseLocation": true,
+   "tested": true,
+   "inCatalog": false
+  },
+  {
+   "ruleId": 29623,
+   "code": "RULE-29623",
+   "title": "Hydration Mismatch: Render Output Branches on typeof window",
+   "severity": "MEDIUM",
+   "source": "lib/rules/logic-react-next-rules.ts",
+   "preciseLocation": true,
+   "tested": true,
+   "inCatalog": false
+  },
+  {
+   "ruleId": 29624,
+   "code": "RULE-29624",
+   "title": "${x[3]}() Called During Render (Infinite Re-render Loop)",
+   "severity": "HIGH",
+   "source": "lib/rules/logic-react-next-rules.ts",
+   "preciseLocation": true,
+   "tested": true,
+   "inCatalog": false
+  },
+  {
+   "ruleId": 29625,
+   "code": "RULE-29625",
+   "title": "${x[1]}={${x[2]}(...)} Calls the Setter During Render",
+   "severity": "HIGH",
+   "source": "lib/rules/logic-react-next-rules.ts",
+   "preciseLocation": true,
+   "tested": true,
+   "inCatalog": false
+  },
+  {
+   "ruleId": 29626,
+   "code": "RULE-29626",
+   "title": "Stale State: Callback Registered Once Reads ${st} From the First Render",
+   "severity": "HIGH",
+   "source": "lib/rules/logic-react-next-rules.ts",
+   "preciseLocation": true,
+   "tested": true,
+   "inCatalog": false
+  },
+  {
+   "ruleId": 29627,
+   "code": "RULE-29627",
+   "title": "Prop ${src} Copied Into State ${x[1]} That Never Updates",
+   "severity": "MEDIUM",
+   "source": "lib/rules/logic-react-next-rules.ts",
+   "preciseLocation": true,
+   "tested": true,
+   "inCatalog": false
+  },
+  {
+   "ruleId": 29628,
+   "code": "RULE-29628",
+   "title": "${x[1]} Dependency ${fresh.length > 30 ? ",
+   "severity": "UNKNOWN",
+   "source": "lib/rules/logic-react-next-rules.ts",
+   "preciseLocation": true,
+   "tested": true,
+   "inCatalog": false
+  },
+  {
+   "ruleId": 29629,
+   "code": "RULE-29629",
+   "title": "${x[1]} With [] Reads ${st} (Frozen at the First Render)",
+   "severity": "MEDIUM",
+   "source": "lib/rules/logic-react-next-rules.ts",
+   "preciseLocation": true,
+   "tested": true,
+   "inCatalog": false
+  },
+  {
+   "ruleId": 29630,
+   "code": "RULE-29630",
+   "title": "useEffect Updates Its Own Dependency ${st} (Infinite Loop)",
+   "severity": "HIGH",
+   "source": "lib/rules/logic-react-next-rules.ts",
+   "preciseLocation": true,
+   "tested": true,
+   "inCatalog": false
+  },
+  {
+   "ruleId": 29631,
+   "code": "RULE-29631",
+   "title": "Random key (${r[1]}()) Remounts the Element on Every Render",
+   "severity": "MEDIUM",
+   "source": "lib/rules/logic-react-next-rules.ts",
+   "preciseLocation": true,
+   "tested": true,
+   "inCatalog": false
+  },
+  {
+   "ruleId": 29632,
+   "code": "RULE-29632",
+   "title": "Index key on ${arr}, Which Is Deleted From: Inputs Show the Wrong Row",
+   "severity": "MEDIUM",
+   "source": "lib/rules/logic-react-next-rules.ts",
+   "preciseLocation": true,
+   "tested": true,
+   "inCatalog": false
+  },
+  {
+   "ruleId": 29633,
+   "code": "RULE-29633",
+   "title": "<${t.name}> Has ${valueAttr ? ",
+   "severity": "HIGH",
+   "source": "lib/rules/logic-react-next-rules.ts",
+   "preciseLocation": true,
+   "tested": true,
+   "inCatalog": false
+  },
+  {
+   "ruleId": 29634,
+   "code": "RULE-29634",
+   "title": "Form onSubmit Sends a Request Without preventDefault (Page Reloads)",
+   "severity": "HIGH",
+   "source": "lib/rules/logic-react-next-rules.ts",
+   "preciseLocation": true,
+   "tested": true,
+   "inCatalog": false
+  },
+  {
+   "ruleId": 29635,
+   "code": "RULE-29635",
+   "title": "<button> Without type Inside a Form Also Submits It",
+   "severity": "MEDIUM",
+   "source": "lib/rules/logic-react-next-rules.ts",
+   "preciseLocation": true,
+   "tested": true,
+   "inCatalog": false
+  },
+  {
+   "ruleId": 29636,
+   "code": "RULE-29636",
+   "title": "Payment Button Can Be Clicked Again While the Charge Is Pending",
+   "severity": "HIGH",
+   "source": "lib/rules/logic-react-next-rules.ts",
+   "preciseLocation": true,
+   "tested": true,
+   "inCatalog": false
+  },
+  {
+   "ruleId": 29637,
+   "code": "RULE-29637",
+   "title": "Request API Used Without await: ${x[1]}() (Next.js 16)",
+   "severity": "HIGH",
+   "source": "lib/rules/logic-react-next-rules.ts",
+   "preciseLocation": true,
+   "tested": true,
+   "inCatalog": false
+  },
+  {
+   "ruleId": 29638,
+   "code": "RULE-29638",
+   "title": "${name} Exported From a ",
+   "severity": "HIGH",
+   "source": "lib/rules/logic-react-next-rules.ts",
+   "preciseLocation": true,
+   "tested": true,
+   "inCatalog": false
+  },
+  {
+   "ruleId": 29639,
+   "code": "RULE-29639",
+   "title": "Async Client Component ${k.name}",
+   "severity": "HIGH",
+   "source": "lib/rules/logic-react-next-rules.ts",
+   "preciseLocation": true,
+   "tested": true,
+   "inCatalog": false
+  },
+  {
+   "ruleId": 29640,
+   "code": "RULE-29640",
+   "title": "Server-Only Import in a Client Component: ",
+   "severity": "HIGH",
+   "source": "lib/rules/logic-react-next-rules.ts",
+   "preciseLocation": true,
+   "tested": true,
+   "inCatalog": false
+  },
+  {
+   "ruleId": 29641,
+   "code": "RULE-29641",
+   "title": "${x[1]}() Called From a Client Event Handler",
+   "severity": "HIGH",
+   "source": "lib/rules/logic-react-next-rules.ts",
+   "preciseLocation": true,
+   "tested": true,
+   "inCatalog": false
+  },
+  {
+   "ruleId": 29642,
+   "code": "RULE-29642",
+   "title": "next/router Imported in the App Router",
+   "severity": "HIGH",
+   "source": "lib/rules/logic-react-next-rules.ts",
+   "preciseLocation": true,
+   "tested": true,
+   "inCatalog": false
+  },
+  {
+   "ruleId": 29643,
+   "code": "RULE-29643",
+   "title": "force-static Route Handler Reads the Request",
+   "severity": "HIGH",
+   "source": "lib/rules/logic-react-next-rules.ts",
+   "preciseLocation": true,
+   "tested": true,
+   "inCatalog": false
+  },
+  {
+   "ruleId": 29644,
+   "code": "RULE-29644",
+   "title": "",
+   "severity": "HIGH",
+   "source": "lib/rules/logic-react-next-rules.ts",
+   "preciseLocation": true,
+   "tested": true,
+   "inCatalog": false
+  },
+  {
+   "ruleId": 29645,
+   "code": "RULE-29645",
+   "title": "",
+   "severity": "HIGH",
+   "source": "lib/rules/logic-react-next-rules.ts",
+   "preciseLocation": true,
+   "tested": true,
+   "inCatalog": false
+  },
+  {
+   "ruleId": 29646,
+   "code": "RULE-29646",
+   "title": "Client-Only Code in a Server Component: ${h[1]}()",
+   "severity": "HIGH",
+   "source": "lib/rules/logic-react-next-rules.ts",
+   "preciseLocation": true,
+   "tested": true,
+   "inCatalog": false
+  },
+  {
+   "ruleId": 29647,
+   "code": "RULE-29647",
+   "title": "${/global-error/.test(path) ? ",
+   "severity": "HIGH",
+   "source": "lib/rules/logic-react-next-rules.ts",
+   "preciseLocation": true,
+   "tested": true,
+   "inCatalog": false
+  },
+  {
+   "ruleId": 29648,
+   "code": "RULE-29648",
+   "title": "<Image fill> Without sizes Downloads a Full-Viewport-Width Image",
+   "severity": "LOW",
+   "source": "lib/rules/logic-react-next-rules.ts",
+   "preciseLocation": true,
+   "tested": true,
+   "inCatalog": false
+  },
+  {
+   "ruleId": 29649,
+   "code": "RULE-29649",
+   "title": "",
+   "severity": "HIGH",
+   "source": "lib/rules/logic-react-next-rules.ts",
+   "preciseLocation": true,
+   "tested": true,
+   "inCatalog": false
+  },
+  {
+   "ruleId": 29650,
+   "code": "RULE-29650",
+   "title": "text-${col} on bg-${col}: Invisible Text",
+   "severity": "MEDIUM",
+   "source": "lib/rules/logic-react-next-rules.ts",
+   "preciseLocation": true,
+   "tested": true,
+   "inCatalog": false
+  },
+  {
+   "ruleId": 29651,
+   "code": "RULE-29651",
+   "title": "Fixed ${wide[0]} Width Overflows Phone Screens",
+   "severity": "MEDIUM",
+   "source": "lib/rules/logic-react-next-rules.ts",
+   "preciseLocation": true,
+   "tested": true,
+   "inCatalog": false
+  },
+  {
+   "ruleId": 29652,
+   "code": "RULE-29652",
+   "title": "{${x[1]}.length && ...} Renders ",
+   "severity": "MEDIUM",
+   "source": "lib/rules/logic-react-next-rules.ts",
+   "preciseLocation": true,
+   "tested": true,
+   "inCatalog": false
+  },
+  {
+   "ruleId": 29653,
+   "code": "RULE-29653",
+   "title": "State ${st} Mutated In Place, Then Set With the Same Reference",
+   "severity": "HIGH",
+   "source": "lib/rules/logic-react-next-rules.ts",
+   "preciseLocation": true,
+   "tested": true,
+   "inCatalog": false
+  },
+  {
+   "ruleId": 29654,
+   "code": "RULE-29654",
+   "title": "router.${what} Does Not Exist on the next/navigation Router",
+   "severity": "HIGH",
+   "source": "lib/rules/logic-react-next-rules.ts",
+   "preciseLocation": true,
+   "tested": true,
+   "inCatalog": false
+  },
+  {
+   "ruleId": 29655,
+   "code": "RULE-29655",
+   "title": "${x[1]} in the App Router",
+   "severity": "HIGH",
+   "source": "lib/rules/logic-react-next-rules.ts",
+   "preciseLocation": true,
+   "tested": true,
+   "inCatalog": false
+  },
+  {
+   "ruleId": 29656,
+   "code": "RULE-29656",
+   "title": "",
+   "severity": "HIGH",
+   "source": "lib/rules/logic-react-next-rules.ts",
+   "preciseLocation": true,
+   "tested": true,
+   "inCatalog": false
+  },
+  {
+   "ruleId": 29657,
+   "code": "RULE-29657",
+   "title": "${/proxy\\./.test(path) ? ",
+   "severity": "HIGH",
+   "source": "lib/rules/logic-react-next-rules.ts",
+   "preciseLocation": true,
+   "tested": true,
+   "inCatalog": false
+  },
+  {
+   "ruleId": 29658,
+   "code": "RULE-29658",
+   "title": "Form action Handler Treats Its Argument as an Event",
+   "severity": "HIGH",
+   "source": "lib/rules/logic-react-next-rules.ts",
+   "preciseLocation": true,
+   "tested": true,
+   "inCatalog": false
+  },
+  {
+   "ruleId": 29659,
+   "code": "RULE-29659",
+   "title": "${x[1]}() Called ${why === ",
+   "severity": "HIGH",
+   "source": "lib/rules/logic-react-next-rules.ts",
    "preciseLocation": true,
    "tested": true,
    "inCatalog": false

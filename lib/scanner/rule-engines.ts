@@ -133,6 +133,7 @@ import { evaluateSaasV5Rules } from '../rules/saas-v5-rules';
 import { evaluatePyGoFlowRules } from '../rules/py-go-flow-rules';
 import { evaluateLogicBugRules } from '../rules/logic-bug-rules';
 import { evaluateLogicDataRules } from '../rules/logic-data-rules';
+import { evaluateLogicReactNextRules } from '../rules/logic-react-next-rules';
 
 import { evaluateAstFlowRules } from '../rules/ast-flow-rules';
 
@@ -439,6 +440,8 @@ export const RULE_ENGINES: ReadonlyArray<{ evaluate: RuleEngine; scanRawContent?
   { evaluate: evaluateLogicBugRules },
   // Data, async, money, time and auth-flow logic bugs: lost updates, unrounded cents, Stripe seconds (BUG-60.., Rule IDs 29660-29699)
   { evaluate: evaluateLogicDataRules },
+  // React / Next.js / UI logic bugs: hydration mismatches, render loops, App Router misuse (BUG-20.., Rule IDs 29620-29659)
+  { evaluate: evaluateLogicReactNextRules },
   // AST analysis (Babel): route auth/ownership flow and taint for JS/TS (AST-01.., Rule IDs 29301-29399)
   { evaluate: evaluateAstFlowRules },
 ];
