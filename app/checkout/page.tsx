@@ -98,7 +98,7 @@ function CheckoutPageContent() {
         }}
         onUpgradeSuccess={(newTier) => {
           const updatedUser: UserProfile = {
-            ...(user || { name: 'Customer', email: 'customer@zelsis.dev', isLoggedIn: true, emailVerified: true }),
+            ...(user || { name: 'Customer', email: 'customer@example.com', isLoggedIn: true, emailVerified: true }),
             tier: newTier,
             expiresAt: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString(),
             status: 'active',

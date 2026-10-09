@@ -2,7 +2,7 @@
 ## Senior Developer Growth & Go-To-Market Playbook
 
 > **Target:** #1 Product of the Day on Product Hunt & Front Page "Show HN" on Hacker News  
-> **Platform:** Zelsis (https://shipguard-saas.vercel.app)  
+> **Platform:** Zelsis (https://zelsis.com)  
 > **Core Value:** The sub-3.5s universal pre-deployment release gate & code health scanner.
 
 ---
@@ -15,7 +15,7 @@
 - **Primary Category:** Developer Tools, Engineering, SaaS, Productivity
 - **Topics:** Developer Tools, Security, GitHub, Open Source, Next.js
 - **Pricing:** Free tier available / $19/mo Pro Tier
-- **Website URL:** `https://shipguard-saas.vercel.app`
+- **Website URL:** `https://zelsis.com`
 
 ---
 
@@ -62,7 +62,7 @@ Bedirhan & the Zelsis Team
 ```markdown
 Hi HN,
 
-I built Zelsis (https://shipguard-saas.vercel.app), a client-side release gate and code scanner that audits repositories for security risks, configuration errors, and accessibility flaws before deployment.
+I built Zelsis (https://zelsis.com), a client-side release gate and code scanner that audits repositories for security risks, configuration errors, and accessibility flaws before deployment.
 
 ### Why I built it
 Traditional SAST and SCA tools (Snyk, SonarQube) add significant latency to CI/CD pipelines (often 4–8 minutes per build) and upload code to third-party databases. For solo engineers and agile teams, waiting on heavy enterprise scanners slows down velocity.
@@ -84,7 +84,7 @@ You can test any public GitHub repo directly without an account.
 
 I would appreciate any feedback on false positives, rule calibration, or edge cases.
 
-URL: https://shipguard-saas.vercel.app
+URL: https://zelsis.com
 ```
 
 ---

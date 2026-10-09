@@ -29,12 +29,12 @@ This guide details the exact, step-by-step configuration required across **Supab
    👉 **Supabase Dashboard -> Authentication -> URL Configuration**
 2. Set **Site URL** to:
    ```text
-   https://shipguard-saas.vercel.app
+   https://zelsis.com
    ```
 3. In **Redirect URLs**, add:
    ```text
-   https://shipguard-saas.vercel.app/**
-   https://shipguard-saas.vercel.app/auth/callback
+   https://zelsis.com/**
+   https://zelsis.com/auth/callback
    http://localhost:3000/auth/callback
    ```
 4. Click **Save**.
@@ -55,7 +55,7 @@ This guide details the exact, step-by-step configuration required across **Supab
 2. Click **Add Endpoint**.
 3. Set **Endpoint URL** to:
    ```text
-   https://shipguard-saas.vercel.app/api/v1/polar-webhook
+   https://zelsis.com/api/v1/polar-webhook
    ```
 4. Select all of the following events:
    - `subscription.created`
@@ -88,7 +88,7 @@ This guide details the exact, step-by-step configuration required across **Supab
 
 | Variable Name | Value | Purpose |
 | :--- | :--- | :--- |
-| `NEXT_PUBLIC_APP_URL` | `https://shipguard-saas.vercel.app` | Canonical app URL |
+| `NEXT_PUBLIC_APP_URL` | `https://zelsis.com` | Canonical app URL |
 | `NEXT_PUBLIC_SUPABASE_URL` | `https://<your-project-id>.supabase.co` | Supabase endpoint |
 | `NEXT_PUBLIC_SUPABASE_ANON_KEY` | `eyJhbGciOiJIUzI1NiIsInR5cCI...` | Supabase Anon Key |
 | `SUPABASE_SERVICE_ROLE_KEY` | *(Copied from Supabase Step 1C)* | Server-side user & sub management |

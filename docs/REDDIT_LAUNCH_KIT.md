@@ -72,7 +72,7 @@ We ran ESLint for syntax and formatting. We ran `npm audit` for known CVEs. But 
 
 Linters don't typically check infrastructure and database patterns. Heavy enterprise security platforms (Snyk, SonarQube) are often expensive, slow in CI, and noisy with style warnings.
 
-To address this gap, I spent the last few weekends building **Zelsis** (hosted at https://shipguard-saas.vercel.app). 
+To address this gap, I spent the last few weekends building **Zelsis** (hosted at https://zelsis.com). 
 
 It is a lightweight, web-based release gate designed to perform a fast, unified pre-flight audit of any repository before you push to production.
 
@@ -90,7 +90,7 @@ It is a lightweight, web-based release gate designed to perform a fast, unified 
 ### Free to test without an account:
 
 You can test any public repository on GitHub directly without signing up or entering a credit card:
-https://shipguard-saas.vercel.app
+https://zelsis.com
 
 ### Questions for the community:
 
@@ -126,7 +126,7 @@ When I went back to fix it, I realized I also had a wildcard CORS rule enabled o
 
 Most indie developers and solo builders don't have dedicated DevOps or SecOps teams. We run `npm run build`, check that the console is green, and deploy. But build success only tells you the code compiles — not that it is safe or ready for real production traffic.
 
-I decided to build the tool I needed: **Zelsis** (https://shipguard-saas.vercel.app).
+I decided to build the tool I needed: **Zelsis** (https://zelsis.com).
 
 ### What Zelsis is:
 
@@ -153,7 +153,7 @@ As a developer, I am very careful about third-party tools inspecting code. Here 
 
 I would love for fellow builders here to run their side project repos through it and tell me where it falls short. 
 
-Link: https://shipguard-saas.vercel.app
+Link: https://zelsis.com
 
 * Did it flag any false positives?
 * What checks would give you the most confidence before you hit "Deploy"?
@@ -230,14 +230,14 @@ USER nextjs
 
 ### We automated this checklist:
 
-We built a free tool called **Zelsis** (https://shipguard-saas.vercel.app) to automate these checks. 
+We built a free tool called **Zelsis** (https://zelsis.com) to automate these checks. 
 
 It audits your public Next.js repository against these specific patterns (along with OWASP security, container settings, and dependency CVEs) and outputs a pass/fail release gate scorecard with unified diff patches.
 
 It runs purely in memory (we do not store your code or train models on it) and requires no account.
 
 If you are deploying a Next.js project soon, feel free to run a check and let me know if we missed any framework-specific edge cases:
-https://shipguard-saas.vercel.app
+https://zelsis.com
 
 What other Next.js production gotchas have bitten you on launch day?
 ```
@@ -293,14 +293,14 @@ To keep our releases predictable, we formalized a 4-layer pre-deployment release
 
 ### Automating the Checklist:
 
-Going through this checklist manually on every release became tedious. To solve this, we built **Zelsis** (https://shipguard-saas.vercel.app).
+Going through this checklist manually on every release became tedious. To solve this, we built **Zelsis** (https://zelsis.com).
 
 It is a free pre-deployment release gate that automatically audits public repositories against these security, configuration, and reliability standards. 
 
 It runs in-memory without storing source code, generates a 0-100 release readiness score, and provides the exact code diffs needed to fix any flagged items.
 
 You can run any repository through it without signing up:
-https://shipguard-saas.vercel.app
+https://zelsis.com
 
 What manual checks do you consider non-negotiable before taking a new SaaS project public?
 ```
@@ -416,7 +416,7 @@ flowchart TD
 ### Phase-by-Phase Execution Checklist
 
 #### Hour -1: Pre-Submission Verification
-- [ ] Verify that https://shipguard-saas.vercel.app is healthy and running with zero downtime.
+- [ ] Verify that https://zelsis.com is healthy and running with zero downtime.
 - [ ] Run a test audit on a sample public repository to ensure GitHub API rate limits have adequate headroom.
 - [ ] Confirm mobile responsiveness on iOS and Android viewports.
 - [ ] Ensure all direct URLs in the post body use clean parameters (e.g., `?ref=reddit_webdev`) without affiliate tags.
