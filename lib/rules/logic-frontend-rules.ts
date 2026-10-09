@@ -151,11 +151,11 @@ function evaluate(path: string, c: string, add: (h: Hit) => void, context?: Repo
     }
 
     // BUG-111: Radix / shadcn dialog content without a title (console error, screen readers announce nothing)
-    for (const x of c.matchAll(/<((?:Alert)?Dialog(?:Primitive\.)?Content|SheetContent|DrawerContent|(?:AlertDialog|Dialog)Primitive\.Content)\b/g)) {
+    for (const x of c.matchAll(/<((?:Alert)?Dialog(?:Primitive)?\.?Content|SheetContent|DrawerContent)\b/g)) {
       const close = closingTag(c, x.index!, x[1]);
       if (close < 0) continue;
       const inner = c.slice(x.index!, close);
-      if (/<(?:\w+\.)?(?:Alert)?(?:Dialog|Sheet|Drawer)(?:Primitive\.)?Title\b|<\w*Title\b|aria-label(?:ledby)?\s*=|VisuallyHidden/.test(inner)) continue;
+      if (/<(?:\w+\.)?(?:Alert)?(?:Dialog|Sheet|Drawer)(?:Primitive\.)?Title\b|<[\w.]*Title\b|aria-label(?:ledby)?\s*=|VisuallyHidden/.test(inner)) continue;
       if (/\{\s*(?:children|props\.children)\s*\}/.test(inner) && !/<h[1-6]\b/.test(inner)) continue; // wrapper component; the caller supplies the title
       add({ ruleId: 29744, code: 'BUG-111', severity: 'LOW', category: 'UI Bug', lineIdx: at(x.index!),
         title: `${x[1]} Has No Title`,
@@ -247,7 +247,8 @@ function evaluate(path: string, c: string, add: (h: Hit) => void, context?: Repo
     }
 
     // BUG-118: next-themes provider but <html> without suppressHydrationWarning
-    if (/from\s+['"]next-themes['"]/.test(c) || /<ThemeProvider\b[^>]*attribute\s*=/.test(c)) {
+    // next-themes directly or through the shadcn wrapper (components/theme-provider); other UI kits never touch <html>
+    if (/<ThemeProvider\b/.test(c) && !/import[^;]*\bThemeProvider\b[^;]*from\s*['"](?:@mui|@material-ui|styled-components|@emotion|@chakra-ui|@mantine|theme-ui|@fluentui|antd)/.test(c)) {
       const h = /<html\b[^>]*>/.exec(c);
       if (h && !/suppressHydrationWarning/.test(h[0]) && /<ThemeProvider\b/.test(c)) {
         add({ ruleId: 29751, code: 'BUG-118', severity: 'LOW', category: 'UI Bug', lineIdx: at(h.index),

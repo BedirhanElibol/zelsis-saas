@@ -8,6 +8,7 @@
  */
 import type { Finding } from '@/data/schema';
 import type { CodeFile } from '../scanner-engine';
+import type { RepoContext } from '../scanner/repo-context';
 
 interface Hit { ruleId: number; code: string; title: string; severity: Finding['severity']; category: string; lineIdx: number; why: string; fix: string }
 
@@ -112,7 +113,7 @@ function sqlLogicBugs(content: string): Hit[] {
 
 export function evaluateLogicBugRules(file: CodeFile, lines: string[], cleanContent: string, findingCounter: {
   count: number;
-}): { findings: Finding[]; logs: string[] } {
+}, context?: RepoContext): { findings: Finding[]; logs: string[] } {
   const findings: Finding[] = [];
   const logs: string[] = [];
   const path = file.path.replace(/\\/g, '/');
@@ -273,7 +274,9 @@ export function evaluateLogicBugRules(file: CodeFile, lines: string[], cleanCont
   }
 
   // BUG-11: localStorage / sessionStorage read at module top level crashes server rendering
-  if (/\.[jt]sx$/i.test(path) || /^\s*['"]use client['"]/m.test(c)) {
+  // in a Next.js app plain .ts modules are imported by components that also render on the server
+  const nextModule = context?.nextMajorVersion != null && /\.[cm]?[jt]s$/i.test(path) && !/(?:^|\/)(?:scripts|server|api)\/|(?:^|\/)(?:route|middleware|proxy|instrumentation)\.[jt]s$|\.config\.[cm]?[jt]s$/.test(path);
+  if (/\.[jt]sx$/i.test(path) || /^\s*['"]use client['"]/m.test(c) || nextModule) {
     lines.forEach((l, i) => {
       if (/^(?:export\s+)?(?:const|let|var)\s+\w+\s*=\s*(?:JSON\.parse\(\s*)?(?:window\.)?(?:localStorage|sessionStorage)\.getItem\(/.test(l)) {
         add({ ruleId: 29611, code: 'BUG-11', severity: 'HIGH', category: 'Logic Bug', lineIdx: i,

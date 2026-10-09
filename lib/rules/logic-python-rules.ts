@@ -95,7 +95,8 @@ function evaluate(code: string[], content: string, add: (h: Hit) => void) {
   code.forEach((l, i) => {
     const m = /\bint\(\s*(?!round\()([^()]*(?:\([^()]*\))?[^()]*?)\s*\*\s*100\s*\)/.exec(l);
     // a division inside is a percentage, not money
-    if (!m || m[1].includes('/') || !/amount|price|cents|total|cost|fee|charge|unit_amount|subtotal|balance/i.test(l)) return;
+    const money = /amount|price|cents|total|cost|fee|charge|unit_amount|subtotal|balance|dollar/i;
+    if (!m || m[1].includes('/') || !(money.test(l) || (defOf[i] >= 0 && money.test(code[defOf[i]])))) return;
     add({ ruleId: 29707, code: 'BUG-97', severity: 'MEDIUM', lineIdx: i,
       title: 'int(price * 100) Truncates Floats and Loses a Cent',
       why: 'Floats are not exact: 19.99 * 100 is 1998.9999999999998, and int() truncates it to 1998, so Stripe charges (or you store) one cent less on many prices.',
@@ -128,10 +129,11 @@ function evaluate(code: string[], content: string, add: (h: Hit) => void) {
   });
 
   // BUG-100: FastAPI DB dependency that returns the session instead of yielding it (never closed)
-  if (/\bDepends\(\s*get_\w+\s*\)/.test(content)) {
+  // get_db usually lives in deps.py and is used with Depends() in other files, so the name alone is enough
+  {
     code.forEach((l, i) => {
       const d = /^\s*(?:async\s+)?def\s+(get_\w*(?:db|session|conn)\w*)\s*\(/i.exec(l);
-      if (!d || !new RegExp(String.raw`Depends\(\s*${d[1]}\s*\)`).test(content)) return;
+      if (!d || (!new RegExp(String.raw`Depends\(\s*${d[1]}\s*\)`).test(content) && !/^get_(?:db|session|db_session|async_session)$/i.test(d[1]))) return;
       const body = blockOf(code, i).map((k) => code[k]).join('\n');
       if (/\byield\b/.test(body) || !/=\s*(?:SessionLocal|Session|async_session\w*|sessionmaker\w*|AsyncSessionLocal|\w*[Ss]ession\w*)\(\)/.test(body) || !/^\s*return\s+\w+\s*$/m.test(body) || /\bwith\b/.test(body)) return;
       add({ ruleId: 29710, code: 'BUG-100', severity: 'MEDIUM', lineIdx: i,
