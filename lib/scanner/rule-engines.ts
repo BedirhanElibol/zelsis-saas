@@ -134,6 +134,7 @@ import { evaluatePyGoFlowRules } from '../rules/py-go-flow-rules';
 import { evaluateLogicBugRules } from '../rules/logic-bug-rules';
 import { evaluateLogicDataRules } from '../rules/logic-data-rules';
 import { evaluateLogicReactNextRules } from '../rules/logic-react-next-rules';
+import { evaluateLogicPythonRules } from '../rules/logic-python-rules';
 
 import { evaluateAstFlowRules } from '../rules/ast-flow-rules';
 
@@ -442,6 +443,8 @@ export const RULE_ENGINES: ReadonlyArray<{ evaluate: RuleEngine; scanRawContent?
   { evaluate: evaluateLogicDataRules },
   // React / Next.js / UI logic bugs: hydration mismatches, render loops, App Router misuse (BUG-20.., Rule IDs 29620-29659)
   { evaluate: evaluateLogicReactNextRules },
+  // Python / Django / FastAPI logic bugs: frozen defaults, truncated cents, 200-OK errors, leaked sessions (BUG-94.., Rule IDs 29704-29739)
+  { evaluate: evaluateLogicPythonRules },
   // AST analysis (Babel): route auth/ownership flow and taint for JS/TS (AST-01.., Rule IDs 29301-29399)
   { evaluate: evaluateAstFlowRules },
 ];
