@@ -1,8 +1,8 @@
 {
  "summary": {
-  "implementedRules": 1002,
-  "testedRules": 994,
-  "preciseLocationRules": 999,
+  "implementedRules": 1015,
+  "testedRules": 1007,
+  "preciseLocationRules": 1012,
   "catalogEntries": 1922,
   "catalogOnlyNotImplemented": 1401,
   "catalogPlaceholderMetadata": 1810
@@ -11427,6 +11427,136 @@
    "title": "Whole Site Marked noindex / Disallowed for Search Engines",
    "severity": "HIGH",
    "source": "lib/rules/logic-bug-rules.ts",
+   "preciseLocation": true,
+   "tested": true,
+   "inCatalog": false
+  },
+  {
+   "ruleId": 29704,
+   "code": "RULE-29704",
+   "title": "Field default=${m[1]} Is Evaluated Once, at Import",
+   "severity": "MEDIUM",
+   "source": "lib/rules/logic-python-rules.ts",
+   "preciseLocation": true,
+   "tested": true,
+   "inCatalog": false
+  },
+  {
+   "ruleId": 29705,
+   "code": "RULE-29705",
+   "title": "${m[1]} Uses auto_now=True and Changes on Every Save",
+   "severity": "MEDIUM",
+   "source": "lib/rules/logic-python-rules.ts",
+   "preciseLocation": true,
+   "tested": true,
+   "inCatalog": false
+  },
+  {
+   "ruleId": 29706,
+   "code": "RULE-29706",
+   "title": "${m[1]} Flag Read as a String: ",
+   "severity": "MEDIUM",
+   "source": "lib/rules/logic-python-rules.ts",
+   "preciseLocation": true,
+   "tested": true,
+   "inCatalog": false
+  },
+  {
+   "ruleId": 29707,
+   "code": "RULE-29707",
+   "title": "int(price * 100) Truncates Floats and Loses a Cent",
+   "severity": "MEDIUM",
+   "source": "lib/rules/logic-python-rules.ts",
+   "preciseLocation": true,
+   "tested": true,
+   "inCatalog": false
+  },
+  {
+   "ruleId": 29708,
+   "code": "RULE-29708",
+   "title": "${m[1]} Is Always None: ${fn}() Works in Place",
+   "severity": "MEDIUM",
+   "source": "lib/rules/logic-python-rules.ts",
+   "preciseLocation": true,
+   "tested": true,
+   "inCatalog": false
+  },
+  {
+   "ruleId": 29709,
+   "code": "RULE-29709",
+   "title": "Background Task Queued Before the Transaction Commits",
+   "severity": "MEDIUM",
+   "source": "lib/rules/logic-python-rules.ts",
+   "preciseLocation": true,
+   "tested": true,
+   "inCatalog": false
+  },
+  {
+   "ruleId": 29710,
+   "code": "RULE-29710",
+   "title": "${d[1]}() Returns the Session, So It Is Never Closed",
+   "severity": "MEDIUM",
+   "source": "lib/rules/logic-python-rules.ts",
+   "preciseLocation": true,
+   "tested": true,
+   "inCatalog": false
+  },
+  {
+   "ruleId": 29711,
+   "code": "RULE-29711",
+   "title": "Error Returned With HTTP 200 OK",
+   "severity": "MEDIUM",
+   "source": "lib/rules/logic-python-rules.ts",
+   "preciseLocation": true,
+   "tested": true,
+   "inCatalog": false
+  },
+  {
+   "ruleId": 29712,
+   "code": "RULE-29712",
+   "title": "Missing f Prefix: ",
+   "severity": "LOW",
+   "source": "lib/rules/logic-python-rules.ts",
+   "preciseLocation": true,
+   "tested": true,
+   "inCatalog": false
+  },
+  {
+   "ruleId": 29713,
+   "code": "RULE-29713",
+   "title": "${m[2].toUpperCase()} ${m[4]} Is Registered Twice",
+   "severity": "MEDIUM",
+   "source": "lib/rules/logic-python-rules.ts",
+   "preciseLocation": true,
+   "tested": true,
+   "inCatalog": false
+  },
+  {
+   "ruleId": 29714,
+   "code": "RULE-29714",
+   "title": "Naive datetime.now() Mixed With Django Timezone-Aware Dates",
+   "severity": "MEDIUM",
+   "source": "lib/rules/logic-python-rules.ts",
+   "preciseLocation": true,
+   "tested": true,
+   "inCatalog": false
+  },
+  {
+   "ruleId": 29715,
+   "code": "RULE-29715",
+   "title": "${t.trim().split(/\\s/)[0]} Inside finally Swallows Exceptions",
+   "severity": "MEDIUM",
+   "source": "lib/rules/logic-python-rules.ts",
+   "preciseLocation": true,
+   "tested": true,
+   "inCatalog": false
+  },
+  {
+   "ruleId": 29716,
+   "code": "RULE-29716",
+   "title": "${m[1].replace(/\\($/, ",
+   "severity": "MEDIUM",
+   "source": "lib/rules/logic-python-rules.ts",
    "preciseLocation": true,
    "tested": true,
    "inCatalog": false
