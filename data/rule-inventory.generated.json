@@ -1,8 +1,8 @@
 {
  "summary": {
-  "implementedRules": 907,
-  "testedRules": 899,
-  "preciseLocationRules": 904,
+  "implementedRules": 919,
+  "testedRules": 911,
+  "preciseLocationRules": 916,
   "catalogEntries": 1922,
   "catalogOnlyNotImplemented": 1401,
   "catalogPlaceholderMetadata": 1810
@@ -10477,6 +10477,126 @@
    "title": "Request Input Builds a File Path (Go)",
    "severity": "HIGH",
    "source": "lib/rules/py-go-flow-rules.ts",
+   "preciseLocation": true,
+   "tested": true,
+   "inCatalog": false
+  },
+  {
+   "ruleId": 29601,
+   "code": "RULE-29601",
+   "title": "Database Write Is Never Awaited, So It Never Runs (${sb ? ",
+   "severity": "HIGH",
+   "source": "lib/rules/logic-bug-rules.ts",
+   "preciseLocation": true,
+   "tested": true,
+   "inCatalog": false
+  },
+  {
+   "ruleId": 29602,
+   "code": "RULE-29602",
+   "title": "redirect() Inside try/catch Is Swallowed by the catch Block",
+   "severity": "HIGH",
+   "source": "lib/rules/logic-bug-rules.ts",
+   "preciseLocation": true,
+   "tested": true,
+   "inCatalog": false
+  },
+  {
+   "ruleId": 29603,
+   "code": "RULE-29603",
+   "title": "Async Function Passed Directly to useEffect",
+   "severity": "MEDIUM",
+   "source": "lib/rules/logic-bug-rules.ts",
+   "preciseLocation": true,
+   "tested": true,
+   "inCatalog": false
+  },
+  {
+   "ruleId": 29604,
+   "code": "RULE-29604",
+   "title": "useEffect Without a Dependency Array Sets State (Infinite Render Loop)",
+   "severity": "HIGH",
+   "source": "lib/rules/logic-bug-rules.ts",
+   "preciseLocation": true,
+   "tested": true,
+   "inCatalog": false
+  },
+  {
+   "ruleId": 29605,
+   "code": "RULE-29605",
+   "title": "${kind} Started in useEffect Without Cleanup",
+   "severity": "MEDIUM",
+   "source": "lib/rules/logic-bug-rules.ts",
+   "preciseLocation": true,
+   "tested": true,
+   "inCatalog": false
+  },
+  {
+   "ruleId": 29606,
+   "code": "RULE-29606",
+   "title": "async Callback in forEach Is Never Awaited",
+   "severity": "HIGH",
+   "source": "lib/rules/logic-bug-rules.ts",
+   "preciseLocation": true,
+   "tested": true,
+   "inCatalog": false
+  },
+  {
+   "ruleId": 29607,
+   "code": "RULE-29607",
+   "title": "Supabase .range() End Is Inclusive (Off-by-One Pagination)",
+   "severity": "MEDIUM",
+   "source": "lib/rules/logic-bug-rules.ts",
+   "preciseLocation": true,
+   "tested": true,
+   "inCatalog": false
+  },
+  {
+   "ruleId": 29608,
+   "code": "RULE-29608",
+   "title": "Comparison With NaN Is Always False",
+   "severity": "MEDIUM",
+   "source": "lib/rules/logic-bug-rules.ts",
+   "preciseLocation": true,
+   "tested": true,
+   "inCatalog": false
+  },
+  {
+   "ruleId": 29609,
+   "code": "RULE-29609",
+   "title": "State Array ${m[1]} Mutated In Place With .${m[2]}()",
+   "severity": "MEDIUM",
+   "source": "lib/rules/logic-bug-rules.ts",
+   "preciseLocation": true,
+   "tested": true,
+   "inCatalog": false
+  },
+  {
+   "ruleId": 29610,
+   "code": "RULE-29610",
+   "title": "Stripe ${m[1]} Given in Dollars Instead of Cents",
+   "severity": "HIGH",
+   "source": "lib/rules/logic-bug-rules.ts",
+   "preciseLocation": true,
+   "tested": true,
+   "inCatalog": false
+  },
+  {
+   "ruleId": 29611,
+   "code": "RULE-29611",
+   "title": "localStorage Read at Module Load Crashes Server Rendering",
+   "severity": "HIGH",
+   "source": "lib/rules/logic-bug-rules.ts",
+   "preciseLocation": true,
+   "tested": true,
+   "inCatalog": false
+  },
+  {
+   "ruleId": 29613,
+   "code": "RULE-29613",
+   "title": "Error Swallowed, Then Success Shown to the User",
+   "severity": "MEDIUM",
+   "source": "lib/rules/logic-bug-rules.ts",
    "preciseLocation": true,
    "tested": true,
    "inCatalog": false
