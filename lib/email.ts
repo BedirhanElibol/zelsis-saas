@@ -1,5 +1,6 @@
 import { logger } from './logger';
 import { getConfiguredAppUrl } from './app-url';
+import { CONTACT_EMAIL } from './contact';
 
 export interface SendEmailOptions {
   to: string | string[];
@@ -46,7 +47,8 @@ export async function sendEmail(options: SendEmailOptions): Promise<SendEmailRes
         subject: options.subject,
         html: options.html,
         text: options.text,
-        reply_to: options.replyTo,
+        // noreply@ has no inbox, so replies go to the support mailbox
+        reply_to: options.replyTo || CONTACT_EMAIL,
         headers: options.headers,
       }),
       signal: AbortSignal.timeout(8000),
