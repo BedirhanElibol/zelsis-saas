@@ -1,8 +1,8 @@
 {
  "summary": {
-  "implementedRules": 1040,
-  "testedRules": 1032,
-  "preciseLocationRules": 1037,
+  "implementedRules": 1051,
+  "testedRules": 1043,
+  "preciseLocationRules": 1048,
   "catalogEntries": 1922,
   "catalogOnlyNotImplemented": 1401,
   "catalogPlaceholderMetadata": 1810
@@ -11807,6 +11807,116 @@
    "title": "${name}.defaultProps Is Ignored in React 19",
    "severity": "MEDIUM",
    "source": "lib/rules/logic-crossfile-rules.ts",
+   "preciseLocation": true,
+   "tested": true,
+   "inCatalog": false
+  },
+  {
+   "ruleId": 29780,
+   "code": "RULE-29780",
+   "title": "${x[1]} Selector Calls .${x[3]}() on Store State",
+   "severity": "MEDIUM",
+   "source": "lib/rules/logic-corpus-rules.ts",
+   "preciseLocation": true,
+   "tested": true,
+   "inCatalog": false
+  },
+  {
+   "ruleId": 29781,
+   "code": "RULE-29781",
+   "title": "${name}() Called While ${comp.name} Renders",
+   "severity": "HIGH",
+   "source": "lib/rules/logic-corpus-rules.ts",
+   "preciseLocation": true,
+   "tested": true,
+   "inCatalog": false
+  },
+  {
+   "ruleId": 29782,
+   "code": "RULE-29782",
+   "title": "onValueChange Receives a Value, Not an Event (${x[1]}.target)",
+   "severity": "HIGH",
+   "source": "lib/rules/logic-corpus-rules.ts",
+   "preciseLocation": true,
+   "tested": true,
+   "inCatalog": false
+  },
+  {
+   "ruleId": 29783,
+   "code": "RULE-29783",
+   "title": "register(${x[2]}) Spread Onto <${x[1]}>, Which Has No Native Input",
+   "severity": "MEDIUM",
+   "source": "lib/rules/logic-corpus-rules.ts",
+   "preciseLocation": true,
+   "tested": true,
+   "inCatalog": false
+  },
+  {
+   "ruleId": 29784,
+   "code": "RULE-29784",
+   "title": "aria-hidden=",
+   "severity": "MEDIUM",
+   "source": "lib/rules/logic-corpus-rules.ts",
+   "preciseLocation": true,
+   "tested": true,
+   "inCatalog": false
+  },
+  {
+   "ruleId": 29785,
+   "code": "RULE-29785",
+   "title": "Route Param ${v} May Be an Array: ${v}.${use[1]}() Can Crash",
+   "severity": "MEDIUM",
+   "source": "lib/rules/logic-corpus-rules.ts",
+   "preciseLocation": true,
+   "tested": true,
+   "inCatalog": false
+  },
+  {
+   "ruleId": 29786,
+   "code": "RULE-29786",
+   "title": "Form Action Returns an Error Without fail()",
+   "severity": "MEDIUM",
+   "source": "lib/rules/logic-corpus-rules.ts",
+   "preciseLocation": true,
+   "tested": true,
+   "inCatalog": false
+  },
+  {
+   "ruleId": 29787,
+   "code": "RULE-29787",
+   "title": "Background Task Receives the Request Session ",
+   "severity": "HIGH",
+   "source": "lib/rules/logic-corpus-rules.ts",
+   "preciseLocation": true,
+   "tested": true,
+   "inCatalog": false
+  },
+  {
+   "ruleId": 29788,
+   "code": "RULE-29788",
+   "title": "Path Parameter ${name} Has No Type, So It Is Always a String",
+   "severity": "MEDIUM",
+   "source": "lib/rules/logic-corpus-rules.ts",
+   "preciseLocation": true,
+   "tested": true,
+   "inCatalog": false
+  },
+  {
+   "ruleId": 29789,
+   "code": "RULE-29789",
+   "title": "Naive datetime.now() Compared in a File That Uses Aware Datetimes",
+   "severity": "MEDIUM",
+   "source": "lib/rules/logic-corpus-rules.ts",
+   "preciseLocation": true,
+   "tested": true,
+   "inCatalog": false
+  },
+  {
+   "ruleId": 29790,
+   "code": "RULE-29790",
+   "title": "${m[2]}.${m[3]}() Without return: the Handler Keeps Running",
+   "severity": "HIGH",
+   "source": "lib/rules/logic-corpus-rules.ts",
    "preciseLocation": true,
    "tested": true,
    "inCatalog": false
