@@ -332,7 +332,70 @@ export function evaluateLogicBugRules(file: CodeFile, lines: string[], cleanCont
     });
   }
 
+  shipReadiness(path, lines, c, add);
   return emit(file, hits, findingCounter);
+}
+
+/** Code that works on localhost and breaks once deployed: hardcoded dev URLs, VERCEL_URL without protocol, noindex. */
+function shipReadiness(path: string, lines: string[], c: string, add: (h: Hit) => void) {
+  const devOnlyFile = /(?:^|\/)(?:scripts?|seed|fixtures?|mocks?|e2e|playwright|cypress|stories|\.storybook|examples?|docs?)\/|\.(?:config|stories)\.[cm]?[jt]sx?$|(?:^|\/)(?:vite|vitest|jest|playwright|next|tailwind|postcss)\.config\./i;
+  if (devOnlyFile.test(path)) return;
+
+  // SHIP-01: hardcoded localhost URL in code that runs in production
+  lines.forEach((l, i) => {
+    if (isComment(l)) return;
+    const m = /(['"`])(https?:\/\/(?:localhost|127\.0\.0\.1)(?::\d+)?[^'"`\s]*)\1/.exec(l);
+    if (!m) return;
+    // Fallbacks and dev-only branches are fine: env ?? 'http://localhost:3000', NODE_ENV === 'development' ? ... : ...
+    if (/\?\?|\|\||NODE_ENV|isDev\b|IS_DEV|development|process\.env\.|import\.meta\.env|\bdev(?:elopment)?(?:Url|URL|Origin)\b/.test(l)) return;
+    if (/^\s*(?:export\s+)?const\s+\w*(?:dev|local|test)\w*\s*=/i.test(l)) return;
+    // Startup logs, and allow-lists that also contain a real origin
+    if (/\b(?:console|logger|log)\.\w+\s*\(|\bprint\s*\(/.test(l) || /['"`]https:\/\/(?!localhost|127\.)[^'"`]+['"`]/.test(l)) return;
+    // Default parameter / destructuring default (callers pass the real URL) and the last branch of a multi-line fallback
+    if (/^\s*\w+\s*(?::\s*[\w<>|\s]+)?=\s*['"`]https?:\/\/(?:localhost|127\.0\.0\.1)[^'"`]*['"`]\s*,?\s*$/.test(l) && !/^\s*(?:const|let|var)\b/.test(l)) return;
+    const prev = (lines.slice(0, i).reverse().find((x) => x.trim() && !isComment(x)) || '').replace(/\r$/, '').replace(/\s*\/\/.*$/, '');
+    if (/^\s*[:?]/.test(l) || /(?:\?\?|\|\||[?:])\s*$/.test(prev) || /^\s*:\s*$/.test(prev)) return;
+    // A SCREAMING_CASE constant is a configurable default (SDK constants); flag it only when this file sends requests to it
+    const constant = /^\s*(?:export\s+)?const\s+([A-Z][A-Z0-9_]*)\s*(?::\s*\w+)?\s*=\s*['"`]/.exec(l);
+    if (constant && !new RegExp(String.raw`(?:fetch|axios\.\w+|redirect|baseURL\s*:)\s*\(?\s*(?:\x60\$\{)?\s*` + constant[1] + String.raw`\b`).test(c)) return;
+    const ctx = /emailRedirectTo|redirectTo|redirect_uri|callbackUrl/i.test(l) ? 'auth redirect'
+      : /success_url|cancel_url|return_url|successUrl|cancelUrl|returnUrl/i.test(l) ? 'payment redirect'
+      : /\bfetch\s*\(|\baxios\b|\bbaseURL\b|\bky\./.test(l) ? 'API request'
+      : /metadataBase|sitemap|canonical|openGraph|\burl\s*:/i.test(l) || /sitemap|robots/i.test(path) ? 'SEO URL'
+      : /Access-Control-Allow-Origin|origin/i.test(l) ? 'CORS origin' : 'URL';
+    add({ ruleId: 29701, code: 'SHIP-01', severity: ctx === 'URL' || ctx === 'CORS origin' ? 'MEDIUM' : 'HIGH', category: 'Deployment Bug', lineIdx: i,
+      title: `Hardcoded localhost ${ctx} (${m[2].slice(0, 40)}) Breaks in Production`,
+      why: ctx === 'auth redirect' ? 'Confirmation, magic-link and OAuth emails will send real users to localhost, so nobody can finish signing up or logging in on the deployed site.'
+        : ctx === 'payment redirect' ? 'After paying, customers are sent to localhost and see a connection error instead of your success page.'
+        : ctx === 'API request' ? 'On the deployed server or in a visitor\'s browser, localhost is not your API, so this request fails and the page shows an error or empty data.'
+        : ctx === 'SEO URL' ? 'Search engines and social previews receive localhost links, so pages are not indexed and shared links show no preview.'
+        : 'This address only exists on your machine; once deployed, the code using it fails.',
+      fix: 'Build the URL from an environment variable set per environment: `${process.env.NEXT_PUBLIC_SITE_URL}/auth/callback` (and add the production URL to Supabase Auth redirect URLs / Stripe settings).' });
+  });
+
+  // SHIP-02: VERCEL_URL has no protocol and is the per-deployment preview host
+  lines.forEach((l, i) => {
+    if (isComment(l) || !/process\.env\.(?:NEXT_PUBLIC_)?VERCEL_URL\b/.test(l) || /https?:\/\//.test(l)) return;
+    if (!/(?:=|\(|\$\{|:)\s*process\.env\.(?:NEXT_PUBLIC_)?VERCEL_URL\b/.test(l)) return;
+    add({ ruleId: 29702, code: 'SHIP-02', severity: 'MEDIUM', category: 'Deployment Bug', lineIdx: i,
+      title: 'VERCEL_URL Used as a Full URL (No https://, Changes Every Deployment)',
+      why: 'VERCEL_URL is a bare host like my-app-abc123.vercel.app: without https:// fetch() and new URL() throw, and because it is the unique deployment URL, links and auth redirects point at a preview build instead of your domain.',
+      fix: 'Use your own NEXT_PUBLIC_SITE_URL for user-facing links, and prefix the protocol when you need the deployment host: `https://${process.env.VERCEL_URL}`.' });
+  });
+
+  // SHIP-03: site-wide noindex in the root layout or robots route
+  if (/(?:^|\/)(?:src\/)?app\/(?:layout|robots)\.[jt]sx?$|(?:^|\/)pages\/_document\.[jt]sx?$/i.test(path)) {
+    lines.forEach((l, i) => {
+      if (isComment(l) || /process\.env|\?/.test(l)) return;
+      const noindex = /\brobots\s*:\s*\{[^}]*\bindex\s*:\s*false\b|\brobots\s*:\s*['"`][^'"`]*noindex|name=["']robots["'][^>]*content=["'][^"']*noindex/i.test(l)
+        || (/robots\./i.test(path) && /\bdisallow\s*:\s*['"`]\/['"`]/i.test(l) && /userAgent\s*:\s*['"`]\*['"`]/.test(c) && !/\ballow\s*:/i.test(c));
+      if (!noindex) return;
+      add({ ruleId: 29703, code: 'SHIP-03', severity: 'HIGH', category: 'Deployment Bug', lineIdx: i,
+        title: 'Whole Site Marked noindex / Disallowed for Search Engines',
+        why: 'This applies to every page in production, so Google drops the site from search results; a setting meant for staging shipped to the live site.',
+        fix: 'Only block indexing outside production: robots: process.env.VERCEL_ENV === "production" ? undefined : { index: false }.' });
+    });
+  }
 }
 
 function emit(file: CodeFile, hits: Hit[], findingCounter: { count: number }): { findings: Finding[]; logs: string[] } {

@@ -1,8 +1,8 @@
 {
  "summary": {
-  "implementedRules": 999,
-  "testedRules": 991,
-  "preciseLocationRules": 996,
+  "implementedRules": 1002,
+  "testedRules": 994,
+  "preciseLocationRules": 999,
   "catalogEntries": 1922,
   "catalogOnlyNotImplemented": 1401,
   "catalogPlaceholderMetadata": 1810
@@ -11397,6 +11397,36 @@
    "title": "datetime.utcnow().timestamp() Is Off by the Server UTC Offset",
    "severity": "MEDIUM",
    "source": "lib/rules/logic-data-rules.ts",
+   "preciseLocation": true,
+   "tested": true,
+   "inCatalog": false
+  },
+  {
+   "ruleId": 29701,
+   "code": "RULE-29701",
+   "title": "Hardcoded localhost ${ctx} (${m[2].slice(0, 40)}) Breaks in Production",
+   "severity": "UNKNOWN",
+   "source": "lib/rules/logic-bug-rules.ts",
+   "preciseLocation": true,
+   "tested": true,
+   "inCatalog": false
+  },
+  {
+   "ruleId": 29702,
+   "code": "RULE-29702",
+   "title": "VERCEL_URL Used as a Full URL (No https://, Changes Every Deployment)",
+   "severity": "MEDIUM",
+   "source": "lib/rules/logic-bug-rules.ts",
+   "preciseLocation": true,
+   "tested": true,
+   "inCatalog": false
+  },
+  {
+   "ruleId": 29703,
+   "code": "RULE-29703",
+   "title": "Whole Site Marked noindex / Disallowed for Search Engines",
+   "severity": "HIGH",
+   "source": "lib/rules/logic-bug-rules.ts",
    "preciseLocation": true,
    "tested": true,
    "inCatalog": false
