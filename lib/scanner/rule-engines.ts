@@ -136,6 +136,7 @@ import { evaluateLogicDataRules } from '../rules/logic-data-rules';
 import { evaluateLogicReactNextRules } from '../rules/logic-react-next-rules';
 import { evaluateLogicPythonRules } from '../rules/logic-python-rules';
 import { evaluateLogicFrontendRules } from '../rules/logic-frontend-rules';
+import { evaluateLogicCrossFileRules } from '../rules/logic-crossfile-rules';
 
 import { evaluateAstFlowRules } from '../rules/ast-flow-rules';
 
@@ -448,6 +449,8 @@ export const RULE_ENGINES: ReadonlyArray<{ evaluate: RuleEngine; scanRawContent?
   { evaluate: evaluateLogicPythonRules },
   // Frontend logic/UI bugs: Tailwind dynamic classes, Radix asChild/Title, useFormStatus, search races, Stripe relative URLs (BUG-107.., Rule IDs 29740-29779)
   { evaluate: evaluateLogicFrontendRules },
+  // Cross-file frontend bugs: import case, dead links, image hosts, static export, Suspense, Zustand v5, Expo env, React 19 (BUG-125.., Rule IDs 29758-29779)
+  { evaluate: evaluateLogicCrossFileRules },
   // AST analysis (Babel): route auth/ownership flow and taint for JS/TS (AST-01.., Rule IDs 29301-29399)
   { evaluate: evaluateAstFlowRules },
 ];
