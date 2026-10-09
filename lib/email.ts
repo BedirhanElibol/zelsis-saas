@@ -30,8 +30,16 @@ export async function sendEmail(options: SendEmailOptions): Promise<SendEmailRes
     return { success: false, error: 'RESEND_API_KEY is not configured' };
   }
 
-  const defaultFrom = process.env.RESEND_FROM_EMAIL?.trim() || 'Zelsis <onboarding@resend.dev>';
-  const from = options.from || defaultFrom;
+  const configuredFrom = process.env.RESEND_FROM_EMAIL?.trim();
+  const isLegacyOrNoreply =
+    !configuredFrom ||
+    configuredFrom.includes('onboarding@resend.dev') ||
+    configuredFrom.includes('noreply@') ||
+    configuredFrom.toLowerCase().includes('shipguard');
+
+  const defaultFrom = isLegacyOrNoreply ? `Zelsis <${CONTACT_EMAIL}>` : configuredFrom;
+  const rawFrom = options.from || defaultFrom;
+  const from = rawFrom.includes('noreply@') ? `Zelsis <${CONTACT_EMAIL}>` : rawFrom;
   const to = Array.isArray(options.to) ? options.to : [options.to];
 
   try {
@@ -47,7 +55,7 @@ export async function sendEmail(options: SendEmailOptions): Promise<SendEmailRes
         subject: options.subject,
         html: options.html,
         text: options.text,
-        // noreply@ has no inbox, so replies go to the support mailbox
+        // All outbound messages and customer replies route through the single verified contact mailbox
         reply_to: options.replyTo || CONTACT_EMAIL,
         headers: options.headers,
       }),
