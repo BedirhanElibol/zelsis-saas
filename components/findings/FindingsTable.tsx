@@ -46,6 +46,20 @@ export const FindingsTable: React.FC<FindingsTableProps> = ({
   const [dismissFindingItem, setDismissFindingItem] = useState<Finding | null>(null);
   const [expandedCardIds, setExpandedCardIds] = useState<Set<string>>(new Set());
   const [showAdvisory, setShowAdvisory] = useState(false);
+  const tableRef = React.useRef<HTMLDivElement>(null);
+
+  // The sidebar's "Logic Bugs" entry (and ?findings=VIBECARE links) open this table on that pillar
+  React.useEffect(() => {
+    const open = (pillar: string) => {
+      setPillarFilter(pillar);
+      setTimeout(() => tableRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' }), 50);
+    };
+    const fromUrl = new URLSearchParams(window.location.search).get('findings');
+    if (fromUrl) open(fromUrl);
+    const onEvent = (e: Event) => open(String((e as CustomEvent).detail || 'ALL'));
+    window.addEventListener('zelsis:findings-tab', onEvent);
+    return () => window.removeEventListener('zelsis:findings-tab', onEvent);
+  }, []);
 
   // Default view: findings from verified rules only. Everything below (counts, tabs, bulk fix) uses this list.
   const advisoryCount = (Array.isArray(allFindings) ? allFindings : []).filter(isAdvisoryFinding).length;
@@ -184,7 +198,7 @@ export const FindingsTable: React.FC<FindingsTableProps> = ({
   });
 
   return (
-    <div className="bg-[#141414] border border-white/10 rounded-xl p-4 sm:p-6 flex flex-col gap-5 bg-[#141414] border-white/10">
+    <div ref={tableRef} className="scroll-mt-20 bg-[#141414] border border-white/10 rounded-xl p-4 sm:p-6 flex flex-col gap-5">
       {/* Snyk-Grade Release Readiness Radar & Category Breakdown Cards */}
       <div className="grid grid-cols-2 lg:grid-cols-5 gap-3">
         {/* Card 1: Security & OWASP */}

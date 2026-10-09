@@ -1,5 +1,6 @@
 'use client';
 
+import { withLiveStatus } from '@/lib/project-status';
 import React, { useState, useEffect } from 'react';
 import { Project } from '@/data/schema';
 import { MOCK_PROJECTS } from '@/data/demo-data';
@@ -224,7 +225,8 @@ export const ProjectsView: React.FC<ProjectsViewProps> = ({
             </button>
           </div>
         ) : (
-          projects.map((p) => {
+          projects.map((stored) => {
+            const p = withLiveStatus(stored);
             const isFailed = p.gateStatus === 'FAILED';
             const isWarning = p.gateStatus === 'WARNING';
 
