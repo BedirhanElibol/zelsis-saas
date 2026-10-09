@@ -68,8 +68,14 @@ jobs:
           TEST_BASE_URL: http://127.0.0.1:3000
 
       - name: Install Playwright Chromium
+        timeout-minutes: 12
+        # The apt/CDN download occasionally hangs; cap each attempt and retry instead of blocking the job
         run: |
-          npx playwright install --with-deps chromium
+          for attempt in 1 2 3; do
+            timeout 240 npx playwright install --with-deps chromium && exit 0
+            echo "Playwright install attempt $attempt failed or timed out, retrying"
+          done
+          exit 1
 
       - name: Run E2E Smoke Tests
         run: |
