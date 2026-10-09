@@ -239,4 +239,111 @@ export function Save({ data }: { data: unknown }) {
 }
 `),
   },
+  {
+    ruleIds: [29614], name: 'BUG-14 INSERT policy with USING',
+    detects: f('supabase/migrations/20250101_posts.sql', `create policy "insert own posts" on public.posts for insert to authenticated using (auth.uid() = user_id);
+`),
+    ignores: f('supabase/migrations/20250101_posts.sql', `create policy "insert own posts" on public.posts for insert to authenticated with check (auth.uid() = user_id);
+create policy "read own posts" on public.posts for select using (auth.uid() = user_id);
+`),
+  },
+  {
+    ruleIds: [29615], name: 'BUG-15 signup trigger function without security definer',
+    detects: f('supabase/migrations/20250101_profiles.sql', `create function public.handle_new_user() returns trigger language plpgsql as $$
+begin
+  insert into public.profiles (id, email) values (new.id, new.email);
+  return new;
+end; $$;
+create trigger on_auth_user_created after insert on auth.users for each row execute procedure public.handle_new_user();
+`),
+    ignores: f('supabase/migrations/20250101_profiles.sql', `create function public.handle_new_user() returns trigger language plpgsql security definer set search_path = '' as $$
+begin
+  insert into public.profiles (id, email) values (new.id, new.email);
+  return new;
+end; $$;
+create trigger on_auth_user_created after insert on auth.users for each row execute procedure public.handle_new_user();
+`),
+  },
+  {
+    ruleIds: [29616], name: 'BUG-16 policy compares auth.uid() with the generated row id',
+    detects: f('supabase/migrations/20250101_notes.sql', `create table public.notes (
+  id uuid primary key default gen_random_uuid(),
+  user_id uuid not null references auth.users on delete cascade,
+  body text
+);
+create policy "own notes" on public.notes for select using (auth.uid() = id);
+`),
+    ignores: f('supabase/migrations/20250101_notes.sql', `create table public.notes (
+  id uuid primary key default gen_random_uuid(),
+  user_id uuid not null references auth.users on delete cascade,
+  body text
+);
+create table public.profiles (id uuid primary key references auth.users on delete cascade, name text);
+create policy "own notes" on public.notes for select using (auth.uid() = user_id);
+create policy "own profile" on public.profiles for select using (auth.uid() = id);
+`),
+  },
+  {
+    ruleIds: [29617], name: 'BUG-17 FK to auth.users without on delete',
+    detects: f('supabase/migrations/20250101_orders.sql', `create table public.orders (
+  id uuid primary key default gen_random_uuid(),
+  user_id uuid not null references auth.users(id),
+  total int
+);
+`),
+    ignores: f('supabase/migrations/20250101_orders.sql', `create table public.orders (
+  id uuid primary key default gen_random_uuid(),
+  user_id uuid references auth.users(id) on delete set null,
+  total int
+);
+`),
+  },
+  {
+    ruleIds: [29618], name: 'BUG-18 Express response without return',
+    detects: f('src/routes/users.js', `app.post('/users', async (req, res) => {
+  if (!req.body.email) {
+    res.status(400).json({ error: 'email required' });
+  }
+  const user = await db.users.create(req.body);
+  res.status(201).json(user);
+});
+`),
+    ignores: f('src/routes/users.js', `app.post('/users', async (req, res) => {
+  if (!req.body.email) {
+    return res.status(400).json({ error: 'email required' });
+  }
+  const user = await db.users.create(req.body);
+  res.status(201).json(user);
+});
+app.get('/health', (req, res) => {
+  if (req.query.verbose) {
+    res.json({ ok: true, uptime: process.uptime() });
+  } else {
+    res.json({ ok: true });
+  }
+});
+`),
+  },
+  {
+    ruleIds: [29619], name: 'BUG-19 route handler response not returned',
+    detects: f('app/api/items/route.ts', `import { NextResponse } from 'next/server';
+export async function POST(req: Request) {
+  const body = await req.json();
+  if (!body.name) {
+    NextResponse.json({ error: 'name required' }, { status: 400 });
+  }
+  return NextResponse.json(await create(body.name));
+}
+`),
+    ignores: f('app/api/items/route.ts', `import { NextResponse } from 'next/server';
+export async function POST(req: Request) {
+  const body = await req.json();
+  if (!body.name) {
+    return NextResponse.json({ error: 'name required' }, { status: 400 });
+  }
+  const res = NextResponse.json(await create(body.name));
+  return res;
+}
+`),
+  },
 ];

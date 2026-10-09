@@ -1,8 +1,8 @@
 {
  "summary": {
-  "implementedRules": 919,
-  "testedRules": 911,
-  "preciseLocationRules": 916,
+  "implementedRules": 925,
+  "testedRules": 917,
+  "preciseLocationRules": 922,
   "catalogEntries": 1922,
   "catalogOnlyNotImplemented": 1401,
   "catalogPlaceholderMetadata": 1810
@@ -10596,6 +10596,66 @@
    "code": "RULE-29613",
    "title": "Error Swallowed, Then Success Shown to the User",
    "severity": "MEDIUM",
+   "source": "lib/rules/logic-bug-rules.ts",
+   "preciseLocation": true,
+   "tested": true,
+   "inCatalog": false
+  },
+  {
+   "ruleId": 29614,
+   "code": "RULE-29614",
+   "title": "INSERT Policy Uses USING Instead of WITH CHECK (Migration Fails)",
+   "severity": "HIGH",
+   "source": "lib/rules/logic-bug-rules.ts",
+   "preciseLocation": true,
+   "tested": true,
+   "inCatalog": false
+  },
+  {
+   "ruleId": 29615,
+   "code": "RULE-29615",
+   "title": "Signup Trigger Function ${fn} Is Not SECURITY DEFINER (Every Signup Fails)",
+   "severity": "HIGH",
+   "source": "lib/rules/logic-bug-rules.ts",
+   "preciseLocation": true,
+   "tested": true,
+   "inCatalog": false
+  },
+  {
+   "ruleId": 29616,
+   "code": "RULE-29616",
+   "title": "Policy Compares auth.uid() With ${table}.id Instead of ${ownerCol[1]}",
+   "severity": "HIGH",
+   "source": "lib/rules/logic-bug-rules.ts",
+   "preciseLocation": true,
+   "tested": true,
+   "inCatalog": false
+  },
+  {
+   "ruleId": 29617,
+   "code": "RULE-29617",
+   "title": "Foreign Key to auth.users Has No ON DELETE Rule (User Deletion Fails)",
+   "severity": "MEDIUM",
+   "source": "lib/rules/logic-bug-rules.ts",
+   "preciseLocation": true,
+   "tested": true,
+   "inCatalog": false
+  },
+  {
+   "ruleId": 29618,
+   "code": "RULE-29618",
+   "title": "Response Sent Without return; Handler Continues and Responds Again",
+   "severity": "HIGH",
+   "source": "lib/rules/logic-bug-rules.ts",
+   "preciseLocation": true,
+   "tested": true,
+   "inCatalog": false
+  },
+  {
+   "ruleId": 29619,
+   "code": "RULE-29619",
+   "title": "Route Handler Creates a Response but Never Returns It",
+   "severity": "HIGH",
    "source": "lib/rules/logic-bug-rules.ts",
    "preciseLocation": true,
    "tested": true,
