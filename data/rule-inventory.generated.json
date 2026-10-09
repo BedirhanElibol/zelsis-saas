@@ -1,8 +1,8 @@
 {
  "summary": {
-  "implementedRules": 925,
-  "testedRules": 917,
-  "preciseLocationRules": 922,
+  "implementedRules": 959,
+  "testedRules": 951,
+  "preciseLocationRules": 956,
   "catalogEntries": 1922,
   "catalogOnlyNotImplemented": 1401,
   "catalogPlaceholderMetadata": 1810
@@ -10657,6 +10657,346 @@
    "title": "Route Handler Creates a Response but Never Returns It",
    "severity": "HIGH",
    "source": "lib/rules/logic-bug-rules.ts",
+   "preciseLocation": true,
+   "tested": true,
+   "inCatalog": false
+  },
+  {
+   "ruleId": 29660,
+   "code": "RULE-29660",
+   "title": "${m[1]}() Is Not Awaited in a Serverless Handler",
+   "severity": "HIGH",
+   "source": "lib/rules/logic-data-rules.ts",
+   "preciseLocation": true,
+   "tested": true,
+   "inCatalog": false
+  },
+  {
+   "ruleId": 29661,
+   "code": "RULE-29661",
+   "title": "Promise Returned Without await Inside try: catch Never Runs",
+   "severity": "MEDIUM",
+   "source": "lib/rules/logic-data-rules.ts",
+   "preciseLocation": true,
+   "tested": true,
+   "inCatalog": false
+  },
+  {
+   "ruleId": 29662,
+   "code": "RULE-29662",
+   "title": ".map(async ...) Result Used as Data Without Promise.all",
+   "severity": "HIGH",
+   "source": "lib/rules/logic-data-rules.ts",
+   "preciseLocation": true,
+   "tested": true,
+   "inCatalog": false
+  },
+  {
+   "ruleId": 29663,
+   "code": "RULE-29663",
+   "title": "async Callback in .${m[1]}() Is Always Truthy",
+   "severity": "HIGH",
+   "source": "lib/rules/logic-data-rules.ts",
+   "preciseLocation": true,
+   "tested": true,
+   "inCatalog": false
+  },
+  {
+   "ruleId": 29664,
+   "code": "RULE-29664",
+   "title": "async reduce() Uses the Accumulator Without Awaiting It",
+   "severity": "HIGH",
+   "source": "lib/rules/logic-data-rules.ts",
+   "preciseLocation": true,
+   "tested": true,
+   "inCatalog": false
+  },
+  {
+   "ruleId": 29665,
+   "code": "RULE-29665",
+   "title": "async ${m[1]}() Used in a Condition Without await",
+   "severity": "HIGH",
+   "source": "lib/rules/logic-data-rules.ts",
+   "preciseLocation": true,
+   "tested": true,
+   "inCatalog": false
+  },
+  {
+   "ruleId": 29666,
+   "code": "RULE-29666",
+   "title": "${w[1]} Updated From a Stale Read (Lost Update Race)",
+   "severity": "UNKNOWN",
+   "source": "lib/rules/logic-data-rules.ts",
+   "preciseLocation": true,
+   "tested": true,
+   "inCatalog": false
+  },
+  {
+   "ruleId": 29667,
+   "code": "RULE-29667",
+   "title": ".single() Errors on 0 Rows, So the ",
+   "severity": "MEDIUM",
+   "source": "lib/rules/logic-data-rules.ts",
+   "preciseLocation": true,
+   "tested": true,
+   "inCatalog": false
+  },
+  {
+   "ruleId": 29668,
+   "code": "RULE-29668",
+   "title": "Supabase ${m[2]}() Error Is Discarded but Its data Is Used",
+   "severity": "HIGH",
+   "source": "lib/rules/logic-data-rules.ts",
+   "preciseLocation": true,
+   "tested": true,
+   "inCatalog": false
+  },
+  {
+   "ruleId": 29669,
+   "code": "RULE-29669",
+   "title": "${m[1]}: ${op} * 100 Is Not Rounded to an Integer",
+   "severity": "HIGH",
+   "source": "lib/rules/logic-data-rules.ts",
+   "preciseLocation": true,
+   "tested": true,
+   "inCatalog": false
+  },
+  {
+   "ruleId": 29670,
+   "code": "RULE-29670",
+   "title": "${m[1]} Rounds to Whole Dollars Before Converting to Cents",
+   "severity": "HIGH",
+   "source": "lib/rules/logic-data-rules.ts",
+   "preciseLocation": true,
+   "tested": true,
+   "inCatalog": false
+  },
+  {
+   "ruleId": 29671,
+   "code": "RULE-29671",
+   "title": "toFixed() String Added to a Number (Concatenation, Not Addition)",
+   "severity": "MEDIUM",
+   "source": "lib/rules/logic-data-rules.ts",
+   "preciseLocation": true,
+   "tested": true,
+   "inCatalog": false
+  },
+  {
+   "ruleId": 29672,
+   "code": "RULE-29672",
+   "title": "Input String Added to a Number (String Concatenation)",
+   "severity": "MEDIUM",
+   "source": "lib/rules/logic-data-rules.ts",
+   "preciseLocation": true,
+   "tested": true,
+   "inCatalog": false
+  },
+  {
+   "ruleId": 29673,
+   "code": "RULE-29673",
+   "title": "checkout.session.completed Fulfilled Without Checking payment_status",
+   "severity": "HIGH",
+   "source": "lib/rules/logic-data-rules.ts",
+   "preciseLocation": true,
+   "tested": true,
+   "inCatalog": false
+  },
+  {
+   "ruleId": 29674,
+   "code": "RULE-29674",
+   "title": "Subscription Access Granted Without Checking subscription.status",
+   "severity": "HIGH",
+   "source": "lib/rules/logic-data-rules.ts",
+   "preciseLocation": true,
+   "tested": true,
+   "inCatalog": false
+  },
+  {
+   "ruleId": 29675,
+   "code": "RULE-29675",
+   "title": "Stripe Timestamp ${f.split(",
+   "severity": "HIGH",
+   "source": "lib/rules/logic-data-rules.ts",
+   "preciseLocation": true,
+   "tested": true,
+   "inCatalog": false
+  },
+  {
+   "ruleId": 29676,
+   "code": "RULE-29676",
+   "title": "Date-Only String Parsed as UTC, Then Read in Local Time (Off by One Day)",
+   "severity": "MEDIUM",
+   "source": "lib/rules/logic-data-rules.ts",
+   "preciseLocation": true,
+   "tested": true,
+   "inCatalog": false
+  },
+  {
+   "ruleId": 29677,
+   "code": "RULE-29677",
+   "title": "getMonth() Is 0-Based (Month Off by One)",
+   "severity": "MEDIUM",
+   "source": "lib/rules/logic-data-rules.ts",
+   "preciseLocation": true,
+   "tested": true,
+   "inCatalog": false
+  },
+  {
+   "ruleId": 29678,
+   "code": "RULE-29678",
+   "title": "",
+   "severity": "MEDIUM",
+   "source": "lib/rules/logic-data-rules.ts",
+   "preciseLocation": true,
+   "tested": true,
+   "inCatalog": false
+  },
+  {
+   "ruleId": 29679,
+   "code": "RULE-29679",
+   "title": "Date Objects Compared With == / ===",
+   "severity": "MEDIUM",
+   "source": "lib/rules/logic-data-rules.ts",
+   "preciseLocation": true,
+   "tested": true,
+   "inCatalog": false
+  },
+  {
+   "ruleId": 29680,
+   "code": "RULE-29680",
+   "title": "toISOString() Used as the User",
+   "severity": "MEDIUM",
+   "source": "lib/rules/logic-data-rules.ts",
+   "preciseLocation": true,
+   "tested": true,
+   "inCatalog": false
+  },
+  {
+   "ruleId": 29681,
+   "code": "RULE-29681",
+   "title": "Date Mutated In Place, Then Used Again",
+   "severity": "MEDIUM",
+   "source": "lib/rules/logic-data-rules.ts",
+   "preciseLocation": true,
+   "tested": true,
+   "inCatalog": false
+  },
+  {
+   "ruleId": 29682,
+   "code": "RULE-29682",
+   "title": "${v} Used Without a Null Check After Fetching It",
+   "severity": "MEDIUM",
+   "source": "lib/rules/logic-data-rules.ts",
+   "preciseLocation": true,
+   "tested": true,
+   "inCatalog": false
+  },
+  {
+   "ruleId": 29683,
+   "code": "RULE-29683",
+   "title": "Email Stored Lowercased but Looked Up Case-Sensitively",
+   "severity": "MEDIUM",
+   "source": "lib/rules/logic-data-rules.ts",
+   "preciseLocation": true,
+   "tested": true,
+   "inCatalog": false
+  },
+  {
+   "ruleId": 29684,
+   "code": "RULE-29684",
+   "title": "Numbers Sorted With the Default .sort() (Compared as Strings)",
+   "severity": "MEDIUM",
+   "source": "lib/rules/logic-data-rules.ts",
+   "preciseLocation": true,
+   "tested": true,
+   "inCatalog": false
+  },
+  {
+   "ruleId": 29685,
+   "code": "RULE-29685",
+   "title": "",
+   "severity": "MEDIUM",
+   "source": "lib/rules/logic-data-rules.ts",
+   "preciseLocation": true,
+   "tested": true,
+   "inCatalog": false
+  },
+  {
+   "ruleId": 29686,
+   "code": "RULE-29686",
+   "title": "typeof Never Returns ",
+   "severity": "MEDIUM",
+   "source": "lib/rules/logic-data-rules.ts",
+   "preciseLocation": true,
+   "tested": true,
+   "inCatalog": false
+  },
+  {
+   "ruleId": 29687,
+   "code": "RULE-29687",
+   "title": "Assignment ${m[1]} = ${m[2]} Inside if (Should Be ===)",
+   "severity": "HIGH",
+   "source": "lib/rules/logic-data-rules.ts",
+   "preciseLocation": true,
+   "tested": true,
+   "inCatalog": false
+  },
+  {
+   "ruleId": 29688,
+   "code": "RULE-29688",
+   "title": "Math.round(x * ${m[2]} / ${m[2]}) Does Not Round to Decimals",
+   "severity": "MEDIUM",
+   "source": "lib/rules/logic-data-rules.ts",
+   "preciseLocation": true,
+   "tested": true,
+   "inCatalog": false
+  },
+  {
+   "ruleId": 29689,
+   "code": "RULE-29689",
+   "title": "Delete and Insert on ${t} Run in Parallel (Promise.all)",
+   "severity": "HIGH",
+   "source": "lib/rules/logic-data-rules.ts",
+   "preciseLocation": true,
+   "tested": true,
+   "inCatalog": false
+  },
+  {
+   "ruleId": 29690,
+   "code": "RULE-29690",
+   "title": "response.json() Is Not Awaited",
+   "severity": "HIGH",
+   "source": "lib/rules/logic-data-rules.ts",
+   "preciseLocation": true,
+   "tested": true,
+   "inCatalog": false
+  },
+  {
+   "ruleId": 29691,
+   "code": "RULE-29691",
+   "title": "Mutable Default Argument ${v}=${p[2]} Is Shared Between Calls",
+   "severity": "MEDIUM",
+   "source": "lib/rules/logic-data-rules.ts",
+   "preciseLocation": true,
+   "tested": true,
+   "inCatalog": false
+  },
+  {
+   "ruleId": 29692,
+   "code": "RULE-29692",
+   "title": "\\",
+   "severity": "MEDIUM",
+   "source": "lib/rules/logic-data-rules.ts",
+   "preciseLocation": true,
+   "tested": true,
+   "inCatalog": false
+  },
+  {
+   "ruleId": 29693,
+   "code": "RULE-29693",
+   "title": "datetime.utcnow().timestamp() Is Off by the Server UTC Offset",
+   "severity": "MEDIUM",
+   "source": "lib/rules/logic-data-rules.ts",
    "preciseLocation": true,
    "tested": true,
    "inCatalog": false
