@@ -1,8 +1,8 @@
 {
  "summary": {
-  "implementedRules": 1032,
-  "testedRules": 1024,
-  "preciseLocationRules": 1029,
+  "implementedRules": 1040,
+  "testedRules": 1032,
+  "preciseLocationRules": 1037,
   "catalogEntries": 1922,
   "catalogOnlyNotImplemented": 1401,
   "catalogPlaceholderMetadata": 1810
@@ -11727,6 +11727,86 @@
    "title": "Platform.OS Compared With ",
    "severity": "MEDIUM",
    "source": "lib/rules/logic-frontend-rules.ts",
+   "preciseLocation": true,
+   "tested": true,
+   "inCatalog": false
+  },
+  {
+   "ruleId": 29758,
+   "code": "RULE-29758",
+   "title": "Import ",
+   "severity": "HIGH",
+   "source": "lib/rules/logic-crossfile-rules.ts",
+   "preciseLocation": true,
+   "tested": true,
+   "inCatalog": false
+  },
+  {
+   "ruleId": 29759,
+   "code": "RULE-29759",
+   "title": "Link to ${href}, but No Page Exists at That Route",
+   "severity": "MEDIUM",
+   "source": "lib/rules/logic-crossfile-rules.ts",
+   "preciseLocation": true,
+   "tested": true,
+   "inCatalog": false
+  },
+  {
+   "ruleId": 29760,
+   "code": "RULE-29760",
+   "title": "next/image Loads ${host}, Which next.config Does Not Allow",
+   "severity": "HIGH",
+   "source": "lib/rules/logic-crossfile-rules.ts",
+   "preciseLocation": true,
+   "tested": true,
+   "inCatalog": false
+  },
+  {
+   "ruleId": 29761,
+   "code": "RULE-29761",
+   "title": "${what} in an App Built With output: ",
+   "severity": "HIGH",
+   "source": "lib/rules/logic-crossfile-rules.ts",
+   "preciseLocation": true,
+   "tested": true,
+   "inCatalog": false
+  },
+  {
+   "ruleId": 29762,
+   "code": "RULE-29762",
+   "title": "useSearchParams() in a Client Page Without a Suspense Boundary",
+   "severity": "HIGH",
+   "source": "lib/rules/logic-crossfile-rules.ts",
+   "preciseLocation": true,
+   "tested": true,
+   "inCatalog": false
+  },
+  {
+   "ruleId": 29763,
+   "code": "RULE-29763",
+   "title": "${x[1]} Selector Returns a New ${x[3].startsWith(",
+   "severity": "HIGH",
+   "source": "lib/rules/logic-crossfile-rules.ts",
+   "preciseLocation": true,
+   "tested": true,
+   "inCatalog": false
+  },
+  {
+   "ruleId": 29764,
+   "code": "RULE-29764",
+   "title": "process.env.${x[1]} Is Undefined in the Expo App",
+   "severity": "MEDIUM",
+   "source": "lib/rules/logic-crossfile-rules.ts",
+   "preciseLocation": true,
+   "tested": true,
+   "inCatalog": false
+  },
+  {
+   "ruleId": 29765,
+   "code": "RULE-29765",
+   "title": "${name}.defaultProps Is Ignored in React 19",
+   "severity": "MEDIUM",
+   "source": "lib/rules/logic-crossfile-rules.ts",
    "preciseLocation": true,
    "tested": true,
    "inCatalog": false

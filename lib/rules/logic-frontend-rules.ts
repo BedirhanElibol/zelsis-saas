@@ -1,5 +1,5 @@
 /**
- * Frontend logic and UI bugs in AI-written apps (BUG-107.., Rule IDs 29740-29779): Tailwind, shadcn/Radix, React 19
+ * Frontend logic and UI bugs in AI-written apps (BUG-107..124, Rule IDs 29740-29757): Tailwind, shadcn/Radix, React 19
  * forms, Next.js 15/16 request APIs, client data fetching, mobile Safari, Stripe redirect URLs, Vue and React Native.
  *
  * Reliability findings (type VIBECARE): they cost score points but never fail the release gate. Each rule matches a

@@ -31,6 +31,22 @@ export interface RepoContext {
   sensitiveColumnsByModel: Map<string, string[]>;
   /** Exported auth helpers and the routes middleware.ts authenticates, for the AST flow rules. */
   crossFileAuth: CrossFileAuth;
+  /** Every scanned path (forward slashes, exact case), for import / route / segment lookups. */
+  filePaths: Set<string>;
+  /** Lowest pinned major version per dependency across package.json files (`react` -> 19). */
+  packageMajors: Map<string, number>;
+  /** Folders ('' for the root) of package.json files that depend on expo; a file belongs to its nearest package.json. */
+  expoPackageDirs: Set<string>;
+  /** Facts read from next.config.*, or null when the repo has no next.config file. */
+  nextConfig: NextConfigFacts | null;
+}
+
+export interface NextConfigFacts {
+  /** Allowed remote image hostnames (remotePatterns hostname / domains), or null when images can load from anywhere or the list cannot be read. */
+  imageHosts: string[] | null;
+  outputExport: boolean;
+  /** rewrites() / redirects() / i18n / basePath change which paths exist, so link checks stay quiet. */
+  remapsRoutes: boolean;
 }
 
 /** Normalises `"public"."fn"` / `public.fn` / `fn` to `fn`. */
@@ -72,7 +88,45 @@ export function buildRepoContext(files: CodeFile[]): RepoContext {
       if (/SET\s+search_path/i.test(m[0])) hardenedSqlFunctions.add(normalizeSqlName(m[1]));
     }
   }
-  return { hardenedSqlFunctions, rlsEnabledTables, exposesDatabaseToClients, hasHealthEndpoint, nextMajorVersion, ...collectServerClientFacts(files), crossFileAuth: buildCrossFileAuth(files) };
+  return {
+    hardenedSqlFunctions, rlsEnabledTables, exposesDatabaseToClients, hasHealthEndpoint, nextMajorVersion,
+    ...collectServerClientFacts(files), crossFileAuth: buildCrossFileAuth(files), ...collectProjectFacts(files)
+  };
+}
+
+/** Paths, dependency majors and next.config facts for the cross-file frontend rules. */
+function collectProjectFacts(files: CodeFile[]): Pick<RepoContext, 'filePaths' | 'packageMajors' | 'expoPackageDirs' | 'nextConfig'> {
+  const filePaths = new Set<string>();
+  const packageMajors = new Map<string, number>();
+  const expoPackageDirs = new Set<string>();
+  let nextConfig: NextConfigFacts | null = null;
+  for (const file of files) {
+    const path = (file.path || '').replace(/\\/g, '/').replace(/^\.\//, '');
+    filePaths.add(path);
+    const content = file.content || '';
+    if (/(?:^|\/)package\.json$/.test(path) && !/node_modules\//.test(path)) {
+      for (const m of content.matchAll(/"(@?[\w./-]+)"\s*:\s*"(?:npm:[\w@./-]+@)?[\^~>=v\s]*(\d+)\.?/g)) {
+        const prev = packageMajors.get(m[1]);
+        const v = Number(m[2]);
+        if (prev === undefined || v < prev) packageMajors.set(m[1], v);
+      }
+      if (/"expo"\s*:/.test(content)) expoPackageDirs.add(path.includes('/') ? path.slice(0, path.lastIndexOf('/')) : '');
+    }
+    if (/(?:^|\/)next\.config\.(?:js|mjs|cjs|ts|mts)$/.test(path) && !/node_modules\//.test(path)) {
+      const hosts: string[] = [];
+      for (const m of content.matchAll(/hostname\s*:\s*['"`]([^'"`]+)['"`]/g)) hosts.push(m[1]);
+      const dom = /domains\s*:\s*\[([^\]]*)\]/.exec(content);
+      if (dom) for (const m of dom[1].matchAll(/['"`]([^'"`]+)['"`]/g)) hosts.push(m[1]);
+      // unoptimized / custom loader / computed patterns: any host may be allowed
+      const open = /unoptimized\s*:\s*true|loader(?:File)?\s*:|remotePatterns\s*:(?!\s*\[)|hostname\s*:(?!\s*['"`])|new URL\(|\.\.\.|process\.env/.test(content.slice(content.search(/images\s*:/) >= 0 ? content.search(/images\s*:/) : content.length));
+      nextConfig = {
+        imageHosts: open || hosts.includes('**') ? null : hosts,
+        outputExport: /output\s*:\s*['"`]export['"`]/.test(content),
+        remapsRoutes: /\b(?:rewrites|redirects)\s*(?:\(|:)|\bi18n\s*:|\bbasePath\s*:/.test(content)
+      };
+    }
+  }
+  return { filePaths, packageMajors, expoPackageDirs, nextConfig };
 }
 
 /** Column names that hold credentials or secrets (password hashes, tokens, API keys, TOTP seeds). */
@@ -128,4 +182,4 @@ function collectServerClientFacts(files: CodeFile[]): Pick<RepoContext, 'clientC
 }
 
 /** Without repo-wide knowledge, assume the database may be exposed (single-file scans keep RLS checks on). */
-export const emptyRepoContext = (): RepoContext => ({ hardenedSqlFunctions: new Set(), rlsEnabledTables: new Set(), exposesDatabaseToClients: true, hasHealthEndpoint: false, nextMajorVersion: null, clientComponentModules: new Set(), sensitiveColumnsByModel: new Map(), crossFileAuth: emptyCrossFileAuth() });
+export const emptyRepoContext = (): RepoContext => ({ hardenedSqlFunctions: new Set(), rlsEnabledTables: new Set(), exposesDatabaseToClients: true, hasHealthEndpoint: false, nextMajorVersion: null, clientComponentModules: new Set(), sensitiveColumnsByModel: new Map(), crossFileAuth: emptyCrossFileAuth(), filePaths: new Set(), packageMajors: new Map(), expoPackageDirs: new Set(), nextConfig: null });
