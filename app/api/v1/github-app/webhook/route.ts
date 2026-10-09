@@ -4,6 +4,7 @@ import crypto from 'crypto';
 import { createClient } from '@supabase/supabase-js';
 import { createGitHubAppClient, createCheckRun, updateCheckRun, postOrUpdatePRComment } from '@/lib/github/app';
 import { fetchGithubRepositoryData } from '@/lib/github-api';
+import { getConfiguredAppUrl } from '@/lib/app-url';
 import { runStaticCodeScan } from '@/lib/scanner-engine';
 import { calculateGateStatus, gatingFindings, calculateReadinessScore } from '@/lib/scanner/scoring';
 import { getOrgPolicy } from '@/lib/organization';
@@ -212,7 +213,7 @@ async function handlePullRequest(payload: any, supabase: any) {
         `- ⚠️ **Medium:** ${gFindings.filter(f => f.severity === 'MEDIUM').length}\n` +
         `- ℹ️ **Low:** ${gFindings.filter(f => f.severity === 'LOW').length}\n\n` +
         `_Scan includes ${newFindings.length} new issues and detected ${existingFindings.length} pre-existing issues._\n\n` +
-        `[View full report on Zelsis](https://shipguard-saas.vercel.app/dashboard)`;
+        `[View full report on Zelsis](${getConfiguredAppUrl()}/dashboard)`;
       
       await postOrUpdatePRComment(octokit, owner, repo, pull_request.number, commentBody);
 

@@ -179,7 +179,7 @@ export const CheckoutView: React.FC<CheckoutViewProps> = ({
           if (!isMounted) return;
           if (data.verified) {
             const verifiedTier: 'Pro' | 'Enterprise' = data.tier === 'Enterprise' ? 'Enterprise' : 'Pro';
-            const userEmail = data.email || currentUser?.email || email || 'customer@zelsis.dev';
+            const userEmail = data.email || currentUser?.email || email || 'customer@example.com';
             const key = generateLicenseKey(selectedPlanId, userEmail);
             activateUserTier(verifiedTier, key, {
               name: fullName || currentUser?.name,

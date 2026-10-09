@@ -539,7 +539,7 @@ The Open Graph image is displayed automatically when links are shared on X, Redd
        - Pillar 4: **Code Hygiene & Error Boundaries** -> `PASSED (0 leaks)`
        - Pillar 5: **Privacy & Zero Data Retention** -> `100% IN-MEMORY`
   4. **Bottom Verification Footer:**
-     - Live application URL: `https://shipguard-saas.vercel.app`
+     - Live application URL: `https://zelsis.com`
      - Trust pledge: *"No source code is ever stored on disk or used for model training."*
 
 ---
@@ -711,7 +711,7 @@ The Open Graph image is displayed automatically when links are shared on X, Redd
       VERIFY ANY PUBLIC REPOSITORY:
     </text>
     <text x="210" y="20" class="font-mono" font-size="12" font-weight="600" fill="#10B981">
-      https://shipguard-saas.vercel.app
+      https://zelsis.com
     </text>
     <text x="1040" y="20" class="font-mono" font-size="11" font-weight="400" fill="#52525B" text-anchor="end">
       Deterministic Pre-Flight Gate · Zero Third-Party Telemetry
@@ -744,7 +744,7 @@ To maintain high technical trust on X threads and Reddit posts, screenshots must
 
 ### 5.2 Key View 1: Clean Dashboard Overview & Scorecard
 
-- **Target URL:** `https://shipguard-saas.vercel.app`
+- **Target URL:** `https://zelsis.com`
 - **Component Hierarchy to Capture:**
   1. Top navigation: Logo, "Docs", "GitHub", "Status: Operational".
   2. Main Hero Input: Clean input field containing `https://github.com/acme-corp/nextjs-saas-template` with an emerald `"Run Release Audit"` button.

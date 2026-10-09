@@ -1,5 +1,5 @@
 /** Production host used when neither the browser origin nor NEXT_PUBLIC_APP_URL is available. */
-const FALLBACK_APP_URL = 'https://shipguard-saas.vercel.app';
+const FALLBACK_APP_URL = 'https://zelsis.com';
 
 /**
  * Public origin of this deployment, for links and copy-paste snippets (CI workflows, curl, badges).

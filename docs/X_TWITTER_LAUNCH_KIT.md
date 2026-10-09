@@ -48,21 +48,21 @@ X enforces a strict 160-character maximum for account biographies. Each option b
 
 #### Primary Option (Recommended)
 ```text
-Pre-deployment release gate for web apps. Audit security flaws, misconfigurations, and dependency risks before merging. Free public repo scans at zelsis.dev
+Pre-deployment release gate for web apps. Audit security flaws, misconfigurations, and dependency risks before merging. Free public repo scans at zelsis.com
 ```
 - **Character Count:** 159 / 160 characters.
 - **Tone:** Grounded, utility-first, clear value proposition, frictionless call to action.
 
 #### Alternative Option A (Enterprise & Full-Stack Focus)
 ```text
-Automated pre-deployment release gate for full-stack web apps. In-memory security, config, and dependency checks. Test any public repo free at zelsis.dev
+Automated pre-deployment release gate for full-stack web apps. In-memory security, config, and dependency checks. Test any public repo free at zelsis.com
 ```
 - **Character Count:** 156 / 160 characters.
 - **Tone:** Focuses on full-stack scope and in-memory architecture.
 
 #### Alternative Option B (Action-Oriented)
 ```text
-Clear your web app for takeoff. In-memory release gate auditing security leaks, broken configs, and vulnerable packages. Free public audits at zelsis.dev
+Clear your web app for takeoff. In-memory release gate auditing security leaks, broken configs, and vulnerable packages. Free public audits at zelsis.com
 ```
 - **Character Count:** 156 / 160 characters.
 - **Tone:** Pre-flight clearance metaphor with immediate functional clarity.
@@ -122,14 +122,14 @@ Zelsis is an automated pre-deployment release gate for web apps.
 
 Before merging to production, it runs in-memory audits across your stack to catch security leaks, broken configs, and vulnerable dependencies.
 
-Test any public repo free: https://zelsis.dev
+Test any public repo free: https://zelsis.com
 ```
 - **Character Count:** 261 / 280 characters.
 - **Conversion Role:** Explains the product in one sentence, clarifies the scope, and offers instant zero-friction verification on any public GitHub repository.
 
 #### Pinned Tweet Media Attachment:
 - **Asset Type:** High-resolution 16:9 MP4 video (15 seconds) or optimized animated GIF.
-- **Visual Content:** Screen capture showing someone pasting an open-source Next.js repository URL into `zelsis.dev`, the in-memory audit running in under 2 seconds, and a clean result card expanding to show an exact Git diff patching a leaked API key in a client configuration file.
+- **Visual Content:** Screen capture showing someone pasting an open-source Next.js repository URL into `zelsis.com`, the in-memory audit running in under 2 seconds, and a clean result card expanding to show an exact Git diff patching a leaked API key in a client configuration file.
 - **Alt Text:** `Zelsis pre-deployment scan completing an in-memory audit on a web application repository and generating an actionable Git diff.`
 
 ---
@@ -231,7 +231,7 @@ Audit any public GitHub repo right now:
 - No credit card required
 
 Paste your repo URL to verify your release gate:
-https://zelsis.dev
+https://zelsis.com
 ```
 - **Character Count:** 264 / 280 characters.
 - **Media Suggestion:** Quick GIF demonstrating 1-click audit initiation by simply pasting a public GitHub repository link.
@@ -574,7 +574,7 @@ The goal of Zelsis's engagement strategy is to become a recognized, helpful tech
   ```
 - **Follow-up / Link Guidance:** If others in the thread comment on automating the checklist:
   ```text
-  We built @ZelsisHQ specifically to run this whole checklist in-memory on any repo before merging. You can test public repos free at zelsis.dev if helpful!
+  We built @ZelsisHQ specifically to run this whole checklist in-memory on any repo before merging. You can test public repos free at zelsis.com if helpful!
   ```
 
 ---

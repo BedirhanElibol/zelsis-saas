@@ -1,7 +1,6 @@
 /**
  * Public contact address for support, billing, privacy, legal and security requests.
- * Set NEXT_PUBLIC_CONTACT_EMAIL to a mailbox that receives mail; the default only works
- * once the zelsis.com domain and its mail routing are live.
+ * NEXT_PUBLIC_CONTACT_EMAIL overrides it; the default is the live contact@zelsis.com mailbox.
  */
 export const CONTACT_EMAIL = process.env.NEXT_PUBLIC_CONTACT_EMAIL?.trim() || 'contact@zelsis.com';
 

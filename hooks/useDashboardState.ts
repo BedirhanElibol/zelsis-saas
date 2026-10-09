@@ -464,7 +464,7 @@ export function useDashboardState() {
             const data = await res.json();
             if (data.verified && (data.tier === 'Pro' || data.tier === 'Enterprise')) {
               const upgradedTier: 'Pro' | 'Enterprise' = data.tier === 'Enterprise' ? 'Enterprise' : 'Pro';
-              const activeEmail = data.email || userEmail || 'subscriber@zelsis.com';
+              const activeEmail = data.email || userEmail || 'subscriber@example.com';
               const validExpiry = data.expiresAt || new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString();
               
               setUser((prev) => {
@@ -1158,7 +1158,7 @@ export function useDashboardState() {
 
       if (isUpgradingTier) {
         const planId = fields.tier === 'Enterprise' ? 'vibecare' : 'zelsis-core';
-        const validKey = generateLicenseKey(planId, updated.email || 'customer@zelsis.dev');
+        const validKey = generateLicenseKey(planId, updated.email || 'customer@example.com');
         localStorage.setItem('zelsis_license_key', validKey);
         localStorage.setItem('shipguard_license_key', validKey);
       }

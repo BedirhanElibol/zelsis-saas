@@ -127,7 +127,7 @@ export async function activateUserTier(
     if (!userObj) {
       userObj = {
         name: 'Subscriber',
-        email: 'customer@zelsis.dev',
+        email: 'customer@example.com',
         tier: tier,
         isLoggedIn: true,
         emailVerified: true,
