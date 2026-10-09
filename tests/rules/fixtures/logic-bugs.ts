@@ -346,4 +346,45 @@ export async function POST(req: Request) {
 }
 `),
   },
+  {
+    ruleIds: [29701], name: 'SHIP-01 hardcoded localhost auth redirect',
+    detects: f('app/login/actions.ts', `'use server';
+export async function signup(formData: FormData) {
+  const supabase = await createClient();
+  await supabase.auth.signUp({ email: String(formData.get('email')), password: String(formData.get('password')),
+    options: { emailRedirectTo: 'http://localhost:3000/auth/callback' } });
+}
+`),
+    ignores: f('app/login/actions.ts', `'use server';
+const siteUrl = process.env.NEXT_PUBLIC_SITE_URL ?? 'http://localhost:3000';
+export async function signup(formData: FormData, assetBaseUrl = 'http://localhost:3002') {
+  const supabase = await createClient();
+  console.log('dev server on http://localhost:3000');
+  await supabase.auth.signUp({ email: String(formData.get('email')), password: String(formData.get('password')),
+    options: { emailRedirectTo: \`\${siteUrl}/auth/callback\` } });
+}
+`),
+  },
+  {
+    ruleIds: [29702], name: 'SHIP-02 VERCEL_URL used without protocol',
+    detects: f('lib/url.ts', `export const baseUrl = process.env.VERCEL_URL ?? 'localhost:3000';
+`),
+    ignores: f('lib/url.ts', `export const baseUrl = process.env.VERCEL_URL ? \`https://\${process.env.VERCEL_URL}\` : 'http://localhost:3000';
+`),
+  },
+  {
+    ruleIds: [29703], name: 'SHIP-03 site-wide noindex in root layout',
+    detects: f('app/layout.tsx', `import type { Metadata } from 'next';
+export const metadata: Metadata = {
+  title: 'Acme',
+  robots: { index: false, follow: false },
+};
+`),
+    ignores: f('app/layout.tsx', `import type { Metadata } from 'next';
+export const metadata: Metadata = {
+  title: 'Acme',
+  robots: process.env.VERCEL_ENV === 'production' ? undefined : { index: false },
+};
+`),
+  },
 ];
