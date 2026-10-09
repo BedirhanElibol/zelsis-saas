@@ -1,8 +1,8 @@
 {
  "summary": {
-  "implementedRules": 915,
-  "testedRules": 907,
-  "preciseLocationRules": 912,
+  "implementedRules": 919,
+  "testedRules": 911,
+  "preciseLocationRules": 916,
   "catalogEntries": 1922,
   "catalogOnlyNotImplemented": 1401,
   "catalogPlaceholderMetadata": 1810
@@ -9665,6 +9665,46 @@
    "ruleId": 28825,
    "code": "RULE-28825",
    "title": "Edge Function Runs an Admin Auth Operation Without Checking the Caller",
+   "severity": "HIGH",
+   "source": "lib/rules/missed-vulns-rules.ts",
+   "preciseLocation": true,
+   "tested": true,
+   "inCatalog": false
+  },
+  {
+   "ruleId": 28826,
+   "code": "RULE-28826",
+   "title": "Server Secret ${m[1]} Inlined Into the Browser Bundle (next.config env)",
+   "severity": "CRITICAL",
+   "source": "lib/rules/missed-vulns-rules.ts",
+   "preciseLocation": true,
+   "tested": true,
+   "inCatalog": false
+  },
+  {
+   "ruleId": 28827,
+   "code": "RULE-28827",
+   "title": "Rewrite Destination Host Taken From the Request Path (Open Proxy)",
+   "severity": "HIGH",
+   "source": "lib/rules/missed-vulns-rules.ts",
+   "preciseLocation": true,
+   "tested": true,
+   "inCatalog": false
+  },
+  {
+   "ruleId": 28828,
+   "code": "RULE-28828",
+   "title": "Workflow Prints an Encoded Secret, Bypassing Log Masking",
+   "severity": "HIGH",
+   "source": "lib/rules/missed-vulns-rules.ts",
+   "preciseLocation": true,
+   "tested": true,
+   "inCatalog": false
+  },
+  {
+   "ruleId": 28829,
+   "code": "RULE-28829",
+   "title": "",
    "severity": "HIGH",
    "source": "lib/rules/missed-vulns-rules.ts",
    "preciseLocation": true,
