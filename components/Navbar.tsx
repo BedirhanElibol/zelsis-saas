@@ -94,6 +94,7 @@ export const Navbar: React.FC<NavbarProps> = ({ onToggleDashboard, showDashboard
     { label: 'Benchmark', href: '#benchmark' },
     { label: 'Pricing', href: '#pricing' },
     { label: 'Docs', href: '/docs' },
+    { label: 'Guides', href: '/guides' },
     { label: 'FAQ', href: '#faq' },
   ];
 
