@@ -445,6 +445,59 @@ export function evaluateMissedVulnsRules(file: CodeFile, lines: string[], cleanC
     });
   }
 
+  const isNextConfig = /(?:^|\/)next\.config\.[cm]?[jt]s$/i.test(path);
+  // GAP-26: server secret inlined into the client bundle through next.config env
+  if (isNextConfig && /\benv\s*:\s*\{/.test(cleanContent)) {
+    const block = cleanContent.slice(cleanContent.search(/\benv\s*:\s*\{/));
+    const end = block.indexOf('}');
+    const start = cleanContent.length - block.length;
+    for (const m of block.slice(0, end).matchAll(/\b(\w*(?:SECRET|PRIVATE|SERVICE_ROLE|PASSWORD|DATABASE_URL|API_KEY|TOKEN)\w*)\s*:/gi)) {
+      if (/PUBLISHABLE|PUBLIC|ANON/i.test(m[1])) continue;
+      add({ ruleId: 28826, code: 'GAP-26', severity: 'CRITICAL', category: 'Secret Isolation', lineIdx: lineAt(cleanContent, start + m.index!),
+        title: `Server Secret ${m[1]} Inlined Into the Browser Bundle (next.config env)`,
+        why: 'Values in the next.config env block are replaced into client-side JavaScript at build time, so anyone can read this secret from the shipped bundle.',
+        fix: `Remove ${m[1]} from next.config env and read process.env.${m[1]} only in server code (route handlers, server actions, server components).` });
+    }
+  }
+
+  // GAP-27: rewrite whose destination host comes from the request path (open proxy / SSRF)
+  if (isNextConfig) {
+    lines.forEach((l, i) => {
+      if (!isComment(l) && /\bdestination\s*:\s*['"\x60]https?:\/\/:\w+/.test(l)) {
+        add({ ruleId: 28827, code: 'GAP-27', severity: 'HIGH', category: 'Server-Side Request Forgery', lineIdx: i,
+          title: 'Rewrite Destination Host Taken From the Request Path (Open Proxy)',
+          why: 'The host part of the destination is a path parameter, so a request can make the server fetch any URL, including internal services and cloud metadata endpoints, and return the response.',
+          fix: 'Hard-code the destination host (https://api.example.com/:path*) and keep only the path as a parameter.' });
+      }
+    });
+  }
+
+  // GAP-28: secret transformed before printing, which defeats GitHub log masking
+  if (/(?:^|\/)\.github\/workflows\/.+\.ya?ml$/i.test(path)) {
+    lines.forEach((l, i) => {
+      if (!isComment(l) && /\$\{\{\s*secrets\.\w+\s*\}\}[^|\n]*\|\s*(?:base64|rev|xxd|od|hexdump|sed|tr)\b/.test(l)) {
+        add({ ruleId: 28828, code: 'GAP-28', severity: 'HIGH', category: 'Secrets Management', lineIdx: i,
+          title: 'Workflow Prints an Encoded Secret, Bypassing Log Masking',
+          why: 'GitHub masks only the literal secret value; base64 or other transforms print a different string that is not masked, and the log (public for public repos) reveals the secret.',
+          fix: 'Never echo secrets. Pass them to tools through env: and let the tool read them; if you need an encoded form, register it with ::add-mask:: before printing anything.' });
+      }
+    });
+  }
+
+  // GAP-29: secret baked into a Docker image layer
+  if (/(?:^|\/)Dockerfile(?:\.[\w-]+)?$/i.test(path)) {
+    lines.forEach((l, i) => {
+      if (isComment(l)) return;
+      const copyEnv = /^\s*(?:COPY|ADD)\s+(?:--\S+\s+)*\.env(?:\.(?!example|sample|template|dist)[\w.-]+)?\s/i.test(l);
+      const envSecret = /^\s*ENV\s+(\w*(?:SECRET|PRIVATE_KEY|SERVICE_ROLE|PASSWORD|API_KEY|_TOKEN)\w*)\s*[= ]\s*\S/i.exec(l);
+      if (!copyEnv && !(envSecret && !/PUBLIC|PUBLISHABLE/i.test(envSecret[1]))) return;
+      add({ ruleId: 28829, code: 'GAP-29', severity: 'HIGH', category: 'Secrets Management', lineIdx: i,
+        title: copyEnv ? 'Environment File Copied Into the Docker Image' : `Secret ${envSecret![1]} Stored in a Docker Image Layer`,
+        why: 'Image layers keep every file and ENV value; anyone who can pull the image (registry, CI cache, a leaked tarball) reads the secret with docker history or by unpacking the layer.',
+        fix: 'Pass secrets at runtime (docker run -e / orchestrator secrets) or with BuildKit RUN --mount=type=secret during the build; add .env to .dockerignore.' });
+    });
+  }
+
   // GAP-19: Auth.js / NextAuth links an OAuth sign-in to an existing account by e-mail alone
   if (isJs && /next-auth|@auth\//.test(cleanContent)) {
     lines.forEach((l, i) => {

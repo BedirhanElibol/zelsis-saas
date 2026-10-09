@@ -646,4 +646,63 @@ Deno.serve(async (req) => {
 });
 `),
   },
+  {
+    ruleIds: [28826], name: 'GAP-26 next.config env inlines a server secret',
+    detects: f('next.config.js', `module.exports = {
+  env: { STRIPE_SECRET_KEY: process.env.STRIPE_SECRET_KEY },
+};
+`),
+    ignores: f('next.config.js', `module.exports = {
+  env: { NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY: process.env.STRIPE_PUBLISHABLE_KEY, APP_VERSION: '1.2.0' },
+};
+`),
+  },
+  {
+    ruleIds: [28827], name: 'GAP-27 rewrite destination host from a path param',
+    detects: f('next.config.js', `module.exports = {
+  async rewrites() {
+    return [{ source: '/proxy/:url*', destination: 'https://:url*' }];
+  },
+};
+`),
+    ignores: f('next.config.js', `module.exports = {
+  async rewrites() {
+    return [{ source: '/api/:path*', destination: 'https://api.example.com/:path*' }];
+  },
+};
+`),
+  },
+  {
+    ruleIds: [28828], name: 'GAP-28 workflow prints a base64-encoded secret',
+    detects: f('.github/workflows/ci.yml', `on: push
+jobs:
+  t:
+    runs-on: ubuntu-latest
+    steps:
+      - run: echo \${{ secrets.NPM_TOKEN }} | base64
+`),
+    ignores: f('.github/workflows/ci.yml', `on: push
+jobs:
+  t:
+    runs-on: ubuntu-latest
+    steps:
+      - run: npm publish
+        env:
+          NODE_AUTH_TOKEN: \${{ secrets.NPM_TOKEN }}
+`),
+  },
+  {
+    ruleIds: [28829], name: 'GAP-29 secret baked into a Docker image',
+    detects: f('Dockerfile', `FROM node:22-alpine
+ARG STRIPE_SECRET_KEY
+ENV STRIPE_SECRET_KEY=$STRIPE_SECRET_KEY
+COPY .env .env
+RUN npm ci && npm run build
+`),
+    ignores: f('Dockerfile', `FROM node:22-alpine
+ENV NODE_ENV=production
+COPY .env.example .env.example
+RUN --mount=type=secret,id=stripe STRIPE_SECRET_KEY=$(cat /run/secrets/stripe) npm run build
+`),
+  },
 ];
