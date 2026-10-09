@@ -263,7 +263,7 @@ export function evaluatePythonEnterpriseRules(file: CodeFile, lines: string[], c
     // Settings-level signing secret assigned a real-looking literal (placeholders and dev/test settings are skipped)
     const idx_8809 = isDevSettingsPath(lowerPath) ? -1 : pyFindLine(lines, /^\s*(?:SECRET_KEY|JWT_SECRET(?:_KEY)?)\s*(?::\s*str\s*)?=\s*['"]([^'"\s]{16,})['"]\s*$/, (l) => {
         const value = /=\s*['"]([^'"\s]{16,})['"]/.exec(l)![1];
-        return !/change|replace|example|your|dummy|placeholder|xxx|\{|\$|<|test|sample/i.test(value);
+        return !/change|replace|example|your|dummy|placeholder|xxx|\$\{|\{\{|^\$|<|test|sample/i.test(value);
     });
     if (idx_8809 !== -1) {
         const matchLineIdx = idx_8809;

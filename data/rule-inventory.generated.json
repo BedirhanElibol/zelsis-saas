@@ -1,8 +1,8 @@
 {
  "summary": {
-  "implementedRules": 900,
-  "testedRules": 892,
-  "preciseLocationRules": 897,
+  "implementedRules": 903,
+  "testedRules": 895,
+  "preciseLocationRules": 900,
   "catalogEntries": 1922,
   "catalogOnlyNotImplemented": 1401,
   "catalogPlaceholderMetadata": 1810
@@ -9635,6 +9635,36 @@
    "ruleId": 28822,
    "code": "RULE-28822",
    "title": "Every Submitted Form Field Is Written to the Database (Object.fromEntries)",
+   "severity": "HIGH",
+   "source": "lib/rules/missed-vulns-rules.ts",
+   "preciseLocation": true,
+   "tested": true,
+   "inCatalog": false
+  },
+  {
+   "ruleId": 28823,
+   "code": "RULE-28823",
+   "title": "Every Request Field Is Copied Onto the Model (setattr loop)",
+   "severity": "HIGH",
+   "source": "lib/rules/missed-vulns-rules.ts",
+   "preciseLocation": true,
+   "tested": true,
+   "inCatalog": false
+  },
+  {
+   "ruleId": 28824,
+   "code": "RULE-28824",
+   "title": "CORS Reflects Any Origin With Credentials Allowed",
+   "severity": "HIGH",
+   "source": "lib/rules/missed-vulns-rules.ts",
+   "preciseLocation": true,
+   "tested": true,
+   "inCatalog": false
+  },
+  {
+   "ruleId": 28825,
+   "code": "RULE-28825",
+   "title": "Edge Function Runs an Admin Auth Operation Without Checking the Caller",
    "severity": "HIGH",
    "source": "lib/rules/missed-vulns-rules.ts",
    "preciseLocation": true,
