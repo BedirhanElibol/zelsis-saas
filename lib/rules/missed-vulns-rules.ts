@@ -404,6 +404,47 @@ export function evaluateMissedVulnsRules(file: CodeFile, lines: string[], cleanC
     });
   }
 
+  // GAP-23: every key of a request dict copied onto a model (for k, v in payload.items(): setattr(obj, k, v))
+  if (isPy) {
+    lines.forEach((l, i) => {
+      const loop = l.match(/^\s*for\s+(\w+)\s*,\s*(\w+)\s+in\s+(\w+(?:\.\w+)*(?:\(\))?)\.items\(\)\s*:/);
+      if (!loop || isComment(l) || !/payload|body|data|update|changes|patch|request|json|form|params/i.test(loop[3])) return;
+      const win = lines.slice(i, i + 3).join('\n');
+      if (new RegExp(String.raw`\bif\s+(?:not\s+)?` + loop[1] + String.raw`\s+(?:not\s+)?in\b`).test(win)) return;
+      if (new RegExp(String.raw`\bsetattr\(\s*\w+\s*,\s*` + loop[1] + String.raw`\s*,\s*` + loop[2] + String.raw`\s*\)`).test(win)) {
+        add({ ruleId: 28823, code: 'GAP-23', severity: 'HIGH', category: 'Mass Assignment', lineIdx: i,
+          title: 'Every Request Field Is Copied Onto the Model (setattr loop)',
+          why: `Each key in ${loop[3]} becomes an attribute, so a request can set is_admin, role, balance or owner_id along with the fields the form shows.`,
+          fix: 'Validate with a Pydantic model that lists the editable fields and copy only those: for k, v in UserUpdate(**payload).model_dump(exclude_unset=True).items().' });
+      }
+    });
+  }
+
+  // GAP-24: Go handler reflects the request Origin while allowing credentials
+  if (/\.go$/i.test(path) && /Access-Control-Allow-Credentials["']?\s*,\s*["']true/i.test(cleanContent)) {
+    lines.forEach((l, i) => {
+      if (!isComment(l) && /Header\(\)\.(?:Set|Add)\(\s*"Access-Control-Allow-Origin"\s*,\s*\w+\.Header\.Get\(\s*"Origin"\s*\)\s*\)/.test(l)) {
+        add({ ruleId: 28824, code: 'GAP-24', severity: 'HIGH', category: 'Network & CORS', lineIdx: i,
+          title: 'CORS Reflects Any Origin With Credentials Allowed',
+          why: 'Echoing the request Origin together with Allow-Credentials: true lets any website make authenticated requests with the user\'s cookies and read the responses.',
+          fix: 'Compare the Origin against an allow-list of exact origins and only then echo it (and add Vary: Origin).' });
+      }
+    });
+  }
+
+  // GAP-25: Supabase Edge Function runs an auth.admin operation for any caller
+  if (/(?:^|\/)supabase\/functions\/.+\.[jt]s$/i.test(path) && /SERVICE_ROLE/.test(cleanContent)
+    && !/\.auth\.getUser\s*\(|getClaims\s*\(|jwtVerify|verify\w*\s*\(|headers\.get\(/i.test(cleanContent)) {
+    lines.forEach((l, i) => {
+      if (!isComment(l) && /\.auth\.admin\.(?:deleteUser|updateUserById|createUser|inviteUserByEmail|generateLink)\s*\(/.test(l)) {
+        add({ ruleId: 28825, code: 'GAP-25', severity: 'HIGH', category: 'Broken Access Control', lineIdx: i,
+          title: 'Edge Function Runs an Admin Auth Operation Without Checking the Caller',
+          why: 'Edge Functions accept the public anon key as a valid JWT by default, and this function never resolves the caller, so anyone can trigger the service-role admin call on any user.',
+          fix: 'Resolve the caller first (const { data: { user } } = await supabase.auth.getUser(token) from the Authorization header), check they may act on the target, and only then use the admin client.' });
+      }
+    });
+  }
+
   // GAP-19: Auth.js / NextAuth links an OAuth sign-in to an existing account by e-mail alone
   if (isJs && /next-auth|@auth\//.test(cleanContent)) {
     lines.forEach((l, i) => {

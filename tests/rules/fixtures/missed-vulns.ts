@@ -578,4 +578,72 @@ export async function updateProfile(formData: FormData) {
 }
 `),
   },
+  {
+    ruleIds: [8809], name: 'PY-SEC-09 Django generated key containing $ is still a real secret',
+    detects: f('mysite/settings.py', `SECRET_KEY = 'django-insecure-9x$k2l!m3n4b5v6c7x8z9a0s1d2f3g4h5j6k7l8'
+`),
+    ignores: f('mysite/settings.py', `import os
+SECRET_KEY = os.environ['DJANGO_SECRET_KEY']
+`),
+  },
+  {
+    ruleIds: [28823], name: 'GAP-23 setattr loop over a request dict',
+    detects: f('app/api/users.py', `@router.patch("/me")
+def update_me(payload: dict, user=Depends(current_user), db=Depends(get_db)):
+    for k, v in payload.items():
+        setattr(user, k, v)
+    db.commit()
+    return user
+`),
+    ignores: f('app/api/users.py', `EDITABLE = {"name", "bio"}
+@router.patch("/me")
+def update_me(payload: dict, user=Depends(current_user), db=Depends(get_db)):
+    for k, v in payload.items():
+        if k in EDITABLE:
+            setattr(user, k, v)
+    db.commit()
+    return user
+`),
+  },
+  {
+    ruleIds: [28824], name: 'GAP-24 Go CORS reflects Origin with credentials',
+    detects: f('main.go', `package main
+import "net/http"
+func cors(w http.ResponseWriter, r *http.Request) {
+  w.Header().Set("Access-Control-Allow-Origin", r.Header.Get("Origin"))
+  w.Header().Set("Access-Control-Allow-Credentials", "true")
+}
+`),
+    ignores: f('main.go', `package main
+import "net/http"
+var allowed = map[string]bool{"https://app.example.com": true}
+func cors(w http.ResponseWriter, r *http.Request) {
+  if o := r.Header.Get("Origin"); allowed[o] {
+    w.Header().Set("Access-Control-Allow-Origin", o)
+    w.Header().Set("Access-Control-Allow-Credentials", "true")
+  }
+}
+`),
+  },
+  {
+    ruleIds: [28825], name: 'GAP-25 edge function deletes any user without resolving the caller',
+    detects: f('supabase/functions/delete-user/index.ts', `import { createClient } from 'jsr:@supabase/supabase-js@2';
+Deno.serve(async (req) => {
+  const { userId } = await req.json();
+  const admin = createClient(Deno.env.get('SUPABASE_URL')!, Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!);
+  await admin.auth.admin.deleteUser(userId);
+  return new Response('ok');
+});
+`),
+    ignores: f('supabase/functions/delete-user/index.ts', `import { createClient } from 'jsr:@supabase/supabase-js@2';
+Deno.serve(async (req) => {
+  const token = req.headers.get('Authorization')!.replace('Bearer ', '');
+  const admin = createClient(Deno.env.get('SUPABASE_URL')!, Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!);
+  const { data: { user } } = await admin.auth.getUser(token);
+  if (!user) return new Response('unauthorized', { status: 401 });
+  await admin.auth.admin.deleteUser(user.id);
+  return new Response('ok');
+});
+`),
+  },
 ];
