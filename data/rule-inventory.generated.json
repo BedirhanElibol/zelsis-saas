@@ -1,8 +1,8 @@
 {
  "summary": {
-  "implementedRules": 899,
-  "testedRules": 891,
-  "preciseLocationRules": 896,
+  "implementedRules": 900,
+  "testedRules": 892,
+  "preciseLocationRules": 897,
   "catalogEntries": 1922,
   "catalogOnlyNotImplemented": 1401,
   "catalogPlaceholderMetadata": 1810
@@ -9625,6 +9625,16 @@
    "ruleId": 28821,
    "code": "RULE-28821",
    "title": "Storage Policy Lets Every Caller Read All Files in the ",
+   "severity": "HIGH",
+   "source": "lib/rules/missed-vulns-rules.ts",
+   "preciseLocation": true,
+   "tested": true,
+   "inCatalog": false
+  },
+  {
+   "ruleId": 28822,
+   "code": "RULE-28822",
+   "title": "Every Submitted Form Field Is Written to the Database (Object.fromEntries)",
    "severity": "HIGH",
    "source": "lib/rules/missed-vulns-rules.ts",
    "preciseLocation": true,

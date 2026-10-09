@@ -392,6 +392,18 @@ export function evaluateMissedVulnsRules(file: CodeFile, lines: string[], cleanC
     });
   }
 
+  // GAP-22: whole submitted form written to the database (Object.fromEntries(formData))
+  if (isJs && /Object\.fromEntries/.test(cleanContent)) {
+    lines.forEach((l, i) => {
+      if (!isComment(l) && /(?:\.(?:update|insert|upsert)\(\s*|\bdata\s*:\s*)(?:\{\s*\.\.\.)?Object\.fromEntries\(\s*(?:await\s+)?\w*(?:form|req)\w*(?:\.entries\(\))?\s*\)/i.test(l)) {
+        add({ ruleId: 28822, code: 'GAP-22', severity: 'HIGH', category: 'Mass Assignment', lineIdx: i,
+          title: 'Every Submitted Form Field Is Written to the Database (Object.fromEntries)',
+          why: 'Form fields come from the client, so a request can add role, plan, credits or user_id to the form and the update writes them as-is.',
+          fix: 'Parse the form with a Zod schema that lists the editable fields (schema.parse(Object.fromEntries(formData))) and write only the parsed object.' });
+      }
+    });
+  }
+
   // GAP-19: Auth.js / NextAuth links an OAuth sign-in to an existing account by e-mail alone
   if (isJs && /next-auth|@auth\//.test(cleanContent)) {
     lines.forEach((l, i) => {

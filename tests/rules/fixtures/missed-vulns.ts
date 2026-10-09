@@ -557,4 +557,25 @@ export async function isAdmin(token: string, key: Uint8Array) {
 }
 `),
   },
+  {
+    ruleIds: [28822], name: 'GAP-22 server action writes Object.fromEntries(formData)',
+    detects: f('app/actions/profile.ts', `'use server';
+import { createClient } from '@/lib/supabase/server';
+export async function updateProfile(formData: FormData) {
+  const supabase = await createClient();
+  const { data: { user } } = await supabase.auth.getUser();
+  await supabase.from('profiles').update(Object.fromEntries(formData)).eq('id', user!.id);
+}
+`),
+    ignores: f('app/actions/profile.ts', `'use server';
+import { z } from 'zod';
+import { createClient } from '@/lib/supabase/server';
+const Profile = z.object({ name: z.string().max(80), bio: z.string().max(500) });
+export async function updateProfile(formData: FormData) {
+  const supabase = await createClient();
+  const { data: { user } } = await supabase.auth.getUser();
+  await supabase.from('profiles').update(Profile.parse(Object.fromEntries(formData))).eq('id', user!.id);
+}
+`),
+  },
 ];
