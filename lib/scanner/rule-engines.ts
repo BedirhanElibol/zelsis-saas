@@ -138,6 +138,7 @@ import { evaluateLogicPythonRules } from '../rules/logic-python-rules';
 import { evaluateLogicFrontendRules } from '../rules/logic-frontend-rules';
 import { evaluateLogicCrossFileRules } from '../rules/logic-crossfile-rules';
 import { evaluateLogicCorpusRules } from '../rules/logic-corpus-rules';
+import { evaluateLogicFakeRules } from '../rules/logic-fake-rules';
 
 import { evaluateAstFlowRules } from '../rules/ast-flow-rules';
 
@@ -454,6 +455,8 @@ export const RULE_ENGINES: ReadonlyArray<{ evaluate: RuleEngine; scanRawContent?
   { evaluate: evaluateLogicCrossFileRules },
   // Bugs from the real-world bug corpus no rule caught: selector mutation, setters in render, Radix value handlers, RHF custom inputs, Gin handlers (BUG-133.., Rule IDs 29780-29799)
   { evaluate: evaluateLogicCorpusRules },
+  // Unfinished / fake features found reviewing real Lovable and Bolt apps: fake submits, placeholder keys, dead buttons, mock logins (FAKE-01.., BUG-144.., Rule IDs 29791-29819)
+  { evaluate: evaluateLogicFakeRules },
   // AST analysis (Babel): route auth/ownership flow and taint for JS/TS (AST-01.., Rule IDs 29301-29399)
   { evaluate: evaluateAstFlowRules },
 ];

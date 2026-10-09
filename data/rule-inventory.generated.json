@@ -1,8 +1,8 @@
 {
  "summary": {
-  "implementedRules": 1051,
-  "testedRules": 1043,
-  "preciseLocationRules": 1048,
+  "implementedRules": 1065,
+  "testedRules": 1057,
+  "preciseLocationRules": 1062,
   "catalogEntries": 1922,
   "catalogOnlyNotImplemented": 1401,
   "catalogPlaceholderMetadata": 1810
@@ -11917,6 +11917,146 @@
    "title": "${m[2]}.${m[3]}() Without return: the Handler Keeps Running",
    "severity": "HIGH",
    "source": "lib/rules/logic-corpus-rules.ts",
+   "preciseLocation": true,
+   "tested": true,
+   "inCatalog": false
+  },
+  {
+   "ruleId": 29791,
+   "code": "RULE-29791",
+   "title": "${x[1]} Is Still a Placeholder (",
+   "severity": "HIGH",
+   "source": "lib/rules/logic-fake-rules.ts",
+   "preciseLocation": true,
+   "tested": true,
+   "inCatalog": false
+  },
+  {
+   "ruleId": 29792,
+   "code": "RULE-29792",
+   "title": "${fn.name}() Fakes the Request With a Timer",
+   "severity": "HIGH",
+   "source": "lib/rules/logic-fake-rules.ts",
+   "preciseLocation": true,
+   "tested": true,
+   "inCatalog": false
+  },
+  {
+   "ruleId": 29793,
+   "code": "RULE-29793",
+   "title": "The Real Request Is Commented Out, but Success Is Still Shown",
+   "severity": "HIGH",
+   "source": "lib/rules/logic-fake-rules.ts",
+   "preciseLocation": true,
+   "tested": true,
+   "inCatalog": false
+  },
+  {
+   "ruleId": 29794,
+   "code": "RULE-29794",
+   "title": "${fn.name}() Shows Success Without Sending Anything",
+   "severity": "HIGH",
+   "source": "lib/rules/logic-fake-rules.ts",
+   "preciseLocation": true,
+   "tested": true,
+   "inCatalog": false
+  },
+  {
+   "ruleId": 29795,
+   "code": "RULE-29795",
+   "title": "",
+   "severity": "MEDIUM",
+   "source": "lib/rules/logic-fake-rules.ts",
+   "preciseLocation": true,
+   "tested": true,
+   "inCatalog": false
+  },
+  {
+   "ruleId": 29796,
+   "code": "RULE-29796",
+   "title": "Link Points to ",
+   "severity": "LOW",
+   "source": "lib/rules/logic-fake-rules.ts",
+   "preciseLocation": true,
+   "tested": true,
+   "inCatalog": false
+  },
+  {
+   "ruleId": 29797,
+   "code": "RULE-29797",
+   "title": "Login Checks a Hard-Coded Password",
+   "severity": "CRITICAL",
+   "source": "lib/rules/logic-fake-rules.ts",
+   "preciseLocation": true,
+   "tested": true,
+   "inCatalog": false
+  },
+  {
+   "ruleId": 29798,
+   "code": "RULE-29798",
+   "title": "removeEventListener(${x[1]}) Gets a New Function, So Nothing Is Removed",
+   "severity": "MEDIUM",
+   "source": "lib/rules/logic-fake-rules.ts",
+   "preciseLocation": true,
+   "tested": true,
+   "inCatalog": false
+  },
+  {
+   "ruleId": 29799,
+   "code": "RULE-29799",
+   "title": "process.env.${x[1]} in a Vite App Is Undefined in the Browser",
+   "severity": "HIGH",
+   "source": "lib/rules/logic-fake-rules.ts",
+   "preciseLocation": true,
+   "tested": true,
+   "inCatalog": false
+  },
+  {
+   "ruleId": 29800,
+   "code": "RULE-29800",
+   "title": "setTimeout of ${Math.round(ms / 60000)} min in a Serverless Function Never Fires",
+   "severity": "HIGH",
+   "source": "lib/rules/logic-fake-rules.ts",
+   "preciseLocation": true,
+   "tested": true,
+   "inCatalog": false
+  },
+  {
+   "ruleId": 29801,
+   "code": "RULE-29801",
+   "title": "Both Branches of the Ternary Are ${x[1].slice(0, 40)}",
+   "severity": "MEDIUM",
+   "source": "lib/rules/logic-fake-rules.ts",
+   "preciseLocation": true,
+   "tested": true,
+   "inCatalog": false
+  },
+  {
+   "ruleId": 29802,
+   "code": "RULE-29802",
+   "title": "Row Saved With ${m[1]}: ${m[2]} (null When Signed Out)",
+   "severity": "MEDIUM",
+   "source": "lib/rules/logic-fake-rules.ts",
+   "preciseLocation": true,
+   "tested": true,
+   "inCatalog": false
+  },
+  {
+   "ruleId": 29803,
+   "code": "RULE-29803",
+   "title": "Test-Mode Payment Key Hard-Coded (${x[2].slice(0, 9)}...)",
+   "severity": "MEDIUM",
+   "source": "lib/rules/logic-fake-rules.ts",
+   "preciseLocation": true,
+   "tested": true,
+   "inCatalog": false
+  },
+  {
+   "ruleId": 29804,
+   "code": "RULE-29804",
+   "title": "Auth Returns a Fake Token (",
+   "severity": "HIGH",
+   "source": "lib/rules/logic-fake-rules.ts",
    "preciseLocation": true,
    "tested": true,
    "inCatalog": false
