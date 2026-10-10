@@ -177,6 +177,9 @@ export const FindingsTable: React.FC<FindingsTableProps> = ({
     return matches ? [...new Set(matches.map((m) => m.toUpperCase()))] : [];
   };
 
+  // Only findings that carry a ready diff; every finding has a fix prompt, which is not a patch
+  const patchCount = findings.filter((f) => Boolean(f.diffPatch)).length;
+
   const filtered = safeFindings.filter((f) => {
     if (!f) return false;
     const safeSearch = safeLower(safeTrim(searchTerm));
@@ -194,7 +197,9 @@ export const FindingsTable: React.FC<FindingsTableProps> = ({
       pillarFilter === 'ALL' ||
       (pillarFilter === 'SCA_DEPS' ? isScaFinding(f) : f.type === pillarFilter);
 
-    return matchesSearch && matchesSeverity && matchesStatus && matchesPillar;
+    const matchesPatch = !hasDiffOnly || Boolean(f.diffPatch);
+
+    return matchesSearch && matchesSeverity && matchesStatus && matchesPillar && matchesPatch;
   });
 
   return (
@@ -377,9 +382,11 @@ export const FindingsTable: React.FC<FindingsTableProps> = ({
           <AlertOctagon size={12} />
           <span>Critical Only ({findings.filter(f => f.severity === 'CRITICAL').length})</span>
         </button>
+        {patchCount > 0 && (
         <button
           type="button"
           onClick={() => setHasDiffOnly(!hasDiffOnly)}
+          aria-pressed={hasDiffOnly}
           className={`px-2.5 py-1 rounded-md border text-[11px] transition-all cursor-pointer shrink-0 flex items-center gap-1 ${
             hasDiffOnly
               ? 'bg-white text-black font-bold border-white shadow-sm'
@@ -387,8 +394,9 @@ export const FindingsTable: React.FC<FindingsTableProps> = ({
           }`}
         >
           <GitCommit size={12} />
-          <span>Has 1-Click Code Patch ({findings.filter(f => Boolean(f.diffPatch || f.remediationPrompt)).length})</span>
+          <span>Has Code Patch ({patchCount})</span>
         </button>
+        )}
       </div>
 
       {advisoryCount > 0 && (
