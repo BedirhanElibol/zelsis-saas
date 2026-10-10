@@ -139,6 +139,7 @@ import { evaluateLogicFrontendRules } from '../rules/logic-frontend-rules';
 import { evaluateLogicCrossFileRules } from '../rules/logic-crossfile-rules';
 import { evaluateLogicCorpusRules } from '../rules/logic-corpus-rules';
 import { evaluateLogicFakeRules } from '../rules/logic-fake-rules';
+import { evaluateLiveBundleRules } from '../rules/live-bundle-rules';
 
 import { evaluateAstFlowRules } from '../rules/ast-flow-rules';
 
@@ -457,6 +458,8 @@ export const RULE_ENGINES: ReadonlyArray<{ evaluate: RuleEngine; scanRawContent?
   { evaluate: evaluateLogicCorpusRules },
   // Unfinished / fake features found reviewing real Lovable and Bolt apps: fake submits, placeholder keys, dead buttons, mock logins (FAKE-01.., BUG-144.., Rule IDs 29791-29819)
   { evaluate: evaluateLogicFakeRules },
+  // Live sites: secrets and Supabase keys found in the full JavaScript bundles, public source maps (LIVE-01.., Rule IDs 29805-29809)
+  { evaluate: evaluateLiveBundleRules },
   // AST analysis (Babel): route auth/ownership flow and taint for JS/TS (AST-01.., Rule IDs 29301-29399)
   { evaluate: evaluateAstFlowRules },
 ];

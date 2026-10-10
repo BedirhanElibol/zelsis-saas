@@ -304,7 +304,7 @@ export async function POST(req: NextRequest) {
           status: 'ERROR',
           gateStatus: 'FAILED',
           readinessScore: 0,
-          error: `Automated audit blocked by Cloudflare Bot Protection on "${rawRepoUrl}". Disable bot challenge for scanner user-agents or run audit against a staging endpoint.`,
+          error: `The site "${rawRepoUrl}" answered with a bot-protection challenge (Cloudflare or Vercel), so Zelsis could not read it. Scan the GitHub repository instead (connect GitHub or add it as a project), or allow the Zelsis scanner in your firewall settings.`,
           timestamp: new Date().toISOString()
         }, { status: 403 });
       }
