@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { installationTokenForRepo } from '@/lib/github/installations';
 import crypto from 'crypto';
 import { parseGithubUrl, prioritizeFilesForScan } from '@/lib/github-api';
 import { checkRateLimit, createRateLimitResponse } from '@/lib/rate-limiter';
@@ -312,7 +313,8 @@ export async function GET(req: NextRequest) {
     req.headers.get('x-github-token')?.trim() ||
     req.cookies.get('sb-provider-token')?.value?.trim() ||
     req.cookies.get('github_token')?.value?.trim() ||
-    undefined;
+    // Connected through the Zelsis GitHub App: a short-lived read token for this owner, no PAT needed
+    (authenticatedUserId ? (await installationTokenForRepo(authenticatedUserId, owner)) ?? undefined : undefined);
 
   let activeToken = tokenPool.getEffectiveToken(userToken);
 

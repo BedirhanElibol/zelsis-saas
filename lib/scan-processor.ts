@@ -1,5 +1,6 @@
 import { runStaticCodeScan, CodeFile } from '@/lib/scanner-engine';
-import { fetchGithubRepositoryData } from '@/lib/github-api';
+import { installationTokenForRepo } from '@/lib/github/installations';
+import { fetchGithubRepositoryData, parseGithubUrl } from '@/lib/github-api';
 import { fetchWebsiteAuditData, isValidWebUrl } from '@/lib/website-scanner';
 import { dispatchWebhookAlerts } from '@/lib/notifications';
 import { logger } from '@/lib/logger';
@@ -180,7 +181,10 @@ export async function executeScanJob(options: ExecuteScanJobOptions): Promise<Sc
       resolvedTargetName = webData?.title || rawRepoUrl;
     } else {
       // GitHub Repository Fetch
-      const liveData = await fetchGithubRepositoryData(rawRepoUrl, githubToken);
+      // No token from the browser: use the GitHub App installation the user connected for this owner
+      const owner = parseGithubUrl(rawRepoUrl)?.owner;
+      const effectiveToken = githubToken || (authenticatedUserId && owner ? (await installationTokenForRepo(authenticatedUserId, owner)) ?? undefined : undefined);
+      const liveData = await fetchGithubRepositoryData(rawRepoUrl, effectiveToken);
 
       // A scheduled rescan has no token: a repo GitHub hides from anonymous reads is private (or gone),
       // so record that before failing and the weekly cron stops picking it up.

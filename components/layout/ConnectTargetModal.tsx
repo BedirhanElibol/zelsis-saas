@@ -1,6 +1,7 @@
 'use client';
 
 import { GithubTokenSteps } from '@/components/dashboard/GithubTokenSteps';
+import { GithubConnectPanel } from '@/components/dashboard/GithubConnectPanel';
 import React, { useState, useEffect } from 'react';
 import { Project } from '@/data/schema';
 import { FolderGit2, X, Globe, Eye, EyeOff, Play } from 'lucide-react';
@@ -214,6 +215,7 @@ export const ConnectTargetModal: React.FC<ConnectTargetModalProps> = ({
 
           {targetType === 'GITHUB' ? (
             <>
+              <GithubConnectPanel onPickRepo={(url) => { setGithubUrl(url); setUrlError(''); }} />
               <div className="flex flex-col gap-1">
                 <label htmlFor="target-github-url" className="text-[0.7rem] text-[#A1A1AA] font-mono font-bold uppercase">GitHub Repository URL *</label>
                 <input
