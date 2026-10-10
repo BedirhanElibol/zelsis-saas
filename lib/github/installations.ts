@@ -108,3 +108,58 @@ export async function listConnectedRepos(userId: string): Promise<{ fullName: st
   }
   return out.slice(0, 500);
 }
+
+/** OAuth client of the GitHub App ("Request user authorization during installation"), needed to link existing installations. */
+const oauthClient = () => {
+  const id = process.env.GITHUB_APP_CLIENT_ID?.trim();
+  const secret = process.env.GITHUB_APP_CLIENT_SECRET?.trim();
+  return id && secret ? { id, secret } : null;
+};
+export const isGithubOAuthConfigured = (): boolean => Boolean(oauthClient() && appCredentials());
+
+/**
+ * Links every installation of this app the GitHub user can access to the signed-in Zelsis user.
+ * GitHub sends an OAuth code after install and after "Save" on an existing installation, so this also covers
+ * reconnecting from another browser or account, where the signed install state is not available.
+ */
+export async function linkInstallationsFromOAuthCode(userId: string, code: string): Promise<number> {
+  const client = oauthClient();
+  const creds = appCredentials();
+  const admin = getSupabaseAdmin();
+  if (!client || !creds || !admin) return 0;
+
+  const tokenRes = await fetch('https://github.com/login/oauth/access_token', {
+    method: 'POST',
+    headers: { Accept: 'application/json', 'Content-Type': 'application/json' },
+    body: JSON.stringify({ client_id: client.id, client_secret: client.secret, code }),
+    signal: AbortSignal.timeout(10_000),
+  });
+  const tokenJson = (await tokenRes.json().catch(() => ({}))) as { access_token?: string };
+  if (!tokenJson.access_token) return 0;
+
+  const res = await fetch('https://api.github.com/user/installations?per_page=100', {
+    headers: { Accept: 'application/vnd.github+json', Authorization: `Bearer ${tokenJson.access_token}`, 'X-GitHub-Api-Version': '2022-11-28' },
+    signal: AbortSignal.timeout(10_000),
+  });
+  const data = (await res.json().catch(() => ({}))) as {
+    installations?: { id: number; app_id: number; repository_selection: string; account: { login?: string; type?: string } | null }[];
+  };
+  const mine = (data.installations || []).filter((i) => String(i.app_id) === String(creds.appId));
+  let linked = 0;
+  for (const i of mine) {
+    const { error } = await admin.from('github_installations').upsert(
+      {
+        user_id: userId,
+        installation_id: i.id,
+        account_login: i.account?.login || '',
+        account_type: i.account?.type || 'User',
+        repository_selection: i.repository_selection,
+        updated_at: new Date().toISOString(),
+      },
+      { onConflict: 'installation_id' }
+    );
+    if (!error) linked++;
+    else logger.warn('[GitHub App] Could not link installation:', error.message);
+  }
+  return linked;
+}
