@@ -54,7 +54,7 @@ export default function TermsPage() {
           <section className="flex flex-col gap-2">
             <h2 className="text-base font-bold text-[#FFFFFF]">1. Terms Agreement &amp; Operating Entity</h2>
             <p>
-              By accessing, browsing, or utilizing the Zelsis Pre-Flight Release Gate SaaS platform (&quot;Service&quot;), you agree to be bound by these Terms of Service. If you are accepting on behalf of an organization or corporate entity, you represent and warrant that you possess full authority to bind that entity to these Terms.
+              By accessing, browsing, or utilizing Zelsis, the code scanning service (&quot;Service&quot;), you agree to be bound by these Terms of Service. If you are accepting on behalf of an organization or corporate entity, you represent and warrant that you possess full authority to bind that entity to these Terms.
             </p>
             <div className="bg-[#141414] border border-[#262626] rounded-xl p-3 text-xs font-mono text-[#AAAAAA] mt-1 space-y-1">
               <div><strong className="text-white">Operating Entity:</strong> Zelsis Technologies (Bedirhan Elibol)</div>

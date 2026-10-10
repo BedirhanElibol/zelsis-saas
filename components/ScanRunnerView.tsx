@@ -869,7 +869,7 @@ export const ScanRunnerView: React.FC<ScanRunnerViewProps> = ({
       isCancelled = true;
       controller.abort();
       if (typeof document !== 'undefined') {
-        document.title = 'Zelsis | Release Gate SaaS';
+        document.title = 'Zelsis | Dashboard';
       }
       if (intervalRef.current) {
         clearInterval(intervalRef.current);
