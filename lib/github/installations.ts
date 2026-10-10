@@ -91,10 +91,12 @@ export async function installationTokenForRepo(userId: string, owner: string): P
 }
 
 /** Repositories the user gave the app access to, across all their installations. */
-export async function listConnectedRepos(userId: string): Promise<{ fullName: string; private: boolean; url: string }[]> {
+export async function listConnectedRepos(userId: string): Promise<{ repos: { fullName: string; private: boolean; url: string }[]; errors: string[] }> {
   const creds = appCredentials();
-  if (!creds) return [];
+  if (!creds) return { repos: [], errors: ['GitHub App credentials are not configured'] };
   const out: { fullName: string; private: boolean; url: string }[] = [];
+  // Error messages (never secrets) go back to the caller, so a misconfigured key shows up instead of an empty list
+  const errors: string[] = [];
   for (const install of await getUserInstallations(userId)) {
     try {
       const octokit = new Octokit({ authStrategy: createAppAuth, auth: { ...creds, installationId: install.installationId } });
@@ -103,10 +105,12 @@ export async function listConnectedRepos(userId: string): Promise<{ fullName: st
         out.push({ fullName: r.full_name, private: r.private, url: r.html_url });
       }
     } catch (err) {
-      logger.warn('[GitHub App] Could not list installation repositories:', err instanceof Error ? err.message : String(err));
+      const message = err instanceof Error ? err.message : String(err);
+      errors.push(message.slice(0, 200));
+      logger.warn('[GitHub App] Could not list installation repositories:', message);
     }
   }
-  return out.slice(0, 500);
+  return { repos: out.slice(0, 500), errors };
 }
 
 /** OAuth client of the GitHub App ("Request user authorization during installation"), needed to link existing installations. */

@@ -7,5 +7,6 @@ export async function GET(req: Request) {
   if (!isGithubAppConfigured()) return NextResponse.json({ configured: false, repos: [] });
   const userId = await getRequestUserId(req);
   if (!userId) return NextResponse.json({ error: 'Sign in first.' }, { status: 401 });
-  return NextResponse.json({ configured: true, repos: await listConnectedRepos(userId) }, { headers: { 'Cache-Control': 'no-store' } });
+  const { repos, errors } = await listConnectedRepos(userId);
+  return NextResponse.json({ configured: true, repos, errors }, { headers: { 'Cache-Control': 'no-store' } });
 }
