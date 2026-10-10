@@ -11,6 +11,9 @@ interface HelpLauncherProps {
   onOpenTour?: () => void;
 }
 
+/** Lowercase without accents, so "özel" matches "ozel" and "İNDİR" matches "indir". */
+const fold = (s: string) => s.toLocaleLowerCase('tr').replace(/ı/g, 'i').normalize('NFD').replace(/[̀-ͯ]/g, '');
+
 interface Task {
   title: string;
   hint: string;
@@ -35,7 +38,7 @@ export function HelpLauncher({ onNavigate, onOpenConnect, onFocusScan, onOpenTou
     { title: 'Scan a public repository', hint: 'Paste a GitHub URL in the box at the top and press Scan.', keywords: 'scan audit check repo github url analyze tara', run: onFocusScan },
     { title: 'Scan a private repository', hint: 'Add a project and connect GitHub (or paste a read-only token).', keywords: 'private token pat secret access connect github ozel gizli', run: onOpenConnect },
     { title: 'See logic bugs and broken features', hint: 'Bugs that break features: fake submits, dead buttons, wrong dates, money.', keywords: 'logic bug broken feature unfinished fake button form mantik hata', run: () => { onNavigate('dashboard'); setTimeout(() => window.dispatchEvent(new CustomEvent('zelsis:findings-tab', { detail: 'VIBECARE' })), 150); } },
-    { title: 'See security findings', hint: 'Leaked keys, open Supabase RLS, injection, auth holes.', keywords: 'security vulnerability rls supabase secret leak xss guvenlik acik', run: () => { onNavigate('dashboard'); setTimeout(() => window.dispatchEvent(new CustomEvent('zelsis:findings-tab', { detail: 'SECURITY' })), 150); } },
+    { title: 'See security findings', hint: 'Leaked keys, open Supabase RLS, injection, auth holes.', keywords: 'security vulnerability rls supabase secret leak xss guvenlik acik acigi sizinti', run: () => { onNavigate('dashboard'); setTimeout(() => window.dispatchEvent(new CustomEvent('zelsis:findings-tab', { detail: 'SECURITY' })), 150); } },
     { title: 'Block bad releases in CI (GitHub Action)', hint: 'Copy the workflow file and add your API key as a GitHub secret.', keywords: 'ci cd github action workflow pull request pr gate block deploy pipeline', run: go('cicd') },
     { title: 'Get an API key', hint: 'Settings & API Keys: create a key for the CI gate or the API.', keywords: 'api key token settings ci secret anahtar', run: go('settings') },
     { title: 'Download a report or PDF', hint: 'Reports & PDF Export: share the audit with your team or client.', keywords: 'report pdf export download share certificate rapor indir', run: go('lab-briefing') },
@@ -51,10 +54,10 @@ export function HelpLauncher({ onNavigate, onOpenConnect, onFocusScan, onOpenTou
   }, [onNavigate, onOpenConnect, onFocusScan, onOpenTour, router]);
 
   const results = useMemo(() => {
-    const words = query.toLowerCase().split(/\s+/).filter(Boolean);
+    const words = fold(query).split(/\s+/).filter(Boolean);
     if (!words.length) return tasks;
     return tasks.filter((t) => {
-      const hay = `${t.title} ${t.hint} ${t.keywords}`.toLowerCase();
+      const hay = fold(`${t.title} ${t.hint} ${t.keywords}`);
       return words.every((w) => hay.includes(w));
     });
   }, [query, tasks]);
