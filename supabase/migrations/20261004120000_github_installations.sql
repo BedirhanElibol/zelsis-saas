@@ -35,18 +35,20 @@ CREATE POLICY "Service role can manage all github installations"
     WITH CHECK (true);
 
 -- Indexing for quick lookups
-CREATE INDEX idx_github_installations_user_id ON public.github_installations(user_id);
-CREATE INDEX idx_github_installations_installation_id ON public.github_installations(installation_id);
+CREATE INDEX IF NOT EXISTS idx_github_installations_user_id ON public.github_installations(user_id);
 
--- Optional: update trigger
-CREATE OR REPLACE FUNCTION update_github_installations_modtime()
-RETURNS TRIGGER AS $$
+-- Optional: update trigger (fixed search_path, as applied to production on 2026-10-10)
+CREATE OR REPLACE FUNCTION public.update_github_installations_modtime()
+RETURNS TRIGGER
+LANGUAGE plpgsql
+SET search_path = ''
+AS $$
 BEGIN
-    NEW.updated_at = NOW();
+    NEW.updated_at = pg_catalog.now();
     RETURN NEW;
 END;
-$$ LANGUAGE plpgsql;
+$$;
 
 CREATE TRIGGER trg_github_installations_updated_at
 BEFORE UPDATE ON public.github_installations
-FOR EACH ROW EXECUTE FUNCTION update_github_installations_modtime();
+FOR EACH ROW EXECUTE FUNCTION public.update_github_installations_modtime();
