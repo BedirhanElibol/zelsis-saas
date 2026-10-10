@@ -279,7 +279,7 @@ export const ScanRunnerView: React.FC<ScanRunnerViewProps> = ({
             const pct = Math.min(100, Math.round(25 + (currentIdx / realLogs.length) * 75));
             setProgress(pct);
             if (typeof document !== 'undefined') {
-              document.title = `(${pct}%) Zelsis Audit | ${project.name}`;
+              document.title = `(${pct}%) Scanning | Zelsis`;
             }
           } else {
             if (intervalRef.current) clearInterval(intervalRef.current);
@@ -288,7 +288,7 @@ export const ScanRunnerView: React.FC<ScanRunnerViewProps> = ({
             setIsFinished(true);
 
             if (typeof document !== 'undefined') {
-              document.title = `Audit Complete | ${project.name}`;
+              document.title = `Scan complete | Zelsis`;
               if (document.hidden && typeof window !== 'undefined' && 'Notification' in window && Notification.permission === 'granted') {
                 new Notification(`Zelsis Audit Completed: ${project.name}`, {
                   body: `Release Gate Audit finished successfully with readiness score ${result.score}/100.`,
@@ -869,7 +869,7 @@ export const ScanRunnerView: React.FC<ScanRunnerViewProps> = ({
       isCancelled = true;
       controller.abort();
       if (typeof document !== 'undefined') {
-        document.title = 'Zelsis | Dashboard';
+        document.title = 'Zelsis';
       }
       if (intervalRef.current) {
         clearInterval(intervalRef.current);

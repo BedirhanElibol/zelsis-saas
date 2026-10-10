@@ -144,3 +144,26 @@ export function serializeProjectsForStorage(projects: Project[], allowLocalAudit
   });
   return JSON.stringify(stored);
 }
+
+/** One key per repository: "owner/repo", "https://github.com/owner/repo/" and "...repo.git" are the same project. */
+export function repoKey(url?: string): string {
+  return (url || '').trim().toLowerCase()
+    .replace(/^https?:\/\//, '').replace(/^www\./, '').replace(/^github\.com\//, '')
+    .replace(/\.git$/, '').replace(/\/+$/, '');
+}
+
+/** Collapses projects that point at the same repository, keeping the one with the most recent scan and findings. */
+export function dedupeProjects(projects: Project[]): Project[] {
+  const rank = (p: Project) => [Array.isArray(p.findings) && p.findings.length > 0 ? 1 : 0, p.lastScanIso || ""] as const;
+  const byKey = new Map<string, Project>();
+  const order: string[] = [];
+  for (const p of projects) {
+    const key = isLocalAuditProject(p) || !p.repoUrl ? `id:${p.id}` : repoKey(p.repoUrl);
+    const prev = byKey.get(key);
+    if (!prev) { byKey.set(key, p); order.push(key); continue; }
+    const [pf, pd] = rank(p);
+    const [qf, qd] = rank(prev);
+    if (pf > qf || (pf === qf && pd > qd)) byKey.set(key, p);
+  }
+  return order.map((k) => byKey.get(k)!);
+}
