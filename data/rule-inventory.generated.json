@@ -1,8 +1,8 @@
 {
  "summary": {
-  "implementedRules": 1065,
+  "implementedRules": 1068,
   "testedRules": 1057,
-  "preciseLocationRules": 1062,
+  "preciseLocationRules": 1065,
   "catalogEntries": 1922,
   "catalogOnlyNotImplemented": 1401,
   "catalogPlaceholderMetadata": 1810
@@ -12059,6 +12059,36 @@
    "source": "lib/rules/logic-fake-rules.ts",
    "preciseLocation": true,
    "tested": true,
+   "inCatalog": false
+  },
+  {
+   "ruleId": 29805,
+   "code": "LIVE-01",
+   "title": "Supabase ${s.kind === ",
+   "severity": "CRITICAL",
+   "source": "lib/rules/live-bundle-rules.ts",
+   "preciseLocation": true,
+   "tested": false,
+   "inCatalog": false
+  },
+  {
+   "ruleId": 29806,
+   "code": "LIVE-02",
+   "title": "${s.kind} Is in Your Website",
+   "severity": "UNKNOWN",
+   "source": "lib/rules/live-bundle-rules.ts",
+   "preciseLocation": true,
+   "tested": false,
+   "inCatalog": false
+  },
+  {
+   "ruleId": 29807,
+   "code": "LIVE-03",
+   "title": "Source Maps Are Public, So Your Original Source Code Can Be Downloaded",
+   "severity": "MEDIUM",
+   "source": "lib/rules/live-bundle-rules.ts",
+   "preciseLocation": true,
+   "tested": false,
    "inCatalog": false
   }
  ]

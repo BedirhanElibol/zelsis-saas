@@ -2,6 +2,12 @@ import { CodeFile } from './scanner-engine';
 
 import { validateSafeTargetUrl, safeFetch } from '@/lib/ssrf-guard';
 import { probeLiveSite, type LiveProbeResult } from '@/lib/scanner/live-checks';
+import { analyzeBundles, lazyChunkUrls, sourceMapUrl } from './live-bundle-analyzer';
+
+/** Bundles are read in full for secrets (Vite/Lovable main bundles are 0.4-2 MB), within these limits. */
+const MAX_BUNDLE_BYTES = 5_000_000;
+const MAX_LAZY_CHUNKS = 20;
+const MAX_TOTAL_BUNDLE_BYTES = 15_000_000;
 
 export interface WebsiteAuditData {
   url: string;
@@ -127,12 +133,15 @@ export async function fetchWebsiteAuditData(siteUrl: string, signal?: AbortSigna
   const isCfTitle = /<title[^>]*>(?:just a moment\.\.\.|attention required!\s*\|\s*cloudflare|cloudflare)<\/title>/i.test(htmlText);
   const hasCfIndicators = /challenges\.cloudflare\.com|cf-browser-verification|cf-turnstile|ray id:|\/cdn-cgi\/challenge-platform/i.test(htmlText);
 
-  if (isCfHtml || isCfHeader || ((statusCode === 403 || statusCode === 503) && (isCfServer || isCfTitle || hasCfIndicators)) || (isCfTitle && hasCfIndicators)) {
+  // Vercel's bot checkpoint answers 200/429 with a challenge page; scanning it would report a clean site that was never read
+  const isVercelChallenge = headers['x-vercel-mitigated'] === 'challenge' || /<title[^>]*>\s*Vercel Security Checkpoint\s*<\/title>/i.test(htmlText);
+
+  if (isVercelChallenge || isCfHtml || isCfHeader || ((statusCode === 403 || statusCode === 503) && (isCfServer || isCfTitle || hasCfIndicators)) || (isCfTitle && hasCfIndicators)) {
     return {
       url: formattedUrl,
       statusCode: statusCode === 200 ? 403 : statusCode,
       headers,
-      title: 'Cloudflare Bot Protection Challenge',
+      title: isVercelChallenge ? 'Vercel Bot Protection Challenge' : 'Cloudflare Bot Protection Challenge',
       files: [],
       securityHeadersMissing: [],
       discoveredButtonsCount: 0,
@@ -248,6 +257,7 @@ export async function fetchWebsiteAuditData(siteUrl: string, signal?: AbortSigna
   const scriptMatches = Array.from(htmlText.matchAll(/<script[^>]+src=["']([^"']+)["']/g));
   const scriptSrcs = scriptMatches.map((m) => m[1]).slice(0, 6);
 
+  const fullBundles: { url: string; text: string }[] = [];
   const scriptPromises = scriptSrcs.map(async (src, i) => {
     let scriptUrl = src;
     if (src.startsWith('//')) {
@@ -267,7 +277,9 @@ export async function fetchWebsiteAuditData(siteUrl: string, signal?: AbortSigna
         signal: signal || AbortSignal.timeout(5000) 
       });
       if (scriptRes.ok) {
-        const scriptText = await scriptRes.text();
+        const scriptText = (await scriptRes.text()).slice(0, MAX_BUNDLE_BYTES);
+        fullBundles.push({ url: scriptUrl, text: scriptText });
+        // The general rules read the first 250 KB; the full text goes to the bundle analyzer below
         return {
           path: `live-deployment/bundle-${i + 1}.js`,
           content: scriptText.slice(0, 250000)
@@ -284,6 +296,40 @@ export async function fetchWebsiteAuditData(siteUrl: string, signal?: AbortSigna
     if (item.status === 'fulfilled' && item.value) {
       files.push(item.value);
     }
+  }
+
+  // Lazy chunks (same origin only) and public source maps, then secrets across the full bundles
+  try {
+    const chunkUrls = [...new Set(fullBundles.flatMap((b) => lazyChunkUrls(b.text, origin)))]
+      .filter((u) => u.startsWith(origin) && !fullBundles.some((b) => b.url === u))
+      .slice(0, MAX_LAZY_CHUNKS);
+    let budget = MAX_TOTAL_BUNDLE_BYTES - fullBundles.reduce((n, b) => n + b.text.length, 0);
+    const chunkResults = await Promise.allSettled(chunkUrls.map(async (u) => {
+      const res = await safeFetch(u, { headers: { 'User-Agent': 'Zelsis-Release-Gate-Scanner/3.5' }, maxRedirects: 2, signal: signal || AbortSignal.timeout(6000) });
+      return res.ok ? { url: u, text: (await res.text()).slice(0, MAX_BUNDLE_BYTES) } : null;
+    }));
+    for (const c of chunkResults) {
+      if (c.status !== 'fulfilled' || !c.value || budget <= 0) continue;
+      budget -= c.value.text.length;
+      fullBundles.push(c.value);
+    }
+    const publicSourceMaps: string[] = [];
+    for (const b of fullBundles.slice(0, 8)) {
+      const mapUrl = sourceMapUrl(b.text, b.url);
+      if (!mapUrl || !mapUrl.startsWith(origin)) continue;
+      try {
+        const mapRes = await safeFetch(mapUrl, { headers: { 'User-Agent': 'Zelsis-Release-Gate-Scanner/3.5' }, maxRedirects: 2, signal: signal || AbortSignal.timeout(4000) });
+        if (mapRes.ok && /"sources"\s*:/.test((await mapRes.text()).slice(0, 4000))) publicSourceMaps.push(mapUrl);
+      } catch { /* unreachable map is the good case */ }
+    }
+    if (fullBundles.length > 0) {
+      files.push({
+        path: 'live-deployment/bundle-analysis.json',
+        content: JSON.stringify({ ...analyzeBundles(fullBundles), publicSourceMaps }, null, 2)
+      });
+    }
+  } catch (err: unknown) {
+    console.warn('Bundle analysis skipped:', err instanceof Error ? err.message : String(err));
   }
 
   const liveProbe = await liveProbePromise;

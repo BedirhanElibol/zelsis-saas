@@ -610,11 +610,11 @@ export const ScanRunnerView: React.FC<ScanRunnerViewProps> = ({
         // Check for Cloudflare bot challenge on web deployment target
         if (webData?.error === 'CLOUDFLARE_BOT_PROTECTION') {
           if (!isCancelled) {
-            setScanFailureReason(`Automated audit blocked by Cloudflare Bot Protection on "${project.repoUrl}". Disable bot challenge for scanner user-agents or run audit against a staging endpoint.`);
+            setScanFailureReason(`"${project.repoUrl}" answered with a bot-protection challenge (Cloudflare or Vercel), so Zelsis could not read it. Scan the GitHub repository instead (connect GitHub or add it as a project), or allow the Zelsis scanner in your firewall settings.`);
             setLogs((prev) => [
               ...prev,
-              `[${new Date().toLocaleTimeString()}] [ERROR] 🛡️ CLOUDFLARE BOT PROTECTION: Automated audit blocked by Cloudflare Bot Protection on "${project.repoUrl}".`,
-              `[${new Date().toLocaleTimeString()}] [ACTION] Disable bot challenge for scanner user-agents or run audit against a staging endpoint.`
+              `[${new Date().toLocaleTimeString()}] [ERROR] 🛡️ BOT PROTECTION: "${project.repoUrl}" returned a Cloudflare / Vercel challenge page instead of the site.`,
+              `[${new Date().toLocaleTimeString()}] [ACTION] Scan the GitHub repository instead, or allow the Zelsis scanner in your firewall settings.`
             ]);
             setIsFinished(true);
           }
@@ -638,7 +638,7 @@ export const ScanRunnerView: React.FC<ScanRunnerViewProps> = ({
           if (!isCancelled) {
             const isCf = webData?.isCloudflareChallenge || webData?.error === 'CLOUDFLARE_BOT_PROTECTION';
             const failureReason = isCf
-              ? `Automated inspection blocked by Cloudflare bot protection for "${project.repoUrl}". Direct crawling is restricted by bot mitigation.`
+              ? `"${project.repoUrl}" answered with a bot-protection challenge (Cloudflare or Vercel), so Zelsis could not read it. Scan the GitHub repository instead (connect GitHub or add it as a project), or allow the Zelsis scanner in your firewall settings.`
               : `Unable to reach target website "${project.repoUrl}". Verify the URL is live, accessible, and not blocking automated audits.`;
             setScanFailureReason(failureReason);
             setLogs((prev) => [
@@ -696,11 +696,11 @@ export const ScanRunnerView: React.FC<ScanRunnerViewProps> = ({
 
         if (liveData?.error === 'CLOUDFLARE_BOT_PROTECTION') {
           if (!isCancelled) {
-            setScanFailureReason(`Automated audit blocked by Cloudflare Bot Protection on "${project.repoUrl}". Disable bot challenge for scanner user-agents or run audit against a staging endpoint.`);
+            setScanFailureReason(`"${project.repoUrl}" answered with a bot-protection challenge (Cloudflare or Vercel), so Zelsis could not read it. Scan the GitHub repository instead (connect GitHub or add it as a project), or allow the Zelsis scanner in your firewall settings.`);
             setLogs((prev) => [
               ...prev,
-              `[${new Date().toLocaleTimeString()}] [ERROR] 🛡️ CLOUDFLARE BOT PROTECTION: Automated audit blocked by Cloudflare Bot Protection on "${project.repoUrl}".`,
-              `[${new Date().toLocaleTimeString()}] [ACTION] Disable bot challenge for scanner user-agents or run audit against a staging endpoint.`
+              `[${new Date().toLocaleTimeString()}] [ERROR] 🛡️ BOT PROTECTION: "${project.repoUrl}" returned a Cloudflare / Vercel challenge page instead of the site.`,
+              `[${new Date().toLocaleTimeString()}] [ACTION] Scan the GitHub repository instead, or allow the Zelsis scanner in your firewall settings.`
             ]);
             setIsFinished(true);
           }
