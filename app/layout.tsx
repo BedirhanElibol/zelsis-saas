@@ -43,7 +43,7 @@ function getMetadataBase(): URL {
 export const metadata: Metadata = {
   metadataBase: getMetadataBase(),
   title: {
-    default: 'Zelsis | Security Scanner & Release Gate for Web Apps',
+    default: 'Zelsis',
     template: '%s | Zelsis',
   },
   description:
