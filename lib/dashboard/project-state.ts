@@ -104,7 +104,7 @@ export function normalizeProject(p: Project, fallback: Project): Project {
     repoUrl: cleanRepoUrl,
     framework: p.framework || UNDETECTED_FRAMEWORK,
     providers: Array.isArray(p.providers) ? p.providers : [],
-    lastScanAt: p.lastScanAt || 'Never audited',
+    lastScanAt: p.lastScanAt || (Array.isArray(p.findings) && p.findings.length ? 'Earlier scan (date unknown)' : 'Never audited'),
     readinessScore: typeof p.readinessScore === 'number' ? p.readinessScore : 100,
     gateStatus: p.gateStatus || 'PASSED',
     criticalCount: typeof p.criticalCount === 'number' ? p.criticalCount : 0,

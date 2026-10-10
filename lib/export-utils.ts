@@ -74,7 +74,7 @@ export function exportScorecardToJson(project: Project): void {
   const auditReport = {
     schemaVersion: '3.0.0',
     generatedAt: new Date().toISOString(),
-    auditEngine: 'Zelsis Release Gate SaaS (Production AST)',
+    auditEngine: 'Zelsis code scanner',
     target: {
       id: project.id,
       name: project.name,
