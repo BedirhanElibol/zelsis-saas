@@ -37,15 +37,16 @@ export function GithubConnectPanel({ onPickRepo }: { onPickRepo: (url: string) =
     return () => { alive = false; };
   }, []);
 
-  const connect = async () => {
+  const connect = async (mode: 'install' | 'link' = 'install') => {
     setBusy(true);
     setError('');
     const { accessToken } = await getActiveUserAuth();
     if (!accessToken) { setBusy(false); setError('Sign in first, then connect GitHub.'); return; }
     try {
       const res = await fetch('/api/v1/github-app/connect', { method: 'POST', headers: { Authorization: `Bearer ${accessToken}` } });
-      const data = (await res.json()) as { url?: string; error?: string };
-      if (data.url) { window.location.href = data.url; return; }
+      const data = (await res.json()) as { url?: string; linkUrl?: string | null; error?: string };
+      const target = mode === 'link' ? data.linkUrl || data.url : data.url;
+      if (target) { window.location.href = target; return; }
       setError(data.error || 'Could not start the GitHub connection.');
     } catch {
       setError('Could not reach Zelsis. Check your connection and try again.');
@@ -96,6 +97,9 @@ export function GithubConnectPanel({ onPickRepo }: { onPickRepo: (url: string) =
           >
             {busy ? <Loader2 size={13} className="animate-spin" /> : <GitBranch size={13} />}
             Connect GitHub
+          </button>
+          <button type="button" onClick={() => void connect('link')} disabled={busy} className="w-fit text-[11px] text-zinc-400 hover:text-white underline underline-offset-2">
+            Already installed the Zelsis app on GitHub? Link it to this account
           </button>
         </>
       )}
