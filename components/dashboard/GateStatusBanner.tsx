@@ -114,6 +114,7 @@ export const GateStatusBanner: React.FC<GateStatusBannerProps> = ({
 
   return (
     <div
+      data-tour="gate"
       className={`bg-[#141414] border rounded-xl p-4 sm:p-6 lg:p-8 flex flex-col lg:flex-row items-start lg:items-center justify-between gap-5 sm:gap-6 ${
         gateStatus === 'FAILED'
           ? 'border-red-500/30'

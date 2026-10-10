@@ -121,6 +121,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
           return (
             <button
               key={item.id}
+              data-tour={`nav-${item.id}`}
               onClick={() => handleNavClick(item.id)}
               className={`flex items-center gap-3 px-3 py-2.5 rounded-lg text-xs font-bold transition-all w-full text-left ${
                 isActive
@@ -148,6 +149,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
           return (
             <button
               key={item.id}
+              data-tour={`nav-${item.id}`}
               onClick={() => handleNavClick(item.id)}
               className={`flex items-center justify-between px-3 py-2.5 rounded-lg text-xs font-bold transition-all w-full ${
                 isActive
@@ -177,6 +179,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
           return (
             <button
               key={item.id}
+              data-tour={`nav-${item.id}`}
               onClick={() => handleNavClick(item.id)}
               className={`flex items-center gap-3 px-3 py-2.5 rounded-lg text-xs font-bold transition-all w-full text-left ${
                 isActive

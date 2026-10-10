@@ -203,7 +203,7 @@ export const FindingsTable: React.FC<FindingsTableProps> = ({
   });
 
   return (
-    <div ref={tableRef} className="scroll-mt-20 bg-[#141414] border border-white/10 rounded-xl p-4 sm:p-6 flex flex-col gap-5">
+    <div ref={tableRef} data-tour="findings" className="scroll-mt-20 bg-[#141414] border border-white/10 rounded-xl p-4 sm:p-6 flex flex-col gap-5">
       {/* Snyk-Grade Release Readiness Radar & Category Breakdown Cards */}
       <div className="grid grid-cols-2 lg:grid-cols-5 gap-3">
         {/* Card 1: Security & OWASP */}
