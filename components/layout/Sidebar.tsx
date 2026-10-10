@@ -10,8 +10,7 @@ import {
   Layers,
   FolderGit2,
   CheckSquare,
-  CreditCard
-} from 'lucide-react';
+  CreditCard, Bug } from 'lucide-react';
 import {
   Settings,
   FileText,
@@ -73,15 +72,17 @@ export const Sidebar: React.FC<SidebarProps> = ({
     { id: 'compliance', label: 'Legal & Privacy Gate', icon: Scale },
     { id: 'infra', label: 'Infra & Database Gate', icon: Database },
     { id: 'vibepolish', label: 'Design & UX Polish', icon: Palette },
-    { id: 'aimaster', label: 'Master Quality Matrix', icon: Layers },
+    // Opens the user's own logic-bug findings (the other pillars list the rule catalog)
+    { id: 'logicbugs', label: 'Logic Bugs & Broken Features', icon: Bug },
+    { id: 'aimaster', label: 'All Rules (Catalog)', icon: Layers },
   ];
 
   const managementNav = [
     { id: 'cicd', label: 'CI/CD & CLI Automation', icon: Terminal },
-    { id: 'remediation', label: 'Remediation Queue', icon: CheckSquare },
+    { id: 'remediation', label: 'Fix Queue', icon: CheckSquare },
     { id: 'checkout', label: 'Billing & Tiers', icon: CreditCard },
-    { id: 'portal', label: 'Customer Portal', icon: FileText },
-    { id: 'settings', label: 'Security Policies', icon: Settings },
+    { id: 'portal', label: 'Manage Subscription', icon: FileText },
+    { id: 'settings', label: 'Settings & API Keys', icon: Settings },
   ];
 
 
@@ -92,6 +93,13 @@ export const Sidebar: React.FC<SidebarProps> = ({
       } else if (onOpenAuth) {
         onOpenAuth('signin');
       }
+      return;
+    }
+    if (id === 'logicbugs') {
+      onNavigate('dashboard');
+      // FindingsTable listens and switches to the Logic Bugs tab
+      setTimeout(() => window.dispatchEvent(new CustomEvent('zelsis:findings-tab', { detail: 'VIBECARE' })), 150);
+      if (onCloseMobile) onCloseMobile();
       return;
     }
     onNavigate(id);

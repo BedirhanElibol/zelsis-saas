@@ -28,7 +28,8 @@ export const OnboardingChecklist: React.FC<OnboardingChecklistProps> = ({ projec
     {
       id: 'gate',
       title: 'Add CI Gate',
-      description: 'Block PRs that fail security or UI quality checks.',
+      description: '3 steps: create an API key in Settings & API Keys, add it to your GitHub repo as the ZELSIS_API_KEY secret, then commit the workflow below to .github/workflows/zelsis.yml.',
+      link: { href: '/dashboard?nav=cicd', label: 'Open the CI setup page' },
       isComplete: false, // In a real app, this would check if the webhook/app is installed
       snippet: buildGateWorkflow({ appUrl: getConfiguredAppUrl(), projectName: project.name }),
     },
@@ -89,19 +90,26 @@ export const OnboardingChecklist: React.FC<OnboardingChecklistProps> = ({ projec
               </div>
             </div>
 
+            {'link' in step && step.link && !step.isComplete && (
+              <a href={step.link.href} className="ml-7 w-fit text-xs font-bold text-emerald-400 hover:text-emerald-300 underline underline-offset-2">
+                {step.link.label} →
+              </a>
+            )}
+
             {step.snippet && !step.isComplete && (
-              <div className="ml-7 mt-2 relative group">
+              <details className="ml-7 mt-1 relative" open={step.id !== 'gate'}>
+                <summary className="cursor-pointer text-xs text-[#A1A1AA] hover:text-white">{step.id === 'gate' ? 'Show the workflow file' : 'Show the snippet'}</summary>
                 <pre className="bg-black/50 border border-white/10 rounded-lg p-3 text-[10px] text-zinc-300 overflow-x-auto">
                   <code>{step.snippet}</code>
                 </pre>
                 <button
                   onClick={() => handleCopy(step.snippet!, index)}
-                  className="absolute top-2 right-2 p-1.5 bg-[#1A1A1A] border border-white/10 rounded text-[#A1A1AA] hover:text-white hover:bg-white/10 transition-colors opacity-0 group-hover:opacity-100 focus:opacity-100 focus:outline-none focus:ring-2 focus:ring-emerald-500"
+                  className="absolute top-8 right-2 p-1.5 bg-[#1A1A1A] border border-white/10 rounded text-[#A1A1AA] hover:text-white hover:bg-white/10 transition-colors focus:outline-none focus:ring-2 focus:ring-emerald-500"
                   aria-label="Copy snippet"
                 >
                   {copiedIndex === index ? <Check size={12} className="text-emerald-500" /> : <Copy size={12} />}
                 </button>
-              </div>
+              </details>
             )}
           </div>
         ))}

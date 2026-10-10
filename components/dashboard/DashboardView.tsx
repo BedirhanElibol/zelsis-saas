@@ -13,6 +13,7 @@ import { QuickChartWidget } from './QuickChartWidget';
 import { DashboardModals, ActiveModalType } from './DashboardModals';
 import { GateStatusBanner } from './GateStatusBanner';
 import { gateSeverity, gatingFindings } from '@/lib/scanner/scoring';
+import { withLiveStatus } from '@/lib/project-status';
 import { OnboardingChecklist } from './OnboardingChecklist';
 import { DemoShowcaseBanner } from '../OverviewView';
 import { generateAuditPdfReport } from '@/lib/pdf-exporter';
@@ -62,11 +63,11 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
     const p = (project && typeof project === 'object' && !('nativeEvent' in project) && (project as any).id)
       ? project
       : MOCK_PROJECTS[0];
-    return {
+    return withLiveStatus({
       ...p,
       name: p.name || 'Target Repository',
       framework: p.framework || 'Polyglot Web App',
-      lastScanAt: p.lastScanAt || 'Never audited',
+      lastScanAt: p.lastScanAt || (Array.isArray(p.findings) && p.findings.length ? 'Unknown' : 'Never audited'),
       readinessScore: typeof p.readinessScore === 'number' ? p.readinessScore : 100,
       gateStatus: p.gateStatus || 'PASSED',
       findings: Array.isArray(p.findings) ? p.findings : [],
@@ -75,7 +76,7 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
       mediumCount: typeof p.mediumCount === 'number' ? p.mediumCount : 0,
       lowCount: typeof p.lowCount === 'number' ? p.lowCount : 0,
       uiClicheCount: typeof p.uiClicheCount === 'number' ? p.uiClicheCount : 0,
-    };
+    });
   }, [project]);
 
   // Cmd+K / Ctrl+K keyboard shortcut listener for Knowledge Base
