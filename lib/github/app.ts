@@ -1,9 +1,10 @@
 import { createAppAuth } from '@octokit/auth-app';
+import { normalizePrivateKey } from './private-key';
 import { Octokit } from '@octokit/rest';
 
 export async function createGitHubAppClient(installationId: number) {
   const appId = process.env.GITHUB_APP_ID;
-  const privateKey = process.env.GITHUB_APP_PRIVATE_KEY;
+  const privateKey = normalizePrivateKey(process.env.GITHUB_APP_PRIVATE_KEY);
 
   if (!appId || !privateKey) {
     throw new Error('Missing GitHub App credentials');
@@ -13,7 +14,7 @@ export async function createGitHubAppClient(installationId: number) {
     authStrategy: createAppAuth,
     auth: {
       appId,
-      privateKey: privateKey.replace(/\\n/g, '\n'), // handle potential newlines
+      privateKey,
       installationId,
     },
   });

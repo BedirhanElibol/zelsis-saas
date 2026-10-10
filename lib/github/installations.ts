@@ -3,6 +3,7 @@ import { createAppAuth } from '@octokit/auth-app';
 import { Octokit } from '@octokit/rest';
 import { getSupabaseAdmin } from '@/lib/supabase-admin';
 import { logger } from '@/lib/logger';
+import { normalizePrivateKey } from './private-key';
 
 /**
  * "Connect GitHub" through the Zelsis GitHub App: users install the app on the repositories they choose, and the
@@ -12,7 +13,7 @@ import { logger } from '@/lib/logger';
 
 const appCredentials = () => {
   const appId = process.env.GITHUB_APP_ID;
-  const privateKey = process.env.GITHUB_APP_PRIVATE_KEY?.replace(/\\n/g, '\n');
+  const privateKey = normalizePrivateKey(process.env.GITHUB_APP_PRIVATE_KEY);
   return appId && privateKey ? { appId, privateKey } : null;
 };
 
