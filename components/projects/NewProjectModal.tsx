@@ -1,5 +1,6 @@
 'use client';
 
+import { GithubConnectPanel } from '@/components/dashboard/GithubConnectPanel';
 import React, { useState } from 'react';
 import { Project } from '@/data/schema';
 import { X } from 'lucide-react';
@@ -96,6 +97,13 @@ export const NewProjectModal: React.FC<NewProjectModalProps> = ({ isOpen, onClos
         )}
 
         <form onSubmit={handleSubmitNew} className="flex flex-col gap-4">
+          <GithubConnectPanel
+            onPickRepo={(url) => {
+              setRepoUrl(url);
+              setUrlError('');
+              if (!name.trim()) setName(url.split('/').pop() || '');
+            }}
+          />
           <div>
             <label htmlFor="app-name-input" className="block text-xs font-bold text-[#CBD5E1] mb-1.5 uppercase">
               Application Name
