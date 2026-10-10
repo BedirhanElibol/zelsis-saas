@@ -7,6 +7,7 @@ import { Play, ArrowLeft, ArrowRight, FolderGit2, LogOut, User, ChevronDown, Set
 import { UserProfile } from '@/components/auth/AuthModal';
 import { normalizeRepoUrl, extractRepoDisplayName } from '@/lib/github-api';
 import { ConnectTargetModal } from './ConnectTargetModal';
+import { HelpLauncher } from './HelpLauncher';
 import { ZelsisLogo } from '@/components/ui/ZelsisLogo';
 import { UserAvatar } from '@/components/ui/UserAvatar';
 import { getSubscriptionValidity } from '@/lib/subscription-utils';
@@ -27,6 +28,7 @@ interface HeaderProps {
   onOpenCheckout?: (plan?: 'Pro' | 'Enterprise') => void;
   onNavigateSettings?: () => void;
   onToggleMobileMenu?: () => void;
+  onNavigate?: (nav: string) => void;
   quota?: PlanUsageQuota;
 }
 
@@ -43,6 +45,7 @@ export const Header: React.FC<HeaderProps> = ({
   onOpenCheckout,
   onNavigateSettings,
   onToggleMobileMenu,
+  onNavigate,
   quota
 }) => {
   const [isGithubModalOpen, setIsGithubModalOpen] = useState<boolean>(false);
@@ -267,6 +270,21 @@ export const Header: React.FC<HeaderProps> = ({
 
         {/* Right: User Auth Info / Profile Dropdown */}
         <div className="flex items-center gap-2 sm:gap-3 shrink-0">
+
+          {onNavigate && (
+            <span data-tour="help">
+              <HelpLauncher
+                onNavigate={onNavigate}
+                onOpenConnect={() => setIsGithubModalOpen(true)}
+                onFocusScan={() => {
+                  const el = document.getElementById('header-target-repo-input') as HTMLInputElement | null;
+                  el?.focus();
+                  el?.select();
+                }}
+                onOpenTour={() => window.dispatchEvent(new Event('zelsis:open-tour'))}
+              />
+            </span>
+          )}
 
           {/* Quick Plan Quota Badge */}
           {quota && (
