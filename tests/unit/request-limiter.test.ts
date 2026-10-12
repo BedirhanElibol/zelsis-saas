@@ -43,7 +43,7 @@ test('cloudflare challenges are recorded too, and note() works for custom fetch 
 });
 
 test('challenge messages name the right firewall and the fix', () => {
-  assert.match(botChallengeMessage('https://a.example', 'vercel'), /Vercel's Security Checkpoint.*Firewall.*Bypass rule/s);
-  assert.match(botChallengeMessage('https://a.example', 'cloudflare'), /Cloudflare.*WAF.*Skip rule/s);
+  assert.match(botChallengeMessage('https://a.example', 'vercel'), /Vercel's Security Checkpoint[\s\S]*Firewall[\s\S]*Bypass rule/);
+  assert.match(botChallengeMessage('https://a.example', 'cloudflare'), /Cloudflare[\s\S]*WAF[\s\S]*Skip rule/);
   assert.match(botChallengeMessage('https://a.example', undefined), /Vercel or Cloudflare/);
 });
