@@ -142,6 +142,7 @@ import { evaluateLogicGeminiRules } from '../rules/logic-gemini-rules';
 import { evaluateSecurityGeminiRules } from '../rules/security-gemini-rules';
 import { evaluateCicdCloudGeminiRules } from '../rules/cicd-cloud-gemini-rules';
 import { evaluatePrivacyDbGeminiRules } from '../rules/privacy-db-gemini-rules';
+import { evaluateUxGeminiRules } from '../rules/ux-gemini-rules';
 import { evaluateLogicFakeRules } from '../rules/logic-fake-rules';
 import { evaluateLiveBundleRules } from '../rules/live-bundle-rules';
 
@@ -468,6 +469,8 @@ export const RULE_ENGINES: ReadonlyArray<{ evaluate: RuleEngine; scanRawContent?
   { evaluate: evaluateCicdCloudGeminiRules, scanRawContent: true },
   // Privacy leaks and database correctness / performance defects from the Gemini rule report (PRV-01.., DBG-01.., Rule IDs 29974-29999)
   { evaluate: evaluatePrivacyDbGeminiRules },
+  // Accessibility and front-end performance defects from the Gemini rule report (UXG-01.., Rule IDs 30000-30099)
+  { evaluate: evaluateUxGeminiRules },
   // Unfinished / fake features found reviewing real Lovable and Bolt apps: fake submits, placeholder keys, dead buttons, mock logins (FAKE-01.., BUG-144.., Rule IDs 29791-29819)
   { evaluate: evaluateLogicFakeRules },
   // Live sites: secrets and Supabase keys found in the full JavaScript bundles, public source maps (LIVE-01.., Rule IDs 29805-29809)
