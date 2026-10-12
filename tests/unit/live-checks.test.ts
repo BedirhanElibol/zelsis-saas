@@ -144,7 +144,8 @@ test('LIVE-08..12: deploy artifacts and admin consoles are confirmed from the bo
       [`https://${HOST}/_cluster/health`]: t('{"cluster_name":"prod","status":"green","number_of_nodes":3}', 'application/json'),
       [`https://${HOST}/Dockerfile`]: t('FROM node:22-alpine\nCOPY . .\nRUN npm ci\n'),
     }),
-    tlsInspect: goodTls
+    tlsInspect: goodTls,
+    deepProbes: true
   });
   const findings = buildLiveFindings(probe, NOW);
   const byId = (id: number) => findings.find((f) => f.ruleId === id);
@@ -165,8 +166,20 @@ test('LIVE-08..12: SPA pages, HTML 404s and look-alike text do not count as arti
       [`https://${HOST}/Dockerfile`]: { status: 200, body: '<!doctype html><p>FROM our team</p><p>RUN fast</p>', headers: { 'content-type': 'text/html' } },
       [`https://${HOST}/adminer.php`]: { status: 404, body: '<title>Adminer</title>', headers: { 'content-type': 'text/html' } },
     }),
-    tlsInspect: goodTls
+    tlsInspect: goodTls,
+    deepProbes: true
   });
   assert.deepEqual(probe.exposedFiles, []);
   assert.deepEqual(buildLiveFindings(probe, NOW), []);
+});
+
+test('LIVE-08..12 paths are not requested unless the domain is verified (deepProbes)', async () => {
+  const calls: string[] = [];
+  const probe = await probeLiveSite(`https://${HOST}/`, [], {
+    fetchImpl: fakeSite({ ...redirectHttp, [`https://${HOST}/backup.sql`]: { status: 200, body: '-- PostgreSQL database dump\n', headers: { 'content-type': 'text/plain' } } }, calls),
+    tlsInspect: goodTls
+  });
+  assert.equal(probe.deepProbes, false);
+  assert.ok(!calls.some((u) => /backup\.sql|terraform|adminer|phpinfo/.test(u)), 'no deep paths requested');
+  assert.equal(buildLiveFindings(probe, NOW).some((f) => f.ruleId === 27008), false);
 });

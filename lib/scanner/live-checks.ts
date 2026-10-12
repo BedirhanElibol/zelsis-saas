@@ -34,12 +34,16 @@ export interface LiveProbeResult {
   /** How plain http://host/ answers. 'unreachable' (port 80 closed) is fine. */
   plainHttp: 'redirects-to-https' | 'serves-content' | 'unreachable';
   insecureCookies: InsecureCookie[];
+  /** Whether the LIVE-08..12 artifact paths were checked (domain ownership verified). */
+  deepProbes?: boolean;
 }
 
 export interface LiveProbeOptions {
   fetchImpl?: typeof fetch;
   tlsInspect?: (host: string, ip: string | undefined, timeoutMs: number) => Promise<TlsInfo | null | undefined>;
   timeoutMs?: number;
+  /** Deploy-artifact and admin-console paths (LIVE-08..12): only for domains the user proved they own. */
+  deepProbes?: boolean;
 }
 
 const ENV_PATHS = ['/.env', '/.env.local', '/.env.production', '/.env.development'];
@@ -184,7 +188,7 @@ export async function inspectTls(host: string, ip: string | undefined, timeoutMs
 export async function probeLiveSite(
   targetUrl: string,
   setCookies: string[],
-  { fetchImpl = globalThis.fetch, tlsInspect = inspectTls, timeoutMs = 5000 }: LiveProbeOptions = {}
+  { fetchImpl = globalThis.fetch, tlsInspect = inspectTls, timeoutMs = 5000, deepProbes = false }: LiveProbeOptions = {}
 ): Promise<LiveProbeResult> {
   const target = new URL(targetUrl);
   const host = target.hostname;
@@ -193,7 +197,7 @@ export async function probeLiveSite(
 
   const [exposed, artifacts, tlsInfo, plain] = await Promise.all([
     Promise.all([...ENV_PATHS, ...GIT_PATHS].map((p) => probePath(target.origin, p, fetchImpl, timeoutMs))),
-    Promise.all(ARTIFACT_PROBES.map((p) => probeArtifact(target.origin, p, fetchImpl, timeoutMs))),
+    Promise.all((deepProbes ? ARTIFACT_PROBES : []).map((p) => probeArtifact(target.origin, p, fetchImpl, timeoutMs))),
     // TLS handshakes to distant hosts can take several seconds; give them twice the HTTP budget
     check.safe ? tlsInspect(host, ip, timeoutMs * 2).catch(() => undefined) : Promise.resolve(undefined),
     fetchNoRedirect(`http://${host}/`, fetchImpl, timeoutMs)
@@ -214,7 +218,8 @@ export async function probeLiveSite(
     exposedFiles: [...exposed, ...artifacts].filter((e): e is ExposedFile => e !== null),
     ...(tlsInfo === undefined ? {} : { tls: tlsInfo }),
     plainHttp,
-    insecureCookies: findInsecureCookies(setCookies, target.protocol === 'https:')
+    insecureCookies: findInsecureCookies(setCookies, target.protocol === 'https:'),
+    deepProbes
   };
 }
 
