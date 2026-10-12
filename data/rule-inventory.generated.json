@@ -1,8 +1,8 @@
 {
  "summary": {
-  "implementedRules": 1149,
-  "testedRules": 1138,
-  "preciseLocationRules": 1146,
+  "implementedRules": 1165,
+  "testedRules": 1154,
+  "preciseLocationRules": 1162,
   "catalogEntries": 1922,
   "catalogOnlyNotImplemented": 1401,
   "catalogPlaceholderMetadata": 1810
@@ -12897,6 +12897,166 @@
    "title": "${r[1]}.read() Called a Second Time Without seek(0)",
    "severity": "MEDIUM",
    "source": "lib/rules/logic-gemini-rules.ts",
+   "preciseLocation": true,
+   "tested": true,
+   "inCatalog": false
+  },
+  {
+   "ruleId": 29900,
+   "code": "RULE-29900",
+   "title": "Upload Saved Using the Client File Name",
+   "severity": "HIGH",
+   "source": "lib/rules/security-gemini-rules.ts",
+   "preciseLocation": true,
+   "tested": true,
+   "inCatalog": false
+  },
+  {
+   "ruleId": 29901,
+   "code": "RULE-29901",
+   "title": "http.FileServer Serves the Working Directory",
+   "severity": "HIGH",
+   "source": "lib/rules/security-gemini-rules.ts",
+   "preciseLocation": true,
+   "tested": true,
+   "inCatalog": false
+  },
+  {
+   "ruleId": 29902,
+   "code": "RULE-29902",
+   "title": "Static Server Allows Dotfiles (dotfiles: ",
+   "severity": "HIGH",
+   "source": "lib/rules/security-gemini-rules.ts",
+   "preciseLocation": true,
+   "tested": true,
+   "inCatalog": false
+  },
+  {
+   "ruleId": 29903,
+   "code": "RULE-29903",
+   "title": "Query Parser Configured With allowPrototypes: true",
+   "severity": "HIGH",
+   "source": "lib/rules/security-gemini-rules.ts",
+   "preciseLocation": true,
+   "tested": true,
+   "inCatalog": false
+  },
+  {
+   "ruleId": 29905,
+   "code": "RULE-29905",
+   "title": "jwt.decode Accepts Both RSA/EC and HMAC Algorithms",
+   "severity": "CRITICAL",
+   "source": "lib/rules/security-gemini-rules.ts",
+   "preciseLocation": true,
+   "tested": true,
+   "inCatalog": false
+  },
+  {
+   "ruleId": 29906,
+   "code": "RULE-29906",
+   "title": "Global ValidationPipe Without whitelist: true",
+   "severity": "MEDIUM",
+   "source": "lib/rules/security-gemini-rules.ts",
+   "preciseLocation": true,
+   "tested": true,
+   "inCatalog": false
+  },
+  {
+   "ruleId": 29907,
+   "code": "RULE-29907",
+   "title": "SAML ${m[1]}: false",
+   "severity": "CRITICAL",
+   "source": "lib/rules/security-gemini-rules.ts",
+   "preciseLocation": true,
+   "tested": true,
+   "inCatalog": false
+  },
+  {
+   "ruleId": 29908,
+   "code": "RULE-29908",
+   "title": "Spring Boot Actuator Exposes ${prop ? prop[1] : ",
+   "severity": "HIGH",
+   "source": "lib/rules/security-gemini-rules.ts",
+   "preciseLocation": true,
+   "tested": true,
+   "inCatalog": false
+  },
+  {
+   "ruleId": 29909,
+   "code": "RULE-29909",
+   "title": "CORS Allows Any Origin With Credentials",
+   "severity": "HIGH",
+   "source": "lib/rules/security-gemini-rules.ts",
+   "preciseLocation": true,
+   "tested": true,
+   "inCatalog": false
+  },
+  {
+   "ruleId": 29910,
+   "code": "RULE-29910",
+   "title": "Authenticated Response Sent With Cache-Control ",
+   "severity": "HIGH",
+   "source": "lib/rules/security-gemini-rules.ts",
+   "preciseLocation": true,
+   "tested": true,
+   "inCatalog": false
+  },
+  {
+   "ruleId": 29911,
+   "code": "RULE-29911",
+   "title": "SQLAlchemy text() Fragment Built From an f-string",
+   "severity": "HIGH",
+   "source": "lib/rules/security-gemini-rules.ts",
+   "preciseLocation": true,
+   "tested": true,
+   "inCatalog": false
+  },
+  {
+   "ruleId": 29912,
+   "code": "RULE-29912",
+   "title": "getPublicUrl() on the Private ",
+   "severity": "HIGH",
+   "source": "lib/rules/security-gemini-rules.ts",
+   "preciseLocation": true,
+   "tested": true,
+   "inCatalog": false
+  },
+  {
+   "ruleId": 29913,
+   "code": "RULE-29913",
+   "title": "JWT kid Header Used to Load the Verification Key From Disk",
+   "severity": "CRITICAL",
+   "source": "lib/rules/security-gemini-rules.ts",
+   "preciseLocation": true,
+   "tested": true,
+   "inCatalog": false
+  },
+  {
+   "ruleId": 29914,
+   "code": "RULE-29914",
+   "title": "Secret Token Matched by Pattern: ${m[2]} via .${m[1]}()",
+   "severity": "HIGH",
+   "source": "lib/rules/security-gemini-rules.ts",
+   "preciseLocation": true,
+   "tested": true,
+   "inCatalog": false
+  },
+  {
+   "ruleId": 29916,
+   "code": "RULE-29916",
+   "title": "JWT Signed Without an Expiry",
+   "severity": "MEDIUM",
+   "source": "lib/rules/security-gemini-rules.ts",
+   "preciseLocation": true,
+   "tested": true,
+   "inCatalog": false
+  },
+  {
+   "ruleId": 29917,
+   "code": "RULE-29917",
+   "title": "Request Input Passed as an Argument to ${m[1]}",
+   "severity": "HIGH",
+   "source": "lib/rules/security-gemini-rules.ts",
    "preciseLocation": true,
    "tested": true,
    "inCatalog": false
