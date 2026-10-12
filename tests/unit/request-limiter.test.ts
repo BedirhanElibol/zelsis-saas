@@ -47,3 +47,15 @@ test('challenge messages name the right firewall and the fix', () => {
   assert.match(botChallengeMessage('https://a.example', 'cloudflare'), /Cloudflare[\s\S]*WAF[\s\S]*Skip rule/);
   assert.match(botChallengeMessage('https://a.example', undefined), /Vercel or Cloudflare/);
 });
+
+test('records which request first got challenged and how many had been sent', async () => {
+  let calls = 0;
+  const fetchImpl = (async () => {
+    calls++;
+    return calls === 3 ? new Response('', { status: 403, headers: { 'x-vercel-mitigated': 'challenge' } }) : new Response('ok');
+  }) as unknown as typeof fetch;
+  const limiter = createRequestLimiter({ concurrency: 1, minIntervalMs: 0, fetchImpl });
+  await Promise.allSettled(['/a', '/b', '/.env', '/c'].map((p) => limiter.fetch(`https://site.example${p}`)));
+  assert.deepEqual(limiter.trigger, { url: 'https://site.example/.env', index: 3 });
+  assert.equal(limiter.sent, 3, 'the request after the challenge was never sent');
+});
