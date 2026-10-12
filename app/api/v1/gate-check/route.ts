@@ -16,6 +16,7 @@ import { getEffectivePlanTier, getOrgPolicy } from '@/lib/organization';
 import { LOCKED_FIX_TEXT } from '@/lib/fix-gate';
 import { buildWorkflowAnnotations } from '@/lib/ci-annotations';
 import { calculateGateStatus, gatingFindings } from '@/lib/scanner/scoring';
+import { botChallengeMessage } from '@/lib/bot-challenge';
 
 // F-31: Bounded execution duration for static code scans (bounded to 30s for serverless SLA)
 export const maxDuration = 30;
@@ -307,7 +308,7 @@ export async function POST(req: NextRequest) {
           status: 'ERROR',
           gateStatus: 'FAILED',
           readinessScore: 0,
-          error: `The site "${rawRepoUrl}" answered with a bot-protection challenge (Cloudflare or Vercel), so Zelsis could not read it. Scan the GitHub repository instead (connect GitHub or add it as a project), or allow the Zelsis scanner in your firewall settings.`,
+          error: botChallengeMessage(rawRepoUrl, webData.challengeProvider),
           timestamp: new Date().toISOString()
         }, { status: 403 });
       }

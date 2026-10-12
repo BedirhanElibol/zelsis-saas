@@ -3,6 +3,8 @@ import { CodeFile } from './scanner-engine';
 import { validateSafeTargetUrl, safeFetch } from '@/lib/ssrf-guard';
 import { probeLiveSite, type LiveProbeResult } from '@/lib/scanner/live-checks';
 import { analyzeBundles, lazyChunkUrls, sourceMapUrl } from './live-bundle-analyzer';
+import { createRequestLimiter } from '@/lib/scanner/request-limiter';
+import type { ChallengeProvider } from '@/lib/bot-challenge';
 
 /** Bundles are read in full for secrets (Vite/Lovable main bundles are 0.4-2 MB), within these limits. */
 const MAX_BUNDLE_BYTES = 5_000_000;
@@ -20,6 +22,10 @@ export interface WebsiteAuditData {
   crawledPagesCount: number;
   liveProbe?: LiveProbeResult;
   isCloudflareChallenge?: boolean;
+  /** Which layer answered with the challenge (the error code stays CLOUDFLARE_BOT_PROTECTION for existing callers). */
+  challengeProvider?: ChallengeProvider;
+  /** The target started challenging part-way through, so subpages / bundles / probes after that point were skipped. */
+  challengedDuringScan?: boolean;
   error?: 'CLOUDFLARE_BOT_PROTECTION' | string;
 }
 
@@ -147,6 +153,7 @@ export async function fetchWebsiteAuditData(siteUrl: string, signal?: AbortSigna
       discoveredButtonsCount: 0,
       crawledPagesCount: 0,
       isCloudflareChallenge: true,
+      challengeProvider: isVercelChallenge ? 'vercel' : 'cloudflare',
       error: 'CLOUDFLARE_BOT_PROTECTION'
     };
   }
@@ -187,9 +194,14 @@ export async function fetchWebsiteAuditData(siteUrl: string, signal?: AbortSigna
 
   const subpagesToCrawl = Array.from(subpageUrls).slice(0, 8);
 
+  // Every request after the homepage goes through one limiter: at most 4 in flight, starts spaced out, and nothing more
+  // is sent once the target challenges us (a burst makes Vercel / Cloudflare block the scanner IP for minutes)
+  const limiter = createRequestLimiter({ concurrency: 4, minIntervalMs: 120 });
+  const politeFetch = (url: string, init: Parameters<typeof safeFetch>[1]) => limiter.run(async () => limiter.note(await safeFetch(url, init)));
+
   // Server-only probes (.env/.git exposure, TLS, HTTP redirect, cookies); browser runs cannot open raw TLS sockets
   const liveProbePromise = typeof window === 'undefined'
-    ? probeLiveSite(formattedUrl, setCookies, { deepProbes: options.deepProbes === true }).catch((err) => {
+    ? probeLiveSite(formattedUrl, setCookies, { deepProbes: options.deepProbes === true, fetchImpl: limiter.fetch }).catch((err) => {
         console.warn(`Live probes failed for ${formattedUrl}:`, err?.message || err);
         return undefined;
       })
@@ -228,7 +240,7 @@ export async function fetchWebsiteAuditData(siteUrl: string, signal?: AbortSigna
   const subpagePromises = subpagesToCrawl.map(async (subUrl) => {
     const pathName = new URL(subUrl).pathname.replace(/[^a-zA-Z0-9_-]/g, '_');
     try {
-      const subRes = await safeFetch(subUrl, { 
+      const subRes = await politeFetch(subUrl, { 
         headers: { 'User-Agent': 'Zelsis-Release-Gate-Scanner/3.5' },
         maxRedirects: 3,
         signal: signal || AbortSignal.timeout(5000) 
@@ -271,7 +283,7 @@ export async function fetchWebsiteAuditData(siteUrl: string, signal?: AbortSigna
     }
 
     try {
-      const scriptRes = await safeFetch(scriptUrl, { 
+      const scriptRes = await politeFetch(scriptUrl, { 
         headers: { 'User-Agent': 'Zelsis-Release-Gate-Scanner/3.5' },
         maxRedirects: 3,
         signal: signal || AbortSignal.timeout(5000) 
@@ -305,7 +317,7 @@ export async function fetchWebsiteAuditData(siteUrl: string, signal?: AbortSigna
       .slice(0, MAX_LAZY_CHUNKS);
     let budget = MAX_TOTAL_BUNDLE_BYTES - fullBundles.reduce((n, b) => n + b.text.length, 0);
     const chunkResults = await Promise.allSettled(chunkUrls.map(async (u) => {
-      const res = await safeFetch(u, { headers: { 'User-Agent': 'Zelsis-Release-Gate-Scanner/3.5' }, maxRedirects: 2, signal: signal || AbortSignal.timeout(6000) });
+      const res = await politeFetch(u, { headers: { 'User-Agent': 'Zelsis-Release-Gate-Scanner/3.5' }, maxRedirects: 2, signal: signal || AbortSignal.timeout(6000) });
       return res.ok ? { url: u, text: (await res.text()).slice(0, MAX_BUNDLE_BYTES) } : null;
     }));
     for (const c of chunkResults) {
@@ -318,7 +330,7 @@ export async function fetchWebsiteAuditData(siteUrl: string, signal?: AbortSigna
       const mapUrl = sourceMapUrl(b.text, b.url);
       if (!mapUrl || !mapUrl.startsWith(origin)) continue;
       try {
-        const mapRes = await safeFetch(mapUrl, { headers: { 'User-Agent': 'Zelsis-Release-Gate-Scanner/3.5' }, maxRedirects: 2, signal: signal || AbortSignal.timeout(4000) });
+        const mapRes = await politeFetch(mapUrl, { headers: { 'User-Agent': 'Zelsis-Release-Gate-Scanner/3.5' }, maxRedirects: 2, signal: signal || AbortSignal.timeout(4000) });
         if (mapRes.ok && /"sources"\s*:/.test((await mapRes.text()).slice(0, 4000))) publicSourceMaps.push(mapUrl);
       } catch { /* unreachable map is the good case */ }
     }
@@ -347,6 +359,8 @@ export async function fetchWebsiteAuditData(siteUrl: string, signal?: AbortSigna
     liveProbe,
     securityHeadersMissing,
     discoveredButtonsCount,
-    crawledPagesCount: subpagesToCrawl.length + 1
+    crawledPagesCount: subpagesToCrawl.length + 1,
+    // Requests after the challenge were skipped: report it instead of a clean result for a site we could not fully read
+    ...(limiter.challenged ? { challengedDuringScan: true, isCloudflareChallenge: true, challengeProvider: limiter.provider, error: 'CLOUDFLARE_BOT_PROTECTION' } : {})
   };
 }

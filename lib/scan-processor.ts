@@ -13,6 +13,7 @@ import { getSupabaseAdmin } from '@/lib/supabase-admin';
 import { FREE_PROJECT_LIMIT } from '@/lib/quota-manager';
 import { recordRescanAlert } from '@/lib/rescan-alerts';
 import { isSiteVerified } from '@/lib/site-verification';
+import { botChallengeMessage } from '@/lib/bot-challenge';
 
 export interface ExecuteScanJobOptions {
   jobId: string;
@@ -176,7 +177,7 @@ export async function executeScanJob(options: ExecuteScanJobOptions): Promise<Sc
         await updateJobState({
           status: 'FAILED',
           progress_percent: 0,
-          error_message: `Website Audit Error: ${webData.error}`
+          error_message: webData.error === 'CLOUDFLARE_BOT_PROTECTION' ? botChallengeMessage(rawRepoUrl, webData.challengeProvider) : `Website Audit Error: ${webData.error}`
         });
         throw new ScanJobError(webData.error, 502);
       }
