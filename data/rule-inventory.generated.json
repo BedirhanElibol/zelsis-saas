@@ -1,8 +1,8 @@
 {
  "summary": {
-  "implementedRules": 1165,
-  "testedRules": 1154,
-  "preciseLocationRules": 1162,
+  "implementedRules": 1174,
+  "testedRules": 1163,
+  "preciseLocationRules": 1171,
   "catalogEntries": 1922,
   "catalogOnlyNotImplemented": 1401,
   "catalogPlaceholderMetadata": 1810
@@ -13056,6 +13056,96 @@
    "code": "RULE-29917",
    "title": "Request Input Passed as an Argument to ${m[1]}",
    "severity": "HIGH",
+   "source": "lib/rules/security-gemini-rules.ts",
+   "preciseLocation": true,
+   "tested": true,
+   "inCatalog": false
+  },
+  {
+   "ruleId": 29918,
+   "code": "RULE-29918",
+   "title": "reqwest danger_accept_invalid_${m[1]}(true)",
+   "severity": "HIGH",
+   "source": "lib/rules/security-gemini-rules.ts",
+   "preciseLocation": true,
+   "tested": true,
+   "inCatalog": false
+  },
+  {
+   "ruleId": 29919,
+   "code": "RULE-29919",
+   "title": "${s[1]} Falls Back to a Hard-Coded Value",
+   "severity": "HIGH",
+   "source": "lib/rules/security-gemini-rules.ts",
+   "preciseLocation": true,
+   "tested": true,
+   "inCatalog": false
+  },
+  {
+   "ruleId": 29920,
+   "code": "RULE-29920",
+   "title": "open() Called With a Request Parameter",
+   "severity": "CRITICAL",
+   "source": "lib/rules/security-gemini-rules.ts",
+   "preciseLocation": true,
+   "tested": true,
+   "inCatalog": false
+  },
+  {
+   "ruleId": 29921,
+   "code": "RULE-29921",
+   "title": "req.signedCookies Used but cookieParser() Has No Secret",
+   "severity": "HIGH",
+   "source": "lib/rules/security-gemini-rules.ts",
+   "preciseLocation": true,
+   "tested": true,
+   "inCatalog": false
+  },
+  {
+   "ruleId": 29922,
+   "code": "RULE-29922",
+   "title": "Directory Listing Enabled With serve-index",
+   "severity": "MEDIUM",
+   "source": "lib/rules/security-gemini-rules.ts",
+   "preciseLocation": true,
+   "tested": true,
+   "inCatalog": false
+  },
+  {
+   "ruleId": 29923,
+   "code": "RULE-29923",
+   "title": "Response Content-Type Chosen by the Request",
+   "severity": "HIGH",
+   "source": "lib/rules/security-gemini-rules.ts",
+   "preciseLocation": true,
+   "tested": true,
+   "inCatalog": false
+  },
+  {
+   "ruleId": 29924,
+   "code": "RULE-29924",
+   "title": "Access Decided by localStorage ",
+   "severity": "MEDIUM",
+   "source": "lib/rules/security-gemini-rules.ts",
+   "preciseLocation": true,
+   "tested": true,
+   "inCatalog": false
+  },
+  {
+   "ruleId": 29925,
+   "code": "RULE-29925",
+   "title": "Checkout ${m[1]} Taken From the Request",
+   "severity": "MEDIUM",
+   "source": "lib/rules/security-gemini-rules.ts",
+   "preciseLocation": true,
+   "tested": true,
+   "inCatalog": false
+  },
+  {
+   "ruleId": 29926,
+   "code": "RULE-29926",
+   "title": "Access Token Sent in the URL Query String",
+   "severity": "MEDIUM",
    "source": "lib/rules/security-gemini-rules.ts",
    "preciseLocation": true,
    "tested": true,

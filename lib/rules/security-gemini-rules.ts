@@ -139,6 +139,77 @@ function evaluateJs(path: string, c: string, add: Add) {
       why: `Even without a shell, a value starting with "-" is read by ${m[1]} as an option (for example --upload-pack=… for git or -o for curl), which can run commands or write files.`,
       fix: `Validate the value (allow-list or a strict regex), and put "--" before positional arguments: ['clone', '--', url].` });
   }
+
+  // SECG-22: signed cookies read while cookie-parser has no secret
+  const cp = /\bcookieParser\(\s*\)/.exec(c);
+  if (cp && /\breq\.signedCookies\b/.test(c)) add({ ruleId: 29921, code: 'SECG-22', severity: 'HIGH', category: 'Session Management', cwe: 'CWE-565', lineIdx: at(cp.index),
+    title: 'req.signedCookies Used but cookieParser() Has No Secret',
+    why: 'Without a secret, cookie-parser cannot verify signatures, so signed cookies are never trusted (always empty) or the app falls back to plain cookies the user can edit, such as a user id.',
+    fix: 'Pass a secret from the environment: app.use(cookieParser(process.env.COOKIE_SECRET)) and keep identity in a server-side session.' });
+
+  // SECG-23: directory listings served by serve-index
+  for (const m of c.matchAll(/\bserveIndex\(|require\(\s*['"]serve-index['"]\s*\)|from\s+['"]serve-index['"]/g)) {
+    add({ ruleId: 29922, code: 'SECG-23', severity: 'MEDIUM', category: 'Sensitive Data Exposure', cwe: 'CWE-548', lineIdx: at(m.index!),
+      title: 'Directory Listing Enabled With serve-index',
+      why: 'serve-index lists every file in the folder, so backups, exports, logs and uploads that were never linked can be found and downloaded.',
+      fix: 'Remove serve-index from production and serve only known files.' });
+    break;
+  }
+
+  // SECG-24: response Content-Type taken from the request
+  for (const m of c.matchAll(/['"]content-type['"]\s*[:,]\s*(?:req\.(?:query|body|params)\.\w+|(?:url\.)?searchParams\.get\(|body\.\w+|formData\.get\()/gi)) {
+    add({ ruleId: 29923, code: 'SECG-24', severity: 'HIGH', category: 'Cross-Site Scripting', cwe: 'CWE-79', lineIdx: at(m.index!),
+      title: 'Response Content-Type Chosen by the Request',
+      why: 'A caller can ask for text/html (or image/svg+xml) on a file they uploaded, so the browser runs their script on your origin: stored XSS against anyone who opens the link.',
+      fix: 'Derive the type from the stored file (allow-list of safe types), add X-Content-Type-Options: nosniff and Content-Disposition: attachment for user files.' });
+  }
+
+  // SECG-25: role / plan read from localStorage decides access
+  // Only when the stored value itself is the gate (compared to admin / true / a paid tier), not when it is displayed
+  for (const m of c.matchAll(/\blocalStorage\.getItem\(\s*['"](role|userRole|isAdmin|is_admin|plan|tier|isPremium|is_premium|isPro|subscription)['"]\s*\)\s*[!=]==?\s*['"](?:admin|owner|superadmin|true|pro|premium|enterprise|paid|business)['"]/gi)) {
+    add({ ruleId: 29924, code: 'SECG-25', severity: 'MEDIUM', category: 'Broken Access Control', cwe: 'CWE-602', lineIdx: at(m.index!),
+      title: `Access Decided by localStorage "${m[1]}"`,
+      why: `Anyone can run localStorage.setItem('${m[1]}', …) in the console, so paid or admin features unlock for free unless every server call checks the real ${m[1]}.`,
+      fix: `Read ${m[1]} from the authenticated session / database on the server, and enforce it in the API, not only in the UI.` });
+  }
+
+  // SECG-26: Stripe redirect URLs taken from the request body
+  for (const m of c.matchAll(/\b(success_url|cancel_url|return_url)\s*:\s*(?:req\.body|body|input|data|params|json)\.\w+/g)) {
+    add({ ruleId: 29925, code: 'SECG-26', severity: 'MEDIUM', category: 'Open Redirect', cwe: 'CWE-601', lineIdx: at(m.index!),
+      title: `Checkout ${m[1]} Taken From the Request`,
+      why: `After paying, Stripe sends the customer to whatever ${m[1]} the client chose, so a crafted link can take them to a look-alike page that asks for card or login details.`,
+      fix: `Build ${m[1]} on the server from your own base URL (process.env.NEXT_PUBLIC_APP_URL + a fixed path).` });
+  }
+
+  // SECG-27: Supabase access token placed in a URL
+  for (const m of c.matchAll(/[?&](?:access_token|token|jwt)=\$\{\s*[\w.?]*(?:session\??\.access_token|accessToken|access_token)\b/g)) {
+    add({ ruleId: 29926, code: 'SECG-27', severity: 'MEDIUM', category: 'Sensitive Data Exposure', cwe: 'CWE-598', lineIdx: at(m.index!),
+      title: 'Access Token Sent in the URL Query String',
+      why: 'URLs end up in server and proxy logs, browser history and Referer headers, so the session token leaks and can be replayed to act as the user.',
+      fix: 'Send it in the Authorization: Bearer header (or a POST body), never in the URL.' });
+  }
+}
+
+function evaluateRust(lines: string[], add: Add) {
+  lines.forEach((l, i) => {
+    // SECG-19: reqwest TLS verification turned off
+    const m = /\.danger_accept_invalid_(certs|hostnames)\(\s*true\s*\)/.exec(l);
+    if (m && !/^\s*\/\//.test(l)) add({ ruleId: 29918, code: 'SECG-19', severity: 'HIGH', category: 'Transport Security', cwe: 'CWE-295', lineIdx: i,
+      title: `reqwest danger_accept_invalid_${m[1]}(true)`,
+      why: 'Certificate checking is off, so anyone on the network path (Wi-Fi, proxy, compromised DNS) can impersonate the API and read or change the traffic, including tokens.',
+      fix: 'Remove the call; for a private CA add it with .add_root_certificate(cert) instead.' });
+  });
+}
+
+function evaluateRuby(lines: string[], add: Add) {
+  lines.forEach((l, i) => {
+    // SECG-21: Kernel#open / URI.open on request parameters
+    const m = /(?:^|[^.\w])(?:Kernel\.)?open\(\s*params\[|\bURI\.open\(\s*params\[|\bopen\(\s*"\|/.exec(l);
+    if (m && !/^\s*#/.test(l)) add({ ruleId: 29920, code: 'SECG-21', severity: 'CRITICAL', category: 'Command Injection', cwe: 'CWE-78', lineIdx: i,
+      title: 'open() Called With a Request Parameter',
+      why: 'Kernel#open runs a shell command when the argument starts with "|", and URI.open fetches any URL (file://, internal hosts): a parameter becomes remote code execution or SSRF.',
+      fix: 'Use File.open for local files with a fixed directory, or Net::HTTP / URI.parse(url).open only after validating the scheme and host against an allow-list.' });
+  });
 }
 
 function evaluatePy(lines: string[], add: Add) {
@@ -150,6 +221,13 @@ function evaluatePy(lines: string[], add: Add) {
       title: 'jwt.decode Accepts Both RSA/EC and HMAC Algorithms',
       why: 'Allowing HS256 next to RS256 lets an attacker sign a token with HMAC using your public key as the secret, which then verifies: full authentication bypass (algorithm confusion).',
       fix: "Accept one algorithm family per key: algorithms=['RS256'] for public keys, ['HS256'] only with a shared secret." });
+
+    // SECG-20: secret read from the environment with a literal fallback
+    const s = /\b(\w*(?:SECRET|secret)\w*)\s*(?::\s*str\s*)?=\s*os\.(?:environ\.get|getenv)\(\s*['"]\w+['"]\s*,\s*['"]([^'"]{1,80})['"]\s*\)/.exec(l);
+    if (s) add({ ruleId: 29919, code: 'SECG-20', severity: 'HIGH', category: 'Secret Isolation', cwe: 'CWE-1188', lineIdx: i,
+      title: `${s[1]} Falls Back to a Hard-Coded Value`,
+      why: `If the variable is missing in production, the app silently signs sessions / tokens with "${s[2].slice(0, 20)}", which is in the repository, so anyone can forge them.`,
+      fix: `Fail at startup when it is missing: ${s[1]} = os.environ["…"] (no default).` });
 
     // SECG-12: SQLAlchemy text() fragment built with an f-string / format
     const t = /\b(?:sa\.|sqlalchemy\.)?text\(\s*(?:[fF]['"][^'"]*\{|['"][^'"]*['"]\s*\.format\(|['"][^'"]*['"]\s*%\s*)/.exec(l);
@@ -216,6 +294,8 @@ export function evaluateSecurityGeminiRules(file: CodeFile, lines: string[], cle
   else if (/\.py$/i.test(path)) evaluatePy(pl, add);
   else if (/\.go$/i.test(path)) evaluateGo(pl, add);
   else if (/\.cs$/i.test(path)) evaluateCs(c, add);
+  else if (/\.rs$/i.test(path)) evaluateRust(pl, add);
+  else if (/\.rb$/i.test(path)) evaluateRuby(pl, add);
   else if (/\.(?:properties|ya?ml)$/i.test(path)) evaluateConfig(path, pl, add);
   else return { findings, logs };
 

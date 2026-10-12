@@ -247,4 +247,135 @@ export function clone(req: { body: { repo: string } }) {
 }
 `),
   },
+  {
+    ruleIds: [29918], name: 'SECG-19 reqwest with TLS checks off',
+    detects: f('src/client.rs', `pub fn client() -> reqwest::Client {
+    reqwest::Client::builder().danger_accept_invalid_certs(true).build().unwrap()
+}
+`),
+    ignores: f('src/client.rs', `pub fn client(ca: reqwest::Certificate) -> reqwest::Client {
+    reqwest::Client::builder().add_root_certificate(ca).build().unwrap()
+}
+`),
+  },
+  {
+    ruleIds: [29919], name: 'SECG-20 Python secret with a literal fallback',
+    detects: f('app/config.py', `import os
+SECRET_KEY = os.environ.get("SECRET_KEY", "dev-secret-change-me")
+`),
+    ignores: f('app/config.py', `import os
+SECRET_KEY = os.environ["SECRET_KEY"]
+DEBUG = os.environ.get("DEBUG", "false") == "true"
+`),
+  },
+  {
+    ruleIds: [29920], name: 'SECG-21 Ruby open on params',
+    detects: f('app/controllers/files_controller.rb', `class FilesController < ApplicationController
+  def show
+    data = open(params[:path]).read
+    render plain: data
+  end
+end
+`),
+    ignores: f('app/controllers/files_controller.rb', `class FilesController < ApplicationController
+  def show
+    name = File.basename(params[:path].to_s)
+    render plain: File.read(Rails.root.join("public", "docs", name))
+  end
+end
+`),
+  },
+  {
+    ruleIds: [29921], name: 'SECG-22 signedCookies without a cookie secret',
+    detects: f('server/app.js', `const express = require('express');
+const cookieParser = require('cookie-parser');
+const app = express();
+app.use(cookieParser());
+app.get('/me', (req, res) => res.json({ id: req.signedCookies.uid }));
+`),
+    ignores: f('server/app.js', `const express = require('express');
+const cookieParser = require('cookie-parser');
+const app = express();
+app.use(cookieParser(process.env.COOKIE_SECRET));
+app.get('/me', (req, res) => res.json({ id: req.signedCookies.uid }));
+`),
+  },
+  {
+    ruleIds: [29922], name: 'SECG-23 serve-index directory listing',
+    detects: f('server/app.js', `const express = require('express');
+const serveIndex = require('serve-index');
+const app = express();
+app.use('/files', express.static('uploads'), serveIndex('uploads'));
+`),
+    ignores: f('server/app.js', `const express = require('express');
+const app = express();
+app.use('/files', express.static('uploads', { index: false }));
+`),
+  },
+  {
+    ruleIds: [29923], name: 'SECG-24 Content-Type taken from the query',
+    detects: f('app/api/file/route.ts', `import { getFile } from '@/lib/storage';
+export async function GET(req: Request) {
+  const url = new URL(req.url);
+  const body = await getFile(url.searchParams.get('id')!);
+  return new Response(body, { headers: { 'Content-Type': url.searchParams.get('type') ?? 'text/plain' } });
+}
+`),
+    ignores: f('app/api/file/route.ts', `import { getFile } from '@/lib/storage';
+export async function GET(req: Request) {
+  const url = new URL(req.url);
+  const file = await getFile(url.searchParams.get('id')!);
+  return new Response(file.body, { headers: { 'Content-Type': file.mime, 'X-Content-Type-Options': 'nosniff' } });
+}
+`),
+  },
+  {
+    ruleIds: [29924], name: 'SECG-25 admin gate from localStorage',
+    detects: f('src/components/AdminLink.tsx', `export function AdminLink() {
+  if (localStorage.getItem('role') === 'admin') return <a href="/admin">Admin</a>;
+  return null;
+}
+`),
+    ignores: f('src/components/AdminLink.tsx', `export function AdminLink({ isAdmin }: { isAdmin: boolean }) {
+  const label = localStorage.getItem('role');
+  if (isAdmin) return <a href="/admin">Admin ({label})</a>;
+  return null;
+}
+`),
+  },
+  {
+    ruleIds: [29925], name: 'SECG-26 Stripe success_url from the request body',
+    detects: f('app/api/checkout/route.ts', `import Stripe from 'stripe';
+const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!);
+export async function POST(req: Request) {
+  const body = await req.json();
+  const session = await stripe.checkout.sessions.create({ mode: 'payment', line_items: [{ price: process.env.PRICE_ID, quantity: 1 }], success_url: body.successUrl, cancel_url: body.cancelUrl });
+  return Response.json({ url: session.url });
+}
+`),
+    ignores: f('app/api/checkout/route.ts', `import Stripe from 'stripe';
+const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!);
+const APP = process.env.NEXT_PUBLIC_APP_URL!;
+export async function POST(req: Request) {
+  const body = await req.json();
+  const session = await stripe.checkout.sessions.create({ mode: 'payment', line_items: [{ price: process.env.PRICE_ID, quantity: 1 }], success_url: APP + '/thanks', cancel_url: APP + '/pricing' });
+  return Response.json({ url: session.url });
+}
+`),
+  },
+  {
+    ruleIds: [29926], name: 'SECG-27 access token in the URL',
+    detects: f('lib/export.ts', `import { supabase } from './supabase';
+export async function exportUrl() {
+  const { data: { session } } = await supabase.auth.getSession();
+  return \`/api/export?access_token=\${session?.access_token}\`;
+}
+`),
+    ignores: f('lib/export.ts', `import { supabase } from './supabase';
+export async function exportCsv() {
+  const { data: { session } } = await supabase.auth.getSession();
+  return fetch('/api/export', { headers: { Authorization: \`Bearer \${session?.access_token}\` } });
+}
+`),
+  },
 ];
