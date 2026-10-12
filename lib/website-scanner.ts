@@ -26,6 +26,8 @@ export interface WebsiteAuditData {
   challengeProvider?: ChallengeProvider;
   /** The target started challenging part-way through, so subpages / bundles / probes after that point were skipped. */
   challengedDuringScan?: boolean;
+  /** The first request the target challenged and how many requests had been sent by then (diagnoses rate vs path triggers). */
+  challengeTrigger?: { url: string; index: number };
   error?: 'CLOUDFLARE_BOT_PROTECTION' | string;
 }
 
@@ -197,15 +199,7 @@ export async function fetchWebsiteAuditData(siteUrl: string, signal?: AbortSigna
   // Every request after the homepage goes through one limiter: at most 4 in flight, starts spaced out, and nothing more
   // is sent once the target challenges us (a burst makes Vercel / Cloudflare block the scanner IP for minutes)
   const limiter = createRequestLimiter({ concurrency: 4, minIntervalMs: 120 });
-  const politeFetch = (url: string, init: Parameters<typeof safeFetch>[1]) => limiter.run(async () => limiter.note(await safeFetch(url, init)));
-
-  // Server-only probes (.env/.git exposure, TLS, HTTP redirect, cookies); browser runs cannot open raw TLS sockets
-  const liveProbePromise = typeof window === 'undefined'
-    ? probeLiveSite(formattedUrl, setCookies, { deepProbes: options.deepProbes === true, fetchImpl: limiter.fetch }).catch((err) => {
-        console.warn(`Live probes failed for ${formattedUrl}:`, err?.message || err);
-        return undefined;
-      })
-    : Promise.resolve(undefined);
+  const politeFetch = (url: string, init: Parameters<typeof safeFetch>[1]) => limiter.run(async () => limiter.note(await safeFetch(url, init), url));
 
   const isHealthy = statusCode >= 200 && statusCode < 400;
   const linkStatusText = statusCode === 200 ? '200 OK (Healthy Target)' : statusCode === 404 ? '404 Not Found (Broken Link)' : statusCode >= 500 ? `HTTP ${statusCode} Server Error (Dead Endpoint)` : `HTTP ${statusCode} Response`;
@@ -344,10 +338,20 @@ export async function fetchWebsiteAuditData(siteUrl: string, signal?: AbortSigna
     console.warn('Bundle analysis skipped:', err instanceof Error ? err.message : String(err));
   }
 
-  const liveProbe = await liveProbePromise;
+  // Exposure probes (.env/.git, deploy artifacts, TLS, HTTP redirect, cookies) run last: requests for paths such as
+  // /.env or /phpmyadmin look like a vulnerability scanner and are the likeliest to get the IP challenged, so the pages
+  // and bundles above are read first. Server only: browser runs cannot open raw TLS sockets.
+  // Challenged while reading pages / bundles: the content is incomplete and the scan must fail rather than look clean
+  const contentChallenged = limiter.challenged;
+  const liveProbe = typeof window === 'undefined' && !contentChallenged
+    ? await probeLiveSite(formattedUrl, setCookies, { deepProbes: options.deepProbes === true, fetchImpl: limiter.fetch }).catch((err) => {
+        console.warn(`Live probes failed for ${formattedUrl}:`, err?.message || err);
+        return undefined;
+      })
+    : undefined;
   if (liveProbe) {
     const headerFile = files.find((f) => f.path === 'live-deployment/security-headers.json');
-    if (headerFile) headerFile.content = JSON.stringify({ ...JSON.parse(headerFile.content), liveProbe }, null, 2);
+    if (headerFile) headerFile.content = JSON.stringify({ ...JSON.parse(headerFile.content), liveProbe, ...(limiter.challenged ? { probesIncomplete: true, challengeTrigger: limiter.trigger } : {}) }, null, 2);
   }
 
   return {
@@ -360,7 +364,9 @@ export async function fetchWebsiteAuditData(siteUrl: string, signal?: AbortSigna
     securityHeadersMissing,
     discoveredButtonsCount,
     crawledPagesCount: subpagesToCrawl.length + 1,
-    // Requests after the challenge were skipped: report it instead of a clean result for a site we could not fully read
-    ...(limiter.challenged ? { challengedDuringScan: true, isCloudflareChallenge: true, challengeProvider: limiter.provider, error: 'CLOUDFLARE_BOT_PROTECTION' } : {})
+    // Challenged during the probes only: pages and bundles were read, the probes after the challenge were skipped
+    // (probesIncomplete). Challenged while reading content: an error, never a clean result for a site we could not read.
+    ...(limiter.challenged ? { challengedDuringScan: true, challengeTrigger: limiter.trigger, challengeProvider: limiter.provider } : {}),
+    ...(contentChallenged ? { isCloudflareChallenge: true, error: 'CLOUDFLARE_BOT_PROTECTION' } : {})
   };
 }

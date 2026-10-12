@@ -23,10 +23,14 @@ export interface RequestLimiter {
   /** A fetch that goes through the limiter and records challenges. */
   fetch: typeof fetch;
   /** Records a response obtained through run() (for callers that use their own fetch wrapper). */
-  note(res: Response): Response;
+  note(res: Response, url?: string): Response;
   readonly challenged: boolean;
   /** Which layer challenged (when challenged). */
   readonly provider: 'vercel' | 'cloudflare' | undefined;
+  /** Requests actually sent to the target so far. */
+  readonly sent: number;
+  /** The first request the target answered with a challenge: which URL and how many requests had gone out by then. */
+  readonly trigger: { url: string; index: number } | undefined;
 }
 
 export function createRequestLimiter({ concurrency = 4, minIntervalMs = 120, fetchImpl = globalThis.fetch } = {}): RequestLimiter {
@@ -34,6 +38,8 @@ export function createRequestLimiter({ concurrency = 4, minIntervalMs = 120, fet
   let lastStart = 0;
   let challenged = false;
   let provider: 'vercel' | 'cloudflare' | undefined;
+  let sent = 0;
+  let trigger: { url: string; index: number } | undefined;
   const queue: (() => void)[] = [];
 
   const next = () => {
@@ -47,17 +53,21 @@ export function createRequestLimiter({ concurrency = 4, minIntervalMs = 120, fet
 
   const run = <T>(fn: () => Promise<T>): Promise<T> => new Promise<T>((resolve, reject) => {
     queue.push(() => {
-      const task = challenged ? Promise.reject(new TargetChallengedError()) : fn();
+      const task = challenged ? Promise.reject(new TargetChallengedError()) : (sent++, fn());
       task.then(resolve, reject).finally(() => { active--; next(); });
     });
     next();
   });
 
-  const note = (res: Response) => {
-    if (isChallengeResponse(res)) { challenged = true; provider ??= res.headers.get('x-vercel-mitigated') ? 'vercel' : 'cloudflare'; }
+  const note = (res: Response, url?: string) => {
+    if (isChallengeResponse(res)) {
+      if (!challenged) trigger = { url: url || res.url || '(unknown)', index: sent };
+      challenged = true;
+      provider ??= res.headers.get('x-vercel-mitigated') ? 'vercel' : 'cloudflare';
+    }
     return res;
   };
-  const limitedFetch = ((input: RequestInfo | URL, init?: RequestInit) => run(async () => note(await fetchImpl(input, init)))) as typeof fetch;
+  const limitedFetch = ((input: RequestInfo | URL, init?: RequestInit) => run(async () => note(await fetchImpl(input, init), input instanceof Request ? input.url : String(input)))) as typeof fetch;
 
-  return { run, fetch: limitedFetch, note, get challenged() { return challenged; }, get provider() { return provider; } };
+  return { run, fetch: limitedFetch, note, get challenged() { return challenged; }, get provider() { return provider; }, get sent() { return sent; }, get trigger() { return trigger; } };
 }
