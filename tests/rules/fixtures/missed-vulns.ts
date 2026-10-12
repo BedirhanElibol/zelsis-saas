@@ -705,4 +705,40 @@ COPY .env.example .env.example
 RUN --mount=type=secret,id=stripe STRIPE_SECRET_KEY=$(cat /run/secrets/stripe) npm run build
 `),
   },
+  {
+    ruleIds: [28830], name: 'GAP-30 Supabase pooler URI with the password inline',
+    detects: f('lib/db.ts', `import { Pool } from 'pg';
+export const pool = new Pool({
+  connectionString: 'postgresql://postgres.abcdefghijklmnopqrst:Hq7vR2mKp9wZ@aws-0-eu-central-1.pooler.supabase.com:6543/postgres',
+});
+`),
+    ignores: f('lib/db.ts', `import { Pool } from 'pg';
+// postgresql://postgres.abcdefghijklmnopqrst:[YOUR-PASSWORD]@aws-0-eu-central-1.pooler.supabase.com:6543/postgres
+export const pool = new Pool({ connectionString: process.env.DATABASE_URL });
+const docs = 'postgresql://postgres.abcdefghijklmnopqrst:\${DB_PASSWORD}@aws-0-eu-central-1.pooler.supabase.com:6543/postgres';
+`),
+  },
+  {
+    ruleIds: [28831], name: 'GAP-31 Convex prod deploy key in code',
+    detects: f('scripts/seed.ts', `import { ConvexHttpClient } from 'convex/browser';
+const client = new ConvexHttpClient(process.env.CONVEX_URL!);
+(client as any).setAdminAuth('prod:happy-animal-123|eyJ2MiI6ImQ0ZjM2YjE4YzQ5ZTQ2N2E5MmQ3YjE1ZTBhOGMzZjJlIn0=');
+`),
+    ignores: f('scripts/seed.ts', `import { ConvexHttpClient } from 'convex/browser';
+const client = new ConvexHttpClient(process.env.CONVEX_URL!);
+(client as any).setAdminAuth(process.env.CONVEX_DEPLOY_KEY!);
+`),
+  },
+  {
+    ruleIds: [28832], name: 'GAP-32 server actions encryption key hard-coded',
+    detects: f('Dockerfile', `FROM node:22-alpine
+ENV NEXT_SERVER_ACTIONS_ENCRYPTION_KEY="K7gNU3sdo+OL0wNhqoVWhr3g6s1xYv72ol/pe/Unols="
+RUN npm ci && npm run build
+`),
+    ignores: f('Dockerfile', `FROM node:22-alpine
+ARG NEXT_SERVER_ACTIONS_ENCRYPTION_KEY
+ENV NEXT_SERVER_ACTIONS_ENCRYPTION_KEY=$NEXT_SERVER_ACTIONS_ENCRYPTION_KEY
+RUN npm ci && npm run build
+`),
+  },
 ];

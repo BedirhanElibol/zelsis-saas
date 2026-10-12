@@ -498,6 +498,43 @@ export function evaluateMissedVulnsRules(file: CodeFile, lines: string[], cleanC
     });
   }
 
+  const isTemplate = /\.(?:example|sample|template|dist)(?:\.[a-z]+)?$/i.test(path);
+  // GAP-30: Supabase Supavisor pooler URI with the database password inline (SEC-SECRET-82 covers only db.<ref>.supabase.co)
+  if (!isTemplate) {
+    lines.forEach((l, i) => {
+      const m = /postgres(?:ql)?:\/\/postgres\.[a-z0-9]{15,25}:([^@\s'"`]{6,})@aws-\d+-[a-z0-9-]+\.pooler\.supabase\.com/i.exec(l);
+      if (!m || /\$\{|\$[A-Z_]|<|\[|YOUR|PASSWORD|placeholder/i.test(m[1])) return;
+      add({ ruleId: 28830, code: 'GAP-30', severity: 'CRITICAL', category: 'Secret Isolation', lineIdx: i,
+        title: 'Supabase Pooler Connection String With the Database Password Committed',
+        why: 'The pooler URI carries the postgres password, which bypasses RLS entirely: anyone with the repo can read and write every table.',
+        fix: 'Reset the database password in Supabase (Project Settings > Database) and read the URI from an environment variable such as DATABASE_URL.' });
+    });
+  }
+
+  // GAP-31: Convex production deploy/admin key in code (full read/write on every table)
+  if (!isTemplate) {
+    lines.forEach((l, i) => {
+      if (/\bprod:[a-z]+-[a-z]+-\d{2,4}\|[A-Za-z0-9+/=_-]{40,}/.test(l)) {
+        add({ ruleId: 28831, code: 'GAP-31', severity: 'CRITICAL', category: 'Secret Isolation', lineIdx: i,
+          title: 'Convex Production Deploy Key Committed',
+          why: 'A Convex prod deploy key grants admin access to the deployment: it can run any function and read or overwrite all data, skipping your auth checks.',
+          fix: 'Regenerate the deploy key in the Convex dashboard and provide it only through CONVEX_DEPLOY_KEY in CI or hosting secrets.' });
+      }
+    });
+  }
+
+  // GAP-32: Next.js server actions encryption key hard-coded in build/deploy config
+  if (/(?:^|\/)(?:Dockerfile(?:\.[\w-]+)?|docker-compose[\w.-]*\.ya?ml|compose\.ya?ml|next\.config\.[cm]?[jt]s|vercel\.json|\.github\/workflows\/[^/]+\.ya?ml)$/i.test(path)) {
+    lines.forEach((l, i) => {
+      if (!isComment(l) && /NEXT_SERVER_ACTIONS_ENCRYPTION_KEY['"]?\s*[:=\s]\s*['"]?[A-Za-z0-9+/]{32,}={0,2}/.test(l)) {
+        add({ ruleId: 28832, code: 'GAP-32', severity: 'HIGH', category: 'Secrets Management', lineIdx: i,
+          title: 'Next.js Server Actions Encryption Key Hard-Coded',
+          why: 'This key encrypts the variables that server actions capture from their closure; with it an attacker can read those values and forge action payloads.',
+          fix: 'Generate a new key and inject NEXT_SERVER_ACTIONS_ENCRYPTION_KEY at build time from a secret store (CI secret, Docker build secret), never as a literal.' });
+      }
+    });
+  }
+
   // GAP-19: Auth.js / NextAuth links an OAuth sign-in to an existing account by e-mail alone
   if (isJs && /next-auth|@auth\//.test(cleanContent)) {
     lines.forEach((l, i) => {
