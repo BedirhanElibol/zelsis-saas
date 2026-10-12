@@ -230,6 +230,12 @@ export const ApiKeyRevokeSchema = z.object({
   keyId: z.string().uuid(),
 });
 
+/** Domain ownership actions (app/actions/site-verification.ts); the hostname is normalised server-side. */
+export const SiteDomainSchema = z.object({
+  accessToken: AccessTokenSchema,
+  hostname: z.string().trim().min(3, 'Enter a domain such as example.com').max(300),
+});
+
 export const OrgNameSchema = z.object({
   accessToken: AccessTokenSchema,
   name: z.string().trim().min(2, 'Workspace name needs at least 2 characters').max(80),

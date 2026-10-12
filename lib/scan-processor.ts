@@ -12,6 +12,7 @@ import { redactScanResultFixes } from '@/lib/fix-gate';
 import { getSupabaseAdmin } from '@/lib/supabase-admin';
 import { FREE_PROJECT_LIMIT } from '@/lib/quota-manager';
 import { recordRescanAlert } from '@/lib/rescan-alerts';
+import { isSiteVerified } from '@/lib/site-verification';
 
 export interface ExecuteScanJobOptions {
   jobId: string;
@@ -168,7 +169,9 @@ export async function executeScanJob(options: ExecuteScanJobOptions): Promise<Sc
         throw new ScanJobError('SSRF blocked', 403);
       }
 
-      const webData = await fetchWebsiteAuditData(rawRepoUrl);
+      // Deep live probes (dump, credential and admin-console paths) only for domains the owner verified
+      const deepProbes = await isSiteVerified(adminClient, authenticatedUserId, rawRepoUrl);
+      const webData = await fetchWebsiteAuditData(rawRepoUrl, undefined, { deepProbes });
       if (webData?.error) {
         await updateJobState({
           status: 'FAILED',

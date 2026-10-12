@@ -44,7 +44,7 @@ export function isValidWebUrl(url: string): boolean {
  * 3. Auditing HTTP Security Headers (CSP, HSTS, X-Frame-Options, CORS)
  * 4. Scanning Client JS Bundles for leaked API secret keys
  */
-export async function fetchWebsiteAuditData(siteUrl: string, signal?: AbortSignal): Promise<WebsiteAuditData | null> {
+export async function fetchWebsiteAuditData(siteUrl: string, signal?: AbortSignal, options: { deepProbes?: boolean } = {}): Promise<WebsiteAuditData | null> {
   const formattedUrl = siteUrl.startsWith('http') ? siteUrl : `https://${siteUrl}`;
   const origin = new URL(formattedUrl).origin;
 
@@ -189,7 +189,7 @@ export async function fetchWebsiteAuditData(siteUrl: string, signal?: AbortSigna
 
   // Server-only probes (.env/.git exposure, TLS, HTTP redirect, cookies); browser runs cannot open raw TLS sockets
   const liveProbePromise = typeof window === 'undefined'
-    ? probeLiveSite(formattedUrl, setCookies).catch((err) => {
+    ? probeLiveSite(formattedUrl, setCookies, { deepProbes: options.deepProbes === true }).catch((err) => {
         console.warn(`Live probes failed for ${formattedUrl}:`, err?.message || err);
         return undefined;
       })
