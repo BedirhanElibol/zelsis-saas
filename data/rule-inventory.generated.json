@@ -1,8 +1,8 @@
 {
  "summary": {
-  "implementedRules": 1242,
-  "testedRules": 1231,
-  "preciseLocationRules": 1239,
+  "implementedRules": 1247,
+  "testedRules": 1236,
+  "preciseLocationRules": 1244,
   "catalogEntries": 1922,
   "catalogOnlyNotImplemented": 1401,
   "catalogPlaceholderMetadata": 1810
@@ -7885,6 +7885,56 @@
    "ruleId": 27007,
    "code": "LIVE-07",
    "title": "Session cookie set without ${[...new Set(probe.insecureCookies.flatMap((c) => c.missing))].join(",
+   "severity": "MEDIUM",
+   "source": "lib/scanner/live-checks.ts",
+   "preciseLocation": true,
+   "tested": true,
+   "inCatalog": false
+  },
+  {
+   "ruleId": 27008,
+   "code": "RULE-27008",
+   "title": "Database dump publicly downloadable",
+   "severity": "CRITICAL",
+   "source": "lib/scanner/live-checks.ts",
+   "preciseLocation": true,
+   "tested": true,
+   "inCatalog": false
+  },
+  {
+   "ruleId": 27009,
+   "code": "RULE-27009",
+   "title": "Cloud / deploy credentials publicly downloadable",
+   "severity": "CRITICAL",
+   "source": "lib/scanner/live-checks.ts",
+   "preciseLocation": true,
+   "tested": true,
+   "inCatalog": false
+  },
+  {
+   "ruleId": 27010,
+   "code": "RULE-27010",
+   "title": "Debug or log endpoint publicly reachable",
+   "severity": "HIGH",
+   "source": "lib/scanner/live-checks.ts",
+   "preciseLocation": true,
+   "tested": true,
+   "inCatalog": false
+  },
+  {
+   "ruleId": 27011,
+   "code": "RULE-27011",
+   "title": "Database / search admin console publicly reachable",
+   "severity": "HIGH",
+   "source": "lib/scanner/live-checks.ts",
+   "preciseLocation": true,
+   "tested": true,
+   "inCatalog": false
+  },
+  {
+   "ruleId": 27012,
+   "code": "RULE-27012",
+   "title": "Build / deployment configuration publicly downloadable",
    "severity": "MEDIUM",
    "source": "lib/scanner/live-checks.ts",
    "preciseLocation": true,

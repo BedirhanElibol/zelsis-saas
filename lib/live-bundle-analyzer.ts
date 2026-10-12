@@ -35,7 +35,10 @@ function jwtPayload(token: string): Record<string, unknown> | null {
   }
 }
 
-const KEY_PATTERNS: { kind: string; re: RegExp; severity: BundleSecret['severity']; detail: string; near?: RegExp }[] = [
+/** Template / documentation values that look like secrets but are not. */
+const PLACEHOLDER = /example|your[_-]?|placeholder|changeme|xxxx|\*\*\*|<[^>]+>|\$\{|localhost|127\.0\.0\.1|password@|user:pass/i;
+
+const KEY_PATTERNS: { kind: string; re: RegExp; severity: BundleSecret['severity']; detail: string; near?: RegExp; reject?: RegExp }[] = [
   { kind: 'Supabase secret key', re: /\bsb_secret_[A-Za-z0-9_-]{20,}/g, severity: 'CRITICAL', detail: 'Supabase secret keys bypass Row Level Security: anyone can read and change every table.' },
   { kind: 'OpenAI API key', re: /\bsk-(?:proj-|svcacct-)?[A-Za-z0-9_-]{40,}/g, severity: 'CRITICAL', detail: 'Anyone can use your OpenAI account and run up your bill.' },
   { kind: 'Anthropic API key', re: /\bsk-ant-[A-Za-z0-9_-]{30,}/g, severity: 'CRITICAL', detail: 'Anyone can use your Anthropic account and run up your bill.' },
@@ -48,6 +51,19 @@ const KEY_PATTERNS: { kind: string; re: RegExp; severity: BundleSecret['severity
   { kind: 'GitHub token', re: /\b(?:ghp_[A-Za-z0-9]{36}|github_pat_[A-Za-z0-9_]{60,})/g, severity: 'CRITICAL', detail: 'Access to your GitHub repositories.' },
   { kind: 'AWS access key', re: /\bAKIA[0-9A-Z]{16}\b/g, severity: 'CRITICAL', detail: 'Access to your AWS account.' },
   { kind: 'Google Gemini API key', re: /\bAIza[0-9A-Za-z_-]{35}\b/g, severity: 'HIGH', near: /generativelanguage\.googleapis|gemini|GoogleGenerativeAI|GoogleGenAI/i, detail: 'Anyone can call Gemini on your Google Cloud bill.' },
+  // From the Gemini report (LIVE-BUNDLE proposals): credentials that have no vendor prefix but an unmistakable shape
+  { kind: 'Database / cache connection string with password', re: /\b(?:postgres(?:ql)?|mysql|mariadb|mongodb(?:\+srv)?|rediss?|amqps?):\/\/[^\s:"'`/@]+:[^\s@"'`/]{6,}@[^\s"'`/]+/g, severity: 'CRITICAL', reject: PLACEHOLDER,
+    detail: 'The database or cache password is readable by every visitor, who can connect directly and read or wipe the data, bypassing your API and RLS.' },
+  { kind: 'Password hash', re: /\$2[aby]\$\d{2}\$[./A-Za-z0-9]{53}|\$argon2id?\$v=\d+\$m=\d+,t=\d+,p=\d+\$[A-Za-z0-9+/]{16,}\$[A-Za-z0-9+/]{20,}/g, severity: 'HIGH',
+    detail: 'A password hash shipped to the browser can be cracked offline; it usually means credentials (often an admin login) are checked in client code.' },
+  { kind: 'Google OAuth client secret', re: /\bGOCSPX-[A-Za-z0-9_-]{28}\b/g, severity: 'HIGH',
+    detail: 'With the client secret anyone can run your Google sign-in flow as your app and exchange stolen authorization codes for tokens.' },
+  { kind: 'Stripe webhook signing secret', re: /\bwhsec_[A-Za-z0-9]{24,}/g, severity: 'HIGH',
+    detail: 'Anyone can forge Stripe webhooks that your server accepts as genuine (fake payments, plan upgrades).' },
+  { kind: 'Server-only secret', re: /\b(?:NEXTAUTH_SECRET|AUTH_SECRET|JWT_SECRET|SESSION_SECRET|COOKIE_SECRET|CRON_SECRET|ENCRYPTION_KEY|SUPABASE_SERVICE_ROLE_KEY|STRIPE_WEBHOOK_SECRET|DATABASE_URL|ADMIN_PASSWORD)["']?\s*[:=]\s*["'][^"'\s]{12,}["']/g, severity: 'CRITICAL', reject: PLACEHOLDER,
+    detail: 'A server-only secret was inlined into the client build (usually through a NEXT_PUBLIC_ / VITE_ variable or next.config env), so anyone can forge sessions, call cron routes or decrypt data.' },
+  { kind: 'Internal admin header secret', re: /["']x-(?:admin|internal|bypass|service|master)[\w-]*(?:secret|key|token)["']\s*:\s*["'][^"'\s]{12,}["']/gi, severity: 'HIGH', reject: PLACEHOLDER,
+    detail: 'The header value that unlocks admin or internal routes is visible to every visitor, so anyone can send it.' },
 ];
 
 /** Secrets and Supabase projects in the full bundle texts. */
@@ -70,6 +86,7 @@ export function analyzeBundles(bundles: { url: string; text: string }[]): Omit<L
     for (const p of KEY_PATTERNS) {
       for (const m of text.matchAll(p.re)) {
         if (p.near && !p.near.test(text.slice(Math.max(0, m.index! - 3000), m.index! + 3000))) continue;
+        if (p.reject?.test(m[0])) continue;
         add({ kind: p.kind, severity: p.severity, preview: redact(m[0]), bundle: url, detail: p.detail }, m[0]);
       }
     }
