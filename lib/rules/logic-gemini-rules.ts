@@ -7,6 +7,7 @@
  */
 import type { Finding } from '@/data/schema';
 import type { CodeFile } from '../scanner-engine';
+import type { RepoContext } from '../scanner/repo-context';
 
 interface Hit { ruleId: number; code: string; title: string; severity: Finding['severity']; lineIdx: number; why: string; fix: string }
 type Add = (h: Hit) => void;
@@ -419,6 +420,286 @@ function evaluateJs(path: string, c: string, add: Add) {
   }
 }
 
+/** Second batch from the report (BUG-190.., Rule IDs 29867-29899). */
+function evaluateJs2(path: string, c: string, add: Add, nextMajor: number) {
+  const at = (off: number) => lineAt(c, off);
+  const isClient = /^\s*['"]use client['"]/m.test(c);
+  const declared = (n: string, init: RegExp) => new RegExp(`\\b(?:const|let|var)\\s+${n}\\s*(?::[^=\\n]+)?=\\s*(?:${init.source})`).test(c);
+
+  // BUG-190: fetch() options with a body but no method (GET cannot have a body)
+  for (const m of c.matchAll(/\bfetch\(\s*[^,()]+(?:\([^()]*\))?\s*,\s*\{/g)) {
+    const open = m.index! + m[0].length - 1;
+    const end = closeOf(c, open);
+    if (end < 0) continue;
+    const opts = c.slice(open, end);
+    if (/(?:^|[,{\s])body\s*[:,}]/.test(opts) && !/\bmethod\s*[:,}]|\.\.\./.test(opts)) add({ ruleId: 29867, code: 'BUG-190', severity: 'HIGH', lineIdx: at(m.index!),
+      title: 'fetch() Sends a body Without a method',
+      why: 'Without method, fetch uses GET, and a GET request with a body throws "Request with GET/HEAD method cannot have body" (TypeError): the save never reaches the server.',
+      fix: "Add the method: fetch(url, { method: 'POST', body, headers })." });
+  }
+
+  // BUG-191: manual multipart Content-Type on a FormData fetch strips the boundary
+  for (const m of c.matchAll(/\bfetch\(\s*[^,()]+(?:\([^()]*\))?\s*,\s*\{/g)) {
+    const open = m.index! + m[0].length - 1;
+    const end = closeOf(c, open);
+    if (end < 0) continue;
+    const opts = c.slice(open, end);
+    const bodyVar = /\bbody\s*:\s*(\w+)/.exec(opts)?.[1] ?? (/(?:^|[,{\s])body\s*[,}]/.test(opts) ? 'body' : '');
+    if (/['"]content-type['"]\s*:\s*['"]multipart\/form-data/i.test(opts) && (/\bbody\s*:\s*new\s+FormData\(/.test(opts) || (bodyVar && declared(bodyVar, /new\s+FormData\(/))))
+      add({ ruleId: 29868, code: 'BUG-191', severity: 'HIGH', lineIdx: at(m.index!),
+        title: 'multipart/form-data Content-Type Set by Hand on a FormData Upload',
+        why: 'The browser must add the multipart boundary to Content-Type. Setting the header yourself drops it, so the server cannot parse the body and the upload fails.',
+        fix: 'Remove the Content-Type header and let fetch set it from the FormData body.' });
+  }
+
+  // BUG-192: ref.current in a hook dependency array
+  for (const m of c.matchAll(/\buse(?:Effect|LayoutEffect|Memo|Callback)\(/g)) {
+    const end = closeOf(c, m.index! + m[0].length - 1);
+    if (end < 0) continue;
+    const deps = /,\s*\[([^\]]*)\]\s*\)$/.exec(c.slice(m.index!, end));
+    const r = deps && /\b(\w+)\.current\b/.exec(deps[1]);
+    if (r) add({ ruleId: 29869, code: 'BUG-192', severity: 'MEDIUM', lineIdx: at(end - deps[0].length),
+      title: `${r[1]}.current Used as a Hook Dependency`,
+      why: 'Changing ref.current does not re-render, so React never sees the new value when comparing dependencies: the effect does not re-run when the element or value changes.',
+      fix: 'Use a callback ref (or state) for elements you need to react to, and drop ref.current from the dependency array.' });
+  }
+
+  // BUG-193: in-place sort / reverse of a useState value
+  for (const m of c.matchAll(/\bconst\s+\[\s*(\w+)\s*,\s*set\w+\s*\]\s*=\s*useState\b/g)) {
+    for (const s of c.matchAll(new RegExp(`(?<![.\\w])${m[1]}\\.(sort|reverse)\\(`, 'g'))) {
+      add({ ruleId: 29870, code: 'BUG-193', severity: 'HIGH', lineIdx: at(s.index!),
+        title: `State ${m[1]} Mutated With .${s[1]}()`,
+        why: `.${s[1]}() changes the state array in place. React compares by reference, so setting it back does not re-render, and other components holding ${m[1]} see it change silently.`,
+        fix: `Copy first: [...${m[1]}].${s[1]}(…) (or ${m[1]}.to${s[1] === 'sort' ? 'Sorted' : 'Reversed'}()).` });
+    }
+  }
+
+  // BUG-194: dynamic request APIs inside unstable_cache
+  for (const m of c.matchAll(/\bunstable_cache\(/g)) {
+    const end = closeOf(c, m.index! + m[0].length - 1);
+    if (end < 0) continue;
+    const r = /\b(cookies|headers|draftMode)\(\)/.exec(c.slice(m.index!, end));
+    if (r) add({ ruleId: 29871, code: 'BUG-194', severity: 'HIGH', lineIdx: at(m.index! + r.index),
+      title: `${r[1]}() Called Inside unstable_cache`,
+      why: `Cached functions run outside the request, so ${r[1]}() throws inside unstable_cache; and if it did work, one user's cookies would be cached and served to everyone.`,
+      fix: `Read ${r[1]}() outside the cached function and pass the needed value in as an argument (it becomes part of the cache key).` });
+  }
+
+  // BUG-195: reduce with a block body that never returns the accumulator
+  for (const m of c.matchAll(/\.reduce\(\s*(?:async\s*)?\(\s*(\w+)\s*(?::[^,]+)?,[^)]*\)\s*(?::[^=]+)?=>\s*\{/g)) {
+    const open = m.index! + m[0].length - 1;
+    const end = closeOf(c, open);
+    if (end < 0) continue;
+    const body = c.slice(open, end);
+    if (!/\breturn\b/.test(body)) add({ ruleId: 29872, code: 'BUG-195', severity: 'HIGH', lineIdx: at(m.index!),
+      title: 'reduce() Callback Never Returns the Accumulator',
+      why: `The block body has no return, so ${m[1]} becomes undefined after the first item and the next iteration throws or the result is undefined.`,
+      fix: `End the callback with return ${m[1]};.` });
+  }
+
+  // BUG-196: Object.keys / entries / spread on URLSearchParams, Headers or FormData
+  const opaque = new Map<string, number>();
+  for (const m of c.matchAll(/\b(?:const|let)\s+(\w+)\s*(?::[^=\n]+)?=\s*(?:await\s+)?(?:new\s+(?:URLSearchParams|Headers|FormData)\(|useSearchParams\(\)|\w+\.formData\(\))/g)) if (!opaque.has(m[1])) opaque.set(m[1], m.index!);
+  for (const [n, declAt] of opaque) {
+    // A name can be reused for a plain object elsewhere in the file: only uses after this declaration count
+    if (new RegExp(`\\b(?:const|let|var)\\s+(?:\\{[^}]*\\.\\.\\.${n}\\b[^}]*\\}|${n}\\s*(?::[^=\\n]+)?=(?!\\s*(?:await\\s+)?(?:new\\s+(?:URLSearchParams|Headers|FormData)\\(|useSearchParams\\(\\)|\\w+\\.formData\\(\\))))`).test(c)) continue;
+    for (const s of c.matchAll(new RegExp(`\\bObject\\.(?:keys|entries|values|assign\\(\\s*\\{\\s*\\}\\s*,)\\(?\\s*${n}\\s*\\)|\\{\\s*\\.\\.\\.${n}\\s*\\}`, 'g'))) {
+      if (s.index! < declAt) continue;
+      add({ ruleId: 29873, code: 'BUG-196', severity: 'HIGH', lineIdx: at(s.index!),
+        title: `${n} Read With Object.keys / Spread`,
+        why: `${n} keeps its entries internally, not as object properties, so Object.keys/entries and { ...${n} } return nothing: the filters, headers or form fields are silently empty.`,
+        fix: `Use Object.fromEntries(${n}) or ${n}.entries() / ${n}.get(…).` });
+    }
+  }
+
+  // BUG-197: use(fetch(...)) creates a new promise every render
+  if (isClient) {
+    for (const m of c.matchAll(/\buse\(\s*fetch\(/g)) add({ ruleId: 29874, code: 'BUG-197', severity: 'HIGH', lineIdx: at(m.index!),
+      title: 'use(fetch(…)) Called During Render',
+      why: 'Each render creates a new fetch promise, so the component suspends, re-renders and fetches again forever (an infinite request loop).',
+      fix: 'Create the promise outside render (a server component passing it down, or a cached / memoized promise) and pass it to use().' });
+  }
+
+  // BUG-198: env var or query string concatenated with a number
+  for (const m of c.matchAll(/\b(process\.env\.\w+|import\.meta\.env\.\w+|searchParams\.get\([^)]*\))\s*\+\s*\d+\b(?!\s*['"`])/g)) {
+    if (/\b(?:Number|parseInt|parseFloat)\(\s*$/.test(c.slice(Math.max(0, m.index! - 20), m.index!))) continue;
+    add({ ruleId: 29875, code: 'BUG-198', severity: 'HIGH', lineIdx: at(m.index!),
+      title: `String ${m[1].slice(0, 30)} + Number Is Concatenated`,
+      why: 'Env vars and query params are strings, so + appends the digits ("3000" + 1 is "30001"): ports, page numbers and limits come out wrong.',
+      fix: `Convert first: Number(${m[1].slice(0, 40)}) + …` });
+  }
+
+  // BUG-199: value encoded before URLSearchParams.set / append (double encoding)
+  for (const m of c.matchAll(/\.(?:set|append)\(\s*[^,()]+,\s*encodeURIComponent\(/g)) {
+    if (!/searchParams|params|query|URLSearchParams|qs\b/i.test(c.slice(Math.max(0, m.index! - 30), m.index!))) continue;
+    add({ ruleId: 29876, code: 'BUG-199', severity: 'MEDIUM', lineIdx: at(m.index!),
+      title: 'Value Encoded Twice for URLSearchParams',
+      why: 'URLSearchParams already encodes values, so encodeURIComponent first produces %2520 / %252F: the server receives the escaped text instead of the original value.',
+      fix: 'Pass the raw value: params.set(key, value).' });
+  }
+
+  // BUG-200: btoa on JSON / text that may contain non-ASCII characters
+  for (const m of c.matchAll(/\bbtoa\(\s*JSON\.stringify\(/g)) {
+    add({ ruleId: 29877, code: 'BUG-200', severity: 'MEDIUM', lineIdx: at(m.index!),
+      title: 'btoa(JSON.stringify(…)) Breaks on Non-ASCII Text',
+      why: 'btoa only accepts Latin-1 characters; any name or text with ğ, ş, é, emoji… throws "InvalidCharacterError" and the feature fails for those users.',
+      fix: 'Encode to UTF-8 first: btoa(String.fromCharCode(...new TextEncoder().encode(json))), or use Buffer.from(json).toString("base64") on the server.' });
+  }
+
+  // BUG-201: Intl currency formatting without a currency code
+  for (const m of c.matchAll(/\bstyle\s*:\s*['"]currency['"]/g)) {
+    // Enclosing object literal: the nearest { before the match whose block extends past it
+    let open = c.lastIndexOf('{', m.index!);
+    while (open >= 0 && closeOf(c, open) <= m.index!) open = c.lastIndexOf('{', open - 1);
+    const end = open < 0 ? -1 : closeOf(c, open);
+    if (end < 0 || /\bcurrency\s*[:,}]|\.\.\./.test(c.slice(open, end).replace(m[0], ''))) continue;
+    add({ ruleId: 29878, code: 'BUG-201', severity: 'HIGH', lineIdx: at(m.index!),
+      title: "Intl Currency Format Without a currency Code",
+      why: 'style: "currency" requires a currency option; without it Intl.NumberFormat throws "Currency code is required" (RangeError) and the price never renders.',
+      fix: "Add the code: { style: 'currency', currency: 'USD' }." });
+  }
+
+  // BUG-202: flatMap with an async callback
+  for (const m of c.matchAll(/\.flatMap\(\s*async\b/g)) add({ ruleId: 29879, code: 'BUG-202', severity: 'HIGH', lineIdx: at(m.index!),
+    title: 'flatMap() With an async Callback',
+    why: 'An async callback returns a Promise, which flatMap cannot flatten: the result is an array of pending Promises, not the items.',
+    fix: 'Use (await Promise.all(items.map(async (x) => …))).flat().' });
+
+  // BUG-203: useContext(SomeContext.Provider)
+  for (const m of c.matchAll(/\buseContext\(\s*(\w+)\.Provider\s*\)/g)) add({ ruleId: 29880, code: 'BUG-203', severity: 'HIGH', lineIdx: at(m.index!),
+    title: `useContext(${m[1]}.Provider) Instead of useContext(${m[1]})`,
+    why: 'useContext needs the context object itself; passing the Provider component returns undefined (or warns), so every consumer reads no value.',
+    fix: `Use useContext(${m[1]}).` });
+
+  // BUG-204: SSE stream parser that JSON.parses the [DONE] sentinel
+  if (/['"`]data: ?['"`]|startsWith\(\s*['"`]data:/.test(c) && /JSON\.parse\(/.test(c) && !/\[DONE\]/.test(c) && /openai|chat\/completions|choices\s*\[\s*0\s*\]\??\.delta|\.delta\??\.content/i.test(c)) {
+    const m = /JSON\.parse\(/.exec(c)!;
+    add({ ruleId: 29881, code: 'BUG-204', severity: 'HIGH', lineIdx: at(m.index),
+      title: 'Stream Parser Does Not Handle the [DONE] Message',
+      why: 'OpenAI-style streams end with "data: [DONE]". JSON.parse("[DONE]") throws, so every response ends with an error (or the last chunk is lost).',
+      fix: "Skip it before parsing: if (data === '[DONE]') break;." });
+  }
+
+  // BUG-205: find / filter / some / every callback returning an object literal
+  for (const m of c.matchAll(/\.(find|filter|some|every|findIndex)\(\s*\(?\s*\w+\s*\)?\s*=>\s*\(\s*\{/g)) add({ ruleId: 29882, code: 'BUG-205', severity: 'HIGH', lineIdx: at(m.index!),
+    title: `${m[1]}() Callback Returns an Object Literal`,
+    why: `=> ({ … }) returns an object, which is always truthy, so ${m[1]}() matches every item regardless of its fields.`,
+    fix: 'Return a comparison: (x) => x.id === id.' });
+
+  // BUG-206: generateMetadata calling React hooks
+  for (const m of c.matchAll(/\bfunction\s+generateMetadata\s*\(/g)) {
+    const b = blockAfter(c, closeOf(c, m.index! + m[0].length - 1));
+    const r = b && /\b(use(?:Params|SearchParams|Pathname|Router|State|Effect|Context))\(/.exec(c.slice(b.s, b.e));
+    if (r) add({ ruleId: 29883, code: 'BUG-206', severity: 'HIGH', lineIdx: at(b!.s + r.index),
+      title: `generateMetadata Calls ${r[1]}()`,
+      why: 'generateMetadata is a server function, not a component; hooks throw there, so the page fails to render.',
+      fix: 'Read params / searchParams from the function arguments: generateMetadata({ params, searchParams }).' });
+  }
+
+  // BUG-207: Math.max / Math.min given an array
+  for (const m of c.matchAll(/\bMath\.(max|min)\(\s*(\w+)\s*\)/g)) {
+    if (!declared(m[2], /\[|\w+(?:\.\w+)*\.(?:map|filter|slice|concat)\(|Array\.from\(/)) continue;
+    add({ ruleId: 29884, code: 'BUG-207', severity: 'HIGH', lineIdx: at(m.index!),
+      title: `Math.${m[1]}(${m[2]}) Given an Array`,
+      why: `Math.${m[1]} takes numbers, not an array, so Math.${m[1]}(${m[2]}) is NaN (or the single value for a one-item array).`,
+      fix: `Spread it: Math.${m[1]}(...${m[2]}) (or reduce for very large arrays).` });
+  }
+
+  // BUG-208: new URL(req.url) in a Node http / Express server (req.url is a path)
+  if (/\bfrom\s+['"](?:express|node:http|http|fastify|koa)['"]|require\(\s*['"](?:express|http|node:http)['"]\s*\)/.test(c) && !/from\s+['"]next/.test(c)) {
+    for (const m of c.matchAll(/\bnew\s+URL\(\s*req\.url\s*\)/g)) add({ ruleId: 29885, code: 'BUG-208', severity: 'HIGH', lineIdx: at(m.index!),
+      title: 'new URL(req.url) Without a Base in a Node Server',
+      why: 'In Node http / Express, req.url is only the path ("/users?id=1"), so new URL(req.url) throws "Invalid URL" on every request.',
+      fix: 'Pass a base: new URL(req.url, `http://${req.headers.host}`).' });
+  }
+
+  // BUG-209: Error spread or serialized loses message and stack
+  const catchBlocks: { n: string; s: number; e: number }[] = [];
+  for (const m of c.matchAll(/\bcatch\s*\(\s*(\w+)[^)]*\)\s*\{/g)) { const b = blockAfter(c, m.index! + m[0].length - 1); if (b) catchBlocks.push({ n: m[1], ...b }); }
+  for (const m of c.matchAll(/\{\s*\.\.\.(err|error|e)\s*\}|JSON\.stringify\(\s*(err|error)\s*\)/g)) {
+    const n = m[1] ?? m[2];
+    if (!catchBlocks.some((b) => b.n === n && m.index! > b.s && m.index! < b.e)) continue;
+    add({ ruleId: 29886, code: 'BUG-209', severity: 'MEDIUM', lineIdx: at(m.index!),
+      title: `Caught ${n} Copied With Spread / JSON.stringify`,
+      why: 'message and stack are not enumerable on Error objects, so the copy is {} : logs and API responses lose the actual error text.',
+      fix: `Pick the fields: { message: ${n}.message, name: ${n}.name } (or log ${n} itself).` });
+  }
+
+  // BUG-210: setMonth(getMonth() + n) overflows on the 29th-31st
+  for (const m of c.matchAll(/\b(\w+)\.setMonth\(\s*\1\.getMonth\(\)\s*[+-]\s*\w+\s*\)/g)) if (c.split('\n')[at(m.index!)].length < 400) add({ ruleId: 29887, code: 'BUG-210', severity: 'MEDIUM', lineIdx: at(m.index!),
+    title: 'setMonth(getMonth() ± n) Skips Short Months',
+    why: 'Jan 31 + 1 month becomes Mar 3 because February has no 31st: renewal, trial-end and billing dates jump a month for users who signed up late in the month.',
+    fix: 'Clamp the day (set day to min(day, days in target month)) or use date-fns addMonths().' });
+
+  // BUG-211: global regex reused with .test() keeps lastIndex between calls
+  // Module-level only: a regex created inside the function is fresh on every call
+  for (const m of c.matchAll(/^(?:export\s+)?(?:const|let)\s+(\w+)\s*=\s*\/(?:\\.|\[(?:\\.|[^\]\n])*\]|[^/\\\n[])+\/[a-z]*g[a-z]*\s*;?\s*$/gm)) {
+    for (const t of c.matchAll(new RegExp(`\\b${m[1]}\\.test\\(`, 'g'))) add({ ruleId: 29888, code: 'BUG-211', severity: 'HIGH', lineIdx: at(t.index!),
+      title: `${m[1]}.test() on a Global Regex Alternates Between true and false`,
+      why: `With the g flag, test() remembers lastIndex, so calling ${m[1]}.test() on the next string starts mid-way: valid input is rejected every other time.`,
+      fix: `Remove the g flag from ${m[1]} (or reset ${m[1]}.lastIndex = 0 before each test).` });
+  }
+
+  // BUG-212: BigInt mixed with a number literal
+  for (const m of c.matchAll(/\bBigInt\([^()]*\)\s*[-+*/%]\s*\d+(?![\dn.])/g)) add({ ruleId: 29889, code: 'BUG-212', severity: 'HIGH', lineIdx: at(m.index!),
+    title: 'BigInt Combined With a Number',
+    why: 'Arithmetic between BigInt and Number throws "Cannot mix BigInt and other types" (TypeError).',
+    fix: 'Use a BigInt literal (1n) or convert explicitly with Number(…) / BigInt(…).' });
+
+  // BUG-213: JSON.stringify on a Map, Set or FormData gives {}
+  for (const m of c.matchAll(/\bJSON\.stringify\(\s*(\w+)\s*[,)]/g)) {
+    const kind = declared(m[1], /new\s+Map\b/) ? 'Map' : declared(m[1], /new\s+Set\b/) ? 'Set' : declared(m[1], /new\s+FormData\b/) ? 'FormData' : '';
+    if (kind) add({ ruleId: 29890, code: 'BUG-213', severity: 'HIGH', lineIdx: at(m.index!),
+      title: `JSON.stringify(${m[1]}) on a ${kind} Sends {}`,
+      why: `A ${kind} has no enumerable properties, so JSON.stringify returns "{}": the request or cache entry is empty.`,
+      fix: kind === 'Set' ? `Use JSON.stringify([...${m[1]}]).` : `Use JSON.stringify(Object.fromEntries(${m[1]})).` });
+  }
+
+  // BUG-214: Supabase .in() given a string instead of an array
+  for (const m of c.matchAll(/\.in\(\s*['"][\w.]+['"]\s*,\s*(?:['"`]\(|[\w.]+\.join\()/g)) add({ ruleId: 29891, code: 'BUG-214', severity: 'HIGH', lineIdx: at(m.index!),
+    title: '.in() Filter Given a String Instead of an Array',
+    why: 'supabase-js builds the in.(…) list from an array; a pre-joined string is sent as one quoted value, so the filter matches nothing (or errors).',
+    fix: "Pass the array: .in('id', ids)." });
+
+  // BUG-215: Supabase textSearch on raw user input without the websearch type
+  for (const m of c.matchAll(/\.textSearch\(\s*['"][\w.]+['"]\s*,\s*([\w.]+(?:\([^()]*\))?)\s*\)/g)) {
+    if (/^['"]/.test(m[1])) continue;
+    add({ ruleId: 29892, code: 'BUG-215', severity: 'MEDIUM', lineIdx: at(m.index!),
+      title: 'textSearch() on User Input Uses to_tsquery Syntax',
+      why: 'Without a type, textSearch uses to_tsquery, which rejects plain phrases: searching "red shoes" or a word with an apostrophe returns a syntax error instead of results.',
+      fix: "Pass the type: .textSearch('fts', query, { type: 'websearch' })." });
+  }
+
+  // BUG-216: JWT expiresIn given in milliseconds
+  for (const m of c.matchAll(/\bexpiresIn\s*:\s*(\d{7,}|(?:\d+\s*\*\s*)+1000\b|1000\s*\*|Date\.now\(\))/g)) {
+    if (!/\bjwt\b|jsonwebtoken|\.sign\(|SignJWT/.test(c)) continue;
+    add({ ruleId: 29893, code: 'BUG-216', severity: 'HIGH', lineIdx: at(m.index!),
+      title: 'JWT expiresIn Given in Milliseconds',
+      why: 'A numeric expiresIn is read as seconds, so a value meant as 1 hour in ms lasts about 41 days (and Date.now() lasts 50,000 years): stolen tokens stay valid.',
+      fix: "Use seconds or a string: expiresIn: 60 * 60 or expiresIn: '1h'." });
+  }
+
+  // BUG-217: timingSafeEqual on inputs that may differ in length
+  for (const m of c.matchAll(/\btimingSafeEqual\(/g)) {
+    const before = c.slice(Math.max(0, m.index! - 400), m.index!);
+    if (/\.length\s*!==?|\.length\s*===?|byteLength/.test(before + c.slice(m.index!, m.index! + 120))) continue;
+    add({ ruleId: 29894, code: 'BUG-217', severity: 'MEDIUM', lineIdx: at(m.index!),
+      title: 'timingSafeEqual Without a Length Check',
+      why: 'timingSafeEqual throws "Input buffers must have the same byte length" (RangeError) for a wrong-length signature or token, so a bad request returns 500 instead of 401.',
+      fix: 'Compare lengths first: if (a.length !== b.length) return false; then timingSafeEqual(a, b).' });
+  }
+
+  // BUG-218: Next.js 15+ cookies() / headers() used without await
+  if (nextMajor >= 15) {
+    for (const m of c.matchAll(/(?<!await\s)(?<!await\s\()\b(cookies|headers|draftMode)\(\)\.(get|getAll|set|has|delete|isEnabled)\b/g)) add({ ruleId: 29895, code: 'BUG-218', severity: nextMajor >= 16 ? 'HIGH' : 'MEDIUM', lineIdx: at(m.index!),
+      title: `${m[1]}().${m[2]} Without await (Next.js ${nextMajor})`,
+      why: `Since Next.js 15, ${m[1]}() returns a Promise${nextMajor >= 16 ? ' and synchronous access was removed' : ''}: ${m[1]}().${m[2]} reads a property of the Promise, which is undefined or throws.`,
+      fix: `Await it: (await ${m[1]}()).${m[2]}(…).` });
+  }
+
+  void path;
+}
+
 /** Indexes of the lines in the indented block under the header at `i`. */
 function pyBody(lines: string[], i: number): number[] {
   const ind = (lines[i].match(/^\s*/)?.[0].length) ?? 0;
@@ -494,9 +775,58 @@ function evaluatePy(lines: string[], add: Add) {
   }
 }
 
+function evaluatePy2(lines: string[], add: Add) {
+  const src = lines.join('\n');
+  const isComment = (l: string) => /^\s*#/.test(l);
+  const moduleVars = new Set([...src.matchAll(/^([A-Za-z_]\w*)\s*(?::[^=\n]+)?=(?!=)/gm)].map((m) => m[1]));
+
+  lines.forEach((l, i) => {
+    if (isComment(l)) return;
+    // BUG-220: os.path.join with an absolute second part discards the base directory
+    const j = /\bos\.path\.join\(\s*[^,()]+(?:\([^()]*\))?\s*,\s*(?:f?['"])\/(?!\/)/.exec(l);
+    if (j) add({ ruleId: 29897, code: 'BUG-220', severity: 'HIGH', lineIdx: i,
+      title: 'os.path.join() With an Absolute Second Path',
+      why: 'When a later part starts with "/", os.path.join throws away everything before it, so the file is read from or written to the filesystem root instead of your base directory.',
+      fix: 'Drop the leading slash ("uploads/…"), or use pathlib: base / "uploads" / name.' });
+
+    // BUG-221: module-level variable updated in a function without `global`
+    const d = /^(\s*)def\s+\w+\(/.exec(l);
+    if (d && moduleVars.size) {
+      const body = pyBody(lines, i);
+      const declaredGlobal = new Set(body.flatMap((k) => /^\s*(?:global|nonlocal)\s+(.+)$/.exec(lines[k])?.[1].split(',').map((s) => s.trim()) ?? []));
+      const assignedLocal = new Set(body.flatMap((k) => { const a = /^\s*([A-Za-z_]\w*)\s*(?::[^=\n]+)?=(?!=)/.exec(lines[k]); return a ? [a[1]] : []; }));
+      for (const k of body) {
+        const a = /^\s*([A-Za-z_]\w*)\s*(?:\+|-|\*|\/|\/\/|%|\|)=/.exec(lines[k]);
+        if (a && moduleVars.has(a[1]) && !declaredGlobal.has(a[1]) && !assignedLocal.has(a[1])) {
+          add({ ruleId: 29898, code: 'BUG-221', severity: 'HIGH', lineIdx: k,
+            title: `Module Variable ${a[1]} Updated Without "global"`,
+            why: `Augmented assignment makes ${a[1]} local to the function, so reading it first raises "UnboundLocalError: local variable '${a[1]}' referenced before assignment" every time.`,
+            fix: `Add "global ${a[1]}" at the top of the function (or keep the counter in an object / class attribute).` });
+          break;
+        }
+      }
+    }
+
+    // BUG-222: UploadFile read twice without seek(0)
+    const r = /^\s*(?:\w+\s*=\s*)?await\s+(\w+)\.read\(\)/.exec(l);
+    if (r) {
+      for (let k = i + 1; k < Math.min(lines.length, i + 40); k++) {
+        if (new RegExp(`\\b${r[1]}\\.seek\\(`).test(lines[k]) || /^\s*(?:async\s+)?def\s/.test(lines[k])) break;
+        if (new RegExp(`\\bawait\\s+${r[1]}\\.read\\(\\)`).test(lines[k])) {
+          add({ ruleId: 29899, code: 'BUG-222', severity: 'MEDIUM', lineIdx: k,
+            title: `${r[1]}.read() Called a Second Time Without seek(0)`,
+            why: 'The first read() consumed the upload, so the second read returns b"" and the saved or parsed file is empty.',
+            fix: `Keep the bytes from the first read, or call await ${r[1]}.seek(0) before reading again.` });
+          break;
+        }
+      }
+    }
+  });
+}
+
 export function evaluateLogicGeminiRules(file: CodeFile, lines: string[], cleanContent: string, findingCounter: {
   count: number;
-}): { findings: Finding[]; logs: string[] } {
+}, context?: RepoContext): { findings: Finding[]; logs: string[] } {
   const findings: Finding[] = [];
   const logs: string[] = [];
   const path = file.path.replace(/\\/g, '/');
@@ -506,8 +836,8 @@ export function evaluateLogicGeminiRules(file: CodeFile, lines: string[], cleanC
 
   const hits: Hit[] = [];
   const add: Add = (h) => { if (h.lineIdx >= 0 && !hits.some((x) => x.ruleId === h.ruleId && x.lineIdx === h.lineIdx)) hits.push(h); };
-  if (/\.[cm]?[jt]sx?$/i.test(path)) evaluateJs(path, c, add);
-  else if (/\.py$/i.test(path)) evaluatePy(c.split('\n'), add);
+  if (/\.[cm]?[jt]sx?$/i.test(path)) { evaluateJs(path, c, add); evaluateJs2(path, c, add, context?.packageMajors.get('next') ?? 0); }
+  else if (/\.py$/i.test(path)) { const pl = c.replace(/\r/g, '').split('\n'); evaluatePy(pl, add); evaluatePy2(pl, add); }
   else return { findings, logs };
 
   const raw = file.content.split('\n');
