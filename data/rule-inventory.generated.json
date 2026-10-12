@@ -1,8 +1,8 @@
 {
  "summary": {
-  "implementedRules": 1071,
-  "testedRules": 1060,
-  "preciseLocationRules": 1068,
+  "implementedRules": 1111,
+  "testedRules": 1100,
+  "preciseLocationRules": 1108,
   "catalogEntries": 1922,
   "catalogOnlyNotImplemented": 1401,
   "catalogPlaceholderMetadata": 1810
@@ -12119,6 +12119,406 @@
    "source": "lib/rules/live-bundle-rules.ts",
    "preciseLocation": true,
    "tested": false,
+   "inCatalog": false
+  },
+  {
+   "ruleId": 29820,
+   "code": "RULE-29820",
+   "title": "Write Inside $transaction Uses ${outer} Instead of ${tx}",
+   "severity": "HIGH",
+   "source": "lib/rules/logic-gemini-rules.ts",
+   "preciseLocation": true,
+   "tested": true,
+   "inCatalog": false
+  },
+  {
+   "ruleId": 29821,
+   "code": "RULE-29821",
+   "title": "Action ${name} for useActionState Takes Only (formData)",
+   "severity": "HIGH",
+   "source": "lib/rules/logic-gemini-rules.ts",
+   "preciseLocation": true,
+   "tested": true,
+   "inCatalog": false
+  },
+  {
+   "ruleId": 29822,
+   "code": "RULE-29822",
+   "title": "catch Reads err.response.status but fetch Does Not Reject on HTTP Errors",
+   "severity": "MEDIUM",
+   "source": "lib/rules/logic-gemini-rules.ts",
+   "preciseLocation": true,
+   "tested": true,
+   "inCatalog": false
+  },
+  {
+   "ruleId": 29823,
+   "code": "RULE-29823",
+   "title": "forEach Calls Async ${m[1]} Without Awaiting It",
+   "severity": "HIGH",
+   "source": "lib/rules/logic-gemini-rules.ts",
+   "preciseLocation": true,
+   "tested": true,
+   "inCatalog": false
+  },
+  {
+   "ruleId": 29824,
+   "code": "RULE-29824",
+   "title": "Array.fill() With an Object Shares the Same Reference in Every Slot",
+   "severity": "MEDIUM",
+   "source": "lib/rules/logic-gemini-rules.ts",
+   "preciseLocation": true,
+   "tested": true,
+   "inCatalog": false
+  },
+  {
+   "ruleId": 29825,
+   "code": "RULE-29825",
+   "title": "${m[1] ?? m[2]} Handler Reads params From the Request Argument",
+   "severity": "HIGH",
+   "source": "lib/rules/logic-gemini-rules.ts",
+   "preciseLocation": true,
+   "tested": true,
+   "inCatalog": false
+  },
+  {
+   "ruleId": 29826,
+   "code": "RULE-29826",
+   "title": "useSearchParams() Result Mutated Directly",
+   "severity": "HIGH",
+   "source": "lib/rules/logic-gemini-rules.ts",
+   "preciseLocation": true,
+   "tested": true,
+   "inCatalog": false
+  },
+  {
+   "ruleId": 29827,
+   "code": "RULE-29827",
+   "title": "",
+   "severity": "HIGH",
+   "source": "lib/rules/logic-gemini-rules.ts",
+   "preciseLocation": true,
+   "tested": true,
+   "inCatalog": false
+  },
+  {
+   "ruleId": 29828,
+   "code": "RULE-29828",
+   "title": "Pagination Skips the First Page (${page} * ${m[2]} With 1-Based ${page})",
+   "severity": "HIGH",
+   "source": "lib/rules/logic-gemini-rules.ts",
+   "preciseLocation": true,
+   "tested": true,
+   "inCatalog": false
+  },
+  {
+   "ruleId": 29829,
+   "code": "RULE-29829",
+   "title": "Response.redirect() Called With a Relative Path",
+   "severity": "HIGH",
+   "source": "lib/rules/logic-gemini-rules.ts",
+   "preciseLocation": true,
+   "tested": true,
+   "inCatalog": false
+  },
+  {
+   "ruleId": 29831,
+   "code": "RULE-29831",
+   "title": "${j[1]}.text() Read After ${j[1]}.json() Consumed the Body",
+   "severity": "MEDIUM",
+   "source": "lib/rules/logic-gemini-rules.ts",
+   "preciseLocation": true,
+   "tested": true,
+   "inCatalog": false
+  },
+  {
+   "ruleId": 29832,
+   "code": "RULE-29832",
+   "title": "${m[1]}() Called With a Regex Without the g Flag",
+   "severity": "HIGH",
+   "source": "lib/rules/logic-gemini-rules.ts",
+   "preciseLocation": true,
+   "tested": true,
+   "inCatalog": false
+  },
+  {
+   "ruleId": 29833,
+   "code": "RULE-29833",
+   "title": "Drizzle ${m[2]}(${m[3]}) Without .where() Affects Every Row",
+   "severity": "HIGH",
+   "source": "lib/rules/logic-gemini-rules.ts",
+   "preciseLocation": true,
+   "tested": true,
+   "inCatalog": false
+  },
+  {
+   "ruleId": 29834,
+   "code": "RULE-29834",
+   "title": "${m[2]}() Compares a New Object/Array Literal by Reference",
+   "severity": "MEDIUM",
+   "source": "lib/rules/logic-gemini-rules.ts",
+   "preciseLocation": true,
+   "tested": true,
+   "inCatalog": false
+  },
+  {
+   "ruleId": 29835,
+   "code": "RULE-29835",
+   "title": "new Promise() With an async Executor",
+   "severity": "MEDIUM",
+   "source": "lib/rules/logic-gemini-rules.ts",
+   "preciseLocation": true,
+   "tested": true,
+   "inCatalog": false
+  },
+  {
+   "ruleId": 29836,
+   "code": "RULE-29836",
+   "title": "fetch() With a Relative URL in Server Code",
+   "severity": "HIGH",
+   "source": "lib/rules/logic-gemini-rules.ts",
+   "preciseLocation": true,
+   "tested": true,
+   "inCatalog": false
+  },
+  {
+   "ruleId": 29837,
+   "code": "RULE-29837",
+   "title": ".${m[1]}(column, null) Never Matches NULL Rows",
+   "severity": "HIGH",
+   "source": "lib/rules/logic-gemini-rules.ts",
+   "preciseLocation": true,
+   "tested": true,
+   "inCatalog": false
+  },
+  {
+   "ruleId": 29838,
+   "code": "RULE-29838",
+   "title": "${n} Modified While Looping Over It",
+   "severity": "HIGH",
+   "source": "lib/rules/logic-gemini-rules.ts",
+   "preciseLocation": true,
+   "tested": true,
+   "inCatalog": false
+  },
+  {
+   "ruleId": 29839,
+   "code": "RULE-29839",
+   "title": "Date Format ",
+   "severity": "HIGH",
+   "source": "lib/rules/logic-gemini-rules.ts",
+   "preciseLocation": true,
+   "tested": true,
+   "inCatalog": false
+  },
+  {
+   "ruleId": 29840,
+   "code": "RULE-29840",
+   "title": "Number Parsed Back From toLocaleString() Output",
+   "severity": "MEDIUM",
+   "source": "lib/rules/logic-gemini-rules.ts",
+   "preciseLocation": true,
+   "tested": true,
+   "inCatalog": false
+  },
+  {
+   "ruleId": 29841,
+   "code": "RULE-29841",
+   "title": "async Function Passed to use${m[1]}",
+   "severity": "HIGH",
+   "source": "lib/rules/logic-gemini-rules.ts",
+   "preciseLocation": true,
+   "tested": true,
+   "inCatalog": false
+  },
+  {
+   "ruleId": 29842,
+   "code": "RULE-29842",
+   "title": "while (… .exec()) Loop Never Advances",
+   "severity": "HIGH",
+   "source": "lib/rules/logic-gemini-rules.ts",
+   "preciseLocation": true,
+   "tested": true,
+   "inCatalog": false
+  },
+  {
+   "ruleId": 29843,
+   "code": "RULE-29843",
+   "title": "${r[1]} Inside finally Overrides the try/catch Result",
+   "severity": "MEDIUM",
+   "source": "lib/rules/logic-gemini-rules.ts",
+   "preciseLocation": true,
+   "tested": true,
+   "inCatalog": false
+  },
+  {
+   "ruleId": 29844,
+   "code": "RULE-29844",
+   "title": "Promise.${m[1]}() Given Separate Arguments Instead of an Array",
+   "severity": "HIGH",
+   "source": "lib/rules/logic-gemini-rules.ts",
+   "preciseLocation": true,
+   "tested": true,
+   "inCatalog": false
+  },
+  {
+   "ruleId": 29845,
+   "code": "RULE-29845",
+   "title": "Plain Object Passed as a Response Body",
+   "severity": "HIGH",
+   "source": "lib/rules/logic-gemini-rules.ts",
+   "preciseLocation": true,
+   "tested": true,
+   "inCatalog": false
+  },
+  {
+   "ruleId": 29846,
+   "code": "RULE-29846",
+   "title": "Plain Object Passed to new ${m[1]}()",
+   "severity": "HIGH",
+   "source": "lib/rules/logic-gemini-rules.ts",
+   "preciseLocation": true,
+   "tested": true,
+   "inCatalog": false
+  },
+  {
+   "ruleId": 29847,
+   "code": "RULE-29847",
+   "title": "Route Placeholder Left in URL ${m[2].slice(0, 40)}",
+   "severity": "HIGH",
+   "source": "lib/rules/logic-gemini-rules.ts",
+   "preciseLocation": true,
+   "tested": true,
+   "inCatalog": false
+  },
+  {
+   "ruleId": 29848,
+   "code": "RULE-29848",
+   "title": "${m[1]}() Arguments Swapped",
+   "severity": "HIGH",
+   "source": "lib/rules/logic-gemini-rules.ts",
+   "preciseLocation": true,
+   "tested": true,
+   "inCatalog": false
+  },
+  {
+   "ruleId": 29849,
+   "code": "RULE-29849",
+   "title": "timedelta.seconds Used as the Total Duration",
+   "severity": "MEDIUM",
+   "source": "lib/rules/logic-gemini-rules.ts",
+   "preciseLocation": true,
+   "tested": true,
+   "inCatalog": false
+  },
+  {
+   "ruleId": 29850,
+   "code": "RULE-29850",
+   "title": "NaN Lookup That Can Never Match",
+   "severity": "HIGH",
+   "source": "lib/rules/logic-gemini-rules.ts",
+   "preciseLocation": true,
+   "tested": true,
+   "inCatalog": false
+  },
+  {
+   "ruleId": 29851,
+   "code": "RULE-29851",
+   "title": "new URL() Called With Only a Relative Path",
+   "severity": "HIGH",
+   "source": "lib/rules/logic-gemini-rules.ts",
+   "preciseLocation": true,
+   "tested": true,
+   "inCatalog": false
+  },
+  {
+   "ruleId": 29852,
+   "code": "RULE-29852",
+   "title": "${n}.abort() Cancels Nothing (signal Never Passed)",
+   "severity": "MEDIUM",
+   "source": "lib/rules/logic-gemini-rules.ts",
+   "preciseLocation": true,
+   "tested": true,
+   "inCatalog": false
+  },
+  {
+   "ruleId": 29853,
+   "code": "RULE-29853",
+   "title": "map(parseInt) Uses the Index as the Radix",
+   "severity": "HIGH",
+   "source": "lib/rules/logic-gemini-rules.ts",
+   "preciseLocation": true,
+   "tested": true,
+   "inCatalog": false
+  },
+  {
+   "ruleId": 29854,
+   "code": "RULE-29854",
+   "title": "sort() Comparator Returns a Boolean",
+   "severity": "HIGH",
+   "source": "lib/rules/logic-gemini-rules.ts",
+   "preciseLocation": true,
+   "tested": true,
+   "inCatalog": false
+  },
+  {
+   "ruleId": 29855,
+   "code": "RULE-29855",
+   "title": "Coroutine ${m[1]}() Called Without await",
+   "severity": "HIGH",
+   "source": "lib/rules/logic-gemini-rules.ts",
+   "preciseLocation": true,
+   "tested": true,
+   "inCatalog": false
+  },
+  {
+   "ruleId": 29856,
+   "code": "RULE-29856",
+   "title": "Money Converted to Cents by Truncating amount * 100",
+   "severity": "MEDIUM",
+   "source": "lib/rules/logic-gemini-rules.ts",
+   "preciseLocation": true,
+   "tested": true,
+   "inCatalog": false
+  },
+  {
+   "ruleId": 29857,
+   "code": "RULE-29857",
+   "title": "Strings From toFixed() Concatenated Instead of Added",
+   "severity": "HIGH",
+   "source": "lib/rules/logic-gemini-rules.ts",
+   "preciseLocation": true,
+   "tested": true,
+   "inCatalog": false
+  },
+  {
+   "ruleId": 29858,
+   "code": "RULE-29858",
+   "title": "Number.${m[1]}() Called on an Unparsed String",
+   "severity": "MEDIUM",
+   "source": "lib/rules/logic-gemini-rules.ts",
+   "preciseLocation": true,
+   "tested": true,
+   "inCatalog": false
+  },
+  {
+   "ruleId": 29859,
+   "code": "RULE-29859",
+   "title": "Set-Cookie Header Overwritten by a Second set()",
+   "severity": "MEDIUM",
+   "source": "lib/rules/logic-gemini-rules.ts",
+   "preciseLocation": true,
+   "tested": true,
+   "inCatalog": false
+  },
+  {
+   "ruleId": 29860,
+   "code": "RULE-29860",
+   "title": "FileList Appended to FormData as a Single Value",
+   "severity": "HIGH",
+   "source": "lib/rules/logic-gemini-rules.ts",
+   "preciseLocation": true,
+   "tested": true,
    "inCatalog": false
   }
  ]

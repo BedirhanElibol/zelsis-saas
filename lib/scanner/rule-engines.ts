@@ -138,6 +138,7 @@ import { evaluateLogicPythonRules } from '../rules/logic-python-rules';
 import { evaluateLogicFrontendRules } from '../rules/logic-frontend-rules';
 import { evaluateLogicCrossFileRules } from '../rules/logic-crossfile-rules';
 import { evaluateLogicCorpusRules } from '../rules/logic-corpus-rules';
+import { evaluateLogicGeminiRules } from '../rules/logic-gemini-rules';
 import { evaluateLogicFakeRules } from '../rules/logic-fake-rules';
 import { evaluateLiveBundleRules } from '../rules/live-bundle-rules';
 
@@ -456,6 +457,8 @@ export const RULE_ENGINES: ReadonlyArray<{ evaluate: RuleEngine; scanRawContent?
   { evaluate: evaluateLogicCrossFileRules },
   // Bugs from the real-world bug corpus no rule caught: selector mutation, setters in render, Radix value handlers, RHF custom inputs, Gin handlers (BUG-133.., Rule IDs 29780-29799)
   { evaluate: evaluateLogicCorpusRules },
+  // Logic bugs from the Gemini rule report, re-verified: tx client misuse, readonly search params, fill() aliasing, Drizzle without where (BUG-149.., Rule IDs 29820-29899)
+  { evaluate: evaluateLogicGeminiRules },
   // Unfinished / fake features found reviewing real Lovable and Bolt apps: fake submits, placeholder keys, dead buttons, mock logins (FAKE-01.., BUG-144.., Rule IDs 29791-29819)
   { evaluate: evaluateLogicFakeRules },
   // Live sites: secrets and Supabase keys found in the full JavaScript bundles, public source maps (LIVE-01.., Rule IDs 29805-29809)
