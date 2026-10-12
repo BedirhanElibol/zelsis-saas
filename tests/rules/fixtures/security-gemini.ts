@@ -378,4 +378,223 @@ export async function exportCsv() {
 }
 `),
   },
+  {
+    ruleIds: [29927], name: 'SECG-28 MCP HTTP transport without DNS-rebinding protection',
+    detects: f('server/mcp.ts', `import { StreamableHTTPServerTransport } from '@modelcontextprotocol/sdk/server/streamableHttp.js';
+export const transport = new StreamableHTTPServerTransport({ sessionIdGenerator: undefined });
+`),
+    ignores: f('server/mcp.ts', `import { StreamableHTTPServerTransport } from '@modelcontextprotocol/sdk/server/streamableHttp.js';
+export const transport = new StreamableHTTPServerTransport({ sessionIdGenerator: undefined, enableDnsRebindingProtection: true, allowedHosts: ['127.0.0.1'] });
+`),
+  },
+  {
+    ruleIds: [29928], name: 'SECG-29 LLM decides authorization',
+    detects: f('lib/authz.ts', `import { generateObject } from 'ai';
+import { z } from 'zod';
+export async function canRead(model: any, user: string, doc: string) {
+  const { object } = await generateObject({ model, schema: z.object({ isAuthorized: z.boolean() }), prompt: user + doc });
+  return object.isAuthorized;
+}
+`),
+    ignores: f('lib/authz.ts', `import { generateObject } from 'ai';
+import { z } from 'zod';
+export async function classify(model: any, doc: string) {
+  const { object } = await generateObject({ model, schema: z.object({ isSpam: z.boolean() }), prompt: doc });
+  return object.isSpam;
+}
+`),
+  },
+  {
+    ruleIds: [29929], name: 'SECG-30 read-only SQL by SELECT prefix',
+    detects: f('lib/sql-tool.ts', `import { prisma } from './db';
+export async function runSql(sql: string) {
+  if (!sql.trim().toUpperCase().startsWith('SELECT')) throw new Error('read only');
+  return prisma.$queryRawUnsafe(sql);
+}
+`),
+    ignores: f('lib/sql-tool.ts', `import { readonlyPool } from './db';
+export async function runSql(sql: string) {
+  const client = await readonlyPool.connect();
+  try { await client.query('SET TRANSACTION READ ONLY'); return await client.query(sql); } finally { client.release(); }
+}
+`),
+  },
+  {
+    ruleIds: [29930], name: 'SECG-31 tool returns the whole environment',
+    detects: f('lib/tools.ts', `import { tool } from 'ai';
+import { z } from 'zod';
+export const debug = tool({ description: 'debug info', parameters: z.object({}), execute: async () => process.env });
+`),
+    ignores: f('lib/tools.ts', `import { tool } from 'ai';
+import { z } from 'zod';
+export const debug = tool({ description: 'debug info', parameters: z.object({}), execute: async () => ({ region: process.env.VERCEL_REGION }) });
+`),
+  },
+  {
+    ruleIds: [29931], name: 'SECG-32 thinking budget from the request',
+    detects: f('app/api/think/route.ts', `import Anthropic from '@anthropic-ai/sdk';
+const a = new Anthropic();
+export async function POST(req: Request) {
+  const body = await req.json();
+  const msg = await a.messages.create({ model: 'claude-opus-5-5', max_tokens: 32000, thinking: { type: 'enabled', budget_tokens: body.budget }, messages: [{ role: 'user', content: body.q }] });
+  return Response.json({ text: msg.content });
+}
+`),
+    ignores: f('app/api/think/route.ts', `import Anthropic from '@anthropic-ai/sdk';
+const a = new Anthropic();
+export async function POST(req: Request) {
+  const body = await req.json();
+  const msg = await a.messages.create({ model: 'claude-opus-5-5', max_tokens: 8000, thinking: { type: 'enabled', budget_tokens: 4000 }, messages: [{ role: 'user', content: body.q }] });
+  return Response.json({ text: msg.content });
+}
+`),
+  },
+  {
+    ruleIds: [29932], name: 'SECG-33 prompt template from user input',
+    detects: f('lib/prompt.ts', `import { PromptTemplate } from '@langchain/core/prompts';
+export const build = (body: { template: string }) => PromptTemplate.fromTemplate(body.template);
+`),
+    ignores: f('lib/prompt.ts', `import { PromptTemplate } from '@langchain/core/prompts';
+const tpl = PromptTemplate.fromTemplate('Answer briefly: {question}');
+export const build = (body: { question: string }) => tpl.format({ question: body.question });
+`),
+  },
+  {
+    ruleIds: [29933], name: 'SECG-34 LLM retry loop without a limit',
+    detects: f('lib/fix.ts', `import { generateText } from 'ai';
+export async function fix(model: any, code: string, check: (s: string) => boolean) {
+  let ok = false; let out = code;
+  while (!ok) {
+    out = (await generateText({ model, prompt: out })).text;
+    ok = check(out);
+  }
+  return out;
+}
+`),
+    ignores: f('lib/fix.ts', `import { generateText } from 'ai';
+export async function fix(model: any, code: string, check: (s: string) => boolean) {
+  let out = code;
+  for (let attempt = 0; attempt < 3; attempt++) {
+    out = (await generateText({ model, prompt: out })).text;
+    if (check(out)) return out;
+  }
+  throw new Error('could not fix');
+}
+`),
+  },
+  {
+    ruleIds: [29934], name: 'SECG-35 tool sends the API key to a model-chosen URL',
+    detects: f('lib/tools.ts', `import { tool } from 'ai';
+import { z } from 'zod';
+export const callApi = tool({
+  description: 'call the API',
+  parameters: z.object({ url: z.string() }),
+  execute: async (args) => (await fetch(args.url, { headers: { Authorization: \`Bearer \${process.env.API_KEY}\` } })).json(),
+});
+`),
+    ignores: f('lib/tools.ts', `import { tool } from 'ai';
+import { z } from 'zod';
+const BASE = 'https://api.example.com';
+export const callApi = tool({
+  description: 'call the API',
+  parameters: z.object({ path: z.string() }),
+  execute: async (args) => {
+    const url = new URL(args.path, BASE);
+    if (url.origin !== BASE) throw new Error('bad host');
+    return (await fetch(url, { headers: { Authorization: \`Bearer \${process.env.API_KEY}\` } })).json();
+  },
+});
+`),
+  },
+  {
+    ruleIds: [29936], name: 'SECG-37 tool writes a model-chosen path',
+    detects: f('lib/tools.ts', `import { tool } from 'ai';
+import fs from 'fs/promises';
+import { z } from 'zod';
+export const write = tool({ description: 'write a file', parameters: z.object({ path: z.string(), content: z.string() }), execute: async (args) => fs.writeFile(args.path, args.content) });
+`),
+    ignores: f('lib/tools.ts', `import { tool } from 'ai';
+import fs from 'fs/promises';
+import path from 'path';
+import { z } from 'zod';
+const ROOT = path.resolve('workspace');
+export const write = tool({ description: 'write a file', parameters: z.object({ path: z.string(), content: z.string() }), execute: async (args) => {
+  const p = path.resolve(ROOT, args.path);
+  if (!p.startsWith(ROOT + path.sep)) throw new Error('outside workspace');
+  return fs.writeFile(p, args.content);
+} });
+`),
+  },
+  {
+    ruleIds: [29938], name: 'SECG-39 full generateText result sent to the client',
+    detects: f('app/api/ask/route.ts', `import { generateText } from 'ai';
+import { openai } from '@ai-sdk/openai';
+export async function POST(req: Request) {
+  const { prompt } = await req.json();
+  const result = await generateText({ model: openai('gpt-4o'), system: 'internal rules', prompt });
+  return Response.json(result);
+}
+`),
+    ignores: f('app/api/ask/route.ts', `import { generateText } from 'ai';
+import { openai } from '@ai-sdk/openai';
+export async function POST(req: Request) {
+  const { prompt } = await req.json();
+  const result = await generateText({ model: openai('gpt-4o'), system: 'internal rules', prompt });
+  return Response.json({ text: result.text });
+}
+`),
+  },
+  {
+    ruleIds: [29939], name: 'SECG-40 browser tool evaluates model script',
+    detects: f('lib/browser-tool.ts', `import { tool } from 'ai';
+import { z } from 'zod';
+declare const page: { evaluate(s: string): Promise<unknown> };
+export const js = tool({ description: 'run js in the page', parameters: z.object({ script: z.string() }), execute: async (args) => page.evaluate(args.script) });
+`),
+    ignores: f('lib/browser-tool.ts', `import { tool } from 'ai';
+import { z } from 'zod';
+declare const page: { evaluate(f: () => string): Promise<unknown> };
+export const readTitle = tool({ description: 'read the page title', parameters: z.object({}), execute: async () => page.evaluate(() => document.title) });
+`),
+  },
+  {
+    ruleIds: [29940], name: 'SECG-41 MCP client URL from the request',
+    detects: f('app/api/mcp/route.ts', `import { Client } from '@modelcontextprotocol/sdk/client/index.js';
+import { StreamableHTTPClientTransport } from '@modelcontextprotocol/sdk/client/streamableHttp.js';
+export async function POST(req: Request) {
+  const body = await req.json();
+  const transport = new StreamableHTTPClientTransport(new URL(body.serverUrl));
+  await new Client({ name: 'app', version: '1.0.0' }).connect(transport);
+  return Response.json({ ok: true });
+}
+`),
+    ignores: f('app/api/mcp/route.ts', `import { Client } from '@modelcontextprotocol/sdk/client/index.js';
+import { StreamableHTTPClientTransport } from '@modelcontextprotocol/sdk/client/streamableHttp.js';
+const SERVERS: Record<string, string> = { docs: 'https://mcp.example.com/docs' };
+export async function POST(req: Request) {
+  const body = await req.json();
+  const transport = new StreamableHTTPClientTransport(new URL(SERVERS[body.server] ?? SERVERS.docs));
+  await new Client({ name: 'app', version: '1.0.0' }).connect(transport);
+  return Response.json({ ok: true });
+}
+`),
+  },
+  {
+    ruleIds: [29942], name: 'SECG-43 LangServe routes without auth',
+    detects: f('app/server.py', `from fastapi import FastAPI
+from langserve import add_routes
+from app.chain import chain
+
+app = FastAPI()
+add_routes(app, chain, path="/chain")
+`),
+    ignores: f('app/server.py', `from fastapi import Depends, FastAPI
+from langserve import add_routes
+from app.chain import chain
+from app.auth import verify_token
+
+app = FastAPI()
+add_routes(app, chain, path="/chain", dependencies=[Depends(verify_token)])
+`),
+  },
 ];
