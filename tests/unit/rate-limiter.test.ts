@@ -59,3 +59,31 @@ describe('checkRateLimit (Upstash)', () => {
     assert.equal(res.allowed, true);
   });
 });
+
+describe('checkRateLimit (CI e2e bypass)', () => {
+  afterEach(() => {
+    delete env.ZELSIS_E2E_NO_RATE_LIMIT;
+    delete env.VERCEL;
+  });
+
+  const exhaust = async (prefix: string) => {
+    const opts = { maxRequests: 1, windowSeconds: 60, prefix };
+    await checkRateLimit(reqFrom('10.0.2.1'), opts);
+    return (await checkRateLimit(reqFrom('10.0.2.1'), opts)).allowed;
+  };
+
+  it('still limits when the flag is unset', async () => {
+    assert.equal(await exhaust(`ci-unset-${Date.now()}`), false);
+  });
+
+  it('skips limiting only with the flag and no VERCEL', async () => {
+    env.ZELSIS_E2E_NO_RATE_LIMIT = '1';
+    assert.equal(await exhaust(`ci-on-${Date.now()}`), true);
+  });
+
+  it('ignores the flag on Vercel', async () => {
+    env.ZELSIS_E2E_NO_RATE_LIMIT = '1';
+    env.VERCEL = '1';
+    assert.equal(await exhaust(`ci-vercel-${Date.now()}`), false);
+  });
+});
