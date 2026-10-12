@@ -1,8 +1,8 @@
 {
  "summary": {
-  "implementedRules": 1174,
-  "testedRules": 1163,
-  "preciseLocationRules": 1171,
+  "implementedRules": 1187,
+  "testedRules": 1176,
+  "preciseLocationRules": 1184,
   "catalogEntries": 1922,
   "catalogOnlyNotImplemented": 1401,
   "catalogPlaceholderMetadata": 1810
@@ -13146,6 +13146,136 @@
    "code": "RULE-29926",
    "title": "Access Token Sent in the URL Query String",
    "severity": "MEDIUM",
+   "source": "lib/rules/security-gemini-rules.ts",
+   "preciseLocation": true,
+   "tested": true,
+   "inCatalog": false
+  },
+  {
+   "ruleId": 29927,
+   "code": "RULE-29927",
+   "title": "MCP ${m[1]} Without DNS-Rebinding Protection",
+   "severity": "MEDIUM",
+   "source": "lib/rules/security-gemini-rules.ts",
+   "preciseLocation": true,
+   "tested": true,
+   "inCatalog": false
+  },
+  {
+   "ruleId": 29928,
+   "code": "RULE-29928",
+   "title": "LLM Output Field ${m[1]} Used as an Access Decision",
+   "severity": "HIGH",
+   "source": "lib/rules/security-gemini-rules.ts",
+   "preciseLocation": true,
+   "tested": true,
+   "inCatalog": false
+  },
+  {
+   "ruleId": 29929,
+   "code": "RULE-29929",
+   "title": "Read-Only SQL Enforced by a ",
+   "severity": "HIGH",
+   "source": "lib/rules/security-gemini-rules.ts",
+   "preciseLocation": true,
+   "tested": true,
+   "inCatalog": false
+  },
+  {
+   "ruleId": 29930,
+   "code": "RULE-29930",
+   "title": "process.env Returned or Serialized Whole",
+   "severity": "CRITICAL",
+   "source": "lib/rules/security-gemini-rules.ts",
+   "preciseLocation": true,
+   "tested": true,
+   "inCatalog": false
+  },
+  {
+   "ruleId": 29931,
+   "code": "RULE-29931",
+   "title": "${m[1]} Chosen by the Caller",
+   "severity": "HIGH",
+   "source": "lib/rules/security-gemini-rules.ts",
+   "preciseLocation": true,
+   "tested": true,
+   "inCatalog": false
+  },
+  {
+   "ruleId": 29932,
+   "code": "RULE-29932",
+   "title": "Prompt Template Built From User Input",
+   "severity": "HIGH",
+   "source": "lib/rules/security-gemini-rules.ts",
+   "preciseLocation": true,
+   "tested": true,
+   "inCatalog": false
+  },
+  {
+   "ruleId": 29933,
+   "code": "RULE-29933",
+   "title": "LLM Called in a Loop With No Attempt Limit",
+   "severity": "HIGH",
+   "source": "lib/rules/security-gemini-rules.ts",
+   "preciseLocation": true,
+   "tested": true,
+   "inCatalog": false
+  },
+  {
+   "ruleId": 29934,
+   "code": "RULE-29934",
+   "title": "Agent Tool Sends Server Credentials to a Model-Chosen URL",
+   "severity": "CRITICAL",
+   "source": "lib/rules/security-gemini-rules.ts",
+   "preciseLocation": true,
+   "tested": true,
+   "inCatalog": false
+  },
+  {
+   "ruleId": 29936,
+   "code": "RULE-29936",
+   "title": "Agent Tool Writes or Deletes a Model-Chosen Path",
+   "severity": "CRITICAL",
+   "source": "lib/rules/security-gemini-rules.ts",
+   "preciseLocation": true,
+   "tested": true,
+   "inCatalog": false
+  },
+  {
+   "ruleId": 29938,
+   "code": "RULE-29938",
+   "title": "Raw ${m[1]} From the AI SDK Sent to the Client",
+   "severity": "MEDIUM",
+   "source": "lib/rules/security-gemini-rules.ts",
+   "preciseLocation": true,
+   "tested": true,
+   "inCatalog": false
+  },
+  {
+   "ruleId": 29939,
+   "code": "RULE-29939",
+   "title": "Browser Tool Runs Model-Written Script (page.${m[1]})",
+   "severity": "CRITICAL",
+   "source": "lib/rules/security-gemini-rules.ts",
+   "preciseLocation": true,
+   "tested": true,
+   "inCatalog": false
+  },
+  {
+   "ruleId": 29940,
+   "code": "RULE-29940",
+   "title": "MCP Client Connects to a Server URL From the Request",
+   "severity": "CRITICAL",
+   "source": "lib/rules/security-gemini-rules.ts",
+   "preciseLocation": true,
+   "tested": true,
+   "inCatalog": false
+  },
+  {
+   "ruleId": 29942,
+   "code": "RULE-29942",
+   "title": "LangServe add_routes() Without Authentication",
+   "severity": "HIGH",
    "source": "lib/rules/security-gemini-rules.ts",
    "preciseLocation": true,
    "tested": true,
