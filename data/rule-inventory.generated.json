@@ -1,8 +1,8 @@
 {
  "summary": {
-  "implementedRules": 1216,
-  "testedRules": 1205,
-  "preciseLocationRules": 1213,
+  "implementedRules": 1231,
+  "testedRules": 1220,
+  "preciseLocationRules": 1228,
   "catalogEntries": 1922,
   "catalogOnlyNotImplemented": 1401,
   "catalogPlaceholderMetadata": 1810
@@ -13567,6 +13567,156 @@
    "title": "${name} Port ${m[2]} Published on All Interfaces",
    "severity": "MEDIUM",
    "source": "lib/rules/cicd-cloud-gemini-rules.ts",
+   "preciseLocation": true,
+   "tested": true,
+   "inCatalog": false
+  },
+  {
+   "ruleId": 29974,
+   "code": "RULE-29974",
+   "title": "Raw ${k[1]} Sent in an Analytics Event",
+   "severity": "MEDIUM",
+   "source": "lib/rules/privacy-db-gemini-rules.ts",
+   "preciseLocation": true,
+   "tested": true,
+   "inCatalog": false
+  },
+  {
+   "ruleId": 29975,
+   "code": "RULE-29975",
+   "title": "${m[1]} Sent in a URL Query String",
+   "severity": "HIGH",
+   "source": "lib/rules/privacy-db-gemini-rules.ts",
+   "preciseLocation": true,
+   "tested": true,
+   "inCatalog": false
+  },
+  {
+   "ruleId": 29976,
+   "code": "RULE-29976",
+   "title": "Every Recipient Put in the ${m[1] === ",
+   "severity": "HIGH",
+   "source": "lib/rules/privacy-db-gemini-rules.ts",
+   "preciseLocation": true,
+   "tested": true,
+   "inCatalog": false
+  },
+  {
+   "ruleId": 29977,
+   "code": "RULE-29977",
+   "title": "Refresh Token Stored in Web Storage (${m[1]})",
+   "severity": "HIGH",
+   "source": "lib/rules/privacy-db-gemini-rules.ts",
+   "preciseLocation": true,
+   "tested": true,
+   "inCatalog": false
+  },
+  {
+   "ruleId": 29978,
+   "code": "RULE-29978",
+   "title": "${m[1]} Saved in Plain Text",
+   "severity": "HIGH",
+   "source": "lib/rules/privacy-db-gemini-rules.ts",
+   "preciseLocation": true,
+   "tested": true,
+   "inCatalog": false
+  },
+  {
+   "ruleId": 29979,
+   "code": "RULE-29979",
+   "title": "Foreign Server Password Committed in a Migration",
+   "severity": "HIGH",
+   "source": "lib/rules/privacy-db-gemini-rules.ts",
+   "preciseLocation": true,
+   "tested": true,
+   "inCatalog": false
+  },
+  {
+   "ruleId": 29980,
+   "code": "RULE-29980",
+   "title": "ON DELETE SET NULL on NOT NULL Column ${m[1]}",
+   "severity": "HIGH",
+   "source": "lib/rules/privacy-db-gemini-rules.ts",
+   "preciseLocation": true,
+   "tested": true,
+   "inCatalog": false
+  },
+  {
+   "ruleId": 29981,
+   "code": "RULE-29981",
+   "title": "NOT IN (SELECT …) Returns No Rows When the Subquery Has a NULL",
+   "severity": "MEDIUM",
+   "source": "lib/rules/privacy-db-gemini-rules.ts",
+   "preciseLocation": true,
+   "tested": true,
+   "inCatalog": false
+  },
+  {
+   "ruleId": 29982,
+   "code": "RULE-29982",
+   "title": "Trigger on ${table} Updates ${table} Again (Infinite Recursion)",
+   "severity": "HIGH",
+   "source": "lib/rules/privacy-db-gemini-rules.ts",
+   "preciseLocation": true,
+   "tested": true,
+   "inCatalog": false
+  },
+  {
+   "ruleId": 29983,
+   "code": "RULE-29983",
+   "title": "REFRESH MATERIALIZED VIEW Without CONCURRENTLY",
+   "severity": "MEDIUM",
+   "source": "lib/rules/privacy-db-gemini-rules.ts",
+   "preciseLocation": true,
+   "tested": true,
+   "inCatalog": false
+  },
+  {
+   "ruleId": 29984,
+   "code": "RULE-29984",
+   "title": "pg_notify Sends the Whole Row as Payload",
+   "severity": "MEDIUM",
+   "source": "lib/rules/privacy-db-gemini-rules.ts",
+   "preciseLocation": true,
+   "tested": true,
+   "inCatalog": false
+  },
+  {
+   "ruleId": 29985,
+   "code": "RULE-29985",
+   "title": "${m[1]}.id Is a 32-bit ${m[2].toUpperCase()}",
+   "severity": "MEDIUM",
+   "source": "lib/rules/privacy-db-gemini-rules.ts",
+   "preciseLocation": true,
+   "tested": true,
+   "inCatalog": false
+  },
+  {
+   "ruleId": 29986,
+   "code": "RULE-29986",
+   "title": "Redis KEYS Pattern Scan in Application Code",
+   "severity": "HIGH",
+   "source": "lib/rules/privacy-db-gemini-rules.ts",
+   "preciseLocation": true,
+   "tested": true,
+   "inCatalog": false
+  },
+  {
+   "ruleId": 29987,
+   "code": "RULE-29987",
+   "title": "Row Count Computed by Loading Every Row (${m[1]}().length)",
+   "severity": "HIGH",
+   "source": "lib/rules/privacy-db-gemini-rules.ts",
+   "preciseLocation": true,
+   "tested": true,
+   "inCatalog": false
+  },
+  {
+   "ruleId": 29988,
+   "code": "RULE-29988",
+   "title": "Entire Table Loaded, Then Filtered in JavaScript",
+   "severity": "MEDIUM",
+   "source": "lib/rules/privacy-db-gemini-rules.ts",
    "preciseLocation": true,
    "tested": true,
    "inCatalog": false
