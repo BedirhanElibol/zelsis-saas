@@ -84,7 +84,7 @@ export const SaasHero: React.FC<SaasHeroProps> = ({ onOpenDashboard }) => {
           Find the flaws in your app <span className="text-emerald-400">before your users do.</span>
         </h1>
         <p className="text-base sm:text-lg lg:text-xl text-[#A1A1AA] max-w-3xl mx-auto leading-relaxed mt-6 mb-10 font-sans font-normal">
-          Zelsis checks your repo for leaked keys, open Supabase RLS policies, broken auth, vulnerable dependencies, accessibility failures and risky cloud config, and blocks the pull request when something critical slips in. Paste a public repo and see the results in seconds.
+          Zelsis checks your repo for leaked keys, broken auth, logic bugs, features that only look finished, vulnerable dependencies and risky CI/CD and cloud config, and blocks the pull request when something critical slips in. Paste a public repo and see the results in seconds.
         </p>
 
         {/* Direct Repository Scan Command Bar */}
@@ -210,7 +210,7 @@ export const SaasHero: React.FC<SaasHeroProps> = ({ onOpenDashboard }) => {
           {/* Footer Ribbon inside Frame */}
           <div className="hidden sm:flex px-5 py-2.5 bg-[#0E0E10] border-t border-white/10 flex-wrap items-center gap-x-6 gap-y-1 text-xs font-mono text-zinc-400">
             <span>Engine: <strong className="text-zinc-200 font-mono">pattern-based static analysis</strong></span>
-            <span>Coverage: <strong className="text-zinc-200 font-mono">OWASP Top 10, secrets, RLS, dependencies</strong></span>
+            <span>Coverage: <strong className="text-zinc-200 font-mono">OWASP Top 10, secrets, logic bugs, dependencies, CI/CD</strong></span>
           </div>
         </m.div>
 

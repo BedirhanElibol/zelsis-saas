@@ -47,7 +47,7 @@ export const metadata: Metadata = {
     template: '%s | Zelsis',
   },
   description:
-    'Scan your GitHub repository for leaked secrets, open Supabase RLS policies, injection and vulnerable dependencies. Free for public repos, with a CI gate that fails the release on critical issues.',
+    'Scan your GitHub repository for leaked secrets, broken auth, logic bugs, vulnerable dependencies and risky CI/CD config. Free for public repos, with a CI gate that fails the release on critical issues.',
   keywords: [
     'Zelsis',
     'Release Gate',
@@ -67,7 +67,7 @@ export const metadata: Metadata = {
   openGraph: {
     title: 'Zelsis | Security Scanner & Release Gate for Web Apps',
     description:
-      'Scan your GitHub repository for leaked secrets, open Supabase RLS policies, injection and vulnerable dependencies. Free for public repos, with a CI gate that fails the release on critical issues.',
+      'Scan your GitHub repository for leaked secrets, broken auth, logic bugs, vulnerable dependencies and risky CI/CD config. Free for public repos, with a CI gate that fails the release on critical issues.',
     url: './',
     siteName: 'Zelsis',
     images: [
@@ -86,7 +86,7 @@ export const metadata: Metadata = {
     card: 'summary_large_image',
     title: 'Zelsis | Security Scanner & Release Gate for Web Apps',
     description:
-      'Scan your GitHub repository for leaked secrets, open Supabase RLS policies, injection and vulnerable dependencies. Free for public repos, with a CI gate that fails the release on critical issues.',
+      'Scan your GitHub repository for leaked secrets, broken auth, logic bugs, vulnerable dependencies and risky CI/CD config. Free for public repos, with a CI gate that fails the release on critical issues.',
     images: ['/og-image.png'],
   },
   icons: {
