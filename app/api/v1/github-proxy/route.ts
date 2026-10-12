@@ -7,6 +7,7 @@ import { GithubProxyQuerySchema, validateQueryParams } from '@/lib/validations/a
 import { logger } from '@/lib/logger';
 import { createClient } from '@supabase/supabase-js';
 import { isDependencyFile } from '@/lib/scanner/dependencies';
+import { isScannableTreePath } from '@/lib/scanner/scan-paths';
 import { isPlatformAdminEmail } from '@/lib/subscription-utils';
 import { getEffectivePlanTier } from '@/lib/organization';
 import { priceLabel } from '@/data/pricing-plans';
@@ -573,19 +574,7 @@ export async function GET(req: NextRequest) {
           item.type === 'blob' &&
           typeof item.path === 'string' &&
           (!item.size || item.size <= (isDependencyFile(item.path) ? 8000000 : 2000000)) &&
-          (isDependencyFile(item.path) || /(\.(ts|tsx|js|jsx|json|css|sql|html|py|yml|yaml|toml|sh|ps1|c|cpp|cc|cxx|h|hpp|java|kt|kts|go|rs|php|cs|rb|swift|xml|plist|gradle|md|mdx|zelsisignore|shipguardignore)$)|(\.env(\.[a-zA-Z0-9_\-]+)?$)|((?:^|\/)(?:dockerfile|makefile|podfile)$)/i.test(item.path)) &&
-          !item.path.includes('node_modules') &&
-          !item.path.includes('.next') &&
-          !item.path.includes('.git') &&
-          !item.path.includes('dist/') &&
-          !item.path.includes('build/') &&
-          !item.path.includes('vendor/') &&
-          !item.path.includes('.agent') &&
-          !item.path.includes('.antigravity') &&
-          !item.path.includes('artifacts') &&
-          !item.path.includes('venv/') &&
-          !item.path.includes('.venv/') &&
-          !item.path.includes('__pycache__/')
+          isScannableTreePath(item.path)
       );
 
     if (treeFiles.length === 0) {
