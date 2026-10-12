@@ -1,8 +1,8 @@
 {
  "summary": {
-  "implementedRules": 1117,
-  "testedRules": 1106,
-  "preciseLocationRules": 1114,
+  "implementedRules": 1149,
+  "testedRules": 1138,
+  "preciseLocationRules": 1146,
   "catalogEntries": 1922,
   "catalogOnlyNotImplemented": 1401,
   "catalogPlaceholderMetadata": 1810
@@ -12577,6 +12577,326 @@
    "title": "Text Saved With a PDF Content Type",
    "severity": "HIGH",
    "source": "lib/rules/logic-fake-rules.ts",
+   "preciseLocation": true,
+   "tested": true,
+   "inCatalog": false
+  },
+  {
+   "ruleId": 29867,
+   "code": "RULE-29867",
+   "title": "fetch() Sends a body Without a method",
+   "severity": "HIGH",
+   "source": "lib/rules/logic-gemini-rules.ts",
+   "preciseLocation": true,
+   "tested": true,
+   "inCatalog": false
+  },
+  {
+   "ruleId": 29868,
+   "code": "RULE-29868",
+   "title": "multipart/form-data Content-Type Set by Hand on a FormData Upload",
+   "severity": "HIGH",
+   "source": "lib/rules/logic-gemini-rules.ts",
+   "preciseLocation": true,
+   "tested": true,
+   "inCatalog": false
+  },
+  {
+   "ruleId": 29869,
+   "code": "RULE-29869",
+   "title": "${r[1]}.current Used as a Hook Dependency",
+   "severity": "MEDIUM",
+   "source": "lib/rules/logic-gemini-rules.ts",
+   "preciseLocation": true,
+   "tested": true,
+   "inCatalog": false
+  },
+  {
+   "ruleId": 29870,
+   "code": "RULE-29870",
+   "title": "State ${m[1]} Mutated With .${s[1]}()",
+   "severity": "HIGH",
+   "source": "lib/rules/logic-gemini-rules.ts",
+   "preciseLocation": true,
+   "tested": true,
+   "inCatalog": false
+  },
+  {
+   "ruleId": 29871,
+   "code": "RULE-29871",
+   "title": "${r[1]}() Called Inside unstable_cache",
+   "severity": "HIGH",
+   "source": "lib/rules/logic-gemini-rules.ts",
+   "preciseLocation": true,
+   "tested": true,
+   "inCatalog": false
+  },
+  {
+   "ruleId": 29872,
+   "code": "RULE-29872",
+   "title": "reduce() Callback Never Returns the Accumulator",
+   "severity": "HIGH",
+   "source": "lib/rules/logic-gemini-rules.ts",
+   "preciseLocation": true,
+   "tested": true,
+   "inCatalog": false
+  },
+  {
+   "ruleId": 29873,
+   "code": "RULE-29873",
+   "title": "${n} Read With Object.keys / Spread",
+   "severity": "HIGH",
+   "source": "lib/rules/logic-gemini-rules.ts",
+   "preciseLocation": true,
+   "tested": true,
+   "inCatalog": false
+  },
+  {
+   "ruleId": 29874,
+   "code": "RULE-29874",
+   "title": "use(fetch(…)) Called During Render",
+   "severity": "HIGH",
+   "source": "lib/rules/logic-gemini-rules.ts",
+   "preciseLocation": true,
+   "tested": true,
+   "inCatalog": false
+  },
+  {
+   "ruleId": 29875,
+   "code": "RULE-29875",
+   "title": "String ${m[1].slice(0, 30)} + Number Is Concatenated",
+   "severity": "HIGH",
+   "source": "lib/rules/logic-gemini-rules.ts",
+   "preciseLocation": true,
+   "tested": true,
+   "inCatalog": false
+  },
+  {
+   "ruleId": 29876,
+   "code": "RULE-29876",
+   "title": "Value Encoded Twice for URLSearchParams",
+   "severity": "MEDIUM",
+   "source": "lib/rules/logic-gemini-rules.ts",
+   "preciseLocation": true,
+   "tested": true,
+   "inCatalog": false
+  },
+  {
+   "ruleId": 29877,
+   "code": "RULE-29877",
+   "title": "btoa(JSON.stringify(…)) Breaks on Non-ASCII Text",
+   "severity": "MEDIUM",
+   "source": "lib/rules/logic-gemini-rules.ts",
+   "preciseLocation": true,
+   "tested": true,
+   "inCatalog": false
+  },
+  {
+   "ruleId": 29878,
+   "code": "RULE-29878",
+   "title": "Intl Currency Format Without a currency Code",
+   "severity": "HIGH",
+   "source": "lib/rules/logic-gemini-rules.ts",
+   "preciseLocation": true,
+   "tested": true,
+   "inCatalog": false
+  },
+  {
+   "ruleId": 29879,
+   "code": "RULE-29879",
+   "title": "flatMap() With an async Callback",
+   "severity": "HIGH",
+   "source": "lib/rules/logic-gemini-rules.ts",
+   "preciseLocation": true,
+   "tested": true,
+   "inCatalog": false
+  },
+  {
+   "ruleId": 29880,
+   "code": "RULE-29880",
+   "title": "useContext(${m[1]}.Provider) Instead of useContext(${m[1]})",
+   "severity": "HIGH",
+   "source": "lib/rules/logic-gemini-rules.ts",
+   "preciseLocation": true,
+   "tested": true,
+   "inCatalog": false
+  },
+  {
+   "ruleId": 29881,
+   "code": "RULE-29881",
+   "title": "Stream Parser Does Not Handle the [DONE] Message",
+   "severity": "HIGH",
+   "source": "lib/rules/logic-gemini-rules.ts",
+   "preciseLocation": true,
+   "tested": true,
+   "inCatalog": false
+  },
+  {
+   "ruleId": 29882,
+   "code": "RULE-29882",
+   "title": "${m[1]}() Callback Returns an Object Literal",
+   "severity": "HIGH",
+   "source": "lib/rules/logic-gemini-rules.ts",
+   "preciseLocation": true,
+   "tested": true,
+   "inCatalog": false
+  },
+  {
+   "ruleId": 29883,
+   "code": "RULE-29883",
+   "title": "generateMetadata Calls ${r[1]}()",
+   "severity": "HIGH",
+   "source": "lib/rules/logic-gemini-rules.ts",
+   "preciseLocation": true,
+   "tested": true,
+   "inCatalog": false
+  },
+  {
+   "ruleId": 29884,
+   "code": "RULE-29884",
+   "title": "Math.${m[1]}(${m[2]}) Given an Array",
+   "severity": "HIGH",
+   "source": "lib/rules/logic-gemini-rules.ts",
+   "preciseLocation": true,
+   "tested": true,
+   "inCatalog": false
+  },
+  {
+   "ruleId": 29885,
+   "code": "RULE-29885",
+   "title": "new URL(req.url) Without a Base in a Node Server",
+   "severity": "HIGH",
+   "source": "lib/rules/logic-gemini-rules.ts",
+   "preciseLocation": true,
+   "tested": true,
+   "inCatalog": false
+  },
+  {
+   "ruleId": 29886,
+   "code": "RULE-29886",
+   "title": "Caught ${n} Copied With Spread / JSON.stringify",
+   "severity": "MEDIUM",
+   "source": "lib/rules/logic-gemini-rules.ts",
+   "preciseLocation": true,
+   "tested": true,
+   "inCatalog": false
+  },
+  {
+   "ruleId": 29887,
+   "code": "RULE-29887",
+   "title": "setMonth(getMonth() ± n) Skips Short Months",
+   "severity": "MEDIUM",
+   "source": "lib/rules/logic-gemini-rules.ts",
+   "preciseLocation": true,
+   "tested": true,
+   "inCatalog": false
+  },
+  {
+   "ruleId": 29888,
+   "code": "RULE-29888",
+   "title": "${m[1]}.test() on a Global Regex Alternates Between true and false",
+   "severity": "HIGH",
+   "source": "lib/rules/logic-gemini-rules.ts",
+   "preciseLocation": true,
+   "tested": true,
+   "inCatalog": false
+  },
+  {
+   "ruleId": 29889,
+   "code": "RULE-29889",
+   "title": "BigInt Combined With a Number",
+   "severity": "HIGH",
+   "source": "lib/rules/logic-gemini-rules.ts",
+   "preciseLocation": true,
+   "tested": true,
+   "inCatalog": false
+  },
+  {
+   "ruleId": 29890,
+   "code": "RULE-29890",
+   "title": "JSON.stringify(${m[1]}) on a ${kind} Sends {}",
+   "severity": "HIGH",
+   "source": "lib/rules/logic-gemini-rules.ts",
+   "preciseLocation": true,
+   "tested": true,
+   "inCatalog": false
+  },
+  {
+   "ruleId": 29891,
+   "code": "RULE-29891",
+   "title": ".in() Filter Given a String Instead of an Array",
+   "severity": "HIGH",
+   "source": "lib/rules/logic-gemini-rules.ts",
+   "preciseLocation": true,
+   "tested": true,
+   "inCatalog": false
+  },
+  {
+   "ruleId": 29892,
+   "code": "RULE-29892",
+   "title": "textSearch() on User Input Uses to_tsquery Syntax",
+   "severity": "MEDIUM",
+   "source": "lib/rules/logic-gemini-rules.ts",
+   "preciseLocation": true,
+   "tested": true,
+   "inCatalog": false
+  },
+  {
+   "ruleId": 29893,
+   "code": "RULE-29893",
+   "title": "JWT expiresIn Given in Milliseconds",
+   "severity": "HIGH",
+   "source": "lib/rules/logic-gemini-rules.ts",
+   "preciseLocation": true,
+   "tested": true,
+   "inCatalog": false
+  },
+  {
+   "ruleId": 29894,
+   "code": "RULE-29894",
+   "title": "timingSafeEqual Without a Length Check",
+   "severity": "MEDIUM",
+   "source": "lib/rules/logic-gemini-rules.ts",
+   "preciseLocation": true,
+   "tested": true,
+   "inCatalog": false
+  },
+  {
+   "ruleId": 29895,
+   "code": "RULE-29895",
+   "title": "${m[1]}().${m[2]} Without await (Next.js ${nextMajor})",
+   "severity": "UNKNOWN",
+   "source": "lib/rules/logic-gemini-rules.ts",
+   "preciseLocation": true,
+   "tested": true,
+   "inCatalog": false
+  },
+  {
+   "ruleId": 29897,
+   "code": "RULE-29897",
+   "title": "os.path.join() With an Absolute Second Path",
+   "severity": "HIGH",
+   "source": "lib/rules/logic-gemini-rules.ts",
+   "preciseLocation": true,
+   "tested": true,
+   "inCatalog": false
+  },
+  {
+   "ruleId": 29898,
+   "code": "RULE-29898",
+   "title": "Module Variable ${a[1]} Updated Without ",
+   "severity": "HIGH",
+   "source": "lib/rules/logic-gemini-rules.ts",
+   "preciseLocation": true,
+   "tested": true,
+   "inCatalog": false
+  },
+  {
+   "ruleId": 29899,
+   "code": "RULE-29899",
+   "title": "${r[1]}.read() Called a Second Time Without seek(0)",
+   "severity": "MEDIUM",
+   "source": "lib/rules/logic-gemini-rules.ts",
    "preciseLocation": true,
    "tested": true,
    "inCatalog": false
