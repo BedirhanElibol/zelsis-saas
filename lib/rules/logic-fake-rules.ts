@@ -1,5 +1,5 @@
 /**
- * Unfinished and fake features in AI-built apps (FAKE-01.., BUG-144.., Rule IDs 29791-29819).
+ * Unfinished and fake features in AI-built apps (FAKE-01.., BUG-144.., Rule IDs 29791-29819; FAKE-10.., 29861-29869).
  *
  * Found by reviewing 30 real Lovable / Bolt apps (.cache/vibe-review.md, quotes verified line by line): the most common
  * user-facing problem was not a vulnerability but a feature that looks finished and does nothing. Forms that show
@@ -232,6 +232,77 @@ function evaluate(path: string, raw: string, c: string, add: (h: Hit) => void, c
       title: `Row Saved With ${m[1]}: ${m[2]} (null When Signed Out)`,
       why: `If the session expired or the user is not loaded yet, ${m[2]} is undefined: the row is saved without an owner (or the insert fails on RLS), so the user's data disappears from their list.`,
       fix: `Check first: if (!user) { redirect to sign-in / show an error; return; } then insert with ${m[1]}: user.id.` });
+  }
+
+  // The rules below come from the Gemini rule report (FAKE-10.., Rule IDs 29861-29869), re-checked on real repos.
+  const isClient = /\.[jt]sx$/i.test(path) || /^\s*['"]use client['"]/m.test(c);
+
+  // FAKE-10: high-stakes account / billing / security action that only edits local state
+  const LOCAL_ONLY_CALL = /^(?:set[A-Z]\w*|toast|alert|confirm|console|log|warn|error|success|info|filter|map|find|findIndex|some|every|includes|indexOf|push|concat|slice|splice|reduce|forEach|sort|keys|values|entries|from|now|random|floor|ceil|round|toString|toISOString|toLocaleString|toLocaleDateString|String|Number|Boolean|Date|stringify|parse|randomUUID|trim|toLowerCase|toUpperCase|replace|split|join|startsWith|endsWith|preventDefault|stopPropagation|close\w*|open\w*|reset|t)$/;
+  for (const fn of fns) {
+    if (!isClient || fn.body.length > 2500) continue;
+    const act = /^(?:handle|on|confirm)?(Delete|Remove|Revoke|Refund|Cancel|Change|Update|Invite|Connect|Disconnect|Enable|Disable|Verify|Publish|Deploy|Restore|Withdraw|Approve|Rotate|Regenerate|Request|Issue|Merge|Transfer|Promote|Demote|Ban|Suspend)(\w*?)(Account|Refund|Sessions?|Role|Members?|Payouts?|Withdrawal|Subscription|Domain|Integration|Slack|Github|GitHub|Notion|Jira|TwoFactor|2fa|2FA|Mfa|MFA|Totp|TOTP|Backup|Deployment|Site|ApiKeys?|Webhooks?|Order|Ownership|User)s?$/.exec(fn.name);
+    // Must rewrite the data itself (filter / map / status), not just open a confirm dialog
+    if (!act || SENDS.test(fn.body) || !/\bset[A-Z]\w*\s*\([^;]*(?:\.(?:filter|map)\(|\bstatus\s*:|\.\.\.)/.test(fn.body)) continue;
+    const calls = [...fn.body.matchAll(/(?<![\w$.])(?:[\w$]+\.)*([\w$]+)\s*\(/g)].map((m) => m[1]).filter((n) => !/^(?:if|for|while|switch|catch|return|function|typeof|await|new)$/.test(n));
+    if (calls.some((n) => !LOCAL_ONLY_CALL.test(n))) continue;
+    add({ ruleId: 29861, code: 'FAKE-10', severity: 'HIGH', category: CAT, lineIdx: at(fn.at),
+      title: `${fn.name}() Only Changes Local State`,
+      why: `"${act[1]} ${act[3]}" is never sent to a server: the screen updates, but after a reload the ${act[3].toLowerCase()} is unchanged, and nothing was actually ${act[1].toLowerCase()}d / applied for the user.`,
+      fix: 'Call the real backend (API route, server action, Supabase, Stripe) and update the UI only after it succeeds; show an error when it fails.' });
+  }
+
+  if (isClient) {
+    // FAKE-11: coupon / promo code checked against a constant in browser code
+    for (const x of c.matchAll(/\b(\w*(?:coupon|promo|discount|voucher)\w*)\s*(?:\.\w+\(\))?\s*===?\s*(['"`])([A-Za-z0-9_-]{3,24})\2/gi)) {
+      if (!/coupon|promo|voucher|discount\w*code/i.test(x[1]) || /(?:Id|Type|Status|Mode|State|Kind)$/.test(x[1])) continue;
+      if (/^(?:percent|fixed|amount|none|active|expired|string|number)$/i.test(x[3])) continue;
+      add({ ruleId: 29862, code: 'FAKE-11', severity: 'HIGH', category: CAT, lineIdx: at(x.index!),
+        title: `Discount Code "${x[3]}" Validated in the Browser`,
+        why: 'The valid code ships in the JavaScript bundle and the discount is applied client-side, so anyone can read the code, and the server-side charge never sees the discount (or trusts a client price).',
+        fix: 'Validate codes on the server (Stripe promotion codes or your API) and compute the final price there.' });
+    }
+
+    // FAKE-12: one-time code "verified" by length or against a constant
+    for (const x of c.matchAll(/\b(\w*(?:otp|totp|mfa|twoFactor|2fa|verificationCode|verifyCode|code|pin)\w*)\s*(?:\.length\s*===?\s*6\b|===?\s*(['"`])\d{4,8}\2)/gi)) {
+      const fn = fns.find((f) => x.index! >= f.bodyAt && x.index! < f.bodyAt + f.body.length);
+      if (!fn || SENDS.test(fn.body) || !/\bset\w*(?:Verified|Enabled|Authenticated|Success|Step|TwoFactor|Mfa|2fa)\w*\s*\(|\bset\w*\s*\(\s*true\s*\)/i.test(fn.body)) continue;
+      add({ ruleId: 29863, code: 'FAKE-12', severity: 'CRITICAL', category: 'Authentication', type: 'SECURITY', lineIdx: at(x.index!),
+        title: `${fn.name}() Accepts the Code Without Checking It on a Server`,
+        why: 'The code is only checked for its length or against a constant in the browser, so any 6 digits (or the code visible in the bundle) pass: two-factor or email verification protects nothing.',
+        fix: 'Send the code to the server and verify it there (TOTP secret / provider verify API); mark the step done only on a successful response.' });
+    }
+
+    // FAKE-13: live metrics simulated with setInterval + Math.random
+    for (const x of c.matchAll(/\bsetInterval\s*\(/g)) {
+      const end = closeOf(c, x.index! + x[0].length - 1);
+      if (end < 0) continue;
+      const body = c.slice(x.index!, end);
+      const m = /\bset(\w*(?:Cpu|CPU|Memory|Ram|RAM|Latency|Uptime|Requests|Visitors|Online|Users|Traffic|Revenue|Sales|Load|Bandwidth|Throughput|Metrics|Stats))\s*\([^)]*Math\.random\(\)/.exec(body);
+      if (m && !SENDS.test(body)) add({ ruleId: 29864, code: 'FAKE-13', severity: 'MEDIUM', category: CAT, lineIdx: at(x.index!),
+        title: `"Live" ${m[1]} Is Random Numbers`,
+        why: `${m[1]} is updated every few seconds with Math.random(), not from real data, so the dashboard shows invented activity that users may act on.`,
+        fix: 'Fetch the real metric (your API, analytics, a realtime channel) or label the widget as sample data.' });
+    }
+
+    // FAKE-14: recovery / backup codes generated in the browser and never stored
+    for (const fn of fns) {
+      if (!/^(?:handle|on)?(?:Generate|Create|Regenerate|Show)\w*(?:Recovery|Backup)\w*Codes?$/i.test(fn.name)) continue;
+      if (/Math\.random\(|crypto\.getRandomValues\(|randomUUID\(/.test(fn.body) && !SENDS.test(fn.body)) add({ ruleId: 29865, code: 'FAKE-14', severity: 'HIGH', category: 'Authentication', type: 'SECURITY', lineIdx: at(fn.at),
+        title: `${fn.name}() Creates Recovery Codes Only in the Browser`,
+        why: 'The codes are random strings in page memory and are never saved (hashed) on the server, so they cannot be used to recover the account: the user is locked out when they lose their device.',
+        fix: 'Generate and store hashed recovery codes on the server, return them once, and verify them server-side at sign-in.' });
+    }
+  }
+
+  // FAKE-15: "PDF" download that is plain text or JSON in a Blob
+  for (const x of c.matchAll(/new\s+Blob\s*\(\s*\[([^\]]*)\]\s*,\s*\{\s*type\s*:\s*['"]application\/pdf['"]/g)) {
+    if (!/^\s*(?:JSON\.stringify\(|['"`])/.test(x[1])) continue;
+    if (/\b(?:jsPDF|pdf-lib|PDFDocument|@react-pdf|pdfmake|html2pdf|output\(|arrayBuffer|Uint8Array|base64)/.test(c)) continue;
+    add({ ruleId: 29866, code: 'FAKE-15', severity: 'HIGH', category: CAT, lineIdx: at(x.index!),
+      title: 'Text Saved With a PDF Content Type',
+      why: 'Labelling a string or JSON as application/pdf does not make a PDF: the downloaded invoice or report fails to open ("file is damaged").',
+      fix: 'Generate a real PDF (pdf-lib, @react-pdf/renderer, jsPDF, or on the server) or download it as .txt / .csv / .json.' });
   }
 }
 

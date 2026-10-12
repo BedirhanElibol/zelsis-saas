@@ -223,4 +223,141 @@ export default API_BASE_URL;
 }
 `),
   },
+  {
+    ruleIds: [29861], name: 'FAKE-10 refund only updates local state',
+    detects: f('src/pages/Orders.tsx', `import { useState } from 'react';
+import { toast } from 'sonner';
+export default function Orders({ initial }: { initial: { id: string; status: string }[] }) {
+  const [orders, setOrders] = useState(initial);
+  const handleRefundOrder = (id: string) => {
+    setOrders((prev) => prev.map((o) => (o.id === id ? { ...o, status: 'refunded' } : o)));
+    toast.success('Refund issued');
+  };
+  return <ul>{orders.map((o) => <li key={o.id} onClick={() => handleRefundOrder(o.id)}>{o.status}</li>)}</ul>;
+}
+`),
+    ignores: f('src/pages/Orders.tsx', `import { useState } from 'react';
+import { toast } from 'sonner';
+export default function Orders({ initial }: { initial: { id: string; status: string }[] }) {
+  const [orders, setOrders] = useState(initial);
+  const handleRefundOrder = async (id: string) => {
+    const res = await fetch('/api/refunds', { method: 'POST', body: JSON.stringify({ id }) });
+    if (!res.ok) return toast.error('Refund failed');
+    setOrders((prev) => prev.map((o) => (o.id === id ? { ...o, status: 'refunded' } : o)));
+  };
+  const handleRemoveRow = (id: string) => setOrders((prev) => prev.filter((o) => o.id !== id));
+  return <ul>{orders.map((o) => <li key={o.id} onClick={() => handleRefundOrder(o.id)} onDoubleClick={() => handleRemoveRow(o.id)}>{o.status}</li>)}</ul>;
+}
+`),
+  },
+  {
+    ruleIds: [29862], name: 'FAKE-11 coupon checked against a constant in the browser',
+    detects: f('src/components/Checkout.tsx', `import { useState } from 'react';
+export function Checkout({ price }: { price: number }) {
+  const [couponCode, setCouponCode] = useState('');
+  const total = couponCode.toUpperCase() === 'SAVE20' ? price * 0.8 : price;
+  return <input value={couponCode} onChange={(e) => setCouponCode(e.target.value)} placeholder={String(total)} />;
+}
+`),
+    ignores: f('src/components/Checkout.tsx', `import { useState } from 'react';
+export function Checkout({ price }: { price: number }) {
+  const [couponCode, setCouponCode] = useState('');
+  const [discountType] = useState<'percent' | 'fixed'>('percent');
+  const label = discountType === 'percent' ? '%' : '$';
+  return <input value={couponCode} onChange={(e) => setCouponCode(e.target.value)} placeholder={label + price} />;
+}
+`),
+  },
+  {
+    ruleIds: [29863], name: 'FAKE-12 OTP accepted by length only',
+    detects: f('src/components/TwoFactor.tsx', `import { useState } from 'react';
+export function TwoFactor() {
+  const [otp, setOtp] = useState('');
+  const [verified, setVerified] = useState(false);
+  const handleVerify = () => {
+    if (otp.length === 6) setVerified(true);
+  };
+  return <div><input value={otp} onChange={(e) => setOtp(e.target.value)} /><button onClick={handleVerify}>{String(verified)}</button></div>;
+}
+`),
+    ignores: f('src/components/TwoFactor.tsx', `import { useState } from 'react';
+export function TwoFactor() {
+  const [otp, setOtp] = useState('');
+  const [verified, setVerified] = useState(false);
+  const handleVerify = async () => {
+    if (otp.length !== 6) return;
+    const res = await fetch('/api/2fa/verify', { method: 'POST', body: JSON.stringify({ otp }) });
+    if (res.ok) setVerified(true);
+  };
+  return <div><input value={otp} onChange={(e) => setOtp(e.target.value)} /><button onClick={handleVerify}>{String(verified)}</button></div>;
+}
+`),
+  },
+  {
+    ruleIds: [29864], name: 'FAKE-13 live metrics from Math.random',
+    detects: f('src/components/ServerStats.tsx', `import { useEffect, useState } from 'react';
+export function ServerStats() {
+  const [cpu, setCpu] = useState(0);
+  useEffect(() => {
+    const id = setInterval(() => setCpu(Math.round(Math.random() * 100)), 2000);
+    return () => clearInterval(id);
+  }, []);
+  return <span>{cpu}%</span>;
+}
+`),
+    ignores: f('src/components/ServerStats.tsx', `import { useEffect, useState } from 'react';
+export function ServerStats() {
+  const [cpu, setCpu] = useState(0);
+  useEffect(() => {
+    const id = setInterval(async () => setCpu((await (await fetch('/api/stats')).json()).cpu), 2000);
+    return () => clearInterval(id);
+  }, []);
+  return <span>{cpu}%</span>;
+}
+`),
+  },
+  {
+    ruleIds: [29865], name: 'FAKE-14 recovery codes generated only in the browser',
+    detects: f('src/components/Security.tsx', `import { useState } from 'react';
+export function Security() {
+  const [codes, setCodes] = useState<string[]>([]);
+  const handleGenerateRecoveryCodes = () => {
+    setCodes(Array.from({ length: 8 }, () => Math.random().toString(36).slice(2, 10)));
+  };
+  return <button onClick={handleGenerateRecoveryCodes}>{codes.join(' ')}</button>;
+}
+`),
+    ignores: f('src/components/Security.tsx', `import { useState } from 'react';
+export function Security() {
+  const [codes, setCodes] = useState<string[]>([]);
+  const handleGenerateRecoveryCodes = async () => {
+    const res = await fetch('/api/2fa/recovery-codes', { method: 'POST' });
+    setCodes((await res.json()).codes);
+  };
+  return <button onClick={handleGenerateRecoveryCodes}>{codes.join(' ')}</button>;
+}
+`),
+  },
+  {
+    ruleIds: [29866], name: 'FAKE-15 JSON saved as application/pdf',
+    detects: f('src/components/Invoice.tsx', `export function Invoice({ invoice }: { invoice: { id: string; total: number } }) {
+  const download = () => {
+    const blob = new Blob([JSON.stringify(invoice)], { type: 'application/pdf' });
+    window.open(URL.createObjectURL(blob));
+  };
+  return <button onClick={download}>Download PDF</button>;
+}
+`),
+    ignores: f('src/components/Invoice.tsx', `import { jsPDF } from 'jspdf';
+export function Invoice({ invoice }: { invoice: { id: string; total: number } }) {
+  const download = () => {
+    const doc = new jsPDF();
+    doc.text('Invoice ' + invoice.id, 10, 10);
+    const blob = new Blob([doc.output('arraybuffer')], { type: 'application/pdf' });
+    window.open(URL.createObjectURL(blob));
+  };
+  return <button onClick={download}>Download PDF</button>;
+}
+`),
+  },
 ];
