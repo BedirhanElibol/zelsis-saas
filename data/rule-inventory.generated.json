@@ -1,8 +1,8 @@
 {
  "summary": {
-  "implementedRules": 1231,
-  "testedRules": 1220,
-  "preciseLocationRules": 1228,
+  "implementedRules": 1242,
+  "testedRules": 1231,
+  "preciseLocationRules": 1239,
   "catalogEntries": 1922,
   "catalogOnlyNotImplemented": 1401,
   "catalogPlaceholderMetadata": 1810
@@ -13717,6 +13717,116 @@
    "title": "Entire Table Loaded, Then Filtered in JavaScript",
    "severity": "MEDIUM",
    "source": "lib/rules/privacy-db-gemini-rules.ts",
+   "preciseLocation": true,
+   "tested": true,
+   "inCatalog": false
+  },
+  {
+   "ruleId": 30000,
+   "code": "RULE-30000",
+   "title": "aria-label ",
+   "severity": "MEDIUM",
+   "source": "lib/rules/ux-gemini-rules.ts",
+   "preciseLocation": true,
+   "tested": true,
+   "inCatalog": false
+  },
+  {
+   "ruleId": 30001,
+   "code": "RULE-30001",
+   "title": "<select> Navigates or Submits on Change",
+   "severity": "MEDIUM",
+   "source": "lib/rules/ux-gemini-rules.ts",
+   "preciseLocation": true,
+   "tested": true,
+   "inCatalog": false
+  },
+  {
+   "ruleId": 30002,
+   "code": "RULE-30002",
+   "title": "Analytics / Chat Script Loaded With strategy=",
+   "severity": "MEDIUM",
+   "source": "lib/rules/ux-gemini-rules.ts",
+   "preciseLocation": true,
+   "tested": true,
+   "inCatalog": false
+  },
+  {
+   "ruleId": 30003,
+   "code": "RULE-30003",
+   "title": "Every Icon in ${m[2]} Bundled (Dynamic ${m[1]}[name] Lookup)",
+   "severity": "HIGH",
+   "source": "lib/rules/ux-gemini-rules.ts",
+   "preciseLocation": true,
+   "tested": true,
+   "inCatalog": false
+  },
+  {
+   "ruleId": 30004,
+   "code": "RULE-30004",
+   "title": "Whole lodash Imported in Client Code",
+   "severity": "MEDIUM",
+   "source": "lib/rules/ux-gemini-rules.ts",
+   "preciseLocation": true,
+   "tested": true,
+   "inCatalog": false
+  },
+  {
+   "ruleId": 30005,
+   "code": "RULE-30005",
+   "title": "priority on Every Image Rendered by .map()",
+   "severity": "MEDIUM",
+   "source": "lib/rules/ux-gemini-rules.ts",
+   "preciseLocation": true,
+   "tested": true,
+   "inCatalog": false
+  },
+  {
+   "ruleId": 30006,
+   "code": "RULE-30006",
+   "title": "Auto-Advancing Carousel Without a Pause Control",
+   "severity": "MEDIUM",
+   "source": "lib/rules/ux-gemini-rules.ts",
+   "preciseLocation": true,
+   "tested": true,
+   "inCatalog": false
+  },
+  {
+   "ruleId": 30007,
+   "code": "RULE-30007",
+   "title": "<${n[1]}> Nested Inside <${tag}>",
+   "severity": "MEDIUM",
+   "source": "lib/rules/ux-gemini-rules.ts",
+   "preciseLocation": true,
+   "tested": true,
+   "inCatalog": false
+  },
+  {
+   "ruleId": 30009,
+   "code": "RULE-30009",
+   "title": "Content Revealed Only on Mouse Hover",
+   "severity": "MEDIUM",
+   "source": "lib/rules/ux-gemini-rules.ts",
+   "preciseLocation": true,
+   "tested": true,
+   "inCatalog": false
+  },
+  {
+   "ruleId": 30010,
+   "code": "RULE-30010",
+   "title": "new Intl.${f[1]}() Created for Every Item",
+   "severity": "MEDIUM",
+   "source": "lib/rules/ux-gemini-rules.ts",
+   "preciseLocation": true,
+   "tested": true,
+   "inCatalog": false
+  },
+  {
+   "ruleId": 30011,
+   "code": "RULE-30011",
+   "title": "Error Stack Trace Rendered in the UI",
+   "severity": "MEDIUM",
+   "source": "lib/rules/ux-gemini-rules.ts",
    "preciseLocation": true,
    "tested": true,
    "inCatalog": false
