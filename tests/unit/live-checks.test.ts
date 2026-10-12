@@ -4,7 +4,7 @@ import { buildLiveFindings, findInsecureCookies, parseEnvBody, probeLiveSite, ty
 import { runStaticCodeScan } from '@/lib/scanner-engine';
 
 /** Evidence fixture for the rule audit: each LIVE rule fires on a broken site and stays silent on a healthy one. */
-export const LIVE_CASE = { ruleIds: [27001, 27002, 27003, 27004, 27005, 27006, 27007], name: 'Live deployment probes' };
+export const LIVE_CASE = { ruleIds: [27001, 27002, 27003, 27004, 27005, 27006, 27007, 27008, 27009, 27010, 27011, 27012], name: 'Live deployment probes' };
 
 // Public IP literal: passes the SSRF guard without a DNS lookup.
 const HOST = '93.184.215.14';
@@ -130,4 +130,43 @@ test('scan engine turns liveProbe data in security-headers.json into findings', 
   };
   const result = await runStaticCodeScan([{ path: 'live-deployment/security-headers.json', content: JSON.stringify(headers) }], 'live');
   assert.ok(result.findings.some((f) => f.ruleId === 27001));
+});
+
+test('LIVE-08..12: deploy artifacts and admin consoles are confirmed from the body, values never stored', async () => {
+  const t = (body: string, type = 'text/plain'): Route => ({ status: 200, body, headers: { 'content-type': type } });
+  const probe = await probeLiveSite(`https://${HOST}/`, [], {
+    fetchImpl: fakeSite({
+      ...redirectHttp,
+      [`https://${HOST}/backup.sql`]: t('-- PostgreSQL database dump\nCREATE TABLE users (email text);\nINSERT INTO users VALUES (\'a@b.co\');\n'),
+      [`https://${HOST}/terraform.tfstate`]: t('{"version":4,"terraform_version":"1.9.0","resources":[{"type":"aws_db_instance","password":"tf-secret-pw"}]}', 'application/json'),
+      [`https://${HOST}/.npmrc`]: t('//registry.npmjs.org/:_authToken=npm_SECRETVALUE123\n'),
+      [`https://${HOST}/phpinfo.php`]: t('<html><title>PHP 8.3.1 - phpinfo()</title><h1>PHP Version 8.3.1</h1></html>', 'text/html'),
+      [`https://${HOST}/_cluster/health`]: t('{"cluster_name":"prod","status":"green","number_of_nodes":3}', 'application/json'),
+      [`https://${HOST}/Dockerfile`]: t('FROM node:22-alpine\nCOPY . .\nRUN npm ci\n'),
+    }),
+    tlsInspect: goodTls
+  });
+  const findings = buildLiveFindings(probe, NOW);
+  const byId = (id: number) => findings.find((f) => f.ruleId === id);
+  assert.equal(byId(27008)?.severity, 'CRITICAL');
+  assert.match(byId(27009)!.title, /terraform\.tfstate, \/\.npmrc|\.npmrc, \/terraform\.tfstate/);
+  assert.equal(byId(27010)?.severity, 'HIGH');
+  assert.match(byId(27011)!.snippet, /Elasticsearch/);
+  assert.equal(byId(27012)?.severity, 'MEDIUM');
+  assert.doesNotMatch(JSON.stringify(findings), /tf-secret-pw|npm_SECRETVALUE123|a@b\.co/);
+});
+
+test('LIVE-08..12: SPA pages, HTML 404s and look-alike text do not count as artifacts', async () => {
+  const probe = await probeLiveSite(`https://${HOST}/`, [], {
+    fetchImpl: fakeSite({
+      ...redirectHttp,
+      [`https://${HOST}/dump.sql`]: { status: 200, body: 'Page not found', headers: { 'content-type': 'text/plain' } },
+      [`https://${HOST}/terraform.tfstate`]: { status: 200, body: '{"error":"not found"}', headers: { 'content-type': 'application/json' } },
+      [`https://${HOST}/Dockerfile`]: { status: 200, body: '<!doctype html><p>FROM our team</p><p>RUN fast</p>', headers: { 'content-type': 'text/html' } },
+      [`https://${HOST}/adminer.php`]: { status: 404, body: '<title>Adminer</title>', headers: { 'content-type': 'text/html' } },
+    }),
+    tlsInspect: goodTls
+  });
+  assert.deepEqual(probe.exposedFiles, []);
+  assert.deepEqual(buildLiveFindings(probe, NOW), []);
 });

@@ -37,3 +37,18 @@ test('the summary becomes CRITICAL / MEDIUM findings', () => {
   const { findings } = evaluateLiveBundleRules({ path: 'live-deployment/bundle-analysis.json', content: JSON.stringify(summary) }, [], '', { count: 0 });
   assert.deepEqual(findings.map((f) => [f.ruleId, f.severity]), [[29805, 'CRITICAL'], [29807, 'MEDIUM']]);
 });
+
+test('credentials without a vendor prefix are found in bundles; placeholders are not', () => {
+  const text = [
+    'var e={url:"rediss://default:AbC123secretPw@eu1-keen-fox-30000.upstash.io:6379"};',
+    'var u={hash:"$2b$10$abcdefghijklmnopqrstuuVwXyZ0123456789abcdefghijklmnopq"};',
+    'var g={client_secret:"GOCSPX-AbCdEfGhIjKlMnOpQrStUvWxYz12"};',
+    'var s={NEXTAUTH_SECRET:"k8sJ2x9QmP4vL7nR3tY6wZ1bC5dF0gH8"};',
+    'fetch("/api/admin",{headers:{"x-admin-secret":"Sup3rAdm1nK3y2024xyz"}});',
+    'var doc="postgres://user:password@localhost:5432/db", tpl="DATABASE_URL=\\"postgresql://your_user:your_password@host/db\\"";',
+  ].join('\n');
+  const kinds = analyzeBundles([{ url: 'https://app.example.com/assets/index.js', text }]).secrets.map((s) => s.kind).sort();
+  assert.deepEqual(kinds, ['Database / cache connection string with password', 'Google OAuth client secret', 'Internal admin header secret', 'Password hash', 'Server-only secret']);
+  const all = JSON.stringify(analyzeBundles([{ url: 'https://app.example.com/assets/index.js', text }]));
+  assert.doesNotMatch(all, /AbC123secretPw|k8sJ2x9QmP4vL7nR3tY6wZ1b|Sup3rAdm1nK3y2024/);
+});
