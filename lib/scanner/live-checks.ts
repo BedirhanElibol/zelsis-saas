@@ -1,5 +1,6 @@
 import type { Finding } from '@/data/schema';
 import { validateSafeTargetUrl } from '@/lib/ssrf-guard';
+import { isChallengeResponse } from '@/lib/scanner/request-limiter';
 
 /**
  * Live deployment probes: files that should never be served (.env, .git), TLS certificate health,
@@ -36,6 +37,8 @@ export interface LiveProbeResult {
   insecureCookies: InsecureCookie[];
   /** Whether the LIVE-08..12 artifact paths were checked (domain ownership verified). */
   deepProbes?: boolean;
+  /** Exposure paths that got an HTTP answer vs. how many were planned (fewer when the host started challenging). */
+  probeCoverage?: { answered: number; total: number };
 }
 
 export interface LiveProbeOptions {
@@ -44,6 +47,11 @@ export interface LiveProbeOptions {
   timeoutMs?: number;
   /** Deploy-artifact and admin-console paths (LIVE-08..12): only for domains the user proved they own. */
   deepProbes?: boolean;
+  /**
+   * Pause between exposure-path requests, sent one at a time. A quick run of 404s on /.env, /.git/config, /dump.sql…
+   * is a vulnerability-scanner signature: Vercel challenged the scanner IP after 13 of them in 1.3 s (2026-10-12).
+   */
+  probeIntervalMs?: number;
 }
 
 const ENV_PATHS = ['/.env', '/.env.local', '/.env.production', '/.env.development'];
@@ -188,16 +196,38 @@ export async function inspectTls(host: string, ip: string | undefined, timeoutMs
 export async function probeLiveSite(
   targetUrl: string,
   setCookies: string[],
-  { fetchImpl = globalThis.fetch, tlsInspect = inspectTls, timeoutMs = 5000, deepProbes = false }: LiveProbeOptions = {}
+  { fetchImpl = globalThis.fetch, tlsInspect = inspectTls, timeoutMs = 5000, deepProbes = false, probeIntervalMs = 0 }: LiveProbeOptions = {}
 ): Promise<LiveProbeResult> {
   const target = new URL(targetUrl);
   const host = target.hostname;
   const check = await validateSafeTargetUrl(targetUrl);
   const ip = check.safe ? check.resolvedIp : undefined;
 
-  const [exposed, artifacts, tlsInfo, plain] = await Promise.all([
-    Promise.all([...ENV_PATHS, ...GIT_PATHS].map((p) => probePath(target.origin, p, fetchImpl, timeoutMs))),
-    Promise.all((deepProbes ? ARTIFACT_PROBES : []).map((p) => probeArtifact(target.origin, p, fetchImpl, timeoutMs))),
+  // Exposure paths go one at a time with a pause (see probeIntervalMs). answered counts real answers (a challenge page
+  // is not a check); after a challenge the remaining paths are not requested at all.
+  let answered = 0;
+  let challenged = false;
+  const counting = (async (input: RequestInfo | URL, init?: RequestInit) => {
+    const r = await fetchImpl(input, init);
+    if (isChallengeResponse(r)) challenged = true; else answered++;
+    return r;
+  }) as typeof fetch;
+  const pathProbes: (() => Promise<ExposedFile | null>)[] = [
+    ...[...ENV_PATHS, ...GIT_PATHS].map((p) => () => probePath(target.origin, p, counting, timeoutMs)),
+    ...(deepProbes ? ARTIFACT_PROBES : []).map((p) => () => probeArtifact(target.origin, p, counting, timeoutMs)),
+  ];
+  const runPathProbes = async (): Promise<(ExposedFile | null)[]> => {
+    if (!probeIntervalMs) return Promise.all(pathProbes.map((run) => run()));
+    const out: (ExposedFile | null)[] = [];
+    for (let i = 0; i < pathProbes.length && !challenged; i++) {
+      if (i) await new Promise((r) => setTimeout(r, probeIntervalMs));
+      out.push(await pathProbes[i]());
+    }
+    return out;
+  };
+
+  const [probed, tlsInfo, plain] = await Promise.all([
+    runPathProbes(),
     // TLS handshakes to distant hosts can take several seconds; give them twice the HTTP budget
     check.safe ? tlsInspect(host, ip, timeoutMs * 2).catch(() => undefined) : Promise.resolve(undefined),
     fetchNoRedirect(`http://${host}/`, fetchImpl, timeoutMs)
@@ -215,7 +245,8 @@ export async function probeLiveSite(
 
   return {
     host,
-    exposedFiles: [...exposed, ...artifacts].filter((e): e is ExposedFile => e !== null),
+    exposedFiles: probed.filter((e): e is ExposedFile => e !== null),
+    probeCoverage: { answered, total: pathProbes.length },
     ...(tlsInfo === undefined ? {} : { tls: tlsInfo }),
     plainHttp,
     insecureCookies: findInsecureCookies(setCookies, target.protocol === 'https:'),
@@ -307,6 +338,29 @@ export function buildLiveFindings(probe: LiveProbeResult, now: Date = new Date()
       snippet: files.map((f) => `${f.path}: ${f.evidence}`).join('\n'),
       reproductionSteps: [...files.map((f) => `GET ${target}${f.path} returned HTTP 200 (${f.evidence}).`), d.why],
       remediationPrompt: `${d.fix} (${files.map((f) => f.path).join(', ')} on ${probe.host})`,
+      status: 'OPEN',
+      falsePositive: false
+    });
+  }
+
+  // LIVE-13: the host started challenging before every exposure path was checked; say so instead of implying a clean bill
+  const cov = probe.probeCoverage;
+  if (cov && cov.answered < cov.total) {
+    findings.push({
+      id: `live-coverage-${probe.host}`,
+      ruleId: 27013,
+      type: 'VIBEPOLISH',
+      title: `LIVE-13: Live exposure checks incomplete (${cov.answered}/${cov.total} paths checked)`,
+      severity: 'LOW',
+      category: 'Scan Coverage',
+      filePath: `${target}/`,
+      lineRange: 'HTTP',
+      snippet: `${cov.total - cov.answered} exposure paths were not checked: ${probe.host} answered with a bot-protection challenge.`,
+      reproductionSteps: [
+        `${cov.answered} of ${cov.total} exposure paths (.env, .git${probe.deepProbes ? ', dumps, credentials, debug pages, admin consoles' : ''}) got an answer before the host started challenging the scanner.`,
+        'Vercel and Cloudflare challenge an IP that requests many sensitive paths in a row; the challenge usually clears after a few minutes.'
+      ],
+      remediationPrompt: `Re-run the scan in a few minutes to check the remaining paths. If it keeps happening, allow the Zelsis scanner (User-Agent "Zelsis-Release-Gate-Scanner") in the ${probe.host} firewall.`,
       status: 'OPEN',
       falsePositive: false
     });

@@ -4,7 +4,7 @@ import { buildLiveFindings, findInsecureCookies, parseEnvBody, probeLiveSite, ty
 import { runStaticCodeScan } from '@/lib/scanner-engine';
 
 /** Evidence fixture for the rule audit: each LIVE rule fires on a broken site and stays silent on a healthy one. */
-export const LIVE_CASE = { ruleIds: [27001, 27002, 27003, 27004, 27005, 27006, 27007, 27008, 27009, 27010, 27011, 27012], name: 'Live deployment probes' };
+export const LIVE_CASE = { ruleIds: [27001, 27002, 27003, 27004, 27005, 27006, 27007, 27008, 27009, 27010, 27011, 27012, 27013], name: 'Live deployment probes' };
 
 // Public IP literal: passes the SSRF guard without a DNS lookup.
 const HOST = '93.184.215.14';
@@ -182,4 +182,32 @@ test('LIVE-08..12 paths are not requested unless the domain is verified (deepPro
   assert.equal(probe.deepProbes, false);
   assert.ok(!calls.some((u) => /backup\.sql|terraform|adminer|phpinfo/.test(u)), 'no deep paths requested');
   assert.equal(buildLiveFindings(probe, NOW).some((f) => f.ruleId === 27008), false);
+});
+
+test('paced probes go one at a time and stop at the first challenge; LIVE-13 reports the gap', async () => {
+  const calls: string[] = [];
+  let inFlight = 0; let peak = 0;
+  const base = fakeSite({ ...redirectHttp }, calls);
+  const fetchImpl = (async (url: string | URL, init?: RequestInit) => {
+    const u = String(url);
+    inFlight++; peak = Math.max(peak, inFlight);
+    try {
+      if (u.endsWith('/dump.sql')) return new Response('<title>Vercel Security Checkpoint</title>', { status: 403, headers: { 'x-vercel-mitigated': 'challenge', 'content-type': 'text/html' } });
+      return await base(url, init);
+    } finally { inFlight--; }
+  }) as typeof fetch;
+  const probe = await probeLiveSite(`https://${HOST}/`, [], { fetchImpl, tlsInspect: goodTls, deepProbes: true, probeIntervalMs: 5 });
+  const pathCalls = calls.filter((u) => !u.startsWith('http://'));
+  assert.equal(pathCalls.length, 6, '.env x4 and .git x2 answered, nothing after /dump.sql');
+  assert.ok(peak <= 2, `path probes were sequential (peak ${peak}, the plain-http check runs alongside)`);
+  assert.deepEqual(probe.probeCoverage, { answered: 6, total: 26 });
+  const gap = buildLiveFindings(probe, NOW).find((f) => f.ruleId === 27013);
+  assert.equal(gap?.type, 'VIBEPOLISH');
+  assert.match(gap!.title, /6\/26 paths checked/);
+});
+
+test('LIVE-13 stays silent when every exposure path was answered', async () => {
+  const probe = await probeLiveSite(`https://${HOST}/`, [], { fetchImpl: fakeSite(redirectHttp), tlsInspect: goodTls, deepProbes: true, probeIntervalMs: 1 });
+  assert.deepEqual(probe.probeCoverage, { answered: 26, total: 26 });
+  assert.equal(buildLiveFindings(probe, NOW).some((f) => f.ruleId === 27013), false);
 });

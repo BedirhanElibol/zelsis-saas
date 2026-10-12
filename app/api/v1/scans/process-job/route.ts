@@ -4,7 +4,7 @@ import { logger } from '@/lib/logger';
 import { isValidInternalSecret } from '@/lib/internal-auth';
 import { executeScanJob, ScanJobError } from '@/lib/scan-processor';
 
-export const maxDuration = 30;
+export const maxDuration = 90; // live scans pace exposure probes (~40 s) to avoid scanner-pattern blocking
 export const revalidate = 3600;
 
 export async function POST(req: NextRequest) {

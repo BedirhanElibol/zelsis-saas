@@ -344,7 +344,7 @@ export async function fetchWebsiteAuditData(siteUrl: string, signal?: AbortSigna
   // Challenged while reading pages / bundles: the content is incomplete and the scan must fail rather than look clean
   const contentChallenged = limiter.challenged;
   const liveProbe = typeof window === 'undefined' && !contentChallenged
-    ? await probeLiveSite(formattedUrl, setCookies, { deepProbes: options.deepProbes === true, fetchImpl: limiter.fetch }).catch((err) => {
+    ? await probeLiveSite(formattedUrl, setCookies, { deepProbes: options.deepProbes === true, fetchImpl: limiter.fetch, probeIntervalMs: 1500 }).catch((err) => {
         console.warn(`Live probes failed for ${formattedUrl}:`, err?.message || err);
         return undefined;
       })

@@ -11,8 +11,8 @@ import { executeScanJob } from '@/lib/scan-processor';
 import { z } from 'zod';
 
 export const dynamic = 'force-dynamic';
-// Covers the after() worker hand-off, which waits for process-job (maxDuration 30)
-export const maxDuration = 60;
+// Covers the in-process scan run by after() (live scans pace exposure probes, ~40 s) and the process-job fallback (maxDuration 90)
+export const maxDuration = 120;
 
 const QueueScanRequestSchema = z.object({
   repoUrl: z.string().min(1, 'Target repository or web URL is required'),
