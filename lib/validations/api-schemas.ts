@@ -244,7 +244,8 @@ export const OrgNameSchema = z.object({
 export const OrgInviteSchema = z.object({
   accessToken: AccessTokenSchema,
   role: z.enum(['admin', 'member']).default('member'),
-  email: z.string().trim().email('Invalid email address').optional().or(z.literal('')),
+  // Invites are bound to this address: only a user signed in with it can accept
+  email: z.string().trim().toLowerCase().email("Enter your teammate's email address"),
 });
 
 export const OrgAcceptInviteSchema = z.object({

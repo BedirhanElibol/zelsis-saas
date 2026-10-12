@@ -7,6 +7,25 @@ export type OrgRole = 'owner' | 'admin' | 'member';
 export { ENTERPRISE_SEAT_LIMIT } from '@/data/pricing-plans';
 export const INVITE_TTL_DAYS = 7;
 
+/** "j***@company.com": enough for the invitee to recognise the address, without disclosing it to a link holder. */
+export function maskEmail(email: string): string {
+  const at = email.lastIndexOf('@');
+  if (at < 1) return '***';
+  return `${email.slice(0, 1)}***@${email.slice(at + 1)}`;
+}
+
+/**
+ * Why this signed-in user may not accept an invite bound to inviteEmail, or null when they may.
+ * A forwarded or leaked invite link must not let anyone else join the workspace.
+ */
+export function inviteAcceptError(user: { email?: string | null; email_confirmed_at?: string | null }, inviteEmail: string): string | null {
+  if (!user.email_confirmed_at) return 'Confirm your email address first, then open the invite link again.';
+  if ((user.email || '').trim().toLowerCase() !== inviteEmail.trim().toLowerCase()) {
+    return `This invite was sent to ${maskEmail(inviteEmail)}. Sign in with that address to accept it.`;
+  }
+  return null;
+}
+
 export interface OrgMembership {
   orgId: string;
   role: OrgRole;
