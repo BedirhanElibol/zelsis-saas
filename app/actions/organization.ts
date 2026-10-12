@@ -20,6 +20,7 @@ import {
   getEffectivePlanTier,
   getOrgMembership,
   getOwnPlanTier,
+  inviteAcceptError,
   type OrgMembership,
   type OrgRole,
 } from '@/lib/organization';
@@ -126,7 +127,7 @@ export async function createOrganization(_prev: OrgActionState, formData: FormDa
 
 export async function createInvite(_prev: OrgActionState, formData: FormData): Promise<OrgActionState> {
   const input = parseForm(OrgInviteSchema, formData);
-  if (!input) return fail('Invalid invite request.');
+  if (!input) return fail("Enter your teammate's email address.");
   const ctx = await authenticate(input.accessToken);
   if (!ctx) return fail('Please sign in again.');
   const membership = await requireManager(ctx);
@@ -146,6 +147,7 @@ export async function createInvite(_prev: OrgActionState, formData: FormData): P
     org_id: membership.orgId,
     token_hash: hashToken(token),
     role: input.role,
+    email: input.email,
     created_by: ctx.user.id,
     expires_at: expiresAt,
   });
@@ -154,34 +156,28 @@ export async function createInvite(_prev: OrgActionState, formData: FormData): P
     return fail('Could not create the invite. Please try again.');
   }
   const inviteUrl = `${getConfiguredAppUrl()}/invite/${token}`;
-  let emailDispatched = false;
-
-  if (input.email) {
-    const { data: orgData } = await ctx.admin
-      .from('organizations')
-      .select('name')
-      .eq('id', membership.orgId)
-      .maybeSingle();
-
-    const orgName = orgData?.name || 'Workspace';
-    const emailResult = await sendWorkspaceInviteEmail({
-      toEmail: input.email,
-      orgName,
-      role: input.role,
-      inviteUrl,
-    });
-    emailDispatched = emailResult.success;
-  }
+  const { data: orgData } = await ctx.admin
+    .from('organizations')
+    .select('name')
+    .eq('id', membership.orgId)
+    .maybeSingle();
+  const emailResult = await sendWorkspaceInviteEmail({
+    toEmail: input.email,
+    orgName: orgData?.name || 'Workspace',
+    role: input.role,
+    inviteUrl,
+  });
+  const emailDispatched = emailResult.success;
 
   await audit(ctx.admin, ctx.user.id, 'org.invite_created', membership.orgId, {
     role: input.role,
-    email: input.email || null,
+    email: input.email,
     emailDispatched,
   });
 
   const successMessage = emailDispatched
-    ? `Invite link created and email sent to ${input.email}. It expires in ${INVITE_TTL_DAYS} days.`
-    : `Invite link created. It works once and expires in ${INVITE_TTL_DAYS} days.`;
+    ? `Invite sent to ${input.email}. Only that address can accept it; it expires in ${INVITE_TTL_DAYS} days.`
+    : `Invite created for ${input.email}, but the email could not be sent: share the link with them. Only that address can accept it; it expires in ${INVITE_TTL_DAYS} days.`;
 
   return ok(successMessage, {
     inviteUrl,
@@ -215,11 +211,14 @@ export async function acceptInvite(_prev: OrgActionState, formData: FormData): P
 
   const { data: invite } = await ctx.admin
     .from('organization_invites')
-    .select('id, org_id, role, expires_at, used_at')
+    .select('id, org_id, role, email, expires_at, used_at')
     .eq('token_hash', hashToken(input.token))
     .maybeSingle();
   if (!invite || invite.used_at) return fail('This invite link was already used or revoked.');
   if (new Date(invite.expires_at).getTime() < Date.now()) return fail('This invite link has expired. Ask for a new one.');
+  // The invite belongs to one address: a forwarded or leaked link does not let anyone else join
+  const emailError = inviteAcceptError(ctx.user, invite.email);
+  if (emailError) return fail(emailError);
   if (await getOrgMembership(ctx.admin, ctx.user.id)) return fail('You already belong to a workspace. Leave it first.');
 
   const { count: members } = await ctx.admin
@@ -389,12 +388,12 @@ export async function getMyWorkspace(accessToken: string): Promise<WorkspaceSnap
     canManageOrg(membership.role)
       ? ctx.admin
           .from('organization_invites')
-          .select('id, role, expires_at, created_at')
+          .select('id, role, email, expires_at, created_at')
           .eq('org_id', membership.orgId)
           .is('used_at', null)
           .gt('expires_at', new Date().toISOString())
           .order('created_at', { ascending: false })
-      : Promise.resolve({ data: [] as { id: string; role: string; expires_at: string; created_at: string }[] }),
+      : Promise.resolve({ data: [] as { id: string; role: string; email: string; expires_at: string; created_at: string }[] }),
   ]);
   if (!org) return { ...empty, ownTier, effectiveTier };
 
@@ -423,6 +422,6 @@ export async function getMyWorkspace(accessToken: string): Promise<WorkspaceSnap
         joinedAt: row.joined_at as string,
       };
     }),
-    invites: (inviteRows ?? []).map((row) => ({ id: row.id, role: row.role as 'admin' | 'member', expiresAt: row.expires_at })),
+    invites: (inviteRows ?? []).map((row) => ({ id: row.id, role: row.role as 'admin' | 'member', email: row.email, expiresAt: row.expires_at })),
   };
 }

@@ -295,8 +295,9 @@ export const TeamWorkspaceCard: React.FC<TeamWorkspaceCardProps> = ({ user, onOp
                     <input
                       type="email"
                       name="email"
-                      placeholder="teammate@company.com (optional)"
-                      aria-label="Teammate email for direct invitation"
+                      required
+                      placeholder="teammate@company.com"
+                      aria-label="Teammate email (only this address can accept the invite)"
                       className="bg-[#0A0A0A] border border-white/10 rounded-xl px-3.5 py-2.5 text-xs text-white placeholder:text-zinc-500 focus:border-white/30 focus-visible:ring-2 focus-visible:ring-emerald-500 focus-visible:outline-none flex-1 min-w-[200px]"
                     />
                     <button
@@ -305,7 +306,7 @@ export const TeamWorkspaceCard: React.FC<TeamWorkspaceCardProps> = ({ user, onOp
                       className="btn btn-primary min-h-[44px] px-4 rounded-xl text-xs font-bold flex items-center justify-center gap-2"
                     >
                       {pending ? <Loader2 size={14} className="animate-spin" /> : <Link2 size={14} />}
-                      Create invite link
+                      Send invite
                     </button>
                   </>
                 )}
@@ -328,7 +329,7 @@ export const TeamWorkspaceCard: React.FC<TeamWorkspaceCardProps> = ({ user, onOp
                   {snapshot.invites.map((inv) => (
                     <li key={inv.id} className="flex items-center justify-between text-[11px] font-mono text-zinc-400">
                       <span>
-                        Pending {inv.role} invite · expires {new Date(inv.expiresAt).toLocaleDateString()}
+                        Pending {inv.role} invite for {inv.email} · expires {new Date(inv.expiresAt).toLocaleDateString()}
                       </span>
                       <ActionForm action={revokeInvite} accessToken={accessToken} onDone={handleDone}>
                         {(pending) => (
