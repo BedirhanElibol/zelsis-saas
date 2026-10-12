@@ -1,8 +1,8 @@
 {
  "summary": {
-  "implementedRules": 1111,
-  "testedRules": 1100,
-  "preciseLocationRules": 1108,
+  "implementedRules": 1117,
+  "testedRules": 1106,
+  "preciseLocationRules": 1114,
   "catalogEntries": 1922,
   "catalogOnlyNotImplemented": 1401,
   "catalogPlaceholderMetadata": 1810
@@ -12517,6 +12517,66 @@
    "title": "FileList Appended to FormData as a Single Value",
    "severity": "HIGH",
    "source": "lib/rules/logic-gemini-rules.ts",
+   "preciseLocation": true,
+   "tested": true,
+   "inCatalog": false
+  },
+  {
+   "ruleId": 29861,
+   "code": "RULE-29861",
+   "title": "${fn.name}() Only Changes Local State",
+   "severity": "HIGH",
+   "source": "lib/rules/logic-fake-rules.ts",
+   "preciseLocation": true,
+   "tested": true,
+   "inCatalog": false
+  },
+  {
+   "ruleId": 29862,
+   "code": "RULE-29862",
+   "title": "Discount Code ",
+   "severity": "HIGH",
+   "source": "lib/rules/logic-fake-rules.ts",
+   "preciseLocation": true,
+   "tested": true,
+   "inCatalog": false
+  },
+  {
+   "ruleId": 29863,
+   "code": "RULE-29863",
+   "title": "${fn.name}() Accepts the Code Without Checking It on a Server",
+   "severity": "CRITICAL",
+   "source": "lib/rules/logic-fake-rules.ts",
+   "preciseLocation": true,
+   "tested": true,
+   "inCatalog": false
+  },
+  {
+   "ruleId": 29864,
+   "code": "RULE-29864",
+   "title": "",
+   "severity": "MEDIUM",
+   "source": "lib/rules/logic-fake-rules.ts",
+   "preciseLocation": true,
+   "tested": true,
+   "inCatalog": false
+  },
+  {
+   "ruleId": 29865,
+   "code": "RULE-29865",
+   "title": "${fn.name}() Creates Recovery Codes Only in the Browser",
+   "severity": "HIGH",
+   "source": "lib/rules/logic-fake-rules.ts",
+   "preciseLocation": true,
+   "tested": true,
+   "inCatalog": false
+  },
+  {
+   "ruleId": 29866,
+   "code": "RULE-29866",
+   "title": "Text Saved With a PDF Content Type",
+   "severity": "HIGH",
+   "source": "lib/rules/logic-fake-rules.ts",
    "preciseLocation": true,
    "tested": true,
    "inCatalog": false
