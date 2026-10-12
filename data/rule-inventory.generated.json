@@ -1,8 +1,8 @@
 {
  "summary": {
-  "implementedRules": 1187,
-  "testedRules": 1176,
-  "preciseLocationRules": 1184,
+  "implementedRules": 1216,
+  "testedRules": 1205,
+  "preciseLocationRules": 1213,
   "catalogEntries": 1922,
   "catalogOnlyNotImplemented": 1401,
   "catalogPlaceholderMetadata": 1810
@@ -13277,6 +13277,296 @@
    "title": "LangServe add_routes() Without Authentication",
    "severity": "HIGH",
    "source": "lib/rules/security-gemini-rules.ts",
+   "preciseLocation": true,
+   "tested": true,
+   "inCatalog": false
+  },
+  {
+   "ruleId": 29943,
+   "code": "RULE-29943",
+   "title": "ingress-nginx ${m[1]}-snippet Annotation",
+   "severity": "HIGH",
+   "source": "lib/rules/cicd-cloud-gemini-rules.ts",
+   "preciseLocation": true,
+   "tested": true,
+   "inCatalog": false
+  },
+  {
+   "ruleId": 29944,
+   "code": "RULE-29944",
+   "title": "pip --extra-index-url Allows Dependency Confusion",
+   "severity": "HIGH",
+   "source": "lib/rules/cicd-cloud-gemini-rules.ts",
+   "preciseLocation": true,
+   "tested": true,
+   "inCatalog": false
+  },
+  {
+   "ruleId": 29945,
+   "code": "RULE-29945",
+   "title": "Lockfile Integrity Checks Disabled",
+   "severity": "MEDIUM",
+   "source": "lib/rules/cicd-cloud-gemini-rules.ts",
+   "preciseLocation": true,
+   "tested": true,
+   "inCatalog": false
+  },
+  {
+   "ruleId": 29946,
+   "code": "RULE-29946",
+   "title": "Service Uses externalIPs",
+   "severity": "MEDIUM",
+   "source": "lib/rules/cicd-cloud-gemini-rules.ts",
+   "preciseLocation": true,
+   "tested": true,
+   "inCatalog": false
+  },
+  {
+   "ruleId": 29947,
+   "code": "RULE-29947",
+   "title": "Pull Request Jobs Run on a Self-Hosted Runner",
+   "severity": "HIGH",
+   "source": "lib/rules/cicd-cloud-gemini-rules.ts",
+   "preciseLocation": true,
+   "tested": true,
+   "inCatalog": false
+  },
+  {
+   "ruleId": 29948,
+   "code": "RULE-29948",
+   "title": "nginx Trusts Client IP Headers From ${m[1]}",
+   "severity": "HIGH",
+   "source": "lib/rules/cicd-cloud-gemini-rules.ts",
+   "preciseLocation": true,
+   "tested": true,
+   "inCatalog": false
+  },
+  {
+   "ruleId": 29949,
+   "code": "RULE-29949",
+   "title": "Redis protected-mode no Without a Password",
+   "severity": "HIGH",
+   "source": "lib/rules/cicd-cloud-gemini-rules.ts",
+   "preciseLocation": true,
+   "tested": true,
+   "inCatalog": false
+  },
+  {
+   "ruleId": 29950,
+   "code": "RULE-29950",
+   "title": "Dependency Installed From a Moving Git ${m[1] ? ",
+   "severity": "MEDIUM",
+   "source": "lib/rules/cicd-cloud-gemini-rules.ts",
+   "preciseLocation": true,
+   "tested": true,
+   "inCatalog": false
+  },
+  {
+   "ruleId": 29951,
+   "code": "RULE-29951",
+   "title": "Admission Webhook Fails Open (failurePolicy: Ignore)",
+   "severity": "MEDIUM",
+   "source": "lib/rules/cicd-cloud-gemini-rules.ts",
+   "preciseLocation": true,
+   "tested": true,
+   "inCatalog": false
+  },
+  {
+   "ruleId": 29952,
+   "code": "RULE-29952",
+   "title": "uv index-strategy Set to an Unsafe Mode",
+   "severity": "HIGH",
+   "source": "lib/rules/cicd-cloud-gemini-rules.ts",
+   "preciseLocation": true,
+   "tested": true,
+   "inCatalog": false
+  },
+  {
+   "ruleId": 29953,
+   "code": "RULE-29953",
+   "title": "Dispatch Input Interpolated Into a run: Script",
+   "severity": "MEDIUM",
+   "source": "lib/rules/cicd-cloud-gemini-rules.ts",
+   "preciseLocation": true,
+   "tested": true,
+   "inCatalog": false
+  },
+  {
+   "ruleId": 29954,
+   "code": "RULE-29954",
+   "title": "Secret Value Hard-Coded in Terraform",
+   "severity": "HIGH",
+   "source": "lib/rules/cicd-cloud-gemini-rules.ts",
+   "preciseLocation": true,
+   "tested": true,
+   "inCatalog": false
+  },
+  {
+   "ruleId": 29955,
+   "code": "RULE-29955",
+   "title": "TLS Verification Disabled in the Image (${m[1].split(/[= ]/)[0]})",
+   "severity": "HIGH",
+   "source": "lib/rules/cicd-cloud-gemini-rules.ts",
+   "preciseLocation": true,
+   "tested": true,
+   "inCatalog": false
+  },
+  {
+   "ruleId": 29956,
+   "code": "RULE-29956",
+   "title": "ADD Downloads a Remote File Without --checksum",
+   "severity": "MEDIUM",
+   "source": "lib/rules/cicd-cloud-gemini-rules.ts",
+   "preciseLocation": true,
+   "tested": true,
+   "inCatalog": false
+  },
+  {
+   "ruleId": 29958,
+   "code": "RULE-29958",
+   "title": "Override Replaces ${m[1]} With ${m[2].slice(0, 40)}",
+   "severity": "HIGH",
+   "source": "lib/rules/cicd-cloud-gemini-rules.ts",
+   "preciseLocation": true,
+   "tested": true,
+   "inCatalog": false
+  },
+  {
+   "ruleId": 29959,
+   "code": "RULE-29959",
+   "title": "Workflow Expands toJSON(secrets)",
+   "severity": "CRITICAL",
+   "source": "lib/rules/cicd-cloud-gemini-rules.ts",
+   "preciseLocation": true,
+   "tested": true,
+   "inCatalog": false
+  },
+  {
+   "ruleId": 29960,
+   "code": "RULE-29960",
+   "title": "Snapshot / Image Shared With All AWS Accounts",
+   "severity": "CRITICAL",
+   "source": "lib/rules/cicd-cloud-gemini-rules.ts",
+   "preciseLocation": true,
+   "tested": true,
+   "inCatalog": false
+  },
+  {
+   "ruleId": 29961,
+   "code": "RULE-29961",
+   "title": "Rewrite Destination Host Taken From the Request (Open Proxy)",
+   "severity": "HIGH",
+   "source": "lib/rules/cicd-cloud-gemini-rules.ts",
+   "preciseLocation": true,
+   "tested": true,
+   "inCatalog": false
+  },
+  {
+   "ruleId": 29962,
+   "code": "RULE-29962",
+   "title": "Untrusted Artifact Extracted Into the Workspace Root",
+   "severity": "HIGH",
+   "source": "lib/rules/cicd-cloud-gemini-rules.ts",
+   "preciseLocation": true,
+   "tested": true,
+   "inCatalog": false
+  },
+  {
+   "ruleId": 29963,
+   "code": "RULE-29963",
+   "title": "CloudFront Connects to the Origin Over HTTP",
+   "severity": "MEDIUM",
+   "source": "lib/rules/cicd-cloud-gemini-rules.ts",
+   "preciseLocation": true,
+   "tested": true,
+   "inCatalog": false
+  },
+  {
+   "ruleId": 29964,
+   "code": "RULE-29964",
+   "title": "Build Credentials Copied Into the Final Image (${m[1]})",
+   "severity": "HIGH",
+   "source": "lib/rules/cicd-cloud-gemini-rules.ts",
+   "preciseLocation": true,
+   "tested": true,
+   "inCatalog": false
+  },
+  {
+   "ruleId": 29965,
+   "code": "RULE-29965",
+   "title": "${DB[m[1]]} Exposed by a LoadBalancer / NodePort Service",
+   "severity": "HIGH",
+   "source": "lib/rules/cicd-cloud-gemini-rules.ts",
+   "preciseLocation": true,
+   "tested": true,
+   "inCatalog": false
+  },
+  {
+   "ruleId": 29966,
+   "code": "RULE-29966",
+   "title": "Submodule Fetched Over ${m[1]}://",
+   "severity": "MEDIUM",
+   "source": "lib/rules/cicd-cloud-gemini-rules.ts",
+   "preciseLocation": true,
+   "tested": true,
+   "inCatalog": false
+  },
+  {
+   "ruleId": 29967,
+   "code": "RULE-29967",
+   "title": "GitHub OIDC Trust Accepts Any Repository",
+   "severity": "CRITICAL",
+   "source": "lib/rules/cicd-cloud-gemini-rules.ts",
+   "preciseLocation": true,
+   "tested": true,
+   "inCatalog": false
+  },
+  {
+   "ruleId": 29968,
+   "code": "RULE-29968",
+   "title": "Final Image Runs With NODE_ENV=development",
+   "severity": "MEDIUM",
+   "source": "lib/rules/cicd-cloud-gemini-rules.ts",
+   "preciseLocation": true,
+   "tested": true,
+   "inCatalog": false
+  },
+  {
+   "ruleId": 29969,
+   "code": "RULE-29969",
+   "title": "${m[1]} Enabled in the Workflow",
+   "severity": "MEDIUM",
+   "source": "lib/rules/cicd-cloud-gemini-rules.ts",
+   "preciseLocation": true,
+   "tested": true,
+   "inCatalog": false
+  },
+  {
+   "ruleId": 29970,
+   "code": "RULE-29970",
+   "title": "Container Shares the Host IPC Namespace",
+   "severity": "MEDIUM",
+   "source": "lib/rules/cicd-cloud-gemini-rules.ts",
+   "preciseLocation": true,
+   "tested": true,
+   "inCatalog": false
+  },
+  {
+   "ruleId": 29972,
+   "code": "RULE-29972",
+   "title": "Package Registry Uses Plain HTTP",
+   "severity": "HIGH",
+   "source": "lib/rules/cicd-cloud-gemini-rules.ts",
+   "preciseLocation": true,
+   "tested": true,
+   "inCatalog": false
+  },
+  {
+   "ruleId": 29973,
+   "code": "RULE-29973",
+   "title": "${name} Port ${m[2]} Published on All Interfaces",
+   "severity": "MEDIUM",
+   "source": "lib/rules/cicd-cloud-gemini-rules.ts",
    "preciseLocation": true,
    "tested": true,
    "inCatalog": false
