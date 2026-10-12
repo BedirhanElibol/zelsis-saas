@@ -314,8 +314,8 @@ export async function sendFirstScanNudgeEmail(params: { toEmail: string; unsubsc
         Your first scan takes about a minute
       </h1>
       <p style="margin:0 0 12px 0;">
-        Paste a GitHub repository and Zelsis checks it for leaked keys, open Supabase RLS policies, broken auth,
-        vulnerable dependencies and risky cloud config, with the exact file and line for each finding.
+        Paste a GitHub repository and Zelsis checks it for leaked keys, broken auth, logic bugs,
+        vulnerable dependencies and risky CI/CD and cloud config, with the exact file and line for each finding.
       </p>
       <p style="margin:0 0 12px 0;">
         Public repositories are free and unlimited. On the free plan you can also scan up to three private repositories.
@@ -331,7 +331,7 @@ export async function sendFirstScanNudgeEmail(params: { toEmail: string; unsubsc
     `,
   });
 
-  const text = `Your first Zelsis scan takes about a minute.\n\nPaste a GitHub repository and Zelsis checks it for leaked keys, open Supabase RLS policies, broken auth, vulnerable dependencies and risky cloud config.\n\nScan a repository: ${scanUrl}\n\nUnsubscribe from product emails: ${unsubscribeUrl}`;
+  const text = `Your first Zelsis scan takes about a minute.\n\nPaste a GitHub repository and Zelsis checks it for leaked keys, broken auth, logic bugs, vulnerable dependencies and risky CI/CD and cloud config.\n\nScan a repository: ${scanUrl}\n\nUnsubscribe from product emails: ${unsubscribeUrl}`;
 
   return sendEmail({
     to: toEmail,

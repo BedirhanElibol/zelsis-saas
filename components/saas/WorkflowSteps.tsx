@@ -38,7 +38,7 @@ $ curl -X POST ${getConfiguredAppUrl()}/api/v1/gate-check \\
   [PASS] INFRA-02: Container runs as dedicated non-root user .. PASSED
 [SCORE] 94/100 PRODUCTION READINESS ACHIEVED`,
       features: [
-        'OWASP Top 10, SSRF, injection, leaked secrets and Supabase RLS checks',
+        'OWASP Top 10, injection, leaked secrets, logic bugs and CI/CD checks',
         'Known-vulnerable dependencies looked up in OSV.dev from your lockfiles',
         'WCAG 2.2 accessibility, Docker and Kubernetes misconfiguration checks'
       ]
