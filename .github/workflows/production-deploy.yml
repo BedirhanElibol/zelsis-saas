@@ -60,6 +60,11 @@ jobs:
             fi
             sleep 1
           done
+        env:
+          # e2e traffic all comes from 127.0.0.1; the flag is ignored when VERCEL is set
+          ZELSIS_E2E_NO_RATE_LIMIT: '1'
+          # Authenticated GitHub API calls so public-repo scans don't hit the shared runner IP's 60/hr limit
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Run Functional Principles Verification Suite
         run: |

@@ -112,6 +112,12 @@ export async function checkRateLimit(
   } = options;
 
   const clientIp = getClientIp(req);
+
+  // CI e2e runs every request from 127.0.0.1 against `npm start`; never honoured on Vercel
+  if (process.env.ZELSIS_E2E_NO_RATE_LIMIT === '1' && !process.env.VERCEL) {
+    return { allowed: true, limit: maxRequests, remaining: maxRequests, resetSeconds: windowSeconds, clientIp };
+  }
+
   const windowMs = windowSeconds * 1000;
   const now = Date.now();
   const storeKey = `rl:${prefix}:${clientIp}`;
