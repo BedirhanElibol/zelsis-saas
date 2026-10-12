@@ -1,8 +1,8 @@
 {
  "summary": {
-  "implementedRules": 1068,
-  "testedRules": 1057,
-  "preciseLocationRules": 1065,
+  "implementedRules": 1071,
+  "testedRules": 1060,
+  "preciseLocationRules": 1068,
   "catalogEntries": 1922,
   "catalogOnlyNotImplemented": 1401,
   "catalogPlaceholderMetadata": 1810
@@ -9705,6 +9705,36 @@
    "ruleId": 28829,
    "code": "RULE-28829",
    "title": "",
+   "severity": "HIGH",
+   "source": "lib/rules/missed-vulns-rules.ts",
+   "preciseLocation": true,
+   "tested": true,
+   "inCatalog": false
+  },
+  {
+   "ruleId": 28830,
+   "code": "RULE-28830",
+   "title": "Supabase Pooler Connection String With the Database Password Committed",
+   "severity": "CRITICAL",
+   "source": "lib/rules/missed-vulns-rules.ts",
+   "preciseLocation": true,
+   "tested": true,
+   "inCatalog": false
+  },
+  {
+   "ruleId": 28831,
+   "code": "RULE-28831",
+   "title": "Convex Production Deploy Key Committed",
+   "severity": "CRITICAL",
+   "source": "lib/rules/missed-vulns-rules.ts",
+   "preciseLocation": true,
+   "tested": true,
+   "inCatalog": false
+  },
+  {
+   "ruleId": 28832,
+   "code": "RULE-28832",
+   "title": "Next.js Server Actions Encryption Key Hard-Coded",
    "severity": "HIGH",
    "source": "lib/rules/missed-vulns-rules.ts",
    "preciseLocation": true,
