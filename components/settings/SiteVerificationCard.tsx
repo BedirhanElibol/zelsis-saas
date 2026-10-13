@@ -108,7 +108,7 @@ export function SiteVerificationCard() {
                     <p>Deep checks request paths such as <code className="text-zinc-200">/.env</code> and <code className="text-zinc-200">/dump.sql</code>, which bot protection often challenges, so the scan reports them as unchecked. Each probe carries this header; keep the value private.</p>
                     <CopyValue label="header name" value={PROBE_HEADER} />
                     <CopyValue label="header value" value={d.probeKey} />
-                    <p><span className="text-zinc-200">Vercel:</span> Firewall → Configure → New Rule: if Request Header <code className="text-zinc-200">{PROBE_HEADER}</code> equals the value, then Bypass.</p>
+                    <p><span className="text-zinc-200">Vercel:</span> Firewall → Configure → New Rule: if Request Header <code className="text-zinc-200">{PROBE_HEADER}</code> equals the value, then Bypass. This skips your own and managed rules, but not Vercel&apos;s automatic per-IP challenge, which runs first; if checks still show as unchecked, ask Vercel support for a system bypass.</p>
                     <p><span className="text-zinc-200">Cloudflare:</span> Security → WAF → Custom rules: if the header equals the value, then Skip (managed rules and bot protection).</p>
                   </div>
                 </details>
