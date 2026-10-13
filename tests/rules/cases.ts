@@ -31,6 +31,18 @@ const FAKE_AWS_KEY = 'AKIA' + '2E0A8F3B244C9986';
 const FAKE_GITHUB_PAT = 'ghp' + '_R4nd0mT0k3nV4lu3F0rT3st1ngPurp0s3sAb';
 
 export const RULE_CASES: RuleCase[] = [
+  {
+    ruleIds: [28833],
+    name: 'GAP-33 SQL dump in the public folder (path-only entry, content not downloaded)',
+    detects: f('public/backup.sql', ''),
+    ignores: f('db/backup.sql', '')
+  },
+  {
+    ruleIds: [28833],
+    name: 'GAP-33 real env file in a nested static folder, not the shared example',
+    detects: f('apps/web/static/.env.production', 'DATABASE_URL=postgres://x\n'),
+    ignores: f('apps/web/static/.env.example', 'DATABASE_URL=\n')
+  },
   // ─── Secrets ──────────────────────────────────────────────────────────
   {
     ruleIds: [1],

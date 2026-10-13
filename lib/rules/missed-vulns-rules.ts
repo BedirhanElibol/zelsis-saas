@@ -8,6 +8,7 @@
 import { Finding } from '@/data/schema';
 import { CodeFile } from '../scanner-engine';
 import type { RepoContext } from '../scanner/repo-context';
+import { PUBLIC_ARTIFACT } from '../scanner/scan-paths';
 
 export interface MissedVulnsRuleResult {
   findings: Finding[];
@@ -533,6 +534,16 @@ export function evaluateMissedVulnsRules(file: CodeFile, lines: string[], cleanC
           fix: 'Generate a new key and inject NEXT_SERVER_ACTIONS_ENCRYPTION_KEY at build time from a secret store (CI secret, Docker build secret), never as a literal.' });
       }
     });
+  }
+
+  // GAP-33: env file, dump, Terraform state, private key, backup or log inside a folder the host serves as-is
+  if (PUBLIC_ARTIFACT.test(path)) {
+    const name = path.split('/').pop() || path;
+    const critical = /^\.env|\.(?:sql|dump|sql\.gz|tfstate|tfstate\.backup|p12|pfx|pem)$|^id_/i.test(name);
+    add({ ruleId: 28833, code: 'GAP-33', severity: critical ? 'CRITICAL' : 'HIGH', category: 'Information Disclosure', lineIdx: 0,
+      title: `Sensitive File in a Public Web Folder (${name})`,
+      why: `Everything under public/ (or static/) is copied into the deployment and served as a plain file, so anyone can download ${path.replace(/^.*?(?:public|static)\//i, '/')} without signing in. On static hosts such as Vercel and Netlify this is the usual way such a file gets exposed.`,
+      fix: 'Delete the file from the public folder and from git history, then rotate every secret it held. Keep dumps, state files and keys outside the repository.' });
   }
 
   // GAP-19: Auth.js / NextAuth links an OAuth sign-in to an existing account by e-mail alone

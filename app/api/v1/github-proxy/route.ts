@@ -7,7 +7,7 @@ import { GithubProxyQuerySchema, validateQueryParams } from '@/lib/validations/a
 import { logger } from '@/lib/logger';
 import { createClient } from '@supabase/supabase-js';
 import { isDependencyFile } from '@/lib/scanner/dependencies';
-import { isScannableTreePath } from '@/lib/scanner/scan-paths';
+import { isScannableTreePath, withPublicArtifactPaths } from '@/lib/scanner/scan-paths';
 import { isPlatformAdminEmail } from '@/lib/subscription-utils';
 import { getEffectivePlanTier } from '@/lib/organization';
 import { priceLabel } from '@/data/pricing-plans';
@@ -653,7 +653,7 @@ export async function GET(req: NextRequest) {
       defaultBranch: activeBranch,
       stars: repoData.stargazers_count,
       language: repoData.language || 'TypeScript',
-      files: fetchedFiles,
+      files: withPublicArtifactPaths(treeData.tree || [], fetchedFiles),
       isPrivate: repoData.private || false
     };
 
