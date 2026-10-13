@@ -1,6 +1,7 @@
 import type { Finding } from '@/data/schema';
 import { validateSafeTargetUrl } from '@/lib/ssrf-guard';
 import { isChallengeResponse } from '@/lib/scanner/request-limiter';
+import { PROBE_HEADER } from '@/lib/site-verification-state';
 
 /**
  * Live deployment probes: files that should never be served (.env, .git), TLS certificate health,
@@ -50,8 +51,12 @@ export interface LiveProbeOptions {
   /**
    * Pause between exposure-path requests, sent one at a time. A quick run of 404s on /.env, /.git/config, /dump.sql…
    * is a vulnerability-scanner signature: Vercel challenged the scanner IP after 13 of them in 1.3 s (2026-10-12).
+   * Spacing them out does not stop it (1.5 s apart was challenged on the 7th path, 2026-10-13): the path pattern
+   * triggers it, so the pause stays short and probeKey is the real way through.
    */
   probeIntervalMs?: number;
+  /** Sent as the x-zelsis-probe header on exposure probes so a verified owner's firewall rule can let them through. */
+  probeKey?: string;
 }
 
 const ENV_PATHS = ['/.env', '/.env.local', '/.env.production', '/.env.development'];
@@ -196,7 +201,7 @@ export async function inspectTls(host: string, ip: string | undefined, timeoutMs
 export async function probeLiveSite(
   targetUrl: string,
   setCookies: string[],
-  { fetchImpl = globalThis.fetch, tlsInspect = inspectTls, timeoutMs = 5000, deepProbes = false, probeIntervalMs = 0 }: LiveProbeOptions = {}
+  { fetchImpl = globalThis.fetch, tlsInspect = inspectTls, timeoutMs = 5000, deepProbes = false, probeIntervalMs = 0, probeKey }: LiveProbeOptions = {}
 ): Promise<LiveProbeResult> {
   const target = new URL(targetUrl);
   const host = target.hostname;
@@ -208,7 +213,8 @@ export async function probeLiveSite(
   let answered = 0;
   let challenged = false;
   const counting = (async (input: RequestInfo | URL, init?: RequestInit) => {
-    const r = await fetchImpl(input, init);
+    const headers = probeKey ? { ...(init?.headers as Record<string, string> | undefined), [PROBE_HEADER]: probeKey } : init?.headers;
+    const r = await fetchImpl(input, { ...init, headers });
     if (isChallengeResponse(r)) challenged = true; else answered++;
     return r;
   }) as typeof fetch;

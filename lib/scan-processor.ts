@@ -12,7 +12,7 @@ import { redactScanResultFixes } from '@/lib/fix-gate';
 import { getSupabaseAdmin } from '@/lib/supabase-admin';
 import { FREE_PROJECT_LIMIT } from '@/lib/quota-manager';
 import { recordRescanAlert } from '@/lib/rescan-alerts';
-import { isSiteVerified } from '@/lib/site-verification';
+import { getVerifiedSite } from '@/lib/site-verification';
 import { botChallengeMessage } from '@/lib/bot-challenge';
 
 export interface ExecuteScanJobOptions {
@@ -171,8 +171,8 @@ export async function executeScanJob(options: ExecuteScanJobOptions): Promise<Sc
       }
 
       // Deep live probes (dump, credential and admin-console paths) only for domains the owner verified
-      const deepProbes = await isSiteVerified(adminClient, authenticatedUserId, rawRepoUrl);
-      const webData = await fetchWebsiteAuditData(rawRepoUrl, undefined, { deepProbes });
+      const verifiedSite = await getVerifiedSite(adminClient, authenticatedUserId, rawRepoUrl);
+      const webData = await fetchWebsiteAuditData(rawRepoUrl, undefined, { deepProbes: Boolean(verifiedSite), probeKey: verifiedSite?.probeKey ?? undefined });
       if (webData?.error) {
         await updateJobState({
           status: 'FAILED',

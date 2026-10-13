@@ -52,7 +52,7 @@ export function isValidWebUrl(url: string): boolean {
  * 3. Auditing HTTP Security Headers (CSP, HSTS, X-Frame-Options, CORS)
  * 4. Scanning Client JS Bundles for leaked API secret keys
  */
-export async function fetchWebsiteAuditData(siteUrl: string, signal?: AbortSignal, options: { deepProbes?: boolean } = {}): Promise<WebsiteAuditData | null> {
+export async function fetchWebsiteAuditData(siteUrl: string, signal?: AbortSignal, options: { deepProbes?: boolean; probeKey?: string } = {}): Promise<WebsiteAuditData | null> {
   const formattedUrl = siteUrl.startsWith('http') ? siteUrl : `https://${siteUrl}`;
   const origin = new URL(formattedUrl).origin;
 
@@ -344,7 +344,7 @@ export async function fetchWebsiteAuditData(siteUrl: string, signal?: AbortSigna
   // Challenged while reading pages / bundles: the content is incomplete and the scan must fail rather than look clean
   const contentChallenged = limiter.challenged;
   const liveProbe = typeof window === 'undefined' && !contentChallenged
-    ? await probeLiveSite(formattedUrl, setCookies, { deepProbes: options.deepProbes === true, fetchImpl: limiter.fetch, probeIntervalMs: 1500 }).catch((err) => {
+    ? await probeLiveSite(formattedUrl, setCookies, { deepProbes: options.deepProbes === true, probeKey: options.probeKey, fetchImpl: limiter.fetch, probeIntervalMs: 300 }).catch((err) => {
         console.warn(`Live probes failed for ${formattedUrl}:`, err?.message || err);
         return undefined;
       })

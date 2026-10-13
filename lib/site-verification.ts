@@ -95,20 +95,35 @@ export async function verifyOwnership(hostname: string, token: string, deps: Ver
   return null;
 }
 
-/** Whether userId has verified this hostname or one of its parent domains. */
-export async function isSiteVerified(admin: ReturnType<typeof getSupabaseAdmin>, userId: string | null | undefined, siteUrlOrHost: string): Promise<boolean> {
+export { PROBE_HEADER } from '@/lib/site-verification-state';
+
+/** Secret for PROBE_HEADER: "zp_" plus 48 hex characters. Never published, unlike the verification token. */
+export function createProbeKey(): string {
+  return `zp_${randomBytes(24).toString('hex')}`;
+}
+
+/**
+ * The verified row covering this site for userId (the hostname or a parent domain), or null when it is not verified.
+ * probeKey is null for rows verified before probe keys existed until the owner opens the domain card.
+ */
+export async function getVerifiedSite(admin: ReturnType<typeof getSupabaseAdmin>, userId: string | null | undefined, siteUrlOrHost: string): Promise<{ probeKey: string | null } | null> {
   const host = normalizeHostname(siteUrlOrHost);
-  if (!admin || !userId || !host) return false;
+  if (!admin || !userId || !host) return null;
   try {
     const { data } = await admin
       .from('site_verifications')
-      .select('hostname')
+      .select('hostname, probe_key')
       .eq('user_id', userId)
       .in('hostname', coveringHostnames(host))
       .not('verified_at', 'is', null)
       .limit(1);
-    return Boolean(data && data.length);
+    return data && data.length ? { probeKey: data[0].probe_key ?? null } : null;
   } catch {
-    return false;
+    return null;
   }
+}
+
+/** Whether userId has verified this hostname or one of its parent domains. */
+export async function isSiteVerified(admin: ReturnType<typeof getSupabaseAdmin>, userId: string | null | undefined, siteUrlOrHost: string): Promise<boolean> {
+  return Boolean(await getVerifiedSite(admin, userId, siteUrlOrHost));
 }
