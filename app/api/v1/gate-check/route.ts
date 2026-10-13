@@ -4,7 +4,7 @@ import { runStaticCodeScan, CodeFile } from '@/lib/scanner-engine';
 import { fetchGithubRepositoryData, isValidGithubUrl, parseGithubUrl } from '@/lib/github-api';
 import { fetchWebsiteAuditData, isValidWebUrl } from '@/lib/website-scanner';
 import { getSupabaseAdmin } from '@/lib/supabase-admin';
-import { isSiteVerified } from '@/lib/site-verification';
+import { getVerifiedSite } from '@/lib/site-verification';
 import { dispatchWebhookAlerts } from '@/lib/notifications';
 import { checkRateLimit, createRateLimitResponse } from '@/lib/rate-limiter';
 import { GateCheckRequestSchema, validateRequestBody } from '@/lib/validations/api-schemas';
@@ -298,8 +298,8 @@ export async function POST(req: NextRequest) {
       }
 
       logger.info(`[Gate Check] Initiating website audit for ${rawRepoUrl}`);
-      const deepProbes = await isSiteVerified(getSupabaseAdmin(), authenticatedUserId, rawRepoUrl);
-      const webData = await fetchWebsiteAuditData(rawRepoUrl, undefined, { deepProbes });
+      const verifiedSite = await getVerifiedSite(getSupabaseAdmin(), authenticatedUserId, rawRepoUrl);
+      const webData = await fetchWebsiteAuditData(rawRepoUrl, undefined, { deepProbes: Boolean(verifiedSite), probeKey: verifiedSite?.probeKey ?? undefined });
       filesToScan = webData?.files || [];
       targetName = webData?.title || rawRepoUrl;
 

@@ -2,7 +2,7 @@
 
 import { createClient, type SupabaseClient, type User } from '@supabase/supabase-js';
 import { SiteDomainSchema } from '@/lib/validations/api-schemas';
-import { DNS_PREFIX, VERIFY_FILE_PATH, createVerificationToken, normalizeHostname, verifyOwnership } from '@/lib/site-verification';
+import { DNS_PREFIX, VERIFY_FILE_PATH, createProbeKey, createVerificationToken, normalizeHostname, verifyOwnership } from '@/lib/site-verification';
 import { logger } from '@/lib/logger';
 import type { SiteDomainSummary, SiteVerificationActionState } from '@/lib/site-verification-state';
 
@@ -37,18 +37,28 @@ async function parse(formData: FormData) {
   return { hostname, ...ctx };
 }
 
-/** The caller's domains with the token and where to publish it. */
+/** The caller's domains with the token and where to publish it, plus the probe key once a domain is verified. */
 export async function listSiteDomains(accessToken: string): Promise<SiteDomainSummary[]> {
   const ctx = await authenticate(accessToken);
   if (!ctx) return [];
   const { data } = await ctx.admin
     .from('site_verifications')
-    .select('hostname, token, verified_at, verified_method')
+    .select('hostname, token, verified_at, verified_method, probe_key')
     .eq('user_id', ctx.user.id)
     .order('created_at', { ascending: false });
-  return (data ?? []).map((d) => ({
+  const rows = data ?? [];
+  // Domains verified before probe keys existed get one the first time the owner looks
+  for (const d of rows) {
+    if (!d.verified_at || d.probe_key) continue;
+    const probeKey = createProbeKey();
+    const { error } = await ctx.admin.from('site_verifications').update({ probe_key: probeKey })
+      .eq('user_id', ctx.user.id).eq('hostname', d.hostname).is('probe_key', null);
+    if (!error) d.probe_key = probeKey;
+  }
+  return rows.map((d) => ({
     hostname: d.hostname, token: d.token, verifiedAt: d.verified_at, verifiedMethod: d.verified_method,
     fileUrl: `https://${d.hostname}${VERIFY_FILE_PATH}`, dnsValue: `${DNS_PREFIX}${d.token}`,
+    probeKey: d.verified_at ? d.probe_key ?? null : null,
   }));
 }
 
@@ -79,7 +89,7 @@ export async function verifySiteDomain(_prev: SiteVerificationActionState, formD
 
   const { data: row } = await p.admin
     .from('site_verifications')
-    .select('token')
+    .select('token, probe_key')
     .eq('user_id', p.user.id)
     .eq('hostname', p.hostname)
     .maybeSingle();
@@ -89,11 +99,11 @@ export async function verifySiteDomain(_prev: SiteVerificationActionState, formD
   if (!method) return fail(`Token not found on ${p.hostname}. Check the file or TXT record (DNS changes can take a few minutes).`);
   const { error } = await p.admin
     .from('site_verifications')
-    .update({ verified_at: new Date().toISOString(), verified_method: method })
+    .update({ verified_at: new Date().toISOString(), verified_method: method, probe_key: row.probe_key ?? createProbeKey() })
     .eq('user_id', p.user.id)
     .eq('hostname', p.hostname);
   if (error) return fail('Verified, but saving failed. Try again.');
-  return { status: 'success', message: `${p.hostname} verified by ${method === 'dns' ? 'DNS TXT record' : 'well-known file'}. Deep live checks now run on its scans.` };
+  return { status: 'success', message: `${p.hostname} verified by ${method === 'dns' ? 'DNS TXT record' : 'well-known file'}. Deep live checks now run on its scans; allow the probe header below in your firewall so they are not challenged.` };
 }
 
 export async function removeSiteDomain(_prev: SiteVerificationActionState, formData: FormData): Promise<SiteVerificationActionState> {

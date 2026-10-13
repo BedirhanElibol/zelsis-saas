@@ -211,3 +211,21 @@ test('LIVE-13 stays silent when every exposure path was answered', async () => {
   assert.deepEqual(probe.probeCoverage, { answered: 26, total: 26 });
   assert.equal(buildLiveFindings(probe, NOW).some((f) => f.ruleId === 27013), false);
 });
+
+test('the probe key header goes on exposure probes only, and only when a key is given', async () => {
+  const seen: { url: string; key: string | null }[] = [];
+  const base = fakeSite(redirectHttp);
+  const fetchImpl = (async (url: string | URL, init?: RequestInit) => {
+    seen.push({ url: String(url), key: new Headers(init?.headers).get('x-zelsis-probe') });
+    return base(url, init);
+  }) as typeof fetch;
+  await probeLiveSite(`https://${HOST}/`, [], { fetchImpl, tlsInspect: goodTls, deepProbes: true, probeKey: 'zp_test', probeIntervalMs: 1 });
+  const paths = seen.filter((s) => !s.url.startsWith('http://'));
+  assert.equal(paths.length, 26);
+  assert.ok(paths.every((s) => s.key === 'zp_test'));
+  assert.equal(seen.find((s) => s.url.startsWith('http://'))?.key, null, 'the plain-http redirect check is not a probe');
+
+  seen.length = 0;
+  await probeLiveSite(`https://${HOST}/`, [], { fetchImpl, tlsInspect: goodTls, deepProbes: true, probeIntervalMs: 1 });
+  assert.ok(seen.every((s) => s.key === null));
+});

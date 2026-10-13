@@ -1,6 +1,6 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { coveringHostnames, createVerificationToken, isVerificationToken, normalizeHostname, verifyOwnership } from '../../lib/site-verification';
+import { coveringHostnames, createProbeKey, createVerificationToken, isVerificationToken, normalizeHostname, verifyOwnership } from '../../lib/site-verification';
 
 test('normalizeHostname accepts public domains and URLs, rejects IPs, ports, localhost and junk', () => {
   assert.equal(normalizeHostname('Example.COM'), 'example.com');
@@ -36,4 +36,11 @@ test('verifyOwnership accepts the well-known file or the DNS TXT record and noth
   assert.equal(await verifyOwnership('127.0.0.1', token, { ...none, fetchText: async () => token }), null, 'IP hosts are never verified');
   assert.equal(await verifyOwnership('example.com', 'not-a-token', { ...none, fetchText: async () => 'not-a-token' }), null);
   assert.equal(await verifyOwnership('example.com', token, { fetchText: async () => { throw new Error('net'); }, resolveTxt: async () => { throw new Error('dns'); } }), null);
+});
+
+test('probe keys are secret-length, distinct from verification tokens and unique', () => {
+  const k = createProbeKey();
+  assert.match(k, /^zp_[0-9a-f]{48}$/);
+  assert.equal(isVerificationToken(k), false);
+  assert.notEqual(k, createProbeKey());
 });

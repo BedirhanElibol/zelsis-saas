@@ -3,7 +3,7 @@
 import React, { useActionState, useEffect, useState } from 'react';
 import { BadgeCheck, Check, Copy, Globe, Loader2, Trash2 } from 'lucide-react';
 import { addSiteDomain, listSiteDomains, removeSiteDomain, verifySiteDomain } from '@/app/actions/site-verification';
-import { initialSiteVerificationState, type SiteDomainSummary } from '@/lib/site-verification-state';
+import { PROBE_HEADER, initialSiteVerificationState, type SiteDomainSummary } from '@/lib/site-verification-state';
 import { getActiveUserAuth } from '@/lib/supabase-client';
 
 function CopyValue({ label, value }: { label: string; value: string }) {
@@ -98,6 +98,21 @@ export function SiteVerificationCard() {
                   </button>
                 </form>
               </div>
+
+              {d.verifiedAt && d.probeKey && (
+                <details className="text-zinc-400">
+                  <summary className="cursor-pointer text-zinc-300 hover:text-white focus-visible:ring-2 focus-visible:ring-emerald-500 focus-visible:outline-none rounded">
+                    Firewall challenging deep checks? Allow the Zelsis probe header
+                  </summary>
+                  <div className="flex flex-col gap-2 mt-2">
+                    <p>Deep checks request paths such as <code className="text-zinc-200">/.env</code> and <code className="text-zinc-200">/dump.sql</code>, which bot protection often challenges, so the scan reports them as unchecked. Each probe carries this header; keep the value private.</p>
+                    <CopyValue label="header name" value={PROBE_HEADER} />
+                    <CopyValue label="header value" value={d.probeKey} />
+                    <p><span className="text-zinc-200">Vercel:</span> Firewall → Configure → New Rule: if Request Header <code className="text-zinc-200">{PROBE_HEADER}</code> equals the value, then Bypass.</p>
+                    <p><span className="text-zinc-200">Cloudflare:</span> Security → WAF → Custom rules: if the header equals the value, then Skip (managed rules and bot protection).</p>
+                  </div>
+                </details>
+              )}
 
               {!d.verifiedAt && (
                 <>
