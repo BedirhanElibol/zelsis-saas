@@ -19,7 +19,7 @@ import { calculateGateStatus, gatingFindings } from '@/lib/scanner/scoring';
 import { botChallengeMessage } from '@/lib/bot-challenge';
 
 // F-31: Bounded execution duration for static code scans (bounded to 30s for serverless SLA)
-export const maxDuration = 30;
+export const maxDuration = 90; // live scans pace exposure probes (~40 s) to avoid scanner-pattern blocking
 export const dynamic = 'force-dynamic';
 
 function isAllowedWebhookUrl(url: string): boolean {
