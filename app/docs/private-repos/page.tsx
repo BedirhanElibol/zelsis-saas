@@ -4,7 +4,7 @@ import { GITHUB_TOKEN_URL } from '@/components/dashboard/GithubTokenSteps';
 
 export const metadata: Metadata = {
   title: 'Scan a Private Repository - Zelsis Docs',
-  description: 'Give Zelsis read-only access to a private GitHub repository with a fine-grained token in about a minute.',
+  description: 'Connect GitHub to let Zelsis read a private repository, or use a read-only fine-grained token instead.',
 };
 
 export default function PrivateReposPage() {
@@ -12,9 +12,29 @@ export default function PrivateReposPage() {
     <div className="space-y-6">
       <h1 className="text-3xl font-bold text-white mb-2">Scan a Private Repository</h1>
       <p className="text-zinc-400">
-        Public repositories need nothing: paste the URL and scan. For a private repository GitHub needs your permission, which you
-        give with a read-only token. It takes about a minute.
+        Public repositories need nothing: paste the URL and scan. For a private repository GitHub needs your permission. The
+        easiest way is to connect GitHub; a read-only token works too.
       </p>
+
+      <section className="space-y-3">
+        <h2 className="text-xl font-semibold text-white">Easiest: connect GitHub</h2>
+        <ol className="list-decimal pl-5 space-y-2 text-zinc-300">
+          <li>Dashboard → <strong className="text-white">Connected Projects</strong> → <strong className="text-white">Connect New AI App</strong>.</li>
+          <li>Under <strong className="text-white">Private repository? Connect GitHub</strong>, click <strong className="text-white">Connect GitHub</strong>.</li>
+          <li>On GitHub, choose <strong className="text-white">Only select repositories</strong>, pick the repositories to scan and click <strong className="text-white">Install</strong>.</li>
+          <li>Back in Zelsis, pick the repository from the list and start the scan. No token to copy.</li>
+        </ol>
+        <p className="text-zinc-300">
+          Already installed the Zelsis app (in another browser or account)? Use <strong className="text-white">Already installed the Zelsis app on GitHub? Link it to this account</strong>.
+          To share more repositories later, use <strong className="text-white">Add more repositories on GitHub</strong>.
+        </p>
+        <p className="text-zinc-300">
+          The app gets read-only access to the code and metadata of the repositories you chose, nothing else. Remove it any time
+          under GitHub → Settings → Applications → Installed GitHub Apps.
+        </p>
+      </section>
+
+      <h2 className="text-2xl font-bold text-white pt-2">Alternative: a read-only token</h2>
 
       <section className="space-y-3">
         <h2 className="text-xl font-semibold text-white">1. Create a read-only token</h2>
