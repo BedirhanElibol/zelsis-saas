@@ -36,6 +36,10 @@ const loadOrgPolicy = async (): Promise<string | null> => {
   }
 };
 
+// Minimum on-screen scan time grows with the repo: 12s plus 15ms per file, capped at 30s.
+const minScanDurationMs = (fileCount: number) => Math.min(30_000, 12_000 + fileCount * 15);
+const LOG_STEP_MS = 120;
+
 interface ScanRunnerViewProps {
   project: Project;
   onCompleteScan: (updatedResult?: ScanResult) => void;
@@ -78,6 +82,12 @@ export const ScanRunnerView: React.FC<ScanRunnerViewProps> = ({
   const [isFinished, setIsFinished] = useState<boolean>(false);
   const [scanResult, setScanResult] = useState<ScanResult | null>(null);
   const [queuedFilesCount, setQueuedFilesCount] = useState<number>(0);
+  const progressRef = useRef(0);
+  const fileCountRef = useRef(0);
+  useEffect(() => {
+    progressRef.current = progress;
+    fileCountRef.current = queuedFilesCount;
+  }, [progress, queuedFilesCount]);
   const [hasCopiedLogs, setHasCopiedLogs] = useState<boolean>(false);
   const [logSearchQuery, setLogSearchQuery] = useState<string>('');
   const [elapsedSeconds, setElapsedSeconds] = useState<number>(0);
@@ -171,6 +181,7 @@ export const ScanRunnerView: React.FC<ScanRunnerViewProps> = ({
     hasCompletedRef.current = false;
     hasConsumedQuotaRef.current = false;
     setCountdownSeconds(3);
+    const scanStartedAt = Date.now();
 
     async function executeLiveScan() {
       const userTier = user?.tier || 'Free';
@@ -256,13 +267,18 @@ export const ScanRunnerView: React.FC<ScanRunnerViewProps> = ({
       const startLogStream = (result: ScanResult) => {
         let currentIdx = 0;
         const realLogs = result.logs;
-        const stepIntervalMs = 25;
+        const startPct = Math.min(progressRef.current, 90);
+        // Replay the engine's real log lines so the whole scan takes at least minScanDurationMs: a result that
+        // flashes up in a second reads as if nothing was checked. Hidden tabs skip the pacing.
+        const remainingMs = Math.max(0, minScanDurationMs(fileCountRef.current) - (Date.now() - scanStartedAt));
+        const ticks = Math.max(1, Math.floor(remainingMs / LOG_STEP_MS));
+        const visibleBatch = Math.max(1, Math.ceil(realLogs.length / ticks));
 
         // PRIVACY-39: Desktop notification prompts are never requested automatically on stream start
 
         intervalRef.current = setInterval(() => {
           const isHidden = typeof document !== 'undefined' && document.hidden;
-          const batchSize = isHidden ? 25 : 3;
+          const batchSize = isHidden ? 25 : visibleBatch;
 
           if (currentIdx < realLogs.length) {
             const newLogItems: string[] = [];
@@ -277,7 +293,7 @@ export const ScanRunnerView: React.FC<ScanRunnerViewProps> = ({
             }
 
             setLogs((prev) => [...prev, ...newLogItems]);
-            const pct = Math.min(100, Math.round(25 + (currentIdx / realLogs.length) * 75));
+            const pct = Math.min(99, Math.round(startPct + (currentIdx / realLogs.length) * (100 - startPct)));
             setProgress(pct);
             if (typeof document !== 'undefined') {
               document.title = `(${pct}%) Scanning | Zelsis`;
@@ -298,7 +314,7 @@ export const ScanRunnerView: React.FC<ScanRunnerViewProps> = ({
               }
             }
           }
-        }, stepIntervalMs);
+        }, LOG_STEP_MS);
       };
 
       if (isLocalOrSelfAudit) {
@@ -474,12 +490,14 @@ export const ScanRunnerView: React.FC<ScanRunnerViewProps> = ({
               onConsumeScanQuota();
             }
 
-            setLogs((prev) => [
-              ...prev,
-              `[${new Date().toLocaleTimeString()}] [SUCCESS] 🎉 Release Gate Audit Complete: Score ${resolvedResult.score}/100 [GATE: ${resolvedResult.gateStatus}].`,
-              `[${new Date().toLocaleTimeString()}] [REPORT] Preparing full audit report with ${resolvedResult.findings.length} findings...`
-            ]);
-            setIsFinished(true);
+            startLogStream({
+              ...resolvedResult,
+              logs: [
+                ...(resolvedResult.logs || []),
+                `[${new Date().toLocaleTimeString()}] [SUCCESS] 🎉 Release Gate Audit Complete: Score ${resolvedResult.score}/100 [GATE: ${resolvedResult.gateStatus}].`,
+                `[${new Date().toLocaleTimeString()}] [REPORT] Preparing full audit report with ${resolvedResult.findings.length} findings...`
+              ]
+            });
           } else if (job.status === 'FAILED') {
             hasFinishedProcessing = true;
             if (intervalRef.current) {
