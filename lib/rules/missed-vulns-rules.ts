@@ -546,6 +546,69 @@ export function evaluateMissedVulnsRules(file: CodeFile, lines: string[], cleanC
       fix: 'Delete the file from the public folder and from git history, then rotate every secret it held. Keep dumps, state files and keys outside the repository.' });
   }
 
+  if (isJs) {
+    // GAP-34: service role key read in a 'use client' module (bundled for the browser)
+    if (/^\s*(?:\/\/[^\n]*\n\s*|\/\*[\s\S]*?\*\/\s*)*['"]use client['"]/.test(file.content)) {
+      const i = lines.findIndex((l) => !isComment(l) && /process\.env\.[A-Z_]*SERVICE_ROLE[A-Z_]*/.test(l));
+      add({ ruleId: 28834, code: 'GAP-34', severity: 'CRITICAL', category: 'Secrets Management', lineIdx: i,
+        title: "Supabase Service Role Key Used in a 'use client' Module",
+        why: "A 'use client' module is bundled for the browser. If the variable is exposed to the client it ships to every visitor, and the service role key skips every Row Level Security policy; if it is not, the client gets undefined and the code only works by accident on the server.",
+        fix: "Move the admin client into a server-only module (import 'server-only'; route handler or server action) and call it from the client through that boundary." });
+    }
+
+    // GAP-35: CORS wildcard origin together with credentials in static header config
+    if (/(?:^|\/)next\.config\.[cm]?[jt]s$/i.test(path) && /Access-Control-Allow-Credentials['"]?\s*,\s*value\s*:\s*['"]true/i.test(cleanContent)) {
+      const i = lines.findIndex((l) => /Access-Control-Allow-Origin['"]?\s*,\s*value\s*:\s*['"]\*['"]/i.test(l));
+      add({ ruleId: 28835, code: 'GAP-35', severity: 'MEDIUM', category: 'CORS Misconfiguration', lineIdx: i,
+        title: 'CORS Allows Any Origin with Credentials',
+        why: 'Browsers refuse credentialed responses for Access-Control-Allow-Origin: *, so cross-site calls with cookies fail. The usual next "fix" is to reflect the request Origin, which lets any website act as the signed-in user.',
+        fix: 'List the exact origins that may call the API with credentials, or drop Access-Control-Allow-Credentials if the API does not use cookies.' });
+    }
+
+    // GAP-36: user-controlled URL rendered as a link without a scheme check
+    if (/\.[jt]sx$/i.test(path) && !/\b(?:safeUrl|sanitizeUrl|isSafeUrl|isValidUrl|sanitize|startsWith\(\s*['"]https?:)/.test(cleanContent)) {
+      const i = lines.findIndex((l) => !isComment(l) && /\bhref=\{\s*(?:props\.)?(?:profile|user|author|member|account|seller|owner|creator)\??\.(?:website|homepage|url|link|social\w*|portfolio\w*)\s*\}/i.test(l));
+      add({ ruleId: 28836, code: 'GAP-36', severity: 'MEDIUM', category: 'Cross-Site Scripting', lineIdx: i,
+        title: 'User-Supplied URL Rendered as a Link Without a Scheme Check',
+        why: 'A user can save "javascript:…" as their website; React 18 and older render it and the code runs for every visitor who clicks the link (React 19 blocks javascript: URLs, other schemes like data: still pass).',
+        fix: "Accept only http(s): check new URL(value).protocol is 'http:' or 'https:' when saving and before rendering, and add rel=\"noopener noreferrer\" for external links." });
+    }
+
+    // GAP-37: request body deep-merged into an object
+    {
+      const i = lines.findIndex((l) => !isComment(l) && /\b(?:_|lodash)\.(?:merge|mergeWith|defaultsDeep)\s*\((?:[^()]*,)?\s*req(?:uest)?\.(?:body|query)\s*[,)]/.test(l));
+      add({ ruleId: 28837, code: 'GAP-37', severity: 'MEDIUM', category: 'Mass Assignment', lineIdx: i,
+        title: 'Request Body Deep-Merged into an Object',
+        why: 'Every key the client sends lands in the result, including fields it should not control (role, plan, limits). With lodash older than 4.17.12 a "__proto__" key also pollutes Object.prototype for the whole process.',
+        fix: 'Validate the body with a schema (zod, joi) that lists the allowed fields, then merge only the parsed result.' });
+    }
+  }
+
+  // GAP-38: FastAPI route that changes or deletes data without an auth dependency
+  if (isPy && /\bfrom\s+fastapi\b/.test(cleanContent) && !/APIRouter\([^)]*dependencies\s*=/.test(cleanContent)) {
+    lines.forEach((l, i) => {
+      const m = l.match(/^\s*@\w+\.(delete|put|patch)\(\s*['"]([^'"]*)['"]([^)]*)\)/);
+      if (!m || /dependencies\s*=/.test(m[3]) || /webhook|callback|health/i.test(m[2])) return;
+      // Signature: the def line(s) up to the closing "):"
+      let sig = '';
+      for (let j = i + 1; j < Math.min(lines.length, i + 12); j++) {
+        sig += lines[j];
+        if (/\)\s*(?:->[^:]*)?:\s*$/.test(lines[j])) break;
+      }
+      if (!/^\s*(?:async\s+)?def\s/.test(lines[i + 1] || '')) return;
+      // Parameters only (not the function name). The caller is identified by an auth dependency (Depends(get_current_user_id)),
+      // an auth-named parameter (current_user: …) or an auth type (CurrentUser); a record id such as user_id: str is not one.
+      const params = sig.slice(sig.indexOf('(') + 1);
+      if (/(?:Depends|Security)\(\s*[\w.]*(?:user|auth|token|admin|current|verify|require|permission|principal|api_?key|owner|login)/i.test(params)
+        || /(?:^|[(,\s])(?!\w*_ids?\s*:)\w*(?:user|auth|admin|principal|token|api_?key)\w*\s*:/i.test(params)
+        || /:\s*(?:Annotated\[\s*)?(?:Current\w+|\w*(?:Principal|AuthUser|AuthContext))\b/.test(params)) return;
+      add({ ruleId: 28838, code: 'GAP-38', severity: 'HIGH', category: 'Broken Access Control', lineIdx: i + 1,
+        title: `FastAPI ${m[1].toUpperCase()} Route Without an Auth Dependency (${m[2]})`,
+        why: 'Nothing in the route signature identifies the caller (no Depends(get_current_user), Security() or user parameter) and the router has no dependencies=, so anyone who can reach the API can call it.',
+        fix: 'Add current_user: User = Depends(get_current_user) (or router-level dependencies=[Depends(...)]) and check that the user may change this record.' });
+    });
+  }
+
   // GAP-19: Auth.js / NextAuth links an OAuth sign-in to an existing account by e-mail alone
   if (isJs && /next-auth|@auth\//.test(cleanContent)) {
     lines.forEach((l, i) => {

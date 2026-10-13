@@ -1,8 +1,8 @@
 {
  "summary": {
-  "implementedRules": 1249,
-  "testedRules": 1238,
-  "preciseLocationRules": 1246,
+  "implementedRules": 1254,
+  "testedRules": 1243,
+  "preciseLocationRules": 1251,
   "catalogEntries": 1922,
   "catalogOnlyNotImplemented": 1401,
   "catalogPlaceholderMetadata": 1810
@@ -9806,6 +9806,56 @@
    "code": "RULE-28833",
    "title": "Sensitive File in a Public Web Folder (${name})",
    "severity": "UNKNOWN",
+   "source": "lib/rules/missed-vulns-rules.ts",
+   "preciseLocation": true,
+   "tested": true,
+   "inCatalog": false
+  },
+  {
+   "ruleId": 28834,
+   "code": "RULE-28834",
+   "title": "Supabase Service Role Key Used in a ",
+   "severity": "CRITICAL",
+   "source": "lib/rules/missed-vulns-rules.ts",
+   "preciseLocation": true,
+   "tested": true,
+   "inCatalog": false
+  },
+  {
+   "ruleId": 28835,
+   "code": "RULE-28835",
+   "title": "CORS Allows Any Origin with Credentials",
+   "severity": "MEDIUM",
+   "source": "lib/rules/missed-vulns-rules.ts",
+   "preciseLocation": true,
+   "tested": true,
+   "inCatalog": false
+  },
+  {
+   "ruleId": 28836,
+   "code": "RULE-28836",
+   "title": "User-Supplied URL Rendered as a Link Without a Scheme Check",
+   "severity": "MEDIUM",
+   "source": "lib/rules/missed-vulns-rules.ts",
+   "preciseLocation": true,
+   "tested": true,
+   "inCatalog": false
+  },
+  {
+   "ruleId": 28837,
+   "code": "RULE-28837",
+   "title": "Request Body Deep-Merged into an Object",
+   "severity": "MEDIUM",
+   "source": "lib/rules/missed-vulns-rules.ts",
+   "preciseLocation": true,
+   "tested": true,
+   "inCatalog": false
+  },
+  {
+   "ruleId": 28838,
+   "code": "RULE-28838",
+   "title": "FastAPI ${m[1].toUpperCase()} Route Without an Auth Dependency (${m[2]})",
+   "severity": "HIGH",
    "source": "lib/rules/missed-vulns-rules.ts",
    "preciseLocation": true,
    "tested": true,

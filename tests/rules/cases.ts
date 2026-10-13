@@ -32,6 +32,36 @@ const FAKE_GITHUB_PAT = 'ghp' + '_R4nd0mT0k3nV4lu3F0rT3st1ngPurp0s3sAb';
 
 export const RULE_CASES: RuleCase[] = [
   {
+    ruleIds: [28834],
+    name: "GAP-34 service role key in a 'use client' module",
+    detects: f('app/billing/client.tsx', "'use client';\nimport { createClient } from '@supabase/supabase-js';\nexport const admin = createClient(process.env.NEXT_PUBLIC_SUPABASE_URL!, process.env.SUPABASE_SERVICE_ROLE_KEY!);\n"),
+    ignores: f('app/billing/admin.ts', "import 'server-only';\nimport { createClient } from '@supabase/supabase-js';\nexport const admin = createClient(process.env.NEXT_PUBLIC_SUPABASE_URL!, process.env.SUPABASE_SERVICE_ROLE_KEY!);\n")
+  },
+  {
+    ruleIds: [28835],
+    name: 'GAP-35 next.config CORS wildcard with credentials',
+    detects: f('next.config.js', "module.exports = { async headers() { return [{ source: '/api/:path*', headers: [\n  { key: 'Access-Control-Allow-Credentials', value: 'true' },\n  { key: 'Access-Control-Allow-Origin', value: '*' },\n] }]; } };\n"),
+    ignores: f('next.config.js', "module.exports = { async headers() { return [{ source: '/api/:path*', headers: [\n  { key: 'Access-Control-Allow-Credentials', value: 'true' },\n  { key: 'Access-Control-Allow-Origin', value: 'https://app.example.com' },\n] }]; } };\n")
+  },
+  {
+    ruleIds: [28836],
+    name: 'GAP-36 user website rendered as href without a scheme check',
+    detects: f('components/profile-card.tsx', 'export function Card({ profile }: { profile: { name: string; website: string } }) {\n  return <a href={profile.website}>{profile.name}</a>;\n}\n'),
+    ignores: f('components/profile-card.tsx', "const safeUrl = (u: string) => (/^https?:/.test(u) ? u : '#');\nexport function Card({ profile }: { profile: { name: string; website: string } }) {\n  return <a href={safeUrl(profile.website)}>{profile.name}</a>;\n}\n")
+  },
+  {
+    ruleIds: [28837],
+    name: 'GAP-37 request body deep-merged with lodash',
+    detects: f('src/routes/settings.js', "const _ = require('lodash');\napp.post('/settings', (req, res) => {\n  const settings = _.merge({}, defaults, req.body);\n  res.json(settings);\n});\n"),
+    ignores: f('src/routes/settings.js', "const _ = require('lodash');\napp.post('/settings', (req, res) => {\n  const settings = _.merge({}, defaults, SettingsSchema.parse(req.body));\n  res.json(settings);\n});\n")
+  },
+  {
+    ruleIds: [28838],
+    name: 'GAP-38 FastAPI DELETE route without an auth dependency (user_id path param is not auth)',
+    detects: f('app/api/routes/users.py', 'from fastapi import APIRouter, Depends\nrouter = APIRouter()\n\n@router.delete("/users/{user_id}")\ndef delete_user(user_id: int, db: Session = Depends(get_db)):\n    db.query(User).filter(User.id == user_id).delete()\n'),
+    ignores: f('app/api/routes/alerts.py', 'from fastapi import APIRouter, Depends\nrouter = APIRouter()\n\n@router.delete("/{alert_id}")\nasync def delete_alert(\n    alert_id: str,\n    user_id: str = Depends(get_current_user_id),\n    db = Depends(get_db)\n):\n    await db.alerts.delete_one({"id": alert_id, "user_id": user_id})\n')
+  },
+  {
     ruleIds: [28833],
     name: 'GAP-33 SQL dump in the public folder (path-only entry, content not downloaded)',
     detects: f('public/backup.sql', ''),
