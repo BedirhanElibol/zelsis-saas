@@ -1,8 +1,8 @@
 {
  "summary": {
-  "implementedRules": 1248,
-  "testedRules": 1237,
-  "preciseLocationRules": 1245,
+  "implementedRules": 1249,
+  "testedRules": 1238,
+  "preciseLocationRules": 1246,
   "catalogEntries": 1922,
   "catalogOnlyNotImplemented": 1401,
   "catalogPlaceholderMetadata": 1810
@@ -9796,6 +9796,16 @@
    "code": "RULE-28832",
    "title": "Next.js Server Actions Encryption Key Hard-Coded",
    "severity": "HIGH",
+   "source": "lib/rules/missed-vulns-rules.ts",
+   "preciseLocation": true,
+   "tested": true,
+   "inCatalog": false
+  },
+  {
+   "ruleId": 28833,
+   "code": "RULE-28833",
+   "title": "Sensitive File in a Public Web Folder (${name})",
+   "severity": "UNKNOWN",
    "source": "lib/rules/missed-vulns-rules.ts",
    "preciseLocation": true,
    "tested": true,
