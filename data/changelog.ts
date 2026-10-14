@@ -16,6 +16,7 @@ export const CHANGELOG: ChangelogEntry[] = [
     title: 'Mobile apps, shareable reports and fewer missed bugs',
     changes: [
       { kind: 'New', text: 'Checks for iOS, Android and React Native apps: certificate checks turned off, WebViews that read local files, deep links opened in a WebView, ECB / DES encryption, secrets in device logs, tokens in AsyncStorage, debuggable release builds and credentials saved to plain files.' },
+      { kind: 'Improved', text: 'The real-incident test set grows to 118 cases (IDOR, NoSQL login bypass, CORS checks a look-alike domain passes, client-set payment amounts and more): 86% are flagged HIGH or CRITICAL, 99% at MEDIUM or above. Supabase policies that let users change their own role are now caught in one-line table definitions, and admin-only policies are no longer flagged.' },
       { kind: 'New', text: 'Share a read-only report link from the dashboard. It shows the score and findings, never your code or fix instructions, and you can turn it off at any time.' },
       { kind: 'Improved', text: 'Three checks now report HIGH when the flaw is clearly exploitable: database functions anyone can call, roles users pick for themselves at sign-up, and admin checks on a header nothing in the app sets.' },
       { kind: 'Fixed', text: 'Files saved with Windows line endings no longer hide findings from some rules.' },

@@ -31,6 +31,25 @@ const FAKE_AWS_KEY = 'AKIA' + '2E0A8F3B244C9986';
 const FAKE_GITHUB_PAT = 'ghp' + '_R4nd0mT0k3nV4lu3F0rT3st1ngPurp0s3sAb';
 
 export const RULE_CASES: RuleCase[] = [
+  // ─── Real-incident corpus expansion (2026-10-14) ──────────────────────
+  {
+    ruleIds: [28924],
+    name: 'JSF-24 origin regex in a variable without anchors; an anchored ^…$ pattern is fine',
+    detects: f('server/app.ts', "const allowed = new RegExp(process.env.ALLOWED_ORIGIN || 'acme\\\\.com');\napp.use(cors({ origin: (origin, cb) => cb(null, allowed.test(origin || '')), credentials: true }));\n"),
+    ignores: f('server/app.ts', "const allowed = /^https:\\/\\/(?:app\\.)?acme\\.com$/;\napp.use(cors({ origin: (origin, cb) => cb(null, allowed.test(origin || '')), credentials: true }));\n")
+  },
+  {
+    ruleIds: [28016],
+    name: 'NEXT-SB-16 one-line table with a role column users can update; column-level grants are fine',
+    detects: f('supabase/migrations/2_profiles.sql', "create table public.profiles (id uuid primary key references auth.users, name text, role text default 'user');\nalter table public.profiles enable row level security;\ncreate policy \"users update own profile\" on public.profiles for update using (auth.uid() = id);\n"),
+    ignores: f('supabase/migrations/2_profiles.sql', "create table public.profiles (id uuid primary key references auth.users, name text, role text default 'user');\nalter table public.profiles enable row level security;\ncreate policy \"users update own profile\" on public.profiles for update using (auth.uid() = id);\nrevoke update on public.profiles from authenticated;\ngrant update (name) on public.profiles to authenticated;\n")
+  },
+  {
+    ruleIds: [28016],
+    name: 'NEXT-SB-16 members update their own row (role included); an admin-only policy via EXISTS is fine',
+    detects: f('supabase/migrations/3_members.sql', "create table public.tontine_members (\n  id uuid primary key,\n  group_id uuid not null,\n  user_id uuid not null,\n  role text not null default 'member'\n);\ncreate policy update_members on public.tontine_members for update using (\n  user_id = auth.uid() or exists (select 1 from public.tontine_members tm where tm.group_id = group_id and tm.user_id = auth.uid() and tm.role = 'admin')\n);\n"),
+    ignores: f('supabase/migrations/3_members.sql', "create table public.group_members (\n  id uuid primary key,\n  group_id uuid not null,\n  user_id uuid not null,\n  role text not null default 'member'\n);\ncreate policy \"Group admins can manage members\" on public.group_members for all using (\n  exists (select 1 from public.group_members gm where gm.group_id = group_members.group_id and gm.user_id = auth.uid() and gm.role = 'admin')\n);\n")
+  },
   // ─── False positives found on 30 AI-built apps (2026-10-14) ───────────
   {
     ruleIds: [3016],

@@ -493,6 +493,13 @@ export function evaluateJsFrameworksV4Rules(file: CodeFile, lines: string[], cle
         const l = lines[i];
         const regexLit = corsFile && /\borigin\s*:\s*\[?[^\]\n]*?\/((?:\\.|[^/\\\n])+)\/[gimsuy]*\s*[,\]}]/.exec(l);
         if (regexLit && /\\\.|\.(?:com|io|net|org|dev|app)/.test(regexLit[1]) && !/\$\)?$/.test(regexLit[1])) return /./;
+        // A regex kept in a variable and tested against the origin: allowed.test(origin) with new RegExp('acme\\.com') or /acme\.com/
+        const tested = corsFile && /\b(\w+)\.test\(\s*(?:origin|requestOrigin)\b/.exec(l);
+        if (tested) {
+          const decl = new RegExp(String.raw`\b` + tested[1] + String.raw`\s*=\s*(?:new\s+RegExp\(([^)\n]*)\)|\/((?:\\.|[^/\\\n])+)\/[gimsuy]*)`).exec(c);
+          const patterns = decl ? (decl[2] !== undefined ? [decl[2]] : [...(decl[1] ?? '').matchAll(/(['"`])((?:\\.|(?!\1).)*)\1/g)].map((s) => s[2])) : [];
+          if (patterns.some((p) => /\\\\?\.|\.(?:com|io|net|org|dev|app)\b/.test(p) && !(/^\^/.test(p) && /\$\)?$/.test(p)))) return /./;
+        }
         const strCheck = /\b(?:origin|requestOrigin|event\.origin|e\.origin|evt\.origin|msg\.origin|message\.origin)\??\.(includes|endsWith|startsWith|indexOf)\(\s*['"]([^'"]+)['"]\s*\)/.exec(l);
         if (!strCheck || !(corsFile || /\.origin/.test(strCheck[0]))) return null;
         const [, method, value] = strCheck;
