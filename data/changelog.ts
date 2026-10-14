@@ -19,6 +19,8 @@ export const CHANGELOG: ChangelogEntry[] = [
       { kind: 'New', text: 'Share a read-only report link from the dashboard. It shows the score and findings, never your code or fix instructions, and you can turn it off at any time.' },
       { kind: 'Improved', text: 'Three checks now report HIGH when the flaw is clearly exploitable: database functions anyone can call, roles users pick for themselves at sign-up, and admin checks on a header nothing in the app sets.' },
       { kind: 'Fixed', text: 'Files saved with Windows line endings no longer hide findings from some rules.' },
+      { kind: 'Improved', text: 'The public benchmark now covers 26 projects, including six Android and iOS apps: 43 of 43 documented flaws are found, and every finding on the clean projects was reviewed.' },
+      { kind: 'Fixed', text: 'Java and Kotlin deserialization checks no longer flag streams behind a class allowlist, deep copies or files only the app itself can write; untrusted input is still caught.' },
       { kind: 'Fixed', text: 'Plan limits are the same everywhere on the site and match what the app enforces.' },
     ],
   },
