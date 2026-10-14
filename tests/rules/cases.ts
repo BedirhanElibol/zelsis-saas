@@ -32,6 +32,18 @@ const FAKE_GITHUB_PAT = 'ghp' + '_R4nd0mT0k3nV4lu3F0rT3st1ngPurp0s3sAb';
 
 export const RULE_CASES: RuleCase[] = [
   {
+    ruleIds: [28007],
+    name: 'NEXT-SB-07 SECURITY DEFINER delete granted to clients; a guard helper (is_admin) counts as a caller check',
+    detects: f('supabase/migrations/1_fn.sql', 'create or replace function public.delete_account(target uuid)\nreturns void language plpgsql security definer as $$\nbegin\n  delete from public.profiles where id = target;\nend;\n$$;\ngrant execute on function public.delete_account(uuid) to anon, authenticated;\n'),
+    ignores: f('supabase/migrations/1_fn.sql', "create or replace function public.delete_account(target uuid)\nreturns void language plpgsql security definer as $$\nbegin\n  if not public.is_admin() then\n    raise exception 'admins only';\n  end if;\n  delete from public.profiles where id = target;\nend;\n$$;\ngrant execute on function public.delete_account(uuid) to authenticated;\n")
+  },
+  {
+    ruleIds: [28806],
+    name: 'GAP-06 admin header read in a repo where middleware sets it is not client-trusted',
+    detects: [{ path: 'app/api/admin/stats/route.ts', content: "export async function GET(req: Request) {\n  if (req.headers.get('x-user-role') !== 'admin') return new Response('no', { status: 403 });\n  return Response.json({ ok: true });\n}\n" }, { path: 'package.json', content: '{ "dependencies": { "next": "15.0.0" } }\n' }],
+    ignores: [{ path: 'app/api/admin/stats/route.ts', content: "export async function GET(req: Request) {\n  if (req.headers.get('x-user-role') !== 'admin') return new Response('no', { status: 403 });\n  return Response.json({ ok: true });\n}\n" }, { path: 'middleware.ts', content: "export async function middleware(req: NextRequest) {\n  const headers = new Headers(req.headers);\n  headers.set('x-user-role', await roleFromSession(req));\n  return NextResponse.next({ request: { headers } });\n}\n" }]
+  },
+  {
     ruleIds: [28834],
     name: "GAP-34 service role key in a 'use client' module",
     detects: f('app/billing/client.tsx', "'use client';\nimport { createClient } from '@supabase/supabase-js';\nexport const admin = createClient(process.env.NEXT_PUBLIC_SUPABASE_URL!, process.env.SUPABASE_SERVICE_ROLE_KEY!);\n"),

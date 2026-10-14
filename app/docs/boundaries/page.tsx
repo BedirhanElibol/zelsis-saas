@@ -13,7 +13,7 @@ export default function BoundariesPage() {
           <h3 className="text-emerald-400 font-semibold mb-2">Measured Efficacy</h3>
           <p className="text-sm text-zinc-300">
             On a corpus of <strong>108 vulnerable snippets modelled on public incidents and advisories</strong>, the engine flags{' '}
-            <strong>83% as HIGH/CRITICAL</strong> on the vulnerable line, and <strong>99%</strong> when MEDIUM findings are included.
+            <strong>85% as HIGH/CRITICAL</strong> on the vulnerable line, and <strong>99%</strong> when MEDIUM findings are included.
             The corpus is <a href="/benchmark/real-incident-corpus.txt" className="underline hover:text-white">published here</a>, and our test suite
             re-measures it on every release.
           </p>
