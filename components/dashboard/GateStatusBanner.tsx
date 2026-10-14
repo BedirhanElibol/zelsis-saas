@@ -24,7 +24,8 @@ import {
   Table,
   FileText,
   ChevronDown,
-  ExternalLink
+  ExternalLink,
+  Link2
 } from 'lucide-react';
 import { exportFindingsToCsv, exportScorecardToJson } from '@/lib/export-utils';
 import { ActiveModalType } from './DashboardModals';
@@ -438,6 +439,20 @@ export const GateStatusBanner: React.FC<GateStatusBannerProps> = ({
                 <div className="flex flex-col">
                   <span className="font-bold">Release Gate Badge</span>
                   <span className="text-[10px] text-[#A1A1AA]">Live SVG embed for README</span>
+                </div>
+              </button>
+
+              <button
+                onClick={() => {
+                  onOpenModal('share');
+                  setIsToolsMenuOpen(false);
+                }}
+                className="w-full text-left px-3 py-2 rounded-lg text-white hover:bg-white/10 flex items-center gap-2.5 transition-colors cursor-pointer"
+              >
+                <Link2 size={14} className="text-zinc-400" />
+                <div className="flex flex-col">
+                  <span className="font-bold">Share Report Link</span>
+                  <span className="text-[10px] text-[#A1A1AA]">Read-only page, no code included</span>
                 </div>
               </button>
 

@@ -39,7 +39,7 @@ export const OnboardingChecklist: React.FC<OnboardingChecklistProps> = ({ projec
       description: 'Show off your readiness score in your README.',
       isComplete: false,
       snippet: badgeUrlFor(project, getConfiguredAppUrl())
-        ? `[![Zelsis Gate](${badgeUrlFor(project, getConfiguredAppUrl())})](${getConfiguredAppUrl()})`
+        ? `[![Zelsis Gate](${badgeUrlFor(project, getConfiguredAppUrl())})](${getConfiguredAppUrl()}/?ref=badge)`
         : 'Scan a public GitHub repository to get a badge for it.',
     },
   ];

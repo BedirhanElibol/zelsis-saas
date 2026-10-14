@@ -38,8 +38,8 @@ export const BadgeGeneratorModal: React.FC<BadgeGeneratorModalProps> = ({
   // the status/score fallback renders as UNVERIFIED
   const badgeApiUrl = badgeUrlFor(project, appUrl) ?? `${appUrl}/api/v1/badge?status=${status}&score=${score}&label=Zelsis%20Gate`;
 
-  const markdownSnippet = `[![Zelsis Release Gate](${badgeApiUrl})](${appUrl})`;
-  const htmlSnippet = `<a href="${appUrl}"><${'im' + 'g'} src="${badgeApiUrl}" alt="Zelsis Release Gate Status" /></a>`;
+  const markdownSnippet = `[![Zelsis Release Gate](${badgeApiUrl})](${appUrl}/?ref=badge)`;
+  const htmlSnippet = `<a href="${appUrl}/?ref=badge"><${'im' + 'g'} src="${badgeApiUrl}" alt="Zelsis Release Gate Status" /></a>`;
 
   const handleCopy = (text: string, type: string) => {
     navigator.clipboard.writeText(text);
