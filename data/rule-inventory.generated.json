@@ -1,10 +1,10 @@
 {
  "summary": {
-  "implementedRules": 1254,
-  "testedRules": 1243,
-  "preciseLocationRules": 1251,
+  "implementedRules": 1266,
+  "testedRules": 1255,
+  "preciseLocationRules": 1263,
   "catalogEntries": 1922,
-  "catalogOnlyNotImplemented": 1401,
+  "catalogOnlyNotImplemented": 1397,
   "catalogPlaceholderMetadata": 1810
  },
  "catalogOnly": [
@@ -574,12 +574,8 @@
   9208,
   9209,
   9210,
-  9304,
-  9306,
   9307,
   9308,
-  9309,
-  9310,
   9401,
   9402,
   9404,
@@ -6302,6 +6298,16 @@
    "inCatalog": true
   },
   {
+   "ruleId": 9304,
+   "code": "RULE-9304",
+   "title": "TLS Certificate Validation Disabled",
+   "severity": "HIGH",
+   "source": "lib/rules/mobile-native-rules.ts",
+   "preciseLocation": true,
+   "tested": true,
+   "inCatalog": true
+  },
+  {
    "ruleId": 9305,
    "code": "MOB-SEC-05",
    "title": "Exported Android Component Lacking Permission Guard",
@@ -6310,6 +6316,116 @@
    "preciseLocation": true,
    "tested": true,
    "inCatalog": true
+  },
+  {
+   "ruleId": 9306,
+   "code": "RULE-9306",
+   "title": "WebView Lets file:// Pages Read Local Files",
+   "severity": "HIGH",
+   "source": "lib/rules/mobile-native-rules.ts",
+   "preciseLocation": true,
+   "tested": true,
+   "inCatalog": true
+  },
+  {
+   "ruleId": 9309,
+   "code": "RULE-9309",
+   "title": "Weak Encryption Mode or Cipher (ECB / DES)",
+   "severity": "HIGH",
+   "source": "lib/rules/mobile-native-rules.ts",
+   "preciseLocation": true,
+   "tested": true,
+   "inCatalog": true
+  },
+  {
+   "ruleId": 9310,
+   "code": "RULE-9310",
+   "title": "Deep-Link URL Loaded Into a WebView Without a Host Check",
+   "severity": "HIGH",
+   "source": "lib/rules/mobile-native-rules.ts",
+   "preciseLocation": true,
+   "tested": true,
+   "inCatalog": true
+  },
+  {
+   "ruleId": 9311,
+   "code": "RULE-9311",
+   "title": "App Manifest Marked Debuggable",
+   "severity": "HIGH",
+   "source": "lib/rules/mobile-native-rules.ts",
+   "preciseLocation": true,
+   "tested": true,
+   "inCatalog": false
+  },
+  {
+   "ruleId": 9312,
+   "code": "RULE-9312",
+   "title": "Secret Written to the Device Log",
+   "severity": "MEDIUM",
+   "source": "lib/rules/mobile-native-rules.ts",
+   "preciseLocation": true,
+   "tested": true,
+   "inCatalog": false
+  },
+  {
+   "ruleId": 9313,
+   "code": "RULE-9313",
+   "title": "Keychain Item Readable While the Device Is Locked",
+   "severity": "MEDIUM",
+   "source": "lib/rules/mobile-native-rules.ts",
+   "preciseLocation": true,
+   "tested": true,
+   "inCatalog": false
+  },
+  {
+   "ruleId": 9314,
+   "code": "RULE-9314",
+   "title": "SQLite Query Built by String Concatenation",
+   "severity": "HIGH",
+   "source": "lib/rules/mobile-native-rules.ts",
+   "preciseLocation": true,
+   "tested": true,
+   "inCatalog": false
+  },
+  {
+   "ruleId": 9315,
+   "code": "RULE-9315",
+   "title": "Auth Token Stored in Unencrypted AsyncStorage",
+   "severity": "HIGH",
+   "source": "lib/rules/mobile-native-rules.ts",
+   "preciseLocation": true,
+   "tested": true,
+   "inCatalog": false
+  },
+  {
+   "ruleId": 9316,
+   "code": "RULE-9316",
+   "title": "File or Preferences Created World-Readable",
+   "severity": "HIGH",
+   "source": "lib/rules/mobile-native-rules.ts",
+   "preciseLocation": true,
+   "tested": true,
+   "inCatalog": false
+  },
+  {
+   "ruleId": 9317,
+   "code": "RULE-9317",
+   "title": "FileProvider Exposes the Device Root",
+   "severity": "MEDIUM",
+   "source": "lib/rules/mobile-native-rules.ts",
+   "preciseLocation": true,
+   "tested": true,
+   "inCatalog": false
+  },
+  {
+   "ruleId": 9318,
+   "code": "RULE-9318",
+   "title": "Credentials Saved to a Plain File",
+   "severity": "HIGH",
+   "source": "lib/rules/mobile-native-rules.ts",
+   "preciseLocation": true,
+   "tested": true,
+   "inCatalog": false
   },
   {
    "ruleId": 9403,

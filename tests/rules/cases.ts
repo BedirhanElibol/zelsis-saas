@@ -31,6 +31,103 @@ const FAKE_AWS_KEY = 'AKIA' + '2E0A8F3B244C9986';
 const FAKE_GITHUB_PAT = 'ghp' + '_R4nd0mT0k3nV4lu3F0rT3st1ngPurp0s3sAb';
 
 export const RULE_CASES: RuleCase[] = [
+  // ─── Mobile (MOB-SEC-01..17) ──────────────────────────────────────────
+  {
+    ruleIds: [9301],
+    name: 'MOB-SEC-01 token in SharedPreferences; saving screen state in a Bundle is not storage',
+    detects: f('app/src/main/java/com/acme/auth/TokenStore.java', 'prefs.edit().putString("access_token", token).apply();\n'),
+    ignores: f('app/src/main/java/com/acme/feed/FeedActivity.java', 'protected void onSaveInstanceState(Bundle outState) {\n    outState.putString("password", password);\n}\n')
+  },
+  {
+    ruleIds: [9305],
+    name: 'MOB-SEC-05 exported receiver with a custom action; system-only actions are fine',
+    detects: f('app/src/main/AndroidManifest.xml', '<manifest xmlns:android="http://schemas.android.com/apk/res/android">\n  <application>\n    <receiver\n        android:name=".SyncReceiver"\n        android:exported="true">\n      <intent-filter>\n        <action android:name="com.acme.action.SYNC_NOW" />\n      </intent-filter>\n    </receiver>\n  </application>\n</manifest>\n'),
+    ignores: f('app/src/main/AndroidManifest.xml', '<manifest xmlns:android="http://schemas.android.com/apk/res/android">\n  <application>\n    <receiver\n        android:name=".BootReceiver"\n        android:exported="true">\n      <intent-filter>\n        <action android:name="android.intent.action.BOOT_COMPLETED" />\n      </intent-filter>\n    </receiver>\n  </application>\n</manifest>\n')
+  },
+  {
+    ruleIds: [9304],
+    name: 'MOB-SEC-04 Android trust-all TrustManager and hostname verifier',
+    detects: f('app/src/main/java/com/acme/net/Http.kt', 'class TrustAll : X509TrustManager {\n    override fun checkServerTrusted(chain: Array<X509Certificate>, authType: String) {}\n    override fun checkClientTrusted(chain: Array<X509Certificate>, authType: String) {}\n    override fun getAcceptedIssuers() = arrayOf<X509Certificate>()\n}\nval client = OkHttpClient.Builder().hostnameVerifier { _, _ -> true }.build()\n'),
+    ignores: f('app/src/main/java/com/acme/net/Http.kt', 'val client = OkHttpClient.Builder()\n    .certificatePinner(CertificatePinner.Builder().add("api.acme.com", "sha256/AAAA").build())\n    .build()\n')
+  },
+  {
+    ruleIds: [9304],
+    name: 'MOB-SEC-04 iOS session delegate accepts any server trust',
+    detects: f('Acme/Network/Session.swift', 'func urlSession(_ session: URLSession, didReceive challenge: URLAuthenticationChallenge, completionHandler: @escaping (URLSession.AuthChallengeDisposition, URLCredential?) -> Void) {\n    completionHandler(.useCredential, URLCredential(trust: challenge.protectionSpace.serverTrust!))\n}\n'),
+    ignores: f('Acme/Network/Session.swift', 'func urlSession(_ session: URLSession, didReceive challenge: URLAuthenticationChallenge, completionHandler: @escaping (URLSession.AuthChallengeDisposition, URLCredential?) -> Void) {\n    guard let trust = challenge.protectionSpace.serverTrust, SecTrustEvaluateWithError(trust, nil) else { return completionHandler(.cancelAuthenticationChallenge, nil) }\n    completionHandler(.useCredential, URLCredential(trust: trust))\n}\n')
+  },
+  {
+    ruleIds: [9306],
+    name: 'MOB-SEC-06 WebView file-URL access enabled',
+    detects: f('app/src/main/java/com/acme/HelpActivity.kt', 'webView.settings.javaScriptEnabled = true\nwebView.settings.allowUniversalAccessFromFileURLs = true\nwebView.loadUrl("file:///android_asset/help.html")\n'),
+    ignores: f('app/src/main/java/com/acme/HelpActivity.kt', 'webView.settings.javaScriptEnabled = true\nwebView.loadUrl("https://appassets.androidplatform.net/assets/help.html")\n')
+  },
+  {
+    ruleIds: [9309],
+    name: 'MOB-SEC-09 Kotlin AES defaults to ECB',
+    detects: f('app/src/main/java/com/acme/crypto/Box.kt', 'fun encrypt(key: SecretKey, data: ByteArray): ByteArray {\n    val cipher = Cipher.getInstance("AES")\n    cipher.init(Cipher.ENCRYPT_MODE, key)\n    return cipher.doFinal(data)\n}\n'),
+    ignores: f('app/src/main/java/com/acme/crypto/Box.kt', 'fun encrypt(key: SecretKey, data: ByteArray): ByteArray {\n    val cipher = Cipher.getInstance("AES/GCM/NoPadding")\n    cipher.init(Cipher.ENCRYPT_MODE, key)\n    return cipher.iv + cipher.doFinal(data)\n}\n')
+  },
+  {
+    ruleIds: [9310],
+    name: 'MOB-SEC-10 deep-link URL loaded into a WebView',
+    detects: f('app/src/main/java/com/acme/WebActivity.kt', 'override fun onCreate(savedInstanceState: Bundle?) {\n    super.onCreate(savedInstanceState)\n    val target = intent.dataString\n    webView.loadUrl(target!!)\n}\n'),
+    ignores: f('app/src/main/java/com/acme/WebActivity.kt', 'override fun onCreate(savedInstanceState: Bundle?) {\n    super.onCreate(savedInstanceState)\n    val target = intent.data ?: return\n    if (target.scheme == "https" && target.host in setOf("acme.com", "help.acme.com")) webView.loadUrl(target.toString())\n}\n')
+  },
+  {
+    ruleIds: [9311],
+    name: 'MOB-SEC-11 manifest marked debuggable (debug source set is fine)',
+    detects: f('app/src/main/AndroidManifest.xml', '<manifest xmlns:android="http://schemas.android.com/apk/res/android">\n    <application android:debuggable="true" android:label="Acme" />\n</manifest>\n'),
+    ignores: f('app/src/debug/AndroidManifest.xml', '<manifest xmlns:android="http://schemas.android.com/apk/res/android">\n    <application android:debuggable="true" android:label="Acme" />\n</manifest>\n')
+  },
+  {
+    ruleIds: [9312],
+    name: 'MOB-SEC-12 token written to Logcat',
+    detects: f('app/src/main/java/com/acme/auth/Login.kt', 'fun onLoggedIn(session: Session) {\n    Log.d(TAG, "logged in, token=${session.accessToken}")\n}\n'),
+    ignores: f('app/src/main/java/com/acme/auth/Login.kt', 'fun onLoggedIn(session: Session) {\n    Log.d(TAG, "logged in as ${session.userId}")\n    if (BuildConfig.DEBUG) {\n        Log.d(TAG, "token=${session.accessToken}")\n    }\n}\n')
+  },
+  {
+    ruleIds: [9312],
+    name: 'MOB-SEC-12 iOS prints the auth token',
+    detects: f('Acme/Auth/LoginViewModel.swift', 'func didLogin(_ session: Session) {\n    print("login ok \\(session.accessToken)")\n}\n'),
+    ignores: f('Acme/Auth/LoginViewModel.swift', 'func didLogin(_ session: Session) {\n    print("login ok \\(session.userId)")\n}\n')
+  },
+  {
+    ruleIds: [9318],
+    name: 'MOB-SEC-18 password written to a plist file',
+    detects: f('Acme/Storage/ProfileStore.swift', 'let data = NSMutableDictionary()\ndata.setValue(username, forKey: "username")\ndata.setValue(password, forKey: "password")\ndata.write(toFile: path, atomically: true)\n'),
+    ignores: f('Acme/Storage/ProfileStore.swift', 'let data = NSMutableDictionary()\ndata.setValue(username, forKey: "username")\ndata.write(toFile: path, atomically: true)\ntry keychain.set(password, key: "password")\n')
+  },
+  {
+    ruleIds: [9313],
+    name: 'MOB-SEC-13 Keychain item accessible always',
+    detects: f('Acme/Storage/Keychain.swift', 'let query: [String: Any] = [\n    kSecClass as String: kSecClassGenericPassword,\n    kSecAttrAccessible as String: kSecAttrAccessibleAlways,\n    kSecValueData as String: token,\n]\n'),
+    ignores: f('Acme/Storage/Keychain.swift', 'let query: [String: Any] = [\n    kSecClass as String: kSecClassGenericPassword,\n    kSecAttrAccessible as String: kSecAttrAccessibleAfterFirstUnlockThisDeviceOnly,\n    kSecValueData as String: token,\n]\n')
+  },
+  {
+    ruleIds: [9314],
+    name: 'MOB-SEC-14 SQLite rawQuery built by concatenation',
+    detects: f('app/src/main/java/com/acme/db/NotesDao.kt', 'fun find(title: String): Cursor =\n    db.rawQuery("SELECT * FROM notes WHERE title = \'" + title + "\'", null)\n'),
+    ignores: f('app/src/main/java/com/acme/db/NotesDao.kt', 'fun find(title: String): Cursor =\n    db.rawQuery("SELECT * FROM notes WHERE title = ?", arrayOf(title))\n')
+  },
+  {
+    ruleIds: [9315],
+    name: 'MOB-SEC-15 React Native token in AsyncStorage',
+    detects: f('src/auth/session.ts', "import AsyncStorage from '@react-native-async-storage/async-storage';\nexport async function saveSession(token: string) {\n  await AsyncStorage.setItem('accessToken', token);\n}\n"),
+    ignores: f('src/auth/session.ts', "import * as SecureStore from 'expo-secure-store';\nimport AsyncStorage from '@react-native-async-storage/async-storage';\nexport async function saveSession(token: string) {\n  await SecureStore.setItemAsync('accessToken', token);\n  await AsyncStorage.setItem('onboardingDone', 'true');\n}\n")
+  },
+  {
+    ruleIds: [9316],
+    name: 'MOB-SEC-16 world-readable preferences',
+    detects: f('app/src/main/java/com/acme/Prefs.java', 'SharedPreferences prefs = context.getSharedPreferences("session", Context.MODE_WORLD_READABLE);\n'),
+    ignores: f('app/src/main/java/com/acme/Prefs.java', 'SharedPreferences prefs = context.getSharedPreferences("session", Context.MODE_PRIVATE);\n')
+  },
+  {
+    ruleIds: [9317],
+    name: 'MOB-SEC-17 FileProvider root-path',
+    detects: f('app/src/main/res/xml/file_paths.xml', '<paths>\n    <root-path name="root" path="." />\n</paths>\n'),
+    ignores: f('app/src/main/res/xml/file_paths.xml', '<paths>\n    <cache-path name="shared" path="shared/" />\n</paths>\n')
+  },
   {
     ruleIds: [28007],
     name: 'NEXT-SB-07 SECURITY DEFINER delete granted to clients; a guard helper (is_admin) counts as a caller check',

@@ -28,6 +28,7 @@ import { evaluateGoMicroservicesRules } from '../rules/go-microservices-rules';
 import { evaluateTenantIsolationRules } from '../rules/tenant-isolation-rules';
 import { evaluateCloudSecurityRules } from '../rules/cloud-security-rules';
 import { evaluateMobileSecurityRules } from '../rules/mobile-security-rules';
+import { evaluateMobileNativeRules } from '../rules/mobile-native-rules';
 import { evaluateEventStreamingRules } from '../rules/event-streaming-rules';
 import { evaluateCicdSupplyChainRules } from '../rules/cicd-supplychain-rules';
 import { evaluateRustSystemsRules } from '../rules/rust-systems-rules';
@@ -222,6 +223,8 @@ export const RULE_ENGINES: ReadonlyArray<{ evaluate: RuleEngine; scanRawContent?
   { evaluate: evaluateCloudSecurityRules },
   // 21. Mobile App Security & Integrity Gate (MOB-SEC-01 to 50, Rule IDs 9301-9350)
   { evaluate: evaluateMobileSecurityRules },
+  // Native iOS / Android and React Native: TLS, WebView, deep links, logs, storage (MOB-SEC-04..18, Rule IDs 9304-9318)
+  { evaluate: evaluateMobileNativeRules },
   // 22. Kafka & Event Streaming Hardening (EVENT-01 to 50, Rule IDs 9401-9450)
   { evaluate: evaluateEventStreamingRules },
   // 23. CI/CD Pipeline & Supply Chain Hardening (CICD-SEC-01 to 50, Rule IDs 9501-9550)

@@ -25,7 +25,8 @@ export function evaluateMobileSecurityRules(file: CodeFile, lines: string[], cle
     const ts = new Date().toLocaleTimeString();
     // MOB-SEC-01: Insecure Local Data Storage in Cleartext SharedPreferences
     const r9301Idx = /EncryptedSharedPreferences|MasterKey|Keychain/.test(cleanContent) ? -1
-        : lines.findIndex(l => /\.putString\(\s*["'](?:auth[_-]?token|access[_-]?token|refresh[_-]?token|id[_-]?token|session[_-]?token|jwt|password|api[_-]?key)["']/i.test(l) ||
+        // Bundles, Intents and Parcels also have putString; only SharedPreferences writes are persisted to disk
+        : lines.findIndex(l => !/\b(?:outState|savedInstanceState|bundle|args|arguments|extras|intent|result|data|parcel)\??\.putString\(/i.test(l) && /\.putString\(\s*["'](?:auth[_-]?token|access[_-]?token|refresh[_-]?token|id[_-]?token|session[_-]?token|jwt|password|api[_-]?key)["']/i.test(l) ||
             /UserDefaults\.standard\.set\([^)]*forKey:\s*"(?:auth[_-]?token|access[_-]?token|refresh[_-]?token|id[_-]?token|session[_-]?token|jwt|password|api[_-]?key)"/i.test(l));
     if (r9301Idx !== -1) {
         const matchLineIdx = r9301Idx;
@@ -51,7 +52,11 @@ export function evaluateMobileSecurityRules(file: CodeFile, lines: string[], cle
         logs.push(`[${ts}] [MOB SEC] Found MOB-SEC-01: Insecure Local Data Storage in Cleartext SharedPreferences at ${file.path}:${lineNum}`);
     }
     // MOB-SEC-02: Hardcoded API Keys or OAuth Secrets in Mobile App Bundle
-    const r9302Idx = lines.findIndex(l => /\b(?:let|var|val|String)\s+\w*(?:client_?secret|api_?secret|secret_?key|private_?key)\w*\s*(?::\s*String)?\s*=\s*"[A-Za-z0-9_\-]{20,}"/i.test(l));
+    // Not when the constant holds a key's name (privateKeyName = "notification-private-key-base64"): word-like values are labels
+    const r9302Idx = lines.findIndex(l => {
+        const m = l.match(/\b(?:let|var|val|String)\s+(\w*(?:client_?secret|api_?secret|secret_?key|private_?key)\w*)\s*(?::\s*String)?\s*=\s*"([A-Za-z0-9_\-]{20,})"/i);
+        return Boolean(m && !/(?:Name|Identifier|Label|Alias|Tag|Account|Service|Path|File)$/.test(m[1]) && !/^[a-z]+(?:[-_.][a-z0-9]+)+$/.test(m[2]));
+    });
     if (r9302Idx !== -1) {
         const matchLineIdx = r9302Idx;
         const lineNum = matchLineIdx !== -1 ? matchLineIdx + 1 : 1;
@@ -109,7 +114,20 @@ export function evaluateMobileSecurityRules(file: CodeFile, lines: string[], cle
             tag += lines[j] + ' ';
             if (/>/.test(lines[j])) break;
         }
-        return /android:exported\s*=\s*"true"/.test(tag) && !/android:(?:readP|writeP|p)ermission\s*=/.test(tag);
+        if (!/android:exported\s*=\s*"true"/.test(tag) || /android:(?:readP|writeP|p)ermission\s*=/.test(tag)) return false;
+        // Components that only answer system actions (boot, media buttons, MediaBrowser, widgets) must be exported
+        // for the platform to reach them; that is not an open IPC surface.
+        const block: string[] = [];
+        for (let j = i; j < Math.min(lines.length, i + 40); j++) {
+            block.push(lines[j]);
+            if (j > i && /<\/(?:service|receiver|provider)>/.test(lines[j])) break;
+            if (j === i && /\/>\s*$/.test(tag.trim())) break;
+        }
+        // tools:ignore="ExportedService" etc.: the developer reviewed the Android lint warning and kept it on purpose
+        if (/tools:ignore\s*=\s*"[^"]*Exported(?:Service|Receiver|ContentProvider)/.test(block.join(' '))) return false;
+        const actions = [...block.join('\n').matchAll(/<action\s+android:name\s*=\s*"([^"]+)"/g)].map((m) => m[1]);
+        const systemSent = /^(?:androidx?\.|com\.google\.android\.gms\.|com\.google\.firebase\.|com\.google\.android\.c2dm\.|com\.\w+\.intent\.action\.QUICKBOOT_POWERON$)/;
+        return !(actions.length > 0 && actions.every((a) => systemSent.test(a)));
     });
     if (r9305Idx !== -1) {
         const matchLineIdx = r9305Idx;
