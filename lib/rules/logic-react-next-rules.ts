@@ -299,10 +299,12 @@ export function evaluateLogicReactNextRules(file: CodeFile, lines: string[], cle
   const directive = /^\s*(['"])use (client|server)\1/.exec(c);
   const isClient = directive?.[2] === 'client';
   const isServerFile = directive?.[2] === 'server';
+  // pages/ is the Next.js Pages Router only in a Next.js app; Vite / CRA SPAs also keep routes in src/pages and never render on a server
+  const nextPages = NEXT_PAGES.test(path) && !(context && context.packageMajors.size > 0 && !context.packageMajors.has('next'));
   const inApp = NEXT_APP.test(path) && !NEXT_PAGES.test(path);
   const appEntry = inApp && /(?:^|\/)(?:page|layout|template|not-found|default|loading)\.[jt]sx?$/.test(path);
   // Code that is rendered on the server and then hydrated in the browser
-  const hydrates = isClient || (NEXT_PAGES.test(path) && !/(?:^|\/)pages\/api\//.test(path) && /\.[jt]sx$/.test(path));
+  const hydrates = isClient || (nextPages && !/(?:^|\/)pages\/api\//.test(path) && /\.[jt]sx$/.test(path));
   const usesReact = /from\s+['"]react['"]|\buse(?:State|Effect)\s*\(|<[A-Za-z]/.test(m);
 
   const comps = usesReact ? findComponents(m) : [];
@@ -327,7 +329,7 @@ export function evaluateLogicReactNextRules(file: CodeFile, lines: string[], cle
   if (hydrates) {
     // Only route entries are provably server-rendered (a nested component may live in a closed modal, a tooltip or
     // behind client-fetched data), and only up to the first data hook or early-return gate
-    const ssrEntry = (isClient && appEntry) || (NEXT_PAGES.test(path) && !/(?:^|\/)pages\/(?:api|_document)\b/.test(path));
+    const ssrEntry = (isClient && appEntry) || (nextPages && !/(?:^|\/)pages\/(?:api|_document)\b/.test(path));
     for (const k of comps.filter((x) => !x.hook)) {
       const scope = rs.slice(k.open, k.close);
       const earlyReturnBefore = (pos: number) => [...rsStrict.slice(k.open, pos).matchAll(/\breturn\b/g)].some((r) => {
@@ -810,7 +812,7 @@ export function evaluateLogicReactNextRules(file: CodeFile, lines: string[], cle
     }
 
     // BUG-50 / BUG-51: className contradictions and fixed desktop widths
-    const pageFile = /\.[jt]sx$/.test(path) && ((inApp && /(?:^|\/)(?:page|layout|template|loading|not-found)\.[jt]sx$/.test(path)) || (NEXT_PAGES.test(path) && !/(?:^|\/)pages\/(?:api|_)/.test(path)));
+    const pageFile = /\.[jt]sx$/.test(path) && ((inApp && /(?:^|\/)(?:page|layout|template|loading|not-found)\.[jt]sx$/.test(path)) || (nextPages && !/(?:^|\/)pages\/(?:api|_)/.test(path)));
     for (const x of c.matchAll(/\bclassName\s*=\s*(?:\{\s*)?(?:cn\(|clsx\(|twMerge\()?\s*(["'`])([^"'`\n]*)\1/g)) {
       const tokens = x[2].split(/\s+/).filter(Boolean);
       const off = x.index!;
