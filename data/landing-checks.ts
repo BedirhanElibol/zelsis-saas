@@ -111,16 +111,62 @@ export default async function OrdersPage() {
 `,
   },
   {
-    title: 'RLS that trusts user-editable metadata',
-    description: 'user_metadata can be changed by the signed-in user, so a policy that grants admin access from it lets anyone make themselves admin.',
-    ruleId: 28004,
-    code: 'NEXT-SB-04',
-    path: 'supabase/migrations/20250101_profiles.sql',
-    bad: `create policy "Admins read all profiles" on public.profiles
-  for select using ((auth.jwt() -> 'user_metadata' ->> 'role') = 'admin');
+    title: 'Admin check on a token nobody verified',
+    description: 'Express middleware reads the role from jwt.decode(), which only base64-decodes the token. Anyone can sign their own token with role "admin".',
+    ruleId: 39,
+    code: 'RULE-39',
+    path: 'src/middleware/auth.js',
+    bad: `const jwt = require('jsonwebtoken');
+
+module.exports = function requireAdmin(req, res, next) {
+  const token = req.headers.authorization.split(' ')[1];
+  const user = jwt.decode(token);
+  if (user.role !== 'admin') return res.status(403).end();
+  req.user = user;
+  next();
+};
 `,
-    good: `create policy "Admins read all profiles" on public.profiles
-  for select using ((auth.jwt() -> 'app_metadata' ->> 'role') = 'admin');
+    good: `const jwt = require('jsonwebtoken');
+
+module.exports = function requireAdmin(req, res, next) {
+  const token = req.headers.authorization.split(' ')[1];
+  const user = jwt.verify(token, process.env.JWT_SECRET, { algorithms: ['HS256'] });
+  if (user.role !== 'admin') return res.status(403).end();
+  req.user = user;
+  next();
+};
+`,
+  },
+  {
+    title: 'Delete endpoint anyone can call',
+    description: 'A FastAPI DELETE route with a database session but no user dependency: anyone who can reach the API can delete any project by id.',
+    ruleId: 28838,
+    code: 'GAP-38',
+    path: 'app/api/routes/projects.py',
+    bad: `from fastapi import APIRouter, Depends
+from sqlalchemy.orm import Session
+from app.db import get_db
+from app.models import Project
+
+router = APIRouter()
+
+@router.delete("/projects/{project_id}")
+def delete_project(project_id: int, db: Session = Depends(get_db)):
+    db.query(Project).filter(Project.id == project_id).delete()
+    db.commit()
+`,
+    good: `from fastapi import APIRouter, Depends
+from sqlalchemy.orm import Session
+from app.db import get_db
+from app.auth import get_current_user
+from app.models import Project, User
+
+router = APIRouter()
+
+@router.delete("/projects/{project_id}")
+def delete_project(project_id: int, db: Session = Depends(get_db), current_user: User = Depends(get_current_user)):
+    db.query(Project).filter(Project.id == project_id, Project.owner_id == current_user.id).delete()
+    db.commit()
 `,
   },
   {
@@ -149,29 +195,57 @@ export default async function OrdersPage() {
 `,
   },
   {
-    title: 'Icon button screen readers cannot name',
-    description: 'Beyond security: an icon-only button with no accessible name is announced as just "button" (WCAG 4.1.2).',
-    ruleId: 28602,
-    code: 'A11Y-02',
-    path: 'components/settings-dialog.tsx',
-    bad: `import { X } from 'lucide-react';
+    title: 'Users who can make themselves admin',
+    description: 'permit! lets the request set every column, so a user updating their profile can also send admin=true (Rails mass assignment).',
+    ruleId: 18032,
+    code: 'RUBY-SEC-02',
+    path: 'app/controllers/users_controller.rb',
+    bad: `class UsersController < ApplicationController
+  def update
+    @user = current_user
+    @user.update(params.require(:user).permit!)
+    redirect_to @user
+  end
+end
+`,
+    good: `class UsersController < ApplicationController
+  def update
+    @user = current_user
+    @user.update(params.require(:user).permit(:name, :email, :avatar))
+    redirect_to @user
+  end
+end
+`,
+  },
+  {
+    title: 'SQL built from a query string',
+    description: 'A Go handler formats the request value into the SQL text, so a crafted email reads or changes any row in the database.',
+    ruleId: 24101,
+    code: 'CORE-01',
+    path: 'handlers/users.go',
+    bad: `package handlers
 
-export function DialogHeader({ onClose }: { onClose: () => void }) {
-  return (
-    <button onClick={onClose} className="rounded p-1.5">
-      <X size={18} />
-    </button>
-  );
+import (
+	"fmt"
+	"github.com/gin-gonic/gin"
+)
+
+func FindUser(c *gin.Context) {
+	email := c.Query("email")
+	rows, _ := db.Query(fmt.Sprintf("SELECT id, name FROM users WHERE email = '%s'", email))
+	defer rows.Close()
+	c.JSON(200, rows)
 }
 `,
-    good: `import { X } from 'lucide-react';
+    good: `package handlers
 
-export function DialogHeader({ onClose }: { onClose: () => void }) {
-  return (
-    <button onClick={onClose} aria-label="Close settings" className="rounded p-1.5">
-      <X size={18} aria-hidden="true" />
-    </button>
-  );
+import "github.com/gin-gonic/gin"
+
+func FindUser(c *gin.Context) {
+	email := c.Query("email")
+	rows, _ := db.Query("SELECT id, name FROM users WHERE email = $1", email)
+	defer rows.Close()
+	c.JSON(200, rows)
 }
 `,
   },

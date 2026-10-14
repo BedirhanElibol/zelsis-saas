@@ -89,7 +89,7 @@ export const TierDetailsModal: React.FC<TierDetailsModalProps> = ({
               </h2>
             </div>
             <p className="text-xs text-zinc-400">
-              Clear breakdown of quotas, operational paywalls, and feature availability across Free, Pro, and Enterprise tiers.
+              Clear breakdown of quotas, operational paywalls, and feature availability across the Free, Pro and Team plans.
             </p>
           </div>
           <button
@@ -148,7 +148,7 @@ export const TierDetailsModal: React.FC<TierDetailsModalProps> = ({
                 </a>
               ) : currentTier === 'Enterprise' ? (
                 <div className="w-full py-2 px-3 rounded-lg bg-white/5 border border-white/10 text-zinc-400 font-medium text-xs text-center">
-                  Included in Enterprise
+                  Included in Team
                 </div>
               ) : (
                 <button

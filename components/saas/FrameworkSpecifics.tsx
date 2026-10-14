@@ -9,12 +9,13 @@ export function FrameworkSpecifics() {
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
         <div className="max-w-3xl mb-14">
           <h2 className="text-3xl font-bold tracking-tight text-white sm:text-4xl">
-            Knows how Next.js, Supabase and AI apps actually break.
+            Knows how real apps break, not just generic patterns.
           </h2>
           <p className="mt-4 text-lg text-zinc-400">
-            Generic scanners look for generic patterns. Zelsis also understands Server Actions, the Supabase service-role key,
-            RLS metadata, the Next.js data cache, payment webhooks and MCP tools. Every example below is scanned by our test
-            suite on each release, so what you see is what the engine catches.
+            Payment webhooks that pay twice, caches that leak one user&apos;s data to another, admin checks anyone can pass,
+            endpoints nobody protected. Zelsis checks for the logic mistakes behind real incidents in Node, Python, Go, Ruby,
+            PHP and Java apps. Every example below is scanned by our test suite on each release, so what you see is what the
+            engine catches.
           </p>
         </div>
 

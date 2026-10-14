@@ -28,9 +28,9 @@ interface ComparisonCategory {
 
 const planFor = (id: string) => ZELSIS_PRICING_PLANS.find((p) => p.id === id)!;
 const MOBILE_PLANS = [
-  { tier: 'Free' as const, plan: planFor('free') },
-  { tier: 'Pro' as const, plan: planFor('zelsis-core') },
-  { tier: 'Enterprise' as const, plan: planFor('vibecare') },
+  { tier: 'Free' as const, label: 'Free', plan: planFor('free') },
+  { tier: 'Pro' as const, label: 'Pro', plan: planFor('zelsis-core') },
+  { tier: 'Enterprise' as const, label: 'Team', plan: planFor('vibecare') },
 ];
 
 export const ComparisonTable: React.FC = () => {
@@ -109,18 +109,18 @@ export const ComparisonTable: React.FC = () => {
 
   const categories: ComparisonCategory[] = [
     {
-      title: 'Audit Capacity & Concurrency',
+      title: 'Scans & Projects',
       items: [
         {
-          name: 'Monthly Live Scans',
-          description: 'Maximum pre-flight audits performed per monthly billing cycle',
+          name: 'Scans',
+          description: 'Repository and website scans per month',
           free: 'Unlimited Scans',
-          pro: 'Unlimited Scans (fair-use rate limits)',
-          enterprise: 'Unlimited Scans (fair-use rate limits)'
+          pro: 'Unlimited Scans',
+          enterprise: 'Unlimited Scans'
         },
         {
-          name: 'Repository Scope & Privacy',
-          description: 'Supported repository types and permission boundary',
+          name: 'Saved Projects',
+          description: 'Repositories and sites you keep in the dashboard, public or private',
           free: '3 saved projects (public or private)',
           pro: 'Unlimited saved projects',
           enterprise: 'Unlimited saved projects'
@@ -128,11 +128,11 @@ export const ComparisonTable: React.FC = () => {
       ]
     },
     {
-      title: 'Security & Inspection Depth',
+      title: 'What Gets Checked',
       items: [
         {
-          name: 'Static & Pattern-Based Rule Inventory',
-          description: 'Coverage of security vulnerabilities, misconfigurations, and anti-patterns',
+          name: 'Rules',
+          description: 'Security, logic, dependency and configuration checks',
           free: `All ${formatCount(RULE_COUNTS.gating)} active rules`,
           pro: `All ${formatCount(RULE_COUNTS.gating)} active rules`,
           enterprise: `All ${formatCount(RULE_COUNTS.gating)} active rules`
@@ -146,21 +146,21 @@ export const ComparisonTable: React.FC = () => {
         },
         {
           name: 'Secret & API Key Leak Detection',
-          description: 'Scanning engine for hardcoded tokens, AWS keys, and private credentials',
+          description: 'Hardcoded tokens, cloud keys and private credentials',
           free: 'Same secret rules on every plan',
           pro: 'Same secret rules on every plan',
           enterprise: 'Same secret rules on every plan'
         },
         {
-          name: 'Repository Size Scalability',
-          description: 'Analysis support for large multi-package and monorepo codebases',
+          name: 'Large Repositories',
+          description: 'Monorepos and multi-package codebases',
           free: 'Same engine on every plan',
           pro: 'Same engine on every plan',
           enterprise: 'Same engine on every plan'
         },
         {
-          name: 'Source Code Retention',
-          description: CODE_RETENTION_STATEMENT,
+          name: 'Your Code',
+          description: 'How long scanned code is kept',
           free: `Source not stored; snippets erased after ${CODE_SNIPPET_RETENTION_DAYS} days`,
           pro: `Source not stored; snippets erased after ${CODE_SNIPPET_RETENTION_DAYS} days`,
           enterprise: `Source not stored; snippets erased after ${CODE_SNIPPET_RETENTION_DAYS} days`
@@ -168,26 +168,26 @@ export const ComparisonTable: React.FC = () => {
       ]
     },
     {
-      title: 'AI Remediation & Surgical Diffs',
+      title: 'Fixing Findings',
       items: [
         {
-          name: 'Surgical Unified Git Diffs',
-          description: 'Visual before/after line-by-line code replacement for every detected flaw',
-          free: 'Line Numbers only (No Diffs)',
-          pro: 'Interactive Unified Git Diffs',
-          enterprise: 'Interactive Unified Git Diffs'
+          name: 'Before / After Diffs',
+          description: 'A suggested code change for every finding',
+          free: 'Line numbers only',
+          pro: 'Included',
+          enterprise: 'Included'
         },
         {
-          name: 'Context-Engineered AI Prompts',
+          name: 'AI Fix Prompts',
           description: 'Tailored prompts with the CWE (code) or CVE (dependency) for any AI coding assistant',
           free: '5 Fix Prompts / month',
-          pro: 'Unlimited 1-Click Fix Prompts',
-          enterprise: 'Unlimited 1-Click Fix Prompts'
+          pro: 'Unlimited',
+          enterprise: 'Unlimited'
         },
       ]
     },
     {
-      title: 'CI/CD & Production Gates',
+      title: 'CI Release Gate',
       items: [
         {
           name: 'CI Release Gate',
@@ -206,10 +206,10 @@ export const ComparisonTable: React.FC = () => {
       ]
     },
     {
-      title: 'Executive Compliance & Reports',
+      title: 'Reports',
       items: [
         {
-          name: 'PDF Readiness Report',
+          name: 'PDF Report',
           description: 'Downloadable PDF of the gate result, score and findings for stakeholders',
           free: false,
           pro: 'PDF Report Export',
@@ -223,20 +223,20 @@ export const ComparisonTable: React.FC = () => {
           enterprise: '1-Click Jira & Linear Markdown'
         },
         {
-          name: 'Audit History Retention',
-          description: 'Time window for historical telemetry, scan logs, and trend analytics',
-          free: '7 Days Retention',
-          pro: '90 Days Historical Telemetry',
-          enterprise: 'Unlimited Audit History & Compliance Logs'
+          name: 'Scan History',
+          description: 'How long past scans and trends stay in the dashboard',
+          free: '7 days',
+          pro: '90 days',
+          enterprise: 'Unlimited'
         }
       ]
     },
     {
-      title: 'Operational SLA & Support',
+      title: 'Support & Team',
       items: [
         {
-          name: 'Technical Support Channel',
-          description: 'Direct engineering support and issue escalation channel',
+          name: 'Support',
+          description: 'Answered by the people who build Zelsis',
           free: SUPPORT_TERMS.Free,
           pro: SUPPORT_TERMS.Pro,
           enterprise: SUPPORT_TERMS.Enterprise
@@ -313,7 +313,7 @@ export const ComparisonTable: React.FC = () => {
 
         {/* Mobile: stacked plan cards (the matrix needs ~760px) */}
         <div className="md:hidden flex flex-col gap-4">
-          {MOBILE_PLANS.map(({ tier, plan }) => {
+          {MOBILE_PLANS.map(({ tier, label, plan }) => {
             const isCurrent = isLoggedIn && currentTier === tier;
             return (
               <div
@@ -321,7 +321,7 @@ export const ComparisonTable: React.FC = () => {
                 className={`rounded-2xl border p-5 flex flex-col gap-4 bg-[#121216] ${plan.isPopular ? 'border-white/30' : 'border-white/10'}`}
               >
                 <div className="flex items-baseline justify-between gap-3">
-                  <h3 className="text-lg font-bold text-white">{tier}</h3>
+                  <h3 className="text-lg font-bold text-white">{label}</h3>
                   <div className="text-2xl font-extrabold text-white font-mono">
                     ${plan.priceMonthly}
                     <span className="text-sm font-normal text-zinc-400"> / month</span>
@@ -348,7 +348,7 @@ export const ComparisonTable: React.FC = () => {
                       plan.isPopular ? 'bg-emerald-500 text-black hover:bg-emerald-400' : 'bg-white/10 text-white border border-white/20 hover:bg-white/15'
                     }`}
                   >
-                    {tier === 'Free' ? 'Start free' : `Get ${tier}`}
+                    {tier === 'Free' ? 'Start free' : `Get ${label}`}
                   </button>
                 )}
               </div>
@@ -446,7 +446,7 @@ export const ComparisonTable: React.FC = () => {
                       ) : isLoggedIn && currentTier === 'Enterprise' ? (
                         <div className="flex flex-col gap-1 mt-2">
                           <div className="w-full min-h-11 px-3 rounded-lg font-sans bg-white/5 border border-white/10 text-zinc-400 text-sm font-semibold">
-                            Included in Enterprise
+                            Included in Team
                           </div>
                           <span className="text-[10px] text-zinc-400">All Pro features active</span>
                         </div>
@@ -579,8 +579,8 @@ export const ComparisonTable: React.FC = () => {
           {/* Bottom Bar CTA */}
           <div className="p-6 bg-[#0E0E12] border-t border-white/10 flex flex-col sm:flex-row items-center justify-between gap-4">
             <div className="text-xs font-mono text-zinc-400 text-center sm:text-left">
-              <span>Need more than {ENTERPRISE_SEAT_LIMIT} seats, a custom contract or a security questionnaire?</span>
-              <strong className="text-white block sm:inline sm:ml-1">Enterprise: contact us.</strong>
+              <span>Every plan runs the same rules.</span>
+              <strong className="text-white block sm:inline sm:ml-1">Paid plans remove the limits and add the CI gate.</strong>
             </div>
             <div className="flex items-center gap-3">
               <button
@@ -626,8 +626,8 @@ export const ComparisonTable: React.FC = () => {
         {/* Custom Enterprise Inquiries Banner */}
         <div className="p-4 sm:p-6 rounded-xl border border-white/10 bg-[#0E0E12] flex flex-col sm:flex-row items-center justify-between gap-4 text-center sm:text-left">
           <div>
-            <h3 className="text-sm font-bold text-white mb-1">Looking for custom security requirements or bespoke invoicing?</h3>
-            <p className="text-xs text-zinc-400">We offer custom organization onboarding, volume team pricing, and security questionnaire assistance.</p>
+            <h3 className="text-sm font-bold text-white mb-1">Enterprise: more than {ENTERPRISE_SEAT_LIMIT} seats or a custom contract?</h3>
+            <p className="text-xs text-zinc-400">We set up onboarding, volume pricing, invoicing and help with your security questionnaire.</p>
           </div>
           <a
             href={contactMailto('Enterprise inquiry')}

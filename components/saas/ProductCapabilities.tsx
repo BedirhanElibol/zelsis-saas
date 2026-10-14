@@ -39,85 +39,85 @@ export const ProductCapabilities: React.FC = () => {
   const capabilities: ProductCapability[] = [
     {
       id: 'rules',
-      badge: 'RULE TAXONOMY',
-      title: 'Release rules that know your stack',
-      subtitle: 'Continuous verification across OWASP Top 10, database isolation, and cloud architecture.',
+      badge: 'RULES',
+      title: 'Rules that know your stack',
+      subtitle: 'OWASP Top 10, database access rules and cloud config, checked on every pull request.',
       description:
-        'Audit your codebase against an extensive taxonomy of deterministic static & lexical rules. Catch known OWASP Top 10 patterns, check database security policies, flag wildcard CORS endpoints and containers that run as root before they ship.',
+        'Over a thousand rules for JavaScript, Python, Go, Ruby, PHP and Java apps catch injection, broken auth, leaked secrets, permissive database policies, wildcard CORS and containers that run as root before they ship.',
       image: '/images/security_rules.png',
       alt: 'Zelsis Release Gate Rule Catalog and Policy Configurator',
-      tag: 'POLICY ENGINE',
+      tag: 'RULES',
       architecturePills: [
         'OWASP Top 10:2025',
-        'PostgreSQL Row Level Security',
+        'Database access rules (RLS, Firebase)',
         <span key="stack">
           <a href="https://github.com/vercel/nextjs-subscription-payments" target="_blank" rel="noreferrer" className="hover:text-emerald-400 hover:underline transition-colors">Next.js</a>,{' '}
           <a href="https://github.com/django/djangoproject.com" target="_blank" rel="noreferrer" className="hover:text-emerald-400 hover:underline transition-colors">Django</a>,{' '}
           <a href="https://github.com/fastapi/full-stack-fastapi-template" target="_blank" rel="noreferrer" className="hover:text-emerald-400 hover:underline transition-colors">FastAPI</a> &amp;{' '}
           <a href="https://github.com/gothinkster/golang-gin-realworld-example-app" target="_blank" rel="noreferrer" className="hover:text-emerald-400 hover:underline transition-colors">Go</a>
         </span>,
-        'Docker & K8s Security Context'
+        'Docker, Kubernetes & Terraform'
       ],
       bulletPoints: [
-        'Deterministic, non-LLM static detection engine for high-fidelity alerts',
-        'Granular severity controls: Configure CRITICAL, HIGH, MEDIUM per repository',
-        'Clear explanations mapped to CWE standards and security best practices'
+        'No AI guessing: the same code always gets the same result',
+        'Per-repository policy: ignore rules or paths and choose how strict the gate is',
+        'Every finding explained and mapped to its CWE'
       ]
     },
     {
       id: 'findings',
-      badge: 'SURGICAL CODE TRIAGE',
-      title: 'Line-by-Line Vulnerability Triage & Context',
-      subtitle: 'Pinpoint vulnerabilities down to the exact line number with 1-click AI remediation prompts.',
+      badge: 'FINDINGS',
+      title: 'The exact line, and how to fix it',
+      subtitle: 'Every finding points to the file and line, with a fix you can paste into your AI assistant.',
       description:
-        'Every detected flaw is isolated with its syntax context, risk severity, and remediation guidance. Review exact line-by-line diffs and copy automated AI prompts to remediate issues instantly in your AI coding assistant.',
+        'Each finding shows the code around it, how severe it is and why it matters. Review a before / after diff, or copy a fix prompt into Claude, ChatGPT or Cursor and review the change like any other.',
       image: '/images/audit_findings.png',
       alt: 'Zelsis Vulnerability Triage and Line-by-Line Code Findings',
-      tag: 'SURGICAL DIFFS',
+      tag: 'FIXES',
       architecturePills: [
-        'Precise Line Number Isolation',
-        '1-Click AI Fix Prompts',
-        'CWE Risk Explanations',
-        'Exportable JSON & CSV'
+        'Exact file and line',
+        'AI fix prompts',
+        'CWE explanations',
+        'Export to PDF, JSON, CSV, SARIF'
       ],
       bulletPoints: [
         'Exact line numbers with syntax-highlighted code context',
-        'Pre-engineered AI prompts ready for any AI coding assistant',
+        'Fix prompts that work with any AI coding assistant',
         'Every finding tagged verified or suggestion, so you fix what is proven first'
       ]
     },
     {
       id: 'sandbox',
-      badge: 'ZERO-INSTALL REPL',
-      title: 'Interactive In-Memory Security Sandbox',
-      subtitle: 'Test production code snippets against clearance rules in live browser memory.',
+      badge: 'TRY IT',
+      title: 'Try the rules in your browser',
+      subtitle: 'Paste a snippet and see what Zelsis flags, before you push it.',
       description:
-        'Experiment with production snippets before pushing to version control. Test API routes, Dockerfiles, and React components against the full Zelsis engine without installing any local packages or daemons.',
+        'Check an API route, a Dockerfile or a component against the same engine the scans use. It runs in your browser, so nothing is installed and the snippet never leaves your machine.',
       image: '/images/vulnerability_sandbox.png',
       alt: 'Zelsis In-Memory Vulnerability Sandbox and Lexical Pattern Playground',
-      tag: 'ZERO-INSTALL REPL',
+      tag: 'IN YOUR BROWSER',
       architecturePills: [
-        'Client-Side In-Memory Execution',
-        'Zero Data Egress / Full Privacy',
-        'Instant Pattern & Syntax Evaluation',
-        '5 Built-in Production Presets'
+        'Runs in your browser',
+        'Snippet never uploaded',
+        'Instant results',
+        'Built-in examples'
       ],
       bulletPoints: [
-        'Live lexical & pattern analyzer running directly inside your browser viewport',
-        '1-click presets for secret exposure, permissive RLS, and container root',
-        'Real-time feedback as you type or paste production code'
+        'The full rule engine, loaded in the page',
+        'One-click examples: leaked secret, permissive RLS, root container',
+        'Results as soon as you paste'
       ]
     },
     {
       id: 'profiler',
-      badge: 'WEB VITALS & INFRASTRUCTURE',
-      title: 'Performance, Accessibility & Infrastructure Checks',
+      badge: 'BEYOND SECURITY',
+      title: 'Beyond security: performance and accessibility',
       subtitle: 'Catch the code patterns behind layout shifts, heavy bundles and unbounded containers.',
       description:
         'Static checks for the causes of poor Core Web Vitals (images without dimensions, render-blocking scripts, oversized imports), WCAG 2.2 AA accessibility gaps, and Docker or Kubernetes resources left unbounded, before you deploy.',
       image: '/images/bundle_profiler.png',
-      alt: 'Zelsis Performance Bundle Profiler and Cloud Resource Analyzer',
-      tag: 'PERFORMANCE GAUGE',
+      alt: 'Zelsis performance and accessibility checks',
+      tag: 'EXTRAS',
       architecturePills: [
         'Layout-Shift Risks',
         'Render-Blocking Assets',
@@ -126,8 +126,8 @@ export const ProductCapabilities: React.FC = () => {
       ],
       bulletPoints: [
         'Patterns that cause layout shift (CLS) and slow first paint (LCP)',
-        'Detection of unkeyed React iterators and heavy third-party bundle leaks',
-        'Docker healthcheck enforcement and memory quota allocation checks'
+        'Unkeyed React lists and heavy third-party bundles',
+        'Docker healthchecks and container memory limits'
       ]
     }
   ];
@@ -145,7 +145,7 @@ export const ProductCapabilities: React.FC = () => {
             <span>What it checks</span>
           </div>
           <h2 className="text-3xl sm:text-5xl font-extrabold text-[#EDEDED] tracking-tight">
-            Security checks built for how SaaS apps break
+            Security checks built for how web apps break
           </h2>
           <p className="text-base sm:text-lg text-[#A1A1AA] leading-relaxed font-sans">
             Secrets, database access rules, injection, auth and dependencies, each finding with the exact line and a fix you can paste into your AI assistant.

@@ -21,7 +21,7 @@ const ROWS: { label: string; zelsis: string; aikido: string; snyk: string; semgr
   },
   {
     label: 'Focus',
-    zelsis: 'Next.js, Supabase and AI apps, plus accessibility and config checks',
+    zelsis: 'Logic bugs behind real incidents (auth, payments, caching, database rules), plus secrets, dependencies and CI/CD config, gated on every pull request',
     aikido: 'All-in-one platform (code, cloud, runtime)',
     snyk: 'Developer security platform',
     semgrep: 'Customizable SAST and supply chain',
@@ -38,8 +38,8 @@ export function CompetitorComparison() {
             Priced per account, not per developer.
           </h2>
           <p className="mt-4 text-lg text-zinc-400">
-            The established tools are excellent general-purpose platforms. Zelsis is narrower and cheaper: it goes deep on the
-            stack small teams ship with, at a flat price that does not grow with every teammate.
+            The established tools are excellent general-purpose platforms. Zelsis is built for small teams shipping web apps and
+            APIs: deep on the logic bugs that cause real incidents, at a flat price that does not grow with every hire.
           </p>
         </div>
 
