@@ -1,8 +1,8 @@
 {
  "summary": {
-  "implementedRules": 1266,
-  "testedRules": 1256,
-  "preciseLocationRules": 1263,
+  "implementedRules": 1268,
+  "testedRules": 1258,
+  "preciseLocationRules": 1265,
   "catalogEntries": 1922,
   "catalogOnlyNotImplemented": 1397,
   "catalogPlaceholderMetadata": 1810
@@ -7881,6 +7881,26 @@
    "ruleId": 24108,
    "code": "RULE-24108",
    "title": "Weak Password Hashing (MD5 / SHA-1)",
+   "severity": "HIGH",
+   "source": "lib/rules/polyglot-core-rules.ts",
+   "preciseLocation": true,
+   "tested": true,
+   "inCatalog": false
+  },
+  {
+   "ruleId": 24109,
+   "code": "RULE-24109",
+   "title": "TLS Certificate Validation Disabled",
+   "severity": "HIGH",
+   "source": "lib/rules/polyglot-core-rules.ts",
+   "preciseLocation": true,
+   "tested": true,
+   "inCatalog": false
+  },
+  {
+   "ruleId": 24110,
+   "code": "RULE-24110",
+   "title": "Path Traversal: File Path Built From Request Input",
    "severity": "HIGH",
    "source": "lib/rules/polyglot-core-rules.ts",
    "preciseLocation": true,

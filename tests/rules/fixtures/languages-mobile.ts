@@ -13,6 +13,12 @@ export const CASES: RuleCase[] = [
   },
   {
     ruleIds: [24101],
+    name: 'CORE-01 Swift SQL interpolation; an error message that mentions "delete from" is fine (mastodon-ios)',
+    detects: f('App/Store.swift', 'func remove(id: String) {\n    let sql = "DELETE FROM lists WHERE id = \\(id)"\n    sqlite3_exec(db, sql, nil, nil, nil)\n}\n'),
+    ignores: f('App/Store.swift', 'func remove(id: String) {\n    assertionFailure("Error creating delete from list query body: \\(error)")\n}\n')
+  },
+  {
+    ruleIds: [24101],
     name: 'CORE-01 Dart rawQuery with $name; whereArgs is fine',
     detects: f('lib/data/user_repo.dart', 'Future<List<Map>> findUser(String name) async {\n  return db.rawQuery("SELECT * FROM users WHERE name = \'$name\'");\n}\n'),
     ignores: f('lib/data/user_repo.dart', "Future<List<Map>> findUser(String name) async {\n  return db.rawQuery('SELECT * FROM users WHERE name = ?', [name]);\n}\n")

@@ -77,9 +77,10 @@ export function evaluatePolyglotCoreRules(file: CodeFile, lines: string[], clean
       new RegExp(String.raw`(?:"[^"\n]*` + SQL + String.raw`[^"\n]*"|'[^'\n]*` + SQL + String.raw`[^'\n]*')(?:\s*(?:"[^"\n]*"|'[^'\n]*'))*\s*\)?\s*(?:%\s*[({\w]|\.format\s*\(|\+\s*` + DYN + ')', 'i')
     ],
     go: [new RegExp(String.raw`fmt\.Sprintf\(\s*"[^"\n]*` + SQL + String.raw`[^"\n]*%[sv]`, 'i'), new RegExp(String.raw`"[^"\n]*` + SQL + String.raw`[^"\n]*"\s*\+\s*` + DYN, 'i')],
-    // Swift "\(name)" interpolation; Dart '$name' / '${user.id}'
-    swift: [new RegExp(String.raw`"[^"\n]*` + SQL + String.raw`[^"\n]*\\\(\s*` + DYN, 'i'), new RegExp(String.raw`"[^"\n]*` + SQL + String.raw`[^"\n]*"\s*\+\s*` + DYN, 'i')],
-    dart: [new RegExp(String.raw`(?:"[^"\n]*` + SQL + String.raw`[^"\n]*|'[^'\n]*` + SQL + String.raw`[^'\n]*)\$\{?` + DYN, 'i'), new RegExp(String.raw`["'][^"'\n]*` + SQL + String.raw`[^"'\n]*["']\s*\+\s*` + DYN, 'i')]
+    // Swift "\(name)" interpolation; Dart '$name' / '${user.id}'. The literal must start with the SQL verb:
+    // log and error messages ("Error creating delete from list query: \(error)") also contain SQL words.
+    swift: [new RegExp(String.raw`"\s*` + SQL + String.raw`[^"\n]*\\\(\s*` + DYN, 'i'), new RegExp(String.raw`"\s*` + SQL + String.raw`[^"\n]*"\s*\+\s*` + DYN, 'i')],
+    dart: [new RegExp(String.raw`(?:"\s*` + SQL + String.raw`[^"\n]*|'\s*` + SQL + String.raw`[^'\n]*)\$\{?` + DYN, 'i'), new RegExp(String.raw`(?:"\s*` + SQL + String.raw`[^"\n]*"|'\s*` + SQL + String.raw`[^'\n]*')\s*\+\s*` + DYN, 'i')]
   };
   const sqlPatterns = sqlByLang[lang as keyof typeof sqlByLang] ?? [];
   const sqlHit = sqlPatterns.find((re) => re.test(content));

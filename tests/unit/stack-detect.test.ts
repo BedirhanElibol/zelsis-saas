@@ -17,7 +17,12 @@ describe('detectAppStack', () => {
     ['Laravel', [{ path: 'composer.json', content: '{"require":{"laravel/framework":"^11.0"}}' }], 'Laravel'],
     ['Go Gin', [{ path: 'go.mod', content: 'module example.com/app\nrequire github.com/gin-gonic/gin v1.10.0\n' }], 'Go (Gin)'],
     ['Spring Boot', [{ path: 'pom.xml', content: '<artifactId>spring-boot-starter-web</artifactId>' }], 'Spring Boot'],
-    ['nothing known', [{ path: 'main.c', content: 'int main() {}' }], null]
+    ['Android', [{ path: 'app/build.gradle.kts', content: 'plugins {\n  id("com.android.application")\n  kotlin("android")\n}\n' }], 'Android (Kotlin/Java)'],
+    ['iOS', [{ path: 'Acme/Info.plist', content: '<plist><dict><key>LSRequiresIPhoneOS</key><true/></dict></plist>' }], 'iOS (Swift)'],
+    ['Flutter wins over its host projects', [{ path: 'pubspec.yaml', content: 'dependencies:\n  flutter:\n    sdk: flutter\n' }, { path: 'android/app/build.gradle', content: "apply plugin: 'com.android.application'\n" }], 'Flutter'],
+    ['Unity', [{ path: 'Packages/manifest.json', content: '{"dependencies":{"com.unity.ugui":"1.0.0"}}' }], 'Unity'],
+    ['.NET MAUI', [{ path: 'Acme/Acme.csproj', content: '<Project Sdk="Microsoft.NET.Sdk"><PropertyGroup><UseMaui>true</UseMaui></PropertyGroup></Project>' }], '.NET MAUI'],
+    ['nothing known',[{ path: 'main.c', content: 'int main() {}' }], null]
   ];
   for (const [name, files, expected] of cases) {
     it(`detects ${name}`, () => assert.equal(detectAppStack(files).framework, expected));
