@@ -207,8 +207,13 @@ export function evaluateMissedVulnsRules(file: CodeFile, lines: string[], cleanC
     // GAP-06: role / admin flag trusted from a custom request header
     lines.forEach((l, i) => {
       if (isComment(l)) return;
-      if (/(?:headers\.get\(\s*['"]x-(?:user-)?(?:role|admin|is-admin)['"]\s*\)|headers\[\s*['"]x-(?:user-)?(?:role|admin|is-admin)['"]\s*\])\s*[!=]==?\s*['"]/i.test(l)) {
-        add({ ruleId: 28806, code: 'GAP-06', severity: 'MEDIUM', category: 'Broken Access Control', lineIdx: i,
+      const hm = l.match(/(?:headers\.get\(\s*['"](x-(?:user-)?(?:role|admin|is-admin))['"]\s*\)|headers\[\s*['"](x-(?:user-)?(?:role|admin|is-admin))['"]\s*\])\s*[!=]==?\s*['"]/i);
+      if (hm) {
+        // Middleware or a proxy in this repo sets the header itself: the handler reads a server value
+        if (context?.serverSetHeaders.has((hm[1] || hm[2]).toLowerCase())) return;
+        // Whole repo scanned and nothing sets it: the client is the only source. A single file cannot tell.
+        const repoWide = (context?.filePaths.size ?? 0) > 1;
+        add({ ruleId: 28806, code: 'GAP-06', severity: repoWide ? 'HIGH' : 'MEDIUM', category: 'Broken Access Control', lineIdx: i,
           title: 'Admin Check Trusts a Custom Request Header',
           why: 'Clients can send any header. Unless a proxy or middleware strips and re-sets it on every request (the CVE-2025-29927 class of bypass), x-user-role: admin is attacker-controlled.',
           fix: 'Resolve the role from the verified session or token inside the handler instead of a forwarded header.' });
@@ -342,8 +347,11 @@ export function evaluateMissedVulnsRules(file: CodeFile, lines: string[], cleanC
     lines.forEach((l, i) => {
       if (isComment(l) || !/\bauth\.(?:signUp|updateUser)\s*\(/.test(l)) return;
       for (let k = i; k < Math.min(lines.length, i + 10); k++) {
-        if (/\bdata\s*:\s*\{[^}]*\b(?:role|roles|is_admin|isAdmin|admin|plan|tier|credits|permissions|is_pro|isPro|subscription_tier)\s*[:,}]/.test(lines[k])) {
-          add({ ruleId: 28815, code: 'GAP-15', severity: 'MEDIUM', category: 'Authorization', lineIdx: k,
+        const priv = lines[k].match(/\bdata\s*:\s*\{[^}]*\b(?:role|roles|is_admin|isAdmin|admin|plan|tier|credits|permissions|is_pro|isPro|subscription_tier)\s*([:,}])([^,}]*)/);
+        if (priv) {
+          // The value comes straight from the request: the user picks their own role or plan at sign-up
+          const fromRequest = priv[1] === ':' && /\b(?:formData\.get|form\.get|searchParams\.get|req(?:uest)?\.(?:body|query)|body\.)/.test(priv[2]);
+          add({ ruleId: 28815, code: 'GAP-15', severity: fromRequest ? 'HIGH' : 'MEDIUM', category: 'Authorization', lineIdx: k,
             title: 'Privilege Field Stored in User-Editable Supabase user_metadata',
             why: 'options.data / updateUser({ data }) writes raw_user_meta_data, which the user can change at any time with supabase.auth.updateUser(); any check that reads this role, plan or credit value can be self-granted.',
             fix: 'Keep privileges in app_metadata (set with the service role via auth.admin.updateUserById) or in a table users cannot write.' });
@@ -566,7 +574,9 @@ export function evaluateMissedVulnsRules(file: CodeFile, lines: string[], cleanC
     }
 
     // GAP-36: user-controlled URL rendered as a link without a scheme check
-    if (/\.[jt]sx$/i.test(path) && !/\b(?:safeUrl|sanitizeUrl|isSafeUrl|isValidUrl|sanitize|startsWith\(\s*['"]https?:)/.test(cleanContent)) {
+    // React 19 refuses javascript: URLs in href, so only older React is affected
+    if (/\.[jt]sx$/i.test(path) && (context?.packageMajors.get('react') ?? 0) < 19
+      && !/\b(?:safeUrl|sanitizeUrl|isSafeUrl|isValidUrl|sanitize|startsWith\(\s*['"]https?:)/.test(cleanContent)) {
       const i = lines.findIndex((l) => !isComment(l) && /\bhref=\{\s*(?:props\.)?(?:profile|user|author|member|account|seller|owner|creator)\??\.(?:website|homepage|url|link|social\w*|portfolio\w*)\s*\}/i.test(l));
       add({ ruleId: 28836, code: 'GAP-36', severity: 'MEDIUM', category: 'Cross-Site Scripting', lineIdx: i,
         title: 'User-Supplied URL Rendered as a Link Without a Scheme Check',

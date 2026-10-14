@@ -39,6 +39,11 @@ export interface RepoContext {
   expoPackageDirs: Set<string>;
   /** Facts read from next.config.*, or null when the repo has no next.config file. */
   nextConfig: NextConfigFacts | null;
+  /**
+   * Custom x-* request headers the app or its proxy sets itself (middleware requestHeaders.set, nginx
+   * proxy_set_header), lower-cased. A handler reading one of these is not trusting the client.
+   */
+  serverSetHeaders: Set<string>;
 }
 
 export interface NextConfigFacts {
@@ -95,15 +100,17 @@ export function buildRepoContext(files: CodeFile[]): RepoContext {
 }
 
 /** Paths, dependency majors and next.config facts for the cross-file frontend rules. */
-function collectProjectFacts(files: CodeFile[]): Pick<RepoContext, 'filePaths' | 'packageMajors' | 'expoPackageDirs' | 'nextConfig'> {
+function collectProjectFacts(files: CodeFile[]): Pick<RepoContext, 'filePaths' | 'packageMajors' | 'expoPackageDirs' | 'nextConfig' | 'serverSetHeaders'> {
   const filePaths = new Set<string>();
   const packageMajors = new Map<string, number>();
   const expoPackageDirs = new Set<string>();
   let nextConfig: NextConfigFacts | null = null;
+  const serverSetHeaders = new Set<string>();
   for (const file of files) {
     const path = (file.path || '').replace(/\\/g, '/').replace(/^\.\//, '');
     filePaths.add(path);
     const content = file.content || '';
+    for (const m of content.matchAll(/\.(?:set|append)\(\s*['"`](x-[\w-]+)['"`]|proxy_set_header\s+(x-[\w-]+)/gi)) serverSetHeaders.add((m[1] || m[2]).toLowerCase());
     if (/(?:^|\/)package\.json$/.test(path) && !/node_modules\//.test(path)) {
       for (const m of content.matchAll(/"(@?[\w./-]+)"\s*:\s*"(?:npm:[\w@./-]+@)?[\^~>=v\s]*(\d+)\.?/g)) {
         const prev = packageMajors.get(m[1]);
@@ -126,7 +133,7 @@ function collectProjectFacts(files: CodeFile[]): Pick<RepoContext, 'filePaths' |
       };
     }
   }
-  return { filePaths, packageMajors, expoPackageDirs, nextConfig };
+  return { filePaths, packageMajors, expoPackageDirs, nextConfig, serverSetHeaders };
 }
 
 /** Column names that hold credentials or secrets (password hashes, tokens, API keys, TOTP seeds). */
@@ -182,4 +189,4 @@ function collectServerClientFacts(files: CodeFile[]): Pick<RepoContext, 'clientC
 }
 
 /** Without repo-wide knowledge, assume the database may be exposed (single-file scans keep RLS checks on). */
-export const emptyRepoContext = (): RepoContext => ({ hardenedSqlFunctions: new Set(), rlsEnabledTables: new Set(), exposesDatabaseToClients: true, hasHealthEndpoint: false, nextMajorVersion: null, clientComponentModules: new Set(), sensitiveColumnsByModel: new Map(), crossFileAuth: emptyCrossFileAuth(), filePaths: new Set(), packageMajors: new Map(), expoPackageDirs: new Set(), nextConfig: null });
+export const emptyRepoContext = (): RepoContext => ({ hardenedSqlFunctions: new Set(), rlsEnabledTables: new Set(), exposesDatabaseToClients: true, hasHealthEndpoint: false, nextMajorVersion: null, clientComponentModules: new Set(), sensitiveColumnsByModel: new Map(), crossFileAuth: emptyCrossFileAuth(), filePaths: new Set(), packageMajors: new Map(), expoPackageDirs: new Set(), nextConfig: null, serverSetHeaders: new Set() });

@@ -503,11 +503,15 @@ export function evaluateNextjsSupabaseRules(file: CodeFile, lines: string[], cle
       if (!/SECURITY\s+DEFINER/i.test(header) || /RETURNS\s+(?:event_)?trigger\b/i.test(header)) continue;
       if (!/\b(?:INSERT\s+INTO|UPDATE\s+[\w."]+\s+SET|DELETE\s+FROM)\b/i.test(body)) continue;
       if (/auth\.(?:uid|jwt|role)\s*\(|current_user|session_user|request\.jwt|current_setting\s*\(/i.test(body)) continue;
+      // A guard helper such as IF NOT public.is_admin() THEN RAISE also checks the caller
+      if (/\bIF\s+(?:NOT\s+)?(?:\w+\.)?(?:is|has|can|check|assert|require)_\w+\s*\(/i.test(body)) continue;
       const short = normalizeSqlName(fullName);
       if (new RegExp(String.raw`REVOKE[^;]*\bON\s+(?:FUNCTION\s+[\w."]*\b` + short + String.raw`\b|ALL\s+FUNCTIONS\s+IN\s+SCHEMA\s+"?public"?)`, 'i').test(sql)) continue;
       const hasParams = m[2].trim().length > 0;
+      // Granted to clients in this same migration and the caller chooses the target: anyone can run it on any row
+      const grantedToClients = new RegExp(String.raw`GRANT\s+(?:EXECUTE|ALL)[^;]*\bON\s+FUNCTION\s+[\w."]*\b` + short + String.raw`\b[^;]*\bTO\s+[^;]*\b(?:anon|authenticated|public)\b`, 'i').test(sql);
       hits.push({
-        ruleId: 28007, code: 'NEXT-SB-07', severity: 'MEDIUM', type: 'SECURITY', category: 'Database Privilege',
+        ruleId: 28007, code: 'NEXT-SB-07', severity: grantedToClients && hasParams ? 'HIGH' : 'MEDIUM', type: 'SECURITY', category: 'Database Privilege',
         title: 'SECURITY DEFINER Function Writes Data Without Checking the Caller',
         lineIdx: lineAt(sql, m.index!),
         why: `public.${short} bypasses RLS (SECURITY DEFINER) and is executable by anon and authenticated through supabase.rpc('${short}'), yet never checks auth.uid(), so anyone with the public anon key can run its writes${hasParams ? ' with arguments they choose' : ''}.`,
