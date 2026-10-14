@@ -3,7 +3,6 @@
 import React from 'react';
 import { X, Check, Lock, Shield, ArrowRight, Zap, ExternalLink } from 'lucide-react';
 import { UserTier } from '@/data/schema';
-import { formatCount, RULE_COUNTS } from '@/lib/rule-status';
 import { ENTERPRISE_SEAT_LIMIT, PLAN_PRICES, SUPPORT_TERMS } from '@/data/pricing-plans';
 
 interface TierDetailsModalProps {
@@ -42,7 +41,7 @@ export const TierDetailsModal: React.FC<TierDetailsModalProps> = ({
     {
       category: 'Rule Engine & Analysis Depth',
       items: [
-        { label: 'Security & Bug Inventory', free: `All ${formatCount(RULE_COUNTS.gating)} active rules`, pro: `All ${formatCount(RULE_COUNTS.gating)} active rules`, enterprise: `All ${formatCount(RULE_COUNTS.gating)} active rules` },
+        { label: 'Security & Bug Inventory', free: 'Every check, on every plan', pro: 'Every check, on every plan', enterprise: 'Every check, on every plan' },
         { label: 'Secret Detection & RLS', free: 'Same rules on every plan', pro: 'Same rules on every plan', enterprise: 'Same rules on every plan' },
         { label: 'Large Repositories', free: 'Same engine on every plan', pro: 'Same engine on every plan', enterprise: 'Same engine on every plan' }
       ]

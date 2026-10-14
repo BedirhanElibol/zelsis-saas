@@ -6,7 +6,6 @@ import { ArrowRight, Terminal, ExternalLink, Lock, Loader2 } from 'lucide-react'
 import { useRouter } from 'next/navigation';
 import { normalizeRepoUrl } from '@/lib/github-api';
 import { ScanPreviewCard, ScanPreviewResult } from '@/components/saas/ScanPreviewCard';
-import benchmark from '@/data/benchmark-summary.generated.json';
 import { HeroGateMock } from './HeroGateMock';
 import { CODE_RETENTION_SHORT } from '@/lib/data-retention';
 
@@ -175,7 +174,7 @@ export const SaasHero: React.FC<SaasHeroProps> = ({ onOpenDashboard }) => {
           </div>
           <div className="flex items-center gap-2">
             <span className="w-1.5 h-1.5 rounded-full bg-white/40" />
-            <a href="#benchmark" className="inline-flex items-center min-h-[24px] hover:text-white transition-colors">Measured on {benchmark.repos.length} real projects</a>
+            <a href="#benchmark" className="inline-flex items-center min-h-[24px] hover:text-white transition-colors">Measured on real open-source projects</a>
           </div>
           <div className="flex items-center gap-2">
             <span className="w-1.5 h-1.5 rounded-full bg-white/40" />
