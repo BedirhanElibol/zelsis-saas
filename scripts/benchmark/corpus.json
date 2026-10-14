@@ -156,6 +156,18 @@
       "sha": "96466ab85569dbcd37c69b2d15d22ff666f57031",
       "kind": "vulnerable",
       "stack": "iOS (Swift)"
+    },
+    {
+      "name": "localsend/localsend",
+      "sha": "14f3a87426eedffaa9d87d011132eca5501abeb8",
+      "kind": "clean",
+      "stack": "Flutter (Dart) + Rust"
+    },
+    {
+      "name": "LemmyNet/lemmy",
+      "sha": "fc640cf86a130bc897d83dbd06d84c3c7d9b16e3",
+      "kind": "clean",
+      "stack": "Rust + Actix + Diesel + Postgres (production service)"
     }
   ]
 }

@@ -1351,6 +1351,53 @@ pub fn open(path: &str) -> std::fs::File {
 `)
   },
   {
+    ruleIds: [9605], name: 'RUST-05 raw-string SQL in sql_query(format!) vs keywords in errors and URLs',
+    detects: f('src/tasks.rs', `pub async fn rank(conn: &mut PgConnection, table_name: &str) -> QueryResult<usize> {
+    sql_query(format!(
+        r#"UPDATE {table_name} SET hot_rank = 0 WHERE id = ANY($1)"#
+    ))
+    .execute(conn)
+    .await
+}
+`),
+    ignores: f('src/tasks.rs', `pub async fn delete_alias(alias: &str, base: &str) -> anyhow::Result<()> {
+    let url = format!("{}internal/delete?alias={}", base, alias);
+    reqwest::get(url).await.with_context(|| format!("Failed to update {} hot_ranks", alias))?;
+    Err(anyhow!(format!("Invalid identity file: {} (delete it to generate a new one)", base)))
+}
+`)
+  },
+  {
+    ruleIds: [29918], name: 'SECG-19 reqwest accepts invalid certs vs manual fingerprint pinning',
+    detects: f('src/client.rs', `pub fn client() -> reqwest::Result<reqwest::Client> {
+    reqwest::Client::builder().danger_accept_invalid_certs(true).build()
+}
+`),
+    ignores: f('src/client.rs', `pub fn client() -> reqwest::Result<reqwest::Client> {
+    reqwest::Client::builder().use_rustls_tls().danger_accept_invalid_certs(true).tls_info(true).build()
+}
+pub fn check(res: &reqwest::Response, expected_fingerprint: &str) -> anyhow::Result<()> {
+    verify_cert_from_res(res, expected_fingerprint)
+}
+`)
+  },
+  {
+    ruleIds: [24109], name: 'CORE-09 Dart badCertificateCallback vs loopback-only client',
+    detects: f('lib/api/client.dart', `HttpClient buildClient() {
+  final client = HttpClient();
+  client.badCertificateCallback = (cert, host, port) => true;
+  return client;
+}
+Future<void> load() async => buildClient().getUrl(Uri.parse('https://api.example.com/v1/me'));
+`),
+    ignores: f('lib/util/self_check.dart', `Future<void> ping(int port) async {
+  final client = HttpClient();
+  client.badCertificateCallback = (cert, host, port) => true;
+  await client.getUrl(Uri(scheme: 'https', host: '127.0.0.1', port: port, path: '/show'));
+}
+`)
+  },
+  {
     ruleIds: [10001], name: 'CPP-SEC-01 strcpy of a request field into a fixed buffer',
     detects: f('src/http/headers.c', `#include <string.h>
 void set_user_agent(struct request *req, const char *value) {
