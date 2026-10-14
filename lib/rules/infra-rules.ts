@@ -480,7 +480,9 @@ export function evaluateInfraRules(file: CodeFile, lines: string[], cleanContent
     // =========================================================================
     // RULE 3016 (INFRA-16): Production Process Missing Graceful Shutdown (SIGTERM/SIGINT)
     // =========================================================================
-    const isCustomServer = (lowerPath.endsWith('server.js') || lowerPath.endsWith('server.ts')) && !lowerPath.includes('test');
+    // Dev / static / mock servers and scripts/ never take production traffic, so shutdown handling does not matter there
+    const isCustomServer = (lowerPath.endsWith('server.js') || lowerPath.endsWith('server.ts')) && !lowerPath.includes('test')
+        && !/(?:^|\/)(?:scripts|tools|dev)\/|(?:^|\/)(?:dev|static|mock)[-_.]?server\.[cm]?[jt]s$/.test(lowerPath);
     if (isCustomServer && cleanContent.includes('.listen(') && !cleanContent.includes('SIGTERM')) {
         const matchLineIdx = lines.findIndex(l => l.includes('.listen('));
         const lineNum = matchLineIdx !== -1 ? matchLineIdx + 1 : 1;
