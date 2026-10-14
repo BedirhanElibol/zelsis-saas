@@ -11,6 +11,7 @@ import { RuleConfiguratorModal } from './RuleConfiguratorModal';
 const RuleKnowledgeBaseModal = dynamic(() => import('./RuleKnowledgeBaseModal').then((m) => m.RuleKnowledgeBaseModal), { ssr: false });
 import { DeploymentManifestModal } from './DeploymentManifestModal';
 import { BadgeGeneratorModal } from './BadgeGeneratorModal';
+import { ShareReportModal } from './ShareReportModal';
 import { CiCdIntegrationModal } from './CiCdIntegrationModal';
 
 export type ActiveModalType =
@@ -20,6 +21,7 @@ export type ActiveModalType =
   | 'kb'
   | 'manifest'
   | 'badge'
+  | 'share'
   | 'cicd'
   | null;
 
@@ -78,6 +80,12 @@ export const DashboardModals: React.FC<DashboardModalsProps> = ({
 
       <BadgeGeneratorModal
         isOpen={activeModal === 'badge'}
+        onClose={onClose}
+        project={project}
+      />
+
+      <ShareReportModal
+        isOpen={activeModal === 'share'}
         onClose={onClose}
         project={project}
       />

@@ -70,7 +70,7 @@ export const CicdAutomationView: React.FC<CicdAutomationViewProps> = ({
 
   const badgeAppUrl = getConfiguredAppUrl();
   const badgeUrl = badgeUrlFor(project, badgeAppUrl) ?? `${badgeAppUrl}/api/v1/badge?status=PASSED&score=100&label=Zelsis%20Gate`;
-  const badgeMarkdown = `[![Zelsis Gate](${badgeUrl})](${badgeAppUrl})`;
+  const badgeMarkdown = `[![Zelsis Gate](${badgeUrl})](${badgeAppUrl}/?ref=badge)`;
 
   const copyToClipboard = (text: string, setter: (val: boolean) => void) => {
     navigator.clipboard.writeText(text);

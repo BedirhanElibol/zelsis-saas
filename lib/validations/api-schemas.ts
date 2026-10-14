@@ -236,6 +236,18 @@ export const SiteDomainSchema = z.object({
   hostname: z.string().trim().min(3, 'Enter a domain such as example.com').max(300),
 });
 
+/** Share link for the latest completed scan of a project (looked up by project id or repository URL). */
+export const ReportShareCreateSchema = z.object({
+  accessToken: AccessTokenSchema,
+  projectId: z.string().max(128).optional().default(''),
+  repoUrl: z.string().trim().min(1, 'Scan the project first').max(2048),
+});
+
+export const ReportShareRevokeSchema = z.object({
+  accessToken: AccessTokenSchema,
+  token: z.string().regex(/^[A-Za-z0-9_-]{43}$/, 'Invalid link'),
+});
+
 export const OrgNameSchema = z.object({
   accessToken: AccessTokenSchema,
   name: z.string().trim().min(2, 'Workspace name needs at least 2 characters').max(80),
