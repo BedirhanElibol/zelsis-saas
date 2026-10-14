@@ -33,6 +33,18 @@ const FAKE_GITHUB_PAT = 'ghp' + '_R4nd0mT0k3nV4lu3F0rT3st1ngPurp0s3sAb';
 export const RULE_CASES: RuleCase[] = [
   // ─── False positives found on 30 AI-built apps (2026-10-14) ───────────
   {
+    ruleIds: [3016],
+    name: 'Production server without SIGTERM handling; a local dev server is fine',
+    detects: f('backend/server.js', "const app = require('express')();\napp.get('/health', (req, res) => res.send('ok'));\napp.listen(process.env.PORT || 3000);\n"),
+    ignores: f('dev-server.js', "const app = require('express')();\napp.get('/health', (req, res) => res.send('ok'));\napp.listen(3000, () => console.log('dev server on http://localhost:3000'));\n")
+  },
+  {
+    ruleIds: [29701],
+    name: 'SHIP-01 hardcoded localhost API URL; a ternary fallback after an env value is fine',
+    detects: f('src/context/SocketContext.tsx', "export function connect() {\n  return io('http://localhost:3000', { withCredentials: true });\n}\n"),
+    ignores: f('src/context/SocketContext.tsx', "export function connect() {\n  const envUrl = import.meta.env.VITE_API_BASE_URL;\n  const apiBase = envUrl && envUrl.trim() !== '' ? envUrl : 'http://localhost:3000';\n  return io(apiBase, { withCredentials: true });\n}\n")
+  },
+  {
     ruleIds: [8201],
     name: 'PRIVACY-01 password value logged; the word "password" in the message alone is fine',
     detects: f('src/services/auth.ts', "export async function login(email: string, password: string) {\n  console.log('login attempt', email, password);\n}\n"),

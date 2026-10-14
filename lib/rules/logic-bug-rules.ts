@@ -352,6 +352,8 @@ function shipReadiness(path: string, lines: string[], c: string, add: (h: Hit) =
     // Fallbacks and dev-only branches are fine: env ?? 'http://localhost:3000', NODE_ENV === 'development' ? ... : ...
     if (/\?\?|\|\||NODE_ENV|isDev\b|IS_DEV|development|process\.env\.|import\.meta\.env|\bdev(?:elopment)?(?:Url|URL|Origin)\b/.test(l)) return;
     if (/^\s*(?:export\s+)?const\s+\w*(?:dev|local|test)\w*\s*=/i.test(l)) return;
+    // Else branch of a ternary: envUrl && envUrl.trim() ? envUrl : 'http://localhost:3000' (env read on an earlier line)
+    if (new RegExp(String.raw`\?[^:?]+:\s*` + m[1] + String.raw`https?:\/\/(?:localhost|127\.0\.0\.1)`).test(l)) return;
     // Startup logs, and allow-lists that also contain a real origin
     if (/\b(?:console|logger|log)\.\w+\s*\(|\bprint\s*\(/.test(l) || /['"`]https:\/\/(?!localhost|127\.)[^'"`]+['"`]/.test(l)) return;
     // Default parameter / destructuring default (callers pass the real URL) and the last branch of a multi-line fallback
