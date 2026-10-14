@@ -93,7 +93,8 @@ export function evaluateSaasCoreRules(file: CodeFile, lines: string[], cleanCont
         hits.push({
           ruleId: 23003, code: 'SAAS-03', severity: 'HIGH', type: 'INFRA_DATABASE', category: 'Database Privilege',
           title: 'SECURITY DEFINER Function Without a Fixed search_path',
-          lineIdx: lineOf(lines, (l) => l.includes(name.replace(/"/g, ''))),
+          // The CREATE FUNCTION statement itself (the name can also appear earlier, in comments or other statements)
+          lineIdx: cleanContent.slice(0, m.index).split('\n').length - 1,
           why: `${name} runs with its owner's privileges but resolves unqualified names through the caller's search_path, so a caller can shadow tables or functions and escalate privileges.`,
           fix: `Add SET search_path = '' (or pg_catalog, public) to ${name} and schema-qualify every object it references.`
         });

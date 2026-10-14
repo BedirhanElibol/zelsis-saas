@@ -1034,7 +1034,9 @@ export function evaluateSecurityRules(file: CodeFile, lines: string[], cleanCont
     if (isCodeFile && (cleanContent.includes('cookie(') || cleanContent.includes('cookies().set') || cleanContent.includes('response.cookies.set'))) {
         const insecureCookieRegex = /(?:res\.cookie|cookies\(\)\.set|response\.cookies\.set)\s*\([^)]*\{\s*[^}]*(?:httpOnly\s*:\s*false|secure\s*:\s*false)/i;
         if (insecureCookieRegex.test(cleanContent)) {
-            const matchLineIdx = lines.findIndex(l => !l.trim().startsWith('//') && !l.trim().startsWith('*') && insecureCookieRegex.test(l));
+            // The cookie call often spans lines (options object below it): locate by the match offset
+            const cookieAt = insecureCookieRegex.exec(cleanContent)?.index ?? -1;
+            const matchLineIdx = cookieAt >= 0 ? cleanContent.slice(0, cookieAt).split('\n').length - 1 : -1;
             const lineNum = matchLineIdx !== -1 ? matchLineIdx + 1 : 1;
             const snippet = lines.slice(Math.max(0, lineNum - 2), Math.min(lines.length, lineNum + 2)).join('\n');
             findings.push({
