@@ -14,7 +14,7 @@ const ROWS: { label: string; zelsis: string; aikido: string; snyk: string; semgr
   },
   {
     label: 'Free plan',
-    zelsis: 'Unlimited public repo scans, 3 private repos',
+    zelsis: 'Unlimited scans, 3 saved projects, 5 fix prompts / month',
     aikido: '2 users, 10 repos',
     snyk: '5 projects, 100 Code tests/mo',
     semgrep: 'Up to 10 contributors and 10 private repos',

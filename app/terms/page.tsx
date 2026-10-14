@@ -73,7 +73,7 @@ export default function TermsPage() {
           <section className="flex flex-col gap-2">
             <h2 className="text-base font-bold text-[#FFFFFF]">3. Merchant of Record, Subscriptions &amp; Global Tax</h2>
             <p>
-              Unlimited scans, private repository scans, PDF reports and unlimited AI fix prompts require an active subscription (Pro or Enterprise). Every plan scans with the same rules. <strong>Polar Software Inc. serves as the official Merchant of Record (MoR) for all Zelsis software subscriptions, orders, and financial transactions.</strong>
+              The CI release gate, PDF reports, more than 3 saved projects and unlimited AI fix prompts require an active subscription (Pro or Team). Every plan scans with the same rules. <strong>Polar Software Inc. serves as the official Merchant of Record (MoR) for all Zelsis software subscriptions, orders, and financial transactions.</strong>
             </p>
             <p>
               As the Merchant of Record, Polar is responsible for digital order processing, customer billing inquiries, automated EU VAT / international sales tax calculation and remittance, and compliance with PCI-DSS Level 1 payment security standards. Subscriptions renew automatically until cancelled via the customer billing portal.

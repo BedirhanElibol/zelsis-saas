@@ -114,16 +114,16 @@ export const ComparisonTable: React.FC = () => {
         {
           name: 'Monthly Live Scans',
           description: 'Maximum pre-flight audits performed per monthly billing cycle',
-          free: '3 Scans / month (Strict Cap)',
+          free: 'Unlimited Scans',
           pro: 'Unlimited Scans (fair-use rate limits)',
           enterprise: 'Unlimited Scans (fair-use rate limits)'
         },
         {
           name: 'Repository Scope & Privacy',
           description: 'Supported repository types and permission boundary',
-          free: '1 Public Repository only',
-          pro: 'Unlimited Public & Private Repos',
-          enterprise: 'Unlimited Public & Private Repos'
+          free: '3 saved projects (public or private)',
+          pro: 'Unlimited saved projects',
+          enterprise: 'Unlimited saved projects'
         },
       ]
     },
@@ -179,8 +179,8 @@ export const ComparisonTable: React.FC = () => {
         },
         {
           name: 'Context-Engineered AI Prompts',
-          description: 'Tailored prompts with CVE context for any AI coding assistant',
-          free: '1 Lifetime Trial Prompt',
+          description: 'Tailored prompts with the CWE (code) or CVE (dependency) for any AI coding assistant',
+          free: '5 Fix Prompts / month',
           pro: 'Unlimited 1-Click Fix Prompts',
           enterprise: 'Unlimited 1-Click Fix Prompts'
         },
@@ -360,7 +360,7 @@ export const ComparisonTable: React.FC = () => {
         <div className="hidden md:block rounded-2xl border border-white/15 bg-[#121216] overflow-hidden shadow-2xl">
           <div className="overflow-x-auto">
             <table className="w-full text-left border-collapse min-w-[760px]">
-              <caption className="sr-only">Feature comparison of the Free, Pro and Enterprise plans</caption>
+              <caption className="sr-only">Feature comparison of the Free, Pro and Team plans</caption>
               <thead>
                 <tr className="border-b border-white/15 bg-[#0E0E12]">
                   <th className="p-5 sm:p-6 text-xs font-mono uppercase tracking-wider text-zinc-400 w-[34%] align-bottom">
@@ -467,7 +467,7 @@ export const ComparisonTable: React.FC = () => {
                   <th className="p-5 sm:p-6 text-xs font-mono tracking-wider text-zinc-300 w-[22%] align-bottom border-l border-white/10">
                     <div className="flex flex-col gap-2">
                       <div className="flex items-center justify-between">
-                        <span className="text-xs font-bold text-zinc-400 uppercase tracking-widest">Enterprise</span>
+                        <span className="text-xs font-bold text-zinc-400 uppercase tracking-widest">Team</span>
                         {isLoggedIn && currentTier === 'Enterprise' ? (
                           <span className="text-[11px] font-bold uppercase tracking-wider bg-white/10 text-white px-2 py-0.5 rounded border border-white/20 flex items-center gap-1">
                             <span>Active Plan</span>
@@ -494,7 +494,7 @@ export const ComparisonTable: React.FC = () => {
                             <span>Manage at Polar</span>
                             <ExternalLink size={12} />
                           </a>
-                          <span className="text-[10px] text-zinc-400">Enterprise plan active</span>
+                          <span className="text-[10px] text-zinc-400">Team plan active</span>
                         </div>
                       ) : isLoggedIn && currentTier === 'Pro' ? (
                         <button
@@ -502,7 +502,7 @@ export const ComparisonTable: React.FC = () => {
                           onClick={() => handleSelectPlan('Enterprise')}
                           className="mt-2 w-full min-h-11 px-3 rounded-lg font-sans bg-white/10 hover:bg-white/15 border border-white/20 text-white text-sm font-semibold transition-colors flex items-center justify-center gap-1.5 shadow cursor-pointer"
                         >
-                          <span>Upgrade to Enterprise</span>
+                          <span>Upgrade to Team</span>
                           <ArrowRight size={13} />
                         </button>
                       ) : (
@@ -511,7 +511,7 @@ export const ComparisonTable: React.FC = () => {
                           onClick={() => handleSelectPlan('Enterprise')}
                           className="mt-2 w-full min-h-11 px-3 rounded-lg font-sans bg-white/10 hover:bg-white/15 border border-white/20 text-white text-sm font-semibold transition-colors flex items-center justify-center gap-1.5 cursor-pointer"
                         >
-                          <span>Get Enterprise</span>
+                          <span>Get Team</span>
                           <ArrowRight size={13} />
                         </button>
                       )}
@@ -579,8 +579,8 @@ export const ComparisonTable: React.FC = () => {
           {/* Bottom Bar CTA */}
           <div className="p-6 bg-[#0E0E12] border-t border-white/10 flex flex-col sm:flex-row items-center justify-between gap-4">
             <div className="text-xs font-mono text-zinc-400 text-center sm:text-left">
-              <span>Looking for custom on-premise deployments or custom procurement?</span>
-              <strong className="text-white block sm:inline sm:ml-1">Instant digital delivery on all plans.</strong>
+              <span>Need more than {ENTERPRISE_SEAT_LIMIT} seats, a custom contract or a security questionnaire?</span>
+              <strong className="text-white block sm:inline sm:ml-1">Enterprise: contact us.</strong>
             </div>
             <div className="flex items-center gap-3">
               <button
@@ -597,7 +597,7 @@ export const ComparisonTable: React.FC = () => {
                   rel="noopener noreferrer"
                   className="px-5 py-2 rounded-lg text-xs font-mono font-bold uppercase tracking-wider bg-white/10 hover:bg-white/15 border border-white/20 text-white transition-all flex items-center gap-2 cursor-pointer"
                 >
-                  <span>Manage Enterprise Plan</span>
+                  <span>Manage Team Plan</span>
                   <ExternalLink size={13} />
                 </a>
               ) : isLoggedIn && currentTier === 'Pro' ? (
@@ -606,7 +606,7 @@ export const ComparisonTable: React.FC = () => {
                   onClick={() => handleSelectPlan('Enterprise')}
                   className="px-5 py-2 rounded-lg text-xs font-mono font-bold uppercase tracking-wider bg-emerald-500 text-black hover:bg-emerald-400 transition-all flex items-center gap-2 shadow cursor-pointer"
                 >
-                  <span>Upgrade to Enterprise ({priceLabel('Enterprise')})</span>
+                  <span>Upgrade to Team ({priceLabel('Enterprise')})</span>
                   <ArrowRight size={14} />
                 </button>
               ) : (

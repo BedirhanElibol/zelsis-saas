@@ -119,7 +119,8 @@ export type EntitlementStatus = 'active' | 'past_due' | 'canceled';
 /** Maps a Polar product name to the plan tier it grants. */
 export function detectPolarPlanTier(productName?: string | null): 'Pro' | 'Enterprise' {
   const name = (productName || '').toLowerCase();
-  return name.includes('enterprise') || name.includes('suite') ? 'Enterprise' : 'Pro';
+  // The $49 plan is shown as "Team"; older products are named "Enterprise"
+  return /\b(?:enterprise|team|suite)\b/.test(name) ? 'Enterprise' : 'Pro';
 }
 
 export interface PolarEventData {

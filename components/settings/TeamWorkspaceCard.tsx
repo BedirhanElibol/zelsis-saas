@@ -221,7 +221,7 @@ export const TeamWorkspaceCard: React.FC<TeamWorkspaceCardProps> = ({ user, onOp
           {!org.ownerPlanActive && (
             <div className="flex items-start gap-2 text-xs p-3 rounded-xl border bg-amber-500/10 border-amber-500/30 text-amber-300">
               <AlertTriangle size={14} className="shrink-0 mt-0.5" />
-              <span>The owner&apos;s Enterprise plan is not active, so members are on their own plans until it renews.</span>
+              <span>The owner&apos;s Team plan is not active, so members are on their own plans until it renews.</span>
             </div>
           )}
 
