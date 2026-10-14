@@ -10,9 +10,8 @@ import { applyCanonicalSecurityHeaders } from '@/lib/security-headers';
  */
 
 const ALLOWED_ORIGINS = new Set([
-  'http://localhost:3000',
-  'http://localhost:3001',
-  'http://127.0.0.1:3000',
+  // Local dev servers only outside production: a page on someone's own machine is not a Zelsis origin
+  ...(process.env.NODE_ENV === 'production' ? [] : ['http://localhost:3000', 'http://localhost:3001', 'http://127.0.0.1:3000']),
   'https://zelsis.com',
   'https://zelsis-saas.vercel.app',
   'https://shipguard-saas.vercel.app'

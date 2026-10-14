@@ -8,6 +8,8 @@ import { buildCrossFileAuth, emptyCrossFileAuth, type CrossFileAuth } from './as
 export interface RepoContext {
   /** SQL functions given an explicit search_path anywhere in the repo (ALTER FUNCTION or a redefinition with SET search_path). */
   hardenedSqlFunctions: Set<string>;
+  /** SQL functions whose EXECUTE is revoked from PUBLIC / anon / authenticated in any migration (not callable by clients). */
+  revokedSqlFunctions: Set<string>;
   /** Tables with ROW LEVEL SECURITY enabled in any migration. */
   rlsEnabledTables: Set<string>;
   /**
@@ -62,6 +64,7 @@ const HEALTH_ROUTE = /['"`]\/(?:api\/)?(?:health(?:z|check)?|livez?|liveness|rea
 
 export function buildRepoContext(files: CodeFile[]): RepoContext {
   const hardenedSqlFunctions = new Set<string>();
+  const revokedSqlFunctions = new Set<string>();
   const rlsEnabledTables = new Set<string>();
   let exposesDatabaseToClients = false;
   let hasHealthEndpoint = false;
@@ -85,6 +88,9 @@ export function buildRepoContext(files: CodeFile[]): RepoContext {
       }
     }
     if (!/\.sql$/i.test(file.path || '')) continue;
+    for (const m of (file.content || '').matchAll(/REVOKE\s+(?:EXECUTE|ALL)[^;]*?\bON\s+FUNCTION\s+([\w."]+)[^;]*?\bFROM\s+([^;]+);/gi)) {
+      if (/\b(?:public|anon|authenticated)\b/i.test(m[2])) revokedSqlFunctions.add(normalizeSqlName(m[1]));
+    }
     for (const m of (file.content || '').matchAll(/ALTER\s+FUNCTION\s+([\w."]+)\s*(?:\([^)]*\))?\s+SET\s+search_path/gi)) {
       hardenedSqlFunctions.add(normalizeSqlName(m[1]));
     }
@@ -94,7 +100,7 @@ export function buildRepoContext(files: CodeFile[]): RepoContext {
     }
   }
   return {
-    hardenedSqlFunctions, rlsEnabledTables, exposesDatabaseToClients, hasHealthEndpoint, nextMajorVersion,
+    hardenedSqlFunctions, revokedSqlFunctions, rlsEnabledTables, exposesDatabaseToClients, hasHealthEndpoint, nextMajorVersion,
     ...collectServerClientFacts(files), crossFileAuth: buildCrossFileAuth(files), ...collectProjectFacts(files)
   };
 }
@@ -189,4 +195,4 @@ function collectServerClientFacts(files: CodeFile[]): Pick<RepoContext, 'clientC
 }
 
 /** Without repo-wide knowledge, assume the database may be exposed (single-file scans keep RLS checks on). */
-export const emptyRepoContext = (): RepoContext => ({ hardenedSqlFunctions: new Set(), rlsEnabledTables: new Set(), exposesDatabaseToClients: true, hasHealthEndpoint: false, nextMajorVersion: null, clientComponentModules: new Set(), sensitiveColumnsByModel: new Map(), crossFileAuth: emptyCrossFileAuth(), filePaths: new Set(), packageMajors: new Map(), expoPackageDirs: new Set(), nextConfig: null, serverSetHeaders: new Set() });
+export const emptyRepoContext = (): RepoContext => ({ hardenedSqlFunctions: new Set(), revokedSqlFunctions: new Set(), rlsEnabledTables: new Set(), exposesDatabaseToClients: true, hasHealthEndpoint: false, nextMajorVersion: null, clientComponentModules: new Set(), sensitiveColumnsByModel: new Map(), crossFileAuth: emptyCrossFileAuth(), filePaths: new Set(), packageMajors: new Map(), expoPackageDirs: new Set(), nextConfig: null, serverSetHeaders: new Set() });
