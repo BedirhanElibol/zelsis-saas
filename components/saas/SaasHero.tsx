@@ -18,6 +18,7 @@ const WORKS_WITH = [
   'Ruby on Rails',
   'PHP & Laravel',
   'Java & Spring',
+  'iOS & Android (Swift, Kotlin, React Native)',
   'Supabase, Firebase & Postgres',
   'Docker, Kubernetes & Terraform',
   'GitHub Actions & GitLab CI',
