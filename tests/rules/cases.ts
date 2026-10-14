@@ -31,6 +31,18 @@ const FAKE_AWS_KEY = 'AKIA' + '2E0A8F3B244C9986';
 const FAKE_GITHUB_PAT = 'ghp' + '_R4nd0mT0k3nV4lu3F0rT3st1ngPurp0s3sAb';
 
 export const RULE_CASES: RuleCase[] = [
+  {
+    ruleIds: [24103, 18013],
+    name: 'CORE-03 / JAVA-SEC-03 request body deserialized; an allowlisting subclass is safe',
+    detects: f('src/main/java/com/acme/web/ImportController.java', 'public Object load(HttpServletRequest request) throws Exception {\n    ObjectInputStream in = new ObjectInputStream(request.getInputStream());\n    return in.readObject();\n}\n'),
+    ignores: f('src/main/java/com/acme/web/ImportController.java', 'class SafeInput extends ObjectInputStream {\n    SafeInput(InputStream in) throws IOException { super(in); }\n    @Override protected Class<?> resolveClass(ObjectStreamClass desc) throws IOException, ClassNotFoundException {\n        if (!ALLOWED.contains(desc.getName())) throw new InvalidClassException(desc.getName());\n        return super.resolveClass(desc);\n    }\n}\npublic Object load(HttpServletRequest request) throws Exception {\n    return new SafeInput(request.getInputStream()).readObject();\n}\n')
+  },
+  {
+    ruleIds: [24103, 18013],
+    name: 'CORE-03 / JAVA-SEC-03 deep clone of bytes the code just serialized is not untrusted input',
+    detects: f('src/main/java/com/acme/util/SerializationHelper.java', 'public static Object fromString(String s) throws Exception {\n    byte[] data = Base64.getDecoder().decode(s);\n    return new ObjectInputStream(new ByteArrayInputStream(data)).readObject();\n}\npublic static String toString(Serializable o) throws Exception {\n    ByteArrayOutputStream baos = new ByteArrayOutputStream();\n    new ObjectOutputStream(baos).writeObject(o);\n    return Base64.getEncoder().encodeToString(baos.toByteArray());\n}\n'),
+    ignores: f('src/main/java/com/acme/util/Cloner.java', 'public static <T> T deepCopy(T value) throws Exception {\n    ByteArrayOutputStream bytes = new ByteArrayOutputStream();\n    new ObjectOutputStream(bytes).writeObject(value);\n    return (T) new ObjectInputStream(new ByteArrayInputStream(bytes.toByteArray())).readObject();\n}\n')
+  },
   // ─── Mobile (MOB-SEC-01..17) ──────────────────────────────────────────
   {
     ruleIds: [9301],

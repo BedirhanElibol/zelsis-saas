@@ -21,7 +21,7 @@ const corpus = JSON.parse(readFileSync(join(__dirname, 'corpus.json'), 'utf8')) 
   repos: { name: string; sha: string; kind: 'clean' | 'vulnerable'; stack: string }[];
 };
 
-const TEXT_EXT = /\.(?:[cm]?[jt]sx?|vue|svelte|astro|py|rb|erb|go|php|twig|java|jsp|kt|cs|cshtml|razor|rs|sql|prisma|ya?ml|toml|json|tf|html|xml|gradle|env\.example|sh)$|(?:^|\/)(?:Dockerfile|Gemfile|\.zelsisignore)$/i;
+const TEXT_EXT = /\.(?:[cm]?[jt]sx?|vue|svelte|astro|py|rb|erb|go|php|twig|java|jsp|kts?|swift|plist|cs|cshtml|razor|rs|sql|prisma|ya?ml|toml|json|tf|html|xml|gradle|env\.example|sh)$|(?:^|\/)(?:Dockerfile|Gemfile|\.zelsisignore)$/i;
 
 function checkout(name: string, sha: string): string {
   const dir = join(cacheDir, name.replace('/', '_'));

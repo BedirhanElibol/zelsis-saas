@@ -17,5 +17,10 @@ export const REVIEWED_TRUE_POSITIVES: Record<number, string> = {
   12605: 'Third-party GitHub Action referenced by mutable tag',
   23003: 'nextjs-subscription-payments: SECURITY DEFINER handle_new_user() without search_path',
   28005: 'supabase-js test migration: FOR ALL policy on storage.objects checks only bucket_id, so anyone can overwrite files',
-  23008:'nextjs-subscription-payments pins next 14.2.3, affected by CVE-2025-29927'
+  23008:'nextjs-subscription-payments pins next 14.2.3, affected by CVE-2025-29927',
+  5015: 'NewPipe PoTokenWebView hardcodes a Google API key (AIza…, the YouTube web key, marked NOSONAR)',
+  9303: 'AntennaPod sets usesCleartextTraffic="true" so podcast feeds and media can load over plain HTTP',
+  9305: 'AntennaPod MediaButtonReceiver and PlayerWidget are exported with the app\'s own custom actions (NOTIFY_BUTTON_RECEIVER, FORCE_WIDGET_UPDATE) that any app can send',
+  24101: 'AntennaPod DBUpgrader concatenates a media file path into UPDATE … WHERE file_url=\'…\', so a quote in the path breaks the query',
+  24104: 'AntennaPod FeedHandler parses remote podcast feeds with a default SAXParserFactory and no DTD / external-entity hardening'
 };

@@ -54,5 +54,10 @@ export const EXPECTED_FLAWS: ExpectedFlaw[] = [
   { repo: 'adeyosemanputra/pygoat', file: 'introduction/views.py', flaw: 'MD5 password hashing', match: WEAK_HASH },
   { repo: 'anxolerd/dvpwa', file: 'sqli/dao/student.py', flaw: 'SQL injection: % string formatting in INSERT', match: SQLI },
   { repo: 'anxolerd/dvpwa', file: 'sqli/dao/user.py', flaw: 'MD5 password hashing', match: WEAK_HASH },
-  { repo: 'anxolerd/dvpwa', file: 'sqli/app.py', flaw: 'Template autoescaping disabled (autoescape=False)', match: XSS }
+  { repo: 'anxolerd/dvpwa', file: 'sqli/app.py', flaw: 'Template autoescaping disabled (autoescape=False)', match: XSS },
+  { repo: 'payatu/diva-android', file: 'app/src/main/java/jakhar/aseem/diva/SQLInjectionActivity.java', flaw: 'SQL injection: search text concatenated into rawQuery', match: SQLI },
+  { repo: 'payatu/diva-android', file: 'app/src/main/java/jakhar/aseem/diva/InsecureDataStorage1Activity.java', flaw: 'Password stored in plaintext SharedPreferences', match: /SharedPreferences|Local Data Storage/i },
+  { repo: 'dineshshetty/Android-InsecureBankv2', file: 'InsecureBankv2/app/src/main/java/com/android/insecurebankv2/DoLogin.java', flaw: 'Username and password written to Logcat', match: /Log/i },
+  { repo: 'dineshshetty/Android-InsecureBankv2', file: 'InsecureBankv2/app/src/main/java/com/android/insecurebankv2/MyBroadCastReceiver.java', flaw: 'Credentials in world-readable SharedPreferences', match: /World-Readable/i },
+  { repo: 'prateek147/DVIA-v2', file: 'DVIA-v2/DVIA-v2/Vulnerabilities/Insecure Data Storage/Controller/PListViewController.swift', flaw: 'Password saved to a plist in Documents', match: /Plain File|Credential/i }
 ];

@@ -1,7 +1,7 @@
 {
  "summary": {
   "implementedRules": 1266,
-  "testedRules": 1255,
+  "testedRules": 1256,
   "preciseLocationRules": 1263,
   "catalogEntries": 1922,
   "catalogOnlyNotImplemented": 1397,
@@ -7544,7 +7544,7 @@
    "severity": "CRITICAL",
    "source": "lib/rules/polyglot-backend-rules.ts",
    "preciseLocation": true,
-   "tested": false,
+   "tested": true,
    "inCatalog": true
   },
   {

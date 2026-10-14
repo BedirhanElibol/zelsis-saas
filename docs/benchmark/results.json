@@ -1,5 +1,5 @@
 {
- "generatedAt": "2026-10-07",
+ "generatedAt": "2026-10-14",
  "corpus": [
   {
    "name": "vercel/nextjs-subscription-payments",
@@ -120,18 +120,54 @@
    "sha": "a1d8f89fac2e57093189853c6527c2b01fc1d9c1",
    "kind": "vulnerable",
    "stack": "Python + aiohttp"
+  },
+  {
+   "name": "TeamNewPipe/NewPipe",
+   "sha": "ab57bd483bcabb48c67ffe8519a80440e1367a14",
+   "kind": "clean",
+   "stack": "Android (Java + Kotlin)"
+  },
+  {
+   "name": "AntennaPod/AntennaPod",
+   "sha": "3d105d598dfa582c6cb22ba40b56d11780366890",
+   "kind": "clean",
+   "stack": "Android (Java)"
+  },
+  {
+   "name": "mastodon/mastodon-ios",
+   "sha": "14c140cb2be0ec5a6a004bfb89f7b8d8f5436013",
+   "kind": "clean",
+   "stack": "iOS (Swift)"
+  },
+  {
+   "name": "payatu/diva-android",
+   "sha": "2bb63b531ba66c22563ac0911973389e2a0cb723",
+   "kind": "vulnerable",
+   "stack": "Android (Java)"
+  },
+  {
+   "name": "dineshshetty/Android-InsecureBankv2",
+   "sha": "3c8cc3a3ce45ed56d0f58f236b541b41f992e51f",
+   "kind": "vulnerable",
+   "stack": "Android (Java)"
+  },
+  {
+   "name": "prateek147/DVIA-v2",
+   "sha": "96466ab85569dbcd37c69b2d15d22ff666f57031",
+   "kind": "vulnerable",
+   "stack": "iOS (Swift)"
   }
  ],
  "summary": {
-  "cleanRepos": 12,
-  "cleanReposGateFailed": 2,
-  "cleanHighCriticalFindings": 23,
-  "cleanGatingHighCriticalFindings": 23,
-  "documentedFlaws": 38,
-  "documentedFlawsDetected": 38,
+  "cleanRepos": 15,
+  "cleanReposGateFailed": 4,
+  "cleanHighCriticalFindings": 31,
+  "cleanGatingHighCriticalFindings": 31,
+  "documentedFlaws": 43,
+  "documentedFlawsDetected": 43,
   "recall": 1,
-  "documentedFlawsBlockingGate": 37,
-  "rulesFiringOnClean": 54,
+  "documentedFlawsBlockingGate": 41,
+  "rulesFiringOnClean": 71,
   "experimentalRules": 0
  },
  "repos": [
@@ -141,12 +177,12 @@
    "kind": "clean",
    "stack": "Next.js + Supabase + Stripe",
    "files": 67,
-   "scanMs": 724,
+   "scanMs": 492,
    "gate": "WARNING",
-   "score": 77,
+   "score": 70,
    "critical": 0,
    "high": 3,
-   "medium": 2,
+   "medium": 9,
    "low": 1,
    "experimental": 0,
    "allHighCritical": 3,
@@ -158,12 +194,12 @@
    "kind": "clean",
    "stack": "Next.js + Prisma + Stripe + NextAuth",
    "files": 140,
-   "scanMs": 490,
+   "scanMs": 1317,
    "gate": "WARNING",
-   "score": 89,
+   "score": 88,
    "critical": 0,
    "high": 1,
-   "medium": 1,
+   "medium": 2,
    "low": 6,
    "experimental": 0,
    "allHighCritical": 1,
@@ -175,13 +211,13 @@
    "kind": "clean",
    "stack": "FastAPI + React",
    "files": 204,
-   "scanMs": 809,
+   "scanMs": 1915,
    "gate": "WARNING",
-   "score": 85,
+   "score": 82,
    "critical": 0,
    "high": 1,
-   "medium": 4,
-   "low": 5,
+   "medium": 5,
+   "low": 6,
    "experimental": 0,
    "allHighCritical": 1,
    "detectedFramework": "React"
@@ -192,7 +228,7 @@
    "kind": "clean",
    "stack": "Express + Prisma",
    "files": 58,
-   "scanMs": 159,
+   "scanMs": 327,
    "gate": "FAILED",
    "score": 35,
    "critical": 2,
@@ -209,7 +245,7 @@
    "kind": "clean",
    "stack": "Go + Gin",
    "files": 27,
-   "scanMs": 138,
+   "scanMs": 319,
    "gate": "PASSED",
    "score": 98,
    "critical": 0,
@@ -226,7 +262,7 @@
    "kind": "clean",
    "stack": "Laravel",
    "files": 40,
-   "scanMs": 68,
+   "scanMs": 133,
    "gate": "PASSED",
    "score": 100,
    "critical": 0,
@@ -243,13 +279,13 @@
    "kind": "clean",
    "stack": "Remix/React Router + Prisma + tRPC (production SaaS)",
    "files": 2481,
-   "scanMs": 13704,
+   "scanMs": 36581,
    "gate": "WARNING",
    "score": 29,
    "critical": 0,
    "high": 5,
-   "medium": 87,
-   "low": 155,
+   "medium": 92,
+   "low": 165,
    "experimental": 0,
    "allHighCritical": 5,
    "detectedFramework": "React"
@@ -260,12 +296,12 @@
    "kind": "clean",
    "stack": "TypeScript SDK",
    "files": 471,
-   "scanMs": 3834,
+   "scanMs": 6908,
    "gate": "FAILED",
-   "score": 60,
+   "score": 59,
    "critical": 1,
    "high": 1,
-   "medium": 2,
+   "medium": 3,
    "low": 14,
    "experimental": 0,
    "allHighCritical": 2,
@@ -277,7 +313,7 @@
    "kind": "vulnerable",
    "stack": "Express + MongoDB",
    "files": 87,
-   "scanMs": 263,
+   "scanMs": 453,
    "gate": "FAILED",
    "score": 0,
    "critical": 6,
@@ -294,7 +330,7 @@
    "kind": "vulnerable",
    "stack": "Express + Sequelize",
    "files": 21,
-   "scanMs": 124,
+   "scanMs": 181,
    "gate": "FAILED",
    "score": 0,
    "critical": 6,
@@ -310,16 +346,16 @@
    "sha": "1618a611b173b4bf114028e6e02549950606e29d",
    "kind": "vulnerable",
    "stack": "Express + Angular + Sequelize",
-   "files": 965,
-   "scanMs": 6417,
+   "files": 962,
+   "scanMs": 13107,
    "gate": "FAILED",
    "score": 0,
-   "critical": 47,
-   "high": 27,
-   "medium": 33,
-   "low": 68,
+   "critical": 54,
+   "high": 30,
+   "medium": 46,
+   "low": 67,
    "experimental": 0,
-   "allHighCritical": 74,
+   "allHighCritical": 84,
    "detectedFramework": "Express"
   },
   {
@@ -328,7 +364,7 @@
    "kind": "clean",
    "stack": "Java + Spring Boot",
    "files": 84,
-   "scanMs": 154,
+   "scanMs": 274,
    "gate": "WARNING",
    "score": 74,
    "critical": 0,
@@ -345,7 +381,7 @@
    "kind": "clean",
    "stack": "C# + ASP.NET Core",
    "files": 350,
-   "scanMs": 413,
+   "scanMs": 857,
    "gate": "WARNING",
    "score": 80,
    "critical": 0,
@@ -362,12 +398,12 @@
    "kind": "clean",
    "stack": "Ruby on Rails (production service)",
    "files": 1698,
-   "scanMs": 2948,
+   "scanMs": 5374,
    "gate": "WARNING",
-   "score": 67,
+   "score": 63,
    "critical": 0,
    "high": 4,
-   "medium": 2,
+   "medium": 4,
    "low": 3,
    "experimental": 0,
    "allHighCritical": 4,
@@ -379,12 +415,12 @@
    "kind": "clean",
    "stack": "Python + Django (production site)",
    "files": 434,
-   "scanMs": 1530,
+   "scanMs": 3455,
    "gate": "WARNING",
    "score": 68,
    "critical": 0,
    "high": 1,
-   "medium": 12,
+   "medium": 13,
    "low": 27,
    "experimental": 0,
    "allHighCritical": 1,
@@ -396,15 +432,15 @@
    "kind": "vulnerable",
    "stack": "Java + Spring",
    "files": 635,
-   "scanMs": 1986,
+   "scanMs": 3930,
    "gate": "FAILED",
    "score": 0,
    "critical": 15,
-   "high": 7,
-   "medium": 52,
+   "high": 9,
+   "medium": 53,
    "low": 146,
    "experimental": 0,
-   "allHighCritical": 22,
+   "allHighCritical": 24,
    "detectedFramework": "Spring Boot"
   },
   {
@@ -413,7 +449,7 @@
    "kind": "vulnerable",
    "stack": "Ruby on Rails",
    "files": 187,
-   "scanMs": 933,
+   "scanMs": 1341,
    "gate": "FAILED",
    "score": 0,
    "critical": 7,
@@ -430,15 +466,15 @@
    "kind": "vulnerable",
    "stack": "PHP",
    "files": 195,
-   "scanMs": 347,
+   "scanMs": 672,
    "gate": "FAILED",
    "score": 0,
-   "critical": 56,
+   "critical": 57,
    "high": 25,
-   "medium": 3,
+   "medium": 5,
    "low": 0,
    "experimental": 0,
-   "allHighCritical": 81,
+   "allHighCritical": 82,
    "detectedFramework": null
   },
   {
@@ -447,15 +483,15 @@
    "kind": "vulnerable",
    "stack": "Python + Django",
    "files": 217,
-   "scanMs": 440,
+   "scanMs": 886,
    "gate": "FAILED",
    "score": 0,
    "critical": 14,
-   "high": 26,
-   "medium": 39,
+   "high": 27,
+   "medium": 41,
    "low": 39,
    "experimental": 0,
-   "allHighCritical": 40,
+   "allHighCritical": 41,
    "detectedFramework": null
   },
   {
@@ -464,7 +500,7 @@
    "kind": "vulnerable",
    "stack": "Python + aiohttp",
    "files": 30,
-   "scanMs": 943,
+   "scanMs": 1349,
    "gate": "FAILED",
    "score": 31,
    "critical": 2,
@@ -473,6 +509,108 @@
    "low": 1,
    "experimental": 0,
    "allHighCritical": 5,
+   "detectedFramework": null
+  },
+  {
+   "repo": "TeamNewPipe/NewPipe",
+   "sha": "ab57bd483bcabb48c67ffe8519a80440e1367a14",
+   "kind": "clean",
+   "stack": "Android (Java + Kotlin)",
+   "files": 1161,
+   "scanMs": 7825,
+   "gate": "FAILED",
+   "score": 65,
+   "critical": 1,
+   "high": 0,
+   "medium": 6,
+   "low": 0,
+   "experimental": 0,
+   "allHighCritical": 1,
+   "detectedFramework": null
+  },
+  {
+   "repo": "AntennaPod/AntennaPod",
+   "sha": "3d105d598dfa582c6cb22ba40b56d11780366890",
+   "kind": "clean",
+   "stack": "Android (Java)",
+   "files": 1143,
+   "scanMs": 7316,
+   "gate": "FAILED",
+   "score": 18,
+   "critical": 2,
+   "high": 5,
+   "medium": 3,
+   "low": 7,
+   "experimental": 0,
+   "allHighCritical": 7,
+   "detectedFramework": null
+  },
+  {
+   "repo": "mastodon/mastodon-ios",
+   "sha": "14c140cb2be0ec5a6a004bfb89f7b8d8f5436013",
+   "kind": "clean",
+   "stack": "iOS (Swift)",
+   "files": 931,
+   "scanMs": 3251,
+   "gate": "PASSED",
+   "score": 89,
+   "critical": 0,
+   "high": 0,
+   "medium": 8,
+   "low": 0,
+   "experimental": 0,
+   "allHighCritical": 0,
+   "detectedFramework": null
+  },
+  {
+   "repo": "payatu/diva-android",
+   "sha": "2bb63b531ba66c22563ac0911973389e2a0cb723",
+   "kind": "vulnerable",
+   "stack": "Android (Java)",
+   "files": 59,
+   "scanMs": 136,
+   "gate": "FAILED",
+   "score": 5,
+   "critical": 3,
+   "high": 4,
+   "medium": 0,
+   "low": 0,
+   "experimental": 0,
+   "allHighCritical": 7,
+   "detectedFramework": null
+  },
+  {
+   "repo": "dineshshetty/Android-InsecureBankv2",
+   "sha": "3c8cc3a3ce45ed56d0f58f236b541b41f992e51f",
+   "kind": "vulnerable",
+   "stack": "Android (Java)",
+   "files": 90,
+   "scanMs": 223,
+   "gate": "WARNING",
+   "score": 77,
+   "critical": 0,
+   "high": 3,
+   "medium": 1,
+   "low": 0,
+   "experimental": 0,
+   "allHighCritical": 3,
+   "detectedFramework": null
+  },
+  {
+   "repo": "prateek147/DVIA-v2",
+   "sha": "96466ab85569dbcd37c69b2d15d22ff666f57031",
+   "kind": "vulnerable",
+   "stack": "iOS (Swift)",
+   "files": 129,
+   "scanMs": 503,
+   "gate": "WARNING",
+   "score": 86,
+   "critical": 0,
+   "high": 2,
+   "medium": 0,
+   "low": 0,
+   "experimental": 0,
+   "allHighCritical": 2,
    "detectedFramework": null
   }
  ],
@@ -870,9 +1008,101 @@
    "matchedBy": [
     "CORE-05: Cross-Site Scripting (XSS): Output Escaping Bypassed"
    ]
+  },
+  {
+   "repo": "payatu/diva-android",
+   "flaw": "SQL injection: search text concatenated into rawQuery",
+   "file": "app/src/main/java/jakhar/aseem/diva/SQLInjectionActivity.java",
+   "found": true,
+   "blocksGate": true,
+   "matchedBy": [
+    "MOB-SEC-14: SQLite Query Built by String Concatenation",
+    "CORE-01: SQL Injection: Query Built From Dynamic Values"
+   ]
+  },
+  {
+   "repo": "payatu/diva-android",
+   "flaw": "Password stored in plaintext SharedPreferences",
+   "file": "app/src/main/java/jakhar/aseem/diva/InsecureDataStorage1Activity.java",
+   "found": true,
+   "blocksGate": true,
+   "matchedBy": [
+    "MOB-SEC-01: Insecure Local Data Storage in Cleartext SharedPreferences"
+   ]
+  },
+  {
+   "repo": "dineshshetty/Android-InsecureBankv2",
+   "flaw": "Username and password written to Logcat",
+   "file": "InsecureBankv2/app/src/main/java/com/android/insecurebankv2/DoLogin.java",
+   "found": true,
+   "blocksGate": false,
+   "matchedBy": [
+    "MOB-SEC-12: Secret Written to the Device Log"
+   ]
+  },
+  {
+   "repo": "dineshshetty/Android-InsecureBankv2",
+   "flaw": "Credentials in world-readable SharedPreferences",
+   "file": "InsecureBankv2/app/src/main/java/com/android/insecurebankv2/MyBroadCastReceiver.java",
+   "found": true,
+   "blocksGate": true,
+   "matchedBy": [
+    "MOB-SEC-16: File or Preferences Created World-Readable"
+   ]
+  },
+  {
+   "repo": "prateek147/DVIA-v2",
+   "flaw": "Password saved to a plist in Documents",
+   "file": "DVIA-v2/DVIA-v2/Vulnerabilities/Insecure Data Storage/Controller/PListViewController.swift",
+   "found": true,
+   "blocksGate": true,
+   "matchedBy": [
+    "MOB-SEC-18: Credentials Saved to a Plain File"
+   ]
   }
  ],
  "rules": [
+  {
+   "ruleId": 1027,
+   "title": "Unoptimized Raster <img> Tag or Heavy Inline Data URI (Performance Optimization)",
+   "severity": "LOW",
+   "cleanRepos": [
+    "shadcn-ui/taxonomy",
+    "fastapi/full-stack-fastapi-template",
+    "documenso/documenso",
+    "spring-projects/spring-petclinic",
+    "rubygems/rubygems.org",
+    "django/djangoproject.com",
+    "AntennaPod/AntennaPod"
+   ],
+   "cleanFindings": 44,
+   "vulnerableRepos": [
+    "juice-shop/juice-shop",
+    "WebGoat/WebGoat",
+    "adeyosemanputra/pygoat"
+   ]
+  },
+  {
+   "ruleId": 9502,
+   "title": "CICD-SEC-02: Unpinned Third-Party Action Mutable Reference (@v1)",
+   "severity": "MEDIUM",
+   "cleanRepos": [
+    "gothinkster/golang-gin-realworld-example-app",
+    "documenso/documenso",
+    "spring-projects/spring-petclinic",
+    "dotnet-architecture/eShopOnWeb",
+    "django/djangoproject.com",
+    "TeamNewPipe/NewPipe",
+    "mastodon/mastodon-ios"
+   ],
+   "cleanFindings": 21,
+   "vulnerableRepos": [
+    "juice-shop/juice-shop",
+    "WebGoat/WebGoat",
+    "OWASP/railsgoat",
+    "digininja/DVWA"
+   ]
+  },
   {
    "ruleId": 8314,
    "title": "IAC-14: Dockerfile Missing HEALTHCHECK Instruction",
@@ -897,44 +1127,6 @@
    ]
   },
   {
-   "ruleId": 1027,
-   "title": "Unoptimized Raster <img> Tag or Heavy Inline Data URI (Performance Optimization)",
-   "severity": "LOW",
-   "cleanRepos": [
-    "shadcn-ui/taxonomy",
-    "fastapi/full-stack-fastapi-template",
-    "documenso/documenso",
-    "spring-projects/spring-petclinic",
-    "rubygems/rubygems.org",
-    "django/djangoproject.com"
-   ],
-   "cleanFindings": 42,
-   "vulnerableRepos": [
-    "juice-shop/juice-shop",
-    "WebGoat/WebGoat",
-    "adeyosemanputra/pygoat"
-   ]
-  },
-  {
-   "ruleId": 9502,
-   "title": "CICD-SEC-02: Unpinned Third-Party Action Mutable Reference (@v1)",
-   "severity": "MEDIUM",
-   "cleanRepos": [
-    "gothinkster/golang-gin-realworld-example-app",
-    "documenso/documenso",
-    "spring-projects/spring-petclinic",
-    "dotnet-architecture/eShopOnWeb",
-    "django/djangoproject.com"
-   ],
-   "cleanFindings": 14,
-   "vulnerableRepos": [
-    "juice-shop/juice-shop",
-    "WebGoat/WebGoat",
-    "OWASP/railsgoat",
-    "digininja/DVWA"
-   ]
-  },
-  {
    "ruleId": 1026,
    "title": "WCAG 2.2 AA: Interactive Input Missing Accessible Label or Keyboard Focus Ring",
    "severity": "MEDIUM",
@@ -947,6 +1139,23 @@
    "cleanFindings": 14,
    "vulnerableRepos": [
     "OWASP/NodeGoat",
+    "juice-shop/juice-shop",
+    "WebGoat/WebGoat",
+    "adeyosemanputra/pygoat"
+   ]
+  },
+  {
+   "ruleId": 7102,
+   "title": "WEB-PERF-02: Unsized Image or Video Element Causing Layout Shift",
+   "severity": "LOW",
+   "cleanRepos": [
+    "spring-projects/spring-petclinic",
+    "rubygems/rubygems.org",
+    "django/djangoproject.com",
+    "AntennaPod/AntennaPod"
+   ],
+   "cleanFindings": 14,
+   "vulnerableRepos": [
     "juice-shop/juice-shop",
     "WebGoat/WebGoat",
     "adeyosemanputra/pygoat"
@@ -983,18 +1192,20 @@
    "vulnerableRepos": []
   },
   {
-   "ruleId": 7102,
-   "title": "WEB-PERF-02: Unsized Image or Video Element Causing Layout Shift",
+   "ruleId": 7138,
+   "title": "WEB-PERF-38: Missing HTML Lang Attribute Delaying Accessibility Tree",
    "severity": "LOW",
    "cleanRepos": [
     "spring-projects/spring-petclinic",
-    "rubygems/rubygems.org",
-    "django/djangoproject.com"
+    "django/djangoproject.com",
+    "AntennaPod/AntennaPod"
    ],
-   "cleanFindings": 12,
+   "cleanFindings": 14,
    "vulnerableRepos": [
+    "OWASP/NodeGoat",
     "juice-shop/juice-shop",
     "WebGoat/WebGoat",
+    "OWASP/railsgoat",
     "adeyosemanputra/pygoat"
    ]
   },
@@ -1010,6 +1221,37 @@
    "cleanFindings": 11,
    "vulnerableRepos": [
     "juice-shop/juice-shop"
+   ]
+  },
+  {
+   "ruleId": 27223,
+   "title": "CLICHE-AI-COMMENT-03: Unresolved AI Placeholder / Incomplete Code Comment",
+   "severity": "MEDIUM",
+   "cleanRepos": [
+    "shadcn-ui/taxonomy",
+    "TeamNewPipe/NewPipe",
+    "mastodon/mastodon-ios"
+   ],
+   "cleanFindings": 8,
+   "vulnerableRepos": [
+    "WebGoat/WebGoat"
+   ]
+  },
+  {
+   "ruleId": 28601,
+   "title": "A11Y-01: Image Missing alt Text",
+   "severity": "MEDIUM",
+   "cleanRepos": [
+    "spring-projects/spring-petclinic",
+    "django/djangoproject.com",
+    "AntennaPod/AntennaPod"
+   ],
+   "cleanFindings": 6,
+   "vulnerableRepos": [
+    "OWASP/NodeGoat",
+    "juice-shop/juice-shop",
+    "WebGoat/WebGoat",
+    "adeyosemanputra/pygoat"
    ]
   },
   {
@@ -1080,21 +1322,15 @@
    "vulnerableRepos": []
   },
   {
-   "ruleId": 7138,
-   "title": "WEB-PERF-38: Missing HTML Lang Attribute Delaying Accessibility Tree",
-   "severity": "LOW",
+   "ruleId": 29617,
+   "title": "BUG-17: Foreign Key to auth.users Has No ON DELETE Rule (User Deletion Fails)",
+   "severity": "MEDIUM",
    "cleanRepos": [
-    "spring-projects/spring-petclinic",
-    "django/djangoproject.com"
+    "vercel/nextjs-subscription-payments",
+    "supabase/supabase-js"
    ],
-   "cleanFindings": 13,
-   "vulnerableRepos": [
-    "OWASP/NodeGoat",
-    "juice-shop/juice-shop",
-    "WebGoat/WebGoat",
-    "OWASP/railsgoat",
-    "adeyosemanputra/pygoat"
-   ]
+   "cleanFindings": 7,
+   "vulnerableRepos": []
   },
   {
    "ruleId": 16,
@@ -1113,6 +1349,17 @@
     "adeyosemanputra/pygoat",
     "anxolerd/dvpwa"
    ]
+  },
+  {
+   "ruleId": 29747,
+   "title": "BUG-114: Element Only Appears on Hover (group-hover:opacity-100)",
+   "severity": "LOW",
+   "cleanRepos": [
+    "fastapi/full-stack-fastapi-template",
+    "documenso/documenso"
+   ],
+   "cleanFindings": 5,
+   "vulnerableRepos": []
   },
   {
    "ruleId": 28612,
@@ -1161,6 +1408,21 @@
    ]
   },
   {
+   "ruleId": 274,
+   "title": "CLICHE-74: Unannounced External Link Navigation",
+   "severity": "LOW",
+   "cleanRepos": [
+    "django/djangoproject.com",
+    "AntennaPod/AntennaPod"
+   ],
+   "cleanFindings": 5,
+   "vulnerableRepos": [
+    "OWASP/NodeGoat",
+    "juice-shop/juice-shop",
+    "adeyosemanputra/pygoat"
+   ]
+  },
+  {
    "ruleId": 1204,
    "title": "UI-INTERACT-04: Disruptive autoFocus Input Hijacking",
    "severity": "LOW",
@@ -1171,22 +1433,6 @@
    "cleanFindings": 4,
    "vulnerableRepos": [
     "WebGoat/WebGoat"
-   ]
-  },
-  {
-   "ruleId": 28601,
-   "title": "A11Y-01: Image Missing alt Text",
-   "severity": "MEDIUM",
-   "cleanRepos": [
-    "spring-projects/spring-petclinic",
-    "django/djangoproject.com"
-   ],
-   "cleanFindings": 4,
-   "vulnerableRepos": [
-    "OWASP/NodeGoat",
-    "juice-shop/juice-shop",
-    "WebGoat/WebGoat",
-    "adeyosemanputra/pygoat"
    ]
   },
   {
@@ -1213,6 +1459,33 @@
    ],
    "cleanFindings": 2,
    "vulnerableRepos": []
+  },
+  {
+   "ruleId": 29985,
+   "title": "DBG-06: UserSecurityAuditLog.id Is a 32-bit SERIAL",
+   "severity": "MEDIUM",
+   "cleanRepos": [
+    "documenso/documenso",
+    "django/djangoproject.com"
+   ],
+   "cleanFindings": 2,
+   "vulnerableRepos": [
+    "WebGoat/WebGoat",
+    "digininja/DVWA"
+   ]
+  },
+  {
+   "ruleId": 8845,
+   "title": "PY-SEC-45: Missing Request Timeout on Python Requests / HTTPX Calls",
+   "severity": "LOW",
+   "cleanRepos": [
+    "django/djangoproject.com",
+    "AntennaPod/AntennaPod"
+   ],
+   "cleanFindings": 2,
+   "vulnerableRepos": [
+    "adeyosemanputra/pygoat"
+   ]
   },
   {
    "ruleId": 1207,
@@ -1257,6 +1530,16 @@
    ]
   },
   {
+   "ruleId": 29744,
+   "title": "BUG-111: SheetContent Has No Title",
+   "severity": "LOW",
+   "cleanRepos": [
+    "documenso/documenso"
+   ],
+   "cleanFindings": 4,
+   "vulnerableRepos": []
+  },
+  {
    "ruleId": 1240,
    "title": "UI-INTERACT-40: Interactive Chart Missing Keyboard Accessible Data Table",
    "severity": "LOW",
@@ -1287,18 +1570,14 @@
    "vulnerableRepos": []
   },
   {
-   "ruleId": 274,
-   "title": "CLICHE-74: Unannounced External Link Navigation",
-   "severity": "LOW",
+   "ruleId": 29981,
+   "title": "DBG-02: NOT IN (SELECT …) Returns No Rows When the Subquery Has a NULL",
+   "severity": "MEDIUM",
    "cleanRepos": [
-    "django/djangoproject.com"
+    "documenso/documenso"
    ],
-   "cleanFindings": 4,
-   "vulnerableRepos": [
-    "OWASP/NodeGoat",
-    "juice-shop/juice-shop",
-    "adeyosemanputra/pygoat"
-   ]
+   "cleanFindings": 3,
+   "vulnerableRepos": []
   },
   {
    "ruleId": 23003,
@@ -1316,6 +1595,16 @@
    "severity": "CRITICAL",
    "cleanRepos": [
     "gothinkster/node-express-realworld-example-app"
+   ],
+   "cleanFindings": 2,
+   "vulnerableRepos": []
+  },
+  {
+   "ruleId": 29742,
+   "title": "BUG-109: Form Field Uses text-xs on Mobile: iOS Zooms In on Focus",
+   "severity": "LOW",
+   "cleanRepos": [
+    "documenso/documenso"
    ],
    "cleanFindings": 2,
    "vulnerableRepos": []
@@ -1353,16 +1642,87 @@
    "vulnerableRepos": []
   },
   {
-   "ruleId": 27223,
-   "title": "CLICHE-AI-COMMENT-03: Unresolved AI Placeholder / Incomplete Code Comment",
+   "ruleId": 29956,
+   "title": "CIG-14: ADD Downloads a Remote File Without --checksum",
+   "severity": "MEDIUM",
+   "cleanRepos": [
+    "rubygems/rubygems.org"
+   ],
+   "cleanFindings": 2,
+   "vulnerableRepos": []
+  },
+  {
+   "ruleId": 24101,
+   "title": "CORE-01: SQL Injection: Query Built From Dynamic Values",
+   "severity": "CRITICAL",
+   "cleanRepos": [
+    "AntennaPod/AntennaPod"
+   ],
+   "cleanFindings": 2,
+   "vulnerableRepos": [
+    "WebGoat/WebGoat",
+    "OWASP/railsgoat",
+    "digininja/DVWA",
+    "adeyosemanputra/pygoat",
+    "anxolerd/dvpwa",
+    "payatu/diva-android"
+   ]
+  },
+  {
+   "ruleId": 24104,
+   "title": "CORE-04: XML External Entity (XXE) Processing Enabled",
+   "severity": "HIGH",
+   "cleanRepos": [
+    "AntennaPod/AntennaPod"
+   ],
+   "cleanFindings": 2,
+   "vulnerableRepos": [
+    "WebGoat/WebGoat",
+    "adeyosemanputra/pygoat"
+   ]
+  },
+  {
+   "ruleId": 9305,
+   "title": "MOB-SEC-05: Exported Android Component Lacking Permission Guard",
+   "severity": "HIGH",
+   "cleanRepos": [
+    "AntennaPod/AntennaPod"
+   ],
+   "cleanFindings": 2,
+   "vulnerableRepos": [
+    "payatu/diva-android",
+    "dineshshetty/Android-InsecureBankv2"
+   ]
+  },
+  {
+   "ruleId": 30010,
+   "title": "UXG-11: new Intl.NumberFormat() Created for Every Item",
+   "severity": "MEDIUM",
+   "cleanRepos": [
+    "vercel/nextjs-subscription-payments"
+   ],
+   "cleanFindings": 1,
+   "vulnerableRepos": []
+  },
+  {
+   "ruleId": 29651,
+   "title": "BUG-51: Fixed w-[800px] Width Overflows Phone Screens",
    "severity": "MEDIUM",
    "cleanRepos": [
     "shadcn-ui/taxonomy"
    ],
    "cleanFindings": 1,
-   "vulnerableRepos": [
-    "WebGoat/WebGoat"
-   ]
+   "vulnerableRepos": []
+  },
+  {
+   "ruleId": 29970,
+   "title": "CIG-28: Container Shares the Host IPC Namespace",
+   "severity": "MEDIUM",
+   "cleanRepos": [
+    "fastapi/full-stack-fastapi-template"
+   ],
+   "cleanFindings": 1,
+   "vulnerableRepos": []
   },
   {
    "ruleId": 12205,
@@ -1476,6 +1836,16 @@
    ]
   },
   {
+   "ruleId": 29628,
+   "title": "BUG-28: useEffect Dependency handleAutoSave Is Recreated Every Render",
+   "severity": "MEDIUM",
+   "cleanRepos": [
+    "documenso/documenso"
+   ],
+   "cleanFindings": 1,
+   "vulnerableRepos": []
+  },
+  {
    "ruleId": 6017,
    "title": "DB-PERF-17: Redundant Duplicate Indexes on Same Column Prefix",
    "severity": "LOW",
@@ -1528,18 +1898,6 @@
    ]
   },
   {
-   "ruleId": 8845,
-   "title": "PY-SEC-45: Missing Request Timeout on Python Requests / HTTPX Calls",
-   "severity": "LOW",
-   "cleanRepos": [
-    "django/djangoproject.com"
-   ],
-   "cleanFindings": 1,
-   "vulnerableRepos": [
-    "adeyosemanputra/pygoat"
-   ]
-  },
-  {
    "ruleId": 7115,
    "title": "WEB-PERF-15: Forced Synchronous Layout Shift (Layout Thrashing)",
    "severity": "MEDIUM",
@@ -1557,6 +1915,38 @@
    "severity": "MEDIUM",
    "cleanRepos": [
     "django/djangoproject.com"
+   ],
+   "cleanFindings": 1,
+   "vulnerableRepos": []
+  },
+  {
+   "ruleId": 5015,
+   "title": "SEC-SECRET-15: Google Gemini / AI Studio API Key",
+   "severity": "CRITICAL",
+   "cleanRepos": [
+    "TeamNewPipe/NewPipe"
+   ],
+   "cleanFindings": 1,
+   "vulnerableRepos": []
+  },
+  {
+   "ruleId": 9303,
+   "title": "MOB-SEC-03: Cleartext HTTP Traffic Permitted in Mobile Manifest",
+   "severity": "HIGH",
+   "cleanRepos": [
+    "AntennaPod/AntennaPod"
+   ],
+   "cleanFindings": 1,
+   "vulnerableRepos": [
+    "prateek147/DVIA-v2"
+   ]
+  },
+  {
+   "ruleId": 9317,
+   "title": "MOB-SEC-17: FileProvider Exposes the Device Root",
+   "severity": "MEDIUM",
+   "cleanRepos": [
+    "AntennaPod/AntennaPod"
    ],
    "cleanFindings": 1,
    "vulnerableRepos": []
@@ -1737,6 +2127,26 @@
    ]
   },
   {
+   "ruleId": 29701,
+   "title": "SHIP-01: Hardcoded localhost URL (http://localhost:3000) Breaks in Production",
+   "severity": "MEDIUM",
+   "cleanRepos": [],
+   "cleanFindings": 0,
+   "vulnerableRepos": [
+    "juice-shop/juice-shop"
+   ]
+  },
+  {
+   "ruleId": 29922,
+   "title": "SECG-23: Directory Listing Enabled With serve-index",
+   "severity": "MEDIUM",
+   "cleanRepos": [],
+   "cleanFindings": 0,
+   "vulnerableRepos": [
+    "juice-shop/juice-shop"
+   ]
+  },
+  {
    "ruleId": 18041,
    "title": "NOSQL-SEC-01: MongoDB $where Arbitrary JavaScript Evaluation Injection",
    "severity": "CRITICAL",
@@ -1787,8 +2197,28 @@
    ]
   },
   {
+   "ruleId": 29618,
+   "title": "BUG-18: Response Sent Without return; Handler Continues and Responds Again",
+   "severity": "HIGH",
+   "cleanRepos": [],
+   "cleanFindings": 0,
+   "vulnerableRepos": [
+    "juice-shop/juice-shop"
+   ]
+  },
+  {
    "ruleId": 28911,
    "title": "JSF-11: Every Proxy Hop Trusted: Client Can Spoof req.ip via X-Forwarded-For (CWE-348)",
+   "severity": "MEDIUM",
+   "cleanRepos": [],
+   "cleanFindings": 0,
+   "vulnerableRepos": [
+    "juice-shop/juice-shop"
+   ]
+  },
+  {
+   "ruleId": 29745,
+   "title": "BUG-112: JSON.parse(localStorage...) Without try/catch",
    "severity": "MEDIUM",
    "cleanRepos": [],
    "cleanFindings": 0,
@@ -1881,6 +2311,16 @@
    ]
   },
   {
+   "ruleId": 29797,
+   "title": "FAKE-07: Login Checks a Hard-Coded Password",
+   "severity": "CRITICAL",
+   "cleanRepos": [],
+   "cleanFindings": 0,
+   "vulnerableRepos": [
+    "juice-shop/juice-shop"
+   ]
+  },
+  {
    "ruleId": 27101,
    "title": "SEC-SSRF-01: Server-Side Request Forgery (SSRF) in Outbound Fetch / Webhook Dispatch",
    "severity": "CRITICAL",
@@ -1918,20 +2358,6 @@
    "cleanFindings": 0,
    "vulnerableRepos": [
     "WebGoat/WebGoat"
-   ]
-  },
-  {
-   "ruleId": 24101,
-   "title": "CORE-01: SQL Injection: Query Built From Dynamic Values",
-   "severity": "CRITICAL",
-   "cleanRepos": [],
-   "cleanFindings": 0,
-   "vulnerableRepos": [
-    "WebGoat/WebGoat",
-    "OWASP/railsgoat",
-    "digininja/DVWA",
-    "adeyosemanputra/pygoat",
-    "anxolerd/dvpwa"
    ]
   },
   {
@@ -1977,17 +2403,6 @@
    ]
   },
   {
-   "ruleId": 24104,
-   "title": "CORE-04: XML External Entity (XXE) Processing Enabled",
-   "severity": "HIGH",
-   "cleanRepos": [],
-   "cleanFindings": 0,
-   "vulnerableRepos": [
-    "WebGoat/WebGoat",
-    "adeyosemanputra/pygoat"
-   ]
-  },
-  {
    "ruleId": 28603,
    "title": "A11Y-03: Positive tabIndex Overrides Natural Focus Order",
    "severity": "LOW",
@@ -2001,6 +2416,16 @@
    "ruleId": 8131,
    "title": "ZERO-AUTH-31: Insecure JWT Storage in Browser LocalStorage",
    "severity": "MEDIUM",
+   "cleanRepos": [],
+   "cleanFindings": 0,
+   "vulnerableRepos": [
+    "WebGoat/WebGoat"
+   ]
+  },
+  {
+   "ruleId": 29977,
+   "title": "PRV-04: Refresh Token Stored in Web Storage (refresh_token)",
+   "severity": "HIGH",
    "cleanRepos": [],
    "cleanFindings": 0,
    "vulnerableRepos": [
@@ -2102,6 +2527,16 @@
     "digininja/DVWA",
     "adeyosemanputra/pygoat",
     "anxolerd/dvpwa"
+   ]
+  },
+  {
+   "ruleId": 29959,
+   "title": "CIG-17: Workflow Expands toJSON(secrets)",
+   "severity": "CRITICAL",
+   "cleanRepos": [],
+   "cleanFindings": 0,
+   "vulnerableRepos": [
+    "digininja/DVWA"
    ]
   },
   {
@@ -2355,6 +2790,16 @@
    ]
   },
   {
+   "ruleId": 29714,
+   "title": "BUG-104: Naive datetime.now() Mixed With Django Timezone-Aware Dates",
+   "severity": "MEDIUM",
+   "cleanRepos": [],
+   "cleanFindings": 0,
+   "vulnerableRepos": [
+    "adeyosemanputra/pygoat"
+   ]
+  },
+  {
    "ruleId": 7104,
    "title": "WEB-PERF-04: Non-Passive Touch or Wheel Event Listener",
    "severity": "MEDIUM",
@@ -2362,6 +2807,56 @@
    "cleanFindings": 0,
    "vulnerableRepos": [
     "anxolerd/dvpwa"
+   ]
+  },
+  {
+   "ruleId": 9301,
+   "title": "MOB-SEC-01: Insecure Local Data Storage in Cleartext SharedPreferences",
+   "severity": "HIGH",
+   "cleanRepos": [],
+   "cleanFindings": 0,
+   "vulnerableRepos": [
+    "payatu/diva-android"
+   ]
+  },
+  {
+   "ruleId": 9314,
+   "title": "MOB-SEC-14: SQLite Query Built by String Concatenation",
+   "severity": "HIGH",
+   "cleanRepos": [],
+   "cleanFindings": 0,
+   "vulnerableRepos": [
+    "payatu/diva-android"
+   ]
+  },
+  {
+   "ruleId": 9312,
+   "title": "MOB-SEC-12: Secret Written to the Device Log",
+   "severity": "MEDIUM",
+   "cleanRepos": [],
+   "cleanFindings": 0,
+   "vulnerableRepos": [
+    "dineshshetty/Android-InsecureBankv2"
+   ]
+  },
+  {
+   "ruleId": 9316,
+   "title": "MOB-SEC-16: File or Preferences Created World-Readable",
+   "severity": "HIGH",
+   "cleanRepos": [],
+   "cleanFindings": 0,
+   "vulnerableRepos": [
+    "dineshshetty/Android-InsecureBankv2"
+   ]
+  },
+  {
+   "ruleId": 9318,
+   "title": "MOB-SEC-18: Credentials Saved to a Plain File",
+   "severity": "HIGH",
+   "cleanRepos": [],
+   "cleanFindings": 0,
+   "vulnerableRepos": [
+    "prateek147/DVIA-v2"
    ]
   }
  ]
