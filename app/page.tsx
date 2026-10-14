@@ -23,23 +23,25 @@ export default function Home() {
         {/* Hero with the repo scan box and an example failing gate */}
         <SaasHero />
 
+        {/* The release gate first: repo → findings → failed build */}
         <WorkflowSteps />
 
-        <ProductCapabilities />
-
-        {/* Stack-specific checks; every example is scanned by tests/unit/landing-checks.test.ts */}
+        {/* Real-bug examples across stacks; every example is scanned by tests/unit/landing-checks.test.ts */}
         <FrameworkSpecifics />
-
-        <FixPromptsDemo />
 
         {/* Published benchmark: what we catch and what we miss */}
         <BenchmarkSection />
 
-        <SecurityAdvisor />
+        <ProductCapabilities />
+
+        <FixPromptsDemo />
 
         <CompetitorComparison />
 
         <ComparisonTable />
+
+        {/* Stack-specific companion note, below the main pitch */}
+        <SecurityAdvisor />
 
         <FaqSection />
 
