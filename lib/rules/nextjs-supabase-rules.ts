@@ -506,6 +506,8 @@ export function evaluateNextjsSupabaseRules(file: CodeFile, lines: string[], cle
       // A guard helper such as IF NOT public.is_admin() THEN RAISE also checks the caller
       if (/\bIF\s+(?:NOT\s+)?(?:\w+\.)?(?:is|has|can|check|assert|require)_\w+\s*\(/i.test(body)) continue;
       const short = normalizeSqlName(fullName);
+      // A later migration revoked EXECUTE from clients (hardening often ships separately from the function)
+      if (context.revokedSqlFunctions.has(short)) continue;
       if (new RegExp(String.raw`REVOKE[^;]*\bON\s+(?:FUNCTION\s+[\w."]*\b` + short + String.raw`\b|ALL\s+FUNCTIONS\s+IN\s+SCHEMA\s+"?public"?)`, 'i').test(sql)) continue;
       const hasParams = m[2].trim().length > 0;
       // Granted to clients in this same migration and the caller chooses the target: anyone can run it on any row

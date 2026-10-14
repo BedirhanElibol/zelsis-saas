@@ -121,6 +121,7 @@ export function RuleSearchClient({ rules }: RuleSearchClientProps) {
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-zinc-400" size={16} />
           <input
             type="text"
+            aria-label="Search rules"
             placeholder="Search by code (e.g. SEC-03, RULE-1), title, or keywords..."
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}

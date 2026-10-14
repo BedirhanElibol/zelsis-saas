@@ -380,6 +380,9 @@ function shipReadiness(path: string, lines: string[], c: string, add: (h: Hit) =
   lines.forEach((l, i) => {
     if (isComment(l) || !/process\.env\.(?:NEXT_PUBLIC_)?VERCEL_URL\b/.test(l) || /https?:\/\//.test(l)) return;
     if (!/(?:=|\(|\$\{|:)\s*process\.env\.(?:NEXT_PUBLIC_)?VERCEL_URL\b/.test(l)) return;
+    // Stored in a variable that is then given the protocol: `https://${vercelUrl}` / 'https://' + vercelUrl
+    const v = /\b(?:const|let|var)\s+(\w+)\s*=\s*process\.env\.(?:NEXT_PUBLIC_)?VERCEL_URL\b/.exec(l)?.[1];
+    if (v && new RegExp(String.raw`https?://\$\{\s*${v}\b|['"\x60]https?://['"\x60]\s*\+\s*${v}\b`).test(lines.slice(i + 1).join('\n'))) return;
     add({ ruleId: 29702, code: 'SHIP-02', severity: 'MEDIUM', category: 'Deployment Bug', lineIdx: i,
       title: 'VERCEL_URL Used as a Full URL (No https://, Changes Every Deployment)',
       why: 'VERCEL_URL is a bare host like my-app-abc123.vercel.app: without https:// fetch() and new URL() throw, and because it is the unique deployment URL, links and auth redirects point at a preview build instead of your domain.',

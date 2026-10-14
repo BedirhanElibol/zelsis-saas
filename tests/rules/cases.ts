@@ -33,6 +33,27 @@ const FAKE_GITHUB_PAT = 'ghp' + '_R4nd0mT0k3nV4lu3F0rT3st1ngPurp0s3sAb';
 export const RULE_CASES: RuleCase[] = [
   // ─── False positives found by scanning Zelsis itself (2026-10-14) ─────
   {
+    ruleIds: [29702],
+    name: 'SHIP-02 bare VERCEL_URL used as a URL; a variable later given https:// is fine',
+    detects: f('lib/site-url.ts', "export const siteUrl = process.env.VERCEL_URL;\nexport const callback = new URL('/auth/callback', siteUrl);\n"),
+    ignores: f('lib/site-url.ts', "const vercelUrl = process.env.VERCEL_URL;\nexport const siteUrl = vercelUrl ? `https://${vercelUrl}` : 'http://localhost:3000';\n")
+  },
+  {
+    ruleIds: [29894],
+    name: 'BUG-217 timingSafeEqual on unknown lengths; inside try/catch the RangeError is handled',
+    detects: f('app/api/webhooks/route.ts', "export function verify(sig: string, expected: string) {\n  return crypto.timingSafeEqual(Buffer.from(sig), Buffer.from(expected));\n}\n"),
+    ignores: f('app/api/webhooks/route.ts', "export function verify(sig: string, expected: string) {\n  try {\n    return crypto.timingSafeEqual(Buffer.from(sig), Buffer.from(expected));\n  } catch {\n    return false;\n  }\n}\n")
+  },
+  {
+    ruleIds: [28007],
+    name: 'NEXT-SB-07 SECURITY DEFINER write; revoked from clients in a later migration is fine',
+    detects: f('supabase/migrations/1_quota.sql', 'create or replace function public.reserve_quota(p_user uuid)\nreturns void language plpgsql security definer as $$\nbegin\n  update public.profiles set scans_used = scans_used + 1 where id = p_user;\nend;\n$$;\n'),
+    ignores: [
+      { path: 'supabase/migrations/1_quota.sql', content: 'create or replace function public.reserve_quota(p_user uuid)\nreturns void language plpgsql security definer as $$\nbegin\n  update public.profiles set scans_used = scans_used + 1 where id = p_user;\nend;\n$$;\n' },
+      { path: 'supabase/migrations/2_harden.sql', content: 'REVOKE EXECUTE ON FUNCTION public.reserve_quota(uuid) FROM PUBLIC, anon, authenticated;\n' },
+    ]
+  },
+  {
     ruleIds: [29826],
     name: 'BUG-155 useSearchParams() result mutated; a new URL(...).searchParams copy is fine',
     detects: f('app/search/filters.tsx', "'use client';\nimport { useSearchParams } from 'next/navigation';\nexport function Filters() {\n  const searchParams = useSearchParams();\n  searchParams.set('page', '1');\n  return null;\n}\n"),

@@ -684,6 +684,9 @@ function evaluateJs2(path: string, c: string, add: Add, nextMajor: number) {
   for (const m of c.matchAll(/\btimingSafeEqual\(/g)) {
     const before = c.slice(Math.max(0, m.index! - 400), m.index!);
     if (/\.length\s*!==?|\.length\s*===?|byteLength/.test(before + c.slice(m.index!, m.index! + 120))) continue;
+    // Inside try { … } catch: the RangeError for a wrong length is caught and treated as a mismatch
+    const openTry = before.lastIndexOf('try');
+    if (openTry !== -1 && /\btry\s*\{/.test(before.slice(openTry)) && !/\}\s*catch\b/.test(before.slice(openTry)) && /\bcatch\b/.test(c.slice(m.index!, m.index! + 400))) continue;
     add({ ruleId: 29894, code: 'BUG-217', severity: 'MEDIUM', lineIdx: at(m.index!),
       title: 'timingSafeEqual Without a Length Check',
       why: 'timingSafeEqual throws "Input buffers must have the same byte length" (RangeError) for a wrong-length signature or token, so a bad request returns 500 instead of 401.',
