@@ -143,7 +143,10 @@ function evaluate(path: string, c: string, ctx: RepoContext, add: (h: Hit) => vo
       if (CODE_EXT.some((e) => paths.has(`${dir}/loading${e}`))) { hasLoading = true; break; }
       dir = dirOf(dir);
     }
-    if (!hasLoading) {
+    // The default export renders <Suspense> around the inner component that reads the params
+    const page = /export\s+default\s+function\s*\w*\s*\([^)]*\)\s*\{[\s\S]*?\n\}/.exec(c)?.[0] ?? '';
+    const wrapped = /<Suspense\b/.test(page) && !/\buseSearchParams\s*\(/.test(page);
+    if (!hasLoading && !wrapped) {
       const x = /\buseSearchParams\s*\(/.exec(c)!;
       add({ ruleId: 29762, code: 'BUG-129', severity: 'HIGH', category: 'Deployment Bug', lineIdx: at(x.index),
         title: 'useSearchParams() in a Client Page Without a Suspense Boundary',
