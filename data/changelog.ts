@@ -19,6 +19,7 @@ export const CHANGELOG: ChangelogEntry[] = [
       { kind: 'New', text: 'Share a read-only report link from the dashboard. It shows the score and findings, never your code or fix instructions, and you can turn it off at any time.' },
       { kind: 'Improved', text: 'Three checks now report HIGH when the flaw is clearly exploitable: database functions anyone can call, roles users pick for themselves at sign-up, and admin checks on a header nothing in the app sets.' },
       { kind: 'Fixed', text: 'Files saved with Windows line endings no longer hide findings from some rules.' },
+      { kind: 'Fixed', text: 'Fewer false alarms on Next.js and Supabase code: edits to a new URL(...).searchParams copy, writes whose result is checked before use, OAuth callbacks that verify state, and pages that already wrap useSearchParams in Suspense.' },
       { kind: 'Fixed', text: 'Next.js 16 proxy.ts (the renamed middleware.ts) and Auth.js v5 `export { auth as proxy }` count as route protection, so routes they cover are no longer reported as unauthenticated.' },
       { kind: 'Improved', text: 'The public benchmark now covers 26 projects, including six Android and iOS apps: 43 of 43 documented flaws are found, and every finding on the clean projects was reviewed.' },
       { kind: 'Fixed', text: 'Java and Kotlin deserialization checks no longer flag streams behind a class allowlist, deep copies or files only the app itself can write; untrusted input is still caught.' },
