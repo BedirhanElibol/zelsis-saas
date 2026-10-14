@@ -62,8 +62,13 @@ export interface ScanOptions {
   dismissals?: { ruleId: number; filePath: string }[];
 }
 
-export async function runStaticCodeScan(files: CodeFile[], repoName: string = 'Target Repository', options: ScanOptions = {}): Promise<ScanResult> {
+export async function runStaticCodeScan(inputFiles: CodeFile[], repoName: string = 'Target Repository', options: ScanOptions = {}): Promise<ScanResult> {
   const scanStartedAt = Date.now();
+  // Windows (CRLF) and old Mac (CR) line endings become \n once, here: a line ending in \r defeats every
+  // rule that anchors on the end of a line (`.` does not match \r), so CRLF repos silently missed findings.
+  const files = inputFiles.map((f) => (f && typeof f.content === 'string' && f.content.includes('\r')
+    ? { ...f, content: f.content.replace(/\r\n?/g, '\n') }
+    : f));
   const findings: Finding[] = [];
   const logs: string[] = [];
 
