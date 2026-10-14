@@ -94,7 +94,7 @@ export const ProductCapabilities: React.FC = () => {
       description:
         'Check an API route, a Dockerfile or a component against the same engine the scans use. It runs in your browser, so nothing is installed and the snippet never leaves your machine.',
       image: '/images/vulnerability_sandbox.png',
-      alt: 'Zelsis In-Memory Vulnerability Sandbox and Lexical Pattern Playground',
+      alt: 'Zelsis rule sandbox showing four findings in a pasted Next.js route',
       tag: 'IN YOUR BROWSER',
       architecturePills: [
         'Runs in your browser',

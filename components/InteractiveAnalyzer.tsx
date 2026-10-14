@@ -14,7 +14,7 @@ const MAX_CODE_LENGTH = 50000;
 // Many rules key off the file path (route handlers, migrations, Dockerfiles, language extensions),
 // so the snippet is scanned under a realistic path for the chosen file type.
 const FILE_TYPES = [
-  { label: 'Next.js route (route.ts)', path: 'app/api/example/route.ts' },
+  { label: 'Next.js route (route.ts)', path: 'app/api/billing/route.ts' },
   { label: 'React component (.tsx)', path: 'components/Example.tsx' },
   { label: 'SQL migration (.sql)', path: 'supabase/migrations/20260101000000_example.sql' },
   { label: 'Dockerfile', path: 'Dockerfile' },
