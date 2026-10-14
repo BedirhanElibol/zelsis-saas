@@ -2,9 +2,9 @@ import { MetadataRoute } from 'next';
 
 export default function manifest(): MetadataRoute.Manifest {
   return {
-    name: 'Zelsis AI Release Gate',
+    name: 'Zelsis Release Gate',
     short_name: 'Zelsis',
-    description: 'Security Clearance & Design System Pre-flight Release Control for Next.js & LLM Codebases.',
+    description: 'Release checks for web, mobile, SaaS, API and desktop apps: logic bugs, security, dependencies, UI and privacy.',
     start_url: '/',
     display: 'standalone',
     background_color: '#0D0D0D',

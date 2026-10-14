@@ -100,7 +100,7 @@ export const SaasHero: React.FC<SaasHeroProps> = ({ onOpenDashboard }) => {
           Find the flaws in your app <span className="text-emerald-400">before your users do.</span>
         </h1>
         <p className="text-base sm:text-lg lg:text-xl text-[#A1A1AA] max-w-3xl mx-auto leading-relaxed mt-6 mb-10 font-sans font-normal">
-          Zelsis checks every pull request for leaked keys, broken auth, injection, unsafe database rules, payment bugs and vulnerable dependencies, and fails the build when something critical gets in. Web and mobile apps in JavaScript, Python, Go, Ruby, PHP, Java, C#, Swift and Kotlin, one flat price per account.
+          Zelsis checks every pull request for logic bugs, security holes, vulnerable dependencies, UI and accessibility issues and privacy gaps, and fails the build when something critical gets in. Web, mobile, SaaS, API and desktop projects in JavaScript, Python, Go, Ruby, PHP, Java, C#, Swift and Kotlin, one flat price per account.
         </p>
 
         {/* Direct Repository Scan Command Bar */}

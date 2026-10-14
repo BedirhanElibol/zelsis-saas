@@ -14,7 +14,7 @@ export const Footer: React.FC = () => {
           <ZelsisLogo size="md" />
 
           <p className="text-sm leading-relaxed max-w-sm text-[#A1A1AA]">
-            A release gate for web apps and APIs: security, logic and dependency checks on every pull request.
+            A release gate for web, mobile, SaaS, API and desktop apps. Logic, security, dependency, UI and privacy checks on every pull request.
           </p>
 
           <div className="flex flex-col gap-1.5 mt-2 text-xs font-mono text-zinc-400">
