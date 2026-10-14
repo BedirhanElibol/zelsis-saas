@@ -54,7 +54,7 @@ function evaluateJs(path: string, c: string, add: Add) {
   }
 
   // SECG-11: authenticated response marked cacheable by shared caches
-  const isHandler = /(?:^|\/)(?:route|middleware)\.[cm]?[jt]s$|(?:^|\/)(?:api|server|routes)\//i.test(path);
+  const isHandler = /(?:^|\/)(?:route|middleware|proxy)\.[cm]?[jt]s$|(?:^|\/)(?:api|server|routes)\//i.test(path);
   if (isHandler && /\b(?:auth\(\)|getServerSession\(|getSession\(|auth\.getUser\(|getUser\(|currentUser\(|cookies\(\)|req\.user\b|req\.session\b|verifyToken\(|getToken\()/.test(c)) {
     for (const m of c.matchAll(/['"]?Cache-Control['"]?\s*[:,]\s*['"`]([^'"`]*\b(?:public|s-maxage)\b[^'"`]*)['"`]/gi)) {
       if (/\b(?:private|no-store)\b/i.test(m[1])) continue;

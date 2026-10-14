@@ -47,7 +47,7 @@ export function evaluateModernFullstackRules(file: CodeFile, lines: string[], cl
         logs.push(`[${ts}] ⚡ FULLSTACK NEXT15-02: Client Component Props Exposing Server Secrets in ${file.path}:${lineNum}`);
     }
     // NEXT15-05: Edge Middleware Header Injection via URL Parameters
-    if (lowerPath.includes('middleware') && /headers\.set\s*\(\s*["']x-[\w-]*(?:user|tenant|org|role|admin|auth|account)[\w-]*["']\s*,\s*(?:req|request)\.nextUrl\.searchParams\.get/i.test(cleanContent) && !/sanitize/i.test(cleanContent)) {
+    if (/middleware|(?:^|\/)(?:src\/)?proxy\.[cm]?[jt]s$/.test(lowerPath) && /headers\.set\s*\(\s*["']x-[\w-]*(?:user|tenant|org|role|admin|auth|account)[\w-]*["']\s*,\s*(?:req|request)\.nextUrl\.searchParams\.get/i.test(cleanContent) && !/sanitize/i.test(cleanContent)) {
         const matchLineIdx = locateMatchLine(lines, [/headers\.set\s*\(\s*["']x-[\w-]*(?:user|tenant|org|role|admin|auth|account)[\w-]*["']\s*,\s*(?:req|request)\.nextUrl\.searchParams\.get/i], l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('*'));
         const lineNum = matchLineIdx !== -1 ? matchLineIdx + 1 : 1;
         findings.push({

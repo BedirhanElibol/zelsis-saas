@@ -187,13 +187,15 @@ function stringArray(text: string): string[] {
   return [...text.matchAll(/(['"`])((?:\\.|(?!\1).)*)\1/g)].map((m) => m[2].replace(/\\\\/g, '\\'));
 }
 
-const MIDDLEWARE_FILE = /^(?:src\/)?middleware\.[cm]?[jt]s$/;
+/** Next.js 16 renamed middleware.ts to proxy.ts (same matcher config); both run before every matched route. */
+const MIDDLEWARE_FILE = /^(?:src\/)?(?:middleware|proxy)\.[cm]?[jt]s$/;
 
 export function readMiddlewareAuth(files: CodeFile[]): MiddlewareAuth | null {
   const file = files.find((f) => MIDDLEWARE_FILE.test(f.path.replace(/\\/g, '/').replace(/^\.\//, '')));
   if (!file) return null;
   const src = file.content || '';
-  const nextAuth = /export\s*\{\s*default\s*\}\s*from\s*['"]next-auth\/middleware['"]|export\s+default\s+(?:withAuth|auth)\b/.test(src);
+  // next-auth v4 re-export, withAuth / auth() as the default export, or Auth.js v5 `export { auth as proxy }`
+  const nextAuth = /export\s*\{\s*default\s*\}\s*from\s*['"]next-auth\/middleware['"]|export\s+default\s+(?:withAuth|auth)\b|export\s*\{\s*auth\s+as\s+(?:middleware|proxy|default)\s*\}|export\s+const\s+(?:middleware|proxy)\s*=\s*auth\b/.test(src);
   const clerk = /clerkMiddleware\s*\(/.test(src) && /\.protect\s*\(/.test(src);
   // Hand-written: reads the session and redirects / rejects when it is missing
   const manual = /\b(?:getUser|getSession|getToken|auth|verify\w*|jwtVerify)\s*\(/.test(src)

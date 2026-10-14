@@ -103,6 +103,18 @@ export const config = { matcher: ['/dashboard/:path*', '/api/notes/:path*'] };
     ],
   },
   {
+    ruleIds: [29302], name: 'AST-02 suppressed when Next.js 16 proxy.ts (Auth.js v5 export) covers the route',
+    detects: [
+      { path: 'app/api/notes/[id]/route.ts', content: DELETE_NOTE },
+    ],
+    ignores: [
+      { path: 'proxy.ts', content: `export { auth as proxy } from '@/auth';
+export const config = { matcher: ['/api/:path*', '/dashboard/:path*'] };
+` },
+      { path: 'app/api/notes/[id]/route.ts', content: DELETE_NOTE },
+    ],
+  },
+  {
     ruleIds: [29302], name: 'AST-02 kept for routes Clerk marks public',
     detects: [
       { path: 'src/middleware.ts', content: `import { clerkMiddleware, createRouteMatcher } from '@clerk/nextjs/server';

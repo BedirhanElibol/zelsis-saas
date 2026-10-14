@@ -378,7 +378,7 @@ export function evaluateInfraRules(file: CodeFile, lines: string[], cleanContent
     // Prisma's documented singleton factory (`const prismaClientSingleton = () => new PrismaClient()` cached on globalThis) is fine
     // Request-serving modules only (route handlers, API routes, server actions, Express/Lambda handlers); seed and
     // migration scripts that build one client in main() run once.
-    const isRequestModule = /(?:^|\/)(?:app\/.*\/route|pages\/api\/.*|middleware)\.[cm]?[jt]sx?$/.test(lowerPath) ||
+    const isRequestModule = /(?:^|\/)(?:app\/.*\/route|pages\/api\/.*|middleware|proxy)\.[cm]?[jt]sx?$/.test(lowerPath) ||
         /['"]use server['"]|\b(?:app|router)\.(?:get|post|put|patch|delete|all|use)\s*\(|export\s+(?:const|async\s+function|function)\s+handler\b/.test(cleanContent);
     const prismaPerRequestIdx = !isJsModule || !isRequestModule || /globalThis|global\.\w*prisma/i.test(cleanContent) ? -1 : lines.findIndex((l, i) => {
         if (!/new\s+PrismaClient\s*\(/.test(l) || /globalThis|global\./.test(l) || !/^\s+/.test(l)) return false;
