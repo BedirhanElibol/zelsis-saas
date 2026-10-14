@@ -24,6 +24,7 @@ export const CHANGELOG: ChangelogEntry[] = [
       { kind: 'Fixed', text: 'SECURITY DEFINER functions revoked from clients in a later migration, VERCEL_URL values given https:// further down, and timingSafeEqual calls inside try / catch are no longer reported.' },
       { kind: 'Fixed', text: 'Measured on 30 AI-built apps: log messages that only mention the word "password" and Vite / React Router pages (which never render on a server) are no longer flagged, and open RLS policies now point at their USING (true) line instead of line 1.' },
       { kind: 'Fixed', text: 'Localhost URLs used only as a fallback after an environment value, and dev / static servers without shutdown handlers, are no longer flagged.' },
+      { kind: 'Fixed', text: 'Form fields made 16px on phones by a stylesheet and hand-written dialog focus traps are recognised, so they no longer raise mobile-zoom or focus-trap findings.' },
       { kind: 'Fixed', text: 'Next.js 16 proxy.ts (the renamed middleware.ts) and Auth.js v5 `export { auth as proxy }` count as route protection, so routes they cover are no longer reported as unauthenticated.' },
       { kind: 'Improved', text: 'The public benchmark now covers 26 projects, including six Android and iOS apps: 43 of 43 documented flaws are found, and every finding on the clean projects was reviewed.' },
       { kind: 'Fixed', text: 'Java and Kotlin deserialization checks no longer flag streams behind a class allowlist, deep copies or files only the app itself can write; untrusted input is still caught.' },

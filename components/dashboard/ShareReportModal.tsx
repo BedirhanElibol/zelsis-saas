@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useActionState, useEffect, useState } from 'react';
+import React, { useActionState, useEffect, useRef, useState } from 'react';
 import { Check, Copy, Link2, Loader2, X } from 'lucide-react';
 import type { Project } from '@/data/schema';
 import { createReportShare, revokeReportShare } from '@/app/actions/report-share';
@@ -17,6 +17,7 @@ interface ShareReportModalProps {
 export const ShareReportModal: React.FC<ShareReportModalProps> = ({ isOpen, onClose, project }) => {
   const [accessToken, setAccessToken] = useState('');
   const [copied, setCopied] = useState(false);
+  const dialogRef = useRef<HTMLDivElement>(null);
   const [created, createAction, creating] = useActionState(createReportShare, initialReportShareState);
   const [revoked, revokeAction, revoking] = useActionState(revokeReportShare, initialReportShareState);
 
@@ -24,7 +25,19 @@ export const ShareReportModal: React.FC<ShareReportModalProps> = ({ isOpen, onCl
     if (!isOpen) return;
     let alive = true;
     void getActiveUserAuth().then(({ accessToken: token }) => { if (alive) setAccessToken(token || ''); });
-    const onKey = (e: KeyboardEvent) => { if (e.key === 'Escape') onClose(); };
+    // Keep keyboard focus inside the dialog: focus the first control on open, wrap Tab / Shift+Tab at the ends
+    const focusable = () => [...(dialogRef.current?.querySelectorAll<HTMLElement>('button:not([disabled]), [href], input:not([type="hidden"]), [tabindex]:not([tabindex="-1"])') ?? [])];
+    setTimeout(() => focusable()[0]?.focus(), 0);
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') { onClose(); return; }
+      if (e.key !== 'Tab') return;
+      const els = focusable();
+      if (els.length === 0) return;
+      const first = els[0];
+      const last = els[els.length - 1];
+      if (e.shiftKey && document.activeElement === first) { e.preventDefault(); last.focus(); }
+      else if (!e.shiftKey && document.activeElement === last) { e.preventDefault(); first.focus(); }
+    };
     window.addEventListener('keydown', onKey);
     return () => { alive = false; window.removeEventListener('keydown', onKey); };
   }, [isOpen, onClose]);
@@ -50,7 +63,7 @@ export const ShareReportModal: React.FC<ShareReportModalProps> = ({ isOpen, onCl
       onClick={(e) => { if (e.target === e.currentTarget) onClose(); }}
       className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80"
     >
-      <div role="dialog" aria-modal="true" aria-labelledby="share-report-title"
+      <div ref={dialogRef} role="dialog" aria-modal="true" aria-labelledby="share-report-title"
         className="relative w-full max-w-lg bg-[#141414] border border-white/10 rounded-2xl p-6 shadow-xl flex flex-col gap-5 text-[#EDEDED]">
         <div className="flex items-start justify-between gap-4">
           <div className="flex items-center gap-3">

@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { X, ShieldX, Loader2, Copy } from 'lucide-react';
+import { X, ShieldX, Loader2, Copy, Check } from 'lucide-react';
 import { Finding } from '@/data/schema';
 import { dismissFinding } from '@/actions/dismiss-finding';
 import { getActiveUserAuth } from '@/lib/supabase-client';
@@ -26,6 +26,7 @@ export const DismissFindingModal: React.FC<DismissFindingModalProps> = ({
   const [note, setNote] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [copied, setCopied] = useState(false);
 
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
@@ -84,9 +85,15 @@ export const DismissFindingModal: React.FC<DismissFindingModalProps> = ({
     }
   };
 
-  const handleCopyZelsisIgnore = () => {
+  const handleCopyZelsisIgnore = async () => {
     const ignoreLine = `${finding.ruleId} ${finding.filePath}`;
-    navigator.clipboard.writeText(ignoreLine);
+    try {
+      await navigator.clipboard.writeText(ignoreLine);
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2000);
+    } catch {
+      setCopied(false);
+    }
   };
 
   return (
@@ -175,8 +182,8 @@ export const DismissFindingModal: React.FC<DismissFindingModalProps> = ({
                 className="text-xs text-[#A1A1AA] hover:text-white flex items-center gap-1.5 transition-colors font-mono"
                 title="Copy line for .zelsisignore file"
               >
-                <Copy size={12} />
-                <span>Copy .zelsisignore line</span>
+                {copied ? <Check size={12} className="text-emerald-400" /> : <Copy size={12} />}
+                <span aria-live="polite">{copied ? 'Copied' : 'Copy .zelsisignore line'}</span>
               </button>
 
               <div className="flex items-center gap-2">

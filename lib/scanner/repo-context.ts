@@ -46,6 +46,8 @@ export interface RepoContext {
    * proxy_set_header), lower-cased. A handler reading one of these is not trusting the client.
    */
   serverSetHeaders: Set<string>;
+  /** A stylesheet sets form fields to at least 16px (the iOS focus-zoom fix), so text-xs classes on inputs are overridden. */
+  formFieldsMinFont16: boolean;
 }
 
 export interface NextConfigFacts {
@@ -106,17 +108,20 @@ export function buildRepoContext(files: CodeFile[]): RepoContext {
 }
 
 /** Paths, dependency majors and next.config facts for the cross-file frontend rules. */
-function collectProjectFacts(files: CodeFile[]): Pick<RepoContext, 'filePaths' | 'packageMajors' | 'expoPackageDirs' | 'nextConfig' | 'serverSetHeaders'> {
+function collectProjectFacts(files: CodeFile[]): Pick<RepoContext, 'filePaths' | 'packageMajors' | 'expoPackageDirs' | 'nextConfig' | 'serverSetHeaders' | 'formFieldsMinFont16'> {
   const filePaths = new Set<string>();
   const packageMajors = new Map<string, number>();
   const expoPackageDirs = new Set<string>();
   let nextConfig: NextConfigFacts | null = null;
   const serverSetHeaders = new Set<string>();
+  let formFieldsMinFont16 = false;
   for (const file of files) {
     const path = (file.path || '').replace(/\\/g, '/').replace(/^\.\//, '');
     filePaths.add(path);
     const content = file.content || '';
     for (const m of content.matchAll(/\.(?:set|append)\(\s*['"`](x-[\w-]+)['"`]|proxy_set_header\s+(x-[\w-]+)/gi)) serverSetHeaders.add((m[1] || m[2]).toLowerCase());
+    if (!formFieldsMinFont16 && /\.(?:css|scss|sass|less)$/i.test(path)
+      && /\b(?:input|select|textarea)\b[^{}]*\{[^}]*font-size\s*:\s*(?:1[6-9]px|[2-9]\dpx|1(?:\.\d+)?rem|max\(\s*16px)/i.test(content)) formFieldsMinFont16 = true;
     if (/(?:^|\/)package\.json$/.test(path) && !/node_modules\//.test(path)) {
       for (const m of content.matchAll(/"(@?[\w./-]+)"\s*:\s*"(?:npm:[\w@./-]+@)?[\^~>=v\s]*(\d+)\.?/g)) {
         const prev = packageMajors.get(m[1]);
@@ -139,7 +144,7 @@ function collectProjectFacts(files: CodeFile[]): Pick<RepoContext, 'filePaths' |
       };
     }
   }
-  return { filePaths, packageMajors, expoPackageDirs, nextConfig, serverSetHeaders };
+  return { filePaths, packageMajors, expoPackageDirs, nextConfig, serverSetHeaders, formFieldsMinFont16 };
 }
 
 /** Column names that hold credentials or secrets (password hashes, tokens, API keys, TOTP seeds). */
@@ -195,4 +200,4 @@ function collectServerClientFacts(files: CodeFile[]): Pick<RepoContext, 'clientC
 }
 
 /** Without repo-wide knowledge, assume the database may be exposed (single-file scans keep RLS checks on). */
-export const emptyRepoContext = (): RepoContext => ({ hardenedSqlFunctions: new Set(), revokedSqlFunctions: new Set(), rlsEnabledTables: new Set(), exposesDatabaseToClients: true, hasHealthEndpoint: false, nextMajorVersion: null, clientComponentModules: new Set(), sensitiveColumnsByModel: new Map(), crossFileAuth: emptyCrossFileAuth(), filePaths: new Set(), packageMajors: new Map(), expoPackageDirs: new Set(), nextConfig: null, serverSetHeaders: new Set() });
+export const emptyRepoContext = (): RepoContext => ({ hardenedSqlFunctions: new Set(), revokedSqlFunctions: new Set(), rlsEnabledTables: new Set(), exposesDatabaseToClients: true, hasHealthEndpoint: false, nextMajorVersion: null, clientComponentModules: new Set(), sensitiveColumnsByModel: new Map(), crossFileAuth: emptyCrossFileAuth(), filePaths: new Set(), packageMajors: new Map(), expoPackageDirs: new Set(), nextConfig: null, serverSetHeaders: new Set(), formFieldsMinFont16: false });

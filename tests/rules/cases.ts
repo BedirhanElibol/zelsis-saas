@@ -31,6 +31,21 @@ const FAKE_AWS_KEY = 'AKIA' + '2E0A8F3B244C9986';
 const FAKE_GITHUB_PAT = 'ghp' + '_R4nd0mT0k3nV4lu3F0rT3st1ngPurp0s3sAb';
 
 export const RULE_CASES: RuleCase[] = [
+  {
+    ruleIds: [1203],
+    name: 'UI-INTERACT-03 dialog form without a focus trap; a hand-written Tab trap is fine',
+    detects: f('components/InviteModal.tsx', 'export function InviteModal() {\n  return (\n    <div role="dialog" aria-modal="true">\n      <input name="email" />\n      <input name="name" />\n      <input name="team" />\n    </div>\n  );\n}\n'),
+    ignores: f('components/InviteModal.tsx', "export function InviteModal() {\n  const onKey = (e: KeyboardEvent) => {\n    if (e.key !== 'Tab') return;\n    if (e.shiftKey && document.activeElement === first) { e.preventDefault(); last.focus(); }\n  };\n  return (\n    <div role=\"dialog\" aria-modal=\"true\" onKeyDown={onKey}>\n      <input name=\"email\" />\n      <input name=\"name\" />\n      <input name=\"team\" />\n    </div>\n  );\n}\n")
+  },
+  {
+    ruleIds: [29742],
+    name: 'BUG-109 text-xs input zooms on iOS; a stylesheet that sets form fields to 16px on phones fixes it',
+    detects: f('components/search.tsx', 'export function Search() {\n  return <input type="text" className="w-full text-xs px-2" placeholder="Search" />;\n}\n'),
+    ignores: [
+      { path: 'components/search.tsx', content: 'export function Search() {\n  return <input type="text" className="w-full text-xs px-2" placeholder="Search" />;\n}\n' },
+      { path: 'app/globals.css', content: '@media (max-width: 640px) {\n  input, select, textarea { font-size: 16px !important; }\n}\n' },
+    ]
+  },
   // ─── Real-incident corpus expansion (2026-10-14) ──────────────────────
   {
     ruleIds: [28924],

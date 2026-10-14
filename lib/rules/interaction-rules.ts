@@ -92,7 +92,9 @@ export function evaluateInteractionRules(file: CodeFile, lines: string[], cleanC
         logs.push(`[${ts}] 🖱️ UI-INTERACT-02: Modal Dialog Missing Keyboard Escape Listener detected (${file.path}:${lineNum})`);
     }
     // UI-INTERACT-03: Missing Focus Trap in Open Modal Dialog
-    if (!usesHeadlessUi && /role=["\']dialog["\']/i.test(cleanContent) && !/FocusTrap|focus-trap|autoFocus/i.test(cleanContent) && /modal|dialog/i.test(lowerPath) && (cleanContent.match(/<input\b/gi) || []).length > 2) {
+    // A hand-written trap (Tab key handling that moves focus) counts as much as a focus-trap library
+    const handRolledTrap = /\.key\s*[!=]==?\s*['"]Tab['"]/.test(cleanContent) && /\.focus\(\s*\)/.test(cleanContent);
+    if (!usesHeadlessUi && /role=["\']dialog["\']/i.test(cleanContent) && !/FocusTrap|focus-trap|autoFocus/i.test(cleanContent) && !handRolledTrap && /modal|dialog/i.test(lowerPath) && (cleanContent.match(/<input\b/gi) || []).length > 2) {
         const matchLineIdx = locateMatchLine(lines, [/role=["\']dialog["\']/i], l => !l.trim().startsWith('//') && !l.trim().startsWith('*'));
         const lineNum = matchLineIdx !== -1 ? matchLineIdx + 1 : 1;
         findings.push({
