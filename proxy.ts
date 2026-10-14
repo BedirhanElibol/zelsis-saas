@@ -47,7 +47,8 @@ if (vercelUrl) {
   }
 }
 
-export function middleware(req: NextRequest) {
+// Next.js 16 "proxy" (formerly middleware): runs before every matched request on the Node.js runtime
+export function proxy(req: NextRequest) {
   // SEC-03: Platform-authenticated client IP resolution (prevents spoofing via arbitrary x-forwarded-for)
   const isCfVerified = Boolean(req.headers.get('cf-ray') && req.headers.get('cf-connecting-ip'));
   const clientIp =

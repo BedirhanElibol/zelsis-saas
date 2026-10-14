@@ -322,7 +322,7 @@ export function evaluateLogicBugRules(file: CodeFile, lines: string[], cleanCont
   }
 
   // BUG-19: Next.js route handler builds a response but does not return it
-  if (/(?:^|\/)(?:app|src\/app)\/.*route\.[cm]?[jt]s$|(?:^|\/)middleware\.[jt]s$/i.test(path)) {
+  if (/(?:^|\/)(?:app|src\/app)\/.*route\.[cm]?[jt]s$|(?:^|\/)(?:middleware|proxy)\.[jt]s$/i.test(path)) {
     lines.forEach((l, i) => {
       if (!isComment(l) && /^\s*(?:NextResponse\.(?:json|redirect|rewrite)|Response\.(?:json|redirect)|new\s+(?:Next)?Response)\s*\(/.test(l)) {
         const prev = lines.slice(0, i).reverse().find((x) => x.trim() && !isComment(x)) || '';
