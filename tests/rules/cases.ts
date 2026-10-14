@@ -31,6 +31,19 @@ const FAKE_AWS_KEY = 'AKIA' + '2E0A8F3B244C9986';
 const FAKE_GITHUB_PAT = 'ghp' + '_R4nd0mT0k3nV4lu3F0rT3st1ngPurp0s3sAb';
 
 export const RULE_CASES: RuleCase[] = [
+  // ─── False positives found on 30 AI-built apps (2026-10-14) ───────────
+  {
+    ruleIds: [8201],
+    name: 'PRIVACY-01 password value logged; the word "password" in the message alone is fine',
+    detects: f('src/services/auth.ts', "export async function login(email: string, password: string) {\n  console.log('login attempt', email, password);\n}\n"),
+    ignores: f('src/services/auth.ts', "export async function check(error: unknown) {\n  console.error('Error checking password:', error);\n}\n")
+  },
+  {
+    ruleIds: [29622],
+    name: 'BUG-22 localStorage read while rendering a Next.js page; a Vite SPA page never renders on a server',
+    detects: [{ path: 'package.json', content: '{ "dependencies": { "next": "15.0.0", "react": "19.0.0" } }\n' }, { path: 'pages/dashboard.tsx', content: "export default function Dashboard() {\n  const user = localStorage.getItem('user');\n  return <p>{user}</p>;\n}\n" }],
+    ignores: [{ path: 'package.json', content: '{ "dependencies": { "react": "18.3.0", "vite": "5.0.0", "react-router-dom": "6.0.0" } }\n' }, { path: 'src/pages/Dashboard.tsx', content: "export default function Dashboard() {\n  const user = localStorage.getItem('user');\n  return <p>{user}</p>;\n}\n" }]
+  },
   // ─── False positives found by scanning Zelsis itself (2026-10-14) ─────
   {
     ruleIds: [29702],

@@ -1185,7 +1185,11 @@ export function evaluateSecurityRules(file: CodeFile, lines: string[], cleanCont
     if (cleanContent.includes('CREATE POLICY') && (cleanContent.includes('USING (true)') || cleanContent.includes('WITH CHECK (true)'))) {
         const rlsBypassRegex = /CREATE\s+POLICY\s+[^;]+(?:USING\s*\(\s*true\s*\)|WITH\s+CHECK\s*\(\s*true\s*\))/i;
         if (cleanContent.split(';').some((stmt) => rlsBypassRegex.test(stmt) && !/\bTO\s+service_role\b/i.test(stmt))) {
-            const matchLineIdx = lines.findIndex(l => !l.trim().startsWith('--') && rlsBypassRegex.test(l));
+            // Policies span several lines: point at the USING (true) / WITH CHECK (true) of the first open policy
+            const open = [...cleanContent.matchAll(/CREATE\s+POLICY\s+[^;]+?(?:USING\s*\(\s*true\s*\)|WITH\s+CHECK\s*\(\s*true\s*\))[^;]*/gi)]
+                .find((s) => !/\bTO\s+service_role\b/i.test(s[0]));
+            const truePos = open ? open.index! + open[0].search(/(?:USING|WITH\s+CHECK)\s*\(\s*true\s*\)/i) : -1;
+            const matchLineIdx = truePos >= 0 ? cleanContent.slice(0, truePos).split('\n').length - 1 : lines.findIndex(l => !l.trim().startsWith('--') && rlsBypassRegex.test(l));
             const lineNum = matchLineIdx !== -1 ? matchLineIdx + 1 : 1;
             const snippet = lines.slice(Math.max(0, lineNum - 2), Math.min(lines.length, lineNum + 2)).join('\n');
             findings.push({
