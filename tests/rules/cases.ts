@@ -31,6 +31,31 @@ const FAKE_AWS_KEY = 'AKIA' + '2E0A8F3B244C9986';
 const FAKE_GITHUB_PAT = 'ghp' + '_R4nd0mT0k3nV4lu3F0rT3st1ngPurp0s3sAb';
 
 export const RULE_CASES: RuleCase[] = [
+  // ─── False positives found by scanning Zelsis itself (2026-10-14) ─────
+  {
+    ruleIds: [29826],
+    name: 'BUG-155 useSearchParams() result mutated; a new URL(...).searchParams copy is fine',
+    detects: f('app/search/filters.tsx', "'use client';\nimport { useSearchParams } from 'next/navigation';\nexport function Filters() {\n  const searchParams = useSearchParams();\n  searchParams.set('page', '1');\n  return null;\n}\n"),
+    ignores: f('app/search/filters.tsx', "'use client';\nimport { useSearchParams } from 'next/navigation';\nexport function Filters() {\n  const searchParams = useSearchParams();\n  const clean = new URL(window.location.href);\n  clean.searchParams.delete('page');\n  window.history.replaceState({}, '', clean.toString());\n  return searchParams.get('q');\n}\n")
+  },
+  {
+    ruleIds: [29668],
+    name: 'BUG-68 insert data used without checking; a guarded if (row?.id) is fine',
+    detects: f('lib/projects.ts', "export async function createProject(name: string) {\n  const { data: row } = await supabase.from('projects').insert({ name }).select('id').single();\n  return row.id;\n}\n"),
+    ignores: f('lib/projects.ts', "export async function createProject(name: string) {\n  let id: string | null = null;\n  const { data: row } = await supabase.from('projects').insert({ name }).select('id').maybeSingle();\n  if (row?.id) id = row.id;\n  return id;\n}\n")
+  },
+  {
+    ruleIds: [7215],
+    name: 'API-15 GET handler writes data; an OAuth callback that verifies state is fine',
+    detects: f('app/api/v1/subscribe/route.ts', "export async function GET(req: Request) {\n  const url = new URL(req.url);\n  await supabase.from('subscribers').insert({ email: url.searchParams.get('email') });\n  return Response.json({ ok: true });\n}\n"),
+    ignores: f('app/api/v1/github-app/setup/route.ts', "export async function GET(req: Request) {\n  const url = new URL(req.url);\n  const userId = verifyInstallState(url.searchParams.get('state') || '');\n  if (!userId) return new Response('bad state', { status: 400 });\n  await supabase.from('installations').upsert({ user_id: userId, installation_id: url.searchParams.get('installation_id') });\n  return Response.redirect('/dashboard');\n}\n")
+  },
+  {
+    ruleIds: [29762],
+    name: 'BUG-129 useSearchParams page with no Suspense; a default export that wraps it in <Suspense> is fine',
+    detects: [{ path: 'package.json', content: '{ "dependencies": { "next": "16.0.0" } }\n' }, { path: 'app/search/page.tsx', content: "'use client';\nimport { useSearchParams } from 'next/navigation';\nexport default function SearchPage() {\n  const q = useSearchParams().get('q');\n  return <p>{q}</p>;\n}\n" }],
+    ignores: [{ path: 'package.json', content: '{ "dependencies": { "next": "16.0.0" } }\n' }, { path: 'app/search/page.tsx', content: "'use client';\nimport { Suspense } from 'react';\nimport { useSearchParams } from 'next/navigation';\nexport default function SearchPage() {\n  return (\n    <Suspense fallback={null}>\n      <Results />\n    </Suspense>\n  );\n}\nfunction Results() {\n  const q = useSearchParams().get('q');\n  return <p>{q}</p>;\n}\n" }]
+  },
   {
     ruleIds: [24103, 18013],
     name: 'CORE-03 / JAVA-SEC-03 request body deserialized; an allowlisting subclass is safe',

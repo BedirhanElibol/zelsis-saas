@@ -658,6 +658,11 @@ export async function GET(req: NextRequest) {
     };
 
     const payloadJson = JSON.stringify(responsePayload);
+    // Private repositories and signed-in callers get a response only they may see: a shared CDN copy keyed by
+    // the URL could hand one user's private files to the next caller. Anonymous public-repo scans stay cacheable.
+    const cacheControl = responsePayload.isPrivate || authHeaderRaw || req.headers.get('x-github-token')
+      ? 'private, no-store'
+      : 'public, s-maxage=60, stale-while-revalidate=300';
     const contentHash = crypto.createHash('sha256').update(payloadJson).digest('hex');
     const etag = `"${contentHash.slice(0, 16)}"`;
 
@@ -666,7 +671,7 @@ export async function GET(req: NextRequest) {
         status: 304,
         headers: {
           'ETag': etag,
-          'Cache-Control': 'public, s-maxage=60, stale-while-revalidate=300'
+          'Cache-Control': cacheControl
         }
       });
     }
@@ -676,7 +681,7 @@ export async function GET(req: NextRequest) {
       headers: {
         'Content-Type': 'application/json',
         'ETag': etag,
-        'Cache-Control': 'public, s-maxage=60, stale-while-revalidate=300'
+        'Cache-Control': cacheControl
       }
     });
   } catch (err: any) {

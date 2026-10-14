@@ -133,7 +133,8 @@ function evaluateJs(path: string, c: string, add: Add) {
   // BUG-155: ReadonlyURLSearchParams from next/navigation mutated in place
   if (/from\s+['"]next\/navigation['"]/.test(c)) {
     for (const m of c.matchAll(/\b(?:const|let)\s+(\w+)\s*=\s*useSearchParams\(\)/g)) {
-      const r = new RegExp(`\\b${m[1]}\\.(?:set|delete|append|sort)\\(`, 'g');
+      // Not a property of another object: new URL(location.href).searchParams.delete() edits a fresh, mutable copy
+      const r = new RegExp(`(?<![.\\w$])${m[1]}\\.(?:set|delete|append|sort)\\(`, 'g');
       for (const u of c.matchAll(r)) add({ ruleId: 29826, code: 'BUG-155', severity: 'HIGH', lineIdx: at(u.index!),
         title: 'useSearchParams() Result Mutated Directly',
         why: 'next/navigation returns a ReadonlyURLSearchParams; set/delete/append throw at runtime, so the filter or pagination change crashes instead of updating the URL.',
