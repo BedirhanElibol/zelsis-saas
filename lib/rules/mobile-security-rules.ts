@@ -19,15 +19,21 @@ export function evaluateMobileSecurityRules(file: CodeFile, lines: string[], cle
         return { findings, logs };
     }
     const isMobile = lowerPath.endsWith(".swift") || lowerPath.endsWith(".kt") || lowerPath.endsWith(".java") ||
-        lowerPath.endsWith("androidmanifest.xml") || lowerPath.endsWith("info.plist") || lowerPath.includes("ios/") || lowerPath.includes("android/");
+        lowerPath.endsWith("androidmanifest.xml") || lowerPath.endsWith("info.plist") || lowerPath.includes("ios/") || lowerPath.includes("android/") ||
+        // Flutter, and .NET MAUI / Xamarin code that writes to the platform key-value store
+        lowerPath.endsWith(".dart") || (lowerPath.endsWith(".cs") && /\bPreferences\.(?:Default\.)?Set\s*\(/.test(cleanContent));
     if (!isMobile)
         return { findings, logs };
     const ts = new Date().toLocaleTimeString();
+    const TOKEN_KEY = String.raw`(?:auth[_-]?token|access[_-]?token|refresh[_-]?token|id[_-]?token|session[_-]?token|jwt|password|api[_-]?key)`;
     // MOB-SEC-01: Insecure Local Data Storage in Cleartext SharedPreferences
-    const r9301Idx = /EncryptedSharedPreferences|MasterKey|Keychain/.test(cleanContent) ? -1
+    const r9301Idx = /EncryptedSharedPreferences|MasterKey|Keychain|FlutterSecureStorage|SecureStorage\./.test(cleanContent) ? -1
         // Bundles, Intents and Parcels also have putString; only SharedPreferences writes are persisted to disk
         : lines.findIndex(l => !/\b(?:outState|savedInstanceState|bundle|args|arguments|extras|intent|result|data|parcel)\??\.putString\(/i.test(l) && /\.putString\(\s*["'](?:auth[_-]?token|access[_-]?token|refresh[_-]?token|id[_-]?token|session[_-]?token|jwt|password|api[_-]?key)["']/i.test(l) ||
-            /UserDefaults\.standard\.set\([^)]*forKey:\s*"(?:auth[_-]?token|access[_-]?token|refresh[_-]?token|id[_-]?token|session[_-]?token|jwt|password|api[_-]?key)"/i.test(l));
+            /UserDefaults\.standard\.set\([^)]*forKey:\s*"(?:auth[_-]?token|access[_-]?token|refresh[_-]?token|id[_-]?token|session[_-]?token|jwt|password|api[_-]?key)"/i.test(l) ||
+            // Flutter shared_preferences and MAUI Preferences keep values in plain text on disk
+            (/\.dart$/.test(lowerPath) && new RegExp(String.raw`\.setString\(\s*["']` + TOKEN_KEY + `["']`, 'i').test(l)) ||
+            new RegExp(String.raw`\bPreferences\.(?:Default\.)?Set\(\s*"` + TOKEN_KEY + '"', 'i').test(l));
     if (r9301Idx !== -1) {
         const matchLineIdx = r9301Idx;
         const lineNum = matchLineIdx !== -1 ? matchLineIdx + 1 : 1;

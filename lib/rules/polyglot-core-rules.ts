@@ -12,12 +12,15 @@ export interface PolyglotCoreRuleResult {
   logs: string[];
 }
 
-type Lang = 'java' | 'kotlin' | 'ruby' | 'erb' | 'php' | 'python' | 'csharp' | 'razor' | 'go' | 'jsp' | 'template' | null;
+type Lang = 'java' | 'kotlin' | 'ruby' | 'erb' | 'php' | 'python' | 'csharp' | 'razor' | 'go' | 'jsp' | 'template' | 'swift' | 'dart' | 'rust' | null;
 
 function languageOf(path: string): Lang {
   const p = path.toLowerCase();
   if (p.endsWith('.java')) return 'java';
   if (p.endsWith('.kt')) return 'kotlin';
+  if (p.endsWith('.swift')) return 'swift';
+  if (p.endsWith('.dart')) return 'dart';
+  if (p.endsWith('.rs')) return 'rust';
   if (p.endsWith('.rb')) return 'ruby';
   if (p.endsWith('.erb')) return 'erb';
   if (p.endsWith('.php')) return 'php';
@@ -73,7 +76,10 @@ export function evaluatePolyglotCoreRules(file: CodeFile, lines: string[], clean
       new RegExp(String.raw`f"[^"\n]*` + SQL + String.raw`[^"\n]*\{|f'[^'\n]*` + SQL + String.raw`[^'\n]*\{`, 'i'),
       new RegExp(String.raw`(?:"[^"\n]*` + SQL + String.raw`[^"\n]*"|'[^'\n]*` + SQL + String.raw`[^'\n]*')(?:\s*(?:"[^"\n]*"|'[^'\n]*'))*\s*\)?\s*(?:%\s*[({\w]|\.format\s*\(|\+\s*` + DYN + ')', 'i')
     ],
-    go: [new RegExp(String.raw`fmt\.Sprintf\(\s*"[^"\n]*` + SQL + String.raw`[^"\n]*%[sv]`, 'i'), new RegExp(String.raw`"[^"\n]*` + SQL + String.raw`[^"\n]*"\s*\+\s*` + DYN, 'i')]
+    go: [new RegExp(String.raw`fmt\.Sprintf\(\s*"[^"\n]*` + SQL + String.raw`[^"\n]*%[sv]`, 'i'), new RegExp(String.raw`"[^"\n]*` + SQL + String.raw`[^"\n]*"\s*\+\s*` + DYN, 'i')],
+    // Swift "\(name)" interpolation; Dart '$name' / '${user.id}'
+    swift: [new RegExp(String.raw`"[^"\n]*` + SQL + String.raw`[^"\n]*\\\(\s*` + DYN, 'i'), new RegExp(String.raw`"[^"\n]*` + SQL + String.raw`[^"\n]*"\s*\+\s*` + DYN, 'i')],
+    dart: [new RegExp(String.raw`(?:"[^"\n]*` + SQL + String.raw`[^"\n]*|'[^'\n]*` + SQL + String.raw`[^'\n]*)\$\{?` + DYN, 'i'), new RegExp(String.raw`["'][^"'\n]*` + SQL + String.raw`[^"'\n]*["']\s*\+\s*` + DYN, 'i')]
   };
   const sqlPatterns = sqlByLang[lang as keyof typeof sqlByLang] ?? [];
   const sqlHit = sqlPatterns.find((re) => re.test(content));
@@ -94,7 +100,8 @@ export function evaluatePolyglotCoreRules(file: CodeFile, lines: string[], clean
     java: /(?:Runtime\.getRuntime\(\)\.exec|new\s+ProcessBuilder)\s*\([^)]*\+\s*[a-z_]/,
     kotlin: /(?:Runtime\.getRuntime\(\)\.exec|ProcessBuilder)\s*\([^)]*\$\{?[a-z_]/,
     csharp: /Process\.Start\s*\([^)]*(?:\+\s*[a-z_]|\$")/,
-    go: /exec\.Command(?:Context)?\s*\([^)]*"(?:sh|bash|cmd)"\s*,\s*"-c"\s*,\s*[^)"]*(?:\+|fmt\.Sprintf)/
+    go: /exec\.Command(?:Context)?\s*\([^)]*"(?:sh|bash|cmd)"\s*,\s*"-c"\s*,\s*[^)"]*(?:\+|fmt\.Sprintf)/,
+    rust: /Command::new\(\s*"(?:sh|bash|cmd(?:\.exe)?)"\s*\)[\s\S]{0,80}?\.args?\(\s*(?:"(?:-c|\/C)"|\[\s*"(?:-c|\/C)")[\s\S]{0,80}?(?:format!\(|\+\s*&?[a-z_])/
   };
   const cmd = cmdByLang[lang as keyof typeof cmdByLang];
   if (cmd && !isDevTooling && cmd.test(content)) {
@@ -226,6 +233,55 @@ export function evaluatePolyglotCoreRules(file: CodeFile, lines: string[], clean
       fix: 'Hash passwords with bcrypt, scrypt or Argon2 (has_secure_password, password_hash, PBKDF2 / Argon2 libraries).'
     }, weakHash);
     hits[hits.length - 1].lineIdx = weakPasswordHash;
+  }
+
+  const isTestCode = /(?:^|\/)(?:tests?|spec|__tests__|\w+Tests)\/|(?:_test|_spec|Tests?)\.\w+$/i.test(file.path);
+
+  // CORE-09: TLS certificate validation turned off in an HTTP client
+  const tlsOffByLang: Partial<Record<Exclude<Lang, null>, RegExp>> = {
+    dart: /badCertificateCallback\s*=\s*\([^)]*\)\s*(?:=>\s*true\b|\{\s*return\s+true\s*;)/,
+    csharp: /ServerCertificateCustomValidationCallback\s*=\s*(?:\([^)]*\)\s*=>\s*true\b|(?:HttpClientHandler\.)?DangerousAcceptAnyServerCertificateValidator)|ServerCertificateValidationCallback\s*\+?=\s*(?:\([^)]*\)\s*=>\s*true\b|delegate[^{]*\{\s*return\s+true\s*;)/,
+    php: /CURLOPT_SSL_VERIFY(?:PEER|HOST)\s*,\s*(?:false|0)\b|['"]verify['"]\s*=>\s*false\b/i,
+    ruby: /OpenSSL::SSL::VERIFY_NONE|\bverify_ssl:\s*false\b|ssl:\s*\{\s*verify:\s*false/
+  };
+  const tlsOff = tlsOffByLang[lang as keyof typeof tlsOffByLang];
+  if (tlsOff && !isTestCode && tlsOff.test(content)) {
+    add({
+      ruleId: 24109, code: 'CORE-09', severity: 'HIGH',
+      title: 'TLS Certificate Validation Disabled',
+      why: 'The HTTP client accepts any certificate, so anyone on the network path can impersonate the API and read or change tokens and personal data in transit.',
+      fix: 'Remove the override and keep the default certificate checks. For a private CA, trust that CA explicitly instead of accepting every certificate.'
+    }, tlsOff);
+  }
+
+  // CORE-10: file path built from request input (path traversal)
+  const requestParams = new Set<string>();
+  if (lang === 'java' || lang === 'kotlin') {
+    for (const m of content.matchAll(/@(?:RequestParam|PathVariable|RequestHeader)(?:\([^)]*\))?\s+(?:final\s+)?(?:String\s+(\w+)|(\w+)\s*:\s*String)/g)) requestParams.add(m[1] ?? m[2]);
+    for (const m of content.matchAll(/(?:String|val|var)\s+(\w+)\s*=\s*\w+\.getParameter\(/g)) requestParams.add(m[1]);
+  } else if (lang === 'csharp' && /Controller\b|\[Http(?:Get|Post|Put|Delete)\]|MapGet\(/.test(content)) {
+    // String parameters of controller actions and minimal-API handlers are bound from the request
+    for (const m of content.matchAll(/(?:\[From(?:Query|Route|Form|Body|Header)\]\s*)?\bstring\??\s+(\w+)\s*[,)=]/g)) requestParams.add(m[1]);
+  }
+  const fileSink = /(?:Paths\.get|Path\.of|new\s+File(?:InputStream|OutputStream|Reader)?|Files\.\w+|PhysicalFile|File\.(?:ReadAll\w+|OpenRead|OpenWrite|Open|Delete|WriteAll\w+|Exists)|new\s+FileStream|Path\.Combine)\s*\(/;
+  const pathGuard = /getCanonicalPath|toRealPath|\.normalize\(\)[^;\n]*\.startsWith|Path\.GetFileName\s*\(|GetFullPath\([^)]*\)[^;\n]*\.StartsWith|FilenameUtils\.getName|\bbasename\s*\(|realpath\s*\(/;
+  let pathIdx = -1;
+  if (!isTestCode && !pathGuard.test(content)) {
+    if (lang === 'php') {
+      pathIdx = lines.findIndex((l) => /\b(?:readfile|file_get_contents|fopen|file|unlink|file_put_contents|fpassthru)\s*\([^;]*\$_(?:GET|POST|REQUEST|COOKIE)\b/i.test(l));
+    } else if (requestParams.size) {
+      const names = [...requestParams].map((n) => n.replace(/\W/g, '')).join('|');
+      const argUse = new RegExp(String.raw`[(,]\s*(?:` + names + String.raw`)\s*[),+]|\+\s*(?:` + names + String.raw`)\b|\$\{?(?:` + names + String.raw`)\b`);
+      pathIdx = lines.findIndex((l) => fileSink.test(l) && argUse.test(l) && !/^\s*(?:\/\/|\*)/.test(l));
+    }
+  }
+  if (pathIdx !== -1) {
+    hits.push({
+      ruleId: 24110, code: 'CORE-10', severity: 'HIGH', lineIdx: pathIdx,
+      title: 'Path Traversal: File Path Built From Request Input',
+      why: 'A file name from the request goes straight into a file path, so ../../ sequences can read or overwrite files outside the intended folder (config, keys, other users\' uploads).',
+      fix: 'Strip the value to a bare file name (Path.GetFileName, basename, FilenameUtils.getName), or resolve the full path and reject it unless it starts with the allowed base directory.'
+    });
   }
 
   const ts = new Date().toLocaleTimeString();
