@@ -48,7 +48,7 @@ export const ProductCapabilities: React.FC = () => {
       alt: 'Zelsis Release Gate Rule Catalog and Policy Configurator',
       tag: 'POLICY ENGINE',
       architecturePills: [
-        'OWASP Top 10 (2025/2026)',
+        'OWASP Top 10:2025',
         'PostgreSQL Row Level Security',
         <span key="stack">
           <a href="https://github.com/vercel/nextjs-subscription-payments" target="_blank" rel="noreferrer" className="hover:text-emerald-400 hover:underline transition-colors">Next.js</a>,{' '}

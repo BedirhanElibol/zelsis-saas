@@ -150,7 +150,7 @@ export async function POST(req: NextRequest) {
           if (polarSub) {
           const periodEnd = polarSub.current_period_end ? new Date(polarSub.current_period_end) : null;
           const prodName = (polarSub.product?.name || '').toLowerCase();
-          const detectedTier: 'Pro' | 'Enterprise' = prodName.includes('enterprise') || prodName.includes('suite') ? 'Enterprise' : 'Pro';
+          const detectedTier: 'Pro' | 'Enterprise' = /\b(?:enterprise|team|suite)\b/.test(prodName) ? 'Enterprise' : 'Pro';
 
           if (periodEnd && periodEnd.getTime() <= Date.now()) {
             // Strictly expired: zero grace period
@@ -188,7 +188,7 @@ export async function POST(req: NextRequest) {
           // An old paid order only counts while the 30-day period it bought is still running.
           if (paidOrder && orderPeriodEnd > Date.now()) {
             const prodName = (paidOrder.product?.name || '').toLowerCase();
-            verifiedTier = prodName.includes('enterprise') || prodName.includes('suite') ? 'Enterprise' : 'Pro';
+            verifiedTier = /\b(?:enterprise|team|suite)\b/.test(prodName) ? 'Enterprise' : 'Pro';
             isActive = true;
             subStatus = 'active';
             expiresAt = new Date(orderPeriodEnd).toISOString();

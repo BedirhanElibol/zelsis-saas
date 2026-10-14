@@ -292,7 +292,7 @@ export const SubscriptionCard: React.FC<SubscriptionCardProps> = ({
                     className="min-h-[44px] px-4 py-2 rounded-xl bg-gradient-to-r from-amber-400 to-amber-500 hover:from-amber-300 hover:to-amber-400 text-black font-extrabold text-xs flex items-center justify-center gap-2 shadow-lg transition-all cursor-pointer focus-visible:ring-2 focus-visible:ring-emerald-500 focus-visible:outline-none"
                   >
                     <ArrowRight size={14} />
-                    <span>Upgrade to Enterprise ({priceLabel('Enterprise')})</span>
+                    <span>Upgrade to Team ({priceLabel('Enterprise')})</span>
                   </button>
                 </>
               ) : user?.tier === 'Enterprise' ? (

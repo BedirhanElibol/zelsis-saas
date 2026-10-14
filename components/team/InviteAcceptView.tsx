@@ -34,7 +34,7 @@ export function InviteAcceptView({ token }: { token: string }) {
           </div>
           <div>
             <h1 className="text-lg font-extrabold text-white">Join a team workspace</h1>
-            <p className="text-xs text-zinc-400">You were invited to a Zelsis Enterprise workspace.</p>
+            <p className="text-xs text-zinc-400">You were invited to a Zelsis Team workspace.</p>
           </div>
         </div>
 

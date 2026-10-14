@@ -551,7 +551,7 @@ export const CheckoutView: React.FC<CheckoutViewProps> = ({
                               className="w-full sm:w-auto min-h-[40px] px-4 py-2 rounded-xl bg-gradient-to-r from-amber-400 to-amber-500 hover:from-amber-300 text-black font-extrabold text-xs flex items-center justify-center gap-1.5 transition-all cursor-pointer"
                             >
                               <ArrowRight size={14} className="text-black" />
-                              <span>Upgrade to Enterprise ({priceLabel('Enterprise')})</span>
+                              <span>Upgrade to Team ({priceLabel('Enterprise')})</span>
                             </button>
                           )}
                         </div>
@@ -575,7 +575,7 @@ export const CheckoutView: React.FC<CheckoutViewProps> = ({
                         ) : (
                           <>
                             <Lock size={14} />
-                            <span>{isProSubscriber && isSelectedPlanEnterprise ? 'Upgrade to Enterprise' : 'Pay Securely with Polar'} (${selectedPlan.priceMonthly.toFixed(2)}/mo)</span>
+                            <span>{isProSubscriber && isSelectedPlanEnterprise ? 'Upgrade to Team' : 'Pay Securely with Polar'} (${selectedPlan.priceMonthly.toFixed(2)}/mo)</span>
                           </>
                         )}
                       </a>

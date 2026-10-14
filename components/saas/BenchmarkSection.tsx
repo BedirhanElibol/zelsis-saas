@@ -5,6 +5,7 @@ import { m } from 'framer-motion';
 import { CheckCircle2, CircleAlert, CircleX, ExternalLink } from 'lucide-react';
 import benchmark from '@/data/benchmark-summary.generated.json';
 import { formatCount, RULE_COUNTS } from '@/lib/rule-status';
+import { CORPUS_RECALL, corpusPct } from '@/data/corpus-recall';
 
 /**
  * Landing benchmark: every number here comes from scripts/benchmark/run.ts
@@ -77,12 +78,12 @@ export const BenchmarkSection: React.FC = () => {
           <Stat
             label="Active rules"
             value={formatCount(RULE_COUNTS.gating)}
-            detail={`${formatCount(RULE_COUNTS.experimental)} more are experimental: reported, but never decide the gate.`}
+            detail="Every rule runs on every plan. A rule fails the release only when a test fixture, a benchmark catch or a reviewed finding backs it; the rest warn."
           />
           <Stat
-            label="Rules that can fail a release"
-            value={formatCount(RULE_COUNTS.canBlockRelease)}
-            detail={`Backed by test fixtures (${formatCount(RULE_COUNTS.fixtureTested)} rules), a caught benchmark flaw or a reviewed finding. Other rules can warn, not fail.`}
+            label="Real-incident snippets caught"
+            value={`${corpusPct(CORPUS_RECALL.highCritical)}%`}
+            detail={`${CORPUS_RECALL.highCritical} of ${CORPUS_RECALL.total} flagged HIGH/CRITICAL, ${corpusPct(CORPUS_RECALL.withMedium)}% incl. MEDIUM. The misses are listed in What We Don't Check.`}
           />
         </div>
 

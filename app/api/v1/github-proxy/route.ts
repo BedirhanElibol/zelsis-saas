@@ -427,7 +427,7 @@ export async function GET(req: NextRequest) {
       return NextResponse.json({
         name: repoData.name || repo,
         fullName: repoData.full_name || `${owner}/${repo}`,
-        message: `Private repository scans are part of Zelsis Pro (${priceLabel('Pro')}). Sign in with a Pro or Enterprise account to scan this repository.`,
+        message: `Private repository scans are part of Zelsis Pro (${priceLabel('Pro')}). Sign in with a Pro or Team account to scan this repository.`,
         error: 'PLAN_REQUIRED',
         isPrivate: true,
         files: []

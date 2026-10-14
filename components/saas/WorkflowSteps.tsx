@@ -13,24 +13,25 @@ export const WorkflowSteps: React.FC = () => {
       badge: 'CONNECT & PRIVACY',
       title: 'Connect a Repository, Scanned In Memory',
       description:
-        'Paste a public GitHub repository, or connect private ones with a read-only GitHub token. Files are fetched into worker memory, scanned, and released.',
+        'Paste a public GitHub repository, or connect private ones through the Zelsis GitHub App (read-only, repositories you choose). Files are fetched into worker memory, scanned, and released.',
       codeSnippet: `# From the dashboard, or from any CI runner with one HTTP call
 $ curl -X POST ${getConfiguredAppUrl()}/api/v1/gate-check \\
+    -H "Authorization: Bearer $ZELSIS_API_KEY" \\
     -H "Content-Type: application/json" \\
-    -d '{"repoUrl": "your-org/your-app"}'
+    -d '{"repoUrl": "your-org/your-app", "ref": "'"$GIT_SHA"'"}'
 {"gateStatus": "PASSED", "readinessScore": 94, ...}`,
       features: [
         CODE_RETENTION_STATEMENT,
-        'Public repositories instantly, private ones with a read-only token',
+        'Public repositories instantly, private ones through the GitHub App',
         'GitHub Actions, GitLab CI and pre-commit configs generated for you'
       ]
     },
     {
       number: '02',
       badge: 'DEEP RELEASE AUDIT',
-      title: 'Real-Time Evaluation Across Security & Architecture Vectors',
+      title: 'Find Security and Logic Bugs in Seconds',
       description:
-        'Deterministic release rules inspect your application layers simultaneously, isolating regressions before staging or production builds.',
+        'Deterministic rules check every layer of the app at once, so the same code always gets the same result and regressions are caught before they ship.',
       codeSnippet: `[EVALUATING PRODUCTION RELEASE GATES]
   [PASS] SEC-01: No hardcoded client secrets detected ......... PASSED
   [PASS] SEC-03: PostgreSQL Row Level Security enforces auth .. PASSED
@@ -53,7 +54,9 @@ $ curl -X POST ${getConfiguredAppUrl()}/api/v1/gate-check \\
 - name: Zelsis release gate
   run: |
     STATUS=$(curl -s -X POST "$ZELSIS_URL/api/v1/gate-check" \\
-      -d '{"repoUrl":"\${{ github.repository }}"}' | jq -r .gateStatus)
+      -H "Authorization: Bearer \${{ secrets.ZELSIS_API_KEY }}" \\
+      -H "Content-Type: application/json" \\
+      -d '{"repoUrl":"\${{ github.repository }}","ref":"\${{ github.sha }}"}' | jq -r .gateStatus)
     [ "$STATUS" != "FAILED" ] || exit 1`,
       features: [
         'Export results as PDF, JSON, CSV, SARIF or Markdown',
