@@ -99,13 +99,13 @@ export const ProductCapabilities: React.FC = () => {
       architecturePills: [
         'Runs in your browser',
         'Snippet never uploaded',
-        'Instant results',
+        'Path-aware rules',
         'Built-in examples'
       ],
       bulletPoints: [
         'The full rule engine, loaded in the page',
         'One-click examples: leaked secret, permissive RLS, root container',
-        'Results as soon as you paste'
+        'Pick the file type, from route.ts to a Dockerfile, so path-based rules apply'
       ]
     },
     {
