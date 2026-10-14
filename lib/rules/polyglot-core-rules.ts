@@ -5,6 +5,7 @@
  */
 import { Finding } from '@/data/schema';
 import { CodeFile } from '../scanner-engine';
+import { javaDeserializationIsSafe } from './shared/java-deserialization';
 
 export interface PolyglotCoreRuleResult {
   findings: Finding[];
@@ -115,7 +116,9 @@ export function evaluatePolyglotCoreRules(file: CodeFile, lines: string[], clean
     csharp: /\bBinaryFormatter\b|\bLosFormatter\b|\bNetDataContractSerializer\b|TypeNameHandling\s*=\s*TypeNameHandling\.(?:All|Auto|Objects)/
   };
   const deser = deserByLang[lang as keyof typeof deserByLang];
-  if (deser && deser.test(content)) {
+  // ObjectInputStream behind an allowlist, or reading bytes the app wrote itself, cannot load attacker classes
+  const guardedObjectStream = (lang === 'java' || lang === 'kotlin') && !/XMLDecoder|XStream/.test(content) && javaDeserializationIsSafe(content);
+  if (deser && deser.test(content) && !guardedObjectStream) {
     add({
       ruleId: 24103, code: 'CORE-03', severity: 'CRITICAL',
       title: 'Insecure Deserialization of Untrusted Data',

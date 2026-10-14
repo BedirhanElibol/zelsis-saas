@@ -1,6 +1,6 @@
 {
- "generatedAt": "2026-10-07",
- "cleanRepos": 12,
+ "generatedAt": "2026-10-14",
+ "cleanRepos": 15,
  "experimental": [],
  "benchmarkProven": [
   25,
@@ -15,6 +15,11 @@
   8801,
   8811,
   8814,
+  9301,
+  9312,
+  9314,
+  9316,
+  9318,
   13301,
   18001,
   18003,

@@ -1,15 +1,15 @@
 {
- "generatedAt": "2026-10-07",
+ "generatedAt": "2026-10-14",
  "summary": {
-  "cleanRepos": 12,
-  "cleanReposGateFailed": 2,
-  "cleanHighCriticalFindings": 23,
-  "cleanGatingHighCriticalFindings": 23,
-  "documentedFlaws": 38,
-  "documentedFlawsDetected": 38,
+  "cleanRepos": 15,
+  "cleanReposGateFailed": 4,
+  "cleanHighCriticalFindings": 31,
+  "cleanGatingHighCriticalFindings": 31,
+  "documentedFlaws": 43,
+  "documentedFlawsDetected": 43,
   "recall": 1,
-  "documentedFlawsBlockingGate": 37,
-  "rulesFiringOnClean": 54,
+  "documentedFlawsBlockingGate": 41,
+  "rulesFiringOnClean": 71,
   "experimentalRules": 0
  },
  "repos": [
@@ -19,7 +19,7 @@
    "kind": "clean",
    "stack": "Next.js + Supabase + Stripe",
    "files": 67,
-   "scanMs": 724,
+   "scanMs": 492,
    "gate": "WARNING",
    "critical": 0,
    "high": 3
@@ -30,7 +30,7 @@
    "kind": "clean",
    "stack": "Next.js + Prisma + Stripe + NextAuth",
    "files": 140,
-   "scanMs": 490,
+   "scanMs": 1317,
    "gate": "WARNING",
    "critical": 0,
    "high": 1
@@ -41,7 +41,7 @@
    "kind": "clean",
    "stack": "FastAPI + React",
    "files": 204,
-   "scanMs": 809,
+   "scanMs": 1915,
    "gate": "WARNING",
    "critical": 0,
    "high": 1
@@ -52,7 +52,7 @@
    "kind": "clean",
    "stack": "Express + Prisma",
    "files": 58,
-   "scanMs": 159,
+   "scanMs": 327,
    "gate": "FAILED",
    "critical": 2,
    "high": 1
@@ -63,7 +63,7 @@
    "kind": "clean",
    "stack": "Go + Gin",
    "files": 27,
-   "scanMs": 138,
+   "scanMs": 319,
    "gate": "PASSED",
    "critical": 0,
    "high": 0
@@ -74,7 +74,7 @@
    "kind": "clean",
    "stack": "Laravel",
    "files": 40,
-   "scanMs": 68,
+   "scanMs": 133,
    "gate": "PASSED",
    "critical": 0,
    "high": 0
@@ -85,7 +85,7 @@
    "kind": "clean",
    "stack": "Remix/React Router + Prisma + tRPC (production SaaS)",
    "files": 2481,
-   "scanMs": 13704,
+   "scanMs": 36581,
    "gate": "WARNING",
    "critical": 0,
    "high": 5
@@ -96,7 +96,7 @@
    "kind": "clean",
    "stack": "TypeScript SDK",
    "files": 471,
-   "scanMs": 3834,
+   "scanMs": 6908,
    "gate": "FAILED",
    "critical": 1,
    "high": 1
@@ -107,7 +107,7 @@
    "kind": "vulnerable",
    "stack": "Express + MongoDB",
    "files": 87,
-   "scanMs": 263,
+   "scanMs": 453,
    "gate": "FAILED",
    "critical": 6,
    "high": 5
@@ -118,7 +118,7 @@
    "kind": "vulnerable",
    "stack": "Express + Sequelize",
    "files": 21,
-   "scanMs": 124,
+   "scanMs": 181,
    "gate": "FAILED",
    "critical": 6,
    "high": 3
@@ -128,11 +128,11 @@
    "sha": "1618a61",
    "kind": "vulnerable",
    "stack": "Express + Angular + Sequelize",
-   "files": 965,
-   "scanMs": 6417,
+   "files": 962,
+   "scanMs": 13107,
    "gate": "FAILED",
-   "critical": 47,
-   "high": 27
+   "critical": 54,
+   "high": 30
   },
   {
    "repo": "spring-projects/spring-petclinic",
@@ -140,7 +140,7 @@
    "kind": "clean",
    "stack": "Java + Spring Boot",
    "files": 84,
-   "scanMs": 154,
+   "scanMs": 274,
    "gate": "WARNING",
    "critical": 0,
    "high": 1
@@ -151,7 +151,7 @@
    "kind": "clean",
    "stack": "C# + ASP.NET Core",
    "files": 350,
-   "scanMs": 413,
+   "scanMs": 857,
    "gate": "WARNING",
    "critical": 0,
    "high": 2
@@ -162,7 +162,7 @@
    "kind": "clean",
    "stack": "Ruby on Rails (production service)",
    "files": 1698,
-   "scanMs": 2948,
+   "scanMs": 5374,
    "gate": "WARNING",
    "critical": 0,
    "high": 4
@@ -173,7 +173,7 @@
    "kind": "clean",
    "stack": "Python + Django (production site)",
    "files": 434,
-   "scanMs": 1530,
+   "scanMs": 3455,
    "gate": "WARNING",
    "critical": 0,
    "high": 1
@@ -184,10 +184,10 @@
    "kind": "vulnerable",
    "stack": "Java + Spring",
    "files": 635,
-   "scanMs": 1986,
+   "scanMs": 3930,
    "gate": "FAILED",
    "critical": 15,
-   "high": 7
+   "high": 9
   },
   {
    "repo": "OWASP/railsgoat",
@@ -195,7 +195,7 @@
    "kind": "vulnerable",
    "stack": "Ruby on Rails",
    "files": 187,
-   "scanMs": 933,
+   "scanMs": 1341,
    "gate": "FAILED",
    "critical": 7,
    "high": 11
@@ -206,9 +206,9 @@
    "kind": "vulnerable",
    "stack": "PHP",
    "files": 195,
-   "scanMs": 347,
+   "scanMs": 672,
    "gate": "FAILED",
-   "critical": 56,
+   "critical": 57,
    "high": 25
   },
   {
@@ -217,10 +217,10 @@
    "kind": "vulnerable",
    "stack": "Python + Django",
    "files": 217,
-   "scanMs": 440,
+   "scanMs": 886,
    "gate": "FAILED",
    "critical": 14,
-   "high": 26
+   "high": 27
   },
   {
    "repo": "anxolerd/dvpwa",
@@ -228,10 +228,76 @@
    "kind": "vulnerable",
    "stack": "Python + aiohttp",
    "files": 30,
-   "scanMs": 943,
+   "scanMs": 1349,
    "gate": "FAILED",
    "critical": 2,
    "high": 3
+  },
+  {
+   "repo": "TeamNewPipe/NewPipe",
+   "sha": "ab57bd4",
+   "kind": "clean",
+   "stack": "Android (Java + Kotlin)",
+   "files": 1161,
+   "scanMs": 7825,
+   "gate": "FAILED",
+   "critical": 1,
+   "high": 0
+  },
+  {
+   "repo": "AntennaPod/AntennaPod",
+   "sha": "3d105d5",
+   "kind": "clean",
+   "stack": "Android (Java)",
+   "files": 1143,
+   "scanMs": 7316,
+   "gate": "FAILED",
+   "critical": 2,
+   "high": 5
+  },
+  {
+   "repo": "mastodon/mastodon-ios",
+   "sha": "14c140c",
+   "kind": "clean",
+   "stack": "iOS (Swift)",
+   "files": 931,
+   "scanMs": 3251,
+   "gate": "PASSED",
+   "critical": 0,
+   "high": 0
+  },
+  {
+   "repo": "payatu/diva-android",
+   "sha": "2bb63b5",
+   "kind": "vulnerable",
+   "stack": "Android (Java)",
+   "files": 59,
+   "scanMs": 136,
+   "gate": "FAILED",
+   "critical": 3,
+   "high": 4
+  },
+  {
+   "repo": "dineshshetty/Android-InsecureBankv2",
+   "sha": "3c8cc3a",
+   "kind": "vulnerable",
+   "stack": "Android (Java)",
+   "files": 90,
+   "scanMs": 223,
+   "gate": "WARNING",
+   "critical": 0,
+   "high": 3
+  },
+  {
+   "repo": "prateek147/DVIA-v2",
+   "sha": "96466ab",
+   "kind": "vulnerable",
+   "stack": "iOS (Swift)",
+   "files": 129,
+   "scanMs": 503,
+   "gate": "WARNING",
+   "critical": 0,
+   "high": 2
   }
  ],
  "flaws": [
@@ -498,6 +564,41 @@
    "repo": "anxolerd/dvpwa",
    "file": "sqli/app.py",
    "flaw": "Template autoescaping disabled (autoescape=False)",
+   "found": true,
+   "blocksGate": true
+  },
+  {
+   "repo": "payatu/diva-android",
+   "file": "app/src/main/java/jakhar/aseem/diva/SQLInjectionActivity.java",
+   "flaw": "SQL injection: search text concatenated into rawQuery",
+   "found": true,
+   "blocksGate": true
+  },
+  {
+   "repo": "payatu/diva-android",
+   "file": "app/src/main/java/jakhar/aseem/diva/InsecureDataStorage1Activity.java",
+   "flaw": "Password stored in plaintext SharedPreferences",
+   "found": true,
+   "blocksGate": true
+  },
+  {
+   "repo": "dineshshetty/Android-InsecureBankv2",
+   "file": "InsecureBankv2/app/src/main/java/com/android/insecurebankv2/DoLogin.java",
+   "flaw": "Username and password written to Logcat",
+   "found": true,
+   "blocksGate": false
+  },
+  {
+   "repo": "dineshshetty/Android-InsecureBankv2",
+   "file": "InsecureBankv2/app/src/main/java/com/android/insecurebankv2/MyBroadCastReceiver.java",
+   "flaw": "Credentials in world-readable SharedPreferences",
+   "found": true,
+   "blocksGate": true
+  },
+  {
+   "repo": "prateek147/DVIA-v2",
+   "file": "DVIA-v2/DVIA-v2/Vulnerabilities/Insecure Data Storage/Controller/PListViewController.swift",
+   "flaw": "Password saved to a plist in Documents",
    "found": true,
    "blocksGate": true
   }

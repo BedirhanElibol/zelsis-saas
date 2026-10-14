@@ -5,6 +5,7 @@
  */
 import { Finding } from '@/data/schema';
 import { CodeFile } from '../scanner-engine';
+import { javaDeserializationIsSafe } from './shared/java-deserialization';
 export interface PolyglotBackendRuleResult {
     findings: Finding[];
     logs: string[];
@@ -253,7 +254,7 @@ export function evaluatePolyglotBackendRules(file: CodeFile, lines: string[], cl
         }
         // JAVA-03: Insecure Deserialization via ObjectInputStream
         const javaDeserializationRegex = /new\s+ObjectInputStream\b[\s\S]*?\.readObject\(\)/i;
-        if (javaDeserializationRegex.test(cleanContent)) {
+        if (javaDeserializationRegex.test(cleanContent) && !javaDeserializationIsSafe(cleanContent)) {
             const matchLineIdx = lines.findIndex(l => !l.trim().startsWith('//') && !l.trim().startsWith('*') && l.includes('readObject'));
             const lineNum = matchLineIdx !== -1 ? matchLineIdx + 1 : 1;
             const snippet = extractSnippet(lines, lineNum);
