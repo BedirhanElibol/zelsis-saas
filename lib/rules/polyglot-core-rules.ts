@@ -56,7 +56,13 @@ export function evaluatePolyglotCoreRules(file: CodeFile, lines: string[], clean
     : cleanContent;
   // Framework-quoted identifiers are not user input
   const content = joinStatements(withoutHashComments)
-    .replace(/#\{\s*(?:self\.class\.)?(?:quoted_table_name|table_name|connection\.quote\w*\([^}]*\)|sanitize_sql\w*\([^}]*\)|quote_column_name\([^}]*\))\s*\}/g, 'IDENT');
+    .replace(/#\{\s*(?:self\.class\.)?(?:quoted_table_name|table_name|connection\.quote\w*\([^}]*\)|sanitize_sql\w*\([^}]*\)|quote_column_name\([^}]*\))\s*\}/g, 'IDENT')
+    // A table name interpolated after FROM / INTO / UPDATE / JOIN / TABLE cannot be a bind parameter and is
+    // almost always the app's own constant ("SELECT COUNT(*) FROM $TABLE"); values in WHERE / VALUES still count.
+    .replace(/\b(FROM|INTO|UPDATE|JOIN|TABLE)(\s+[`"']?)(?:\$\{\s*\w+\s*\}|\$\w+|\\\(\s*\w+\s*\)|#\{\s*\w+\s*\}|\{\w+\})/gi, '$1$2IDENT')
+    // A dynamic SET clause built from column names is safe when the query uses bind placeholders
+    // (%s, ?, $1, :name) and passes a parameters argument. Values in quotes or unparameterized queries still count.
+    .replace(/\bSET(\s+)(?:\{[a-zA-Z_]\w*\}|\$\{[a-zA-Z_]\w*\})(?=[^\n]*(?:%s|\?|\$\d|:\w+)[^"'\n]*["']\s*,\s*[\w([{])/gi, 'SET$1IDENT');
   const isDevTooling = /(?:^|\/)(?:scripts?|bin|tools|tasks|lib\/tasks|management\/commands)\/|(?:^|\/)(?:Rakefile|manage\.py|setup\.py|fabfile\.py|noxfile\.py)$/i.test(file.path);
   const hits: Hit[] = [];
   const add = (h: Omit<Hit, 'lineIdx'>, lineRe: RegExp) => {
@@ -96,8 +102,10 @@ export function evaluatePolyglotCoreRules(file: CodeFile, lines: string[], clean
   // CORE-02: OS command built from dynamic values
   const cmdByLang: Partial<Record<Exclude<Lang, null>, RegExp>> = {
     ruby: /(?:\bsystem|\bexec|\bspawn|IO\.popen|Open3\.\w+|%x)\s*[\(\{]?\s*["`][^"`\n]*#\{|`[^`\n]*#\{/,
-    php: /\b(?:shell_exec|exec|system|passthru|popen|proc_open|pcntl_exec)\s*\(\s*(?:["'][^"'\n]*["']\s*\.\s*\$|"[^"\n]*\$\w|\$\w)/i,
-    python: /\b(?:os\.system|os\.popen|subprocess\.(?:call|run|Popen|check_output|check_call))\s*\((?=[^)]*(?:\+|%|\.format\(|f["']))|shell\s*=\s*True/,
+    // Global functions only: $pdo->exec() / $sqlite->exec() run SQL, not a shell
+    php: /(?<!->|::)\b(?:shell_exec|exec|system|passthru|popen|proc_open|pcntl_exec)\s*\(\s*(?:["'][^"'\n]*["']\s*\.\s*\$|"[^"\n]*\$\w|\$\w)/i,
+    // shell=True only counts when the command itself is built from values (f-string, +, %, .format) in the same call
+    python: /\b(?:os\.system|os\.popen|subprocess\.(?:call|run|Popen|check_output|check_call))\s*\((?=[^)]*(?:\+|%|\.format\(|f["']))/,
     java: /(?:Runtime\.getRuntime\(\)\.exec|new\s+ProcessBuilder)\s*\([^)]*\+\s*[a-z_]/,
     kotlin: /(?:Runtime\.getRuntime\(\)\.exec|ProcessBuilder)\s*\([^)]*\$\{?[a-z_]/,
     csharp: /Process\.Start\s*\([^)]*(?:\+\s*[a-z_]|\$")/,
@@ -105,13 +113,16 @@ export function evaluatePolyglotCoreRules(file: CodeFile, lines: string[], clean
     rust: /Command::new\(\s*"(?:sh|bash|cmd(?:\.exe)?)"\s*\)[\s\S]{0,80}?\.args?\(\s*(?:"(?:-c|\/C)"|\[\s*"(?:-c|\/C)")[\s\S]{0,80}?(?:format!\(|\+\s*&?[a-z_])/
   };
   const cmd = cmdByLang[lang as keyof typeof cmdByLang];
-  if (cmd && !isDevTooling && cmd.test(content)) {
+  // Python: cmd = f"..." / "..." + x / "...".format(x) on one line, then subprocess.*(cmd, shell=True) on another
+  const pyShellVar = lang === 'python' && [...content.matchAll(/\b(\w+)\s*=\s*(?:f["']|["'][^"'\n]*["']\s*(?:\+|%)|["'][^"'\n]*["']\.format\()/g)]
+    .some((m) => new RegExp(String.raw`subprocess\.\w+\(\s*` + m[1] + String.raw`\b[^)]*shell\s*=\s*True`).test(content));
+  if (cmd && !isDevTooling && (cmd.test(content) || pyShellVar)) {
     add({
       ruleId: 24102, code: 'CORE-02', severity: 'CRITICAL',
       title: 'OS Command Injection: Shell Command Built From Dynamic Values',
       why: 'A shell command string includes a variable, so input containing ; | && or $() runs extra commands on the server.',
       fix: 'Avoid the shell: pass an argument array (Open3.capture2(cmd, arg), subprocess.run([...]), ProcessBuilder(list), escapeshellarg) and validate input against an allowlist.'
-    }, cmd);
+    }, cmd.test(content) ? cmd : /shell\s*=\s*True/);
   }
 
   // CORE-03: deserialization of untrusted data

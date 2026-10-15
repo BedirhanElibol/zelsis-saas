@@ -119,7 +119,17 @@ export function evaluatePythonEnterpriseRules(file: CodeFile, lines: string[], c
     }
     // PY-SEC-04: Python SQL Injection via String Interpolation (f-string / format / %)
     // f-string SQL passed straight to execute()/text() with a value interpolated after WHERE/SET/VALUES/LIKE/=/IN (identifier-only interpolation is left alone)
-    const idx_8804 = pyFindLine(lines, /(?:\.execute(?:many)?|(?<![\w.])text|sa\.text|sqlalchemy\.text)\s*\(\s*[fF](?:"[^"]*\b(?:SELECT|INSERT|UPDATE|DELETE)\b[^"]*(?:\bWHERE\b|\bSET\b|\bVALUES\b|\bLIKE\b|=|\bIN\s*\()[^"]*\{[^"]*"|'[^']*\b(?:SELECT|INSERT|UPDATE|DELETE)\b[^']*(?:\bWHERE\b|\bSET\b|\bVALUES\b|\bLIKE\b|=|\bIN\s*\()[^']*\{[^']*')/i);
+    const callRe_8804 = /(?:\.execute(?:many)?|(?<![\w.])text|sa\.text|sqlalchemy\.text)\s*\(\s*[fF](?:"[^"]*\b(?:SELECT|INSERT|UPDATE|DELETE)\b[^"]*(?:\bWHERE\b|\bSET\b|\bVALUES\b|\bLIKE\b|=|\bIN\s*\()[^"]*\{[^"]*"|'[^']*\b(?:SELECT|INSERT|UPDATE|DELETE)\b[^']*(?:\bWHERE\b|\bSET\b|\bVALUES\b|\bLIKE\b|=|\bIN\s*\()[^']*\{[^']*')/i;
+    const idx_8804 = pyFindLine(lines, callRe_8804, (_l, i) => {
+        const text = callText(lines, i, /(?:\.execute(?:many)?|(?<![\w.])text|sa\.text|sqlalchemy\.text)\s*\(/i);
+        // A dynamic SET clause built from column names is safe when the query uses bind placeholders
+        // (%s, ?, $1, :name) and passes a separate parameters argument. Values in quotes or unparameterized queries still count.
+        if (/\bSET\s+\{\w+\}/i.test(text) && /(?:%s|\?|\$\d|:\w+)[^"']*(?:["']\s*,\s*[\w([{]|["']\s*,\s*\n\s*[\w([{])/.test(text)) {
+            const withoutSetClause = text.replace(/\bSET\s+\{\w+\}/gi, 'SET IDENT');
+            if (!callRe_8804.test(withoutSetClause)) return false;
+        }
+        return true;
+    });
     if (idx_8804 !== -1) {
         const matchLineIdx = idx_8804;
         const lineNum = matchLineIdx !== -1 ? matchLineIdx + 1 : 1;
@@ -329,9 +339,9 @@ export function evaluatePythonEnterpriseRules(file: CodeFile, lines: string[], c
         logs.push(`[${ts}] [PYTHON AUDIT] Found PY-SEC-10: Unrestricted Jinja2 Server-Side Template Injection (SSTI) at ${file.path}:${lineNum}`);
     }
     // PY-SEC-11: Dynamic Code Execution via eval() or exec()
-    const reg_8811 = /(?<![.\w])(?:eval|exec|compile)\s*\(\s*(?!'[^']*'|"[^"]*")[a-zA-Z0-9_]+/;
+    const reg_8811 = /(?<![.\w])(?<!\bdef\s+)(?:eval|exec|compile)\s*\(\s*(?!'[^']*'|"[^"]*")[a-zA-Z0-9_]+/;
     if (reg_8811.test(cleanContent)) {
-        const linePattern = /(?<![.\w])(?:eval|exec|compile)\s*\(/;
+        const linePattern = /(?<![.\w])(?<!\bdef\s+)(?:eval|exec|compile)\s*\(/;
         const matchLineIdx = lines.findIndex(l => !l.trim().startsWith('#') && !l.trim().startsWith('"""') && linePattern.test(l));
         const lineNum = matchLineIdx !== -1 ? matchLineIdx + 1 : 1;
         const rawSnippet = matchLineIdx !== -1 ? lines[matchLineIdx].trim() : lines.find(l => !l.trim().startsWith('#'))?.trim() || "Dynamic Code Execution via eval() or exec()";
@@ -1199,7 +1209,11 @@ export function evaluatePythonEnterpriseRules(file: CodeFile, lines: string[], c
         logs.push(`[${ts}] [PYTHON AUDIT] Found PY-SEC-43: Insecure Cipher Mode (ECB Mode in PyCryptodome / Cryptography) at ${file.path}:${lineNum}`);
     }
     // PY-SEC-44: JWT Signature Verification Disabled in PyJWT
-    const idx_8844 = (() => {
+    // An id_token decoded right after the authorization-code exchange with the provider (OIDC Core 3.1.3.7) is not a bypass
+    const oidcIdTokenAfterExchange = /token_endpoint|fetch_token|authorization_code|grant_type/.test(cleanContent)
+        && /jwt\.decode\s*\(\s*(?:\w+\.)?id_token\b/.test(cleanContent)
+        && !/jwt\.decode\s*\(\s*(?!(?:\w+\.)?id_token\b)\w+[^)]*verify_signature['"]\s*:\s*False/.test(cleanContent);
+    const idx_8844 = oidcIdTokenAfterExchange ? -1 : (() => {
         const direct = pyFindLine(lines, /jwt\.decode\s*\([^)]*(?:\bverify\s*=\s*False|['"]verify_signature['"]\s*:\s*False)/);
         if (direct !== -1) return direct;
         return pyFindLine(lines, /['"]verify_signature['"]\s*:\s*False/, (_l, i) => /jwt\.decode\s*\(/.test(lines.slice(Math.max(0, i - 4), i + 1).join('\n')));

@@ -484,7 +484,9 @@ export function evaluateMissedVulnsRules(file: CodeFile, lines: string[], cleanC
   // GAP-28: secret transformed before printing, which defeats GitHub log masking
   if (/(?:^|\/)\.github\/workflows\/.+\.ya?ml$/i.test(path)) {
     lines.forEach((l, i) => {
-      if (!isComment(l) && /\$\{\{\s*secrets\.\w+\s*\}\}[^|\n]*\|\s*(?:base64|rev|xxd|od|hexdump|sed|tr)\b/.test(l)) {
+      // Written to a file (> key.p8) or piped on into another command: nothing reaches the log
+      if (!isComment(l) && /\$\{\{\s*secrets\.\w+\s*\}\}[^|\n]*\|\s*(?:base64|rev|xxd|od|hexdump|sed|tr)\b/.test(l)
+        && !/\|\s*(?:base64|rev|xxd|od|hexdump|sed|tr)\b[^|\n]*(?:>\s*(?!&)\S|\|\s*\S)/.test(l)) {
         add({ ruleId: 28828, code: 'GAP-28', severity: 'HIGH', category: 'Secrets Management', lineIdx: i,
           title: 'Workflow Prints an Encoded Secret, Bypassing Log Masking',
           why: 'GitHub masks only the literal secret value; base64 or other transforms print a different string that is not masked, and the log (public for public repos) reveals the secret.',
@@ -595,22 +597,28 @@ export function evaluateMissedVulnsRules(file: CodeFile, lines: string[], cleanC
   }
 
   // GAP-38: FastAPI route that changes or deletes data without an auth dependency
-  if (isPy && /\bfrom\s+fastapi\b/.test(cleanContent) && !/APIRouter\([^)]*dependencies\s*=/.test(cleanContent)) {
+  // A local app bound to 127.0.0.1 with no deploy config has no remote callers to authenticate
+  if (isPy && !context?.loopbackOnlyServer && /\bfrom\s+fastapi\b/.test(cleanContent) && !/APIRouter\([^)]*dependencies\s*=/.test(cleanContent)) {
     lines.forEach((l, i) => {
       const m = l.match(/^\s*@\w+\.(delete|put|patch)\(\s*['"]([^'"]*)['"]([^)]*)\)/);
       if (!m || /dependencies\s*=/.test(m[3]) || /webhook|callback|health/i.test(m[2])) return;
       // Signature: the def line(s) up to the closing "):"
       let sig = '';
+      let sigEnd = i + 1;
       for (let j = i + 1; j < Math.min(lines.length, i + 12); j++) {
         sig += lines[j];
+        sigEnd = j;
         if (/\)\s*(?:->[^:]*)?:\s*$/.test(lines[j])) break;
       }
+      // An imperative auth check at the top of the body (require_operator(request), verify_admin(...)) also identifies the caller
+      const body = lines.slice(sigEnd + 1, sigEnd + 7).join('\n');
+      if (/^\s*(?:await\s+)?\w*\b(?:require|ensure|assert|check|verify|authorize|authenticate)_\w*(?:user|auth|admin|operator|owner|permission|role|login|token|session|access|member|staff)\w*\s*\(/im.test(body)) return;
       if (!/^\s*(?:async\s+)?def\s/.test(lines[i + 1] || '')) return;
       // Parameters only (not the function name). The caller is identified by an auth dependency (Depends(get_current_user_id)),
       // an auth-named parameter (current_user: …) or an auth type (CurrentUser); a record id such as user_id: str is not one.
       const params = sig.slice(sig.indexOf('(') + 1);
-      if (/(?:Depends|Security)\(\s*[\w.]*(?:user|auth|token|admin|current|verify|require|permission|principal|api_?key|owner|login)/i.test(params)
-        || /(?:^|[(,\s])(?!\w*_ids?\s*:)\w*(?:user|auth|admin|principal|token|api_?key)\w*\s*:/i.test(params)
+      if (/(?:Depends|Security)\(\s*[\w.]*(?:user|auth|token|admin|current|verify|require|permission|principal|api_?key|owner|login|caller|session|account|member|identity)/i.test(params)
+        || /(?:^|[(,\s])(?!\w*_ids?\s*:)\w*(?:user|auth|admin|principal|token|api_?key|caller|account)\w*\s*:/i.test(params)
         || /:\s*(?:Annotated\[\s*)?(?:Current\w+|\w*(?:Principal|AuthUser|AuthContext))\b/.test(params)) return;
       add({ ruleId: 28838, code: 'GAP-38', severity: 'HIGH', category: 'Broken Access Control', lineIdx: i + 1,
         title: `FastAPI ${m[1].toUpperCase()} Route Without an Auth Dependency (${m[2]})`,
