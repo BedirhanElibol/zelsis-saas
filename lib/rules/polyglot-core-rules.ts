@@ -59,7 +59,10 @@ export function evaluatePolyglotCoreRules(file: CodeFile, lines: string[], clean
     .replace(/#\{\s*(?:self\.class\.)?(?:quoted_table_name|table_name|connection\.quote\w*\([^}]*\)|sanitize_sql\w*\([^}]*\)|quote_column_name\([^}]*\))\s*\}/g, 'IDENT')
     // A table name interpolated after FROM / INTO / UPDATE / JOIN / TABLE cannot be a bind parameter and is
     // almost always the app's own constant ("SELECT COUNT(*) FROM $TABLE"); values in WHERE / VALUES still count.
-    .replace(/\b(FROM|INTO|UPDATE|JOIN|TABLE)(\s+[`"']?)(?:\$\{\s*\w+\s*\}|\$\w+|\\\(\s*\w+\s*\)|#\{\s*\w+\s*\}|\{\w+\})/gi, '$1$2IDENT');
+    .replace(/\b(FROM|INTO|UPDATE|JOIN|TABLE)(\s+[`"']?)(?:\$\{\s*\w+\s*\}|\$\w+|\\\(\s*\w+\s*\)|#\{\s*\w+\s*\}|\{\w+\})/gi, '$1$2IDENT')
+    // A dynamic SET clause built from column names is safe when the query uses bind placeholders
+    // (%s, ?, $1, :name) and passes a parameters argument. Values in quotes or unparameterized queries still count.
+    .replace(/\bSET(\s+)(?:\{[a-zA-Z_]\w*\}|\$\{[a-zA-Z_]\w*\})(?=[^\n]*(?:%s|\?|\$\d|:\w+)[^"'\n]*["']\s*,\s*[\w([{])/gi, 'SET$1IDENT');
   const isDevTooling = /(?:^|\/)(?:scripts?|bin|tools|tasks|lib\/tasks|management\/commands)\/|(?:^|\/)(?:Rakefile|manage\.py|setup\.py|fabfile\.py|noxfile\.py)$/i.test(file.path);
   const hits: Hit[] = [];
   const add = (h: Omit<Hit, 'lineIdx'>, lineRe: RegExp) => {

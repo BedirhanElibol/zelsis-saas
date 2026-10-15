@@ -285,5 +285,16 @@ export async function POST(req: Request) {
   return scroll({ selector: input.selector, direction: input.direction, amount: input.amount });
 }
 `)
+  },
+  {
+    ruleIds: [24101, 8804], name: 'CORE-01/PY-SEC-04 value in SET vs SET clause built from columns with %s params',
+    detects: f('app/store.py', `def rename(conn, item_id, name):
+    conn.execute(f"UPDATE items SET name = '{name}' WHERE id = %s", (item_id,))
+`),
+    ignores: f('app/store.py', `def update(conn, slug, fields):
+    set_clause = ", ".join(f"{k} = %s" for k in fields)
+    values = list(fields.values()) + [slug]
+    conn.execute(f"UPDATE agents SET {set_clause} WHERE slug = %s", values)
+`)
   }
 ];

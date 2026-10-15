@@ -119,7 +119,17 @@ export function evaluatePythonEnterpriseRules(file: CodeFile, lines: string[], c
     }
     // PY-SEC-04: Python SQL Injection via String Interpolation (f-string / format / %)
     // f-string SQL passed straight to execute()/text() with a value interpolated after WHERE/SET/VALUES/LIKE/=/IN (identifier-only interpolation is left alone)
-    const idx_8804 = pyFindLine(lines, /(?:\.execute(?:many)?|(?<![\w.])text|sa\.text|sqlalchemy\.text)\s*\(\s*[fF](?:"[^"]*\b(?:SELECT|INSERT|UPDATE|DELETE)\b[^"]*(?:\bWHERE\b|\bSET\b|\bVALUES\b|\bLIKE\b|=|\bIN\s*\()[^"]*\{[^"]*"|'[^']*\b(?:SELECT|INSERT|UPDATE|DELETE)\b[^']*(?:\bWHERE\b|\bSET\b|\bVALUES\b|\bLIKE\b|=|\bIN\s*\()[^']*\{[^']*')/i);
+    const callRe_8804 = /(?:\.execute(?:many)?|(?<![\w.])text|sa\.text|sqlalchemy\.text)\s*\(\s*[fF](?:"[^"]*\b(?:SELECT|INSERT|UPDATE|DELETE)\b[^"]*(?:\bWHERE\b|\bSET\b|\bVALUES\b|\bLIKE\b|=|\bIN\s*\()[^"]*\{[^"]*"|'[^']*\b(?:SELECT|INSERT|UPDATE|DELETE)\b[^']*(?:\bWHERE\b|\bSET\b|\bVALUES\b|\bLIKE\b|=|\bIN\s*\()[^']*\{[^']*')/i;
+    const idx_8804 = pyFindLine(lines, callRe_8804, (_l, i) => {
+        const text = callText(lines, i, /(?:\.execute(?:many)?|(?<![\w.])text|sa\.text|sqlalchemy\.text)\s*\(/i);
+        // A dynamic SET clause built from column names is safe when the query uses bind placeholders
+        // (%s, ?, $1, :name) and passes a separate parameters argument. Values in quotes or unparameterized queries still count.
+        if (/\bSET\s+\{\w+\}/i.test(text) && /(?:%s|\?|\$\d|:\w+)[^"']*(?:["']\s*,\s*[\w([{]|["']\s*,\s*\n\s*[\w([{])/.test(text)) {
+            const withoutSetClause = text.replace(/\bSET\s+\{\w+\}/gi, 'SET IDENT');
+            if (!callRe_8804.test(withoutSetClause)) return false;
+        }
+        return true;
+    });
     if (idx_8804 !== -1) {
         const matchLineIdx = idx_8804;
         const lineNum = matchLineIdx !== -1 ? matchLineIdx + 1 : 1;
