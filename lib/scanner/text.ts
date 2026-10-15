@@ -49,7 +49,7 @@ export const isSecretPatternFixture = (path: string): boolean => {
 };
 
 /** Hardcoded-secret rules stay active in test files. */
-export const isSecretRuleId = (ruleId: number): boolean => ruleId === 1 || ruleId === 43 || (ruleId >= 5001 && ruleId <= 5100);
+export const isSecretRuleId = (ruleId: number): boolean => ruleId === 1 || ruleId === 43 || (ruleId >= 5001 && ruleId <= 5299);
 
 /** Third-party code copied into the repo (vendored libraries, bower/static lib folders, an embedded VS Code fork). */
 export const isVendoredPath = (path: string): boolean =>

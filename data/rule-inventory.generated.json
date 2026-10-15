@@ -1,8 +1,8 @@
 {
  "summary": {
-  "implementedRules": 1268,
-  "testedRules": 1259,
-  "preciseLocationRules": 1265,
+  "implementedRules": 1283,
+  "testedRules": 1274,
+  "preciseLocationRules": 1280,
   "catalogEntries": 1922,
   "catalogOnlyNotImplemented": 1397,
   "catalogPlaceholderMetadata": 1810
@@ -14083,6 +14083,156 @@
    "title": "Error Stack Trace Rendered in the UI",
    "severity": "MEDIUM",
    "source": "lib/rules/ux-gemini-rules.ts",
+   "preciseLocation": true,
+   "tested": true,
+   "inCatalog": false
+  },
+  {
+   "ruleId": 30101,
+   "code": "RULE-30101",
+   "title": "${v} = http.request() Is Never Ended, So the Request Is Never Sent",
+   "severity": "HIGH",
+   "source": "lib/rules/logic-gemini2-rules.ts",
+   "preciseLocation": true,
+   "tested": true,
+   "inCatalog": false
+  },
+  {
+   "ruleId": 30102,
+   "code": "RULE-30102",
+   "title": "uncaughtException Handler Keeps the Process Running",
+   "severity": "MEDIUM",
+   "source": "lib/rules/logic-gemini2-rules.ts",
+   "preciseLocation": true,
+   "tested": true,
+   "inCatalog": false
+  },
+  {
+   "ruleId": 30104,
+   "code": "RULE-30104",
+   "title": "Object.${it[1]}(${e[1]}) on a Numeric Enum Lists Every Member Twice",
+   "severity": "MEDIUM",
+   "source": "lib/rules/logic-gemini2-rules.ts",
+   "preciseLocation": true,
+   "tested": true,
+   "inCatalog": false
+  },
+  {
+   "ruleId": 30105,
+   "code": "RULE-30105",
+   "title": "zlib.${m[1]}${m[2] ?? ",
+   "severity": "HIGH",
+   "source": "lib/rules/logic-gemini2-rules.ts",
+   "preciseLocation": true,
+   "tested": true,
+   "inCatalog": false
+  },
+  {
+   "ruleId": 30106,
+   "code": "RULE-30106",
+   "title": "${v} Has the g Flag and Is Reused With .test()",
+   "severity": "MEDIUM",
+   "source": "lib/rules/logic-gemini2-rules.ts",
+   "preciseLocation": true,
+   "tested": true,
+   "inCatalog": false
+  },
+  {
+   "ruleId": 30107,
+   "code": "RULE-30107",
+   "title": "${m[1]}() in a Request Handler Blocks the Event Loop",
+   "severity": "MEDIUM",
+   "source": "lib/rules/logic-gemini2-rules.ts",
+   "preciseLocation": true,
+   "tested": true,
+   "inCatalog": false
+  },
+  {
+   "ruleId": 30108,
+   "code": "RULE-30108",
+   "title": "Middleware catch Swallows the Error and Never Calls next()",
+   "severity": "MEDIUM",
+   "source": "lib/rules/logic-gemini2-rules.ts",
+   "preciseLocation": true,
+   "tested": true,
+   "inCatalog": false
+  },
+  {
+   "ruleId": 30109,
+   "code": "RULE-30109",
+   "title": "cookies().${m[1]}() Called While Rendering a Server Component",
+   "severity": "HIGH",
+   "source": "lib/rules/logic-gemini2-rules.ts",
+   "preciseLocation": true,
+   "tested": true,
+   "inCatalog": false
+  },
+  {
+   "ruleId": 30110,
+   "code": "RULE-30110",
+   "title": "sync.${p[2]} ${p[1]} Passed by Value",
+   "severity": "HIGH",
+   "source": "lib/rules/logic-gemini2-rules.ts",
+   "preciseLocation": true,
+   "tested": true,
+   "inCatalog": false
+  },
+  {
+   "ruleId": 30151,
+   "code": "RULE-30151",
+   "title": "Export Downloads an Empty File",
+   "severity": "HIGH",
+   "source": "lib/rules/logic-gemini2-rules.ts",
+   "preciseLocation": true,
+   "tested": true,
+   "inCatalog": false
+  },
+  {
+   "ruleId": 30152,
+   "code": "RULE-30152",
+   "title": "${m[1]} Are Hard-Coded in the Source",
+   "severity": "HIGH",
+   "source": "lib/rules/logic-gemini2-rules.ts",
+   "preciseLocation": true,
+   "tested": true,
+   "inCatalog": false
+  },
+  {
+   "ruleId": 30201,
+   "code": "RULE-30201",
+   "title": "Agent Loop Calls the Model With No Step Limit",
+   "severity": "MEDIUM",
+   "source": "lib/rules/logic-gemini2-rules.ts",
+   "preciseLocation": true,
+   "tested": true,
+   "inCatalog": false
+  },
+  {
+   "ruleId": 30202,
+   "code": "RULE-30202",
+   "title": "Agent Tool Runs ${fsCall[1]}() on a Path the Model Chose",
+   "severity": "HIGH",
+   "source": "lib/rules/logic-gemini2-rules.ts",
+   "preciseLocation": true,
+   "tested": true,
+   "inCatalog": false
+  },
+  {
+   "ruleId": 30251,
+   "code": "RULE-30251",
+   "title": "Node Inspector Exposed on All Interfaces (${m[0]})",
+   "severity": "CRITICAL",
+   "source": "lib/rules/logic-gemini2-rules.ts",
+   "preciseLocation": true,
+   "tested": true,
+   "inCatalog": false
+  },
+  {
+   "ruleId": 30252,
+   "code": "RULE-30252",
+   "title": "${m[1]} Is Downloaded Over an Unencrypted URL",
+   "severity": "HIGH",
+   "source": "lib/rules/logic-gemini2-rules.ts",
    "preciseLocation": true,
    "tested": true,
    "inCatalog": false

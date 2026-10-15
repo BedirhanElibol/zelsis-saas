@@ -7,6 +7,7 @@ import { evaluateComplianceRules } from '../rules/compliance-rules';
 import { evaluateInfraRules } from '../rules/infra-rules';
 import { evaluateInteractionRules } from '../rules/interaction-rules';
 import { evaluateSecretRules } from '../rules/secrets-rules';
+import { evaluateProviderSecretRules } from '../rules/provider-secret-rules';
 import { evaluateDatabaseRules } from '../rules/database-rules';
 import { evaluateCloudNativeRules } from '../rules/cloud-native-rules';
 import { evaluateWebVitalsRules } from '../rules/web-vitals-rules';
@@ -140,6 +141,7 @@ import { evaluateLogicFrontendRules } from '../rules/logic-frontend-rules';
 import { evaluateLogicCrossFileRules } from '../rules/logic-crossfile-rules';
 import { evaluateLogicCorpusRules } from '../rules/logic-corpus-rules';
 import { evaluateLogicGeminiRules } from '../rules/logic-gemini-rules';
+import { evaluateLogicGemini2Rules } from '../rules/logic-gemini2-rules';
 import { evaluateSecurityGeminiRules } from '../rules/security-gemini-rules';
 import { evaluateCicdCloudGeminiRules } from '../rules/cicd-cloud-gemini-rules';
 import { evaluatePrivacyDbGeminiRules } from '../rules/privacy-db-gemini-rules';
@@ -176,6 +178,8 @@ export const RULE_ENGINES: ReadonlyArray<{ evaluate: RuleEngine; scanRawContent?
   // 2. Enterprise Secret Signatures (SEC-SECRET-01 to 100, Rule IDs 5001-5100)
   // F-16 Remediation: Scan unstripped content including comments to eliminate blind spots
   { evaluate: evaluateSecretRules, scanRawContent: true },
+  // 2b. Newer SaaS provider keys (SEC-SECRET-188.., Rule IDs 5188-5299)
+  { evaluate: evaluateProviderSecretRules, scanRawContent: true },
   // 3. Database & ORM Performance Engine (DB-PERF-01 to 50, Rule IDs 6001-6050)
   { evaluate: evaluateDatabaseRules },
   // Wave 2 Enterprise Release Gate Engines:
@@ -466,6 +470,8 @@ export const RULE_ENGINES: ReadonlyArray<{ evaluate: RuleEngine; scanRawContent?
   { evaluate: evaluateLogicCorpusRules },
   // Logic bugs from the Gemini rule report, re-verified: tx client misuse, readonly search params, fill() aliasing, Drizzle without where (BUG-149.., Rule IDs 29820-29899)
   { evaluate: evaluateLogicGeminiRules },
+  // Logic bugs from part 2 of the Gemini report (BUG-223.., Rule IDs 30101-30199)
+  { evaluate: evaluateLogicGemini2Rules },
   // Security defects from the Gemini rule report, re-verified: upload names, dotfiles, SAML signatures, alg confusion, shared-cache leaks (SECG-01.., Rule IDs 29900-29999)
   { evaluate: evaluateSecurityGeminiRules },
   // CI/CD, container, Kubernetes, Terraform and package-manager defects from the Gemini rule report (CIG-01.., Rule IDs 29943-29999)
