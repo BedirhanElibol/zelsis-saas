@@ -173,6 +173,19 @@ CMD ["node", "--inspect=127.0.0.1:9229", "server.js"]
 `)
   },
   {
+    ruleIds: [29895], name: 'BUG-218 cookies().get without await vs the same text inside a changelog string',
+    detects: f('package.json', '{ "dependencies": { "next": "16.0.0" } }\n').concat(f('app/account/page.tsx', `import { cookies } from 'next/headers';
+export default function Account() {
+  const theme = cookies().get('theme');
+  return <main data-theme={theme?.value} />;
+}
+`)),
+    ignores: f('package.json', '{ "dependencies": { "next": "16.0.0" } }\n').concat(f('data/changelog.ts', `export const CHANGES = [
+  { kind: 'New', text: 'Catches cookies().set() in a page and cookies().delete() during render.' },
+];
+`))
+  },
+  {
     ruleIds: [30151], name: 'FAKE-16 export of an empty Blob vs the fetched rows',
     detects: f('components/AuditLogExport.tsx', `export function AuditLogExport() {
   const exportLogs = () => {

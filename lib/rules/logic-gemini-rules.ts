@@ -698,7 +698,9 @@ function evaluateJs2(path: string, c: string, add: Add, nextMajor: number) {
 
   // BUG-218: Next.js 15+ cookies() / headers() used without await
   if (nextMajor >= 15) {
-    for (const m of c.matchAll(/(?<!await\s)(?<!await\s\()\b(cookies|headers|draftMode)\(\)\.(get|getAll|set|has|delete|isEnabled)\b/g)) add({ ruleId: 29895, code: 'BUG-218', severity: nextMajor >= 16 ? 'HIGH' : 'MEDIUM', lineIdx: at(m.index!),
+    // Skip mentions inside a string on the same line (docs, changelogs, error messages)
+    const inString = (i: number) => { const pre = c.slice(c.lastIndexOf('\n', i) + 1, i).replace(/\\./g, ''); return ['\'', '"', '`'].some((q) => pre.split(q).length % 2 === 0); };
+    for (const m of c.matchAll(/(?<!await\s)(?<!await\s\()\b(cookies|headers|draftMode)\(\)\.(get|getAll|set|has|delete|isEnabled)\b/g)) if (!inString(m.index!)) add({ ruleId: 29895, code: 'BUG-218', severity: nextMajor >= 16 ? 'HIGH' : 'MEDIUM', lineIdx: at(m.index!),
       title: `${m[1]}().${m[2]} Without await (Next.js ${nextMajor})`,
       why: `Since Next.js 15, ${m[1]}() returns a Promise${nextMajor >= 16 ? ' and synchronous access was removed' : ''}: ${m[1]}().${m[2]} reads a property of the Promise, which is undefined or throws.`,
       fix: `Await it: (await ${m[1]}()).${m[2]}(…).` });
