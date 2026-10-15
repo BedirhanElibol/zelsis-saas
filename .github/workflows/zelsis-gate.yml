@@ -2,30 +2,21 @@ name: Zelsis AI Release Gate Audit
 
 on:
   push:
-    branches: [ main, master, develop ]
+    branches: [ main ]
   pull_request:
-    branches: [ main, master, develop ]
+    branches: [ main ]
+
+concurrency:
+  group: gate-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
 
 jobs:
   zelsis-release-gate:
     name: Zelsis Production Pre-flight Audit
     runs-on: ubuntu-latest
 
+    # The scan runs on the Zelsis API; typecheck and lint run in the build pipeline
     steps:
-      - name: Checkout Code Repository
-        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
-
-      - name: Setup Node.js Environment
-        uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4.4.0
-        with:
-          node-version: '20'
-          cache: 'npm'
-
-      - name: Run TypeScript & Security Lint Check
-        run: |
-          npm ci || npm install
-          npx tsc --noEmit
-
       - name: Trigger Zelsis Release Gate API Audit
         env:
           ZELSIS_API_URL: ${{ secrets.ZELSIS_API_URL || 'https://shipguard-saas.vercel.app/api/v1/gate-check' }}

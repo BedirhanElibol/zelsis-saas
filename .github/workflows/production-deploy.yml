@@ -1,13 +1,19 @@
 name: Production Build & Deployment Pipeline
 
+# PRs into main are verified here; main is not re-run on push (it only receives verified PRs)
 on:
-  push:
-    branches:
-      - main
   pull_request:
     branches:
       - main
+    paths-ignore:
+      - '**/*.md'
+      - 'marketing-assets/**'
   workflow_dispatch:
+
+# A new push to the same PR cancels the run it replaces
+concurrency:
+  group: deploy-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
 
 jobs:
   validate-and-build:
