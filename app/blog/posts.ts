@@ -7,6 +7,13 @@ export interface BlogPost {
 
 export const POSTS: BlogPost[] = [
   {
+    slug: 'public-vs-secret-keys',
+    title: 'Which keys in a SaaS stack can ship to the browser',
+    summary:
+      'PostHog, Langfuse, LaunchDarkly and Flagsmith give you a public key and a secret one with similar names. How to tell them apart, and the newer keys that must stay on the server.',
+    date: '2026-10-16',
+  },
+  {
     slug: 'flutter-rust-false-alarms',
     title: 'We ran our release checks on a Flutter app and a Rust service. Most of the alarms were ours.',
     summary:
