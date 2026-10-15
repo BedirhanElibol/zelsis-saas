@@ -1394,9 +1394,11 @@ export function evaluateSecretRules(file: CodeFile, lines: string[], rawContentO
         }
     }
     // SEC-SECRET-49: Generic Private Key Block Exposure
-    const pattern49 = /-----BEGIN PRIVATE KEY-----/i;
+    // The header alone (a starts_with() assertion, a PEM parser) is not a key; require base64 key material after it
+    const pattern49 = /-----BEGIN PRIVATE KEY-----(?:\\n|\s|["'`])+[A-Za-z0-9+/]{40}/;
     if (pattern49.test(contentToScan)) {
-        const matchLineIdx = lines.findIndex(l => pattern49.test(l) && !isDummyPlaceholder(l));
+        const matchLineIdx = lines.findIndex((l, i) =>
+            l.includes('-----BEGIN PRIVATE KEY-----') && !isDummyPlaceholder(l) && pattern49.test(`${l}\n${lines[i + 1] ?? ''}`));
         if (matchLineIdx !== -1) {
             const lineNum = matchLineIdx + 1;
             findings.push({

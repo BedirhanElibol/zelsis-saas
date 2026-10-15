@@ -246,7 +246,9 @@ export function evaluatePolyglotCoreRules(file: CodeFile, lines: string[], clean
     ruby: /OpenSSL::SSL::VERIFY_NONE|\bverify_ssl:\s*false\b|ssl:\s*\{\s*verify:\s*false/
   };
   const tlsOff = tlsOffByLang[lang as keyof typeof tlsOffByLang];
-  if (tlsOff && !isTestCode && tlsOff.test(content)) {
+  // A client that only ever talks to this machine (127.0.0.1 / localhost) has no network path to intercept
+  const loopbackOnly = /\b(?:127\.0\.0\.1|localhost)\b/.test(content) && !/https?:\/\/(?!127\.0\.0\.1|localhost)[\w-]+\./.test(content);
+  if (tlsOff && !isTestCode && !loopbackOnly && tlsOff.test(content)) {
     add({
       ruleId: 24109, code: 'CORE-09', severity: 'HIGH',
       title: 'TLS Certificate Validation Disabled',

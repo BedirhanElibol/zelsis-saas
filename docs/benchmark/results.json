@@ -156,18 +156,30 @@
    "sha": "96466ab85569dbcd37c69b2d15d22ff666f57031",
    "kind": "vulnerable",
    "stack": "iOS (Swift)"
+  },
+  {
+   "name": "localsend/localsend",
+   "sha": "14f3a87426eedffaa9d87d011132eca5501abeb8",
+   "kind": "clean",
+   "stack": "Flutter (Dart) + Rust"
+  },
+  {
+   "name": "LemmyNet/lemmy",
+   "sha": "fc640cf86a130bc897d83dbd06d84c3c7d9b16e3",
+   "kind": "clean",
+   "stack": "Rust + Actix + Diesel + Postgres (production service)"
   }
  ],
  "summary": {
-  "cleanRepos": 15,
-  "cleanReposGateFailed": 4,
-  "cleanHighCriticalFindings": 31,
-  "cleanGatingHighCriticalFindings": 31,
+  "cleanRepos": 17,
+  "cleanReposGateFailed": 5,
+  "cleanHighCriticalFindings": 36,
+  "cleanGatingHighCriticalFindings": 36,
   "documentedFlaws": 43,
   "documentedFlawsDetected": 43,
   "recall": 1,
   "documentedFlawsBlockingGate": 41,
-  "rulesFiringOnClean": 71,
+  "rulesFiringOnClean": 75,
   "experimentalRules": 0
  },
  "repos": [
@@ -177,7 +189,7 @@
    "kind": "clean",
    "stack": "Next.js + Supabase + Stripe",
    "files": 67,
-   "scanMs": 492,
+   "scanMs": 964,
    "gate": "WARNING",
    "score": 70,
    "critical": 0,
@@ -194,7 +206,7 @@
    "kind": "clean",
    "stack": "Next.js + Prisma + Stripe + NextAuth",
    "files": 140,
-   "scanMs": 1317,
+   "scanMs": 1338,
    "gate": "WARNING",
    "score": 88,
    "critical": 0,
@@ -211,7 +223,7 @@
    "kind": "clean",
    "stack": "FastAPI + React",
    "files": 204,
-   "scanMs": 1915,
+   "scanMs": 1615,
    "gate": "WARNING",
    "score": 82,
    "critical": 0,
@@ -228,7 +240,7 @@
    "kind": "clean",
    "stack": "Express + Prisma",
    "files": 58,
-   "scanMs": 327,
+   "scanMs": 272,
    "gate": "FAILED",
    "score": 35,
    "critical": 2,
@@ -245,7 +257,7 @@
    "kind": "clean",
    "stack": "Go + Gin",
    "files": 27,
-   "scanMs": 319,
+   "scanMs": 241,
    "gate": "PASSED",
    "score": 98,
    "critical": 0,
@@ -262,7 +274,7 @@
    "kind": "clean",
    "stack": "Laravel",
    "files": 40,
-   "scanMs": 133,
+   "scanMs": 118,
    "gate": "PASSED",
    "score": 100,
    "critical": 0,
@@ -279,7 +291,7 @@
    "kind": "clean",
    "stack": "Remix/React Router + Prisma + tRPC (production SaaS)",
    "files": 2481,
-   "scanMs": 36581,
+   "scanMs": 25865,
    "gate": "WARNING",
    "score": 29,
    "critical": 0,
@@ -296,7 +308,7 @@
    "kind": "clean",
    "stack": "TypeScript SDK",
    "files": 471,
-   "scanMs": 6908,
+   "scanMs": 5349,
    "gate": "FAILED",
    "score": 59,
    "critical": 1,
@@ -313,15 +325,15 @@
    "kind": "vulnerable",
    "stack": "Express + MongoDB",
    "files": 87,
-   "scanMs": 453,
+   "scanMs": 292,
    "gate": "FAILED",
    "score": 0,
    "critical": 6,
-   "high": 5,
+   "high": 4,
    "medium": 11,
    "low": 10,
    "experimental": 0,
-   "allHighCritical": 11,
+   "allHighCritical": 10,
    "detectedFramework": "Express"
   },
   {
@@ -330,7 +342,7 @@
    "kind": "vulnerable",
    "stack": "Express + Sequelize",
    "files": 21,
-   "scanMs": 181,
+   "scanMs": 130,
    "gate": "FAILED",
    "score": 0,
    "critical": 6,
@@ -347,7 +359,7 @@
    "kind": "vulnerable",
    "stack": "Express + Angular + Sequelize",
    "files": 962,
-   "scanMs": 13107,
+   "scanMs": 8947,
    "gate": "FAILED",
    "score": 0,
    "critical": 54,
@@ -364,7 +376,7 @@
    "kind": "clean",
    "stack": "Java + Spring Boot",
    "files": 84,
-   "scanMs": 274,
+   "scanMs": 168,
    "gate": "WARNING",
    "score": 74,
    "critical": 0,
@@ -381,7 +393,7 @@
    "kind": "clean",
    "stack": "C# + ASP.NET Core",
    "files": 350,
-   "scanMs": 857,
+   "scanMs": 764,
    "gate": "WARNING",
    "score": 80,
    "critical": 0,
@@ -398,7 +410,7 @@
    "kind": "clean",
    "stack": "Ruby on Rails (production service)",
    "files": 1698,
-   "scanMs": 5374,
+   "scanMs": 4906,
    "gate": "WARNING",
    "score": 63,
    "critical": 0,
@@ -415,7 +427,7 @@
    "kind": "clean",
    "stack": "Python + Django (production site)",
    "files": 434,
-   "scanMs": 3455,
+   "scanMs": 2820,
    "gate": "WARNING",
    "score": 68,
    "critical": 0,
@@ -432,11 +444,11 @@
    "kind": "vulnerable",
    "stack": "Java + Spring",
    "files": 635,
-   "scanMs": 3930,
+   "scanMs": 3597,
    "gate": "FAILED",
    "score": 0,
-   "critical": 15,
-   "high": 9,
+   "critical": 14,
+   "high": 10,
    "medium": 53,
    "low": 146,
    "experimental": 0,
@@ -449,7 +461,7 @@
    "kind": "vulnerable",
    "stack": "Ruby on Rails",
    "files": 187,
-   "scanMs": 1341,
+   "scanMs": 1364,
    "gate": "FAILED",
    "score": 0,
    "critical": 7,
@@ -466,7 +478,7 @@
    "kind": "vulnerable",
    "stack": "PHP",
    "files": 195,
-   "scanMs": 672,
+   "scanMs": 592,
    "gate": "FAILED",
    "score": 0,
    "critical": 57,
@@ -483,7 +495,7 @@
    "kind": "vulnerable",
    "stack": "Python + Django",
    "files": 217,
-   "scanMs": 886,
+   "scanMs": 919,
    "gate": "FAILED",
    "score": 0,
    "critical": 14,
@@ -500,7 +512,7 @@
    "kind": "vulnerable",
    "stack": "Python + aiohttp",
    "files": 30,
-   "scanMs": 1349,
+   "scanMs": 1216,
    "gate": "FAILED",
    "score": 31,
    "critical": 2,
@@ -517,7 +529,7 @@
    "kind": "clean",
    "stack": "Android (Java + Kotlin)",
    "files": 1161,
-   "scanMs": 7825,
+   "scanMs": 6147,
    "gate": "FAILED",
    "score": 65,
    "critical": 1,
@@ -534,7 +546,7 @@
    "kind": "clean",
    "stack": "Android (Java)",
    "files": 1143,
-   "scanMs": 7316,
+   "scanMs": 5099,
    "gate": "FAILED",
    "score": 18,
    "critical": 2,
@@ -551,7 +563,7 @@
    "kind": "clean",
    "stack": "iOS (Swift)",
    "files": 931,
-   "scanMs": 3251,
+   "scanMs": 3205,
    "gate": "PASSED",
    "score": 89,
    "critical": 0,
@@ -560,7 +572,7 @@
    "low": 0,
    "experimental": 0,
    "allHighCritical": 0,
-   "detectedFramework": null
+   "detectedFramework": "iOS (Swift)"
   },
   {
    "repo": "payatu/diva-android",
@@ -568,7 +580,7 @@
    "kind": "vulnerable",
    "stack": "Android (Java)",
    "files": 59,
-   "scanMs": 136,
+   "scanMs": 125,
    "gate": "FAILED",
    "score": 5,
    "critical": 3,
@@ -577,7 +589,7 @@
    "low": 0,
    "experimental": 0,
    "allHighCritical": 7,
-   "detectedFramework": null
+   "detectedFramework": "Android (Kotlin/Java)"
   },
   {
    "repo": "dineshshetty/Android-InsecureBankv2",
@@ -585,7 +597,7 @@
    "kind": "vulnerable",
    "stack": "Android (Java)",
    "files": 90,
-   "scanMs": 223,
+   "scanMs": 232,
    "gate": "WARNING",
    "score": 77,
    "critical": 0,
@@ -594,7 +606,7 @@
    "low": 0,
    "experimental": 0,
    "allHighCritical": 3,
-   "detectedFramework": null
+   "detectedFramework": "Android (Kotlin/Java)"
   },
   {
    "repo": "prateek147/DVIA-v2",
@@ -602,7 +614,7 @@
    "kind": "vulnerable",
    "stack": "iOS (Swift)",
    "files": 129,
-   "scanMs": 503,
+   "scanMs": 485,
    "gate": "WARNING",
    "score": 86,
    "critical": 0,
@@ -611,7 +623,41 @@
    "low": 0,
    "experimental": 0,
    "allHighCritical": 2,
-   "detectedFramework": null
+   "detectedFramework": "iOS (Swift)"
+  },
+  {
+   "repo": "localsend/localsend",
+   "sha": "14f3a87426eedffaa9d87d011132eca5501abeb8",
+   "kind": "clean",
+   "stack": "Flutter (Dart) + Rust",
+   "files": 734,
+   "scanMs": 5366,
+   "gate": "WARNING",
+   "score": 51,
+   "critical": 0,
+   "high": 3,
+   "medium": 19,
+   "low": 7,
+   "experimental": 0,
+   "allHighCritical": 3,
+   "detectedFramework": "Rust (web)"
+  },
+  {
+   "repo": "LemmyNet/lemmy",
+   "sha": "fc640cf86a130bc897d83dbd06d84c3c7d9b16e3",
+   "kind": "clean",
+   "stack": "Rust + Actix + Diesel + Postgres (production service)",
+   "files": 1442,
+   "scanMs": 4774,
+   "gate": "FAILED",
+   "score": 33,
+   "critical": 2,
+   "high": 0,
+   "medium": 117,
+   "low": 3,
+   "experimental": 0,
+   "allHighCritical": 2,
+   "detectedFramework": "Rust (web)"
   }
  ],
  "recall": [
@@ -1063,6 +1109,52 @@
  ],
  "rules": [
   {
+   "ruleId": 9502,
+   "title": "CICD-SEC-02: Unpinned Third-Party Action Mutable Reference (@v1)",
+   "severity": "MEDIUM",
+   "cleanRepos": [
+    "gothinkster/golang-gin-realworld-example-app",
+    "documenso/documenso",
+    "spring-projects/spring-petclinic",
+    "dotnet-architecture/eShopOnWeb",
+    "django/djangoproject.com",
+    "TeamNewPipe/NewPipe",
+    "mastodon/mastodon-ios",
+    "localsend/localsend"
+   ],
+   "cleanFindings": 37,
+   "vulnerableRepos": [
+    "juice-shop/juice-shop",
+    "WebGoat/WebGoat",
+    "OWASP/railsgoat",
+    "digininja/DVWA"
+   ]
+  },
+  {
+   "ruleId": 8314,
+   "title": "IAC-14: Dockerfile Missing HEALTHCHECK Instruction",
+   "severity": "MEDIUM",
+   "cleanRepos": [
+    "fastapi/full-stack-fastapi-template",
+    "gothinkster/node-express-realworld-example-app",
+    "documenso/documenso",
+    "spring-projects/spring-petclinic",
+    "dotnet-architecture/eShopOnWeb",
+    "rubygems/rubygems.org",
+    "django/djangoproject.com",
+    "localsend/localsend"
+   ],
+   "cleanFindings": 10,
+   "vulnerableRepos": [
+    "OWASP/NodeGoat",
+    "appsecco/dvna",
+    "juice-shop/juice-shop",
+    "OWASP/railsgoat",
+    "digininja/DVWA",
+    "adeyosemanputra/pygoat"
+   ]
+  },
+  {
    "ruleId": 1027,
    "title": "Unoptimized Raster <img> Tag or Heavy Inline Data URI (Performance Optimization)",
    "severity": "LOW",
@@ -1083,46 +1175,40 @@
    ]
   },
   {
-   "ruleId": 9502,
-   "title": "CICD-SEC-02: Unpinned Third-Party Action Mutable Reference (@v1)",
-   "severity": "MEDIUM",
+   "ruleId": 7004,
+   "title": "CLOUD-04: Docker Container Running as Default Root User",
+   "severity": "HIGH",
    "cleanRepos": [
-    "gothinkster/golang-gin-realworld-example-app",
-    "documenso/documenso",
-    "spring-projects/spring-petclinic",
+    "fastapi/full-stack-fastapi-template",
     "dotnet-architecture/eShopOnWeb",
+    "rubygems/rubygems.org",
     "django/djangoproject.com",
-    "TeamNewPipe/NewPipe",
-    "mastodon/mastodon-ios"
+    "localsend/localsend"
    ],
-   "cleanFindings": 21,
+   "cleanFindings": 6,
    "vulnerableRepos": [
-    "juice-shop/juice-shop",
-    "WebGoat/WebGoat",
+    "appsecco/dvna",
     "OWASP/railsgoat",
-    "digininja/DVWA"
+    "digininja/DVWA",
+    "adeyosemanputra/pygoat"
    ]
   },
   {
-   "ruleId": 8314,
-   "title": "IAC-14: Dockerfile Missing HEALTHCHECK Instruction",
-   "severity": "MEDIUM",
+   "ruleId": 7138,
+   "title": "WEB-PERF-38: Missing HTML Lang Attribute Delaying Accessibility Tree",
+   "severity": "LOW",
    "cleanRepos": [
-    "fastapi/full-stack-fastapi-template",
-    "gothinkster/node-express-realworld-example-app",
-    "documenso/documenso",
     "spring-projects/spring-petclinic",
-    "dotnet-architecture/eShopOnWeb",
-    "rubygems/rubygems.org",
-    "django/djangoproject.com"
+    "django/djangoproject.com",
+    "AntennaPod/AntennaPod",
+    "localsend/localsend"
    ],
-   "cleanFindings": 9,
+   "cleanFindings": 18,
    "vulnerableRepos": [
     "OWASP/NodeGoat",
-    "appsecco/dvna",
     "juice-shop/juice-shop",
+    "WebGoat/WebGoat",
     "OWASP/railsgoat",
-    "digininja/DVWA",
     "adeyosemanputra/pygoat"
    ]
   },
@@ -1162,22 +1248,31 @@
    ]
   },
   {
-   "ruleId": 7004,
-   "title": "CLOUD-04: Docker Container Running as Default Root User",
-   "severity": "HIGH",
+   "ruleId": 3019,
+   "title": "Docker Compose Database Port Exposed Directly on Host (0.0.0.0 Exposure Risk)",
+   "severity": "MEDIUM",
    "cleanRepos": [
-    "fastapi/full-stack-fastapi-template",
-    "dotnet-architecture/eShopOnWeb",
-    "rubygems/rubygems.org",
-    "django/djangoproject.com"
+    "supabase/supabase-js",
+    "spring-projects/spring-petclinic",
+    "django/djangoproject.com",
+    "LemmyNet/lemmy"
    ],
    "cleanFindings": 5,
    "vulnerableRepos": [
-    "appsecco/dvna",
-    "OWASP/railsgoat",
-    "digininja/DVWA",
-    "adeyosemanputra/pygoat"
+    "anxolerd/dvpwa"
    ]
+  },
+  {
+   "ruleId": 6051,
+   "title": "DB-PERF-51: Migration Takes a Blocking Table Lock on an Existing Table",
+   "severity": "MEDIUM",
+   "cleanRepos": [
+    "gothinkster/node-express-realworld-example-app",
+    "documenso/documenso",
+    "LemmyNet/lemmy"
+   ],
+   "cleanFindings": 146,
+   "vulnerableRepos": []
   },
   {
    "ruleId": 7135,
@@ -1190,24 +1285,6 @@
    ],
    "cleanFindings": 50,
    "vulnerableRepos": []
-  },
-  {
-   "ruleId": 7138,
-   "title": "WEB-PERF-38: Missing HTML Lang Attribute Delaying Accessibility Tree",
-   "severity": "LOW",
-   "cleanRepos": [
-    "spring-projects/spring-petclinic",
-    "django/djangoproject.com",
-    "AntennaPod/AntennaPod"
-   ],
-   "cleanFindings": 14,
-   "vulnerableRepos": [
-    "OWASP/NodeGoat",
-    "juice-shop/juice-shop",
-    "WebGoat/WebGoat",
-    "OWASP/railsgoat",
-    "adeyosemanputra/pygoat"
-   ]
   },
   {
    "ruleId": 111,
@@ -1235,6 +1312,42 @@
    "cleanFindings": 8,
    "vulnerableRepos": [
     "WebGoat/WebGoat"
+   ]
+  },
+  {
+   "ruleId": 16,
+   "title": "Unsanitized Direct InnerHTML DOM Mutation (XSS Risk)",
+   "severity": "HIGH",
+   "cleanRepos": [
+    "documenso/documenso",
+    "rubygems/rubygems.org",
+    "localsend/localsend"
+   ],
+   "cleanFindings": 8,
+   "vulnerableRepos": [
+    "juice-shop/juice-shop",
+    "WebGoat/WebGoat",
+    "OWASP/railsgoat",
+    "digininja/DVWA",
+    "adeyosemanputra/pygoat",
+    "anxolerd/dvpwa"
+   ]
+  },
+  {
+   "ruleId": 1034,
+   "title": "Synchronous Render-Blocking Script Tag Detected in Document Head",
+   "severity": "LOW",
+   "cleanRepos": [
+    "spring-projects/spring-petclinic",
+    "django/djangoproject.com",
+    "localsend/localsend"
+   ],
+   "cleanFindings": 6,
+   "vulnerableRepos": [
+    "OWASP/NodeGoat",
+    "juice-shop/juice-shop",
+    "WebGoat/WebGoat",
+    "adeyosemanputra/pygoat"
    ]
   },
   {
@@ -1279,22 +1392,21 @@
     "rubygems/rubygems.org"
    ],
    "cleanFindings": 3,
-   "vulnerableRepos": [
-    "OWASP/NodeGoat"
-   ]
+   "vulnerableRepos": []
   },
   {
-   "ruleId": 3019,
-   "title": "Docker Compose Database Port Exposed Directly on Host (0.0.0.0 Exposure Risk)",
+   "ruleId": 29985,
+   "title": "DBG-06: UserSecurityAuditLog.id Is a 32-bit SERIAL",
    "severity": "MEDIUM",
    "cleanRepos": [
-    "supabase/supabase-js",
-    "spring-projects/spring-petclinic",
-    "django/djangoproject.com"
+    "documenso/documenso",
+    "django/djangoproject.com",
+    "LemmyNet/lemmy"
    ],
    "cleanFindings": 3,
    "vulnerableRepos": [
-    "anxolerd/dvpwa"
+    "WebGoat/WebGoat",
+    "digininja/DVWA"
    ]
   },
   {
@@ -1311,17 +1423,6 @@
    ]
   },
   {
-   "ruleId": 6051,
-   "title": "DB-PERF-51: Migration Takes a Blocking Table Lock on an Existing Table",
-   "severity": "MEDIUM",
-   "cleanRepos": [
-    "gothinkster/node-express-realworld-example-app",
-    "documenso/documenso"
-   ],
-   "cleanFindings": 33,
-   "vulnerableRepos": []
-  },
-  {
    "ruleId": 29617,
    "title": "BUG-17: Foreign Key to auth.users Has No ON DELETE Rule (User Deletion Fails)",
    "severity": "MEDIUM",
@@ -1331,24 +1432,6 @@
    ],
    "cleanFindings": 7,
    "vulnerableRepos": []
-  },
-  {
-   "ruleId": 16,
-   "title": "Unsanitized Direct InnerHTML DOM Mutation (XSS Risk)",
-   "severity": "HIGH",
-   "cleanRepos": [
-    "documenso/documenso",
-    "rubygems/rubygems.org"
-   ],
-   "cleanFindings": 7,
-   "vulnerableRepos": [
-    "juice-shop/juice-shop",
-    "WebGoat/WebGoat",
-    "OWASP/railsgoat",
-    "digininja/DVWA",
-    "adeyosemanputra/pygoat",
-    "anxolerd/dvpwa"
-   ]
   },
   {
    "ruleId": 29747,
@@ -1392,22 +1475,6 @@
    ]
   },
   {
-   "ruleId": 1034,
-   "title": "Synchronous Render-Blocking Script Tag Detected in Document Head",
-   "severity": "LOW",
-   "cleanRepos": [
-    "spring-projects/spring-petclinic",
-    "django/djangoproject.com"
-   ],
-   "cleanFindings": 5,
-   "vulnerableRepos": [
-    "OWASP/NodeGoat",
-    "juice-shop/juice-shop",
-    "WebGoat/WebGoat",
-    "adeyosemanputra/pygoat"
-   ]
-  },
-  {
    "ruleId": 274,
    "title": "CLICHE-74: Unannounced External Link Navigation",
    "severity": "LOW",
@@ -1436,6 +1503,28 @@
    ]
   },
   {
+   "ruleId": 29981,
+   "title": "DBG-02: NOT IN (SELECT …) Returns No Rows When the Subquery Has a NULL",
+   "severity": "MEDIUM",
+   "cleanRepos": [
+    "documenso/documenso",
+    "LemmyNet/lemmy"
+   ],
+   "cleanFindings": 4,
+   "vulnerableRepos": []
+  },
+  {
+   "ruleId": 6017,
+   "title": "DB-PERF-17: Redundant Duplicate Indexes on Same Column Prefix",
+   "severity": "LOW",
+   "cleanRepos": [
+    "supabase/supabase-js",
+    "LemmyNet/lemmy"
+   ],
+   "cleanFindings": 4,
+   "vulnerableRepos": []
+  },
+  {
    "ruleId": 1211,
    "title": "UI-INTERACT-11: Double-Click Duplicate Mutation Hazard",
    "severity": "LOW",
@@ -1461,20 +1550,6 @@
    "vulnerableRepos": []
   },
   {
-   "ruleId": 29985,
-   "title": "DBG-06: UserSecurityAuditLog.id Is a 32-bit SERIAL",
-   "severity": "MEDIUM",
-   "cleanRepos": [
-    "documenso/documenso",
-    "django/djangoproject.com"
-   ],
-   "cleanFindings": 2,
-   "vulnerableRepos": [
-    "WebGoat/WebGoat",
-    "digininja/DVWA"
-   ]
-  },
-  {
    "ruleId": 8845,
    "title": "PY-SEC-45: Missing Request Timeout on Python Requests / HTTPX Calls",
    "severity": "LOW",
@@ -1485,6 +1560,19 @@
    "cleanFindings": 2,
    "vulnerableRepos": [
     "adeyosemanputra/pygoat"
+   ]
+  },
+  {
+   "ruleId": 9303,
+   "title": "MOB-SEC-03: Cleartext HTTP Traffic Permitted in Mobile Manifest",
+   "severity": "HIGH",
+   "cleanRepos": [
+    "AntennaPod/AntennaPod",
+    "localsend/localsend"
+   ],
+   "cleanFindings": 2,
+   "vulnerableRepos": [
+    "prateek147/DVIA-v2"
    ]
   },
   {
@@ -1567,16 +1655,6 @@
     "documenso/documenso"
    ],
    "cleanFindings": 4,
-   "vulnerableRepos": []
-  },
-  {
-   "ruleId": 29981,
-   "title": "DBG-02: NOT IN (SELECT …) Returns No Rows When the Subquery Has a NULL",
-   "severity": "MEDIUM",
-   "cleanRepos": [
-    "documenso/documenso"
-   ],
-   "cleanFindings": 3,
    "vulnerableRepos": []
   },
   {
@@ -1693,6 +1771,26 @@
     "payatu/diva-android",
     "dineshshetty/Android-InsecureBankv2"
    ]
+  },
+  {
+   "ruleId": 9604,
+   "title": "RUST-04: Panic in Drop Trait Implementation (Process Abort)",
+   "severity": "MEDIUM",
+   "cleanRepos": [
+    "localsend/localsend"
+   ],
+   "cleanFindings": 2,
+   "vulnerableRepos": []
+  },
+  {
+   "ruleId": 9605,
+   "title": "RUST-05: SQL Injection via format! String Interpolation in Query",
+   "severity": "CRITICAL",
+   "cleanRepos": [
+    "LemmyNet/lemmy"
+   ],
+   "cleanFindings": 2,
+   "vulnerableRepos": []
   },
   {
    "ruleId": 30010,
@@ -1846,16 +1944,6 @@
    "vulnerableRepos": []
   },
   {
-   "ruleId": 6017,
-   "title": "DB-PERF-17: Redundant Duplicate Indexes on Same Column Prefix",
-   "severity": "LOW",
-   "cleanRepos": [
-    "supabase/supabase-js"
-   ],
-   "cleanFindings": 1,
-   "vulnerableRepos": []
-  },
-  {
    "ruleId": 10905,
    "title": "OAUTH-05: Use of Deprecated Resource Owner Password Credentials (ROPC) Grant",
    "severity": "MEDIUM",
@@ -1898,6 +1986,20 @@
    ]
   },
   {
+   "ruleId": 1225,
+   "title": "UI-INTERACT-25: Unchecked File Upload Size and Type Traps",
+   "severity": "LOW",
+   "cleanRepos": [
+    "localsend/localsend"
+   ],
+   "cleanFindings": 1,
+   "vulnerableRepos": [
+    "juice-shop/juice-shop",
+    "WebGoat/WebGoat",
+    "adeyosemanputra/pygoat"
+   ]
+  },
+  {
    "ruleId": 7115,
    "title": "WEB-PERF-15: Forced Synchronous Layout Shift (Layout Thrashing)",
    "severity": "MEDIUM",
@@ -1930,23 +2032,21 @@
    "vulnerableRepos": []
   },
   {
-   "ruleId": 9303,
-   "title": "MOB-SEC-03: Cleartext HTTP Traffic Permitted in Mobile Manifest",
-   "severity": "HIGH",
-   "cleanRepos": [
-    "AntennaPod/AntennaPod"
-   ],
-   "cleanFindings": 1,
-   "vulnerableRepos": [
-    "prateek147/DVIA-v2"
-   ]
-  },
-  {
    "ruleId": 9317,
    "title": "MOB-SEC-17: FileProvider Exposes the Device Root",
    "severity": "MEDIUM",
    "cleanRepos": [
     "AntennaPod/AntennaPod"
+   ],
+   "cleanFindings": 1,
+   "vulnerableRepos": []
+  },
+  {
+   "ruleId": 9601,
+   "title": "RUST-01: Unsound Unsafe Block Missing Safety Invariant Comment",
+   "severity": "LOW",
+   "cleanRepos": [
+    "localsend/localsend"
    ],
    "cleanFindings": 1,
    "vulnerableRepos": []
@@ -2227,18 +2327,6 @@
    ]
   },
   {
-   "ruleId": 1225,
-   "title": "UI-INTERACT-25: Unchecked File Upload Size and Type Traps",
-   "severity": "LOW",
-   "cleanRepos": [],
-   "cleanFindings": 0,
-   "vulnerableRepos": [
-    "juice-shop/juice-shop",
-    "WebGoat/WebGoat",
-    "adeyosemanputra/pygoat"
-   ]
-  },
-  {
    "ruleId": 28620,
    "title": "A11Y-20: aria-label on a Generic Element Is Ignored",
    "severity": "LOW",
@@ -2361,16 +2449,6 @@
    ]
   },
   {
-   "ruleId": 5049,
-   "title": "SEC-SECRET-49: Generic Private Key Block Exposure",
-   "severity": "CRITICAL",
-   "cleanRepos": [],
-   "cleanFindings": 0,
-   "vulnerableRepos": [
-    "WebGoat/WebGoat"
-   ]
-  },
-  {
    "ruleId": 18013,
    "title": "JAVA-SEC-03: Unrestricted Java Deserialization via ObjectInputStream.readObject",
    "severity": "CRITICAL",
@@ -2390,6 +2468,16 @@
     "WebGoat/WebGoat",
     "OWASP/railsgoat",
     "adeyosemanputra/pygoat"
+   ]
+  },
+  {
+   "ruleId": 24110,
+   "title": "CORE-10: Path Traversal: File Path Built From Request Input",
+   "severity": "HIGH",
+   "cleanRepos": [],
+   "cleanFindings": 0,
+   "vulnerableRepos": [
+    "WebGoat/WebGoat"
    ]
   },
   {

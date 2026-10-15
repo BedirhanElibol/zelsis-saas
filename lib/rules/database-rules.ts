@@ -304,7 +304,8 @@ export function evaluateDatabaseRules(file: CodeFile, lines: string[], cleanCont
         logs.push(`[${ts}] 🗄️ DB-PERF-34: Unbounded In-Memory Array Sorting in ORM detected (${file.path}:${lineNum})`);
     }
     // DB-PERF-38: Database Connection String with Plaintext Password in Repo
-    if (/DATABASE_URL\s*=\s*["\']postgres(?:ql)?:\/\/[^:]+:[^@]+@/i.test(cleanContent) && !/\.env/i.test(lowerPath) && !/localhost/i.test(cleanContent)) {
+    // Placeholder passwords and hosts taken from a shell variable are dev-script defaults, not leaked credentials
+    if (/DATABASE_URL\s*=\s*["\']postgres(?:ql)?:\/\/[^:]+:(?!(?:password|changeme|change_me|secret|example|placeholder)@)[^@]+@(?!\$)/i.test(cleanContent) && !/\.env/i.test(lowerPath) && !/localhost/i.test(cleanContent)) {
         const matchLineIdx = locateMatchLine(lines, [/DATABASE_URL\s*=\s*["\']postgres(?:ql)?:\/\/[^:]+:[^@]+@/i], l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('*'));
         const lineNum = matchLineIdx !== -1 ? matchLineIdx + 1 : 1;
         findings.push({

@@ -92,7 +92,7 @@ export function evaluateInfraRules(file: CodeFile, lines: string[], cleanContent
     if (isDockerfile) {
         const hasFrom = /^\s*FROM\s+/im.test(cleanContent);
         if (hasFrom) {
-            const hasNonRootUser = /^\s*USER\s+(?!root\b)[a-zA-Z0-9_-]+/im.test(cleanContent);
+            const hasNonRootUser = /^\s*USER\s+(?!root\b)(?:[a-zA-Z0-9_-]+|\$\{?\w+\}?)/im.test(cleanContent);
             const hasExplicitRoot = /^\s*USER\s+root\b/im.test(cleanContent);
             if (!hasNonRootUser || hasExplicitRoot) {
                 let lineNum = 1;
@@ -142,6 +142,10 @@ export function evaluateInfraRules(file: CodeFile, lines: string[], cleanContent
             const password = dbMatch[2];
             // Skip generic placeholder credentials
             if (['username', 'user', 'your_user', 'password', 'your_password', 'xxx'].includes(user.toLowerCase()) && ['password', 'pass', 'your_password', 'xxx', 'secret'].includes(password.toLowerCase())) {
+                continue;
+            }
+            // A literal placeholder password (CI service containers, dev scripts) is not a leaked credential
+            if (['password', 'changeme', 'change_me', 'secret', 'example', 'placeholder'].includes(password.toLowerCase())) {
                 continue;
             }
             // Skip common default local dev credentials

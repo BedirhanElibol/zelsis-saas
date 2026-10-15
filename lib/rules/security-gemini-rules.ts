@@ -334,10 +334,14 @@ function evaluateLlm(path: string, c: string, add: Add) {
 }
 
 function evaluateRust(lines: string[], add: Add) {
+  // A client that reads the peer certificate (.tls_info(true)) and checks it itself pins it manually,
+  // the usual setup for self-signed LAN peers; that is not "verification off".
+  const joined = lines.join('\n');
+  const pinsManually = /\.tls_info\(\s*true\s*\)/.test(joined) && /fingerprint|verify_cert|peer_certificate/i.test(joined);
   lines.forEach((l, i) => {
     // SECG-19: reqwest TLS verification turned off
     const m = /\.danger_accept_invalid_(certs|hostnames)\(\s*true\s*\)/.exec(l);
-    if (m && !/^\s*\/\//.test(l)) add({ ruleId: 29918, code: 'SECG-19', severity: 'HIGH', category: 'Transport Security', cwe: 'CWE-295', lineIdx: i,
+    if (m && !pinsManually && !/^\s*\/\//.test(l)) add({ ruleId: 29918, code: 'SECG-19', severity: 'HIGH', category: 'Transport Security', cwe: 'CWE-295', lineIdx: i,
       title: `reqwest danger_accept_invalid_${m[1]}(true)`,
       why: 'Certificate checking is off, so anyone on the network path (Wi-Fi, proxy, compromised DNS) can impersonate the API and read or change the traffic, including tokens.',
       fix: 'Remove the call; for a private CA add it with .add_root_certificate(cert) instead.' });

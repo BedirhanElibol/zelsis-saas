@@ -139,10 +139,24 @@ export function evaluateRustSystemsRules(file: CodeFile, lines: string[], cleanC
         });
         logs.push(`[${ts}] [RUST AUDIT] Found RUST-04: Panic in Drop Trait Implementation (Process Abort) at ${file.path}:${lineNum}`);
     }
-    // RUST-05: SQL Injection via format! in Database Queries
-    const rustSqlInjection = /(?:format!\s*\(\s*["'][^"']*\b(?:SELECT|INSERT|UPDATE|DELETE)\b|sqlx::query\s*\(\s*&format!\()/i.exec(cleanContent);
-    if (rustSqlInjection) {
-        const matchLineIdx = lineAt(cleanContent, rustSqlInjection.index);
+    // RUST-05: SQL Injection via format! in Database Queries. The format string (plain or raw) must have SQL
+    // structure and an interpolation; a bare keyword in an error message ("Failed to update {}") or a URL
+    // ("internal/delete?alias={}") is not SQL.
+    const SQL_SHAPE = /\bSELECT\b[\s\S]*?\bFROM\b|\bINSERT\s+INTO\b|\bUPDATE\s+[\w."{}]+\s+SET\b|\bDELETE\s+FROM\b/i;
+    let rustSqlIndex = -1;
+    const formatCall = /format!\s*\(\s*(r#*)?"/g;
+    for (let m = formatCall.exec(cleanContent); m && rustSqlIndex === -1; m = formatCall.exec(cleanContent)) {
+        const bodyStart = m.index + m[0].length;
+        const end = m[1] !== undefined ? cleanContent.indexOf('"' + m[1].slice(1), bodyStart) : cleanContent.slice(bodyStart).search(/(?<!\\)"/) + bodyStart;
+        const literal = cleanContent.slice(bodyStart, end < bodyStart ? undefined : end);
+        if (SQL_SHAPE.test(literal) && /\{[^{}]*\}/.test(literal.replace(/\{\{|\}\}/g, ''))) rustSqlIndex = m.index;
+    }
+    if (rustSqlIndex === -1) {
+        const queryFormat = /sqlx::query\s*\(\s*&format!\(/.exec(cleanContent);
+        if (queryFormat) rustSqlIndex = queryFormat.index;
+    }
+    if (rustSqlIndex !== -1) {
+        const matchLineIdx = lineAt(cleanContent, rustSqlIndex);
         const lineNum = matchLineIdx + 1;
         findings.push({
             id: `rust9605-${Date.now()}-${findingCounter.count++}`,
