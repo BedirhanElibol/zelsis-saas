@@ -296,5 +296,48 @@ export async function POST(req: Request) {
     values = list(fields.values()) + [slug]
     conn.execute(f"UPDATE agents SET {set_clause} WHERE slug = %s", values)
 `)
+  },
+  {
+    ruleIds: [29833], name: 'BUG-162 Drizzle delete without where vs cookies().delete() and Map.delete() in a Drizzle file',
+    detects: f('src/server/users.ts', `import { eq } from 'drizzle-orm';
+import { users } from './schema';
+export async function wipe() {
+  await db.delete(users);
+}
+`),
+    ignores: f('src/app/actions.ts', `import { eq } from 'drizzle-orm';
+import { cookies } from 'next/headers';
+export async function clearPromo(pending: Map<string, unknown>, callId: string) {
+  const store = await cookies();
+  store.delete(PROMO_COOKIE);
+  pending.delete(callId);
+}
+`)
+  },
+  {
+    ruleIds: [29889], name: 'BUG-212 BigInt mixed with a number vs a BigInt literal with separators',
+    detects: f('src/money.ts', `export const toUnits = (stroops: string) => BigInt(stroops) / 10000000;
+`),
+    ignores: f('src/money.ts', `export const toUnits = (stroops: string) => BigInt(stroops) / 10_000_000n;
+`)
+  },
+  {
+    ruleIds: [28838], name: 'GAP-38 DELETE without auth vs require_operator(request) at the top of the body',
+    detects: f('app/main.py', `from fastapi import FastAPI, Request
+app = FastAPI()
+
+@app.delete("/api/mentions/{mid}")
+def api_delete(mid: int, request: Request):
+    db.delete_mention(mid)
+`),
+    ignores: f('app/main.py', `from fastapi import FastAPI, Request
+app = FastAPI()
+
+@app.delete("/api/mentions/{mid}")
+def api_delete(mid: int, request: Request):
+    require_operator(request)
+    require_csrf(request)
+    db.delete_mention(mid)
+`)
   }
 ];

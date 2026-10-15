@@ -199,6 +199,9 @@ function evaluateJs(path: string, c: string, add: Add) {
   // BUG-162: Drizzle update/delete without .where() changes every row of the table
   if (/from\s+['"]drizzle-orm/.test(c)) {
     for (const m of c.matchAll(/\b(\w+)\.(delete|update)\(\s*(\w+)\s*\)/g)) {
+      // Only a db/transaction handle or a declared table; cookies().delete(NAME), Map/Set.delete(key) are not queries
+      if (!/^(?:db|tx|trx|txn|database|drizzle|orm|conn|client)$/i.test(m[1])
+        && !new RegExp(`\\b${m[3]}\\s*=\\s*(?:pg|sqlite|mysql)Table\\(`).test(c)) continue;
       let end = m.index! + m[0].length;
       if (m[2] === 'update') {
         const set = /^\s*\.set\(/.exec(c.slice(end));
@@ -642,7 +645,7 @@ function evaluateJs2(path: string, c: string, add: Add, nextMajor: number) {
   }
 
   // BUG-212: BigInt mixed with a number literal
-  for (const m of c.matchAll(/\bBigInt\([^()]*\)\s*[-+*/%]\s*\d+(?![\dn.])/g)) add({ ruleId: 29889, code: 'BUG-212', severity: 'HIGH', lineIdx: at(m.index!),
+  for (const m of c.matchAll(/\bBigInt\([^()]*\)\s*[-+*/%]\s*\d[\d_]*(?![\dn._])/g)) add({ ruleId: 29889, code: 'BUG-212', severity: 'HIGH', lineIdx: at(m.index!),
     title: 'BigInt Combined With a Number',
     why: 'Arithmetic between BigInt and Number throws "Cannot mix BigInt and other types" (TypeError).',
     fix: 'Use a BigInt literal (1n) or convert explicitly with Number(…) / BigInt(…).' });

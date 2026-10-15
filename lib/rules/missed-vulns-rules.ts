@@ -604,10 +604,15 @@ export function evaluateMissedVulnsRules(file: CodeFile, lines: string[], cleanC
       if (!m || /dependencies\s*=/.test(m[3]) || /webhook|callback|health/i.test(m[2])) return;
       // Signature: the def line(s) up to the closing "):"
       let sig = '';
+      let sigEnd = i + 1;
       for (let j = i + 1; j < Math.min(lines.length, i + 12); j++) {
         sig += lines[j];
+        sigEnd = j;
         if (/\)\s*(?:->[^:]*)?:\s*$/.test(lines[j])) break;
       }
+      // An imperative auth check at the top of the body (require_operator(request), verify_admin(...)) also identifies the caller
+      const body = lines.slice(sigEnd + 1, sigEnd + 7).join('\n');
+      if (/^\s*(?:await\s+)?\w*\b(?:require|ensure|assert|check|verify|authorize|authenticate)_\w*(?:user|auth|admin|operator|owner|permission|role|login|token|session|access|member|staff)\w*\s*\(/im.test(body)) return;
       if (!/^\s*(?:async\s+)?def\s/.test(lines[i + 1] || '')) return;
       // Parameters only (not the function name). The caller is identified by an auth dependency (Depends(get_current_user_id)),
       // an auth-named parameter (current_user: …) or an auth type (CurrentUser); a record id such as user_id: str is not one.
