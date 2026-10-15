@@ -12,6 +12,17 @@ export interface ChangelogEntry {
 
 export const CHANGELOG: ChangelogEntry[] = [
   {
+    date: '2026-10-15',
+    title: 'Keys for newer SaaS tools, hung requests and agent tools',
+    changes: [
+      { kind: 'New', text: 'Leaked keys for tools small teams adopted recently: Langfuse, Helicone, LangSmith, Pinecone, Convex, Inngest, Trigger.dev, Unkey, Dub, PostHog personal keys, Axiom, Neon, Tinybird, PlanetScale service tokens, OneSignal, LaunchDarkly server keys, Flagsmith server keys and more. Keys without a fixed prefix are only reported when they sit in the provider\'s own variable name.' },
+      { kind: 'New', text: 'Bugs that hang or break requests: an http.request() that is never ended, async Express middleware whose catch never calls next(err), cookies().set() in a page or layout, a /g regex reused with .test(), sync bcrypt hashing inside a route, and Object.values() on a numeric enum.' },
+      { kind: 'New', text: 'AI agents that loop with no step limit, and agent tools that read or write a file path the model picked without checking it stays inside the intended folder.' },
+      { kind: 'New', text: 'Node inspectors exposed on 0.0.0.0 in production Dockerfiles and start commands, dependencies installed over http:// or git://, sync.WaitGroup or Mutex passed by value in Go, gunzip on request data without a size limit, export buttons that download an empty file, and 2FA backup codes written into the source.' },
+      { kind: 'Fixed', text: 'Fewer false alarms: Map / Set / cookies().delete() in a Drizzle file is not a query without .where(), BigInt literals with separators (10_000_000n) are not mixed with numbers, and FastAPI routes that call require_operator(request) at the top count as authenticated.' },
+    ],
+  },
+  {
     date: '2026-10-14',
     title: 'Mobile apps, shareable reports and fewer missed bugs',
     changes: [

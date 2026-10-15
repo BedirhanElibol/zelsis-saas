@@ -12,11 +12,11 @@ import type { RepoContext } from '../scanner/repo-context';
 interface Hit { ruleId: number; code: string; title: string; severity: Finding['severity']; lineIdx: number; why: string; fix: string }
 type Add = (h: Hit) => void;
 
-const SKIP = /\.d\.ts$|(?:^|\/)node_modules\/|(?:^|\/)vendor\/|\.min\.js$|(?:^|\/)(?:tests?|__tests__|e2e|stories|__mocks__|fixtures?|testdata|seeds?)\/|\.(?:test|spec|stories)\.[jt]sx?$|_test\.(?:go|py)$|(?:^|\/)test_\w+\.py$|(?:^|\/)seed\.[jt]s$/i;
-const lineAt = (c: string, off: number) => { let n = 0; for (let i = 0; i < off && i < c.length; i++) if (c.charCodeAt(i) === 10) n++; return n; };
+export const SKIP = /\.d\.ts$|(?:^|\/)node_modules\/|(?:^|\/)vendor\/|\.min\.js$|(?:^|\/)(?:tests?|__tests__|e2e|stories|__mocks__|fixtures?|testdata|seeds?)\/|\.(?:test|spec|stories)\.[jt]sx?$|_test\.(?:go|py)$|(?:^|\/)test_\w+\.py$|(?:^|\/)seed\.[jt]s$/i;
+export const lineAt = (c: string, off: number) => { let n = 0; for (let i = 0; i < off && i < c.length; i++) if (c.charCodeAt(i) === 10) n++; return n; };
 
 /** Offset just past the bracket that closes the one at `open` (strings skipped), or -1. */
-function closeOf(c: string, open: number): number {
+export function closeOf(c: string, open: number): number {
   const pair: Record<string, string> = { '(': ')', '{': '}', '[': ']' };
   const stack: string[] = [];
   for (let i = open; i < c.length; i++) {
@@ -29,7 +29,7 @@ function closeOf(c: string, open: number): number {
 }
 
 /** Text of the `{ ... }` block that starts at the first `{` at or after `from`. */
-function blockAfter(c: string, from: number): { s: number; e: number } | null {
+export function blockAfter(c: string, from: number): { s: number; e: number } | null {
   const open = c.indexOf('{', from);
   if (open < 0) return null;
   const end = closeOf(c, open);
@@ -37,7 +37,7 @@ function blockAfter(c: string, from: number): { s: number; e: number } | null {
 }
 
 /** Number of top-level comma-separated arguments in the call whose `(` is at `open`. */
-function argCount(c: string, open: number): number {
+export function argCount(c: string, open: number): number {
   const end = closeOf(c, open);
   if (end < 0) return 0;
   const inner = c.slice(open + 1, end - 1);
@@ -698,7 +698,9 @@ function evaluateJs2(path: string, c: string, add: Add, nextMajor: number) {
 
   // BUG-218: Next.js 15+ cookies() / headers() used without await
   if (nextMajor >= 15) {
-    for (const m of c.matchAll(/(?<!await\s)(?<!await\s\()\b(cookies|headers|draftMode)\(\)\.(get|getAll|set|has|delete|isEnabled)\b/g)) add({ ruleId: 29895, code: 'BUG-218', severity: nextMajor >= 16 ? 'HIGH' : 'MEDIUM', lineIdx: at(m.index!),
+    // Skip mentions inside a string on the same line (docs, changelogs, error messages)
+    const inString = (i: number) => { const pre = c.slice(c.lastIndexOf('\n', i) + 1, i).replace(/\\./g, ''); return ['\'', '"', '`'].some((q) => pre.split(q).length % 2 === 0); };
+    for (const m of c.matchAll(/(?<!await\s)(?<!await\s\()\b(cookies|headers|draftMode)\(\)\.(get|getAll|set|has|delete|isEnabled)\b/g)) if (!inString(m.index!)) add({ ruleId: 29895, code: 'BUG-218', severity: nextMajor >= 16 ? 'HIGH' : 'MEDIUM', lineIdx: at(m.index!),
       title: `${m[1]}().${m[2]} Without await (Next.js ${nextMajor})`,
       why: `Since Next.js 15, ${m[1]}() returns a Promise${nextMajor >= 16 ? ' and synchronous access was removed' : ''}: ${m[1]}().${m[2]} reads a property of the Promise, which is undefined or throws.`,
       fix: `Await it: (await ${m[1]}()).${m[2]}(…).` });
