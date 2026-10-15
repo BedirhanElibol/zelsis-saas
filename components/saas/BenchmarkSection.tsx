@@ -4,7 +4,7 @@ import React, { useState } from 'react';
 import { m } from 'framer-motion';
 import { CheckCircle2, CircleAlert, CircleX, ExternalLink } from 'lucide-react';
 import benchmark from '@/data/benchmark-summary.generated.json';
-import { formatCount, RULE_COUNTS } from '@/lib/rule-status';
+import { formatCount } from '@/lib/rule-status';
 import { CORPUS_RECALL, corpusPct } from '@/data/corpus-recall';
 
 /**
@@ -64,7 +64,7 @@ export const BenchmarkSection: React.FC = () => {
           </p>
         </div>
 
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
           <Stat
             label="Documented flaws found"
             value={`${summary.documentedFlawsDetected} / ${summary.documentedFlaws}`}
@@ -74,11 +74,6 @@ export const BenchmarkSection: React.FC = () => {
             label="Clean projects not failed"
             value={`${cleanPassedOrWarned} / ${cleanRepos.length}`}
             detail={`${cleanRepos.length - cleanPassedOrWarned} failed on issues we reviewed as real.`}
-          />
-          <Stat
-            label="Active rules"
-            value={formatCount(RULE_COUNTS.gating)}
-            detail="Every rule runs on every plan. A rule fails the release only when a test fixture, a benchmark catch or a reviewed finding backs it; the rest warn."
           />
           <Stat
             label="Real-incident snippets caught"

@@ -145,7 +145,7 @@ export const ProductCapabilities: React.FC = () => {
             <span>What it checks</span>
           </div>
           <h2 className="text-3xl sm:text-5xl font-extrabold text-[#EDEDED] tracking-tight">
-            Security checks built for how web apps break
+            Security checks built for how real apps break
           </h2>
           <p className="text-base sm:text-lg text-[#A1A1AA] leading-relaxed font-sans">
             Secrets, database access rules, injection, auth and dependencies, each finding with the exact line and a fix you can paste into your AI assistant.

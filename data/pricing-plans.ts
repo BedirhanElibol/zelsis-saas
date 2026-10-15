@@ -1,6 +1,5 @@
 import { z } from 'zod';
 
-import { formatCount, RULE_COUNTS } from '@/lib/rule-status';
 
 export const PricingPlanSchema = z.object({
   id: z.enum(['free', 'zelsis-core', 'shipguard-core', 'vibecare', 'zelsis-suite']),
@@ -44,7 +43,7 @@ export const ZELSIS_PRICING_PLANS: PricingPlanItem[] = [
     features: [
       'Unlimited scans, public and private repositories',
       '3 saved projects',
-      `All ${formatCount(RULE_COUNTS.gating)} active rules`,
+      'Every check, on every plan',
       '5 AI fix prompts / month',
       SUPPORT_TERMS.Free,
     ],
@@ -59,7 +58,7 @@ export const ZELSIS_PRICING_PLANS: PricingPlanItem[] = [
     features: [
       'Unlimited scans',
       'Unlimited saved projects',
-      `All ${formatCount(RULE_COUNTS.gating)} active rules`,
+      'Every check, on every plan',
       'Unlimited AI fix prompts',
       'Printable PDF audit report',
       'GitHub Actions & CI/CD release gate',

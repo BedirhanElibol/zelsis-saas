@@ -8,7 +8,6 @@ import type { UserProfile } from '@/components/auth/AuthModal';
 
 // Loaded only when a visitor picks a paid plan without being signed in
 const AuthModal = dynamic(() => import('@/components/auth/AuthModal').then((m) => m.AuthModal), { ssr: false });
-import { formatCount, RULE_COUNTS } from '@/lib/rule-status';
 import { ENTERPRISE_SEAT_LIMIT, PLAN_PRICES, priceLabel, SUPPORT_TERMS, ZELSIS_PRICING_PLANS } from '@/data/pricing-plans';
 import { contactMailto } from '@/lib/contact';
 import { CODE_RETENTION_STATEMENT, CODE_SNIPPET_RETENTION_DAYS } from '@/lib/data-retention';
@@ -133,9 +132,9 @@ export const ComparisonTable: React.FC = () => {
         {
           name: 'Rules',
           description: 'Security, logic, dependency and configuration checks',
-          free: `All ${formatCount(RULE_COUNTS.gating)} active rules`,
-          pro: `All ${formatCount(RULE_COUNTS.gating)} active rules`,
-          enterprise: `All ${formatCount(RULE_COUNTS.gating)} active rules`
+          free: 'Every check, on every plan',
+          pro: 'Every check, on every plan',
+          enterprise: 'Every check, on every plan'
         },
         {
           name: 'Known Vulnerable Dependencies',

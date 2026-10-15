@@ -47,7 +47,7 @@ export const metadata: Metadata = {
     template: '%s | Zelsis',
   },
   description:
-    'Scan your GitHub repository for leaked secrets, broken auth, logic bugs, vulnerable dependencies and risky CI/CD config. Free for public repos, with a CI gate that fails the release on critical issues.',
+    'Checks every pull request in your web, mobile, SaaS, API or desktop app for logic bugs, security holes, vulnerable dependencies, UI and accessibility issues, privacy gaps and risky config. Free for public repos, with a CI gate that fails the release on critical issues.',
   keywords: [
     'Zelsis',
     'Release Gate',
@@ -56,8 +56,8 @@ export const metadata: Metadata = {
     'Code Quality',
     'Production Readiness',
     'DevOps CI/CD',
-    'Next.js',
-    'Supabase RLS',
+    'Logic Bugs',
+    'Mobile App Checks',
     'Secret Scanning',
     'SAST',
   ],
@@ -65,29 +65,20 @@ export const metadata: Metadata = {
     canonical: './',
   },
   openGraph: {
-    title: 'Zelsis | Security Scanner & Release Gate for Web Apps',
+    title: 'Zelsis | Release Checks for Web, Mobile and SaaS Apps',
     description:
-      'Scan your GitHub repository for leaked secrets, broken auth, logic bugs, vulnerable dependencies and risky CI/CD config. Free for public repos, with a CI gate that fails the release on critical issues.',
+      'Checks every pull request in your web, mobile, SaaS, API or desktop app for logic bugs, security holes, vulnerable dependencies, UI and accessibility issues, privacy gaps and risky config. Free for public repos, with a CI gate that fails the release on critical issues.',
     url: './',
     siteName: 'Zelsis',
-    images: [
-      {
-        url: '/og-image.png',
-        width: 1200,
-        height: 630,
-        type: 'image/png',
-        alt: 'Zelsis | Security Scanner & Release Gate for Web Apps',
-      },
-    ],
+    // The image comes from app/opengraph-image.tsx
     locale: 'en_US',
     type: 'website',
   },
   twitter: {
     card: 'summary_large_image',
-    title: 'Zelsis | Security Scanner & Release Gate for Web Apps',
+    title: 'Zelsis | Release Checks for Web, Mobile and SaaS Apps',
     description:
-      'Scan your GitHub repository for leaked secrets, broken auth, logic bugs, vulnerable dependencies and risky CI/CD config. Free for public repos, with a CI gate that fails the release on critical issues.',
-    images: ['/og-image.png'],
+      'Checks every pull request in your web, mobile, SaaS, API or desktop app for logic bugs, security holes, vulnerable dependencies, UI and accessibility issues, privacy gaps and risky config. Free for public repos, with a CI gate that fails the release on critical issues.',
   },
   icons: {
     icon: [

@@ -6,7 +6,6 @@ import { ArrowRight, Terminal, ExternalLink, Lock, Loader2 } from 'lucide-react'
 import { useRouter } from 'next/navigation';
 import { normalizeRepoUrl } from '@/lib/github-api';
 import { ScanPreviewCard, ScanPreviewResult } from '@/components/saas/ScanPreviewCard';
-import benchmark from '@/data/benchmark-summary.generated.json';
 import { HeroGateMock } from './HeroGateMock';
 import { CODE_RETENTION_SHORT } from '@/lib/data-retention';
 
@@ -18,6 +17,7 @@ const WORKS_WITH = [
   'Ruby on Rails',
   'PHP & Laravel',
   'Java & Spring',
+  'C# & ASP.NET Core',
   'iOS & Android (Swift, Kotlin, React Native)',
   'Supabase, Firebase & Postgres',
   'Docker, Kubernetes & Terraform',
@@ -99,7 +99,7 @@ export const SaasHero: React.FC<SaasHeroProps> = ({ onOpenDashboard }) => {
           Find the flaws in your app <span className="text-emerald-400">before your users do.</span>
         </h1>
         <p className="text-base sm:text-lg lg:text-xl text-[#A1A1AA] max-w-3xl mx-auto leading-relaxed mt-6 mb-10 font-sans font-normal">
-          Zelsis checks every pull request for leaked keys, broken auth, injection, unsafe database rules, payment bugs and vulnerable dependencies, and fails the build when something critical gets in. JavaScript, Python, Go, Ruby, PHP and Java, one flat price per account.
+          Zelsis checks every pull request for logic bugs, security holes, vulnerable dependencies, UI and accessibility issues and privacy gaps, and fails the build when something critical gets in. Web, mobile, SaaS, API and desktop projects in JavaScript, Python, Go, Ruby, PHP, Java, C#, Swift and Kotlin, one flat price per account.
         </p>
 
         {/* Direct Repository Scan Command Bar */}
@@ -174,7 +174,7 @@ export const SaasHero: React.FC<SaasHeroProps> = ({ onOpenDashboard }) => {
           </div>
           <div className="flex items-center gap-2">
             <span className="w-1.5 h-1.5 rounded-full bg-white/40" />
-            <a href="#benchmark" className="inline-flex items-center min-h-[24px] hover:text-white transition-colors">Measured on {benchmark.repos.length} real projects</a>
+            <a href="#benchmark" className="inline-flex items-center min-h-[24px] hover:text-white transition-colors">Measured on real open-source projects</a>
           </div>
           <div className="flex items-center gap-2">
             <span className="w-1.5 h-1.5 rounded-full bg-white/40" />
