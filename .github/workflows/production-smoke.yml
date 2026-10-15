@@ -1,13 +1,12 @@
 name: Production Smoke
 
 # Read-only checks against the live site: pages load, auth/cron/unsubscribe guards reject bad calls,
-# badges never fake a pass, and the public scan + gate-check APIs answer. Runs daily and after main changes
-# (Vercel deploys main within a few minutes, so the push run waits before testing).
+# badges never fake a pass, and the public scan + gate-check APIs answer. Runs twice a week and when
+# Vercel reports a finished production deploy, so there is no idle wait.
 on:
   schedule:
-    - cron: '23 7 * * *'
-  push:
-    branches: [main]
+    - cron: '23 7 * * 1,4'
+  deployment_status:
   workflow_dispatch:
 
 permissions:
@@ -18,6 +17,8 @@ jobs:
     name: Live site smoke tests
     runs-on: ubuntu-latest
     timeout-minutes: 20
+    # Skipped jobs cost no minutes: only successful production deploys run it
+    if: github.event_name != 'deployment_status' || (github.event.deployment_status.state == 'success' && github.event.deployment.environment == 'Production')
     steps:
       - name: Checkout
         uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
@@ -32,10 +33,6 @@ jobs:
         run: |
           npm ci
           npx playwright install --with-deps chromium
-
-      - name: Wait for the Vercel deploy of this commit
-        if: github.event_name == 'push'
-        run: sleep 240
 
       - name: Run smoke tests against production
         env:
