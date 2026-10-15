@@ -45,6 +45,7 @@ dist/
 build/
 out/
 
-# SEO guides and the real-bugs page show deliberately buggy code as examples
+# SEO guides, blog posts and the real-bugs page show deliberately buggy code as examples
 app/guides/
+app/blog/
 app/docs/real-world-bugs/
