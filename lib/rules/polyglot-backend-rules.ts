@@ -6,6 +6,7 @@
 import { Finding } from '@/data/schema';
 import { CodeFile } from '../scanner-engine';
 import { javaDeserializationIsSafe } from './shared/java-deserialization';
+import type { RepoContext } from '../scanner/repo-context';
 export interface PolyglotBackendRuleResult {
     findings: Finding[];
     logs: string[];
@@ -20,7 +21,7 @@ function extractSnippet(lines: string[], lineNum: number): string {
 }
 export function evaluatePolyglotBackendRules(file: CodeFile, lines: string[], cleanContent: string, findingCounter: {
     count: number;
-}): PolyglotBackendRuleResult {
+}, context?: RepoContext): PolyglotBackendRuleResult {
     const findings: Finding[] = [];
     const logs: string[] = [];
     const lowerPath = file.path.toLowerCase().replace(/\\/g, '/');
@@ -37,8 +38,15 @@ export function evaluatePolyglotBackendRules(file: CodeFile, lines: string[], cl
         // PHP-01: SQL Injection via unparameterized input concatenation
         const phpSqliRegex = /(?:mysql_query|mysqli_query|\$pdo->query|\$pdo->exec|\$db->query)\s*\(\s*(?:["'][^"']*\b(?:SELECT|INSERT|UPDATE|DELETE)\b[^"']*["']\s*\.|\$[a-zA-Z0-9_]+\s*\.|\s*"\s*(?:SELECT|INSERT|UPDATE|DELETE)\s+[^"]*\$_(?:GET|POST|REQUEST|COOKIE))/i;
         const phpConcatSql = /\$_(?:GET|POST|REQUEST|COOKIE)\[[^\]]+\][\s\S]*?(?:SELECT|INSERT|UPDATE|DELETE)/i;
-        if (phpSqliRegex.test(cleanContent) || (phpConcatSql.test(cleanContent) && /(?:query|exec)\s*\(/i.test(cleanContent))) {
-            const matchLineIdx = lines.findIndex(l => !l.trim().startsWith('//') && !l.trim().startsWith('#') && (phpSqliRegex.test(l) || /\$_(?:GET|POST|REQUEST)/.test(l)));
+        // Integer values cannot inject: (int) casts, intval(), and functions declared `: int` anywhere in the repo
+        const intFns = context?.phpIntFunctions ?? new Set<string>();
+        const safeInt = String.raw`(?:\(int\)\s*\$[\w>-]+|intval\s*\([^)]*\)|(\w+)\s*\(\s*\))`;
+        const stripIntConcat = (s: string) => s
+            .replace(new RegExp(String.raw`(["'])\s*\.\s*` + safeInt + String.raw`\s*\.\s*\1`, 'g'), (m, _q, fn) => (fn && !intFns.has(fn) ? m : ''))
+            .replace(new RegExp(String.raw`(["'])\s*\.\s*` + safeInt + String.raw`(?=\s*[),;])`, 'g'), (m, q, fn) => (fn && !intFns.has(fn) ? m : q));
+        const phpSql = stripIntConcat(cleanContent);
+        if (phpSqliRegex.test(phpSql) || (phpConcatSql.test(phpSql) && /(?:query|exec)\s*\(/i.test(phpSql))) {
+            const matchLineIdx = lines.findIndex(l => !l.trim().startsWith('//') && !l.trim().startsWith('#') && (phpSqliRegex.test(stripIntConcat(l)) || /\$_(?:GET|POST|REQUEST)/.test(l)));
             const lineNum = matchLineIdx !== -1 ? matchLineIdx + 1 : 1;
             const snippet = extractSnippet(lines, lineNum);
             findings.push({

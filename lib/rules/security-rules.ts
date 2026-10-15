@@ -792,7 +792,8 @@ export function evaluateSecurityRules(file: CodeFile, lines: string[], cleanCont
         }
     }
     // Rule 33 / SEC-33: Command Injection via Unsanitized Child Process Execution
-    if (isCodeFile && (cleanContent.includes('child_process') || cleanContent.includes('execSync(') || cleanContent.includes('exec('))) {
+    // Only files that use child_process; db.exec() / sqlite.exec() / this.exec() run SQL or app code, not a shell
+    if (isCodeFile && cleanContent.includes('child_process')) {
         // Shell commands built from dynamic values, or passed a value that comes from the request.
         // A variable merely named `command` / `cmd` holding a constant is not injection.
         const cmdRequestVars = new Set<string>();
@@ -804,7 +805,7 @@ export function evaluateSecurityRules(file: CodeFile, lines: string[], cleanCont
         // Developer tooling (scripts/, bin/, tools/) receives no request input: only request-derived values count there
         const isDevTooling = /(?:^|\/)(?:scripts|bin|tools|\.husky)\//i.test(lowerPath);
         const dynamicShell = String.raw`\x60[^\x60]*\$\{[^}]+\}|['"][^'"]*['"]\s*\+|[a-zA-Z0-9_.]+\s*\+|`;
-        const cmdInjRegex = new RegExp(String.raw`(?:child_process\.(?:exec|execSync)|\bexec\s*\(|\bexecSync\s*\()\s*(?:` + (isDevTooling ? '' : dynamicShell) + cmdRequestRef + ')');
+        const cmdInjRegex = new RegExp(String.raw`(?:\b(?:child_process|cp|childProcess)\.(?:exec|execSync)\s*\(|(?<![.\w])exec\s*\(|(?<![.\w])execSync\s*\()\s*(?:` + (isDevTooling ? '' : dynamicShell) + cmdRequestRef + ')');
         if (cmdInjRegex.test(cleanContent)) {
             const matchLineIdx = lines.findIndex(l => !l.trim().startsWith('//') && !l.trim().startsWith('*') && cmdInjRegex.test(l));
             const lineNum = matchLineIdx !== -1 ? matchLineIdx + 1 : 1;

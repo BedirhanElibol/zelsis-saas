@@ -96,7 +96,8 @@ export function evaluatePolyglotCoreRules(file: CodeFile, lines: string[], clean
   // CORE-02: OS command built from dynamic values
   const cmdByLang: Partial<Record<Exclude<Lang, null>, RegExp>> = {
     ruby: /(?:\bsystem|\bexec|\bspawn|IO\.popen|Open3\.\w+|%x)\s*[\(\{]?\s*["`][^"`\n]*#\{|`[^`\n]*#\{/,
-    php: /\b(?:shell_exec|exec|system|passthru|popen|proc_open|pcntl_exec)\s*\(\s*(?:["'][^"'\n]*["']\s*\.\s*\$|"[^"\n]*\$\w|\$\w)/i,
+    // Global functions only: $pdo->exec() / $sqlite->exec() run SQL, not a shell
+    php: /(?<!->|::)\b(?:shell_exec|exec|system|passthru|popen|proc_open|pcntl_exec)\s*\(\s*(?:["'][^"'\n]*["']\s*\.\s*\$|"[^"\n]*\$\w|\$\w)/i,
     python: /\b(?:os\.system|os\.popen|subprocess\.(?:call|run|Popen|check_output|check_call))\s*\((?=[^)]*(?:\+|%|\.format\(|f["']))|shell\s*=\s*True/,
     java: /(?:Runtime\.getRuntime\(\)\.exec|new\s+ProcessBuilder)\s*\([^)]*\+\s*[a-z_]/,
     kotlin: /(?:Runtime\.getRuntime\(\)\.exec|ProcessBuilder)\s*\([^)]*\$\{?[a-z_]/,

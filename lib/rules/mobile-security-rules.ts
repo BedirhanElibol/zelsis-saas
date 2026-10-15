@@ -61,7 +61,9 @@ export function evaluateMobileSecurityRules(file: CodeFile, lines: string[], cle
     // Not when the constant holds a key's name (privateKeyName = "notification-private-key-base64"): word-like values are labels
     const r9302Idx = lines.findIndex(l => {
         const m = l.match(/\b(?:let|var|val|String)\s+(\w*(?:client_?secret|api_?secret|secret_?key|private_?key)\w*)\s*(?::\s*String)?\s*=\s*"([A-Za-z0-9_\-]{20,})"/i);
-        return Boolean(m && !/(?:Name|Identifier|Label|Alias|Tag|Account|Service|Path|File)$/.test(m[1]) && !/^[a-z]+(?:[-_.][a-z0-9]+)+$/.test(m[2]));
+        // Placeholders (GOCSPX-xxxxxxxx, 00000000, your_client_secret) are not secrets
+        return Boolean(m && !/(?:Name|Identifier|Label|Alias|Tag|Account|Service|Path|File)$/.test(m[1]) && !/^[a-z]+(?:[-_.][a-z0-9]+)+$/.test(m[2])
+            && !/x{6,}|0{8,}|your|example|placeholder|changeme|dummy/i.test(m[2]));
     });
     if (r9302Idx !== -1) {
         const matchLineIdx = r9302Idx;

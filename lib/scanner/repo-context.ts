@@ -48,6 +48,13 @@ export interface RepoContext {
   serverSetHeaders: Set<string>;
   /** A stylesheet sets form fields to at least 16px (the iOS focus-zoom fix), so text-xs classes on inputs are overridden. */
   formFieldsMinFont16: boolean;
+  /**
+   * The server is pinned to 127.0.0.1 / localhost, nothing binds 0.0.0.0 and the repo has no deploy config
+   * (Dockerfile, Procfile, fly.toml, render.yaml, app.yaml, vercel.json): a local app, not a public API.
+   */
+  loopbackOnlyServer: boolean;
+  /** PHP functions declared to return int (function user_id(): int); concatenating their result into SQL cannot inject. */
+  phpIntFunctions: Set<string>;
 }
 
 export interface NextConfigFacts {
@@ -108,17 +115,25 @@ export function buildRepoContext(files: CodeFile[]): RepoContext {
 }
 
 /** Paths, dependency majors and next.config facts for the cross-file frontend rules. */
-function collectProjectFacts(files: CodeFile[]): Pick<RepoContext, 'filePaths' | 'packageMajors' | 'expoPackageDirs' | 'nextConfig' | 'serverSetHeaders' | 'formFieldsMinFont16'> {
+function collectProjectFacts(files: CodeFile[]): Pick<RepoContext, 'filePaths' | 'packageMajors' | 'expoPackageDirs' | 'nextConfig' | 'serverSetHeaders' | 'formFieldsMinFont16' | 'loopbackOnlyServer' | 'phpIntFunctions'> {
   const filePaths = new Set<string>();
   const packageMajors = new Map<string, number>();
   const expoPackageDirs = new Set<string>();
   let nextConfig: NextConfigFacts | null = null;
   const serverSetHeaders = new Set<string>();
   let formFieldsMinFont16 = false;
+  let bindsLoopback = false;
+  let bindsPublic = false;
+  let hasDeployConfig = false;
+  const phpIntFunctions = new Set<string>();
   for (const file of files) {
     const path = (file.path || '').replace(/\\/g, '/').replace(/^\.\//, '');
     filePaths.add(path);
     const content = file.content || '';
+    if (/\.php$/i.test(path)) for (const m of content.matchAll(/function\s+(\w+)\s*\([^)]*\)\s*:\s*int\b/g)) phpIntFunctions.add(m[1]);
+    if (/(?:^|\/)(?:Dockerfile|Procfile|fly\.toml|render\.ya?ml|app\.ya?ml|vercel\.json|netlify\.toml|railway\.json)$/i.test(path)) hasDeployConfig = true;
+    if (/\bhost\s*[:=]\s*(?:str\s*=\s*)?['"](?:127\.0\.0\.1|localhost)['"]|--host[=\s]+(?:127\.0\.0\.1|localhost)\b/.test(content)) bindsLoopback = true;
+    if (/\bhost\s*[:=]\s*(?:str\s*=\s*)?['"](?:0\.0\.0\.0|::)['"]|--host[=\s]+0\.0\.0\.0\b|['"]0\.0\.0\.0['"]/.test(content)) bindsPublic = true;
     for (const m of content.matchAll(/\.(?:set|append)\(\s*['"`](x-[\w-]+)['"`]|proxy_set_header\s+(x-[\w-]+)/gi)) serverSetHeaders.add((m[1] || m[2]).toLowerCase());
     if (!formFieldsMinFont16 && /\.(?:css|scss|sass|less)$/i.test(path)
       && /\b(?:input|select|textarea)\b[^{}]*\{[^}]*font-size\s*:\s*(?:1[6-9]px|[2-9]\dpx|1(?:\.\d+)?rem|max\(\s*16px)/i.test(content)) formFieldsMinFont16 = true;
@@ -144,7 +159,7 @@ function collectProjectFacts(files: CodeFile[]): Pick<RepoContext, 'filePaths' |
       };
     }
   }
-  return { filePaths, packageMajors, expoPackageDirs, nextConfig, serverSetHeaders, formFieldsMinFont16 };
+  return { filePaths, packageMajors, expoPackageDirs, nextConfig, serverSetHeaders, formFieldsMinFont16, loopbackOnlyServer: bindsLoopback && !bindsPublic && !hasDeployConfig, phpIntFunctions };
 }
 
 /** Column names that hold credentials or secrets (password hashes, tokens, API keys, TOTP seeds). */
@@ -200,4 +215,4 @@ function collectServerClientFacts(files: CodeFile[]): Pick<RepoContext, 'clientC
 }
 
 /** Without repo-wide knowledge, assume the database may be exposed (single-file scans keep RLS checks on). */
-export const emptyRepoContext = (): RepoContext => ({ hardenedSqlFunctions: new Set(), revokedSqlFunctions: new Set(), rlsEnabledTables: new Set(), exposesDatabaseToClients: true, hasHealthEndpoint: false, nextMajorVersion: null, clientComponentModules: new Set(), sensitiveColumnsByModel: new Map(), crossFileAuth: emptyCrossFileAuth(), filePaths: new Set(), packageMajors: new Map(), expoPackageDirs: new Set(), nextConfig: null, serverSetHeaders: new Set(), formFieldsMinFont16: false });
+export const emptyRepoContext = (): RepoContext => ({ hardenedSqlFunctions: new Set(), revokedSqlFunctions: new Set(), rlsEnabledTables: new Set(), exposesDatabaseToClients: true, hasHealthEndpoint: false, nextMajorVersion: null, clientComponentModules: new Set(), sensitiveColumnsByModel: new Map(), crossFileAuth: emptyCrossFileAuth(), filePaths: new Set(), packageMajors: new Map(), expoPackageDirs: new Set(), nextConfig: null, serverSetHeaders: new Set(), formFieldsMinFont16: false, loopbackOnlyServer: false, phpIntFunctions: new Set() });

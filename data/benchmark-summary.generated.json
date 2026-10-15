@@ -1,5 +1,5 @@
 {
- "generatedAt": "2026-10-14",
+ "generatedAt": "2026-10-15",
  "summary": {
   "cleanRepos": 17,
   "cleanReposGateFailed": 5,
@@ -19,7 +19,7 @@
    "kind": "clean",
    "stack": "Next.js + Supabase + Stripe",
    "files": 67,
-   "scanMs": 964,
+   "scanMs": 653,
    "gate": "WARNING",
    "critical": 0,
    "high": 3
@@ -30,7 +30,7 @@
    "kind": "clean",
    "stack": "Next.js + Prisma + Stripe + NextAuth",
    "files": 140,
-   "scanMs": 1338,
+   "scanMs": 1330,
    "gate": "WARNING",
    "critical": 0,
    "high": 1
@@ -41,7 +41,7 @@
    "kind": "clean",
    "stack": "FastAPI + React",
    "files": 204,
-   "scanMs": 1615,
+   "scanMs": 1914,
    "gate": "WARNING",
    "critical": 0,
    "high": 1
@@ -52,7 +52,7 @@
    "kind": "clean",
    "stack": "Express + Prisma",
    "files": 58,
-   "scanMs": 272,
+   "scanMs": 374,
    "gate": "FAILED",
    "critical": 2,
    "high": 1
@@ -63,7 +63,7 @@
    "kind": "clean",
    "stack": "Go + Gin",
    "files": 27,
-   "scanMs": 241,
+   "scanMs": 295,
    "gate": "PASSED",
    "critical": 0,
    "high": 0
@@ -74,7 +74,7 @@
    "kind": "clean",
    "stack": "Laravel",
    "files": 40,
-   "scanMs": 118,
+   "scanMs": 136,
    "gate": "PASSED",
    "critical": 0,
    "high": 0
@@ -85,7 +85,7 @@
    "kind": "clean",
    "stack": "Remix/React Router + Prisma + tRPC (production SaaS)",
    "files": 2481,
-   "scanMs": 25865,
+   "scanMs": 35708,
    "gate": "WARNING",
    "critical": 0,
    "high": 5
@@ -96,7 +96,7 @@
    "kind": "clean",
    "stack": "TypeScript SDK",
    "files": 471,
-   "scanMs": 5349,
+   "scanMs": 7476,
    "gate": "FAILED",
    "critical": 1,
    "high": 1
@@ -107,7 +107,7 @@
    "kind": "vulnerable",
    "stack": "Express + MongoDB",
    "files": 87,
-   "scanMs": 292,
+   "scanMs": 539,
    "gate": "FAILED",
    "critical": 6,
    "high": 4
@@ -118,7 +118,7 @@
    "kind": "vulnerable",
    "stack": "Express + Sequelize",
    "files": 21,
-   "scanMs": 130,
+   "scanMs": 173,
    "gate": "FAILED",
    "critical": 6,
    "high": 3
@@ -129,7 +129,7 @@
    "kind": "vulnerable",
    "stack": "Express + Angular + Sequelize",
    "files": 962,
-   "scanMs": 8947,
+   "scanMs": 13192,
    "gate": "FAILED",
    "critical": 54,
    "high": 30
@@ -140,7 +140,7 @@
    "kind": "clean",
    "stack": "Java + Spring Boot",
    "files": 84,
-   "scanMs": 168,
+   "scanMs": 310,
    "gate": "WARNING",
    "critical": 0,
    "high": 1
@@ -151,7 +151,7 @@
    "kind": "clean",
    "stack": "C# + ASP.NET Core",
    "files": 350,
-   "scanMs": 764,
+   "scanMs": 867,
    "gate": "WARNING",
    "critical": 0,
    "high": 2
@@ -162,7 +162,7 @@
    "kind": "clean",
    "stack": "Ruby on Rails (production service)",
    "files": 1698,
-   "scanMs": 4906,
+   "scanMs": 5547,
    "gate": "WARNING",
    "critical": 0,
    "high": 4
@@ -173,7 +173,7 @@
    "kind": "clean",
    "stack": "Python + Django (production site)",
    "files": 434,
-   "scanMs": 2820,
+   "scanMs": 3389,
    "gate": "WARNING",
    "critical": 0,
    "high": 1
@@ -184,9 +184,9 @@
    "kind": "vulnerable",
    "stack": "Java + Spring",
    "files": 635,
-   "scanMs": 3597,
+   "scanMs": 4040,
    "gate": "FAILED",
-   "critical": 14,
+   "critical": 13,
    "high": 10
   },
   {
@@ -195,7 +195,7 @@
    "kind": "vulnerable",
    "stack": "Ruby on Rails",
    "files": 187,
-   "scanMs": 1364,
+   "scanMs": 1481,
    "gate": "FAILED",
    "critical": 7,
    "high": 11
@@ -206,7 +206,7 @@
    "kind": "vulnerable",
    "stack": "PHP",
    "files": 195,
-   "scanMs": 592,
+   "scanMs": 682,
    "gate": "FAILED",
    "critical": 57,
    "high": 25
@@ -217,7 +217,7 @@
    "kind": "vulnerable",
    "stack": "Python + Django",
    "files": 217,
-   "scanMs": 919,
+   "scanMs": 889,
    "gate": "FAILED",
    "critical": 14,
    "high": 27
@@ -228,7 +228,7 @@
    "kind": "vulnerable",
    "stack": "Python + aiohttp",
    "files": 30,
-   "scanMs": 1216,
+   "scanMs": 1499,
    "gate": "FAILED",
    "critical": 2,
    "high": 3
@@ -239,7 +239,7 @@
    "kind": "clean",
    "stack": "Android (Java + Kotlin)",
    "files": 1161,
-   "scanMs": 6147,
+   "scanMs": 7710,
    "gate": "FAILED",
    "critical": 1,
    "high": 0
@@ -250,7 +250,7 @@
    "kind": "clean",
    "stack": "Android (Java)",
    "files": 1143,
-   "scanMs": 5099,
+   "scanMs": 6444,
    "gate": "FAILED",
    "critical": 2,
    "high": 5
@@ -261,7 +261,7 @@
    "kind": "clean",
    "stack": "iOS (Swift)",
    "files": 931,
-   "scanMs": 3205,
+   "scanMs": 3541,
    "gate": "PASSED",
    "critical": 0,
    "high": 0
@@ -272,7 +272,7 @@
    "kind": "vulnerable",
    "stack": "Android (Java)",
    "files": 59,
-   "scanMs": 125,
+   "scanMs": 142,
    "gate": "FAILED",
    "critical": 3,
    "high": 4
@@ -283,7 +283,7 @@
    "kind": "vulnerable",
    "stack": "Android (Java)",
    "files": 90,
-   "scanMs": 232,
+   "scanMs": 301,
    "gate": "WARNING",
    "critical": 0,
    "high": 3
@@ -294,7 +294,7 @@
    "kind": "vulnerable",
    "stack": "iOS (Swift)",
    "files": 129,
-   "scanMs": 485,
+   "scanMs": 538,
    "gate": "WARNING",
    "critical": 0,
    "high": 2
@@ -305,7 +305,7 @@
    "kind": "clean",
    "stack": "Flutter (Dart) + Rust",
    "files": 734,
-   "scanMs": 5366,
+   "scanMs": 6484,
    "gate": "WARNING",
    "critical": 0,
    "high": 3
@@ -316,7 +316,7 @@
    "kind": "clean",
    "stack": "Rust + Actix + Diesel + Postgres (production service)",
    "files": 1442,
-   "scanMs": 4774,
+   "scanMs": 5303,
    "gate": "FAILED",
    "critical": 2,
    "high": 0

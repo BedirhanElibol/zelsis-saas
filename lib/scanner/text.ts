@@ -41,9 +41,9 @@ export function isTestFixturePath(path: string): boolean {
 /** Hardcoded-secret rules stay active in test files. */
 export const isSecretRuleId = (ruleId: number): boolean => ruleId === 1 || ruleId === 43 || (ruleId >= 5001 && ruleId <= 5100);
 
-/** Third-party code copied into the repo (vendored libraries, bower/static lib folders). */
+/** Third-party code copied into the repo (vendored libraries, bower/static lib folders, an embedded VS Code fork). */
 export const isVendoredPath = (path: string): boolean =>
-  /(?:^|\/)(?:vendor|third_party|bower_components|jspm_packages|static\/(?:js\/)?libs?|public\/(?:js\/)?libs?|assets\/(?:js\/)?(?:libs?|vendor)|wwwroot\/lib)\//i.test(path.replace(/\\/g, '/'));
+  /(?:^|\/)(?:vendor|third_party|bower_components|jspm_packages|static\/(?:js\/)?libs?|public\/(?:js\/)?libs?|assets\/(?:js\/)?(?:libs?|vendor)|wwwroot\/lib|code-oss|deps|externals?)\//i.test(path.replace(/\\/g, '/'));
 
 /** Minified / generated bundles: very long average line length. */
 export function isMinifiedContent(content: string): boolean {

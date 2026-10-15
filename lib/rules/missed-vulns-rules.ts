@@ -595,7 +595,8 @@ export function evaluateMissedVulnsRules(file: CodeFile, lines: string[], cleanC
   }
 
   // GAP-38: FastAPI route that changes or deletes data without an auth dependency
-  if (isPy && /\bfrom\s+fastapi\b/.test(cleanContent) && !/APIRouter\([^)]*dependencies\s*=/.test(cleanContent)) {
+  // A local app bound to 127.0.0.1 with no deploy config has no remote callers to authenticate
+  if (isPy && !context?.loopbackOnlyServer && /\bfrom\s+fastapi\b/.test(cleanContent) && !/APIRouter\([^)]*dependencies\s*=/.test(cleanContent)) {
     lines.forEach((l, i) => {
       const m = l.match(/^\s*@\w+\.(delete|put|patch)\(\s*['"]([^'"]*)['"]([^)]*)\)/);
       if (!m || /dependencies\s*=/.test(m[3]) || /webhook|callback|health/i.test(m[2])) return;
