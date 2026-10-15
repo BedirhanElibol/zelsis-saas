@@ -38,6 +38,16 @@ export function isTestFixturePath(path: string): boolean {
     /(?:^|\/)(?:test_[^/]+|tests|conftest)\.py$|_test\.(?:py|go)$|_spec\.rb$|Tests?\.(?:java|cs|kt)$/.test(p);
 }
 
+/**
+ * Files whose job is to list credential shapes: secret-scanner configs (.gitleaks.toml, .secrets.baseline,
+ * trufflehog / detect-secrets settings) and test fixtures or tests named fake / dummy keys or about redaction.
+ */
+export const isSecretPatternFixture = (path: string): boolean => {
+  const p = (path || '').replace(/\\/g, '/').toLowerCase();
+  return /(?:^|\/)(?:\.gitleaks\.toml|\.gitleaksignore|\.secrets\.baseline|\.trufflehog\w*\.ya?ml|\.detect-secrets\w*)$/.test(p)
+    || /(?:^|\/)(?:tests?|__tests__|spec|fixtures?)\/(?:.*\/)?[^/]*(?:fake|dummy|redact|scrub|mask|leak|secret[-_]?scan)[^/]*$/.test(p);
+};
+
 /** Hardcoded-secret rules stay active in test files. */
 export const isSecretRuleId = (ruleId: number): boolean => ruleId === 1 || ruleId === 43 || (ruleId >= 5001 && ruleId <= 5100);
 

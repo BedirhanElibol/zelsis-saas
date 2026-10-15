@@ -1,7 +1,7 @@
 {
  "summary": {
   "implementedRules": 1268,
-  "testedRules": 1258,
+  "testedRules": 1259,
   "preciseLocationRules": 1265,
   "catalogEntries": 1922,
   "catalogOnlyNotImplemented": 1397,
@@ -1444,7 +1444,7 @@
    "severity": "CRITICAL",
    "source": "lib/rules/security-rules.ts",
    "preciseLocation": true,
-   "tested": false,
+   "tested": true,
    "inCatalog": false
   },
   {

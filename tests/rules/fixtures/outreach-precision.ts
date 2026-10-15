@@ -170,6 +170,110 @@ async def forget_device(device_id: str, caller: Caller = Depends(hub_dep)) -> No
 `)
   },
   {
+    ruleIds: [14], name: 'SEC-14 JWT fallback secret vs one the app refuses to start without in production',
+    detects: f('server.ts', `import jwt from 'jsonwebtoken';
+const JWT_SECRET = process.env.JWT_SECRET || "development-secret-change-me";
+export const sign = (id: string) => jwt.sign({ id }, JWT_SECRET);
+`),
+    ignores: f('server.ts', `import jwt from 'jsonwebtoken';
+const JWT_SECRET = process.env.JWT_SECRET || "development-secret-change-me";
+if (process.env.NODE_ENV === "production" && !process.env.JWT_SECRET) {
+  throw new Error("JWT_SECRET must be configured in production");
+}
+export const sign = (id: string) => jwt.sign({ id }, JWT_SECRET);
+`)
+  },
+  {
+    ruleIds: [21], name: 'SEC-21 logging a token vs logging its fingerprint',
+    detects: f('src/runner.ts', `export function start(config: { token: string }) {
+  console.log("runner starting", config.token);
+}
+`),
+    ignores: f('src/runner.ts', `export function start(config: { token: string }) {
+  console.log("runner starting", installationFingerprint(config.token));
+}
+`)
+  },
+  {
+    ruleIds: [29910], name: 'SECG-11 public cache on a session route vs a static asset handler',
+    detects: f('src/server/routes/me.ts', `export async function me(req: Request, reply: Reply) {
+  const user = req.user;
+  reply.header("Cache-Control", "public, max-age=3600");
+  return { email: user.email };
+}
+`),
+    ignores: f('src/server/app.ts', `app.register(fastifyStatic, {
+  root: config.clientDir,
+  setHeaders(reply, filePath) {
+    if (filePath.includes("/assets/")) reply.header("Cache-Control", "public, max-age=31536000, immutable");
+  }
+});
+app.get("/api/me", async (req) => ({ user: req.user }));
+`)
+  },
+  {
+    ruleIds: [28828], name: 'GAP-28 decoded secret echoed to the log vs written to a file',
+    detects: f('.github/workflows/release.yml', `jobs:
+  release:
+    runs-on: ubuntu-latest
+    steps:
+      - run: echo "\${{ secrets.APPLE_API_KEY }}" | base64 --decode
+`),
+    ignores: f('.github/workflows/release.yml', `jobs:
+  release:
+    runs-on: ubuntu-latest
+    steps:
+      - run: echo "\${{ secrets.APPLE_API_KEY }}" | base64 --decode > "$RUNNER_TEMP/AuthKey.p8"
+`)
+  },
+  {
+    ruleIds: [29302], name: 'AST-02 anonymous revoke vs a route behind apiUser() + checkOrgRole()',
+    detects: f('web/app/api/orgs/[slug]/keys/[id]/route.ts', `import { NextRequest, NextResponse } from "next/server";
+import { db } from "@/lib/db";
+export async function DELETE(_req: NextRequest, { params }: { params: Promise<{ slug: string; id: string }> }) {
+  const { id } = await params;
+  await db.apiKey.update({ where: { id }, data: { revokedAt: new Date() } });
+  return NextResponse.json({ ok: true });
+}
+`),
+    ignores: f('web/app/api/orgs/[slug]/keys/[id]/route.ts', `import { NextRequest, NextResponse } from "next/server";
+import { db } from "@/lib/db";
+import { apiUser } from "@/lib/auth-helpers";
+import { checkOrgRole } from "@/lib/rbac";
+export async function DELETE(_req: NextRequest, { params }: { params: Promise<{ slug: string; id: string }> }) {
+  const { slug, id } = await params;
+  const userId = await apiUser();
+  const chk = await checkOrgRole(userId, slug, "admin");
+  if (!chk.ok) return NextResponse.json({ error: chk.error }, { status: chk.status });
+  const key = await db.apiKey.findFirst({ where: { id, orgId: chk.access.org.id } });
+  if (!key) return NextResponse.json({ error: "not found" }, { status: 404 });
+  await db.apiKey.update({ where: { id }, data: { revokedAt: new Date() } });
+  return NextResponse.json({ ok: true });
+}
+`)
+  },
+  {
+    ruleIds: [8844], name: 'PY-SEC-44 unverified decode of a client token vs an id_token from the code exchange',
+    detects: f('app/auth.py', `import jwt
+def current_user(request):
+    token = request.headers["Authorization"].split()[1]
+    return jwt.decode(token, options={"verify_signature": False})
+`),
+    ignores: f('app/oidc.py', `import jwt, httpx
+def finish_login(code, cfg):
+    resp = httpx.post(cfg.token_endpoint, data={"grant_type": "authorization_code", "code": code})
+    id_token = resp.json()["id_token"]
+    return jwt.decode(id_token, options={"verify_signature": False})
+`)
+  },
+  {
+    ruleIds: [5013], name: 'SEC-SECRET-13 OpenAI key in app code vs a fake-keys test fixture',
+    detects: f('src/llm.ts', `export const client = new OpenAI({ apiKey: "sk-4BhS07qso9pVhcsmtU3tyK8zkSbrFKgre4rHtDCWem7VZKYk" });
+`),
+    ignores: f('tests/fixtures/fake_api_keys.json', `[{ "provider": "openai", "key": "sk-4BhS07qso9pVhcsmtU3tyK8zkSbrFKgre4rHtDCWem7VZKYk" }]
+`)
+  },
+  {
     ruleIds: [10102], name: 'ECOMM-02 charge amount from the request vs a scroll amount',
     detects: f('app/api/checkout/route.ts', `import Stripe from 'stripe';
 export async function POST(req: Request) {

@@ -1,7 +1,7 @@
 import { evaluateAiCommentRules } from './rules/ai-comment-rules';
 import { Finding } from '@/data/schema';
 import type { CodeFile, ScanResult } from './scanner/types';
-import { isMinifiedContent, isSecretRuleId, isTestFixturePath, isVendoredPath, stripComments, yieldToMain } from './scanner/text';
+import { isMinifiedContent, isSecretPatternFixture, isSecretRuleId, isTestFixturePath, isVendoredPath, stripComments, yieldToMain } from './scanner/text';
 import { parseZelsisIgnore } from './scanner/ignore-parser';
 import { parseZelsisRc } from './scanner/rc-config';
 import { calculateGateStatus, calculateReadinessScore, gateSeverity, gatingFindings } from './scanner/scoring';
@@ -238,6 +238,11 @@ export async function runStaticCodeScan(inputFiles: CodeFile[], repoName: string
       }
       // Test code does not ship: only leaked secrets count there
       if (isTestFixture && !isSecretRuleId(f.ruleId)) {
+        testFixtureSkips++;
+        return;
+      }
+      // Secret-scanner configs and fake-key fixtures list credential shapes on purpose
+      if (isSecretRuleId(f.ruleId) && isSecretPatternFixture(f.filePath)) {
         testFixtureSkips++;
         return;
       }

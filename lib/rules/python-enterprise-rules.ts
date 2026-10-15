@@ -1199,7 +1199,11 @@ export function evaluatePythonEnterpriseRules(file: CodeFile, lines: string[], c
         logs.push(`[${ts}] [PYTHON AUDIT] Found PY-SEC-43: Insecure Cipher Mode (ECB Mode in PyCryptodome / Cryptography) at ${file.path}:${lineNum}`);
     }
     // PY-SEC-44: JWT Signature Verification Disabled in PyJWT
-    const idx_8844 = (() => {
+    // An id_token decoded right after the authorization-code exchange with the provider (OIDC Core 3.1.3.7) is not a bypass
+    const oidcIdTokenAfterExchange = /token_endpoint|fetch_token|authorization_code|grant_type/.test(cleanContent)
+        && /jwt\.decode\s*\(\s*(?:\w+\.)?id_token\b/.test(cleanContent)
+        && !/jwt\.decode\s*\(\s*(?!(?:\w+\.)?id_token\b)\w+[^)]*verify_signature['"]\s*:\s*False/.test(cleanContent);
+    const idx_8844 = oidcIdTokenAfterExchange ? -1 : (() => {
         const direct = pyFindLine(lines, /jwt\.decode\s*\([^)]*(?:\bverify\s*=\s*False|['"]verify_signature['"]\s*:\s*False)/);
         if (direct !== -1) return direct;
         return pyFindLine(lines, /['"]verify_signature['"]\s*:\s*False/, (_l, i) => /jwt\.decode\s*\(/.test(lines.slice(Math.max(0, i - 4), i + 1).join('\n')));

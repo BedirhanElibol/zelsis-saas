@@ -58,6 +58,8 @@ function evaluateJs(path: string, c: string, add: Add) {
   if (isHandler && /\b(?:auth\(\)|getServerSession\(|getSession\(|auth\.getUser\(|getUser\(|currentUser\(|cookies\(\)|req\.user\b|req\.session\b|verifyToken\(|getToken\()/.test(c)) {
     for (const m of c.matchAll(/['"]?Cache-Control['"]?\s*[:,]\s*['"`]([^'"`]*\b(?:public|s-maxage)\b[^'"`]*)['"`]/gi)) {
       if (/\b(?:private|no-store)\b/i.test(m[1])) continue;
+      // Static file handlers (build assets, the SPA shell) are the same for every user
+      if (/setHeaders|fastifyStatic|@fastify\/static|express\.static|serveStatic|sirv\(/.test(c.slice(Math.max(0, m.index! - 600), m.index!))) continue;
       add({ ruleId: 29910, code: 'SECG-11', severity: 'HIGH', category: 'Sensitive Data Exposure', cwe: 'CWE-524', lineIdx: at(m.index!),
         title: `Authenticated Response Sent With Cache-Control "${m[1].slice(0, 40)}"`,
         why: 'This handler reads the user session, but the response is marked cacheable by CDNs and proxies, so one user\'s data can be stored and served to the next visitor of the same URL.',

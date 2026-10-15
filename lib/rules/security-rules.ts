@@ -203,7 +203,8 @@ export function evaluateSecurityRules(file: CodeFile, lines: string[], cleanCont
     if (isCodeFile && !lowerPath.endsWith('package.json')) {
         const logCallRegex = /(?:console\.(?:log|error|warn|info|debug)|logger\.(?:info|error|warn|debug)|print|System\.out\.println)\s*\(/i;
         const sensitiveVarRegex = /(?:\$\{[^}]*(?:[a-zA-Z0-9_]*(?:token|secret|password|passwd|apiKey|api_key|jwt)|authHeader)\b|(?:\+\s*|,\s*|:\s*)(?:[a-zA-Z0-9_.]+\.)?(?:[a-zA-Z0-9_]*(?:token|secret|password|passwd|apiKey|api_key|jwt)|authHeader)\b|\{\s*(?:[a-zA-Z0-9_]+(?::\s*[^,}]+)?,\s*)*(?:[a-zA-Z0-9_]*(?:token|secret|password|passwd|apiKey|api_key|jwt)|authHeader)\b|\(\s*(?:[a-zA-Z0-9_.]+\.)?(?:[a-zA-Z0-9_]*(?:token|secret|password|passwd|apiKey|api_key|jwt)|authHeader)\s*[\),]|(?:req\.headers(?:\.authorization)?|headers\[['"]authorization['"]\]))/i;
-        const safeMaskRegex = /(?:mask|redact|hash|\[REDACTED\]|\*\*\*)/i;
+        // A fingerprint / digest / hint of a token is not the token
+        const safeMaskRegex = /(?:mask|redact|hash|fingerprint|digest|hint|prefix|last4|\[REDACTED\]|\*\*\*)/i;
         let logMatchesInFile = 0;
         for (let idx = 0; idx < lines.length; idx++) {
             const line = lines[idx];
@@ -288,7 +289,11 @@ export function evaluateSecurityRules(file: CodeFile, lines: string[], cleanCont
     }
     // Rule 14 / SEC-14: Insecure JWT & Session Secret Hardcoded Fallbacks
     const jwtFallbackRegex = /(?:JWT_SECRET|SESSION_SECRET|AUTH_SECRET|COOKIE_SECRET|NEXTAUTH_SECRET)\s*(?:\|\||\?\?)\s*['"`][^'"`]+['"`]/i;
-    if (isCodeFile && jwtFallbackRegex.test(cleanContent)) {
+    // The dev fallback is fine when the app refuses to start in production without the real secret:
+    // if (process.env.NODE_ENV === "production" && !process.env.JWT_SECRET) throw ...
+    const fallbackName = /(JWT_SECRET|SESSION_SECRET|AUTH_SECRET|COOKIE_SECRET|NEXTAUTH_SECRET)\s*(?:\|\||\?\?)/i.exec(cleanContent)?.[1];
+    const productionGuard = fallbackName !== undefined && new RegExp(String.raw`production[^\n]{0,80}!\s*process\.env\.` + fallbackName + String.raw`\b[\s\S]{0,120}?(?:throw\b|process\.exit)|!\s*process\.env\.` + fallbackName + String.raw`\b[^\n]{0,80}production[\s\S]{0,120}?(?:throw\b|process\.exit)`).test(cleanContent);
+    if (isCodeFile && !productionGuard && jwtFallbackRegex.test(cleanContent)) {
         const matchLineIdx = lines.findIndex(l => !l.trim().startsWith('//') && jwtFallbackRegex.test(l));
         const lineNum = matchLineIdx !== -1 ? matchLineIdx + 1 : 1;
         const snippet = lines.slice(Math.max(0, lineNum - 2), Math.min(lines.length, lineNum + 2)).join('\n');
@@ -1009,7 +1014,12 @@ export function evaluateSecurityRules(file: CodeFile, lines: string[], cleanCont
         const jwtDecodeRegex = isPython
             ? /\bjwt\.decode\s*\((?:\s*\w+\s*\)|[^)]*verify_signature["']?\s*:\s*False|[^)]*verify\s*=\s*False)/
             : /\bjwt\.decode\s*\([^)]+\)/;
-        if (jwtDecodeRegex.test(cleanContent) && !cleanContent.includes('jwt.verify(')) {
+        // OIDC: an id_token read straight after the code exchange with the provider's token endpoint (over TLS) is
+        // trusted by OIDC Core 3.1.3.7, so decoding it without a signature check is the documented flow
+        const oidcIdTokenAfterExchange = isPython && /token_endpoint|fetch_token|authorization_code|grant_type/.test(cleanContent)
+            && /\bjwt\.decode\s*\(\s*(?:\w+\.)?id_token\b/.test(cleanContent)
+            && !/\bjwt\.decode\s*\(\s*(?!(?:\w+\.)?id_token\b)\w+(?:\s*\)|[^)]*verify_signature["']?\s*:\s*False|[^)]*verify\s*=\s*False)/.test(cleanContent);
+        if (jwtDecodeRegex.test(cleanContent) && !cleanContent.includes('jwt.verify(') && !oidcIdTokenAfterExchange) {
             const matchLineIdx = lines.findIndex(l => !l.trim().startsWith('//') && !l.trim().startsWith('*') && jwtDecodeRegex.test(l));
             const lineNum = matchLineIdx !== -1 ? matchLineIdx + 1 : 1;
             const snippet = lines.slice(Math.max(0, lineNum - 2), Math.min(lines.length, lineNum + 2)).join('\n');

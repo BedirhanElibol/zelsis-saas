@@ -484,7 +484,9 @@ export function evaluateMissedVulnsRules(file: CodeFile, lines: string[], cleanC
   // GAP-28: secret transformed before printing, which defeats GitHub log masking
   if (/(?:^|\/)\.github\/workflows\/.+\.ya?ml$/i.test(path)) {
     lines.forEach((l, i) => {
-      if (!isComment(l) && /\$\{\{\s*secrets\.\w+\s*\}\}[^|\n]*\|\s*(?:base64|rev|xxd|od|hexdump|sed|tr)\b/.test(l)) {
+      // Written to a file (> key.p8) or piped on into another command: nothing reaches the log
+      if (!isComment(l) && /\$\{\{\s*secrets\.\w+\s*\}\}[^|\n]*\|\s*(?:base64|rev|xxd|od|hexdump|sed|tr)\b/.test(l)
+        && !/\|\s*(?:base64|rev|xxd|od|hexdump|sed|tr)\b[^|\n]*(?:>\s*(?!&)\S|\|\s*\S)/.test(l)) {
         add({ ruleId: 28828, code: 'GAP-28', severity: 'HIGH', category: 'Secrets Management', lineIdx: i,
           title: 'Workflow Prints an Encoded Secret, Bypassing Log Masking',
           why: 'GitHub masks only the literal secret value; base64 or other transforms print a different string that is not masked, and the log (public for public repos) reveals the secret.',
