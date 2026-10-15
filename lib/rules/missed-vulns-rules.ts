@@ -610,8 +610,8 @@ export function evaluateMissedVulnsRules(file: CodeFile, lines: string[], cleanC
       // Parameters only (not the function name). The caller is identified by an auth dependency (Depends(get_current_user_id)),
       // an auth-named parameter (current_user: …) or an auth type (CurrentUser); a record id such as user_id: str is not one.
       const params = sig.slice(sig.indexOf('(') + 1);
-      if (/(?:Depends|Security)\(\s*[\w.]*(?:user|auth|token|admin|current|verify|require|permission|principal|api_?key|owner|login)/i.test(params)
-        || /(?:^|[(,\s])(?!\w*_ids?\s*:)\w*(?:user|auth|admin|principal|token|api_?key)\w*\s*:/i.test(params)
+      if (/(?:Depends|Security)\(\s*[\w.]*(?:user|auth|token|admin|current|verify|require|permission|principal|api_?key|owner|login|caller|session|account|member|identity)/i.test(params)
+        || /(?:^|[(,\s])(?!\w*_ids?\s*:)\w*(?:user|auth|admin|principal|token|api_?key|caller|account)\w*\s*:/i.test(params)
         || /:\s*(?:Annotated\[\s*)?(?:Current\w+|\w*(?:Principal|AuthUser|AuthContext))\b/.test(params)) return;
       add({ ruleId: 28838, code: 'GAP-38', severity: 'HIGH', category: 'Broken Access Control', lineIdx: i + 1,
         title: `FastAPI ${m[1].toUpperCase()} Route Without an Auth Dependency (${m[2]})`,
