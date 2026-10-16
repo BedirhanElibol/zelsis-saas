@@ -18,6 +18,8 @@ export interface SecretRuleResult {
 export function isDummyPlaceholder(line: string): boolean {
     if (!line || typeof line !== 'string')
         return false;
+    if (/-----BEGIN [A-Z0-9 ]*PRIVATE KEY-----(?:\\n|\s)*(?:\{\s*\}|%[sv]|\$\{[^}]+\})(?:\\n|\s)*-----END/i.test(line))
+        return true;
     return /placeholder|ghp_x{8,}|EXAMPLE|dummy|test_secret_12345|\bx{10,}\b|00000000/i.test(line);
 }
 export function maskSecretInLine(line: string, pattern: RegExp): string {

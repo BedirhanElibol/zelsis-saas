@@ -506,7 +506,8 @@ export function evaluateZeroTrustRules(file: CodeFile, lines: string[], cleanCon
         logs.push(`[${ts}] 🛡️ HIGH: ZERO-AUTH-43 finding in ${file.path}:${lineNum}`);
     }
     // ZERO-AUTH-50: Insecure Ephemeral Token Generation using Math.random()
-    if (MATH_RANDOM_TOKEN.test(cleanContent)) {
+    const isRichTextPlugin = /(?:^|\/)(?:tiptap|prosemirror|lexical)\//i.test(file.path) || /@tiptap\/|prosemirror-/i.test(cleanContent);
+    if (!isRichTextPlugin && MATH_RANDOM_TOKEN.test(cleanContent)) {
         const matchLineIdx = locateMatchLine(lines, [MATH_RANDOM_TOKEN], l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('*'));
         const lineNum = matchLineIdx !== -1 ? matchLineIdx + 1 : 1;
         findings.push({

@@ -33,7 +33,7 @@ function languageOf(path: string): Lang {
   return null;
 }
 
-const SQL = String.raw`(?:SELECT\s+[\w*]|INSERT\s+INTO|UPDATE\s+\w+\s+SET|DELETE\s+FROM)`;
+const SQL = String.raw`(?:(?<!<)\bSELECT\s+(?!value\s*=)[\w*]|INSERT\s+INTO|UPDATE\s+\w+\s+SET|DELETE\s+FROM)`;
 /** A non-constant identifier (lowercase start or member access), i.e. not FOO_BAR / Foo.class. */
 const DYN = String.raw`(?:[a-z_][\w]*(?:\.[\w]+|\[[^\]]*\]|\([^)]*\))*)`;
 

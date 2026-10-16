@@ -842,7 +842,7 @@ export function evaluateSecurityRules(file: CodeFile, lines: string[], cleanCont
         }
     }
     // Rule 34 / SEC-34: Server-Side Request Forgery (SSRF) via Unvalidated HTTP Request
-    const httpClient = String.raw`(?:fetch|axios(?:\.(?:get|post|put|request|head))?|https?\.(?:get|request)|needle(?:\.(?:get|post|request))?|got(?:\.(?:get|post))?|request(?:\.(?:get|post))?|superagent\.(?:get|post)|undici\.request|ky(?:\.(?:get|post))?)`;
+    const httpClient = String.raw`(?:(?<![.\w$])fetch|\b(?:globalThis|window)\.fetch|axios(?:\.(?:get|post|put|request|head))?|https?\.(?:get|request)|needle(?:\.(?:get|post|request))?|got(?:\.(?:get|post))?|request(?:\.(?:get|post))?|superagent\.(?:get|post)|undici\.request|ky(?:\.(?:get|post))?)`;
     if (isCodeFile && new RegExp(httpClient + String.raw`\s*\(`).test(cleanContent)) {
         // Only URLs that come from the request: direct req.* access or variables assigned / destructured from it
         const requestVars = new Set<string>();
@@ -977,7 +977,8 @@ export function evaluateSecurityRules(file: CodeFile, lines: string[], cleanCont
         }
     }
     // Rule 38 / SEC-38: Insecure Cryptographic Pseudo-Random Generation (Math.random)
-    if (isCodeFile && !file.path.includes('live-deployment/bundle-') && cleanContent.includes('Math.random()')) {
+    const isRichTextPlugin = /(?:^|\/)(?:tiptap|prosemirror|lexical)\//i.test(file.path) || /@tiptap\/|prosemirror-/i.test(cleanContent);
+    if (isCodeFile && !isRichTextPlugin && !file.path.includes('live-deployment/bundle-') && cleanContent.includes('Math.random()')) {
         // Only values assigned to a security-named identifier (resetToken, sessionId, otpCode, apiKey...). A bare
         // Math.random().toString(36) is the usual way to build UI keys / temp ids and is not reported on its own.
         const mathRandomRegex = /\b\w*(?:token|secret|password|passwd|nonce|salt|otp|csrf|apiKey|api_key|sessionId|session_id|resetCode|verificationCode|inviteCode)\s*[=:]\s*[^;\n]*Math\.random\s*\(\)/i;

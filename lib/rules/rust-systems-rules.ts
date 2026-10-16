@@ -149,7 +149,9 @@ export function evaluateRustSystemsRules(file: CodeFile, lines: string[], cleanC
         const bodyStart = m.index + m[0].length;
         const end = m[1] !== undefined ? cleanContent.indexOf('"' + m[1].slice(1), bodyStart) : cleanContent.slice(bodyStart).search(/(?<!\\)"/) + bodyStart;
         const literal = cleanContent.slice(bodyStart, end < bodyStart ? undefined : end);
-        if (SQL_SHAPE.test(literal) && /\{[^{}]*\}/.test(literal.replace(/\{\{|\}\}/g, ''))) rustSqlIndex = m.index;
+        const afterQuote = end >= bodyStart ? cleanContent.slice(end + 1, end + 240) : '';
+        const onlyPlaceholderHelpers = /^\s*(?:,\s*(?:ph|placeholder|param|bind_param)\s*\(\s*\d+\s*\))+\s*\)/.test(afterQuote);
+        if ( !onlyPlaceholderHelpers && SQL_SHAPE.test(literal) && /\{[^{}]*\}/.test(literal.replace(/\{\{|\}\}/g, ''))) rustSqlIndex = m.index;
     }
     if (rustSqlIndex === -1) {
         const queryFormat = /sqlx::query\s*\(\s*&format!\(/.exec(cleanContent);
