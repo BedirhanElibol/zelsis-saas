@@ -1,5 +1,5 @@
 /**
- * Vulnerabilities small teams ship that the other packs missed (GAP-01.., Rule IDs 28801-28899).
+ * Vulnerabilities apps ship that the other packs missed (GAP-01.., Rule IDs 28801-28899).
  * Found by a false-negative hunt over realistic snippets from public incidents and advisories
  * (Supabase / Firebase open data, mass assignment, client-controlled roles, leaked secrets in responses,
  * upload file names, template injection, postMessage token leaks). Each rule keys on a pattern that is

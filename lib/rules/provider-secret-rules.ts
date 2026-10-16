@@ -1,5 +1,5 @@
 /**
- * Secret keys for SaaS providers small teams adopted after the first secret pack
+ * Secret keys for SaaS providers adopted after the first secret pack
  * (SEC-SECRET-188.., Rule IDs 5188-5299): LLM observability, vector DBs, realtime, notifications,
  * feature flags, background jobs. Keys with a documented prefix match on the prefix alone; keys
  * without one (plain hex, JWTs) only match when assigned to the provider's own variable name,
