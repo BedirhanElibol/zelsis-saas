@@ -111,7 +111,7 @@ export default function PrivacyPolicyPage() {
                   <tr>
                     <td className="p-2.5 text-white font-bold">Supabase Inc.</td>
                     <td className="p-2.5">Managed PostgreSQL database, Auth &amp; Telemetry persistence</td>
-                    <td className="p-2.5">USA (AWS us-east-1)</td>
+                    <td className="p-2.5">EU (AWS eu-west-1, Ireland)</td>
                     <td className="p-2.5 text-emerald-400">SOC 2 Type II, AES-256</td>
                   </tr>
                   <tr>
