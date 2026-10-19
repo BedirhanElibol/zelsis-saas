@@ -159,7 +159,7 @@ export function evaluateSaasCoreRules(file: CodeFile, lines: string[], cleanCont
     // SAAS-06: cron endpoint callable by anyone (file-based routes or router.get('/cron/...'))
     const isCronRoute = /(?:^|\/)(?:app|pages|src\/routes|routes)\/(?:api\/)?(?:.*\/)?cron\/.*\.[cm]?[jt]s$|(?:^|\/)app\/routes\/[^/]*\bcron\b[^/]*\.[jt]sx?$/i.test(lowerPath) ||
       /\b(?:app|router|server|fastify)\.(?:get|post|all)\s*\(\s*['"`]\/(?:api\/)?cron\b/i.test(cleanContent);
-    if (isCronRoute && !/CRON_SECRET|authorization|x-vercel-signature|verifySignature|Receiver\(|upstash-signature|qstash/i.test(cleanContent)) {
+    if (isCronRoute && !/CRON_SECRET|authorization|x-vercel-signature|verifySignature|Receiver\(|upstash-signature|qstash|\b(?:check|verify|require|validate|assert|authenticate)Cron\w*\s*\(/i.test(cleanContent)) {
       hits.push({
         ruleId: 23006, code: 'SAAS-06', severity: 'HIGH', type: 'SECURITY', category: 'Access Control',
         title: 'Cron Endpoint Without a Secret Check',
