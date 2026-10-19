@@ -1,4 +1,5 @@
 import type { CodeFile } from './types';
+import { collectInfraFacts, emptyInfraFacts, type InfraFacts } from './infra-facts';
 import { buildCrossFileAuth, emptyCrossFileAuth, type CrossFileAuth } from './ast/cross-file';
 
 /**
@@ -33,6 +34,8 @@ export interface RepoContext {
   sensitiveColumnsByModel: Map<string, string[]>;
   /** Exported auth helpers and the routes middleware.ts authenticates, for the AST flow rules. */
   crossFileAuth: CrossFileAuth;
+  /** Deploy, proxy and database declarations for the cross-layer rules (infra-facts.ts). */
+  infra: InfraFacts;
   /** Every scanned path (forward slashes, exact case), for import / route / segment lookups. */
   filePaths: Set<string>;
   /** Lowest pinned major version per dependency across package.json files (`react` -> 19). */
@@ -110,7 +113,7 @@ export function buildRepoContext(files: CodeFile[]): RepoContext {
   }
   return {
     hardenedSqlFunctions, revokedSqlFunctions, rlsEnabledTables, exposesDatabaseToClients, hasHealthEndpoint, nextMajorVersion,
-    ...collectServerClientFacts(files), crossFileAuth: buildCrossFileAuth(files), ...collectProjectFacts(files)
+    ...collectServerClientFacts(files), crossFileAuth: buildCrossFileAuth(files), infra: collectInfraFacts(files), ...collectProjectFacts(files)
   };
 }
 
@@ -215,4 +218,4 @@ function collectServerClientFacts(files: CodeFile[]): Pick<RepoContext, 'clientC
 }
 
 /** Without repo-wide knowledge, assume the database may be exposed (single-file scans keep RLS checks on). */
-export const emptyRepoContext = (): RepoContext => ({ hardenedSqlFunctions: new Set(), revokedSqlFunctions: new Set(), rlsEnabledTables: new Set(), exposesDatabaseToClients: true, hasHealthEndpoint: false, nextMajorVersion: null, clientComponentModules: new Set(), sensitiveColumnsByModel: new Map(), crossFileAuth: emptyCrossFileAuth(), filePaths: new Set(), packageMajors: new Map(), expoPackageDirs: new Set(), nextConfig: null, serverSetHeaders: new Set(), formFieldsMinFont16: false, loopbackOnlyServer: false, phpIntFunctions: new Set() });
+export const emptyRepoContext = (): RepoContext => ({ hardenedSqlFunctions: new Set(), revokedSqlFunctions: new Set(), rlsEnabledTables: new Set(), exposesDatabaseToClients: true, hasHealthEndpoint: false, nextMajorVersion: null, clientComponentModules: new Set(), sensitiveColumnsByModel: new Map(), crossFileAuth: emptyCrossFileAuth(), infra: emptyInfraFacts(), filePaths: new Set(), packageMajors: new Map(), expoPackageDirs: new Set(), nextConfig: null, serverSetHeaders: new Set(), formFieldsMinFont16: false, loopbackOnlyServer: false, phpIntFunctions: new Set() });
