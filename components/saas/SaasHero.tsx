@@ -225,7 +225,8 @@ export const SaasHero: React.FC<SaasHeroProps> = ({ onOpenDashboard }) => {
 
           {/* Footer Ribbon inside Frame */}
           <div className="hidden sm:flex px-5 py-2.5 bg-[#0E0E10] border-t border-white/10 flex-wrap items-center gap-x-6 gap-y-1 text-xs font-mono text-zinc-400">
-            <span>Engine: <strong className="text-zinc-200 font-mono">deterministic rules + request-path tracing</strong></span>
+            <span>Engine: <strong className="text-zinc-200 font-mono">deterministic cross-layer rules + request-path tracing</strong></span>
+            <span>Gate: <strong className="text-zinc-200 font-mono">only proven critical findings block a merge</strong></span>
             <span>Coverage: <strong className="text-zinc-200 font-mono">OWASP Top 10, secrets, logic bugs, dependencies, CI/CD</strong></span>
           </div>
         </m.div>
