@@ -2,6 +2,7 @@ import { SmoothScroll } from '@/components/SmoothScroll';
 import { Navbar } from '@/components/Navbar';
 import { SaasHero } from '@/components/saas/SaasHero';
 import { WorkflowSteps } from '@/components/saas/WorkflowSteps';
+import { WhyZelsis } from '@/components/saas/WhyZelsis';
 import { ProductCapabilities } from '@/components/saas/ProductCapabilities';
 import { FrameworkSpecifics } from '@/components/saas/FrameworkSpecifics';
 import { FixPromptsDemo } from '@/components/saas/FixPromptsDemo';
@@ -25,6 +26,9 @@ export default function Home() {
 
         {/* The release gate first: repo → findings → failed build */}
         <WorkflowSteps />
+
+        {/* Positioning: quiet gate, audience, and the failure categories it stops */}
+        <WhyZelsis />
 
         {/* Real-bug examples across stacks; every example is scanned by tests/unit/landing-checks.test.ts */}
         <FrameworkSpecifics />

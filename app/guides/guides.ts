@@ -23,4 +23,10 @@ export const GUIDES: GuideEntry[] = [
     summary:
       'Stripe amounts are integers in the smallest currency unit. How to convert prices safely and which currencies have no decimals.',
   },
+  {
+    slug: 'code-due-diligence',
+    title: 'Check the code before you buy a SaaS app',
+    summary:
+      'How to get access to the repository, which findings cost you money after the sale, and what to verify by hand before you pay.',
+  },
 ];

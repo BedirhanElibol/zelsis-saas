@@ -194,7 +194,7 @@ export const GateStatusBanner: React.FC<GateStatusBannerProps> = ({
           </div>
 
           <p className="text-[11px] sm:text-xs text-[#A1A1AA] mt-1 flex flex-wrap items-center gap-x-3 gap-y-1 font-mono">
-            <span>
+            <span title="Starts at 100 and drops for each open finding, weighted by severity. It reflects what the rules found, not everything that could go wrong.">
               Readiness Score: <strong className="text-white font-mono">{readinessScore}/100</strong>
             </span>
             <span className={criticals.length > 0 ? 'text-red-400 font-bold' : 'text-[#A1A1AA]'}>
@@ -206,6 +206,24 @@ export const GateStatusBanner: React.FC<GateStatusBannerProps> = ({
             <span className="text-[#A1A1AA]">
               {uiCliches.length} UI Issues
             </span>
+            <span
+              title="Open critical and high findings. Your public trust page shows as verified once this reaches 0."
+              className={criticals.length + highs.length > 0 ? 'text-amber-300' : 'text-emerald-400'}
+            >
+              {criticals.length + highs.length > 0
+                ? `Trust page: ${criticals.length + highs.length} left to fix`
+                : 'Trust page: ready'}
+            </span>
+            {gateStatus === 'PASSED' && (
+              <a
+                href="/docs/boundaries"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="text-zinc-400 hover:text-white underline underline-offset-2"
+              >
+                What a pass doesn&apos;t cover
+              </a>
+            )}
           </p>
         </div>
       </div>

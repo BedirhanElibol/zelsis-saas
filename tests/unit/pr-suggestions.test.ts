@@ -32,6 +32,29 @@ test('suggestedLine fixes only the flagged setting and skips lines it cannot fix
     '<meta name="viewport" content="width=device-width, initial-scale=1">',
   );
   assert.equal(suggestedLine(23004, 'amount: body.amount'), null);
+  assert.equal(suggestedLine(9010, '\tcfg := &tls.Config{InsecureSkipVerify: true}'), '\tcfg := &tls.Config{InsecureSkipVerify: false}');
+  assert.equal(suggestedLine(8818, 'r = requests.get(url, verify=False)'), 'r = requests.get(url, verify=True)');
+  assert.equal(suggestedLine(28517, '          allowPrivilegeEscalation: true'), '          allowPrivilegeEscalation: false');
+});
+
+test('new one-line fixes land on the line the scanner flags', async () => {
+  const cases = [
+    { path: 'net/client.go', ruleId: 9010, content: 'package net\n\nimport "crypto/tls"\n\nvar cfg = &tls.Config{InsecureSkipVerify: true}\n' },
+    { path: 'app/fetch.py', ruleId: 8818, content: 'import requests\n\ndef get(url):\n    return requests.get(url, verify=False)\n' },
+    {
+      path: 'k8s/deploy.yaml',
+      ruleId: 28517,
+      content: 'apiVersion: apps/v1\nkind: Deployment\nspec:\n  template:\n    spec:\n      containers:\n        - name: api\n          image: api:1\n          securityContext:\n            allowPrivilegeEscalation: true\n',
+    },
+  ];
+  for (const c of cases) {
+    const { findings } = await runStaticCodeScan([{ path: c.path, content: c.content }], 'suggest');
+    const hit = findings.filter((f) => f.ruleId === c.ruleId);
+    assert.ok(hit.length > 0, `${c.ruleId} should fire`);
+    const allLines = new Set(c.content.split('\n').map((_, i) => i + 1));
+    const comments = buildSuggestionComments(hit, new Map([[c.path, c.content]]), new Map([[c.path, allLines]]));
+    assert.equal(comments.length, 1, `${c.ruleId} should get one suggestion`);
+  }
 });
 
 test('scanner findings on added lines become suggested changes; untouched lines do not', async () => {
