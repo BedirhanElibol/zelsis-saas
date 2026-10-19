@@ -329,3 +329,14 @@ export const ScanFilesRequestSchema = z.object({
   changed: z.array(z.string().max(512)).max(SCAN_FILES_MAX_FILES).optional(),
 });
 export type ScanFilesRequest = z.infer<typeof ScanFilesRequestSchema>;
+
+export const TrustPageEnableSchema = z.object({
+  accessToken: AccessTokenSchema,
+  projectId: z.string().uuid('Save the project first'),
+  displayName: z.string().trim().min(1, 'Enter the name customers know').max(80),
+});
+
+export const TrustPageDisableSchema = z.object({
+  accessToken: AccessTokenSchema,
+  projectId: z.string().uuid('Invalid project'),
+});
