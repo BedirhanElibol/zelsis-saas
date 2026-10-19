@@ -1,0 +1,12 @@
+{
+  "name": "zelsis",
+  "version": "0.1.0",
+  "description": "Check your code with Zelsis before you push: security and logic findings, release gate, MCP server for AI coding agents.",
+  "type": "module",
+  "bin": { "zelsis": "bin/zelsis.mjs" },
+  "files": ["bin", "lib.mjs", "mcp.mjs", "README.md"],
+  "engines": { "node": ">=18" },
+  "keywords": ["security", "static-analysis", "sast", "mcp", "code-review", "release-gate"],
+  "homepage": "https://zelsis.com",
+  "license": "MIT"
+}

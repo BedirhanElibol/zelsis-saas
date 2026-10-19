@@ -3,7 +3,7 @@
 import React from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { BookOpen, Rocket, GitBranch, Settings, List, ShieldAlert, XCircle, Bug, Lock, ArrowLeft, type LucideIcon } from 'lucide-react';
+import { BookOpen, Rocket, GitBranch, Settings, List, ShieldAlert, XCircle, Bug, Lock, ArrowLeft, Terminal, type LucideIcon } from 'lucide-react';
 import { ZelsisLogo } from '@/components/ui/ZelsisLogo';
 
 interface NavItem {
@@ -16,6 +16,7 @@ const NAV_ITEMS: NavItem[] = [
   { href: '/docs/getting-started', label: 'Getting Started', icon: Rocket },
   { href: '/docs/private-repos', label: 'Scan a Private Repo', icon: Lock },
   { href: '/docs/ci-gate', label: 'CI Release Gate', icon: GitBranch },
+  { href: '/docs/cli', label: 'CLI and AI Agents (MCP)', icon: Terminal },
   { href: '/docs/configuration', label: 'Configuration', icon: Settings },
   { href: '/docs/rules', label: 'Rule Catalog', icon: List },
   { href: '/docs/data-handling', label: 'Data Handling', icon: ShieldAlert },
