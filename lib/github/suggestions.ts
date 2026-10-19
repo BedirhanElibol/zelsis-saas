@@ -14,6 +14,12 @@ const LINE_FIXES: Readonly<Record<number, (line: string) => string>> = {
   8802: (l) => (/Loader\s*=/.test(l) ? l : l.replace(/\byaml\.load\(/, 'yaml.safe_load(')),
   // GAP-13: Flask debug server reachable from the network
   28813: (l) => l.replace(/\bdebug\s*=\s*True\b/, 'debug=False'),
+  // GO-10: tls.Config with InsecureSkipVerify
+  9010: (l) => l.replace(/\bInsecureSkipVerify(\s*:\s*)true\b/, 'InsecureSkipVerify$1false'),
+  // PY-SEC-18: requests/httpx call with verify=False
+  8818: (l) => l.replace(/\bverify(\s*=\s*)False\b/, 'verify$1True'),
+  // CLOUD-V2-17: container allows privilege escalation
+  28517: (l) => l.replace(/\ballowPrivilegeEscalation(\s*:\s*)true\b/, 'allowPrivilegeEscalation$1false'),
   // Viewport meta that blocks pinch zoom
   1244: (l) =>
     l
