@@ -185,11 +185,13 @@ async function handlePullRequest(payload: any, supabase: any) {
       );
 
       // Run code scan
+      const scanStartedAt = Date.now();
       const scanResult = await runStaticCodeScan(filesToScan, repository.full_name, { 
         dependencyAudit: false, 
         orgPolicy, 
         dismissals 
       });
+      const scanMs = Date.now() - scanStartedAt;
 
       const { newFindings, existingFindings } = splitFindings(scanResult.findings, changedFiles);
       const annotations = generateAnnotations(newFindings);
@@ -220,7 +222,8 @@ async function handlePullRequest(payload: any, supabase: any) {
         `- ℹ️ **Low:** ${gFindings.filter(f => f.severity === 'LOW').length}\n\n` +
         topIssuesSection(gFindings) +
         `_Scan includes ${newFindings.length} new issues and detected ${existingFindings.length} pre-existing issues._\n\n` +
-        `[View full report on Zelsis](${getConfiguredAppUrl()}/dashboard)`;
+        `[View full report on Zelsis](${getConfiguredAppUrl()}/dashboard)\n\n` +
+        scanFooter(scanMs, filesToScan.length, gFindings);
       
       await postOrUpdatePRComment(octokit, owner, repo, pull_request.number, commentBody);
 
@@ -268,6 +271,14 @@ export function splitFindings(findings: any[], changedFiles: string[]) {
   const newFindings = findings.filter(f => changedFiles.includes(f.filePath));
   const existingFindings = findings.filter(f => !changedFiles.includes(f.filePath));
   return { newFindings, existingFindings };
+}
+
+/** Footer line: scan time, files and whether the change has blocking-level issues. */
+export function scanFooter(ms: number, files: number, findings: any[]): string {
+  const seconds = ms < 1000 ? '<1' : (ms / 1000).toFixed(1);
+  const critical = findings.filter(f => f.severity === 'CRITICAL').length;
+  const verdict = critical === 0 ? 'no critical issues in this change' : `${critical} critical issue${critical === 1 ? '' : 's'} in this change`;
+  return `<sub>⚡ Scanned ${files} files in ${seconds}s by [Zelsis](https://zelsis.com): ${verdict}.</sub>`;
 }
 
 /** Up to five blocking-level PR findings with what someone can do with each, for the PR comment. */

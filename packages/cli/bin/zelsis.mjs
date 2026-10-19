@@ -6,6 +6,7 @@ const HELP = `zelsis ${VERSION}: check your code with Zelsis before you push
 
 Usage:
   zelsis check            Scan uncommitted changes (the rest of the repo is sent as context)
+  zelsis verify           Same as check (for agent instructions: "run zelsis verify before finishing")
   zelsis check --all      Scan and gate on every file
   zelsis check --base origin/main   Also count commits since origin/main as changed
   zelsis mcp              Start the MCP server (tool: zelsis_check) for AI coding agents
@@ -29,7 +30,7 @@ async function main() {
   if (!command || has('--help') || has('-h')) { console.log(HELP); return 0; }
   if (command === '--version' || command === '-v') { console.log(VERSION); return 0; }
   if (command === 'mcp') { serveMcp(); return null; }
-  if (command !== 'check') { console.error(`Unknown command: ${command}\n\n${HELP}`); return 2; }
+  if (command !== 'check' && command !== 'verify') { console.error(`Unknown command: ${command}\n\n${HELP}`); return 2; }
 
   const result = await runCheck({
     cwd: process.cwd(),
