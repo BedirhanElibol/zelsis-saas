@@ -26,3 +26,13 @@ test('scanner attaches the impact sentence to findings of a mapped rule', async 
   assert.ok(f, 'SAAS-04 should fire on a client-supplied amount');
   assert.equal(f.impact, RULE_IMPACT[23004]);
 });
+
+test('risk kind comes from the rule first, then the category; UI findings get none', async () => {
+  const { riskKind, RISK_FALLBACK_IMPACT } = await import('@/lib/scanner/risk-kind');
+  assert.equal(riskKind({ ruleId: 23004, category: 'Whatever' }), 'FINANCIAL');
+  assert.equal(riskKind({ ruleId: 1, category: 'SQL Injection', type: 'SECURITY' }), 'DATA_LEAK');
+  assert.equal(riskKind({ ruleId: 1, category: 'Command Injection', type: 'SECURITY' }), 'CODE_EXECUTION');
+  assert.equal(riskKind({ ruleId: 1, category: 'Denial of Service', type: 'SECURITY' }), 'DOWNTIME');
+  assert.equal(riskKind({ ruleId: 1, category: 'Accessibility', type: 'VIBEPOLISH' }), undefined);
+  for (const text of Object.values(RISK_FALLBACK_IMPACT)) assert.ok(!/—|small teams?/i.test(text));
+});

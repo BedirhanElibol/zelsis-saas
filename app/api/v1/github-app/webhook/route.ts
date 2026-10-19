@@ -9,6 +9,7 @@ import { runStaticCodeScan } from '@/lib/scanner-engine';
 import { calculateGateStatus, gatingFindings, calculateReadinessScore } from '@/lib/scanner/scoring';
 import { getOrgPolicy } from '@/lib/organization';
 import { addedLines, buildSuggestionComments } from '@/lib/github/suggestions';
+import { RISK_LABEL, type RiskKind } from '@/lib/scanner/risk-kind';
 
 export const maxDuration = 300; // Allow 5 minutes for scan processing
 
@@ -296,7 +297,8 @@ export function topIssuesSection(findings: any[]): string {
   const rows = top.map(f => {
     const line = parseLineRange(f.lineRange)?.[0];
     const where = `\`${f.filePath}${line ? `:${line}` : ''}\``;
-    return `- **${f.title}** (${where})${f.impact ? `\n  ${f.impact}` : ''}`;
+    const risk = f.risk ? `**${RISK_LABEL[f.risk as RiskKind].toUpperCase()}:** ` : '';
+    return `- **${f.title}** (${where})${f.impact ? `\n  ${risk}${f.impact}` : ''}`;
   });
   return `#### What needs a look\n${rows.join('\n')}\n\n`;
 }

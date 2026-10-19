@@ -7,12 +7,20 @@ import { parseZelsisRc } from './scanner/rc-config';
 import { calculateGateStatus, calculateReadinessScore, gateSeverity, gatingFindings } from './scanner/scoring';
 import { ruleMaturity } from './scanner/rule-maturity';
 import { ruleImpact } from '../data/rule-impact';
+import { riskKind, RISK_FALLBACK_IMPACT } from './scanner/risk-kind';
 import { guardElsewhere, type CrossFileVerification } from './scanner/cross-file-verify';
 
 /** SAAS-08: next@ release affected by CVE-2025-29927. */
 const NEXT_MIDDLEWARE_CVE_RULE_ID = 23008;
 
 /** [kept, dropped] rule pairs that report the same issue (rule packs overlap). */
+/** Adds maturity, the risk kind and an impact sentence (rule-specific, else by risk kind for CRITICAL/HIGH). */
+function withImpact(f: Finding): Finding {
+  const risk = f.risk ?? riskKind(f);
+  const fallback = risk && (f.severity === 'CRITICAL' || f.severity === 'HIGH') ? RISK_FALLBACK_IMPACT[risk] : undefined;
+  return { ...f, maturity: ruleMaturity(f.ruleId), risk, impact: f.impact ?? ruleImpact(f.ruleId) ?? fallback };
+}
+
 const SAME_ISSUE_RULES: ReadonlyArray<readonly [number, number]> = [
   [7004, 3002], // Dockerfile without USER: CLOUD-04 (reviewed true positive) over the infra-pack duplicate
   [8901, 7013], [8901, 12201], // privileged pod
@@ -268,7 +276,7 @@ export async function runStaticCodeScan(inputFiles: CodeFile[], repoName: string
       if (isDuplicate) {
         return;
       }
-      findings.push({ ...f, maturity: ruleMaturity(f.ruleId), impact: f.impact ?? ruleImpact(f.ruleId) });
+      findings.push(withImpact(f));
     };
 
     // 0. AI Comment, Prompt Artifact & Boilerplate Inspector (Runs on raw unstripped content)
@@ -347,7 +355,7 @@ export async function runStaticCodeScan(inputFiles: CodeFile[], repoName: string
         const f = findings[k];
         if (f.ruleId === 27211 && auditedDirs.has(f.filePath.slice(0, f.filePath.lastIndexOf('/') + 1))) findings.splice(k, 1);
       }
-      for (const f of depFindings) findings.push({ ...f, maturity: ruleMaturity(f.ruleId), impact: f.impact ?? ruleImpact(f.ruleId) });
+      for (const f of depFindings) findings.push(withImpact(f));
       dependencyAudit = {
         status: 'ok',
         packages: dependencies.length,

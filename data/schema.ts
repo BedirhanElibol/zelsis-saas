@@ -20,6 +20,8 @@ export const FindingSchema = z.object({
   diffPatch: z.string().optional(),
   /** One plain sentence on what someone can do with this issue (data/rule-impact.ts). */
   impact: z.string().optional(),
+  /** Kind of damage: money, data, accounts, server, uptime (lib/scanner/risk-kind.ts). */
+  risk: z.enum(['FINANCIAL', 'DATA_LEAK', 'ACCOUNT_TAKEOVER', 'CODE_EXECUTION', 'DOWNTIME']).optional(),
   status: StatusEnum,
   owner: z.string().optional(),
   falsePositive: z.boolean().default(false),

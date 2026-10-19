@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useState } from 'react';
+import { RiskBadge } from '@/components/findings/RiskBadge';
 import { Finding, UserTier } from '@/data/schema';
 import { DEMO_AUDIT_FINDINGS } from '@/data/demo-data';
 import { BulkFixModal } from './BulkFixModal';
@@ -658,7 +659,12 @@ export const FindingsTable: React.FC<FindingsTableProps> = ({
                     {item.maturity === 'experimental' && <ExperimentalBadge className="ml-2" />}
                     {item.maturity === 'unproven' && item.severity === 'CRITICAL' && <UnprovenBadge className="ml-2" />}
                   </h3>
-                  {item.impact && <p className="text-xs text-amber-200/90 mt-0.5">{item.impact}</p>}
+                  {(item.risk || item.impact) && (
+                    <p className="text-xs text-amber-200/90 mt-0.5 flex flex-wrap items-center gap-1.5">
+                      <RiskBadge risk={item.risk} />
+                      {item.impact}
+                    </p>
+                  )}
                   <div className="flex flex-wrap items-center gap-2 mt-1">
                     <span className="px-1.5 py-0.5 rounded bg-white/10 text-zinc-300 font-semibold text-[10px]">
                       {item.category}
