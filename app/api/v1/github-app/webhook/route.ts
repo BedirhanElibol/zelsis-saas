@@ -10,6 +10,8 @@ import { calculateGateStatus, gatingFindings, calculateReadinessScore } from '@/
 import { getOrgPolicy } from '@/lib/organization';
 import { addedLines, buildSuggestionComments } from '@/lib/github/suggestions';
 import { RISK_LABEL, type RiskKind } from '@/lib/scanner/risk-kind';
+import { blockingFindings } from '@/lib/ai-verify';
+import { aiDoubleCheck, aiReviewSection, aiVerifyAllowed } from '@/lib/github/ai-double-check';
 
 export const maxDuration = 300; // Allow 5 minutes for scan processing
 
@@ -194,7 +196,32 @@ async function handlePullRequest(payload: any, supabase: any) {
       });
       const scanMs = Date.now() - scanStartedAt;
 
-      const { newFindings, existingFindings } = splitFindings(scanResult.findings, changedFiles);
+      const split = splitFindings(scanResult.findings, changedFiles);
+      const { existingFindings } = split;
+      let newFindings = split.newFindings;
+
+      // Opt-in AI double-check (Pro): may soften a block the code shown already guards; never adds or removes findings
+      let aiSection = '';
+      if (userId && blockingFindings(newFindings).length > 0) {
+        try {
+          if (await aiVerifyAllowed(supabase, userId)) {
+            const readFile = async (path: string): Promise<string | null> => {
+              try {
+                const { data } = await octokit.repos.getContent({ owner, repo, path, ref: headSha });
+                return !Array.isArray(data) && data.type === 'file' && 'content' in data ? Buffer.from(data.content, 'base64').toString('utf8') : null;
+              } catch {
+                return null;
+              }
+            };
+            const checked = await aiDoubleCheck(newFindings, new Set(filesToScan.map((f: any) => f.path)), readFile);
+            newFindings = checked.findings;
+            aiSection = aiReviewSection(checked.reviewed);
+          }
+        } catch (aiError) {
+          console.error('AI double-check skipped:', aiError);
+        }
+      }
+
       const annotations = generateAnnotations(newFindings);
 
       const gFindings = gatingFindings(newFindings);
@@ -223,6 +250,7 @@ async function handlePullRequest(payload: any, supabase: any) {
         `- ℹ️ **Low:** ${gFindings.filter(f => f.severity === 'LOW').length}\n\n` +
         topIssuesSection(gFindings) +
         verifiedSection(scanResult.crossFileVerified ?? [], changedFiles) +
+        aiSection +
         `_Scan includes ${newFindings.length} new issues and detected ${existingFindings.length} pre-existing issues._\n\n` +
         `[View full report on Zelsis](${getConfiguredAppUrl()}/dashboard)\n\n` +
         scanFooter(scanMs, filesToScan.length, gFindings);

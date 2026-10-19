@@ -8,6 +8,7 @@ import { SubscriptionCard } from '@/components/settings/SubscriptionCard';
 import { TeamWorkspaceCard } from '@/components/settings/TeamWorkspaceCard';
 import { ApiKeysCard } from '@/components/settings/ApiKeysCard';
 import { SiteVerificationCard } from '@/components/settings/SiteVerificationCard';
+import { AiVerifyCard } from '@/components/settings/AiVerifyCard';
 import { RepoConfigCard } from '@/components/settings/RepoConfigCard';
 import { DangerZoneCard } from '@/components/settings/DangerZoneCard';
 
@@ -104,6 +105,7 @@ export const ProjectSettingsView: React.FC<ProjectSettingsViewProps> = ({
 
       {/* API keys for the CI release gate (private repositories) */}
       <ApiKeysCard />
+      <AiVerifyCard />
       <SiteVerificationCard />
 
       {/* Target Repo & GitHub PAT Configuration */}
