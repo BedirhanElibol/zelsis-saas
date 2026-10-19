@@ -102,6 +102,9 @@ export function formatReport(result, { colors = false, limit = 50 } = {}) {
   const gate = { PASSED: c('32', 'PASSED'), WARNING: c('33', 'WARNING'), FAILED: c('1;31', 'FAILED') }[result.gateStatus] ?? result.gateStatus;
   const scope = result.scope === 'changed' ? 'changed files' : 'all files';
   out.push('', `Zelsis gate: ${gate} · ${result.findings.length} finding(s) in ${scope} · ${result.filesScanned} file(s) scanned`);
+  for (const v of (result.crossFileVerified ?? []).slice(0, 5)) {
+    out.push(c('2', `Checked across files: ${v.filePath} is not flagged because ${v.reason}.`));
+  }
   if (result.otherFindings) out.push(c('2', `${result.otherFindings} more finding(s) in files you did not change. Run with --all to see them.`));
   return out.join('\n');
 }

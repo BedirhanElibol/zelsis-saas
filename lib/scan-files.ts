@@ -48,6 +48,7 @@ export async function scanUploadedFiles(files: { path: string; content: string }
     filesScanned: files.length,
     scope: changed ? 'changed' : 'all',
     findings,
+    crossFileVerified: result.crossFileVerified ?? [],
     otherFindings: changed ? result.findings.filter((f) => f.status === 'OPEN' && !changed.has(f.filePath)).length : 0,
   };
 }

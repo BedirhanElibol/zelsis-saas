@@ -221,6 +221,7 @@ async function handlePullRequest(payload: any, supabase: any) {
         `- ⚠️ **Medium:** ${gFindings.filter(f => f.severity === 'MEDIUM').length}\n` +
         `- ℹ️ **Low:** ${gFindings.filter(f => f.severity === 'LOW').length}\n\n` +
         topIssuesSection(gFindings) +
+        verifiedSection(scanResult.crossFileVerified ?? [], changedFiles) +
         `_Scan includes ${newFindings.length} new issues and detected ${existingFindings.length} pre-existing issues._\n\n` +
         `[View full report on Zelsis](${getConfiguredAppUrl()}/dashboard)\n\n` +
         scanFooter(scanMs, filesToScan.length, gFindings);
@@ -271,6 +272,13 @@ export function splitFindings(findings: any[], changedFiles: string[]) {
   const newFindings = findings.filter(f => changedFiles.includes(f.filePath));
   const existingFindings = findings.filter(f => !changedFiles.includes(f.filePath));
   return { newFindings, existingFindings };
+}
+
+/** Route findings in this PR that Zelsis dropped after finding the auth check in another file. */
+export function verifiedSection(verified: { filePath: string; reason: string }[], changedFiles: string[]): string {
+  const rows = verified.filter(v => changedFiles.includes(v.filePath)).slice(0, 5);
+  if (rows.length === 0) return '';
+  return `#### Checked across files\n${rows.map(v => `- \`${v.filePath}\`: not flagged, ${v.reason}.`).join('\n')}\n\n`;
 }
 
 /** Footer line: scan time, files and whether the change has blocking-level issues. */

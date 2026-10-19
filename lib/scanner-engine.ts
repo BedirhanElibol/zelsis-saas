@@ -7,6 +7,7 @@ import { parseZelsisRc } from './scanner/rc-config';
 import { calculateGateStatus, calculateReadinessScore, gateSeverity, gatingFindings } from './scanner/scoring';
 import { ruleMaturity } from './scanner/rule-maturity';
 import { ruleImpact } from '../data/rule-impact';
+import { guardElsewhere, type CrossFileVerification } from './scanner/cross-file-verify';
 
 /** SAAS-08: next@ release affected by CVE-2025-29927. */
 const NEXT_MIDDLEWARE_CVE_RULE_ID = 23008;
@@ -72,6 +73,8 @@ export async function runStaticCodeScan(inputFiles: CodeFile[], repoName: string
     ? { ...f, content: f.content.replace(/\r\n?/g, '\n') }
     : f));
   const findings: Finding[] = [];
+  /** Route findings dropped because another file guards the route (see cross-file-verify.ts). */
+  const crossFileVerified: CrossFileVerification[] = [];
   const logs: string[] = [];
 
   // Parse .zelsisignore or .shipguardignore if present in file tree
@@ -299,6 +302,15 @@ export async function runStaticCodeScan(inputFiles: CodeFile[], repoName: string
       logs.push(...engineResult.logs);
     }
 
+    // Second look before reporting a route as unauthenticated: middleware or an imported helper may guard it
+    for (let k = findings.length - 1; k >= startFindingsCount; k--) {
+      const reason = guardElsewhere(findings[k].ruleId, file.path, cleanContent, repoContext.crossFileAuth);
+      if (!reason) continue;
+      crossFileVerified.push({ ruleId: findings[k].ruleId, filePath: findings[k].filePath, reason });
+      logs.push(`[${new Date().toLocaleTimeString()}]   [VERIFIED] ${file.path}: dropped "${findings[k].title}" (${reason}).`);
+      findings.splice(k, 1);
+    }
+
     const fileFindingsCount = findings.length - startFindingsCount;
     if (fileFindingsCount === 0) {
       logs.push(`[${new Date().toLocaleTimeString()}]   [PASS] ${file.path}: no findings.`);
@@ -418,6 +430,7 @@ export async function runStaticCodeScan(inputFiles: CodeFile[], repoName: string
     lowCount,
     uiClicheCount,
     experimentalCount,
+    crossFileVerified,
     durationMs: Date.now() - scanStartedAt,
     findings,
     logs,
