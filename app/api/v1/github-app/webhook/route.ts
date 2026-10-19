@@ -8,6 +8,7 @@ import { getConfiguredAppUrl } from '@/lib/app-url';
 import { runStaticCodeScan } from '@/lib/scanner-engine';
 import { calculateGateStatus, gatingFindings, calculateReadinessScore } from '@/lib/scanner/scoring';
 import { getOrgPolicy } from '@/lib/organization';
+import { addedLines, buildSuggestionComments } from '@/lib/github/suggestions';
 
 export const maxDuration = 300; // Allow 5 minutes for scan processing
 
@@ -178,6 +179,11 @@ async function handlePullRequest(payload: any, supabase: any) {
       const filesToScan = repoData.files;
       const changedFiles = repoData.changedFiles || [];
 
+      // The scanner empties file contents when it is done; keep the changed files for suggested fixes
+      const changedContent = new Map<string, string>(
+        filesToScan.filter((f: any) => changedFiles.includes(f.path)).map((f: any) => [f.path, f.content]),
+      );
+
       // Run code scan
       const scanResult = await runStaticCodeScan(filesToScan, repository.full_name, { 
         dependencyAudit: false, 
@@ -218,6 +224,14 @@ async function handlePullRequest(payload: any, supabase: any) {
       
       await postOrUpdatePRComment(octokit, owner, repo, pull_request.number, commentBody);
 
+      // One-click fixes: suggested changes on lines this PR added, for rules with a safe one-line fix.
+      // Best effort: a missing permission or API error must not change the gate result.
+      try {
+        await postSuggestedFixes(octokit, owner, repo, pull_request.number, headSha, newFindings, changedContent);
+      } catch (suggestionError) {
+        console.error('PR suggestion comments failed:', suggestionError);
+      }
+
     } catch (scanError: any) {
       console.error('PR Scan Error:', scanError);
       await updateCheckRun(octokit, owner, repo, checkRun.id, 'completed', 'failure', {
@@ -226,6 +240,28 @@ async function handlePullRequest(payload: any, supabase: any) {
       });
     }
   }
+}
+
+async function postSuggestedFixes(
+  octokit: any, owner: string, repo: string, pullNumber: number, headSha: string,
+  findings: any[], contentByPath: Map<string, string>,
+) {
+  const prFiles = await octokit.paginate(octokit.rest.pulls.listFiles, { owner, repo, pull_number: pullNumber, per_page: 100 });
+  const addedByFile = new Map<string, Set<number>>(prFiles.map((f: any) => [f.filename, addedLines(f.patch)]));
+  const comments = buildSuggestionComments(findings, contentByPath, addedByFile);
+  if (comments.length === 0) return;
+
+  // A push re-runs the scan over the whole PR diff: skip suggestions already posted on the same line
+  const existing = await octokit.paginate(octokit.rest.pulls.listReviewComments, { owner, repo, pull_number: pullNumber, per_page: 100 });
+  const posted = new Set(existing.map((c: any) => `${c.path}:${c.line ?? c.original_line}:${c.body}`));
+  const fresh = comments.filter((c) => !posted.has(`${c.path}:${c.line}:${c.body}`));
+  if (fresh.length === 0) return;
+
+  await octokit.rest.pulls.createReview({
+    owner, repo, pull_number: pullNumber, commit_id: headSha, event: 'COMMENT',
+    body: 'Zelsis has a one-line fix for these. Review each one, then use "Commit suggestion".',
+    comments: fresh,
+  });
 }
 
 export function splitFindings(findings: any[], changedFiles: string[]) {
