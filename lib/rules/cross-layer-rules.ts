@@ -34,7 +34,7 @@ const NOT_DEPLOYED = /(?:^|\/)(?:scripts?|tools|bin|e2e|tests?|__tests__|spec|fi
  */
 function readOptionally(name: string, c: string): boolean {
   const ref = String.raw`(?:process\??\.env\??\.${name}\b|process\.env\[\s*['"]${name}['"]\s*\]|import\.meta\.env\.${name}\b)`;
-  for (const m of c.matchAll(new RegExp(String.raw`(?:!\s*|\bif\s*\(\s*)${ref}|${ref}\s*(?:&&|\?(?!\.)|[!=]==?)`, 'g'))) {
+  for (const m of c.matchAll(new RegExp(String.raw`(?:!\s*|\bif\s*\(\s*|\bBoolean\(\s*)${ref}|${ref}\s*(?:&&|\?(?!\.)|[!=]==?)`, 'g'))) {
     if (/^!/.test(m[0]) && /\b(?:throw|process\.exit)\b/.test(c.slice(m.index!, m.index! + 160))) continue;
     return true;
   }
