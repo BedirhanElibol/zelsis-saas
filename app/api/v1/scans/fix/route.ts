@@ -76,8 +76,13 @@ export async function POST(req: NextRequest) {
     const revealed: string[] = fixRow.revealed_finding_ids || [];
     const trialUsed: number = sub?.fix_prompts_used ?? 0;
 
-    if (hasFixPromptAccess(tier) || revealed.includes(ref)) {
+    if (hasFixPromptAccess(tier)) {
       return NextResponse.json({ status: 'SUCCESS', fix, trialUsed, trialLimit: FREE_FIX_TRIAL_LIMIT });
+    }
+    // The Free fix trial reveals fix text only; a withheld file location stays a Pro feature
+    const { location: _withheld, ...trialFix } = fix;
+    if (revealed.includes(ref)) {
+      return NextResponse.json({ status: 'SUCCESS', fix: trialFix, trialUsed, trialLimit: FREE_FIX_TRIAL_LIMIT });
     }
 
     if (!sub || trialUsed >= FREE_FIX_TRIAL_LIMIT) {
@@ -110,7 +115,7 @@ export async function POST(req: NextRequest) {
       logger.warn(`[Scan Fix] Could not record revealed finding for ${jobId}:`, revealErr);
     }
 
-    return NextResponse.json({ status: 'SUCCESS', fix, trialUsed: trialUsed + 1, trialLimit: FREE_FIX_TRIAL_LIMIT });
+    return NextResponse.json({ status: 'SUCCESS', fix: trialFix, trialUsed: trialUsed + 1, trialLimit: FREE_FIX_TRIAL_LIMIT });
   } catch (err: unknown) {
     logger.error('[Scan Fix] Unexpected error:', err);
     return errorResponse('Could not load fix.', 500);
