@@ -21,7 +21,7 @@ export const RATE_LIMIT_GUARD = /rate[-_ ]?limit|ratelimit|limiter|throttl|slowD
 export const WEBHOOK_VERIFY = new RegExp([
   String.raw`constructEvent(?:Async)?\s*\(|construct_event\s*\(`, // Stripe
   String.raw`validateEvent\s*\(|webhooks?\.(?:verify|unmarshal|unwrap|constructEvent)\s*\(`, // Polar, Paddle, Standard Webhooks
-  String.raw`verify\w*(?:Signature|Webhook)\w*\s*\(|new\s+Webhook\s*\([^)]*\)\s*(?:;|\.verify)`, // PayPal, Svix, Clerk, custom
+  String.raw`verify\w*(?:Signature|Webhook|Hmac)\w*\s*\(|new\s+Webhook\s*\([^)]*\)\s*(?:;|\.verify)`, // PayPal, Svix, Clerk, LemonSqueezy, custom
   String.raw`createHmac\s*\(|timingSafeEqual\s*\(|crypto\.subtle\.verify\s*\(|hmac\.compare_digest|hmac\.new\s*\(`
 ].join('|'), 'i');
 

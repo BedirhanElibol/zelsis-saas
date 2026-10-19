@@ -322,7 +322,8 @@ function evaluateJs(path: string, c: string, add: Add) {
   // BUG-176: dynamic route placeholder left in a link or navigation
   for (const m of c.matchAll(/(?:\bhref=\{?\s*|\brouter\.(?:push|replace)\(\s*|\bredirect\(\s*)(['"`])(\/[^'"`\n]*\[(?:\.\.\.)?\w+\][^'"`\n]*)\1(\s*[,)}]?)/g)) {
     if (m[0].startsWith('router') && m[3].trim() === ',') continue;
-    if (!/\[(?:\.\.\.)?[A-Za-z_]\w*\]/.test(m[2].replace(/\$\{[^}]*\}/g, ''))) continue;
+    const pathPart = m[2].split(/[?#]/)[0].replace(/\$\{[^}]*\}/g, '');
+    if (!/\[(?:\.\.\.)?[A-Za-z_]\w*\]/.test(pathPart)) continue;
     add({ ruleId: 29847, code: 'BUG-176', severity: 'HIGH', lineIdx: at(m.index!),
       title: `Route Placeholder Left in URL ${m[2].slice(0, 40)}`,
       why: 'The [param] segment is the file-system pattern, not a URL. Navigating to it opens a literal "[id]" path, so the page 404s or loads the wrong record.',

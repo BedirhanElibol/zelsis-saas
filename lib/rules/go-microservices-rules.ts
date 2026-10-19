@@ -303,9 +303,10 @@ export function evaluateGoMicroservicesRules(file: CodeFile, lines: string[], cl
     }
     // GO-10: Insecure TLS Configuration with InsecureSkipVerify: true
     const reg_9010 = /InsecureSkipVerify\s*:\s*true\b/i;
-    if (reg_9010.test(cleanContent)) {
+    const isOnlyWebsocketAcceptOptions = /AcceptOptions\s*\{[^}]*InsecureSkipVerify\s*:\s*true/i.test(cleanContent) && !/tls\.Config\s*\{[^}]*InsecureSkipVerify\s*:\s*true/i.test(cleanContent);
+    if (reg_9010.test(cleanContent) && !isOnlyWebsocketAcceptOptions) {
         const linePattern = /InsecureSkipVerify\s*:\s*true/i;
-        const matchLineIdx = lines.findIndex(l => !l.trim().startsWith('//') && linePattern.test(l));
+        const matchLineIdx = lines.findIndex(l => !l.trim().startsWith('//') && !l.includes('AcceptOptions') && linePattern.test(l));
         const lineNum = matchLineIdx !== -1 ? matchLineIdx + 1 : 1;
         const rawSnippet = matchLineIdx !== -1 ? lines[matchLineIdx].trim() : lines.find(l => !l.trim().startsWith('//'))?.trim() || "Insecure TLS Configuration with InsecureSkipVerify: true";
         findings.push({

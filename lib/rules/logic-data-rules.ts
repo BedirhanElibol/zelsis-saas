@@ -275,8 +275,15 @@ function evaluateJs(path: string, c: string, add: (h: Hit) => void) {
     const names = [...asyncNames].map(esc).join('|');
     const re = new RegExp(String.raw`(?:[(&|]\s*|!\s*)(${names})\s*\(`);
     cl.forEach((l, i) => {
-      if (!/\b(?:if|while)\s*\(/.test(l)) return;
-      const cond = l.slice(l.search(/\b(?:if|while)\s*\(/));
+      const kw = /\b(?:if|while)\s*\(/.exec(l);
+      if (!kw) return;
+      const start = kw.index + kw[0].length - 1;
+      let depth = 0, end = l.length;
+      for (let k = start; k < l.length; k++) {
+        if (l[k] === '(') depth++;
+        else if (l[k] === ')' && --depth === 0) { end = k + 1; break; }
+      }
+      const cond = l.slice(start, end);
       const m = re.exec(cond);
       if (!m || /\bawait\s*$/.test(cond.slice(0, m.index + m[0].indexOf(m[1])))) return;
       add({ ruleId: 29665, code: 'BUG-65', severity: 'HIGH', category: CAT, lineIdx: i,
