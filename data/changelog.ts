@@ -12,6 +12,14 @@ export interface ChangelogEntry {
 
 export const CHANGELOG: ChangelogEntry[] = [
   {
+    date: '2026-10-19',
+    title: 'Bugs between layers and home-made token checks',
+    changes: [
+      { kind: 'New', text: 'Hand-written token helpers: a parseToken() or getUserFromToken() that splits a JWT, base64-decodes the payload and trusts the user id or role without ever checking the signature. Zelsis follows the helper into its body, and stays quiet when the file verifies the token (jose, jsonwebtoken, an HMAC check) or only reads the expiry to refresh it.' },
+      { kind: 'New', text: 'Bugs that show up only where two layers meet: an env var the code needs but no template or deploy config declares, a Dockerfile on an older Node than package.json asks for, an upload limit above the nginx or ingress body limit, queries on columns no migration indexes, balance or stock updates without a lock, per-user data under a shared cache key, jobs that retry forever, request bodies the frontend and backend disagree on, webhooks processed twice, SMS endpoints without a rate limit and queries missing the tenant filter.' },
+    ],
+  },
+  {
     date: '2026-10-15',
     title: 'Keys for newer SaaS tools, hung requests and agent tools',
     changes: [
