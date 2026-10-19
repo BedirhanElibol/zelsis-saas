@@ -6,6 +6,7 @@ import { parseZelsisIgnore } from './scanner/ignore-parser';
 import { parseZelsisRc } from './scanner/rc-config';
 import { calculateGateStatus, calculateReadinessScore, gateSeverity, gatingFindings } from './scanner/scoring';
 import { ruleMaturity } from './scanner/rule-maturity';
+import { ruleImpact } from '../data/rule-impact';
 
 /** SAAS-08: next@ release affected by CVE-2025-29927. */
 const NEXT_MIDDLEWARE_CVE_RULE_ID = 23008;
@@ -23,6 +24,7 @@ const SAME_ISSUE_RULES: ReadonlyArray<readonly [number, number]> = [
   [3, 45], [3, 28801], // permissive USING (true) / WITH CHECK (true) policy
   // AST flow rules prove the path; keep them over the line-based rule in the same file
   [29301, 9106], [29302, 15], [29302, 28920], [29303, 3021], [29303, 6043], [29303, 18104], [29307, 41], [29308, 16],
+  [23004, 10102], // client-supplied price: SAAS-04 over the e-commerce duplicate
   [9704, 8143], // webhook handler without signature verification
   [9502, 12605], // unpinned third-party GitHub Action
   [29623, 1208], [29632, 7135], [29636, 1211], // React logic rules prove the line: typeof window render, index key, double submit
@@ -263,7 +265,7 @@ export async function runStaticCodeScan(inputFiles: CodeFile[], repoName: string
       if (isDuplicate) {
         return;
       }
-      findings.push({ ...f, maturity: ruleMaturity(f.ruleId) });
+      findings.push({ ...f, maturity: ruleMaturity(f.ruleId), impact: f.impact ?? ruleImpact(f.ruleId) });
     };
 
     // 0. AI Comment, Prompt Artifact & Boilerplate Inspector (Runs on raw unstripped content)
@@ -333,7 +335,7 @@ export async function runStaticCodeScan(inputFiles: CodeFile[], repoName: string
         const f = findings[k];
         if (f.ruleId === 27211 && auditedDirs.has(f.filePath.slice(0, f.filePath.lastIndexOf('/') + 1))) findings.splice(k, 1);
       }
-      for (const f of depFindings) findings.push({ ...f, maturity: ruleMaturity(f.ruleId) });
+      for (const f of depFindings) findings.push({ ...f, maturity: ruleMaturity(f.ruleId), impact: f.impact ?? ruleImpact(f.ruleId) });
       dependencyAudit = {
         status: 'ok',
         packages: dependencies.length,
