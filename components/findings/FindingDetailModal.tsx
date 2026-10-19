@@ -1,6 +1,8 @@
 'use client';
 
 import React, { useState, useEffect, useCallback } from 'react';
+import { RiskBadge } from '@/components/findings/RiskBadge';
+import { LockedLocation } from '@/components/findings/LockedLocation';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Finding, PlanUsageQuota } from '@/data/schema';
 import { UserProfile } from '@/components/auth/AuthModal';
@@ -271,13 +273,24 @@ export const FindingDetailModal: React.FC<FindingDetailModalProps> = ({
                 {finding.maturity === 'experimental' && <ExperimentalBadge className="ml-2" />}
                 {finding.maturity === 'unproven' && finding.severity === 'CRITICAL' && <UnprovenBadge className="ml-2" />}
               </h2>
-              {finding.impact && <p className="text-sm text-amber-200/90">{finding.impact}</p>}
+              {(finding.risk || finding.impact) && (
+                <p className="text-sm text-amber-200/90 flex flex-wrap items-center gap-2">
+                  <RiskBadge risk={finding.risk} />
+                  {finding.impact}
+                </p>
+              )}
               <div className="text-xs font-mono text-emerald-400/90 flex items-center gap-2 flex-wrap">
-                <span className="text-zinc-300 font-bold">{finding.filePath}</span>
-                <span className="text-zinc-400">·</span>
-                <span className="bg-white/5 px-2 py-0.5 rounded text-zinc-300 font-bold border border-white/10">
-                  Line {finding.lineRange}
-                </span>
+                {finding.lockedLocation && !revealedFix?.location ? (
+                  <LockedLocation folder={finding.filePath} />
+                ) : (
+                  <>
+                    <span className="text-zinc-300 font-bold">{revealedFix?.location?.filePath ?? finding.filePath}</span>
+                    <span className="text-zinc-400">·</span>
+                    <span className="bg-white/5 px-2 py-0.5 rounded text-zinc-300 font-bold border border-white/10">
+                      Line {revealedFix?.location?.lineRange ?? finding.lineRange}
+                    </span>
+                  </>
+                )}
                 <span className="text-zinc-400">·</span>
                 <span className="text-zinc-400 capitalize">{(finding.status || 'OPEN').toLowerCase()}</span>
               </div>

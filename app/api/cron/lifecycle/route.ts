@@ -5,6 +5,7 @@ import { isAuthorizedCron } from '@/lib/cron-auth';
 import { getConfiguredAppUrl } from '@/lib/app-url';
 import { sendFirstScanNudgeEmail } from '@/lib/email';
 import { pickFirstScanNudges, unsubscribeToken, type LifecycleUser } from '@/lib/lifecycle-emails';
+import { sendWeeklySummaries } from '@/lib/weekly-summary-job';
 
 export const maxDuration = 30;
 export const dynamic = 'force-dynamic';
@@ -24,6 +25,12 @@ export async function GET(req: Request) {
     return NextResponse.json({ error: 'Lifecycle email is not configured' }, { status: 500 });
   }
 
+  // Fridays: the weekly gate summary runs from this cron (one Vercel cron slot for all product email)
+  let weekly: unknown = null;
+  if (new Date().getUTCDay() === 5) {
+    weekly = await (await sendWeeklySummaries()).json().catch(() => null);
+  }
+
   const users: LifecycleUser[] = [];
   for (let page = 1; page <= MAX_PAGES; page++) {
     const { data, error } = await admin.auth.admin.listUsers({ page, perPage: PAGE_SIZE });
@@ -37,7 +44,7 @@ export async function GET(req: Request) {
 
   // Only the recent signups need the scan check
   const recent = pickFirstScanNudges(users, new Set());
-  if (recent.length === 0) return NextResponse.json({ success: true, sent: 0 });
+  if (recent.length === 0) return NextResponse.json({ success: true, sent: 0, weekly });
   const { data: jobs } = await admin
     .from('scan_jobs')
     .select('user_id')
@@ -62,5 +69,5 @@ export async function GET(req: Request) {
     });
     if (error) logger.error(`[Lifecycle] Could not record nudge for ${u.id}:`, error.message);
   }
-  return NextResponse.json({ success: true, candidates: targets.length, sent });
+  return NextResponse.json({ success: true, candidates: targets.length, sent, weekly });
 }

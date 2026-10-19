@@ -9,6 +9,7 @@ import { runStaticCodeScan } from '@/lib/scanner-engine';
 import { calculateGateStatus, gatingFindings, calculateReadinessScore } from '@/lib/scanner/scoring';
 import { getOrgPolicy } from '@/lib/organization';
 import { addedLines, buildSuggestionComments } from '@/lib/github/suggestions';
+import { RISK_LABEL, type RiskKind } from '@/lib/scanner/risk-kind';
 
 export const maxDuration = 300; // Allow 5 minutes for scan processing
 
@@ -185,11 +186,13 @@ async function handlePullRequest(payload: any, supabase: any) {
       );
 
       // Run code scan
+      const scanStartedAt = Date.now();
       const scanResult = await runStaticCodeScan(filesToScan, repository.full_name, { 
         dependencyAudit: false, 
         orgPolicy, 
         dismissals 
       });
+      const scanMs = Date.now() - scanStartedAt;
 
       const { newFindings, existingFindings } = splitFindings(scanResult.findings, changedFiles);
       const annotations = generateAnnotations(newFindings);
@@ -219,10 +222,40 @@ async function handlePullRequest(payload: any, supabase: any) {
         `- ⚠️ **Medium:** ${gFindings.filter(f => f.severity === 'MEDIUM').length}\n` +
         `- ℹ️ **Low:** ${gFindings.filter(f => f.severity === 'LOW').length}\n\n` +
         topIssuesSection(gFindings) +
+        verifiedSection(scanResult.crossFileVerified ?? [], changedFiles) +
         `_Scan includes ${newFindings.length} new issues and detected ${existingFindings.length} pre-existing issues._\n\n` +
-        `[View full report on Zelsis](${getConfiguredAppUrl()}/dashboard)`;
+        `[View full report on Zelsis](${getConfiguredAppUrl()}/dashboard)\n\n` +
+        scanFooter(scanMs, filesToScan.length, gFindings);
       
       await postOrUpdatePRComment(octokit, owner, repo, pull_request.number, commentBody);
+
+      // Record the PR gate run for the weekly summary (only for repositories saved as a project)
+      if (userId) {
+        try {
+          const { data: project } = await supabase
+            .from('projects')
+            .select('id')
+            .eq('user_id', userId)
+            .eq('repo_url', repoUrl)
+            .maybeSingle();
+          if (project?.id) {
+            await supabase.from('scans').insert({
+              project_id: project.id,
+              user_id: userId,
+              trigger_type: 'WEBHOOK',
+              readiness_score: readinessScore,
+              gate_status: gateStatus,
+              critical_count: gFindings.filter(f => f.severity === 'CRITICAL').length,
+              high_count: gFindings.filter(f => f.severity === 'HIGH').length,
+              medium_count: gFindings.filter(f => f.severity === 'MEDIUM').length,
+              low_count: gFindings.filter(f => f.severity === 'LOW').length,
+              scan_duration_ms: scanMs,
+            });
+          }
+        } catch (recordError) {
+          console.error('PR gate run not recorded:', recordError);
+        }
+      }
 
       // One-click fixes: suggested changes on lines this PR added, for rules with a safe one-line fix.
       // Best effort: a missing permission or API error must not change the gate result.
@@ -270,6 +303,21 @@ export function splitFindings(findings: any[], changedFiles: string[]) {
   return { newFindings, existingFindings };
 }
 
+/** Route findings in this PR that Zelsis dropped after finding the auth check in another file. */
+export function verifiedSection(verified: { filePath: string; reason: string }[], changedFiles: string[]): string {
+  const rows = verified.filter(v => changedFiles.includes(v.filePath)).slice(0, 5);
+  if (rows.length === 0) return '';
+  return `#### Checked across files\n${rows.map(v => `- \`${v.filePath}\`: not flagged, ${v.reason}.`).join('\n')}\n\n`;
+}
+
+/** Footer line: scan time, files and whether the change has blocking-level issues. */
+export function scanFooter(ms: number, files: number, findings: any[]): string {
+  const seconds = ms < 1000 ? '<1' : (ms / 1000).toFixed(1);
+  const critical = findings.filter(f => f.severity === 'CRITICAL').length;
+  const verdict = critical === 0 ? 'no critical issues in this change' : `${critical} critical issue${critical === 1 ? '' : 's'} in this change`;
+  return `<sub>⚡ Scanned ${files} files in ${seconds}s by [Zelsis](https://zelsis.com): ${verdict}.</sub>`;
+}
+
 /** Up to five blocking-level PR findings with what someone can do with each, for the PR comment. */
 export function topIssuesSection(findings: any[]): string {
   const top = findings.filter(f => f.severity === 'CRITICAL' || f.severity === 'HIGH').slice(0, 5);
@@ -277,7 +325,8 @@ export function topIssuesSection(findings: any[]): string {
   const rows = top.map(f => {
     const line = parseLineRange(f.lineRange)?.[0];
     const where = `\`${f.filePath}${line ? `:${line}` : ''}\``;
-    return `- **${f.title}** (${where})${f.impact ? `\n  ${f.impact}` : ''}`;
+    const risk = f.risk ? `**${RISK_LABEL[f.risk as RiskKind].toUpperCase()}:** ` : '';
+    return `- **${f.title}** (${where})${f.impact ? `\n  ${risk}${f.impact}` : ''}`;
   });
   return `#### What needs a look\n${rows.join('\n')}\n\n`;
 }

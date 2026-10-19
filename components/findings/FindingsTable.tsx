@@ -1,6 +1,9 @@
 'use client';
 
 import React, { useState } from 'react';
+import { RiskBadge } from '@/components/findings/RiskBadge';
+import { LockedLocation } from '@/components/findings/LockedLocation';
+import { RiskDiagnosis } from '@/components/findings/RiskDiagnosis';
 import { Finding, UserTier } from '@/data/schema';
 import { DEMO_AUDIT_FINDINGS } from '@/data/demo-data';
 import { BulkFixModal } from './BulkFixModal';
@@ -204,6 +207,8 @@ export const FindingsTable: React.FC<FindingsTableProps> = ({
 
   return (
     <div ref={tableRef} data-tour="findings" className="scroll-mt-20 bg-[#141414] border border-white/10 rounded-xl p-4 sm:p-6 flex flex-col gap-5">
+      <RiskDiagnosis findings={findings} />
+
       {/* Snyk-Grade Release Readiness Radar & Category Breakdown Cards */}
       <div className="grid grid-cols-2 lg:grid-cols-5 gap-3">
         {/* Card 1: Security & OWASP */}
@@ -658,7 +663,12 @@ export const FindingsTable: React.FC<FindingsTableProps> = ({
                     {item.maturity === 'experimental' && <ExperimentalBadge className="ml-2" />}
                     {item.maturity === 'unproven' && item.severity === 'CRITICAL' && <UnprovenBadge className="ml-2" />}
                   </h3>
-                  {item.impact && <p className="text-xs text-amber-200/90 mt-0.5">{item.impact}</p>}
+                  {(item.risk || item.impact) && (
+                    <p className="text-xs text-amber-200/90 mt-0.5 flex flex-wrap items-center gap-1.5">
+                      <RiskBadge risk={item.risk} />
+                      {item.impact}
+                    </p>
+                  )}
                   <div className="flex flex-wrap items-center gap-2 mt-1">
                     <span className="px-1.5 py-0.5 rounded bg-white/10 text-zinc-300 font-semibold text-[10px]">
                       {item.category}
@@ -669,10 +679,16 @@ export const FindingsTable: React.FC<FindingsTableProps> = ({
                 {/* Relative File Path & Line Range */}
                 <div className="flex items-center gap-1.5 text-[11px] font-mono text-zinc-400 min-w-0">
                   <span className="text-zinc-400 shrink-0">Path:</span>
-                  <span className="text-zinc-300 truncate" title={item.filePath}>
-                    {item.filePath}
-                  </span>
-                  <span className="text-zinc-400 shrink-0">({item.lineRange})</span>
+                  {item.lockedLocation ? (
+                    <LockedLocation folder={item.filePath} />
+                  ) : (
+                    <>
+                      <span className="text-zinc-300 truncate" title={item.filePath}>
+                        {item.filePath}
+                      </span>
+                      <span className="text-zinc-400 shrink-0">({item.lineRange})</span>
+                    </>
+                  )}
                 </div>
 
                 {/* Compact Expand/Collapse Details Toggle */}
@@ -944,7 +960,7 @@ export const FindingsTable: React.FC<FindingsTableProps> = ({
 
                   {/* Affected Area / File Path */}
                   <td className="py-3.5 px-4 font-mono text-[#A1A1AA] max-w-xs truncate">
-                    {item.filePath} ({item.lineRange})
+                    {item.lockedLocation ? <LockedLocation folder={item.filePath} /> : `${item.filePath} (${item.lineRange})`}
                   </td>
 
                   {/* Status */}

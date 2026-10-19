@@ -5,7 +5,7 @@ import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { execFileSync } from 'node:child_process';
 import { isScannablePath, changedPaths, collectFiles, formatReport } from '../../packages/cli/lib.mjs';
-import { handleMessage as rawHandleMessage } from '../../packages/cli/mcp.mjs';
+import { handleMessage as rawHandleMessage, agentNote } from '../../packages/cli/mcp.mjs';
 import { scanUploadedFiles } from '@/lib/scan-files';
 import { ScanFilesRequestSchema } from '@/lib/validations/api-schemas';
 
@@ -100,6 +100,11 @@ test('MCP server: initialize, tools/list, tools/call and unknown methods', async
   const failing = await handleMessage({ jsonrpc: '2.0', id: 5, method: 'tools/call', params: { name: 'zelsis_check', arguments: {} } },
     { cwd: '.', env, check: async () => { throw new Error('Invalid API key.'); } });
   assert.equal(failing.result.isError, true);
+});
+
+test('agentNote tells the agent to fix blocking findings and ignores experimental ones', () => {
+  assert.match(agentNote({ findings: [{ severity: 'HIGH' }] }), /Fix the 1 critical\/high finding/);
+  assert.match(agentNote({ findings: [{ severity: 'HIGH', experimental: true }, { severity: 'MEDIUM' }] }), /You can finish/);
 });
 
 test('formatReport says when nothing changed', () => {

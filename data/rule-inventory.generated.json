@@ -1,8 +1,8 @@
 {
  "summary": {
-  "implementedRules": 1283,
-  "testedRules": 1274,
-  "preciseLocationRules": 1280,
+  "implementedRules": 1296,
+  "testedRules": 1287,
+  "preciseLocationRules": 1293,
   "catalogEntries": 1922,
   "catalogOnlyNotImplemented": 1397,
   "catalogPlaceholderMetadata": 1810
@@ -14233,6 +14233,136 @@
    "title": "${m[1]} Is Downloaded Over an Unencrypted URL",
    "severity": "HIGH",
    "source": "lib/rules/logic-gemini2-rules.ts",
+   "preciseLocation": true,
+   "tested": true,
+   "inCatalog": false
+  },
+  {
+   "ruleId": 30301,
+   "code": "RULE-30301",
+   "title": "${name} Is Read by the Code but Declared in No Env Template or Deploy Config",
+   "severity": "MEDIUM",
+   "source": "lib/rules/cross-layer-rules.ts",
+   "preciseLocation": true,
+   "tested": true,
+   "inCatalog": false
+  },
+  {
+   "ruleId": 30302,
+   "code": "RULE-30302",
+   "title": "Dockerfile Uses Node ${d.major}, but ${engines.path} Requires Node ${engines.major}+",
+   "severity": "MEDIUM",
+   "source": "lib/rules/cross-layer-rules.ts",
+   "preciseLocation": true,
+   "tested": true,
+   "inCatalog": false
+  },
+  {
+   "ruleId": 30303,
+   "code": "RULE-30303",
+   "title": "App Accepts ${mb(bytes)} Uploads, but ${proxy.path} Stops Requests at ${mb(proxy.bytes)}",
+   "severity": "MEDIUM",
+   "source": "lib/rules/cross-layer-rules.ts",
+   "preciseLocation": true,
+   "tested": true,
+   "inCatalog": false
+  },
+  {
+   "ruleId": 30304,
+   "code": "RULE-30304",
+   "title": "Query Filters ",
+   "severity": "LOW",
+   "source": "lib/rules/cross-layer-rules.ts",
+   "preciseLocation": true,
+   "tested": true,
+   "inCatalog": false
+  },
+  {
+   "ruleId": 30305,
+   "code": "RULE-30305",
+   "title": "Browser Code Queries ",
+   "severity": "HIGH",
+   "source": "lib/rules/cross-layer-rules.ts",
+   "preciseLocation": true,
+   "tested": true,
+   "inCatalog": false
+  },
+  {
+   "ruleId": 30306,
+   "code": "RULE-30306",
+   "title": "Outbound HTTP Call Without a Timeout (Go)",
+   "severity": "MEDIUM",
+   "source": "lib/rules/cross-layer-rules.ts",
+   "preciseLocation": true,
+   "tested": true,
+   "inCatalog": false
+  },
+  {
+   "ruleId": 30307,
+   "code": "RULE-30307",
+   "title": "Balance or Stock Is Read, Changed in Code, Then Saved Without a Lock",
+   "severity": "HIGH",
+   "source": "lib/rules/cross-layer-rules.ts",
+   "preciseLocation": true,
+   "tested": true,
+   "inCatalog": false
+  },
+  {
+   "ruleId": 30308,
+   "code": "RULE-30308",
+   "title": "Per-User Data ",
+   "severity": "HIGH",
+   "source": "lib/rules/cross-layer-rules.ts",
+   "preciseLocation": true,
+   "tested": true,
+   "inCatalog": false
+  },
+  {
+   "ruleId": 30309,
+   "code": "RULE-30309",
+   "title": "",
+   "severity": "MEDIUM",
+   "source": "lib/rules/cross-layer-rules.ts",
+   "preciseLocation": true,
+   "tested": true,
+   "inCatalog": false
+  },
+  {
+   "ruleId": 30310,
+   "code": "RULE-30310",
+   "title": "Request to ${m[1]} Leaves Out ${missing.join(",
+   "severity": "MEDIUM",
+   "source": "lib/rules/cross-layer-rules.ts",
+   "preciseLocation": true,
+   "tested": true,
+   "inCatalog": false
+  },
+  {
+   "ruleId": 30311,
+   "code": "RULE-30311",
+   "title": "Payment Webhook Adds Credit Without Recording Which Events It Already Handled",
+   "severity": "HIGH",
+   "source": "lib/rules/cross-layer-rules.ts",
+   "preciseLocation": true,
+   "tested": true,
+   "inCatalog": false
+  },
+  {
+   "ruleId": 30312,
+   "code": "RULE-30312",
+   "title": "Endpoint Sends SMS Without a Rate Limit",
+   "severity": "HIGH",
+   "source": "lib/rules/cross-layer-rules.ts",
+   "preciseLocation": true,
+   "tested": true,
+   "inCatalog": false
+  },
+  {
+   "ruleId": 30313,
+   "code": "RULE-30313",
+   "title": "This ${model} Query Skips the Tenant Filter the Other ${model} Queries in This File Use",
+   "severity": "HIGH",
+   "source": "lib/rules/cross-layer-rules.ts",
    "preciseLocation": true,
    "tested": true,
    "inCatalog": false

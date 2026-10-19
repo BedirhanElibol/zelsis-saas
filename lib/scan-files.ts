@@ -1,6 +1,7 @@
 import { runStaticCodeScan } from '@/lib/scanner-engine';
 import { calculateGateStatus, gatingFindings, gateSeverity } from '@/lib/scanner/scoring';
 import { LOCKED_FIX_TEXT } from '@/lib/fix-gate';
+import { RISK_LABEL } from '@/lib/scanner/risk-kind';
 
 export interface ScanFilesOptions {
   projectName?: string;
@@ -38,6 +39,7 @@ export async function scanUploadedFiles(files: { path: string; content: string }
       filePath: f.filePath,
       lineRange: f.lineRange,
       impact: f.impact,
+      risk: f.risk ? RISK_LABEL[f.risk] : undefined,
       experimental: f.maturity === 'experimental' || undefined,
       fix: opts.canSeeFixes ? f.remediationPrompt : LOCKED_FIX_TEXT,
     }));
@@ -48,6 +50,7 @@ export async function scanUploadedFiles(files: { path: string; content: string }
     filesScanned: files.length,
     scope: changed ? 'changed' : 'all',
     findings,
+    crossFileVerified: result.crossFileVerified ?? [],
     otherFindings: changed ? result.findings.filter((f) => f.status === 'OPEN' && !changed.has(f.filePath)).length : 0,
   };
 }

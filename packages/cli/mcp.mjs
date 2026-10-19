@@ -20,6 +20,14 @@ export const TOOLS = [
   },
 ];
 
+/** What the agent should do next, so it fixes blocking issues before handing the change back. */
+export function agentNote(result) {
+  const blocking = (result.findings ?? []).filter((f) => (f.severity === 'CRITICAL' || f.severity === 'HIGH') && !f.experimental);
+  if (blocking.length === 0) return '\n\nNo critical or high findings in the changed files. You can finish.';
+  return `\n\nFix the ${blocking.length} critical/high finding(s) above in the code you wrote, then call zelsis_check again. ` +
+    'Do not report the task as done while the gate is FAILED. If a finding is wrong, explain why to the user instead of hiding it.';
+}
+
 /** Handles one JSON-RPC message. Returns the response object, or null for notifications. */
 export async function handleMessage(msg, { cwd, env, check = runCheck }) {
   const reply = (result) => ({ jsonrpc: '2.0', id: msg.id, result });
@@ -48,7 +56,7 @@ export async function handleMessage(msg, { cwd, env, check = runCheck }) {
           url: env.ZELSIS_URL,
           apiKey: env.ZELSIS_API_KEY,
         });
-        return reply({ content: [{ type: 'text', text: formatReport(result, { limit: 30 }) }], isError: false });
+        return reply({ content: [{ type: 'text', text: formatReport(result, { limit: 30 }) + agentNote(result) }], isError: false });
       } catch (err) {
         return reply({ content: [{ type: 'text', text: `Zelsis check failed: ${err.message}` }], isError: true });
       }

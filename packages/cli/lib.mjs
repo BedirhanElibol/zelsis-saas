@@ -95,13 +95,16 @@ export function formatReport(result, { colors = false, limit = 50 } = {}) {
   for (const f of result.findings.slice(0, limit)) {
     const line = (f.lineRange || '').match(/\d+/)?.[0];
     out.push(`${(sev[f.severity] ?? ((s) => s))(f.severity.padEnd(8))} ${f.filePath}${line ? `:${line}` : ''}  ${f.title}${f.experimental ? c('2', ' (experimental)') : ''}`);
-    if (f.impact) out.push(`         ${f.impact}`);
+    if (f.impact) out.push(`         ${f.risk ? `${c('1', f.risk.toUpperCase())}: ` : ''}${f.impact}`);
     if (f.fix) out.push(c('2', `         Fix: ${f.fix}`));
   }
   if (result.findings.length > limit) out.push(`... and ${result.findings.length - limit} more`);
   const gate = { PASSED: c('32', 'PASSED'), WARNING: c('33', 'WARNING'), FAILED: c('1;31', 'FAILED') }[result.gateStatus] ?? result.gateStatus;
   const scope = result.scope === 'changed' ? 'changed files' : 'all files';
   out.push('', `Zelsis gate: ${gate} · ${result.findings.length} finding(s) in ${scope} · ${result.filesScanned} file(s) scanned`);
+  for (const v of (result.crossFileVerified ?? []).slice(0, 5)) {
+    out.push(c('2', `Checked across files: ${v.filePath} is not flagged because ${v.reason}.`));
+  }
   if (result.otherFindings) out.push(c('2', `${result.otherFindings} more finding(s) in files you did not change. Run with --all to see them.`));
   return out.join('\n');
 }
