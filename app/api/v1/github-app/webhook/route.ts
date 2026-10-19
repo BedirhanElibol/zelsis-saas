@@ -229,6 +229,34 @@ async function handlePullRequest(payload: any, supabase: any) {
       
       await postOrUpdatePRComment(octokit, owner, repo, pull_request.number, commentBody);
 
+      // Record the PR gate run for the weekly summary (only for repositories saved as a project)
+      if (userId) {
+        try {
+          const { data: project } = await supabase
+            .from('projects')
+            .select('id')
+            .eq('user_id', userId)
+            .eq('repo_url', repoUrl)
+            .maybeSingle();
+          if (project?.id) {
+            await supabase.from('scans').insert({
+              project_id: project.id,
+              user_id: userId,
+              trigger_type: 'WEBHOOK',
+              readiness_score: readinessScore,
+              gate_status: gateStatus,
+              critical_count: gFindings.filter(f => f.severity === 'CRITICAL').length,
+              high_count: gFindings.filter(f => f.severity === 'HIGH').length,
+              medium_count: gFindings.filter(f => f.severity === 'MEDIUM').length,
+              low_count: gFindings.filter(f => f.severity === 'LOW').length,
+              scan_duration_ms: scanMs,
+            });
+          }
+        } catch (recordError) {
+          console.error('PR gate run not recorded:', recordError);
+        }
+      }
+
       // One-click fixes: suggested changes on lines this PR added, for rules with a safe one-line fix.
       // Best effort: a missing permission or API error must not change the gate result.
       try {
