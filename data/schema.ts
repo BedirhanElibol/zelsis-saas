@@ -18,6 +18,8 @@ export const FindingSchema = z.object({
   reproductionSteps: z.array(z.string()),
   remediationPrompt: z.string(),
   diffPatch: z.string().optional(),
+  /** One plain sentence on what someone can do with this issue (data/rule-impact.ts). */
+  impact: z.string().optional(),
   status: StatusEnum,
   owner: z.string().optional(),
   falsePositive: z.boolean().default(false),

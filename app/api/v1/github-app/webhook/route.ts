@@ -212,6 +212,7 @@ async function handlePullRequest(payload: any, supabase: any) {
         `- 🚨 **High:** ${gFindings.filter(f => f.severity === 'HIGH').length}\n` +
         `- ⚠️ **Medium:** ${gFindings.filter(f => f.severity === 'MEDIUM').length}\n` +
         `- ℹ️ **Low:** ${gFindings.filter(f => f.severity === 'LOW').length}\n\n` +
+        topIssuesSection(gFindings) +
         `_Scan includes ${newFindings.length} new issues and detected ${existingFindings.length} pre-existing issues._\n\n` +
         `[View full report on Zelsis](${getConfiguredAppUrl()}/dashboard)`;
       
@@ -233,6 +234,18 @@ export function splitFindings(findings: any[], changedFiles: string[]) {
   return { newFindings, existingFindings };
 }
 
+/** Up to five blocking-level PR findings with what someone can do with each, for the PR comment. */
+export function topIssuesSection(findings: any[]): string {
+  const top = findings.filter(f => f.severity === 'CRITICAL' || f.severity === 'HIGH').slice(0, 5);
+  if (top.length === 0) return '';
+  const rows = top.map(f => {
+    const line = parseLineRange(f.lineRange)?.[0];
+    const where = `\`${f.filePath}${line ? `:${line}` : ''}\``;
+    return `- **${f.title}** (${where})${f.impact ? `\n  ${f.impact}` : ''}`;
+  });
+  return `#### What needs a look\n${rows.join('\n')}\n\n`;
+}
+
 export function generateAnnotations(findings: any[]) {
   return findings.map(f => {
     const [startLine, endLine] = parseLineRange(f.lineRange) ?? [1, 1];
@@ -246,7 +259,7 @@ export function generateAnnotations(findings: any[]) {
       start_line: startLine,
       end_line: endLine,
       annotation_level: annotationLevel,
-      message: `${f.severity}: ${f.title}\n\n${f.category}`,
+      message: `${f.severity}: ${f.title}\n\n${f.impact ? `${f.impact}\n\n` : ''}${f.category}`,
       title: `Zelsis: ${f.title}`
     };
   });
