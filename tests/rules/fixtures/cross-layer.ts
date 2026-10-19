@@ -33,6 +33,31 @@ export const region = process.env.MAIL_REGION || 'eu';
 `)],
   },
   {
+    ruleIds: [30301], name: 'XL-01 required var guarded by a throw is still flagged; optional, host-injected, script and .env.local.example vars are not',
+    detects: [ENV_EXAMPLE, f('lib/stripe.ts', `if (!process.env.PAYMENT_API_KEY) throw new Error('PAYMENT_API_KEY is missing');
+export const key = process.env.PAYMENT_API_KEY;
+`)],
+    ignores: [f('.env.local.example', 'PAYMENT_API_KEY=\n'), f('lib/stripe.ts', `if (!process.env.PAYMENT_API_KEY) throw new Error('PAYMENT_API_KEY is missing');
+export const key = process.env.PAYMENT_API_KEY;
+export const debug = process.env.DEBUG_PDF === '1';
+export const site = process?.env?.NEXT_PUBLIC_VERCEL_URL && process.env.NEXT_PUBLIC_VERCEL_URL.trim();
+export function replicas() {
+  if (!process.env.REPLICA_URLS) return [];
+  return process.env.REPLICA_URLS.split(',');
+}
+`), f('scripts/publish.ts', `const deno = process.env.DENO_BIN_PATH;
+`), f('common/db.go', `package common
+import "os"
+func Path() string {
+	p := os.Getenv("TEST_DB_PATH")
+	if p == "" {
+		p = "./test.db"
+	}
+	return p
+}
+`)],
+  },
+  {
     ruleIds: [30302], name: 'XL-02 Dockerfile on Node 18 while engines asks for 20 vs matching image',
     detects: [f('package.json', '{ "name": "api", "engines": { "node": ">=20" } }'), f('Dockerfile', 'FROM node:18-alpine\nWORKDIR /app\nCOPY . .\nRUN npm ci\nCMD ["node", "server.js"]\n')],
     ignores: [f('package.json', '{ "name": "api", "engines": { "node": ">=20" } }'), f('Dockerfile', 'FROM node:20-alpine\nWORKDIR /app\nCOPY . .\nRUN npm ci\nCMD ["node", "server.js"]\n')],

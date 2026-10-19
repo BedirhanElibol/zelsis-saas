@@ -23,11 +23,31 @@ const PLATFORM_ENV = /^(?:NODE_ENV|NODE_OPTIONS|PORT|HOST|HOSTNAME|HOME|PATH|PWD
 
 // ---------------------------------------------------------------------------------------------------------------
 // XL-01: env var read by the code but declared nowhere (env template, compose, k8s, Dockerfile, CI, host config)
+// Host-injected names that Next.js / Vite expose under a public prefix (NEXT_PUBLIC_VERCEL_URL etc.)
+const PUBLIC_PLATFORM_ENV = /^(?:NEXT_PUBLIC_|VITE_|PUBLIC_|EXPO_PUBLIC_)(?:VERCEL|NETLIFY|RENDER|RAILWAY)\w*$/;
+// Developer tooling and tests do not ship with the app, so a missing template entry cannot break a deploy
+const NOT_DEPLOYED = /(?:^|\/)(?:scripts?|tools|bin|e2e|tests?|__tests__|spec|fixtures|examples?|benchmarks?)\/|\.(?:test|spec|stories)\.\w+$|_test\.go$|(?:^|\/)test_[^/]+\.py$/i;
+
+/**
+ * True when the file also treats the variable as optional: a presence check, `X && ...`, a ternary or a comparison.
+ * `if (!process.env.X) throw ...` is the opposite (the app refuses to start without it), so it does not count.
+ */
+function readOptionally(name: string, c: string): boolean {
+  const ref = String.raw`(?:process\??\.env\??\.${name}\b|process\.env\[\s*['"]${name}['"]\s*\]|import\.meta\.env\.${name}\b)`;
+  for (const m of c.matchAll(new RegExp(String.raw`(?:!\s*|\bif\s*\(\s*)${ref}|${ref}\s*(?:&&|\?(?!\.)|[!=]==?)`, 'g'))) {
+    if (/^!/.test(m[0]) && /\b(?:throw|process\.exit)\b/.test(c.slice(m.index!, m.index! + 160))) continue;
+    return true;
+  }
+  return false;
+}
+
 function envReads(path: string, c: string): { name: string; idx: number }[] {
   const out: { name: string; idx: number }[] = [];
-  const push = (name: string, idx: number) => { if (!PLATFORM_ENV.test(name)) out.push({ name, idx }); };
+  const push = (name: string, idx: number) => { if (!PLATFORM_ENV.test(name) && !PUBLIC_PLATFORM_ENV.test(name)) out.push({ name, idx }); };
+  if (NOT_DEPLOYED.test(path)) return out;
   if (JS.test(path)) {
-    for (const m of c.matchAll(/\b(?:process\.env|import\.meta\.env)(?:\.([A-Z][A-Z0-9_]*)|\[\s*['"]([A-Z][A-Z0-9_]*)['"]\s*\])/g)) {
+    for (const m of c.matchAll(/\b(?:process\??\.env\??|import\.meta\.env)(?:\.([A-Z][A-Z0-9_]*)|\[\s*['"]([A-Z][A-Z0-9_]*)['"]\s*\])/g)) {
+      if (readOptionally(m[1] ?? m[2], c)) continue;
       const after = c.slice(m.index! + m[0].length, m.index! + m[0].length + 6);
       if (/^\s*(?:\|\||\?\?|\?)/.test(after)) continue; // has a default
       const before = c.slice(Math.max(0, m.index! - 30), m.index!);
@@ -40,6 +60,9 @@ function envReads(path: string, c: string): { name: string; idx: number }[] {
     for (const m of c.matchAll(/\bos\.(?:Getenv|LookupEnv)\(\s*"([A-Z][A-Z0-9_]*)"\s*\)/g)) {
       const line = c.slice(m.index!, c.indexOf('\n', m.index!));
       if (/LookupEnv/.test(m[0]) || /==\s*""/.test(line)) continue; // checked by the caller
+      // `v := os.Getenv("X")` followed by `if v == "" { ... default ... }`
+      const assigned = c.slice(Math.max(0, m.index! - 60), m.index!).match(/(\w+)\s*:?=\s*$/)?.[1];
+      if (assigned && new RegExp(String.raw`\b${assigned}\s*[!=]=\s*""`).test(c.slice(m.index!))) continue;
       push(m[1], m.index!);
     }
   } else if (RB.test(path)) {
