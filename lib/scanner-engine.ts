@@ -35,6 +35,7 @@ const SAME_ISSUE_RULES: ReadonlyArray<readonly [number, number]> = [
   [29301, 9106], [29302, 15], [29302, 28920], [29303, 3021], [29303, 6043], [29303, 18104], [29307, 41], [29308, 16],
   [23004, 10102], // client-supplied price: SAAS-04 over the e-commerce duplicate
   [9704, 8143], // webhook handler without signature verification
+  [9704, 28002], // unsigned payment webhook: the missing signature check is the issue, not a missing user session
   [9502, 12605], // unpinned third-party GitHub Action
   [29623, 1208], [29632, 7135], [29636, 1211], // React logic rules prove the line: typeof window render, index key, double submit
 ];

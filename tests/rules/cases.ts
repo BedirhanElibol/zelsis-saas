@@ -469,8 +469,16 @@ export const RULE_CASES: RuleCase[] = [
     detects: f('app/api/chat/route.ts', "import OpenAI from 'openai';\nconst openai = new OpenAI();\nexport async function POST(req: Request) {\n  const { prompt } = await req.json();\n  return Response.json(await openai.chat.completions.create({ model: 'gpt-4o', max_tokens: 256, messages: [{ role: 'user', content: prompt }] }));\n}\n"),
     ignores: [
       { path: 'app/api/chat/route.ts', content: "import OpenAI from 'openai';\nimport { rateLimit } from '@/lib/rate-limit';\nconst openai = new OpenAI();\nexport async function POST(req: Request) {\n  await rateLimit(req);\n  const { prompt } = await req.json();\n  return Response.json(await openai.chat.completions.create({ model: 'gpt-4o', max_tokens: 256, messages: [{ role: 'user', content: prompt }] }));\n}\n" },
-      { path: 'app/api/login/route.ts', content: "export async function POST(req: Request) {\n  const body = await req.json();\n  return Response.json({ ok: Boolean(body.email) });\n}\n" }
+      { path: 'app/api/login/route.ts', content: "export async function POST(req: Request) {\n  const body = await req.json();\n  return Response.json({ ok: Boolean(body.email) });\n}\n" },
+      // Twilio's client.messages.create sends an SMS; it is not an AI call (SMS limits are XL-12's job)
+      { path: 'app/api/notify/route.ts', content: "import twilio from 'twilio';\nconst client = twilio(process.env.TWILIO_ACCOUNT_SID, process.env.TWILIO_AUTH_TOKEN);\nexport async function POST(req: Request) {\n  const { phone } = await req.json();\n  await client.messages.create({ to: phone, from: process.env.TWILIO_FROM, body: 'Your order shipped' });\n  return Response.json({ sent: true });\n}\n" }
     ]
+  },
+  {
+    ruleIds: [10402],
+    name: 'Anthropic messages.create endpoint without rate limiting is still an AI endpoint',
+    detects: f('app/api/assistant/route.ts', "import Anthropic from '@anthropic-ai/sdk';\nconst client = new Anthropic();\nexport async function POST(req: Request) {\n  const { prompt } = await req.json();\n  return Response.json(await client.messages.create({ model: 'claude-haiku-5-5', max_tokens: 256, messages: [{ role: 'user', content: prompt }] }));\n}\n"),
+    ignores: f('app/api/assistant/route.ts', "import Anthropic from '@anthropic-ai/sdk';\nimport { rateLimit } from '@/lib/rate-limit';\nconst client = new Anthropic();\nexport async function POST(req: Request) {\n  await rateLimit(req);\n  const { prompt } = await req.json();\n  return Response.json(await client.messages.create({ model: 'claude-haiku-5-5', max_tokens: 256, messages: [{ role: 'user', content: prompt }] }));\n}\n")
   },
 
   // ─── Logging ──────────────────────────────────────────────────────────

@@ -97,6 +97,13 @@ function functionBlocks(src: string, opts: { exportedOnly: boolean }): FnBlock[]
 // ─── Shared signals ───────────────────────────────────────────────────────────────────────
 
 /** Caller verification inside a handler body: provider calls, local auth helpers, signed webhooks, cron secrets. */
+/** Routes that run before the caller has a session: sign-up, sign-in, one-time codes, password reset, OAuth callback. */
+const PUBLIC_AUTH_ROUTE = /\/(?:api\/)?(?:auth|login|log-in|signin|sign-in|signup|sign-up|register|otp|magic-link|send-code|verify-code|forgot-password|reset-password|callback)(?:\/|$)/;
+/** Row or user creation through the service role. */
+const CREATE_ONLY = /\.(?:insert|upsert)\s*\(|\.auth\.admin\.(?:createUser|generateLink|inviteUserByEmail)\s*\(/;
+/** Anything that changes or removes existing data or users. */
+const DESTRUCTIVE_WRITE = /\.(?:update|delete|remove|move)\s*\(|\.auth\.admin\.(?:deleteUser|updateUserById|signOut|mfa\.deleteFactor)\s*\(|\.rpc\s*\(/;
+
 const CALLER_CHECK = new RegExp([
   AUTH_GUARD.source,
   WEBHOOK_VERIFY.source,
@@ -229,6 +236,9 @@ export function evaluateNextjsSupabaseRules(file: CodeFile, lines: string[], cle
         if (!/^(?:GET|POST|PUT|PATCH|DELETE|default|handler)$/.test(fn.name)) continue;
         const writeAt = privilegedWrite(fn.body, admins);
         if (writeAt === -1 || CALLER_CHECK.test(fn.body)) continue;
+        // Sign-up / sign-in / one-time-code routes are called before there is a session by design, and creating the
+        // row is their job. Updates and deletes there are still reported.
+        if (PUBLIC_AUTH_ROUTE.test(lowerPath) && CREATE_ONLY.test(fn.body) && !DESTRUCTIVE_WRITE.test(fn.body)) continue;
         hits.push({
           ruleId: 28002, code: 'NEXT-SB-02', severity: 'CRITICAL', type: 'SECURITY', category: 'Access Control',
           title: 'Route Handler Uses the Service-Role Client Without Verifying the Caller',

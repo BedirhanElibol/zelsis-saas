@@ -34,6 +34,19 @@ export const LLM_CALL = new RegExp([
   String.raw`ConverseCommand|InvokeModelCommand|mistral\.chat|cohere\.chat|ollama\.(?:chat|generate)`
 ].join('|'), 'i');
 
+/** LLM_CALL without the bare `messages.create`, which Twilio's SMS client shares with Anthropic's SDK. */
+const LLM_CALL_NOT_MESSAGES = new RegExp(LLM_CALL.source.replace(String.raw`|messages\.create`, ''), 'i');
+
+/**
+ * True when the code runs an LLM inference. `client.messages.create(...)` is also how Twilio sends an SMS, so it
+ * only counts as an LLM call when the file is not a Twilio file or also mentions Anthropic / Claude.
+ */
+export function callsLlm(code: string): boolean {
+  if (LLM_CALL_NOT_MESSAGES.test(code)) return true;
+  if (!/messages\.create/i.test(code)) return false;
+  return !/\btwilio\b/i.test(code) || /anthropic|claude/i.test(code);
+}
+
 /** Output-token caps across SDKs. */
 export const LLM_OUTPUT_LIMIT = /\b(?:max_tokens|max_completion_tokens|max_output_tokens|maxTokens|maxOutputTokens|max_tokens_to_sample|maxCompletionTokens|num_predict)\s*[:=]/i;
 
