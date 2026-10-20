@@ -403,6 +403,19 @@ def fetch():
     ignores: f('lib/sdk/models/api_meta.rb', 'class ApiMeta\n  def initialize(attributes = {})\n    attributes.each_key do |k|\n      fail ArgumentError, "`#{k}` is not a valid attribute in `ApiMeta`."\n    end\n    raise "A `disco` command named \'#{name}\' is already registered" if taken\n  end\nend\n'),
   },
   {
+    ruleIds: [13301], name: 'CRYPTO-01 hex salt in code vs a Django signing namespace salt',
+    detects: f('src/dtk/signing/websign.py', 'SALT = "A96D855A08C0A9707F8BEF0D9A527E4E"\n'),
+    ignores: f('src/sentry/integrations/slack/views/__init__.py', 'SALT = "sentry-slack-integration"\n'),
+  },
+  {
+    ruleIds: [6043], name: 'DB-PERF-43 interpolated query in a route vs CREATE DATABASE in a setup helper and a seed script',
+    detects: f('src/api/orders.ts', 'export async function get(client, id: string) {\n  return client.query(`SELECT * FROM orders WHERE id = ${id}`);\n}\n'),
+    ignores: [
+      ...f('packages/drizzle/src/postgres/createDatabase.ts', 'export async function create(managementClient, dbName: string) {\n  await managementClient.query(`CREATE DATABASE "${dbName}"`);\n}\n'),
+      ...f('server/src/scripts/seed-stats.ts', 'export async function run(client, table: string) {\n  await client.query(`DELETE FROM ${table}`);\n}\n'),
+    ],
+  },
+  {
     ruleIds: [3021], name: 'INFRA-21 multi-line query with an interpolated id vs a migration and a confirm message',
     detects: f('src/repositories/user.repository.ts', 'export async function findUser(pool, id: string) {\n  return pool.query(`\n    SELECT id, email\n    FROM users\n    WHERE id = ${id}\n  `);\n}\n'),
     ignores: [

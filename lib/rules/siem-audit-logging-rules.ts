@@ -30,7 +30,9 @@ export function evaluateSiemAuditLoggingRules(file: CodeFile, lines: string[], c
             .replace(/'[^'\n]*'|"[^"\n]*"/g, '""');
         return SENSITIVE_VALUE.test(args);
     });
-    if (logsSensitiveValue(cleanContent) && !/logger\./i.test(cleanContent) && !/sanitizeLog/i.test(cleanContent)) {
+    // Docs, API collections (Postman JSON) and dev scripts that print a seeded test password do not log user data
+    const notAppCode = /\.(?:json|mdx?|txt|html)$/i.test(file.path) || /(?:^|\/)(?:scripts?|docs?|bin)\//i.test(file.path.replace(/\\/g, '/'));
+    if (!notAppCode && logsSensitiveValue(cleanContent) && !/logger\./i.test(cleanContent) && !/sanitizeLog/i.test(cleanContent)) {
         const matchLineIdx = lines.findIndex(l => !/^\s*(?:\/\/|--|#|\*)/.test(l) && logsSensitiveValue(l));
         const lineNum = matchLineIdx !== -1 ? matchLineIdx + 1 : 1;
         findings.push({

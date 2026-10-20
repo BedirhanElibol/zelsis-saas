@@ -33,7 +33,7 @@ export async function yieldToMain(): Promise<void> {
 export function isTestFixturePath(path: string): boolean {
   const p = path.toLowerCase().replace(/\\/g, '/');
   // examples / samples / demos: sample apps shipped with a library, not the product itself
-  return /(?:^|\/)(?:tests?|unittests?|testing|testdata|__tests__|__mocks__|__fixtures__|fixtures?|e2e|cypress|spec|seeds?|examples?|samples?|demos?)\//.test(p) ||
+  return /(?:^|\/)(?:tests?|unittests?|testing|testdata|testutils?|__tests__|__mocks__|__fixtures__|fixtures?|e2e|cypress|spec|seeds?|examples?|samples?|demos?)\//.test(p) ||
     /\.(?:test|spec|e2e)\.[cm]?[jt]sx?$/.test(p) ||
     /(?:^|\/)(?:test_[^/]+|tests|conftest)\.py$|_test\.(?:py|go)$|_spec\.rb$|Tests?\.(?:java|cs|kt)$/.test(p);
 }
