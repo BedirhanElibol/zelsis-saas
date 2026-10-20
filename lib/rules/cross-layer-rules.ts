@@ -7,7 +7,7 @@
 import type { Finding } from '@/data/schema';
 import type { CodeFile } from '../scanner/types';
 import { emptyRepoContext, type RepoContext } from '../scanner/repo-context';
-import { parseSize } from '../scanner/infra-facts';
+import { DOWN_MIGRATION, parseSize } from '../scanner/infra-facts';
 import { SKIP, lineAt } from './logic-gemini-rules';
 
 interface Hit { ruleId: number; code: string; title: string; severity: Finding['severity']; lineIdx: number; why: string; fix: string; type: Finding['type']; category: string }
@@ -405,6 +405,43 @@ function checkTenantFilter(path: string, c: string, add: Add) {
 }
 
 // ---------------------------------------------------------------------------------------------------------------
+// XL-15: a cascading foreign key (ON DELETE CASCADE / SET NULL) on a column no migration indexes. Postgres does not
+// index foreign keys by itself, so deleting a parent row scans the whole child table. Indexes from every migration in
+// the repo count (repo-wide index facts), including primary keys, UNIQUE constraints and composite indexes that start
+// with the column. Same check as Supabase's "unindexed foreign keys" advisor, before the migration ships.
+const sqlTable = (name: string) => name.replace(/"/g, '').toLowerCase().split('.').pop() ?? '';
+
+function checkCascadeForeignKeyIndex(path: string, c: string, ctx: RepoContext, add: Add) {
+  if (!/\.sql$/i.test(path) || DOWN_MIGRATION.test(path)) return;
+  const indexed =(table: string, col: string) => (ctx.infra.indexedColumns.get(table) ?? []).some((cols) => cols[0] === col);
+  const fks: { table: string; col: string; idx: number }[] = [];
+  for (const t of c.matchAll(/CREATE\s+TABLE\s+(?:IF\s+NOT\s+EXISTS\s+)?([\w."]+)\s*\(([\s\S]*?)\);/gi)) {
+    const table = sqlTable(t[1]);
+    const bodyStart = t.index! + t[0].indexOf('(') + 1;
+    // Inline: user_id uuid not null references auth.users (id) on delete cascade
+    for (const m of t[2].matchAll(/^\s*"?(\w+)"?\s+[\w ()]+?\bREFERENCES\s+[\w."]+(?:\s*\([^)]*\))?[^,\n]*?\bON\s+DELETE\s+(?:CASCADE|SET\s+NULL)/gim)) {
+      fks.push({ table, col: m[1].toLowerCase(), idx: bodyStart + m.index! });
+    }
+    // Table level: foreign key (team_id) references teams (id) on delete cascade
+    for (const m of t[2].matchAll(/FOREIGN\s+KEY\s*\(\s*"?(\w+)"?\s*\)\s*REFERENCES\s+[\w."]+(?:\s*\([^)]*\))?[^,]*?\bON\s+DELETE\s+(?:CASCADE|SET\s+NULL)/gi)) {
+      fks.push({ table, col: m[1].toLowerCase(), idx: bodyStart + m.index! });
+    }
+  }
+  for (const m of c.matchAll(/ALTER\s+TABLE\s+(?:ONLY\s+)?([\w."]+)\s+ADD\s+(?:CONSTRAINT\s+[\w"]+\s+)?FOREIGN\s+KEY\s*\(\s*"?(\w+)"?\s*\)\s*REFERENCES\s+[\w."]+(?:\s*\([^)]*\))?[^;]*?\bON\s+DELETE\s+(?:CASCADE|SET\s+NULL)/gi)) {
+    fks.push({ table: sqlTable(m[1]), col: m[2].toLowerCase(), idx: m.index! });
+  }
+  for (const fk of fks) {
+    if (/^(?:id|constraint|primary|foreign|unique|check)$/i.test(fk.col) || indexed(fk.table, fk.col)) continue;
+    // A later migration renamed the column or the table: the old name no longer exists, so its index status is moot
+    if (ctx.infra.renamedAway.has(fk.table) || ctx.infra.renamedAway.has(`${fk.table}.${fk.col}`)) continue;
+    add({ ruleId: 30315, code: 'XL-15', severity: 'LOW', lineIdx: lineAt(c, fk.idx), type: 'INFRA_DATABASE', category: 'Schema Optimization',
+      title: `${fk.table}.${fk.col} Cascades on Delete but No Migration Indexes It`,
+      why: `Postgres does not index foreign key columns on its own. When a parent row is deleted, the database looks for matching ${fk.table} rows by ${fk.col}; without an index that is a full scan of ${fk.table}, which gets slow and holds locks as the table grows.`,
+      fix: `Add an index in a migration: CREATE INDEX ON ${fk.table} (${fk.col});` });
+  }
+}
+
+// ---------------------------------------------------------------------------------------------------------------
 export function evaluateCrossLayerRules(file: CodeFile, lines: string[], cleanContent: string, findingCounter: {
   count: number;
 }, context: RepoContext = emptyRepoContext()): { findings: Finding[]; logs: string[] } {
@@ -429,6 +466,7 @@ export function evaluateCrossLayerRules(file: CodeFile, lines: string[], cleanCo
   checkWebhookDedupe(path, c, add);
   checkSmsRateLimit(path, c, add);
   checkTenantFilter(path, c, add);
+  checkCascadeForeignKeyIndex(path, c, context, add);
 
   const raw = (file.content || '').split('\n');
   const ts = new Date().toLocaleTimeString();
