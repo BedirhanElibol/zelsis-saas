@@ -3,6 +3,7 @@
  * - middleware.ts / proxy.ts authenticates the route (config.matcher, Clerk route matchers, skipped prefixes);
  * - the handler calls an imported helper that authenticates (requireUser() in lib/auth.ts calls auth()).
  * A guarded finding is dropped and the reason is kept, so the report can say what was verified.
+ * - the webhook handler hands the payload to an imported module that verifies the signature.
  * Only ever removes findings of the rules below; everything else passes through unchanged.
  */
 import type { CrossFileAuth } from './ast/cross-file';
@@ -13,6 +14,13 @@ export const ROUTE_AUTH_RULES: ReadonlySet<number> = new Set([
   15, // Unauthenticated API mutation route handler
   23006, // SAAS-06: cron endpoint without a secret check
   28002, // NEXT-SB-02: route handler writes with the service-role client without verifying the caller
+  8143, // ZERO-AUTH-43: a route that signs the user in is a webhook settings screen, not a third-party receiver
+]);
+
+/** Webhook rules cleared when the handler passes the payload to an imported module that verifies the signature. */
+export const WEBHOOK_VERIFY_RULES: ReadonlySet<number> = new Set([
+  9704, // FINTECH-04: payment webhook without signature verification
+  8143, // ZERO-AUTH-43: webhook receiver without identity verification
 ]);
 
 /**
@@ -48,8 +56,28 @@ export function calledAuthHelper(filePath: string, content: string, cross: Cross
   return null;
 }
 
+const DEFAULT_IMPORT_RE = /import\s+([A-Za-z_$][\w$]*)\s*(?:,\s*\{[^}]*\})?\s*from\s*['"]([^'"]+)['"]/g;
+
+/** An imported binding from a module that verifies webhook signatures, called here (BillingService.handleWebhook(body, sig)). */
+export function calledWebhookVerifier(filePath: string, content: string, cross: CrossFileAuth): { name: string; from: string } | null {
+  for (const re of [IMPORT_RE, DEFAULT_IMPORT_RE]) {
+    for (const m of content.matchAll(re)) {
+      if (!resolveImport(filePath, m[2]).some((k) => cross.webhookVerifiers.has(k))) continue;
+      const names = re === IMPORT_RE ? m[1].split(',').map((p) => p.trim().split(/\s+as\s+/).pop()!.trim()) : [m[1]];
+      const rest = content.slice(m.index! + m[0].length);
+      const local = names.find((n) => n && new RegExp(String.raw`\b${n.replace(/\$/g, '\\$')}\s*(?:\.\s*\w+\s*)?\(`).test(rest));
+      if (local) return { name: local, from: m[2] };
+    }
+  }
+  return null;
+}
+
 /** Why this route-level finding is guarded elsewhere, or null when nothing was found. */
 export function guardElsewhere(ruleId: number, filePath: string, content: string, cross: CrossFileAuth): string | null {
+  if (WEBHOOK_VERIFY_RULES.has(ruleId)) {
+    const verifier = calledWebhookVerifier(filePath, content, cross);
+    if (verifier) return `the handler passes the request to ${verifier.name} from ${verifier.from}, which verifies the webhook signature`;
+  }
   const routeRule = ROUTE_AUTH_RULES.has(ruleId);
   if (!routeRule && !HELPER_AUTH_RULES.has(ruleId)) return null;
   const route = routePathOf(filePath);

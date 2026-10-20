@@ -4,7 +4,7 @@
  */
 import { Finding } from "@/data/schema";
 import { CodeFile } from "../scanner-engine";
-import { PAYMENT_SDK, REQUEST_BODY, WEBHOOK_VERIFY } from './shared/stack-signals';
+import { CALLER_AUTH, PAYMENT_SDK, REQUEST_BODY, WEBHOOK_VERIFY } from './shared/stack-signals';
 import { locateMatchLine } from './shared/locate';
 export interface FintechComplianceRuleResult {
     findings: Finding[];
@@ -121,7 +121,7 @@ export function evaluateFintechComplianceRules(file: CodeFile, lines: string[], 
     }
     // FINTECH-04: Insecure Webhook Signature Verification on Payment Callback
     const isWebhookCode = lowerPath.includes('webhook') || /\.(?:post|all)\s*\(\s*['"`][^'"`]*webhook/i.test(cleanContent);
-    if (isWebhookCode && (PAYMENT_SDK.test(lowerPath + cleanContent) || /(?:payment|billing|checkout|subscription|invoice|order)/i.test(lowerPath + cleanContent)) && REQUEST_BODY.test(cleanContent) && !WEBHOOK_VERIFY.test(cleanContent)) {
+    if (isWebhookCode && (PAYMENT_SDK.test(lowerPath + cleanContent) || /(?:payment|billing|checkout|subscription|invoice|order)/i.test(lowerPath + cleanContent)) && REQUEST_BODY.test(cleanContent) && !WEBHOOK_VERIFY.test(cleanContent) && !CALLER_AUTH.test(cleanContent)) {
         const matchLineIdx = locateMatchLine(lines, [PAYMENT_SDK, /(?:payment|billing|checkout|subscription|invoice|order)/i, REQUEST_BODY], l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('*'));
         const lineNum = matchLineIdx !== -1 ? matchLineIdx + 1 : 1;
         findings.push({

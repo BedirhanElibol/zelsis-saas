@@ -7,6 +7,7 @@
  */
 import type { CodeFile } from '../types';
 import { isParsablePath, parseSource } from './parse';
+import { WEBHOOK_VERIFY } from '../../rules/shared/stack-signals';
 import { calleeName, isCall, isFunction, isMember, memberPath, unwrap, walk, type AstNode } from './walk';
 import { AUTH_FN } from './flow';
 import { isPinnedSpec, isVulnerableNext } from '../next-version';
@@ -16,6 +17,8 @@ export interface CrossFileAuth {
   authHelpers: Map<string, Set<string>>;
   /** Route path predicate from middleware.ts, or null when no middleware authenticates. */
   middleware: MiddlewareAuth | null;
+  /** Module keys that verify a webhook signature (lib/services/billing.js calls stripe.webhooks.constructEvent). */
+  webhookVerifiers: Set<string>;
 }
 
 export interface MiddlewareAuth {
@@ -28,7 +31,7 @@ export interface MiddlewareAuth {
   skipPrefixes: string[];
 }
 
-export const emptyCrossFileAuth = (): CrossFileAuth => ({ authHelpers: new Map(), middleware: null });
+export const emptyCrossFileAuth = (): CrossFileAuth => ({ authHelpers: new Map(), middleware: null, webhookVerifiers: new Set() });
 
 const AUTHISH = /auth|session|user|token|jwt|clerk|supabase|lucia|kinde|iron/i;
 const SKIP_PATH = /(?:^|\/)(?:__tests__|tests?|spec|e2e|cypress|playwright|stories|examples?|fixtures?)\/|\.(?:test|spec|stories)\.[cm]?[jt]sx?$/;
@@ -265,5 +268,6 @@ function middlewareBypassable(files: CodeFile[]): boolean {
 }
 
 export function buildCrossFileAuth(files: CodeFile[]): CrossFileAuth {
-  return { authHelpers: buildAuthHelperIndex(files), middleware: middlewareBypassable(files) ? null : readMiddlewareAuth(files) };
+  const webhookVerifiers = new Set(files.filter((f) => isParsablePath(f.path) && WEBHOOK_VERIFY.test(f.content)).map((f) => moduleKey(f.path)));
+  return { authHelpers: buildAuthHelperIndex(files), middleware: middlewareBypassable(files) ? null : readMiddlewareAuth(files), webhookVerifiers };
 }

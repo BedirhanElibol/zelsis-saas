@@ -396,5 +396,51 @@ def fetch():
     return requests.get(url, timeout=5).text
 `),
     ],
+  },
+  {
+    ruleIds: [9704], name: 'FINTECH-04 Stripe webhook using the body unverified vs one handing the signature to a service that calls constructEvent',
+    detects: f('src/app/api/webhook/stripe/route.js', `import { NextResponse } from "next/server";
+import { prisma } from "@/lib/prisma";
+
+export async function POST(req) {
+  const event = await req.json();
+  if (event.type === "checkout.session.completed") {
+    await prisma.subscription.update({ where: { id: event.data.object.metadata.subId }, data: { status: "active" } });
+  }
+  return NextResponse.json({ received: true });
+}
+`),
+    ignores: [
+      ...f('src/app/api/webhook/stripe/route.js', `import { NextResponse } from "next/server";
+import { headers } from "next/headers";
+import { BillingService } from "@/lib/services/billing";
+
+export async function POST(req) {
+  const body = await req.text();
+  const signature = (await headers()).get("stripe-signature");
+  const result = await BillingService.handleWebhook(body, signature);
+  return NextResponse.json(result);
+}
+`),
+      ...f('src/lib/services/billing.js', `import Stripe from "stripe";
+const stripe = new Stripe(process.env.STRIPE_SECRET_KEY);
+
+export const BillingService = {
+  async handleWebhook(body, signature) {
+    const event = stripe.webhooks.constructEvent(body, signature, process.env.STRIPE_WEBHOOK_SECRET);
+    return { type: event.type };
+  },
+};
+`),
+      ...f('src/app/api/v1/webhooks/route.ts', `import { requireApiKey } from '@/lib/auth/api-context';
+
+export async function POST(request: Request) {
+  const ctx = await requireApiKey(request, 'webhooks:manage');
+  const body = await request.json();
+  const { data } = await ctx.supabase.from('webhook_endpoints').insert({ url: body.url, events: ['invoice.paid'] }).select().single();
+  return Response.json(data);
+}
+`),
+    ],
   }
 ];
