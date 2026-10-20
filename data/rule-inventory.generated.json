@@ -1,8 +1,8 @@
 {
  "summary": {
-  "implementedRules": 1299,
-  "testedRules": 1290,
-  "preciseLocationRules": 1296,
+  "implementedRules": 1300,
+  "testedRules": 1291,
+  "preciseLocationRules": 1297,
   "catalogEntries": 1922,
   "catalogOnlyNotImplemented": 1396,
   "catalogPlaceholderMetadata": 1810
@@ -10772,6 +10772,16 @@
    "title": "Request Input Builds a File Path (Go)",
    "severity": "HIGH",
    "source": "lib/rules/py-go-flow-rules.ts",
+   "preciseLocation": true,
+   "tested": true,
+   "inCatalog": false
+  },
+  {
+   "ruleId": 29507,
+   "code": "FLOW-07",
+   "title": "${sink.model} Loaded by the Id in the URL Without an Ownership Check (Python)",
+   "severity": "HIGH",
+   "source": "lib/rules/iag-python-rules.ts",
    "preciseLocation": true,
    "tested": true,
    "inCatalog": false
