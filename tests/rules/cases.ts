@@ -391,6 +391,16 @@ export const RULE_CASES: RuleCase[] = [
     ignores: f('lib/calc.ts', 'export function calc(input: string) {\n  return JSON.parse(input);\n}\n')
   },
   {
+    ruleIds: [32],
+    name: 'Python eval on input vs Redis Lua eval, MLX eval and a Java method named eval',
+    detects: f('app/calc.py', 'def calc(expr):\n    return eval(expr)\n'),
+    ignores: [
+      ...f('app/locks.py', 'async def acquire(redis, key, token):\n    return await redis.eval(ACQUIRE_LUA, 1, key, token)\n'),
+      ...f('app/model.py', 'import mlx.core as mx\n\ndef step(x):\n    mx.eval(x)\n    return x\n'),
+      ...f('src/main/java/udtf/Labels.java', 'public class Labels {\n  public void eval(Integer id, String labels) {\n    collect(labels);\n  }\n}\n'),
+    ],
+  },
+  {
     ruleIds: [33],
     name: 'Command injection via shell exec',
     detects: f('app/api/ping/route.ts', "import { exec } from 'child_process';\nexport async function GET(req: Request) {\n  const host = new URL(req.url).searchParams.get('host');\n  exec(`ping -c 1 ${host}`);\n  return new Response('ok');\n}\n"),
@@ -419,6 +429,12 @@ export const RULE_CASES: RuleCase[] = [
     name: 'Unsanitized innerHTML',
     detects: f('components/Post.tsx', 'export const Post = ({ html }: { html: string }) => <div dangerouslySetInnerHTML={{ __html: html }} />;\n'),
     ignores: f('app/layout.tsx', 'const ld = { "@context": "https://schema.org" };\nexport const Ld = () => <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(ld) }} />;\n')
+  },
+  {
+    ruleIds: [16],
+    name: 'innerHTML set from a message vs from an icon helper call',
+    detects: f('src/views/inbox.js', 'export function show(el, message) {\n  el.innerHTML = message.body;\n}\n'),
+    ignores: f('src/views/selfsign.js', "import { icon } from './icons.js';\nexport function done(btn) {\n  btn.innerHTML = icon('check', 16, 2.4);\n}\n"),
   },
 
   // ─── Auth & crypto ────────────────────────────────────────────────────

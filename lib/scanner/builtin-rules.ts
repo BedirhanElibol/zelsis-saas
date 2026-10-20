@@ -122,7 +122,7 @@ export function evaluateBuiltinRules(ctx: BuiltinRuleContext): void {
   const innerHtmlLineIdx = escapesInterpolations ? -1 : lines.findIndex(l => !l.trim().startsWith('//') && !l.trim().startsWith('/*') && (l.includes('dangerouslySetInnerHTML') || l.includes('innerHTML'))
     && !/innerHTML\s*=\s*(?:(['"])(?:\\.|(?!\1).)*\1|`[^`$]*`)\s*;?\s*$/.test(l)
     // an icon / svg constant (button.innerHTML = icon) is markup the app owns
-    && !/innerHTML\s*=\s*[\w.]*(?:icon|svg|spinner|logo|glyph)\w*\s*;?\s*$/i.test(l));
+    && !/innerHTML\s*=\s*[\w.]*(?:icon|svg|spinner|logo|glyph)\w*(?:\s*\([^)]*\))?\s*;?\s*$/i.test(l));
   if (!isSafeMdxOrJsonLd && (cleanContent.includes('dangerouslySetInnerHTML') || cleanContent.includes('innerHTML =')) && innerHtmlLineIdx !== -1) {
     const matchLineIdx = innerHtmlLineIdx;
     const lineNum = matchLineIdx !== -1 ? matchLineIdx + 1 : 1;

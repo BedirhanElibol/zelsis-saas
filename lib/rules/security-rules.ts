@@ -101,7 +101,7 @@ export function evaluateSecurityRules(file: CodeFile, lines: string[], cleanCont
     const escapesInterpolations = /\$\{\s*(?:esc|escape\w*|sanitize\w*|DOMPurify\.sanitize|encode\w*|h)\s*\(/i.test(cleanContent);
     const innerHtmlLineIdx = escapesInterpolations ? -1 : lines.findIndex(l => !l.trim().startsWith('//') && !l.trim().startsWith('/*') && (l.includes('dangerouslySetInnerHTML') || l.includes('innerHTML'))
         && !/innerHTML\s*=\s*(?:(['"])(?:\\.|(?!\1).)*\1|`[^`$]*`)\s*;?\s*$/.test(l)
-        && !/innerHTML\s*=\s*[\w.]*(?:icon|svg|spinner|logo|glyph)\w*\s*;?\s*$/i.test(l));
+        && !/innerHTML\s*=\s*[\w.]*(?:icon|svg|spinner|logo|glyph)\w*(?:\s*\([^)]*\))?\s*;?\s*$/i.test(l));
     if (!isSafeMdxOrJsonLd && (cleanContent.includes('dangerouslySetInnerHTML') || cleanContent.includes('innerHTML =')) && innerHtmlLineIdx !== -1) {
         const matchLineIdx = innerHtmlLineIdx;
         const lineNum = matchLineIdx !== -1 ? matchLineIdx + 1 : 1;
@@ -772,8 +772,12 @@ export function evaluateSecurityRules(file: CodeFile, lines: string[], cleanCont
     // weak hashes, Math.random, insecure cookies, open redirect, $where, secrets in config.
     // ==============================================================================
     // Rule 32 / SEC-32: Dynamic Code Execution / Remote Code Execution (eval, Function)
-    if (isCodeFile && (cleanContent.includes('eval(') || cleanContent.includes('new Function('))) {
-        const evalRegex = /\beval\s*\([^)]+\)|\bnew\s+Function\s*\([^)]+\)/;
+    // Only languages with a global eval / Function constructor; Java, Go and the like have none, and redis.eval(),
+    // mx.eval() or a method named eval are not code execution
+    const hasGlobalEval = !/\.(?:java|kt|kts|scala|cs|go|rs|swift|c|cc|cpp|h|hpp|dart)$/i.test(file.path);
+    if (isCodeFile && hasGlobalEval && (cleanContent.includes('eval(') || cleanContent.includes('new Function('))) {
+        // mathjs.eval() and vm-style receivers still count; Redis Lua (redis/client.eval) and tensor libraries (mx.eval) do not
+        const evalRegex = /(?<![\w$])(?<!(?:redis|client|conn|connection|pipe|pipeline|mx|mlx|model|net|torch|tf)\.)(?<!\b(?:def|function|fun|func|void)\s+)eval\s*\([^)]+\)|\bnew\s+Function\s*\([^)]+\)/;
         if (evalRegex.test(cleanContent)) {
             const matchLineIdx = lines.findIndex(l => !l.trim().startsWith('//') && !l.trim().startsWith('*') && evalRegex.test(l));
             const lineNum = matchLineIdx !== -1 ? matchLineIdx + 1 : 1;
