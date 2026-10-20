@@ -4,7 +4,7 @@
  */
 import { Finding } from '@/data/schema';
 import { CodeFile } from '../scanner-engine';
-import { RATE_LIMIT_GUARD, REQUEST_BODY, SERVER_HANDLER, WEBHOOK_VERIFY, isOutboundWebhookSender } from './shared/stack-signals';
+import { CALLER_AUTH, RATE_LIMIT_GUARD, REQUEST_BODY, SERVER_HANDLER, WEBHOOK_VERIFY, isOutboundWebhookSender } from './shared/stack-signals';
 import { locateMatchLine } from './shared/locate';
 /** HMAC / signature compared with a plain equality operator (timing side channel). */
 const SIGNATURE_PLAIN_EQ = /\b\w*(?:signature|hmac|digest)\w*\s*(?:===|!==)\s*\w*(?:signature|hmac|digest|expected|computed)\w*\b(?!\s*[.(\[])/i;
@@ -481,7 +481,7 @@ export function evaluateZeroTrustRules(file: CodeFile, lines: string[], cleanCon
     const isWebhookHandler = (/webhook/i.test(file.path) && /\.(?:[cm]?[jt]sx?|py|rb|php)$/i.test(file.path) && !isUiComponent && SERVER_HANDLER.test(cleanContent)) ||
         /\.(?:post|all)\s*\(\s*['"`][^'"`]*webhook/i.test(cleanContent);
     // The handler must consume the event payload; the finding points at the handler declaration
-    if (isWebhookHandler && REQUEST_BODY.test(cleanContent) && !isOutboundWebhookSender(cleanContent) && !(WEBHOOK_VERIFY.test(cleanContent) && /secret|signature/i.test(cleanContent))) {
+    if (isWebhookHandler && REQUEST_BODY.test(cleanContent) && !isOutboundWebhookSender(cleanContent) && !CALLER_AUTH.test(cleanContent) &&!(WEBHOOK_VERIFY.test(cleanContent) && /secret|signature/i.test(cleanContent))) {
         const matchLineIdx = locateMatchLine(lines, [/\.(?:post|all)\s*\(\s*['"`][^'"`]*webhook/i, SERVER_HANDLER], l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('*'));
         const lineNum = matchLineIdx !== -1 ? matchLineIdx + 1 : 1;
         findings.push({

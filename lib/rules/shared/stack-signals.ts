@@ -25,6 +25,12 @@ export const WEBHOOK_VERIFY = new RegExp([
   String.raw`createHmac\s*\(|timingSafeEqual\s*\(|crypto\.subtle\.verify\s*\(|hmac\.compare_digest|hmac\.new\s*\(`
 ].join('|'), 'i');
 
+/**
+ * The handler signs in its caller (session, API key, team access). Payment providers and other webhook senders
+ * carry no user session, so such a route manages webhook settings rather than receiving events.
+ */
+export const CALLER_AUTH = /\brequire(?:ApiKey|User|Auth|Session|Permissions?|TeamMember|Admin)\s*\(|\bgetServerSession\s*\(|\bauth\s*\(\s*\)|\bthrowIfNo\w*Access\s*\(|\bcurrentUser\s*\(|@login_required|before_action\s+:authenticate_user!|\bIsAuthenticated\b/;
+
 /** Calls that run an LLM inference across SDKs. */
 export const LLM_CALL = new RegExp([
   String.raw`chat\.completions\.create|\.completions\.create|responses\.create|messages\.create`, // OpenAI / Anthropic style
