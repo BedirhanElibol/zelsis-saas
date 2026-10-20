@@ -558,7 +558,8 @@ export function evaluateMissedVulnsRules(file: CodeFile, lines: string[], cleanC
 
   if (isJs) {
     // GAP-34: service role key read in a 'use client' module (bundled for the browser)
-    if (/^\s*(?:\/\/[^\n]*\n\s*|\/\*[\s\S]*?\*\/\s*)*['"]use client['"]/.test(file.content)) {
+    // Each block comment ends at its first */ (no lazy [\s\S]*?), so files full of /** */ cannot backtrack exponentially
+    if (/^\s*(?:\/\/[^\n]*\n\s*|\/\*(?:[^*]|\*(?!\/))*\*\/\s*)*['"]use client['"]/.test(file.content)) {
       const i = lines.findIndex((l) => !isComment(l) && /process\.env\.[A-Z_]*SERVICE_ROLE[A-Z_]*/.test(l));
       add({ ruleId: 28834, code: 'GAP-34', severity: 'CRITICAL', category: 'Secrets Management', lineIdx: i,
         title: "Supabase Service Role Key Used in a 'use client' Module",
