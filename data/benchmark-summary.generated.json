@@ -1,5 +1,5 @@
 {
- "generatedAt": "2026-10-19",
+ "generatedAt": "2026-10-20",
  "summary": {
   "cleanRepos": 17,
   "cleanReposGateFailed": 5,
@@ -19,7 +19,7 @@
    "kind": "clean",
    "stack": "Next.js + Supabase + Stripe",
    "files": 67,
-   "scanMs": 602,
+   "scanMs": 1307,
    "gate": "WARNING",
    "critical": 0,
    "high": 3
@@ -30,7 +30,7 @@
    "kind": "clean",
    "stack": "Next.js + Prisma + Stripe + NextAuth",
    "files": 140,
-   "scanMs": 626,
+   "scanMs": 1295,
    "gate": "WARNING",
    "critical": 0,
    "high": 1
@@ -41,7 +41,7 @@
    "kind": "clean",
    "stack": "FastAPI + React",
    "files": 204,
-   "scanMs": 923,
+   "scanMs": 1853,
    "gate": "WARNING",
    "critical": 0,
    "high": 1
@@ -52,10 +52,17 @@
    "kind": "clean",
    "stack": "Express + Prisma",
    "files": 58,
-   "scanMs": 171,
+   "scanMs": 329,
    "gate": "FAILED",
    "critical": 2,
-   "high": 1
+   "high": 1,
+   "blockers": [
+    {
+     "ruleId": 14,
+     "title": "Insecure Hardcoded Fallback for Cryptographic Session / JWT Secret",
+     "reviewed": "node-express realworld: process.env.JWT_SECRET || 'superSecret' signs tokens with a guessable key when unset"
+    }
+   ]
   },
   {
    "repo": "gothinkster/golang-gin-realworld-example-app",
@@ -63,7 +70,7 @@
    "kind": "clean",
    "stack": "Go + Gin",
    "files": 27,
-   "scanMs": 136,
+   "scanMs": 313,
    "gate": "PASSED",
    "critical": 0,
    "high": 0
@@ -74,7 +81,7 @@
    "kind": "clean",
    "stack": "Laravel",
    "files": 40,
-   "scanMs": 74,
+   "scanMs": 142,
    "gate": "PASSED",
    "critical": 0,
    "high": 0
@@ -85,7 +92,7 @@
    "kind": "clean",
    "stack": "Remix/React Router + Prisma + tRPC (production SaaS)",
    "files": 2481,
-   "scanMs": 17159,
+   "scanMs": 38488,
    "gate": "WARNING",
    "critical": 0,
    "high": 5
@@ -96,10 +103,17 @@
    "kind": "clean",
    "stack": "TypeScript SDK",
    "files": 471,
-   "scanMs": 3409,
+   "scanMs": 7817,
    "gate": "FAILED",
    "critical": 1,
-   "high": 1
+   "high": 1,
+   "blockers": [
+    {
+     "ruleId": 3,
+     "title": "Permissive Row Level Security (RLS) Policy (USING true)",
+     "reviewed": "USING (true) policy in supabase-js example migration: genuinely public table"
+    }
+   ]
   },
   {
    "repo": "OWASP/NodeGoat",
@@ -107,7 +121,7 @@
    "kind": "vulnerable",
    "stack": "Express + MongoDB",
    "files": 87,
-   "scanMs": 258,
+   "scanMs": 522,
    "gate": "FAILED",
    "critical": 6,
    "high": 4
@@ -118,7 +132,7 @@
    "kind": "vulnerable",
    "stack": "Express + Sequelize",
    "files": 21,
-   "scanMs": 71,
+   "scanMs": 187,
    "gate": "FAILED",
    "critical": 6,
    "high": 3
@@ -129,7 +143,7 @@
    "kind": "vulnerable",
    "stack": "Express + Angular + Sequelize",
    "files": 962,
-   "scanMs": 6407,
+   "scanMs": 13851,
    "gate": "FAILED",
    "critical": 54,
    "high": 30
@@ -140,7 +154,7 @@
    "kind": "clean",
    "stack": "Java + Spring Boot",
    "files": 84,
-   "scanMs": 147,
+   "scanMs": 321,
    "gate": "WARNING",
    "critical": 0,
    "high": 1
@@ -151,7 +165,7 @@
    "kind": "clean",
    "stack": "C# + ASP.NET Core",
    "files": 350,
-   "scanMs": 562,
+   "scanMs": 1030,
    "gate": "WARNING",
    "critical": 0,
    "high": 2
@@ -162,7 +176,7 @@
    "kind": "clean",
    "stack": "Ruby on Rails (production service)",
    "files": 1698,
-   "scanMs": 3048,
+   "scanMs": 6238,
    "gate": "WARNING",
    "critical": 0,
    "high": 4
@@ -173,7 +187,7 @@
    "kind": "clean",
    "stack": "Python + Django (production site)",
    "files": 434,
-   "scanMs": 1765,
+   "scanMs": 3992,
    "gate": "WARNING",
    "critical": 0,
    "high": 1
@@ -184,7 +198,7 @@
    "kind": "vulnerable",
    "stack": "Java + Spring",
    "files": 635,
-   "scanMs": 1951,
+   "scanMs": 3589,
    "gate": "FAILED",
    "critical": 13,
    "high": 10
@@ -195,7 +209,7 @@
    "kind": "vulnerable",
    "stack": "Ruby on Rails",
    "files": 187,
-   "scanMs": 677,
+   "scanMs": 1238,
    "gate": "FAILED",
    "critical": 7,
    "high": 11
@@ -206,7 +220,7 @@
    "kind": "vulnerable",
    "stack": "PHP",
    "files": 195,
-   "scanMs": 385,
+   "scanMs": 751,
    "gate": "FAILED",
    "critical": 57,
    "high": 25
@@ -217,7 +231,7 @@
    "kind": "vulnerable",
    "stack": "Python + Django",
    "files": 217,
-   "scanMs": 515,
+   "scanMs": 1044,
    "gate": "FAILED",
    "critical": 13,
    "high": 28
@@ -228,7 +242,7 @@
    "kind": "vulnerable",
    "stack": "Python + aiohttp",
    "files": 30,
-   "scanMs": 771,
+   "scanMs": 1646,
    "gate": "FAILED",
    "critical": 2,
    "high": 3
@@ -239,10 +253,17 @@
    "kind": "clean",
    "stack": "Android (Java + Kotlin)",
    "files": 1161,
-   "scanMs": 4150,
+   "scanMs": 8434,
    "gate": "FAILED",
    "critical": 1,
-   "high": 0
+   "high": 0,
+   "blockers": [
+    {
+     "ruleId": 5015,
+     "title": "SEC-SECRET-15: Google Gemini / AI Studio API Key",
+     "reviewed": "NewPipe PoTokenWebView hardcodes a Google API key (AIza…, the YouTube web key, marked NOSONAR)"
+    }
+   ]
   },
   {
    "repo": "AntennaPod/AntennaPod",
@@ -250,10 +271,17 @@
    "kind": "clean",
    "stack": "Android (Java)",
    "files": 1143,
-   "scanMs": 3354,
+   "scanMs": 7139,
    "gate": "FAILED",
    "critical": 2,
-   "high": 5
+   "high": 5,
+   "blockers": [
+    {
+     "ruleId": 24101,
+     "title": "CORE-01: SQL Injection: Query Built From Dynamic Values",
+     "reviewed": "AntennaPod DBUpgrader concatenates a media file path into UPDATE … WHERE file_url='…', so a quote in the path breaks the query"
+    }
+   ]
   },
   {
    "repo": "mastodon/mastodon-ios",
@@ -261,7 +289,7 @@
    "kind": "clean",
    "stack": "iOS (Swift)",
    "files": 931,
-   "scanMs": 1890,
+   "scanMs": 3812,
    "gate": "PASSED",
    "critical": 0,
    "high": 0
@@ -272,7 +300,7 @@
    "kind": "vulnerable",
    "stack": "Android (Java)",
    "files": 59,
-   "scanMs": 82,
+   "scanMs": 176,
    "gate": "FAILED",
    "critical": 3,
    "high": 4
@@ -283,7 +311,7 @@
    "kind": "vulnerable",
    "stack": "Android (Java)",
    "files": 90,
-   "scanMs": 112,
+   "scanMs": 274,
    "gate": "WARNING",
    "critical": 0,
    "high": 3
@@ -294,7 +322,7 @@
    "kind": "vulnerable",
    "stack": "iOS (Swift)",
    "files": 129,
-   "scanMs": 306,
+   "scanMs": 576,
    "gate": "WARNING",
    "critical": 0,
    "high": 2
@@ -305,7 +333,7 @@
    "kind": "clean",
    "stack": "Flutter (Dart) + Rust",
    "files": 734,
-   "scanMs": 3233,
+   "scanMs": 6952,
    "gate": "WARNING",
    "critical": 0,
    "high": 3
@@ -316,10 +344,17 @@
    "kind": "clean",
    "stack": "Rust + Actix + Diesel + Postgres (production service)",
    "files": 1442,
-   "scanMs": 2666,
+   "scanMs": 5358,
    "gate": "FAILED",
    "critical": 2,
-   "high": 0
+   "high": 0,
+   "blockers": [
+    {
+     "ruleId": 9605,
+     "title": "RUST-05: SQL Injection via format! String Interpolation in Query",
+     "reviewed": "Lemmy builds SQL with format! (sql_query in scheduled_tasks, batch_execute in schema_setup) from interpolated table names, clauses and intervals; internal callers today, but nothing stops user input reaching them (flagged for review by design)"
+    }
+   ]
   }
  ],
  "flaws": [

@@ -1,5 +1,5 @@
 {
- "generatedAt": "2026-10-19",
+ "generatedAt": "2026-10-20",
  "corpus": [
   {
    "name": "vercel/nextjs-subscription-payments",
@@ -189,7 +189,7 @@
    "kind": "clean",
    "stack": "Next.js + Supabase + Stripe",
    "files": 67,
-   "scanMs": 602,
+   "scanMs": 1307,
    "gate": "WARNING",
    "score": 69,
    "critical": 0,
@@ -198,7 +198,8 @@
    "low": 2,
    "experimental": 0,
    "allHighCritical": 3,
-   "detectedFramework": "Next.js"
+   "detectedFramework": "Next.js",
+   "blockers": []
   },
   {
    "repo": "shadcn-ui/taxonomy",
@@ -206,7 +207,7 @@
    "kind": "clean",
    "stack": "Next.js + Prisma + Stripe + NextAuth",
    "files": 140,
-   "scanMs": 626,
+   "scanMs": 1295,
    "gate": "WARNING",
    "score": 88,
    "critical": 0,
@@ -215,7 +216,8 @@
    "low": 6,
    "experimental": 0,
    "allHighCritical": 1,
-   "detectedFramework": "Next.js"
+   "detectedFramework": "Next.js",
+   "blockers": []
   },
   {
    "repo": "fastapi/full-stack-fastapi-template",
@@ -223,7 +225,7 @@
    "kind": "clean",
    "stack": "FastAPI + React",
    "files": 204,
-   "scanMs": 923,
+   "scanMs": 1853,
    "gate": "WARNING",
    "score": 82,
    "critical": 0,
@@ -232,7 +234,8 @@
    "low": 6,
    "experimental": 0,
    "allHighCritical": 1,
-   "detectedFramework": "React"
+   "detectedFramework": "React",
+   "blockers": []
   },
   {
    "repo": "gothinkster/node-express-realworld-example-app",
@@ -240,7 +243,7 @@
    "kind": "clean",
    "stack": "Express + Prisma",
    "files": 58,
-   "scanMs": 171,
+   "scanMs": 329,
    "gate": "FAILED",
    "score": 35,
    "critical": 2,
@@ -249,7 +252,14 @@
    "low": 1,
    "experimental": 0,
    "allHighCritical": 3,
-   "detectedFramework": "Express"
+   "detectedFramework": "Express",
+   "blockers": [
+    {
+     "ruleId": 14,
+     "title": "Insecure Hardcoded Fallback for Cryptographic Session / JWT Secret",
+     "reviewed": "node-express realworld: process.env.JWT_SECRET || 'superSecret' signs tokens with a guessable key when unset"
+    }
+   ]
   },
   {
    "repo": "gothinkster/golang-gin-realworld-example-app",
@@ -257,7 +267,7 @@
    "kind": "clean",
    "stack": "Go + Gin",
    "files": 27,
-   "scanMs": 136,
+   "scanMs": 313,
    "gate": "PASSED",
    "score": 97,
    "critical": 0,
@@ -266,7 +276,8 @@
    "low": 0,
    "experimental": 0,
    "allHighCritical": 0,
-   "detectedFramework": null
+   "detectedFramework": null,
+   "blockers": []
   },
   {
    "repo": "laravel/laravel",
@@ -274,7 +285,7 @@
    "kind": "clean",
    "stack": "Laravel",
    "files": 40,
-   "scanMs": 74,
+   "scanMs": 142,
    "gate": "PASSED",
    "score": 100,
    "critical": 0,
@@ -283,7 +294,8 @@
    "low": 0,
    "experimental": 0,
    "allHighCritical": 0,
-   "detectedFramework": "Laravel"
+   "detectedFramework": "Laravel",
+   "blockers": []
   },
   {
    "repo": "documenso/documenso",
@@ -291,7 +303,7 @@
    "kind": "clean",
    "stack": "Remix/React Router + Prisma + tRPC (production SaaS)",
    "files": 2481,
-   "scanMs": 17159,
+   "scanMs": 38488,
    "gate": "WARNING",
    "score": 29,
    "critical": 0,
@@ -300,7 +312,8 @@
    "low": 165,
    "experimental": 0,
    "allHighCritical": 5,
-   "detectedFramework": "React"
+   "detectedFramework": "React",
+   "blockers": []
   },
   {
    "repo": "supabase/supabase-js",
@@ -308,7 +321,7 @@
    "kind": "clean",
    "stack": "TypeScript SDK",
    "files": 471,
-   "scanMs": 3409,
+   "scanMs": 7817,
    "gate": "FAILED",
    "score": 57,
    "critical": 1,
@@ -317,7 +330,14 @@
    "low": 14,
    "experimental": 0,
    "allHighCritical": 2,
-   "detectedFramework": "Next.js"
+   "detectedFramework": "Next.js",
+   "blockers": [
+    {
+     "ruleId": 3,
+     "title": "Permissive Row Level Security (RLS) Policy (USING true)",
+     "reviewed": "USING (true) policy in supabase-js example migration: genuinely public table"
+    }
+   ]
   },
   {
    "repo": "OWASP/NodeGoat",
@@ -325,7 +345,7 @@
    "kind": "vulnerable",
    "stack": "Express + MongoDB",
    "files": 87,
-   "scanMs": 258,
+   "scanMs": 522,
    "gate": "FAILED",
    "score": 0,
    "critical": 6,
@@ -334,7 +354,34 @@
    "low": 10,
    "experimental": 0,
    "allHighCritical": 10,
-   "detectedFramework": "Express"
+   "detectedFramework": "Express",
+   "blockers": [
+    {
+     "ruleId": 33,
+     "title": "Command Injection via Unsanitized Child Process Execution",
+     "reviewed": null
+    },
+    {
+     "ruleId": 3020,
+     "title": "MongoDB NoSQL Injection via $where JavaScript Evaluation or Raw Request Query Object",
+     "reviewed": null
+    },
+    {
+     "ruleId": 32,
+     "title": "Dynamic Code Execution (eval / Function Remote Code Execution)",
+     "reviewed": null
+    },
+    {
+     "ruleId": 34,
+     "title": "Server-Side Request Forgery (SSRF) via Unvalidated Target URL",
+     "reviewed": null
+    },
+    {
+     "ruleId": 13301,
+     "title": "CRYPTO-01: Hardcoded Cryptographic Keys and Static Salts in Source Code",
+     "reviewed": null
+    }
+   ]
   },
   {
    "repo": "appsecco/dvna",
@@ -342,7 +389,7 @@
    "kind": "vulnerable",
    "stack": "Express + Sequelize",
    "files": 21,
-   "scanMs": 71,
+   "scanMs": 187,
    "gate": "FAILED",
    "score": 0,
    "critical": 6,
@@ -351,7 +398,34 @@
    "low": 0,
    "experimental": 0,
    "allHighCritical": 9,
-   "detectedFramework": "Express"
+   "detectedFramework": "Express",
+   "blockers": [
+    {
+     "ruleId": 32,
+     "title": "Dynamic Code Execution (eval / Function Remote Code Execution)",
+     "reviewed": null
+    },
+    {
+     "ruleId": 33,
+     "title": "Command Injection via Unsanitized Child Process Execution",
+     "reviewed": null
+    },
+    {
+     "ruleId": 24001,
+     "title": "JS-SEC-01: Insecure Deserialization With a Function-Reviving Library (RCE)",
+     "reviewed": null
+    },
+    {
+     "ruleId": 29303,
+     "title": "AST-03: SQL Injection: Request Input Reaches a Raw Query Through Variables (CWE-89)",
+     "reviewed": null
+    },
+    {
+     "ruleId": 27211,
+     "title": "SCA: CVE-2020-7699 - Express-Fileupload Prototype Pollution to Remote Code Execution (express-fileupload@^0.4.0)",
+     "reviewed": null
+    }
+   ]
   },
   {
    "repo": "juice-shop/juice-shop",
@@ -359,7 +433,7 @@
    "kind": "vulnerable",
    "stack": "Express + Angular + Sequelize",
    "files": 962,
-   "scanMs": 6407,
+   "scanMs": 13851,
    "gate": "FAILED",
    "score": 0,
    "critical": 54,
@@ -368,7 +442,64 @@
    "low": 67,
    "experimental": 0,
    "allHighCritical": 84,
-   "detectedFramework": "Express"
+   "detectedFramework": "Express",
+   "blockers": [
+    {
+     "ruleId": 3020,
+     "title": "MongoDB NoSQL Injection via $where JavaScript Evaluation or Raw Request Query Object",
+     "reviewed": null
+    },
+    {
+     "ruleId": 18041,
+     "title": "NOSQL-SEC-01: MongoDB $where Arbitrary JavaScript Evaluation Injection",
+     "reviewed": null
+    },
+    {
+     "ruleId": 18102,
+     "title": "MONGO-SEC-01: MongoDB NoSQL Injection via $where or Unvalidated Object Filter",
+     "reviewed": null
+    },
+    {
+     "ruleId": 29303,
+     "title": "AST-03: SQL Injection: Request Input Reaches a Raw Query Through Variables (CWE-89)",
+     "reviewed": null
+    },
+    {
+     "ruleId": 13103,
+     "title": "SDP-03: Inbound Perimeter Firewall Ports Open to Public Internet",
+     "reviewed": null
+    },
+    {
+     "ruleId": 3021,
+     "title": "SQL Injection: String Concatenation in Node.js Database Client Query",
+     "reviewed": null
+    },
+    {
+     "ruleId": 5045,
+     "title": "SEC-SECRET-45: RSA Private Key Block Exposure",
+     "reviewed": null
+    },
+    {
+     "ruleId": 32,
+     "title": "Dynamic Code Execution (eval / Function Remote Code Execution)",
+     "reviewed": null
+    },
+    {
+     "ruleId": 29797,
+     "title": "FAKE-07: Login Checks a Hard-Coded Password",
+     "reviewed": null
+    },
+    {
+     "ruleId": 27101,
+     "title": "SEC-SSRF-01: Server-Side Request Forgery (SSRF) in Outbound Fetch / Webhook Dispatch",
+     "reviewed": null
+    },
+    {
+     "ruleId": 34,
+     "title": "Server-Side Request Forgery (SSRF) via Unvalidated Target URL",
+     "reviewed": null
+    }
+   ]
   },
   {
    "repo": "spring-projects/spring-petclinic",
@@ -376,7 +507,7 @@
    "kind": "clean",
    "stack": "Java + Spring Boot",
    "files": 84,
-   "scanMs": 147,
+   "scanMs": 321,
    "gate": "WARNING",
    "score": 74,
    "critical": 0,
@@ -385,7 +516,8 @@
    "low": 25,
    "experimental": 0,
    "allHighCritical": 1,
-   "detectedFramework": "Spring Boot"
+   "detectedFramework": "Spring Boot",
+   "blockers": []
   },
   {
    "repo": "dotnet-architecture/eShopOnWeb",
@@ -393,7 +525,7 @@
    "kind": "clean",
    "stack": "C# + ASP.NET Core",
    "files": 350,
-   "scanMs": 562,
+   "scanMs": 1030,
    "gate": "WARNING",
    "score": 80,
    "critical": 0,
@@ -402,7 +534,8 @@
    "low": 0,
    "experimental": 0,
    "allHighCritical": 2,
-   "detectedFramework": null
+   "detectedFramework": null,
+   "blockers": []
   },
   {
    "repo": "rubygems/rubygems.org",
@@ -410,7 +543,7 @@
    "kind": "clean",
    "stack": "Ruby on Rails (production service)",
    "files": 1698,
-   "scanMs": 3048,
+   "scanMs": 6238,
    "gate": "WARNING",
    "score": 63,
    "critical": 0,
@@ -419,7 +552,8 @@
    "low": 3,
    "experimental": 0,
    "allHighCritical": 4,
-   "detectedFramework": "Ruby on Rails"
+   "detectedFramework": "Ruby on Rails",
+   "blockers": []
   },
   {
    "repo": "django/djangoproject.com",
@@ -427,7 +561,7 @@
    "kind": "clean",
    "stack": "Python + Django (production site)",
    "files": 434,
-   "scanMs": 1765,
+   "scanMs": 3992,
    "gate": "WARNING",
    "score": 68,
    "critical": 0,
@@ -436,7 +570,8 @@
    "low": 27,
    "experimental": 0,
    "allHighCritical": 1,
-   "detectedFramework": "Django"
+   "detectedFramework": "Django",
+   "blockers": []
   },
   {
    "repo": "WebGoat/WebGoat",
@@ -444,7 +579,7 @@
    "kind": "vulnerable",
    "stack": "Java + Spring",
    "files": 635,
-   "scanMs": 1951,
+   "scanMs": 3589,
    "gate": "FAILED",
    "score": 0,
    "critical": 13,
@@ -453,7 +588,24 @@
    "low": 146,
    "experimental": 0,
    "allHighCritical": 23,
-   "detectedFramework": "Spring Boot"
+   "detectedFramework": "Spring Boot",
+   "blockers": [
+    {
+     "ruleId": 24101,
+     "title": "CORE-01: SQL Injection: Query Built From Dynamic Values",
+     "reviewed": "AntennaPod DBUpgrader concatenates a media file path into UPDATE … WHERE file_url='…', so a quote in the path breaks the query"
+    },
+    {
+     "ruleId": 18013,
+     "title": "JAVA-SEC-03: Unrestricted Java Deserialization via ObjectInputStream.readObject",
+     "reviewed": null
+    },
+    {
+     "ruleId": 24103,
+     "title": "CORE-03: Insecure Deserialization of Untrusted Data",
+     "reviewed": null
+    }
+   ]
   },
   {
    "repo": "OWASP/railsgoat",
@@ -461,7 +613,7 @@
    "kind": "vulnerable",
    "stack": "Ruby on Rails",
    "files": 187,
-   "scanMs": 677,
+   "scanMs": 1238,
    "gate": "FAILED",
    "score": 0,
    "critical": 7,
@@ -470,7 +622,39 @@
    "low": 5,
    "experimental": 0,
    "allHighCritical": 18,
-   "detectedFramework": "Ruby on Rails"
+   "detectedFramework": "Ruby on Rails",
+   "blockers": [
+    {
+     "ruleId": 32,
+     "title": "Dynamic Code Execution (eval / Function Remote Code Execution)",
+     "reviewed": null
+    },
+    {
+     "ruleId": 29105,
+     "title": "BEF-05: Rails Request Input Chooses the Class or Method to Call",
+     "reviewed": null
+    },
+    {
+     "ruleId": 24103,
+     "title": "CORE-03: Insecure Deserialization of Untrusted Data",
+     "reviewed": null
+    },
+    {
+     "ruleId": 18031,
+     "title": "RUBY-SEC-01: Ruby on Rails SQL Injection in ActiveRecord Query Interpolation",
+     "reviewed": null
+    },
+    {
+     "ruleId": 24101,
+     "title": "CORE-01: SQL Injection: Query Built From Dynamic Values",
+     "reviewed": "AntennaPod DBUpgrader concatenates a media file path into UPDATE … WHERE file_url='…', so a quote in the path breaks the query"
+    },
+    {
+     "ruleId": 24102,
+     "title": "CORE-02: OS Command Injection: Shell Command Built From Dynamic Values",
+     "reviewed": null
+    }
+   ]
   },
   {
    "repo": "digininja/DVWA",
@@ -478,7 +662,7 @@
    "kind": "vulnerable",
    "stack": "PHP",
    "files": 195,
-   "scanMs": 385,
+   "scanMs": 751,
    "gate": "FAILED",
    "score": 0,
    "critical": 57,
@@ -487,7 +671,49 @@
    "low": 0,
    "experimental": 0,
    "allHighCritical": 82,
-   "detectedFramework": null
+   "detectedFramework": null,
+   "blockers": [
+    {
+     "ruleId": 29959,
+     "title": "CIG-17: Workflow Expands toJSON(secrets)",
+     "reviewed": null
+    },
+    {
+     "ruleId": 18001,
+     "title": "PHP-SEC-01: SQL Injection via Unparameterized Query Concatenation",
+     "reviewed": null
+    },
+    {
+     "ruleId": 24101,
+     "title": "CORE-01: SQL Injection: Query Built From Dynamic Values",
+     "reviewed": "AntennaPod DBUpgrader concatenates a media file path into UPDATE … WHERE file_url='…', so a quote in the path breaks the query"
+    },
+    {
+     "ruleId": 18003,
+     "title": "PHP-SEC-03: OS Command Injection via shell_exec / system",
+     "reviewed": null
+    },
+    {
+     "ruleId": 24102,
+     "title": "CORE-02: OS Command Injection: Shell Command Built From Dynamic Values",
+     "reviewed": null
+    },
+    {
+     "ruleId": 13303,
+     "title": "CRYPTO-03: Insecure Legacy Cipher Modes Permitted (AES-ECB / Unauthenticated CBC)",
+     "reviewed": null
+    },
+    {
+     "ruleId": 24106,
+     "title": "CORE-06: File Inclusion: include/require With a Request-Controlled Path",
+     "reviewed": null
+    },
+    {
+     "ruleId": 32,
+     "title": "Dynamic Code Execution (eval / Function Remote Code Execution)",
+     "reviewed": null
+    }
+   ]
   },
   {
    "repo": "adeyosemanputra/pygoat",
@@ -495,7 +721,7 @@
    "kind": "vulnerable",
    "stack": "Python + Django",
    "files": 217,
-   "scanMs": 515,
+   "scanMs": 1044,
    "gate": "FAILED",
    "score": 0,
    "critical": 13,
@@ -504,7 +730,44 @@
    "low": 39,
    "experimental": 0,
    "allHighCritical": 41,
-   "detectedFramework": null
+   "detectedFramework": null,
+   "blockers": [
+    {
+     "ruleId": 8801,
+     "title": "PY-SEC-01: Unsafe Pickle Deserialization (Remote Code Execution)",
+     "reviewed": null
+    },
+    {
+     "ruleId": 24103,
+     "title": "CORE-03: Insecure Deserialization of Untrusted Data",
+     "reviewed": null
+    },
+    {
+     "ruleId": 8802,
+     "title": "PY-SEC-02: Insecure PyYAML load() Without SafeLoader",
+     "reviewed": null
+    },
+    {
+     "ruleId": 32,
+     "title": "Dynamic Code Execution (eval / Function Remote Code Execution)",
+     "reviewed": null
+    },
+    {
+     "ruleId": 8811,
+     "title": "PY-SEC-11: Dynamic Code Execution via eval() or exec()",
+     "reviewed": null
+    },
+    {
+     "ruleId": 24102,
+     "title": "CORE-02: OS Command Injection: Shell Command Built From Dynamic Values",
+     "reviewed": null
+    },
+    {
+     "ruleId": 24101,
+     "title": "CORE-01: SQL Injection: Query Built From Dynamic Values",
+     "reviewed": "AntennaPod DBUpgrader concatenates a media file path into UPDATE … WHERE file_url='…', so a quote in the path breaks the query"
+    }
+   ]
   },
   {
    "repo": "anxolerd/dvpwa",
@@ -512,7 +775,7 @@
    "kind": "vulnerable",
    "stack": "Python + aiohttp",
    "files": 30,
-   "scanMs": 771,
+   "scanMs": 1646,
    "gate": "FAILED",
    "score": 31,
    "critical": 2,
@@ -521,7 +784,19 @@
    "low": 1,
    "experimental": 0,
    "allHighCritical": 5,
-   "detectedFramework": null
+   "detectedFramework": null,
+   "blockers": [
+    {
+     "ruleId": 24101,
+     "title": "CORE-01: SQL Injection: Query Built From Dynamic Values",
+     "reviewed": "AntennaPod DBUpgrader concatenates a media file path into UPDATE … WHERE file_url='…', so a quote in the path breaks the query"
+    },
+    {
+     "ruleId": 32,
+     "title": "Dynamic Code Execution (eval / Function Remote Code Execution)",
+     "reviewed": null
+    }
+   ]
   },
   {
    "repo": "TeamNewPipe/NewPipe",
@@ -529,7 +804,7 @@
    "kind": "clean",
    "stack": "Android (Java + Kotlin)",
    "files": 1161,
-   "scanMs": 4150,
+   "scanMs": 8434,
    "gate": "FAILED",
    "score": 65,
    "critical": 1,
@@ -538,7 +813,14 @@
    "low": 0,
    "experimental": 0,
    "allHighCritical": 1,
-   "detectedFramework": null
+   "detectedFramework": null,
+   "blockers": [
+    {
+     "ruleId": 5015,
+     "title": "SEC-SECRET-15: Google Gemini / AI Studio API Key",
+     "reviewed": "NewPipe PoTokenWebView hardcodes a Google API key (AIza…, the YouTube web key, marked NOSONAR)"
+    }
+   ]
   },
   {
    "repo": "AntennaPod/AntennaPod",
@@ -546,7 +828,7 @@
    "kind": "clean",
    "stack": "Android (Java)",
    "files": 1143,
-   "scanMs": 3354,
+   "scanMs": 7139,
    "gate": "FAILED",
    "score": 18,
    "critical": 2,
@@ -555,7 +837,14 @@
    "low": 7,
    "experimental": 0,
    "allHighCritical": 7,
-   "detectedFramework": null
+   "detectedFramework": null,
+   "blockers": [
+    {
+     "ruleId": 24101,
+     "title": "CORE-01: SQL Injection: Query Built From Dynamic Values",
+     "reviewed": "AntennaPod DBUpgrader concatenates a media file path into UPDATE … WHERE file_url='…', so a quote in the path breaks the query"
+    }
+   ]
   },
   {
    "repo": "mastodon/mastodon-ios",
@@ -563,7 +852,7 @@
    "kind": "clean",
    "stack": "iOS (Swift)",
    "files": 931,
-   "scanMs": 1890,
+   "scanMs": 3812,
    "gate": "PASSED",
    "score": 89,
    "critical": 0,
@@ -572,7 +861,8 @@
    "low": 0,
    "experimental": 0,
    "allHighCritical": 0,
-   "detectedFramework": "iOS (Swift)"
+   "detectedFramework": "iOS (Swift)",
+   "blockers": []
   },
   {
    "repo": "payatu/diva-android",
@@ -580,7 +870,7 @@
    "kind": "vulnerable",
    "stack": "Android (Java)",
    "files": 59,
-   "scanMs": 82,
+   "scanMs": 176,
    "gate": "FAILED",
    "score": 5,
    "critical": 3,
@@ -589,7 +879,14 @@
    "low": 0,
    "experimental": 0,
    "allHighCritical": 7,
-   "detectedFramework": "Android (Kotlin/Java)"
+   "detectedFramework": "Android (Kotlin/Java)",
+   "blockers": [
+    {
+     "ruleId": 24101,
+     "title": "CORE-01: SQL Injection: Query Built From Dynamic Values",
+     "reviewed": "AntennaPod DBUpgrader concatenates a media file path into UPDATE … WHERE file_url='…', so a quote in the path breaks the query"
+    }
+   ]
   },
   {
    "repo": "dineshshetty/Android-InsecureBankv2",
@@ -597,7 +894,7 @@
    "kind": "vulnerable",
    "stack": "Android (Java)",
    "files": 90,
-   "scanMs": 112,
+   "scanMs": 274,
    "gate": "WARNING",
    "score": 77,
    "critical": 0,
@@ -606,7 +903,8 @@
    "low": 0,
    "experimental": 0,
    "allHighCritical": 3,
-   "detectedFramework": "Android (Kotlin/Java)"
+   "detectedFramework": "Android (Kotlin/Java)",
+   "blockers": []
   },
   {
    "repo": "prateek147/DVIA-v2",
@@ -614,7 +912,7 @@
    "kind": "vulnerable",
    "stack": "iOS (Swift)",
    "files": 129,
-   "scanMs": 306,
+   "scanMs": 576,
    "gate": "WARNING",
    "score": 86,
    "critical": 0,
@@ -623,7 +921,8 @@
    "low": 0,
    "experimental": 0,
    "allHighCritical": 2,
-   "detectedFramework": "iOS (Swift)"
+   "detectedFramework": "iOS (Swift)",
+   "blockers": []
   },
   {
    "repo": "localsend/localsend",
@@ -631,7 +930,7 @@
    "kind": "clean",
    "stack": "Flutter (Dart) + Rust",
    "files": 734,
-   "scanMs": 3233,
+   "scanMs": 6952,
    "gate": "WARNING",
    "score": 51,
    "critical": 0,
@@ -640,7 +939,8 @@
    "low": 7,
    "experimental": 0,
    "allHighCritical": 3,
-   "detectedFramework": "Rust (web)"
+   "detectedFramework": "Rust (web)",
+   "blockers": []
   },
   {
    "repo": "LemmyNet/lemmy",
@@ -648,7 +948,7 @@
    "kind": "clean",
    "stack": "Rust + Actix + Diesel + Postgres (production service)",
    "files": 1442,
-   "scanMs": 2666,
+   "scanMs": 5358,
    "gate": "FAILED",
    "score": 33,
    "critical": 2,
@@ -657,7 +957,14 @@
    "low": 3,
    "experimental": 0,
    "allHighCritical": 2,
-   "detectedFramework": "Rust (web)"
+   "detectedFramework": "Rust (web)",
+   "blockers": [
+    {
+     "ruleId": 9605,
+     "title": "RUST-05: SQL Injection via format! String Interpolation in Query",
+     "reviewed": "Lemmy builds SQL with format! (sql_query in scheduled_tasks, batch_execute in schema_setup) from interpolated table names, clauses and intervals; internal callers today, but nothing stops user input reaching them (flagged for review by design)"
+    }
+   ]
   }
  ],
  "recall": [

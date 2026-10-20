@@ -14,6 +14,7 @@ import { join } from 'path';
 import { runStaticCodeScan, type CodeFile } from '../../lib/scanner-engine';
 import { EXPECTED_FLAWS } from './expected';
 import { REVIEWED_TRUE_POSITIVES } from './reviewed';
+import { gatingFindings, gateSeverity } from '../../lib/scanner/scoring';
 
 const root = join(__dirname, '../..');
 const cacheDir = join(root, '.cache/benchmark');
@@ -81,7 +82,10 @@ interface RuleStats { ruleId: number; title: string; severity: string; cleanRepo
       critical: result.criticalCount, high: result.highCount, medium: result.mediumCount, low: result.lowCount,
       experimental: result.experimentalCount ?? 0,
       allHighCritical: result.findings.filter((f) => f.severity === 'CRITICAL' || f.severity === 'HIGH').length,
-      detectedFramework: result.detectedFramework ?? null
+      detectedFramework: result.detectedFramework ?? null,
+      // Why a clean project fails the gate: one entry per blocking rule, with the hand review that says it is real
+      blockers: [...new Map(gatingFindings(result.findings).filter((f) => gateSeverity(f) === 'CRITICAL')
+        .map((f) => [f.ruleId, { ruleId: f.ruleId, title: f.title, reviewed: REVIEWED_TRUE_POSITIVES[f.ruleId] ?? null }])).values()]
     });
     console.log(`${repo.kind.padEnd(10)} ${repo.name.padEnd(48)} files=${String(files.length).padEnd(5)} gate=${result.gateStatus.padEnd(7)} crit=${result.criticalCount} high=${result.highCount}`);
   }
@@ -146,7 +150,7 @@ interface RuleStats { ruleId: number; title: string; severity: string; cleanRepo
   writeFileSync(join(root, 'data/benchmark-summary.generated.json'), JSON.stringify({
     generatedAt: out.generatedAt,
     summary: out.summary,
-    repos: repoResults.map((r) => ({ repo: r.repo, sha: String(r.sha).slice(0, 7), kind: r.kind, stack: r.stack, files: r.files, scanMs: r.scanMs, gate: r.gate, critical: r.critical, high: r.high })),
+    repos: repoResults.map((r) => ({ repo: r.repo, sha: String(r.sha).slice(0, 7), kind: r.kind, stack: r.stack, files: r.files, scanMs: r.scanMs, gate: r.gate, critical: r.critical, high: r.high, ...(r.kind === 'clean' && r.gate === 'FAILED' ? { blockers: r.blockers } : {}) })),
     flaws: recall.map((r) => ({ repo: r.repo, file: r.file, flaw: r.flaw, found: r.found, blocksGate: r.blocksGate }))
   }, null, 1) + '\n');
   console.log(out.summary);
