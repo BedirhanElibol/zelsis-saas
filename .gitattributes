@@ -1,0 +1,2 @@
+# The CLI ships with a #!/usr/bin/env node shebang: CRLF would break it on macOS and Linux
+packages/cli/** text eol=lf

@@ -21,6 +21,14 @@ Options:
 
 Files are scanned in memory on the Zelsis server and are not stored. Build folders, binaries, lockfiles and files over 512 KB are not sent.
 
+## Make your AI agent check its own work
+
+```bash
+npx zelsis init
+```
+
+Adds a short rule to the agent instruction files in the repo (`CLAUDE.md`, `AGENTS.md`, `.cursorrules`, `.windsurfrules`, `.github/copilot-instructions.md`): run `zelsis verify` before calling a task done and fix critical or high findings first. Files that already have the rule are left alone; if none exist it creates `AGENTS.md` and `CLAUDE.md`. `--dry-run` only prints what it would change. It never writes your API key.
+
 ## Use it from an AI coding agent (MCP)
 
 `zelsis mcp` starts an MCP server with one tool, `zelsis_check`. Your agent can call it after editing code and fix what it reports before you review the change.
