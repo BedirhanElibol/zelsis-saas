@@ -218,6 +218,82 @@ function checkReadModifyWrite(path: string, c: string, add: Add) {
   }
 }
 
+/**
+ * XL-07 for JPA/Hibernate, GORM, Eloquent and ActiveRecord: a balance-like field changed in code and saved a few
+ * lines later, in a file with no row lock and no atomic update. Raw SQL SELECT-then-UPDATE is not covered yet.
+ */
+const JVM = /\.(?:java|kt)$/i;
+const PHP_FILE = /\.php$/i;
+
+interface OrmRmw { lang: RegExp; safe: RegExp; pattern: RegExp; field: (m: RegExpMatchArray) => string; fix: (field: string) => string }
+
+const ORM_RMW: OrmRmw[] = [
+  {
+    // order.setBalance(order.getBalance() - amount); ... repository.save(order)
+    lang: JVM,
+    safe: /@Lock\s*\(|PESSIMISTIC_(?:WRITE|READ)|LockModeType|FOR\s+UPDATE|@Modifying|@Version\b/,
+    pattern: /\b(\w+)\.set(\w+)\(\s*\1\.get\2\(\)\s*[-+]\s*[^;]+;[^\n]*\n(?:[^\n]*\n){0,5}?[^\n]*\.save(?:AndFlush)?\(\s*\1\s*\)/g,
+    field: (m) => m[2],
+    fix: (f) => `Lock the row (@Lock(LockModeType.PESSIMISTIC_WRITE) on the repository finder) inside @Transactional, or use an atomic @Modifying query: UPDATE ... SET ${f.toLowerCase()} = ${f.toLowerCase()} - :amount WHERE id = :id AND ${f.toLowerCase()} >= :amount.`,
+  },
+  {
+    // wallet.Balance -= amount ... db.Save(&wallet)
+    lang: GO,
+    safe: /clause\.Locking|FOR\s+UPDATE|gorm\.Expr\(/i,
+    pattern: /\b(\w+)\.(\w+)\s*(?:-=|\+=|=\s*\1\.\2\s*[-+])[^\n]*\n(?:[^\n]*\n){0,5}?[^\n]*\.Save\(\s*&?\1\s*\)/g,
+    field: (m) => m[2],
+    fix: (f) => `Update atomically: db.Model(&x).Where("${f.toLowerCase()} >= ?", amount).Update("${f.toLowerCase()}", gorm.Expr("${f.toLowerCase()} - ?", amount)), or read the row with clause.Locking{Strength: "UPDATE"} inside a transaction.`,
+  },
+  {
+    // $wallet->balance -= $amount; ... $wallet->save();
+    lang: PHP_FILE,
+    safe: /lockForUpdate\s*\(|sharedLock\s*\(|->(?:de|in)crement\s*\(|FOR\s+UPDATE/i,
+    pattern: /(\$\w+)->(\w+)\s*(?:-=|\+=|=\s*\1->\2\s*[-+])[^\n]*\n(?:[^\n]*\n){0,5}?[^\n]*\1->save\(\s*\)/g,
+    field: (m) => m[2],
+    fix: (f) => `Update atomically with ->decrement('${f}', $amount) on a query that checks ->where('${f}', '>=', $amount), or load the row with ->lockForUpdate() inside DB::transaction().`,
+  },
+  {
+    // account.balance -= amount ... account.save!
+    lang: RB,
+    safe: /\.lock!|\bwith_lock\b|\.lock\.find|update_counters|update_all|FOR\s+UPDATE/i,
+    pattern: /\b(\w+)\.(\w+)\s*(?:-=|\+=|=\s*\1\.\2\s*[-+])[^\n]*\n(?:[^\n]*\n){0,5}?\s*\1\.save!?\b/g,
+    field: (m) => m[2],
+    fix: (f) => `Wrap the change in record.with_lock { ... }, or update atomically: Model.where(id: id).where("${f} >= ?", amount).update_all(["${f} = ${f} - ?", amount]).`,
+  },
+];
+
+/** Model methods: `self.credits -= amount` / `$this->balance -= $x` with a bare save elsewhere in the same model file. */
+const MODEL_RMW: { lang: RegExp; safe: RegExp; change: RegExp; save: RegExp; fix: (f: string) => string }[] = [
+  { lang: RB, safe: ORM_RMW[3].safe, change: /\bself\.(\w+)\s*(?:-=|\+=|=\s*self\.\1\s*[-+])/g, save: /^\s*(?:self\.)?save!?\b/m, fix: ORM_RMW[3].fix },
+  { lang: PHP_FILE, safe: ORM_RMW[2].safe, change: /\$this->(\w+)\s*(?:-=|\+=|=\s*\$this->\1\s*[-+])/g, save: /\$this->save\(\s*\)/, fix: ORM_RMW[2].fix },
+];
+
+function checkOrmReadModifyWrite(path: string, c: string, add: Add) {
+  for (const model of MODEL_RMW) {
+    if (!model.lang.test(path) || model.safe.test(c) || !model.save.test(c)) continue;
+    for (const m of c.matchAll(model.change)) {
+      if (!MONEYISH.test(m[1])) continue;
+      add({ ruleId: 30307, code: 'XL-07', severity: 'HIGH', lineIdx: lineAt(c, m.index!), type: 'SECURITY', category: 'Race Condition',
+        title: 'Balance or Stock Is Read, Changed in Code, Then Saved Without a Lock',
+        why: `This model changes ${m[1]} in memory and saves the whole row. Two requests at the same time both start from the same ${m[1]}, and the second save overwrites the first, so the same ${m[1]} can be spent twice.`,
+        fix: model.fix(m[1]) });
+      return;
+    }
+  }
+  for (const orm of ORM_RMW) {
+    if (!orm.lang.test(path) || orm.safe.test(c)) continue;
+    for (const m of c.matchAll(orm.pattern)) {
+      const field = orm.field(m);
+      if (!MONEYISH.test(field)) continue;
+      add({ ruleId: 30307, code: 'XL-07', severity: 'HIGH', lineIdx: lineAt(c, m.index!), type: 'SECURITY', category: 'Race Condition',
+        title: 'Balance or Stock Is Read, Changed in Code, Then Saved Without a Lock',
+        why: `Two requests at the same time both load the same ${field}, both change it in memory and both save: one change is lost, so the same ${field} can be spent twice.`,
+        fix: orm.fix(field) });
+      return;
+    }
+  }
+}
+
 // ---------------------------------------------------------------------------------------------------------------
 // XL-08: per-user data cached under a key that does not include the user
 function checkSharedCacheKey(path: string, c: string, add: Add) {
@@ -346,6 +422,7 @@ export function evaluateCrossLayerRules(file: CodeFile, lines: string[], cleanCo
   checkSupabaseTables(path, c, context, add);
   checkGoTimeout(path, c, add);
   checkReadModifyWrite(path, c, add);
+  checkOrmReadModifyWrite(path, c, add);
   checkSharedCacheKey(path, c, add);
   checkInfiniteRetry(path, c, add);
   checkBodyContract(path, c, context, add);
