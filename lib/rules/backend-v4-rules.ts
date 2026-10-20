@@ -56,7 +56,11 @@ export function evaluateBackendV4Rules(file: CodeFile, lines: string[], cleanCon
 
   if (/\.(?:rb|erb)$/.test(path)) {
     // BEF-05: request-chosen class or method (constantize / send)
-    const idx = lines.findIndex((l) => RAILS_PARAMS.test(l) && /\.(?:safe_)?constantize\b|\b(?:public_)?send\s*\(\s*params|\.(?:public_)?send\s*\(\s*params/.test(l));
+    // An allow-list checked on that line or just before it (TYPES.include?(type), .in?(ALLOWED), case ... when "Tag",
+    // ALLOWED.detect { ... }, if metric_valid?) limits the input to known classes and methods
+    const ALLOW_LIST = /\.include\?\s*\(|\.in\?\s*\(|^\s*when\s+["':]|\bALLOWED\w*|_TYPES\b|\.detect\s*\{|\b\w+_valid\?|\.fetch\s*\(/;
+    const idx = lines.findIndex((l, i) => RAILS_PARAMS.test(l) && /\.(?:safe_)?constantize\b|\b(?:public_)?send\s*\(\s*params|\.(?:public_)?send\s*\(\s*params/.test(l)
+      && !lines.slice(Math.max(0, i - 6), i + 1).some((w) => ALLOW_LIST.test(w)));
     if (idx !== -1) hits.push({
       ruleId: 29105, code: 'BEF-05', severity: 'CRITICAL', category: 'Injection', lineIdx: idx,
       title: 'Rails Request Input Chooses the Class or Method to Call',
