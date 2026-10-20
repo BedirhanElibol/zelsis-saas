@@ -33,7 +33,8 @@ function languageOf(path: string): Lang {
   return null;
 }
 
-const SQL = String.raw`(?:(?<!<)\bSELECT\s+(?!value\s*=)[\w*]|INSERT\s+INTO|UPDATE\s+\w+\s+SET|DELETE\s+FROM)`;
+// SELECT needs a FROM in the same literal: UI text such as "Select at most {n} tickets" is not a query
+const SQL = String.raw`(?:(?<!<)\bSELECT\s+(?!value\s*=)[\w*][^"'\n]*?\bFROM\b|INSERT\s+INTO|UPDATE\s+\w+\s+SET|DELETE\s+FROM)`;
 /** A non-constant identifier (lowercase start or member access), i.e. not FOO_BAR / Foo.class. */
 const DYN = String.raw`(?:[a-z_][\w]*(?:\.[\w]+|\[[^\]]*\]|\([^)]*\))*)`;
 
@@ -54,8 +55,8 @@ export function evaluatePolyglotCoreRules(file: CodeFile, lines: string[], clean
   const withoutHashComments = lang === 'ruby' || lang === 'python' || lang === 'erb'
     ? cleanContent.replace(/^\s*#.*$/gm, '').replace(/<%#[\s\S]*?%>/g, '')
     : cleanContent;
-  // Framework-quoted identifiers are not user input
-  const content = joinStatements(withoutHashComments)
+  // Framework-quoted identifiers and Python {MAX_IDS}-style module constants are not user input
+  const content = joinStatements(lang === 'python' ? withoutHashComments.replace(/\{[A-Z][A-Z0-9_]*\}/g, 'IDENT') : withoutHashComments)
     .replace(/#\{\s*(?:self\.class\.)?(?:quoted_table_name|table_name|connection\.quote\w*\([^}]*\)|sanitize_sql\w*\([^}]*\)|quote_column_name\([^}]*\))\s*\}/g, 'IDENT')
     // A table name interpolated after FROM / INTO / UPDATE / JOIN / TABLE cannot be a bind parameter and is
     // almost always the app's own constant ("SELECT COUNT(*) FROM $TABLE"); values in WHERE / VALUES still count.
@@ -89,7 +90,9 @@ export function evaluatePolyglotCoreRules(file: CodeFile, lines: string[], clean
     dart: [new RegExp(String.raw`(?:"\s*` + SQL + String.raw`[^"\n]*|'\s*` + SQL + String.raw`[^'\n]*)\$\{?` + DYN, 'i'), new RegExp(String.raw`(?:"\s*` + SQL + String.raw`[^"\n]*"|'\s*` + SQL + String.raw`[^'\n]*')\s*\+\s*` + DYN, 'i')]
   };
   const sqlPatterns = sqlByLang[lang as keyof typeof sqlByLang] ?? [];
-  const sqlHit = sqlPatterns.find((re) => re.test(content));
+  // Migrations and maintenance scripts run SQL on the app's own data, not on request input
+  const notRequestPath = isDevTooling || /(?:^|\/)(?:db\/migrate|migrations?|\.semgrep)\//i.test(file.path);
+  const sqlHit = notRequestPath ? undefined : sqlPatterns.find((re) => re.test(content));
   if (sqlHit) {
     add({
       ruleId: 24101, code: 'CORE-01', severity: 'CRITICAL',

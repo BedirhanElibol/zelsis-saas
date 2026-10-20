@@ -339,5 +339,62 @@ def api_delete(mid: int, request: Request):
     require_csrf(request)
     db.delete_mention(mid)
 `)
+  },
+  {
+    ruleIds: [24101], name: 'CORE-01 f-string query with a request value vs UI text, a module constant and a migration',
+    detects: f('backend/cases/views.py', `def search(cursor, request):
+    q = request.GET["q"]
+    cursor.execute(f"SELECT id, title FROM cases WHERE title LIKE '%{q}%'")
+`),
+    ignores: [
+      ...f('backend/cases/bulk_views.py', `MAX_BULK_IDS = 100
+
+def check(ids):
+    if len(ids) > MAX_BULK_IDS:
+        return {"errors": f"Select at most {MAX_BULK_IDS} tickets at a time."}
+`),
+      ...f('backend/common/rls/pool.py', `CONTEXT_VARIABLE = "app.tenant_id"
+CLEAR_CONTEXT_SQL = f"SELECT current_setting('x') FROM pg_settings WHERE name = '{CONTEXT_VARIABLE}'"
+`),
+      ...f('db/migrate/20170813164435_add_unique_indexes.rb', `class AddUniqueIndexes < ActiveRecord::Migration[5.1]
+  def up
+    execute "DELETE FROM visibilities AS a1 USING visibilities AS a2 #{where_clause}"
+  end
+end
+`),
+    ],
+  },
+  {
+    ruleIds: [8814], name: 'PY-SEC-14 route fetches a URL from the query string vs a job fetching its configured URL and a checked host',
+    detects: f('app/routes/preview.py', `import requests
+from flask import request
+
+@bp.route("/preview")
+def preview():
+    url = request.args["url"]
+    return requests.get(url, timeout=5).text
+`),
+    ignores: [
+      ...f('postrun/job/incident_init.py', `import requests
+
+def init(endpoint, headers):
+    url = endpoint + "/incident"
+    r = requests.get(url, headers=headers)
+    return r.json()
+`),
+      ...f('app/routes/fetch.py', `import requests
+from urllib.parse import urlparse
+from flask import request
+
+ALLOWED_HOSTS = {"api.example.com"}
+
+@bp.route("/fetch")
+def fetch():
+    url = request.args["url"]
+    if urlparse(url).hostname not in ALLOWED_HOSTS:
+        abort(400)
+    return requests.get(url, timeout=5).text
+`),
+    ],
   }
 ];
