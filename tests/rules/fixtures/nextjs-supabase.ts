@@ -61,6 +61,44 @@ export const deleteAccount = async () => {
   },
   {
     ruleIds: [28001],
+    name: 'Server Action that never checks the caller is flagged; one calling an imported helper that runs auth.getUser() is not',
+    detects: [...f('lib/session.ts', `import { createClient } from '@/utils/supabase/server';
+
+export async function mustBeSignedIn() {
+  const supabase = await createClient();
+  const { data } = await supabase.auth.getUser();
+  if (!data.user) throw new Error('Not signed in');
+  return data.user;
+}
+`), ...f('app/team/actions.ts', `'use server';
+${ADMIN_MODULE}
+const admin = createClient(process.env.NEXT_PUBLIC_SUPABASE_URL!, process.env.SUPABASE_SERVICE_ROLE_KEY!);
+
+export async function removeMember(memberId: string) {
+  await admin.from('members').delete().eq('id', memberId);
+}
+`)],
+    ignores: [...f('lib/session.ts', `import { createClient } from '@/utils/supabase/server';
+
+export async function mustBeSignedIn() {
+  const supabase = await createClient();
+  const { data } = await supabase.auth.getUser();
+  if (!data.user) throw new Error('Not signed in');
+  return data.user;
+}
+`), ...f('app/team/actions.ts', `'use server';
+${ADMIN_MODULE}import { mustBeSignedIn } from '@/lib/session';
+
+const admin = createClient(process.env.NEXT_PUBLIC_SUPABASE_URL!, process.env.SUPABASE_SERVICE_ROLE_KEY!);
+
+export async function removeMember(memberId: string) {
+  const user = await mustBeSignedIn();
+  await admin.from('members').delete().eq('id', memberId).eq('team_owner', user.id);
+}
+`)],
+  },
+  {
+    ruleIds: [28001],
     name: 'Server Action whose same-file helper does not verify the caller is still flagged; one that calls auth.getUser is not',
     detects: f('app/actions/settings.ts', `'use server';
 ${ADMIN_MODULE}
