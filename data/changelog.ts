@@ -12,6 +12,16 @@ export interface ChangelogEntry {
 
 export const CHANGELOG: ChangelogEntry[] = [
   {
+    date: '2026-10-20',
+    title: 'Races in more languages, poison messages and fewer false alarms',
+    changes: [
+      { kind: 'New', text: 'Lost-update races on balances, credits and stock now also in Java/Kotlin (JPA), Go (GORM), PHP (Eloquent) and Ruby (ActiveRecord), including model methods that do self.credits -= amount and save later without a lock.' },
+      { kind: 'New', text: 'Queue consumers that put a failed message straight back with nack() / reject() / basic_nack() from the error handler. The message comes back forever and blocks the worker; consumers that check redelivery or a retry counter are not reported.' },
+      { kind: 'Fixed', text: 'Fewer false alarms: .env.local.example and other multi-part env templates are now read, optional env vars (if (process.env.X), X === "1", Boolean(process.env.X)), host-injected NEXT_PUBLIC_VERCEL_* and scripts/ are not reported as missing, and Server Actions or route handlers that call a helper which checks the user (in the same file or imported) are not reported as unauthenticated.' },
+      { kind: 'Improved', text: 'The public benchmark now shows the median scan time and, for each clean project that fails the gate, the hand-reviewed reason.' },
+    ],
+  },
+  {
     date: '2026-10-19',
     title: 'Bugs between layers and home-made token checks',
     changes: [

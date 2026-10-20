@@ -1,10 +1,10 @@
 {
  "summary": {
-  "implementedRules": 1297,
-  "testedRules": 1288,
-  "preciseLocationRules": 1294,
+  "implementedRules": 1298,
+  "testedRules": 1289,
+  "preciseLocationRules": 1295,
   "catalogEntries": 1922,
-  "catalogOnlyNotImplemented": 1397,
+  "catalogOnlyNotImplemented": 1396,
   "catalogPlaceholderMetadata": 1810
  },
  "catalogOnly": [
@@ -1072,7 +1072,6 @@
   12450,
   12501,
   12505,
-  12506,
   12507,
   12508,
   12509,
@@ -7112,6 +7111,16 @@
    "code": "MQ-04",
    "title": "Missing Publisher Confirms / Acknowledgments Leading to Data Loss",
    "severity": "MEDIUM",
+   "source": "lib/rules/message-broker-rules.ts",
+   "preciseLocation": true,
+   "tested": true,
+   "inCatalog": true
+  },
+  {
+   "ruleId": 12506,
+   "code": "MQ-06",
+   "title": "Failed Message Is Requeued Forever From the Error Handler",
+   "severity": "HIGH",
    "source": "lib/rules/message-broker-rules.ts",
    "preciseLocation": true,
    "tested": true,
