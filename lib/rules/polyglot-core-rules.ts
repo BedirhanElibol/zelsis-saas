@@ -104,7 +104,9 @@ export function evaluatePolyglotCoreRules(file: CodeFile, lines: string[], clean
 
   // CORE-02: OS command built from dynamic values
   const cmdByLang: Partial<Record<Exclude<Lang, null>, RegExp>> = {
-    ruby: /(?:\bsystem|\bexec|\bspawn|IO\.popen|Open3\.\w+|%x)\s*[\(\{]?\s*["`][^"`\n]*#\{|`[^`\n]*#\{/,
+    // A bare `...` only runs a command where an expression starts; inside "...", as in error messages
+    // ("`#{k}` is not a valid attribute"), backticks are plain text
+    ruby: /(?:\bsystem|\bexec|\bspawn|IO\.popen|Open3\.\w+|%x)\s*[\(\{]?\s*["`][^"`\n]*#\{|(?<=(?:^|[=(,;]|\breturn|\bputs|&&|\|\|)[ \t]*)`[^`\n]*#\{/m,
     // Global functions only: $pdo->exec() / $sqlite->exec() run SQL, not a shell
     php: /(?<!->|::)\b(?:shell_exec|exec|system|passthru|popen|proc_open|pcntl_exec)\s*\(\s*(?:["'][^"'\n]*["']\s*\.\s*\$|"[^"\n]*\$\w|\$\w)/i,
     // shell=True only counts when the command itself is built from values (f-string, +, %, .format) in the same call

@@ -13,7 +13,7 @@
  */
 import type { Finding } from '@/data/schema';
 import type { CodeFile } from '../scanner-engine';
-import { emptyRepoContext, normalizeSqlName, RepoContext } from '../scanner/repo-context';
+import { databaseExposedAt, emptyRepoContext, normalizeSqlName, RepoContext } from '../scanner/repo-context';
 import { DB_MUTATION } from './shared/stack-signals';
 export interface InfraRuleResult {
     findings: Finding[];
@@ -44,7 +44,7 @@ export function evaluateInfraRules(file: CodeFile, lines: string[], cleanContent
     // =========================================================================
     const isSqlFile = lowerPath.endsWith('.sql') || lowerPath.includes('migration') || lowerPath.includes('schema');
     // RLS only protects tables that clients can query directly (Supabase / PostgREST); skip server-only databases
-    if (isSqlFile && context.exposesDatabaseToClients) {
+    if (isSqlFile && databaseExposedAt(context, file.path)) {
         const tableRegex = /create\s+table\s+(?:if\s+not\s+exists\s+)?([a-zA-Z0-9_."]+)/gi;
         let match: RegExpExecArray | null;
         while ((match = tableRegex.exec(cleanContent)) !== null) {
