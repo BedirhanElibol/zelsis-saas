@@ -136,13 +136,16 @@ export function evaluatePolyglotCoreRules(file: CodeFile, lines: string[], clean
     java: /\bnew\s+ObjectInputStream\s*\(|\.readObject\s*\(\s*\)|\bnew\s+XMLDecoder\s*\(|\bXStream\b[^;]*\.fromXML\s*\(/,
     kotlin: /\bObjectInputStream\s*\(|\.readObject\s*\(\s*\)/,
     python: /\bpickle\.loads?\s*\(|\bcPickle\.loads?\s*\(|\bmarshal\.loads\s*\(|\bjsonpickle\.decode\s*\(|\byaml\.load\s*\((?![^)]*Loader\s*=\s*(?:yaml\.)?(?:Safe|CSafe)Loader)|\byaml\.unsafe_load\s*\(/,
-    php: /\bunserialize\s*\(\s*\$/,
+    // The global function only: Serializable::unserialize() declarations and $this->unserialize() are methods;
+    // allowed_classes => false cannot build objects
+    php: /(?<!->|::)(?<!function\s{1,4})\bunserialize\s*\(\s*\$(?![^)\n]*allowed_classes['"]\s*=>\s*false)/,
     csharp: /\bBinaryFormatter\b|\bLosFormatter\b|\bNetDataContractSerializer\b|TypeNameHandling\s*=\s*TypeNameHandling\.(?:All|Auto|Objects)/
   };
   const deser = deserByLang[lang as keyof typeof deserByLang];
   // ObjectInputStream behind an allowlist, or reading bytes the app wrote itself, cannot load attacker classes
   const guardedObjectStream = (lang === 'java' || lang === 'kotlin') && !/XMLDecoder|XStream/.test(content) && javaDeserializationIsSafe(content);
-  if (deser && deser.test(content) && !guardedObjectStream) {
+  // Maintenance scripts and docs builds load the repo's own files
+  if (deser && !isDevTooling && deser.test(content) && !guardedObjectStream) {
     add({
       ruleId: 24103, code: 'CORE-03', severity: 'CRITICAL',
       title: 'Insecure Deserialization of Untrusted Data',

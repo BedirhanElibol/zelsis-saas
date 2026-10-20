@@ -33,7 +33,7 @@ export async function yieldToMain(): Promise<void> {
 export function isTestFixturePath(path: string): boolean {
   const p = path.toLowerCase().replace(/\\/g, '/');
   // examples / samples / demos: sample apps shipped with a library, not the product itself
-  return /(?:^|\/)(?:tests?|testing|__tests__|__mocks__|__fixtures__|fixtures?|e2e|cypress|spec|seeds?|examples?|samples?|demos?)\//.test(p) ||
+  return /(?:^|\/)(?:tests?|unittests?|testing|testdata|__tests__|__mocks__|__fixtures__|fixtures?|e2e|cypress|spec|seeds?|examples?|samples?|demos?)\//.test(p) ||
     /\.(?:test|spec|e2e)\.[cm]?[jt]sx?$/.test(p) ||
     /(?:^|\/)(?:test_[^/]+|tests|conftest)\.py$|_test\.(?:py|go)$|_spec\.rb$|Tests?\.(?:java|cs|kt)$/.test(p);
 }
@@ -45,7 +45,9 @@ export function isTestFixturePath(path: string): boolean {
 export const isSecretPatternFixture = (path: string): boolean => {
   const p = (path || '').replace(/\\/g, '/').toLowerCase();
   return /(?:^|\/)(?:\.gitleaks\.toml|\.gitleaksignore|\.secrets\.baseline|\.trufflehog\w*\.ya?ml|\.detect-secrets\w*)$/.test(p)
-    || /(?:^|\/)(?:tests?|__tests__|spec|fixtures?)\/(?:.*\/)?[^/]*(?:fake|dummy|redact|scrub|mask|leak|secret[-_]?scan)[^/]*$/.test(p);
+    || /(?:^|\/)(?:tests?|unittests?|testdata|__tests__|spec|fixtures?)\/(?:.*\/)?[^/]*(?:fake|dummy|redact|scrub|mask|leak|secret[-_]?scan)[^/]*$/.test(p)
+    // Redaction / scrubber modules list key headers as patterns wherever they live
+    || /(?:^|\/)[^/]*(?:redact|scrubber|secret[-_]?scan)[^/]*\.\w+$/.test(p);
 };
 
 /** Hardcoded-secret rules stay active in test files. */
