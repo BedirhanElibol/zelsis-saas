@@ -330,7 +330,9 @@ export function evaluateDatabaseRules(file: CodeFile, lines: string[], cleanCont
         logs.push(`[${ts}] 🗄️ DB-PERF-38: Database Connection String with Plaintext Password in Repo detected (${file.path}:${lineNum})`);
     }
     // DB-PERF-43: Unprepared Dynamic SQL Query Injections
-    if (/(?:db\.query|client\.query|prisma\.\$queryRawUnsafe)\s*\(\s*`[^`]*\$\{/i.test(cleanContent)) {
+    // Setup scripts create / drop databases by name (CREATE DATABASE "${dbName}"): DDL from config, not request input
+    const isDbSetupScript = /(?:^|\/)(?:scripts?|migrations?|seeds?)\/|(?:^|\/)seed[^/]*\.[cm]?[jt]s$/i.test(file.path.replace(/\\/g, '/'));
+    if (!isDbSetupScript && /(?:db\.query|client\.query|prisma\.\$queryRawUnsafe)\s*\(\s*`(?!\s*(?:CREATE|DROP)\s+DATABASE\b)[^`]*\$\{/i.test(cleanContent)) {
         const matchLineIdx = locateMatchLine(lines, [/(?:db\.query|client\.query|prisma\.\$queryRawUnsafe)\s*\(\s*`[^`]*\$\{/i], l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('*'));
         const lineNum = matchLineIdx !== -1 ? matchLineIdx + 1 : 1;
         findings.push({
