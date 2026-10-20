@@ -15,6 +15,7 @@ export const CHANGELOG: ChangelogEntry[] = [
     date: '2026-10-20',
     title: 'Races in more languages, poison messages and fewer false alarms',
     changes: [
+      { kind: 'New', text: 'Python IDOR: FastAPI, Flask and Django routes that need a signed-in user, then load a record by the id in the URL without checking it belongs to that user. Only reported for records the same file filters by the user somewhere else, so shared data (tabs, events, catalogues) and routes that check the owner, admin-only routes and DRF object permissions stay quiet.' },
       { kind: 'New', text: 'Lost-update races on balances, credits and stock now also in Java/Kotlin (JPA), Go (GORM), PHP (Eloquent) and Ruby (ActiveRecord), including model methods that do self.credits -= amount and save later without a lock.' },
       { kind: 'New', text: 'Queue consumers that put a failed message straight back with nack() / reject() / basic_nack() from the error handler. The message comes back forever and blocks the worker; consumers that check redelivery or a retry counter are not reported.' },
       { kind: 'New', text: 'Foreign keys with ON DELETE CASCADE or SET NULL that no migration indexes (low severity, advice only). Postgres does not index them for you, so deleting a parent row scans the whole child table. Indexes from every migration count, and columns or tables a later migration renames or drops are skipped. ORMs such as Prisma do not add these indexes on Postgres either.' },
