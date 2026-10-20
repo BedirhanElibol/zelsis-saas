@@ -33,6 +33,9 @@ import { safeReplace, safeTrim, safeString, safeLower } from '@/lib/safe-utils';
 import { UNDETECTED_FRAMEWORK } from '@/lib/scanner/stack-detect';
 import { priceLabel } from '@/data/pricing-plans';
 import { fetchOrgBranding } from '@/lib/supabase';
+import { getActiveUserAuth } from '@/lib/supabase-client';
+import { createReportShare } from '@/app/actions/report-share';
+import { initialReportShareState } from '@/lib/report-share-state';
 
 interface GateStatusBannerProps {
   project: Project;
@@ -58,6 +61,7 @@ export const GateStatusBanner: React.FC<GateStatusBannerProps> = ({
   onOpenCheckout,
 }) => {
   const [isExportMenuOpen, setIsExportMenuOpen] = useState(false);
+  const [verifyNotice, setVerifyNotice] = useState<string | null>(null);
   const [isToolsMenuOpen, setIsToolsMenuOpen] = useState(false);
   const exportMenuRef = useRef<HTMLDivElement>(null);
   const toolsMenuRef = useRef<HTMLDivElement>(null);
@@ -225,6 +229,9 @@ export const GateStatusBanner: React.FC<GateStatusBannerProps> = ({
               </a>
             )}
           </p>
+          {verifyNotice && (
+            <p role="status" className="text-[11px] text-amber-300 mt-1">{verifyNotice}</p>
+          )}
         </div>
       </div>
 
@@ -296,6 +303,34 @@ export const GateStatusBanner: React.FC<GateStatusBannerProps> = ({
                   </span>
                 </div>
               </button>
+
+              {user?.tier !== 'Free' && (
+                <button
+                  onClick={async () => {
+                    setIsExportMenuOpen(false);
+                    // A read-only link to Zelsis' own copy of the scan lets the reader check the PDF was not edited
+                    const { accessToken } = await getActiveUserAuth();
+                    let verifyUrl: string | null = null;
+                    if (accessToken) {
+                      const fd = new FormData();
+                      fd.set('accessToken', accessToken);
+                      fd.set('projectId', safeProject.id || '');
+                      fd.set('repoUrl', safeProject.repoUrl || '');
+                      const res = await createReportShare(initialReportShareState, fd).catch(() => null);
+                      verifyUrl = res?.status === 'success' && res.url ? res.url : null;
+                    }
+                    setVerifyNotice(verifyUrl ? null : 'No cloud scan to link yet, so this PDF has no check link. Run a scan while signed in, then export again.');
+                    generateAuditPdfReport(safeProject, { verifyUrl });
+                  }}
+                  className="w-full text-left px-3 py-2 rounded-lg text-white hover:bg-white/10 flex items-center gap-2.5 transition-colors cursor-pointer"
+                >
+                  <Link2 size={14} className="text-zinc-400" />
+                  <div className="flex flex-col">
+                    <span className="font-bold">PDF with check link</span>
+                    <span className="text-[10px] text-[#A1A1AA]">Adds a read-only link (score and findings, no code) so readers can confirm the PDF was not edited</span>
+                  </div>
+                </button>
+              )}
 
               <button
                 onClick={async () => {
