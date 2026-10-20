@@ -119,6 +119,13 @@ export default async function TrustPage({ params }: { params: Promise<{ slug: st
           ))}
         </ul>
 
+        <h2 className="text-lg font-semibold text-white mt-10 mb-3">Not covered by this check</h2>
+        <ul className="text-sm text-zinc-300 space-y-2 list-disc pl-5">
+          <li>The running application: no attack traffic, fuzzing or penetration testing against live servers.</li>
+          <li>Business rules that need human judgment, such as whether a discount or approval flow is fair.</li>
+          <li>Live database and cloud settings that are changed outside the code (for example in a hosting dashboard).</li>
+        </ul>
+
         <div className="mt-8 text-xs text-zinc-400 space-y-2">
           <p>
             Zelsis reads the source code and configuration of this project and checks them with deterministic rules: access
