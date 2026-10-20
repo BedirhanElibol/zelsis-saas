@@ -22,6 +22,7 @@ export const CHANGELOG: ChangelogEntry[] = [
       { kind: 'Fixed', text: 'Fewer false alarms: .env.local.example and other multi-part env templates are now read, optional env vars (if (process.env.X), X === "1", Boolean(process.env.X)), host-injected NEXT_PUBLIC_VERCEL_* and scripts/ are not reported as missing, and Server Actions or route handlers that call a helper which checks the user (in the same file or imported) are not reported as unauthenticated.' },
       { kind: 'Improved', text: 'The public benchmark now shows the median scan time and, for each clean project that fails the gate, the hand-reviewed reason.' },
       { kind: 'New', text: '"What could this cost?" above the findings: for issues that let someone run up paid SMS or AI calls, enter your price per request and how many requests get through a minute, and see the cost of an hour and a day of abuse. For data leaks, enter how many users you store. Nothing is shown in dollars until you give your own numbers, and they stay in your browser.' },
+      { kind: 'New', text: 'Findings that match a well-documented public incident now say so, with a link to the source: documents opened by changing a number in the URL (First American, 2019), apps shipped without Row Level Security (CVE-2025-48757), an open storage bucket of ID photos (Tea, 2025), an access key left in a public repository (Toyota, 2022), a gift-card balance spent twice by racing requests (Starbucks, 2015) and bot-triggered SMS codes (Twitter, 2023).' },
     ],
   },
   {
