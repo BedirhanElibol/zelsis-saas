@@ -285,6 +285,48 @@ end
 `)],
   },
   {
+    ruleIds: [30315], name: 'XL-15 cascading foreign keys with no index vs indexes added in a later migration',
+    detects: [f('supabase/migrations/001_notes.sql', `create table public.notes (
+  id uuid primary key default gen_random_uuid(),
+  user_id uuid not null references auth.users on delete cascade,
+  body text
+);
+
+create table public.comments (
+  id bigint generated always as identity primary key,
+  note_id uuid not null,
+  body text,
+  foreign key (note_id) references public.notes (id) on delete cascade
+);
+`)],
+    ignores: [f('supabase/migrations/001_notes.sql', `create table public.notes (
+  id uuid primary key default gen_random_uuid(),
+  user_id uuid not null references auth.users on delete cascade,
+  body text
+);
+
+create table public.comments (
+  id bigint generated always as identity primary key,
+  note_id uuid not null,
+  body text,
+  foreign key (note_id) references public.notes (id) on delete cascade
+);
+
+create table public.tags (
+  id bigint primary key,
+  owner_id uuid references auth.users (id)
+);
+`), f('supabase/migrations/002_indexes.sql', `create index notes_user_id_idx on public.notes (user_id);
+create index on public.comments (note_id, created_at);
+`), f('migrations/2019_members/up.sql', `create table community_member (
+  id serial primary key,
+  user_id int references users on update cascade on delete cascade not null
+);
+`), f('migrations/2021_rename/up.sql', `alter table community_member rename column user_id to person_id;
+create index idx_community_member_person on community_member (person_id);
+`)],
+  },
+  {
     ruleIds: [30308], name: 'XL-08 user profile cached under a fixed key vs per-user key',
     detects: [f('lib/profile-cache.ts', `import { redis } from './redis';
 export async function cacheProfile(user: { id: string }) {

@@ -1,8 +1,8 @@
 {
  "summary": {
-  "implementedRules": 1298,
-  "testedRules": 1289,
-  "preciseLocationRules": 1295,
+  "implementedRules": 1299,
+  "testedRules": 1290,
+  "preciseLocationRules": 1296,
   "catalogEntries": 1922,
   "catalogOnlyNotImplemented": 1396,
   "catalogPlaceholderMetadata": 1810
@@ -14371,6 +14371,16 @@
    "code": "RULE-30313",
    "title": "This ${model} Query Skips the Tenant Filter the Other ${model} Queries in This File Use",
    "severity": "HIGH",
+   "source": "lib/rules/cross-layer-rules.ts",
+   "preciseLocation": true,
+   "tested": true,
+   "inCatalog": false
+  },
+  {
+   "ruleId": 30315,
+   "code": "RULE-30315",
+   "title": "${fk.table}.${fk.col} Cascades on Delete but No Migration Indexes It",
+   "severity": "LOW",
    "source": "lib/rules/cross-layer-rules.ts",
    "preciseLocation": true,
    "tested": true,

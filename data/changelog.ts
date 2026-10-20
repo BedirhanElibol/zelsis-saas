@@ -17,6 +17,7 @@ export const CHANGELOG: ChangelogEntry[] = [
     changes: [
       { kind: 'New', text: 'Lost-update races on balances, credits and stock now also in Java/Kotlin (JPA), Go (GORM), PHP (Eloquent) and Ruby (ActiveRecord), including model methods that do self.credits -= amount and save later without a lock.' },
       { kind: 'New', text: 'Queue consumers that put a failed message straight back with nack() / reject() / basic_nack() from the error handler. The message comes back forever and blocks the worker; consumers that check redelivery or a retry counter are not reported.' },
+      { kind: 'New', text: 'Foreign keys with ON DELETE CASCADE or SET NULL that no migration indexes (low severity, advice only). Postgres does not index them for you, so deleting a parent row scans the whole child table. Indexes from every migration count, and columns or tables a later migration renames or drops are skipped. ORMs such as Prisma do not add these indexes on Postgres either.' },
       { kind: 'Fixed', text: 'Fewer false alarms: .env.local.example and other multi-part env templates are now read, optional env vars (if (process.env.X), X === "1", Boolean(process.env.X)), host-injected NEXT_PUBLIC_VERCEL_* and scripts/ are not reported as missing, and Server Actions or route handlers that call a helper which checks the user (in the same file or imported) are not reported as unauthenticated.' },
       { kind: 'Improved', text: 'The public benchmark now shows the median scan time and, for each clean project that fails the gate, the hand-reviewed reason.' },
     ],
