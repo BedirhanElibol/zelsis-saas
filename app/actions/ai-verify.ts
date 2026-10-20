@@ -11,7 +11,7 @@ const ToggleSchema = z.object({
   enabled: z.enum(['true', 'false']),
 });
 
-async function authenticate(accessToken: string): Promise<{ admin: SupabaseClient; user: User } | null> {
+async function getAuthedUser(accessToken: string): Promise<{ admin: SupabaseClient; user: User } | null> {
   const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
   const anonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
   const serviceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
@@ -32,7 +32,7 @@ async function settingsFor(admin: SupabaseClient, user: User): Promise<AiVerifyS
 
 /** The caller's AI double-check setting, or null when signed out. */
 export async function getAiVerifySettings(accessToken: string): Promise<AiVerifySettings | null> {
-  const ctx = await authenticate(accessToken);
+  const ctx = await getAuthedUser(accessToken);
   return ctx ? settingsFor(ctx.admin, ctx.user) : null;
 }
 
@@ -40,7 +40,7 @@ export async function getAiVerifySettings(accessToken: string): Promise<AiVerify
 export async function setAiVerify(_prev: AiVerifyActionState, formData: FormData): Promise<AiVerifyActionState> {
   const parsed = ToggleSchema.safeParse({ accessToken: formData.get('accessToken'), enabled: formData.get('enabled') });
   if (!parsed.success) return { status: 'error', message: 'Invalid request.' };
-  const ctx = await authenticate(parsed.data.accessToken);
+  const ctx = await getAuthedUser(parsed.data.accessToken);
   if (!ctx) return { status: 'error', message: 'Your session expired. Sign in again.' };
   const enabled = parsed.data.enabled === 'true';
   const current = await settingsFor(ctx.admin, ctx.user);
