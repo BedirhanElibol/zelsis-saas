@@ -144,6 +144,7 @@ import { evaluateLogicGeminiRules } from '../rules/logic-gemini-rules';
 import { evaluateLogicGemini2Rules } from '../rules/logic-gemini2-rules';
 import { evaluateCrossLayerRules } from '../rules/cross-layer-rules';
 import { evaluateMissingGuardRules } from '../rules/missing-guard-rules';
+import { evaluateIagPythonRules } from '../rules/iag-python-rules';
 import { evaluateSecurityGeminiRules } from '../rules/security-gemini-rules';
 import { evaluateCicdCloudGeminiRules } from '../rules/cicd-cloud-gemini-rules';
 import { evaluatePrivacyDbGeminiRules } from '../rules/privacy-db-gemini-rules';
@@ -478,6 +479,8 @@ export const RULE_ENGINES: ReadonlyArray<{ evaluate: RuleEngine; scanRawContent?
   { evaluate: evaluateCrossLayerRules },
   // Auth checks that prove nothing: hand-decoded tokens trusted without a signature check (MG-01.., Rule IDs 30401-30499)
   { evaluate: evaluateMissingGuardRules },
+  // Python architecture graph: record loaded by URL id without an ownership check (FLOW-07, Rule ID 29507)
+  { evaluate: evaluateIagPythonRules },
   // Security defects from the Gemini rule report, re-verified: upload names, dotfiles, SAML signatures, alg confusion, shared-cache leaks (SECG-01.., Rule IDs 29900-29999)
   { evaluate: evaluateSecurityGeminiRules },
   // CI/CD, container, Kubernetes, Terraform and package-manager defects from the Gemini rule report (CIG-01.., Rule IDs 29943-29999)
