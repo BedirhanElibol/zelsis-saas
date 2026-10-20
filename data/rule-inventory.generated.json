@@ -3949,7 +3949,7 @@
   {
    "ruleId": 7135,
    "code": "WEB-PERF-35",
-   "title": "Unkeyed React List Elements Forcing Full DOM Rebuild",
+   "title": "List Keyed by Array Index",
    "severity": "LOW",
    "source": "lib/rules/web-vitals-rules.ts",
    "preciseLocation": true,

@@ -409,8 +409,8 @@ export function evaluateWebVitalsRules(file: CodeFile, lines: string[], cleanCon
         });
         logs.push(`[${ts}] ⚡ WEB-PERF-34: DOM Node Polling via setInterval Instead of Observers detected (${file.path}:${lineNum})`);
     }
-    // WEB-PERF-35: Unkeyed React List Elements Forcing Full DOM Rebuild
-    const hit_7135 = /\.(?:tsx|jsx)$/i.test(file.path) ? findIndexKey(lines) : -1;
+    // WEB-PERF-35: List Keyed by Array Index (only when the list reorders or its items hold inputs)
+    const hit_7135 = /\.(?:tsx|jsx)$/i.test(file.path) ? findIndexKey(lines, cleanContent) : -1;
     if (hit_7135 !== -1) {
         const matchLineIdx = hit_7135;
         const lineNum = matchLineIdx !== -1 ? matchLineIdx + 1 : 1;
@@ -418,7 +418,7 @@ export function evaluateWebVitalsRules(file: CodeFile, lines: string[], cleanCon
             id: `webperf35-${Date.now()}-${findingCounter.count++}`,
             ruleId: 7135,
             type: 'VIBEPOLISH',
-            title: "WEB-PERF-35: Unkeyed React List Elements Forcing Full DOM Rebuild",
+            title: "WEB-PERF-35: List Keyed by Array Index",
             severity: 'LOW',
             category: "React Reconciliation",
             filePath: file.path,
@@ -426,14 +426,14 @@ export function evaluateWebVitalsRules(file: CodeFile, lines: string[], cleanCon
             snippet: lines[matchLineIdx] || "<detected WEB-PERF-35 pattern>",
             reproductionSteps: [
                 `Scanned source code in ${file.path}:${lineNum}.`,
-                "Detected Unkeyed React List Elements Forcing Full DOM Rebuild: Mapping array to JSX using index as key or omitting key prop, breaking React reconciliation diffing."
+                "Detected a list keyed by array index that is also sorted, filtered, spliced, edited, dragged or holds inputs: when items move, React reuses the wrong DOM nodes and component state."
             ],
             remediationPrompt: "Use unique entity ID for keys: items.map(item => <Item key={item.id} ... />) instead of index.",
             status: 'OPEN',
             owner: "React Rendering",
             falsePositive: false
         });
-        logs.push(`[${ts}] ⚡ WEB-PERF-35: Unkeyed React List Elements Forcing Full DOM Rebuild detected (${file.path}:${lineNum})`);
+        logs.push(`[${ts}] ⚡ WEB-PERF-35: List Keyed by Array Index detected (${file.path}:${lineNum})`);
     }
     // WEB-PERF-38: Missing HTML Lang Attribute Delaying Accessibility Tree
     const hit_7138 = /\.(?:html|tsx|jsx)$/i.test(file.path) ? findTag(cleanContent, /<html\b(?![^>]*\blang=)(?![^>]*\{\s*\.\.\.)[^>]*>/g) : -1;
@@ -612,13 +612,32 @@ function findBlurOnScroller(src: string): number {
     }
     return -1;
 }
-/** WEB-PERF-35: list items keyed by their array index (`.map((x, i) => <X key={i}`). */
-function findIndexKey(lines: string[]): number {
+/**
+ * WEB-PERF-35: list items keyed by their array index (`.map((x, i) => <X key={i}`), reported only
+ * when that list can change order or length (sorted/filtered/spliced, a `setItems(` setter, drag and
+ * drop) or its items hold inputs. A static render-only list keyed by index is fine.
+ */
+function findIndexKey(lines: string[], src: string): number {
+    const reorder = String.raw`\s*\??\.\s*(?:sort|filter|splice|unshift|reverse|toSorted|toReversed|toSpliced)\s*\(`;
+    const dragDrop = /\b(?:useSortable|SortableContext|DragDropContext|Droppable|Reorder\.Group|onDragEnd|useDrag|useDrop)\b|\bdraggable\b/.test(src);
     for (let i = 0; i < lines.length; i++) {
         const m = /\.map\(\s*\(\s*\w+\s*,\s*(\w+)\s*\)\s*=>/.exec(lines[i]);
         if (!m) continue;
         const key = new RegExp(`\\bkey=\\{\\s*${m[1]}\\s*\\}`);
-        for (let j = i; j < Math.min(lines.length, i + 4); j++) if (key.test(lines[j])) return j;
+        let hit = -1;
+        for (let j = i; j < Math.min(lines.length, i + 4); j++) if (key.test(lines[j])) { hit = j; break; }
+        if (hit === -1) continue;
+        // The mapped list: `todos` in `{todos.map(`, or a chain like `{items.filter(..).map(`.
+        const pre = lines[i].slice(0, m.index);
+        const chain = pre.slice(pre.lastIndexOf('{') + 1);
+        const name = /([A-Za-z_$][\w$]*)\s*$/.exec(pre)?.[1];
+        const changes = new RegExp(reorder).test(chain) || dragDrop || (!!name && (
+            new RegExp(`\\b${name}${reorder}`).test(src) ||
+            new RegExp(`\\b(?:const|let|var)\\s+${name}\\s*=[^;\\n]*${reorder}`).test(src) ||
+            new RegExp(`\\bset${name[0].toUpperCase()}${name.slice(1)}\\s*\\(`).test(src)));
+        const body = lines.slice(i, Math.min(lines.length, hit + 8)).join('\n');
+        const holdsInput = /<(?:input|textarea|select|Input|Textarea|Select)\b|\bdefaultValue=|\bcontentEditable\b/.test(body);
+        if (changes || holdsInput) return hit;
     }
     return -1;
 }

@@ -665,10 +665,10 @@ export const WEB_VITALS_CATALOG: UiRule[] = [
     falsePositiveRisk: "low",
     status: "published",
     code: 'WEB-PERF-35',
-    title: "Unkeyed React List Elements Forcing Full DOM Rebuild",
+    title: "List Keyed by Array Index",
     category: "React Reconciliation",
-    clichePattern: "Mapping array to JSX using index as key or omitting key prop, breaking React reconciliation diffing.",
-    whyAiDoesIt: "All mapped JSX elements supply stable, unique domain entity IDs as keys.",
+    clichePattern: "Keying a list by array index while the list is sorted, filtered, edited, dragged or holds inputs, so React reuses the wrong DOM nodes and state when items move.",
+    whyAiDoesIt: "Lists that change order or length use stable, unique entity IDs as keys; static render-only lists may use the index.",
     zelsisSolution: "Use unique entity ID for keys: items.map(item => <Item key={item.id} ... />) instead of index."
   },
   {
