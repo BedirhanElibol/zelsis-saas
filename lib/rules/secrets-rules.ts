@@ -38,6 +38,9 @@ export function maskSecretInLine(line: string, pattern: RegExp): string {
         return line;
     }
 }
+
+/** A key header used as a pattern or prefix check (scrubbers, key-type detection), not a key. */
+const KEY_HEADER_AS_PATTERN = /(?:startswith|startsWith|endswith|includes|indexOf|re\.compile|new\s+RegExp|regex\s*[:=]|\.test|\.match)\s*\(?\s*(?:r|b|rb)?["'`/][^"'`\n]*-----BEGIN|[=(:,]\s*\/-----BEGIN/;
 export function evaluateSecretRules(file: CodeFile, lines: string[], rawContentOrClean: string, findingCounter: {
     count: number;
 }): SecretRuleResult {
@@ -1286,7 +1289,7 @@ export function evaluateSecretRules(file: CodeFile, lines: string[], rawContentO
     // SEC-SECRET-45: RSA Private Key Block Exposure
     const pattern45 = /-----BEGIN RSA PRIVATE KEY-----/i;
     if (pattern45.test(contentToScan)) {
-        const matchLineIdx = lines.findIndex(l => pattern45.test(l) && !isDummyPlaceholder(l));
+        const matchLineIdx = lines.findIndex(l => pattern45.test(l) && !isDummyPlaceholder(l) && !KEY_HEADER_AS_PATTERN.test(l));
         if (matchLineIdx !== -1) {
             const lineNum = matchLineIdx + 1;
             findings.push({
@@ -1314,7 +1317,7 @@ export function evaluateSecretRules(file: CodeFile, lines: string[], rawContentO
     // SEC-SECRET-46: OpenSSH Private Key Block Exposure
     const pattern46 = /-----BEGIN OPENSSH PRIVATE KEY-----/i;
     if (pattern46.test(contentToScan)) {
-        const matchLineIdx = lines.findIndex(l => pattern46.test(l) && !isDummyPlaceholder(l));
+        const matchLineIdx = lines.findIndex(l => pattern46.test(l) && !isDummyPlaceholder(l) && !KEY_HEADER_AS_PATTERN.test(l));
         if (matchLineIdx !== -1) {
             const lineNum = matchLineIdx + 1;
             findings.push({

@@ -403,6 +403,16 @@ def fetch():
     ignores: f('lib/sdk/models/api_meta.rb', 'class ApiMeta\n  def initialize(attributes = {})\n    attributes.each_key do |k|\n      fail ArgumentError, "`#{k}` is not a valid attribute in `ApiMeta`."\n    end\n    raise "A `disco` command named \'#{name}\' is already registered" if taken\n  end\nend\n'),
   },
   {
+    ruleIds: [24103], name: 'CORE-03 PHP unserialize on a cookie vs Serializable methods and allowed_classes false',
+    detects: f('src/Session/CartCookie.php', "<?php\nclass CartCookie {\n  public function load() {\n    return unserialize($_COOKIE['cart']);\n  }\n}\n"),
+    ignores: f('src/Model/Identity.php', "<?php\nclass Identity implements \\Serializable {\n  public function unserialize($serialized): void {\n    [$this->class, $this->id] = $this->unserialize($serialized);\n  }\n  public function opts($raw) {\n    return unserialize($raw, ['allowed_classes' => false]);\n  }\n}\n"),
+  },
+  {
+    ruleIds: [5045, 5046], name: 'SEC-SECRET-45/46 key blocks with key material vs a header used as a detection pattern or prefix check',
+    detects: f('deploy/keys.py', 'DEPLOY_KEY = """-----BEGIN OPENSSH PRIVATE KEY-----\nb3BlbnNzaC1rZXktdjEAAAAABG5vbmUAAAAEbm9uZQAAAAAAAAABAAABlwAAAAdzc2gtcn\n-----END OPENSSH PRIVATE KEY-----"""\nSIGNING_KEY = """-----BEGIN RSA PRIVATE KEY-----\nMIIEowIBAAKCAQEAu1SU1LfVLPHCozMxH2Mo4lgOEePzNm0tRgeLezV6ffAt0gunVTLw7onLR\n-----END RSA PRIVATE KEY-----"""\n'),
+    ignores: f('apps/common/utils/encode.py', 'def is_ssh_key(text):\n    return text.startswith(b"-----BEGIN OPENSSH PRIVATE KEY-----")\n\nRSA_HEADER = re.compile(r"-----BEGIN RSA PRIVATE KEY-----")\n'),
+  },
+  {
     ruleIds: [3001], name: 'INFRA-01 table without RLS in a Supabase app vs Prisma migrations of an app whose only supabase-js user is an example package',
     detects: [
       ...f('package.json', '{ "dependencies": { "@supabase/supabase-js": "^2.45.0" } }\n'),
