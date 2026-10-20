@@ -1,7 +1,7 @@
 {
  "summary": {
   "implementedRules": 1300,
-  "testedRules": 1291,
+  "testedRules": 1292,
   "preciseLocationRules": 1297,
   "catalogEntries": 1922,
   "catalogOnlyNotImplemented": 1396,
@@ -5433,7 +5433,7 @@
    "severity": "HIGH",
    "source": "lib/rules/python-enterprise-rules.ts",
    "preciseLocation": true,
-   "tested": false,
+   "tested": true,
    "inCatalog": true
   },
   {

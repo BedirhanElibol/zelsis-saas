@@ -419,9 +419,15 @@ export function evaluatePythonEnterpriseRules(file: CodeFile, lines: string[], c
         logs.push(`[${ts}] [PYTHON AUDIT] Found PY-SEC-13: Insecure Temporary File Creation via tempfile.mktemp() at ${file.path}:${lineNum}`);
     }
     // PY-SEC-14: Server-Side Request Forgery (SSRF) via Dynamic URL Fetch
-    const reg_8814 = /(?:requests|httpx)\.(?:get|post|put|delete|request)\s*\(\s*(?:request\.(?:args|GET|POST|values|json)|url|target_url)/i;
-    if (reg_8814.test(cleanContent)) {
-        const linePattern = /(?:requests|httpx)\.(?:get|post|put|delete|request)\s*\(/i;
+    const ssrfDirect = /(?:requests|httpx)\.(?:get|post|put|delete|request)\s*\(\s*request\.(?:args|GET|POST|values|json)/i;
+    // A variable named url only counts in a web handler that reads request input and never checks the host;
+    // scripts, docs builds and jobs fetch URLs from their own config
+    const ssrfViaVar = /(?:requests|httpx)\.(?:get|post|put|delete|request)\s*\(\s*(?:url|target_url)\b/i.test(cleanContent)
+        && /\brequest\.(?:args|GET|POST|values|json|form|query_params|data)\b|\b(?:Query|Body|Form)\s*\(|@\w+\.(?:get|post|put|route)\s*\(/.test(cleanContent)
+        && !/(?:^|\/)(?:scripts?|bin|tools|docs?|tests?|jobs?|postrun|playbooks|migrations?)\//i.test(file.path)
+        && !/urlparse\([^)]*\)\.(?:hostname|netloc)|ALLOWED_HOSTS|allow_?list|white_?list|is_safe_url|validate_url|is_private|ipaddress\./i.test(cleanContent);
+    if (ssrfDirect.test(cleanContent) || ssrfViaVar) {
+        const linePattern = ssrfDirect.test(cleanContent) ? ssrfDirect : /(?:requests|httpx)\.(?:get|post|put|delete|request)\s*\(\s*(?:url|target_url)\b/i;
         const matchLineIdx = lines.findIndex(l => !l.trim().startsWith('#') && !l.trim().startsWith('"""') && linePattern.test(l));
         const lineNum = matchLineIdx !== -1 ? matchLineIdx + 1 : 1;
         const rawSnippet = matchLineIdx !== -1 ? lines[matchLineIdx].trim() : lines.find(l => !l.trim().startsWith('#'))?.trim() || "Server-Side Request Forgery (SSRF) via Dynamic URL Fetch";
