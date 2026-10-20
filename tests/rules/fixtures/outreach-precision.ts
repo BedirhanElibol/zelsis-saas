@@ -398,6 +398,20 @@ def fetch():
     ],
   },
   {
+    ruleIds: [15701], name: 'KERN-SEC-01 privileged compose service vs a locale key ending in _add, a PodSecurityPolicy and a scan report',
+    detects: f('docker-compose.yml', 'services:\n  agent:\n    image: acme/agent:1.4\n    privileged: true\n'),
+    ignores: [
+      ...f('config/locales/client.fi.yml', 'fi:\n  js:\n    user:\n      description_add: "Lisää kaikki ALL osoitteet"\n'),
+      ...f('charts/storage/templates/psp.yaml', 'apiVersion: policy/v1beta1\nkind: PodSecurityPolicy\nmetadata:\n  name: storage-node\nspec:\n  privileged: true\n'),
+      ...f('unittests/scans/dockerbench/docker-bench-report.json', '{ "remediation": "You should not use the --privileged option in docker exec commands." }\n'),
+    ],
+  },
+  {
+    ruleIds: [27214], name: 'SCA requests pinned below 2.31 vs a >= floor and packages whose name only starts with requests',
+    detects: f('requirements.txt', 'flask==3.0.3\nrequests==2.28.1\n'),
+    ignores: f('requirements.txt', 'requests>=2.20\nrequests-oauthlib==1.3.0\nrequests_toolbelt==0.9.1\n'),
+  },
+  {
     ruleIds: [9704], name: 'FINTECH-04 Stripe webhook using the body unverified vs one handing the signature to a service that calls constructEvent',
     detects: f('src/app/api/webhook/stripe/route.js', `import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
