@@ -60,6 +60,35 @@ export const deleteAccount = async () => {
 `)
   },
   {
+    ruleIds: [28001],
+    name: 'Server Action whose same-file helper does not verify the caller is still flagged; one that calls auth.getUser is not',
+    detects: f('app/actions/settings.ts', `'use server';
+${ADMIN_MODULE}
+function adminClient() {
+  return createClient(process.env.NEXT_PUBLIC_SUPABASE_URL!, process.env.SUPABASE_SERVICE_ROLE_KEY!);
+}
+
+export async function setFlag(userId: string, on: boolean) {
+  const admin = adminClient();
+  await admin.auth.admin.updateUserById(userId, { app_metadata: { flag: on } });
+}
+`),
+    ignores: f('app/actions/settings.ts', `'use server';
+${ADMIN_MODULE}
+async function authenticate(accessToken: string) {
+  const { data, error } = await createClient(process.env.NEXT_PUBLIC_SUPABASE_URL!, process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!).auth.getUser(accessToken);
+  if (error || !data?.user) return null;
+  return { admin: createClient(process.env.NEXT_PUBLIC_SUPABASE_URL!, process.env.SUPABASE_SERVICE_ROLE_KEY!), user: data.user };
+}
+
+export async function setFlag(accessToken: string, on: boolean) {
+  const ctx = await authenticate(accessToken);
+  if (!ctx) return { error: 'Sign in again.' };
+  await ctx.admin.auth.admin.updateUserById(ctx.user.id, { app_metadata: { flag: on } });
+}
+`)
+  },
+  {
     ruleIds: [28002],
     name: 'Route handler updates rows with the service-role client and no auth check',
     detects: f('app/api/credits/route.ts', `import { NextResponse } from 'next/server';

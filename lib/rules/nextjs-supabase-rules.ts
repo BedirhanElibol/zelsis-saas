@@ -201,11 +201,17 @@ export function evaluateNextjsSupabaseRules(file: CodeFile, lines: string[], cle
 
     // NEXT-SB-01: Server Action writes with the service-role client without verifying the caller
     if (useServerFile || /['"]use server['"]/.test(cleanContent)) {
+      // Same-file helpers that verify the caller (e.g. `async function authenticate(token) { ...auth.getUser(token)... }`)
+      const guardHelpers = functionBlocks(cleanContent, { exportedOnly: false })
+        .filter((h) => h.name && (CALLER_CHECK.test(h.body) || /\.auth\.getUser\s*\(/.test(h.body)))
+        .map((h) => h.name);
+      const callsGuardHelper = (body: string) =>
+        guardHelpers.some((name) => new RegExp(String.raw`\b${name}\s*\(`).test(body));
       for (const fn of functionBlocks(cleanContent, { exportedOnly: true })) {
         const isAction = useServerFile ? true : /^\s*['"]use server['"]/.test(fn.body);
         if (!isAction) continue;
         const writeAt = privilegedWrite(fn.body, admins);
-        if (writeAt === -1 || CALLER_CHECK.test(fn.body)) continue;
+        if (writeAt === -1 || CALLER_CHECK.test(fn.body) || callsGuardHelper(fn.body)) continue;
         hits.push({
           ruleId: 28001, code: 'NEXT-SB-01', severity: 'CRITICAL', type: 'SECURITY', category: 'Access Control',
           title: 'Server Action Uses the Service-Role Client Without Verifying the Caller',

@@ -1,7 +1,7 @@
 import { isDependencyFile } from './dependencies';
 
 /** Source, config and infrastructure files the rule engines read (CI workflows, Terraform, server configs included). */
-const SCANNABLE_FILE = /\.(?:ts|tsx|js|jsx|json|css|sql|html|py|yml|yaml|toml|sh|ps1|c|cpp|cc|cxx|h|hpp|java|kt|kts|go|rs|php|cs|rb|swift|m|mm|dart|scala|ex|exs|vue|svelte|astro|erb|cshtml|razor|jsp|twig|jinja2?|j2|xml|plist|gradle|md|mdx|tf|tfvars|hcl|conf|properties|zelsisignore|shipguardignore)$|\.env(?:\.[a-zA-Z0-9_-]+)?$|(?:^|\/)(?:dockerfile(?:\.[\w-]+)?|makefile|podfile|\.npmrc|\.yarnrc|\.gitmodules|\.dockerignore)$/i;
+const SCANNABLE_FILE = /\.(?:ts|tsx|js|jsx|json|css|sql|html|py|yml|yaml|toml|sh|ps1|c|cpp|cc|cxx|h|hpp|java|kt|kts|go|rs|php|cs|rb|swift|m|mm|dart|scala|ex|exs|vue|svelte|astro|erb|cshtml|razor|jsp|twig|jinja2?|j2|xml|plist|gradle|md|mdx|tf|tfvars|hcl|conf|properties|zelsisignore|shipguardignore)$|\.env(?:\.[a-zA-Z0-9_-]+)?$|(?:^|\/)\.env(?:\.[a-zA-Z0-9_-]+){2,}$|(?:^|\/)(?:dockerfile(?:\.[\w-]+)?|makefile|podfile|\.npmrc|\.yarnrc|\.gitmodules|\.dockerignore)$/i;
 
 /** Generated, vendored and tool folders that never hold the app's own code. `.git/` only: `.github/` must stay. */
 const SKIPPED_DIR = /(?:^|\/)(?:node_modules|\.next|\.git|dist|build|vendor|\.agent|\.antigravity|venv|\.venv|__pycache__|site-packages)\/|artifacts|(?:^|\/)\.?venv\/(?:lib|Lib|lib64|Scripts|bin|include)\//;
