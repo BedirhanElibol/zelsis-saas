@@ -8,10 +8,19 @@
 import type { CrossFileAuth } from './ast/cross-file';
 import { middlewareAuthenticates, resolveImport, routePathOf } from './ast/cross-file';
 
-/** Rules that report a route as reachable without authentication. */
+/** Rules that report a route as reachable without authentication: middleware or an imported auth helper clears them. */
 export const ROUTE_AUTH_RULES: ReadonlySet<number> = new Set([
   15, // Unauthenticated API mutation route handler
   23006, // SAAS-06: cron endpoint without a secret check
+  28002, // NEXT-SB-02: route handler writes with the service-role client without verifying the caller
+]);
+
+/**
+ * Rules where only an imported auth helper counts. Server Actions post to the page's own URL, so a middleware
+ * matcher written for /api routes says nothing about them.
+ */
+export const HELPER_AUTH_RULES: ReadonlySet<number> = new Set([
+  28001, // NEXT-SB-01: Server Action writes with the service-role client without verifying the caller
 ]);
 
 export interface CrossFileVerification {
@@ -41,9 +50,10 @@ export function calledAuthHelper(filePath: string, content: string, cross: Cross
 
 /** Why this route-level finding is guarded elsewhere, or null when nothing was found. */
 export function guardElsewhere(ruleId: number, filePath: string, content: string, cross: CrossFileAuth): string | null {
-  if (!ROUTE_AUTH_RULES.has(ruleId)) return null;
+  const routeRule = ROUTE_AUTH_RULES.has(ruleId);
+  if (!routeRule && !HELPER_AUTH_RULES.has(ruleId)) return null;
   const route = routePathOf(filePath);
-  if (middlewareAuthenticates(cross.middleware, route)) return `middleware authenticates ${route} before the handler runs`;
+  if (routeRule && middlewareAuthenticates(cross.middleware, route)) return `middleware authenticates ${route} before the handler runs`;
   const helper = calledAuthHelper(filePath, content, cross);
   if (helper) return `the handler calls ${helper.name}() from ${helper.from}, which authenticates the caller`;
   return null;
