@@ -7,7 +7,7 @@
  */
 import { Finding } from '@/data/schema';
 import { CodeFile } from '../scanner-engine';
-import type { RepoContext } from '../scanner/repo-context';
+import { databaseExposedAt, type RepoContext } from '../scanner/repo-context';
 import { PUBLIC_ARTIFACT } from '../scanner/scan-paths';
 
 export interface MissedVulnsRuleResult {
@@ -53,7 +53,7 @@ export function evaluateMissedVulnsRules(file: CodeFile, lines: string[], cleanC
   const add = (h: Hit) => { if (h.lineIdx >= 0 && !hits.some((x) => x.ruleId === h.ruleId && x.lineIdx === h.lineIdx)) hits.push(h); };
 
   // GAP-01: RLS policy that lets anyone UPDATE / DELETE every row (USING (true) / WITH CHECK (true))
-  if (/\.sql$/i.test(path) && (context?.exposesDatabaseToClients || /(?:^|\/)supabase\//i.test(path))) {
+  if (/\.sql$/i.test(path) && ((context && databaseExposedAt(context, path)) || /(?:^|\/)supabase\//i.test(path))) {
     const sql = cleanContent.split('\n').map((l) => l.replace(/--.*$/, '')).join('\n');
     let n = 0;
     for (const m of sql.matchAll(/CREATE\s+POLICY\b[^;]*;/gi)) {

@@ -7,7 +7,7 @@
  */
 import { Finding } from '@/data/schema';
 import { CodeFile } from '../scanner-engine';
-import { emptyRepoContext, normalizeSqlName, RepoContext } from '../scanner/repo-context';
+import { databaseExposedAt, emptyRepoContext, normalizeSqlName, RepoContext } from '../scanner/repo-context';
 import { locateMatchLine } from './shared/locate';
 export interface DatabaseRuleResult {
     findings: Finding[];
@@ -166,7 +166,7 @@ export function evaluateDatabaseRules(file: CodeFile, lines: string[], cleanCont
             const t = normalizeSqlName(m[1]);
             return !context.rlsEnabledTables.has(t) && !new RegExp(String.raw`ALTER\s+TABLE\s+[^;]*\b` + t + String.raw`\b[^;]*ENABLE\s+ROW\s+LEVEL\s+SECURITY`, 'i').test(cleanContent);
         });
-    if (context.exposesDatabaseToClients && tablesWithoutRls.length > 0 && file.path.endsWith(".sql")) {
+    if (databaseExposedAt(context, file.path) && tablesWithoutRls.length > 0 && file.path.endsWith(".sql")) {
         const matchLineIdx = cleanContent.slice(0, tablesWithoutRls[0].index).split('\n').length - 1;
         const lineNum = matchLineIdx !== -1 ? matchLineIdx + 1 : 1;
         findings.push({

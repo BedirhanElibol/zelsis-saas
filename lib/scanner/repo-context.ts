@@ -18,6 +18,12 @@ export interface RepoContext {
    * so tables without RLS are exposed. Apps that only reach Postgres through their own server do not need RLS.
    */
   exposesDatabaseToClients: boolean;
+  /**
+   * Where that exposure applies: null for the whole repo (supabase/ folder, PostgREST config, GRANT ... TO anon),
+   * else the workspace folders whose package.json depends on supabase-js. In a monorepo an examples/ package using
+   * Supabase says nothing about the Prisma migrations of the main app.
+   */
+  dbExposedDirs: string[] | null;
   /** Some file serves a health / liveness / readiness route, so per-file "missing health check" rules stay quiet. */
   hasHealthEndpoint: boolean;
   /**
@@ -78,15 +84,16 @@ export function buildRepoContext(files: CodeFile[]): RepoContext {
   const hardenedSqlFunctions = new Set<string>();
   const revokedSqlFunctions = new Set<string>();
   const rlsEnabledTables = new Set<string>();
-  let exposesDatabaseToClients = false;
+  let strongDbExposure = false;
+  const supabaseWorkspaceDirs: string[] = [];
   let hasHealthEndpoint = false;
   let nextMajorVersion: number | null = null;
   for (const file of files) {
     if (!hasHealthEndpoint && HEALTH_ROUTE.test(file.content || '')) hasHealthEndpoint = true;
     const path = (file.path || '').replace(/\\/g, '/');
-    if (/(?:^|\/)supabase\/(?:config\.toml|migrations\/)/i.test(path) || /postgrest\.conf$/i.test(path) ||
-        (/(?:^|\/)package\.json$/.test(path) && /"@supabase\/(?:supabase-js|ssr|auth-helpers-\w+)"/.test(file.content || ''))) {
-      exposesDatabaseToClients = true;
+    if (/(?:^|\/)supabase\/(?:config\.toml|migrations\/)/i.test(path) || /postgrest\.conf$/i.test(path)) strongDbExposure = true;
+    else if (/(?:^|\/)package\.json$/.test(path) && !/node_modules\//.test(path) && /"@supabase\/(?:supabase-js|ssr|auth-helpers-\w+)"/.test(file.content || '')) {
+      supabaseWorkspaceDirs.push(path.replace(/(?:^|\/)package\.json$/, ''));
     }
     if (/(?:^|\/)package\.json$/.test(path) && !/node_modules\//.test(path)) {
       const pin = /"next"\s*:\s*"(?:npm:next@)?[\^~>=v\s]*(\d+)\b/.exec(file.content || '');
@@ -94,7 +101,7 @@ export function buildRepoContext(files: CodeFile[]): RepoContext {
     }
     if (/\.sql$/i.test(path)) {
       const sql = file.content || '';
-      if (/GRANT[^;]*\bTO\s+(?:anon|authenticated|web_anon)\b/i.test(sql)) exposesDatabaseToClients = true;
+      if (/GRANT[^;]*\bTO\s+(?:anon|authenticated|web_anon)\b/i.test(sql)) strongDbExposure = true;
       for (const m of sql.matchAll(/ALTER\s+TABLE\s+(?:IF\s+EXISTS\s+)?(?:ONLY\s+)?([\w."]+)\s+ENABLE\s+ROW\s+LEVEL\s+SECURITY/gi)) {
         rlsEnabledTables.add(normalizeSqlName(m[1]));
       }
@@ -111,8 +118,11 @@ export function buildRepoContext(files: CodeFile[]): RepoContext {
       if (/SET\s+search_path/i.test(m[0])) hardenedSqlFunctions.add(normalizeSqlName(m[1]));
     }
   }
+  // A supabase-js dependency in the root package.json covers the whole repo
+  const dbExposedDirs = strongDbExposure || supabaseWorkspaceDirs.includes('') ? null : supabaseWorkspaceDirs;
+  const exposesDatabaseToClients = dbExposedDirs === null || dbExposedDirs.length > 0;
   return {
-    hardenedSqlFunctions, revokedSqlFunctions, rlsEnabledTables, exposesDatabaseToClients, hasHealthEndpoint, nextMajorVersion,
+    hardenedSqlFunctions, revokedSqlFunctions, rlsEnabledTables, exposesDatabaseToClients, dbExposedDirs, hasHealthEndpoint, nextMajorVersion,
     ...collectServerClientFacts(files), crossFileAuth: buildCrossFileAuth(files), infra: collectInfraFacts(files), ...collectProjectFacts(files)
   };
 }
@@ -218,4 +228,11 @@ function collectServerClientFacts(files: CodeFile[]): Pick<RepoContext, 'clientC
 }
 
 /** Without repo-wide knowledge, assume the database may be exposed (single-file scans keep RLS checks on). */
-export const emptyRepoContext = (): RepoContext => ({ hardenedSqlFunctions: new Set(), revokedSqlFunctions: new Set(), rlsEnabledTables: new Set(), exposesDatabaseToClients: true, hasHealthEndpoint: false, nextMajorVersion: null, clientComponentModules: new Set(), sensitiveColumnsByModel: new Map(), crossFileAuth: emptyCrossFileAuth(), infra: emptyInfraFacts(), filePaths: new Set(), packageMajors: new Map(), expoPackageDirs: new Set(), nextConfig: null, serverSetHeaders: new Set(), formFieldsMinFont16: false, loopbackOnlyServer: false, phpIntFunctions: new Set() });
+export const emptyRepoContext = (): RepoContext => ({ hardenedSqlFunctions: new Set(), revokedSqlFunctions: new Set(), rlsEnabledTables: new Set(), exposesDatabaseToClients: true, dbExposedDirs: null, hasHealthEndpoint: false, nextMajorVersion: null, clientComponentModules: new Set(), sensitiveColumnsByModel: new Map(), crossFileAuth: emptyCrossFileAuth(), infra: emptyInfraFacts(), filePaths: new Set(), packageMajors: new Map(), expoPackageDirs: new Set(), nextConfig: null, serverSetHeaders: new Set(), formFieldsMinFont16: false, loopbackOnlyServer: false, phpIntFunctions: new Set() });
+
+/** Clients can query the tables this SQL file creates (see dbExposedDirs). */
+export function databaseExposedAt(context: Pick<RepoContext, 'exposesDatabaseToClients' | 'dbExposedDirs'>, path: string): boolean {
+  if (!context.exposesDatabaseToClients) return false;
+  const dirs = context.dbExposedDirs;
+  return !dirs || dirs.some((d) => path.replace(/\\/g, '/').startsWith(d + '/'));
+}

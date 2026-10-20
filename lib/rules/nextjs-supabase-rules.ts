@@ -9,7 +9,7 @@
 import type { Finding } from '@/data/schema';
 import type { CodeFile } from '../scanner-engine';
 import { AUTH_GUARD, WEBHOOK_VERIFY } from './shared/stack-signals';
-import { emptyRepoContext, normalizeSqlName, type RepoContext } from '../scanner/repo-context';
+import { databaseExposedAt, emptyRepoContext, normalizeSqlName, type RepoContext } from '../scanner/repo-context';
 
 interface Hit {
   ruleId: number;
@@ -441,7 +441,7 @@ export function evaluateNextjsSupabaseRules(file: CodeFile, lines: string[], cle
   }
 
   // ─── Supabase SQL migrations ────────────────────────────────────────────────────────────
-  if (/\.sql$/i.test(path) && context.exposesDatabaseToClients) {
+  if (/\.sql$/i.test(path) && databaseExposedAt(context, path)) {
     const sql = stripSqlComments(cleanContent);
     const sqlLines = sql.split('\n');
     const firstLine = (re: RegExp, from = 0) => {

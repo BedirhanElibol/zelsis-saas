@@ -398,6 +398,22 @@ def fetch():
     ],
   },
   {
+    ruleIds: [24102], name: 'CORE-02 Ruby backtick command with interpolation vs backticks inside error and log strings',
+    detects: f('app/services/archive.rb', 'class Archive\n  def pack(dir)\n    out = `tar czf /tmp/out.tgz #{dir}`\n    out\n  end\nend\n'),
+    ignores: f('lib/sdk/models/api_meta.rb', 'class ApiMeta\n  def initialize(attributes = {})\n    attributes.each_key do |k|\n      fail ArgumentError, "`#{k}` is not a valid attribute in `ApiMeta`."\n    end\n    raise "A `disco` command named \'#{name}\' is already registered" if taken\n  end\nend\n'),
+  },
+  {
+    ruleIds: [3001], name: 'INFRA-01 table without RLS in a Supabase app vs Prisma migrations of an app whose only supabase-js user is an example package',
+    detects: [
+      ...f('package.json', '{ "dependencies": { "@supabase/supabase-js": "^2.45.0" } }\n'),
+      ...f('db/schema.sql', 'create table public.notes (\n  id uuid primary key,\n  body text\n);\n'),
+    ],
+    ignores: [
+      ...f('examples/supabase-demo/package.json', '{ "dependencies": { "@supabase/supabase-js": "^2.45.0" } }\n'),
+      ...f('apps/backend/prisma/migrations/20240610085756_init/migration.sql', '-- CreateTable\nCREATE TABLE "VerificationCode" (\n  "id" UUID NOT NULL,\n  "code" TEXT NOT NULL\n);\n'),
+    ],
+  },
+  {
     ruleIds: [15701], name: 'KERN-SEC-01 privileged compose service vs a locale key ending in _add, a PodSecurityPolicy and a scan report',
     detects: f('docker-compose.yml', 'services:\n  agent:\n    image: acme/agent:1.4\n    privileged: true\n'),
     ignores: [
