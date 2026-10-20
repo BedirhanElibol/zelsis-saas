@@ -128,6 +128,30 @@ export async function setFlag(accessToken: string, on: boolean) {
   },
   {
     ruleIds: [28002],
+    name: 'Public auth route that deletes users is flagged; one that only stores a login code is not',
+    detects: f('app/api/auth/delete-account/route.ts', `import { NextResponse } from 'next/server';
+import { supabaseAdmin } from '@/lib/supabase/admin';
+
+export async function POST(req: Request) {
+  const { userId } = await req.json();
+  await supabaseAdmin.auth.admin.deleteUser(userId);
+  return NextResponse.json({ ok: true });
+}
+`),
+    ignores: f('app/api/auth/send-code/route.ts', `import { NextResponse } from 'next/server';
+import { randomInt } from 'crypto';
+import { supabaseAdmin } from '@/lib/supabase/admin';
+
+export async function POST(req: Request) {
+  const { phone } = await req.json();
+  const code = String(randomInt(100000, 999999));
+  await supabaseAdmin.from('login_codes').insert({ phone, code });
+  return NextResponse.json({ sent: true });
+}
+`)
+  },
+  {
+    ruleIds: [28002],
     name: 'Route handler updates rows with the service-role client and no auth check',
     detects: f('app/api/credits/route.ts', `import { NextResponse } from 'next/server';
 import { createAdminClient } from '@/lib/supabase/admin';
