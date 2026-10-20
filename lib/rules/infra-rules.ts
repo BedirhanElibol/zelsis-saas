@@ -156,6 +156,11 @@ export function evaluateInfraRules(file: CodeFile, lines: string[], cleanContent
             if (/^(?:localhost|127\.0\.0\.1|0\.0\.0\.0|host\.docker\.internal)$/i.test(dbMatch[3])) {
                 continue;
             }
+            // A dotless host (db, mysql, database-postgres-main) is a Compose / CI service name: the password only
+            // opens a container on that stack's private network, which is a default to change, not a leaked credential
+            if (/^[a-z][\w-]*$/i.test(dbMatch[3]) && /(?:^|\/)(?:docker-compose[^/]*|compose[^/]*|container-compose[^/]*)\.ya?ml$|(?:^|\/)\.(?:github|forgejo|gitea|gitlab)\/|\.gitlab-ci\.ya?ml$|(?:^|\/)templates?\//i.test(lowerPath)) {
+                continue;
+            }
             const lineNum = cleanContent.slice(0, dbMatch.index).split('\n').length;
             const matchingLine = lines[lineNum - 1]?.trim() || '';
             // Skip commented-out sample URIs in YAML, Python, SQL, or code comments
@@ -652,17 +657,22 @@ export function evaluateInfraRules(file: CodeFile, lines: string[], cleanContent
     // RULE 3021 (INFRA-21): Node.js Database SQL Query String Concatenation (SQLi)
     // =========================================================================
     const isJsTs = lowerPath.endsWith('.js') || lowerPath.endsWith('.ts') || lowerPath.endsWith('.mjs');
-    if (isJsTs && !lowerPath.includes('test') && !lowerPath.includes('spec')) {
+    // Migrations, seeds and maintenance scripts run SQL on the app's own data, not on request input
+    const notRequestPath = /(?:^|\/)(?:migrations?|seeds?|seeders|scripts?|umzug[^/]*)\/|(?:^|\/)seed[^/]*\.[cm]?[jt]s$/i.test(lowerPath);
+    if (isJsTs && !notRequestPath && !lowerPath.includes('test') && !lowerPath.includes('spec')) {
         // Raw SQL built by concatenation / interpolation, passed inline or through a variable to any query API
-        // (pg, mysql, sequelize.query, knex.raw, Prisma $queryRawUnsafe, TypeORM query, better-sqlite3 prepare/exec)
-        const sqlKeyword = String.raw`\b(?:SELECT|INSERT|UPDATE|DELETE)\b`;
+        // (pg, mysql, sequelize.query, knex.raw, Prisma $queryRawUnsafe, TypeORM query, better-sqlite3 prepare/exec).
+        // The literal must look like SQL (SELECT ... FROM, INSERT INTO, UPDATE x SET, DELETE FROM): with the i flag a
+        // bare keyword matched messages such as `Delete ${name}?`
+        const sqlKeyword = String.raw`\b(?:SELECT\b[^"'\x60;]*?\bFROM|INSERT\s+INTO|UPDATE\s+[\w."]+\s+SET|DELETE\s+FROM)\b`;
         const dynamicSql = String.raw`(?:"[^"\n]*` + sqlKeyword + String.raw`[^"\n]*"\s*\+|'[^'\n]*` + sqlKeyword + String.raw`[^'\n]*'\s*\+|\x60[^\x60]*` + sqlKeyword + String.raw`[^\x60]*\$\{)`;
         const queryCall = String.raw`(?:\.(?:query|raw|execute|exec|prepare|unsafe)|\$(?:queryRawUnsafe|executeRawUnsafe))\s*\(\s*`;
         const sqlVars = [...cleanContent.matchAll(new RegExp(String.raw`(?:const|let|var)\s+(\w+)\s*=\s*` + dynamicSql, 'gi'))].map((m) => m[1]);
         const rawSqlConcatRegex = new RegExp(queryCall + '(?:' + dynamicSql + (sqlVars.length ? String.raw`|\b(?:` + sqlVars.join('|') + String.raw`)\b` : '') + ')', 'i');
-        if (rawSqlConcatRegex.test(cleanContent)) {
-            const matchLineIdx = lines.findIndex(l => rawSqlConcatRegex.test(l));
-            const lineNum = matchLineIdx !== -1 ? matchLineIdx + 1 : 1;
+        const sqlConcatMatch = rawSqlConcatRegex.exec(cleanContent);
+        if (sqlConcatMatch) {
+            // Multi-line template literals never match a single line: locate the call from the match offset
+            const lineNum = cleanContent.slice(0, sqlConcatMatch.index).split('\n').length;
             const snippet = extractSnippet(lines, lineNum);
             findings.push({
                 id: `real-find-${Date.now()}-${findingCounter.count++}`,

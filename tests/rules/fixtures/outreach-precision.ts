@@ -403,6 +403,22 @@ def fetch():
     ignores: f('lib/sdk/models/api_meta.rb', 'class ApiMeta\n  def initialize(attributes = {})\n    attributes.each_key do |k|\n      fail ArgumentError, "`#{k}` is not a valid attribute in `ApiMeta`."\n    end\n    raise "A `disco` command named \'#{name}\' is already registered" if taken\n  end\nend\n'),
   },
   {
+    ruleIds: [3021], name: 'INFRA-21 multi-line query with an interpolated id vs a migration and a confirm message',
+    detects: f('src/repositories/user.repository.ts', 'export async function findUser(pool, id: string) {\n  return pool.query(`\n    SELECT id, email\n    FROM users\n    WHERE id = ${id}\n  `);\n}\n'),
+    ignores: [
+      ...f('src/db/migrations/1717180399574-CreatePlans.ts', 'export class CreatePlans {\n  async up(queryRunner, orgs) {\n    for (const org of orgs) await queryRunner.query(`INSERT INTO plans (org_id) VALUES (\'${org.id}\')`);\n  }\n}\n'),
+      ...f('src/ui/confirm.ts', 'export function ask(dialog, name: string) {\n  return dialog.exec(`Delete ${name}? This cannot be undone.`);\n}\n'),
+    ],
+  },
+  {
+    ruleIds: [3003], name: 'INFRA-03 password in a URI to a real host vs Compose and CI service names',
+    detects: f('src/config/database.ts', 'export const DATABASE_URL = "postgresql://app_admin:Qx7vR2mTz9@db-prod-01.eu-west-1.rds.amazonaws.com:5432/app";\n'),
+    ignores: [
+      ...f('container-compose.yml', 'services:\n  web:\n    environment:\n      DATABASE_URL: postgresql://forem:forem@db:5432/PracticalDeveloper_development\n'),
+      ...f('.forgejo/workflows/test-migrations.yml', "jobs:\n  test:\n    steps:\n      - name: Start migration test\n        env:\n          TEST_DATABASE_URL: 'mysql://bookstack-test:bookstack-test@mysql/bookstack-test'\n"),
+    ],
+  },
+  {
     ruleIds: [24103], name: 'CORE-03 PHP unserialize on a cookie vs Serializable methods and allowed_classes false',
     detects: f('src/Session/CartCookie.php', "<?php\nclass CartCookie {\n  public function load() {\n    return unserialize($_COOKIE['cart']);\n  }\n}\n"),
     ignores: f('src/Model/Identity.php', "<?php\nclass Identity implements \\Serializable {\n  public function unserialize($serialized): void {\n    [$this->class, $this->id] = $this->unserialize($serialized);\n  }\n  public function opts($raw) {\n    return unserialize($raw, ['allowed_classes' => false]);\n  }\n}\n"),
