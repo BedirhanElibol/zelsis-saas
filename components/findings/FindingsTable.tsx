@@ -4,6 +4,7 @@ import React, { useState } from 'react';
 import { RiskBadge } from '@/components/findings/RiskBadge';
 import { LockedLocation } from '@/components/findings/LockedLocation';
 import { RiskDiagnosis } from '@/components/findings/RiskDiagnosis';
+import { CostEstimatePanel } from '@/components/findings/CostEstimatePanel';
 import { Finding, UserTier } from '@/data/schema';
 import { DEMO_AUDIT_FINDINGS } from '@/data/demo-data';
 import { BulkFixModal } from './BulkFixModal';
@@ -208,6 +209,7 @@ export const FindingsTable: React.FC<FindingsTableProps> = ({
   return (
     <div ref={tableRef} data-tour="findings" className="scroll-mt-20 bg-[#141414] border border-white/10 rounded-xl p-4 sm:p-6 flex flex-col gap-5">
       <RiskDiagnosis findings={findings} />
+      <CostEstimatePanel findings={findings} projectId={projectId} />
 
       {/* Snyk-Grade Release Readiness Radar & Category Breakdown Cards */}
       <div className="grid grid-cols-2 lg:grid-cols-5 gap-3">
