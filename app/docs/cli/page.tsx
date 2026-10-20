@@ -75,9 +75,12 @@ export default function CliPage() {
         <p><strong>Cursor, Windsurf and other MCP clients</strong> (<code>mcp.json</code>)</p>
         <pre className={pre}><code className="text-emerald-400">{MCP_JSON}</code></pre>
         <p>
-          To make the agent use it every time, add a line to your project instructions (<code>CLAUDE.md</code>,{' '}
-          <code>.cursorrules</code> or similar): &quot;After changing code, run the zelsis_check tool and fix critical and high
-          findings before finishing.&quot;
+          To make the agent use it every time, run <code>npx zelsis init</code> in the repository. It adds a short rule to the
+          agent instruction files you already have (<code>CLAUDE.md</code>, <code>AGENTS.md</code>, <code>.cursorrules</code>,{' '}
+          <code>.windsurfrules</code>, <code>.github/copilot-instructions.md</code>): run <code>zelsis verify</code> before
+          calling a task done and fix critical and high findings first. If none exist it creates <code>AGENTS.md</code> and{' '}
+          <code>CLAUDE.md</code>. Running it again changes nothing, <code>--dry-run</code> only prints the plan, and it never
+          writes your API key.
         </p>
       </section>
 
