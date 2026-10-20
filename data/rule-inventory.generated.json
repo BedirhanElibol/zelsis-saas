@@ -1,8 +1,8 @@
 {
  "summary": {
-  "implementedRules": 1296,
-  "testedRules": 1287,
-  "preciseLocationRules": 1293,
+  "implementedRules": 1297,
+  "testedRules": 1288,
+  "preciseLocationRules": 1294,
   "catalogEntries": 1922,
   "catalogOnlyNotImplemented": 1397,
   "catalogPlaceholderMetadata": 1810
@@ -14363,6 +14363,16 @@
    "title": "This ${model} Query Skips the Tenant Filter the Other ${model} Queries in This File Use",
    "severity": "HIGH",
    "source": "lib/rules/cross-layer-rules.ts",
+   "preciseLocation": true,
+   "tested": true,
+   "inCatalog": false
+  },
+  {
+   "ruleId": 30401,
+   "code": "RULE-30401",
+   "title": "Token Is Decoded by Hand and Trusted Without a Signature Check",
+   "severity": "CRITICAL",
+   "source": "lib/rules/missing-guard-rules.ts",
    "preciseLocation": true,
    "tested": true,
    "inCatalog": false
