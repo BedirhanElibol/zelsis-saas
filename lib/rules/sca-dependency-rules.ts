@@ -512,9 +512,12 @@ export function evaluateScaDependencyRules(file: CodeFile, lines: string[], clea
             if (!trimmed || trimmed.startsWith("#"))
                 return;
             for (const [pkg, info] of Object.entries(pythonCves)) {
-                const pkgRegex = new RegExp(`(?:^|["'\\s])${pkg}(?:$|["'\\s=<>~^])`, "i");
-                if (pkgRegex.test(trimmed) || trimmed.toLowerCase().startsWith(pkg)) {
-                    const match = trimmed.match(/(?:==|<=|~=|=|\^|>=|["'])\s*([0-9]+)\.([0-9]+)(?:\.([0-9]+))?/);
+                // The whole package name: django-extensions and requests-oauthlib are other packages
+                const pkgRegex = new RegExp(`(?:^|["'\\s])${pkg}(?:\\[[^\\]]*\\])?(?:$|["'\\s=<>~!;,])`, "i");
+                if (pkgRegex.test(trimmed)) {
+                    // Only a pin or an upper bound says which version installs; a >= floor or a ^ range resolves to
+                    // the newest release (Django>=4.2,<6 is not Django 4.2.0)
+                    const match = trimmed.match(/(?:===?|~=|<=|=\s*["'])\s*([0-9]+)\.([0-9]+)(?:\.([0-9]+))?/);
                     if (match) {
                         const major = parseInt(match[1], 10);
                         const minor = parseInt(match[2], 10);
