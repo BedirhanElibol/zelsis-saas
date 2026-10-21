@@ -481,6 +481,8 @@ def fetch():
     ],
     ignores: [
       ...f('lib/flipper/ui/public/js/jquery-3.6.0.slim.js', 'function html(elem, value) {\n  elem.innerHTML = value;\n}\n'),
+      // The word in prose (a changelog entry) is not a sink
+      ...f('data/changelog.ts', "export const CHANGELOG = [\n  { kind: 'Fixed', text: 'XSS checks on innerHTML and dangerouslySetInnerHTML now skip vendored scripts.' },\n];\n"),
       ...f('public/js/foo-1.2.3.min.js', 'function set(el, v) { el.innerHTML = v; }\n'),
       ...f('assets/js/bootstrap.bundle.min.js', 'function tip(el, v) { el.innerHTML = v; }\n'),
       ...f('src/components/DocsCode.tsx', 'import { codeToHtml } from "shiki";\nexport async function DocsCode({ code }: { code: string }) {\n  const codeHTML = await codeToHtml(code, { lang: "ts", theme: "nord" });\n  return <div dangerouslySetInnerHTML={{ __html: codeHTML }} />;\n}\n'),
