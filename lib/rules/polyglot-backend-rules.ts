@@ -447,7 +447,18 @@ export function evaluatePolyglotBackendRules(file: CodeFile, lines: string[], cl
         // A value interpolated into the SQL fragment (after =, <, >, LIKE, IN) or params interpolated anywhere.
         // `where("#{table_name}.id = ?", id)` (identifier interpolation with a bound value) stays quiet.
         const rubySqliRegex = /(?:\bfind_by_sql|\bcount_by_sql|\.(?:where|not|order|reorder|having|pluck|joins|group|select|from|find_by|exists\?|delete_all|update_all|lock))\s*\(?\s*"[^"]*?(?:(?:=|<>|!=|<|>|\bLIKE|\bIN)\s*\(?\s*'?%?#\{|#\{params\[)/i;
-        const rubySqliIdx = lines.findIndex(l => !l.trim().startsWith('#') && rubySqliRegex.test(l));
+        const isRubyScriptOrMigration = /(?:^|\/)(?:scripts?|db\/migrate|lib\/tasks)\//i.test(lowerPath);
+        const isSafeRubySqlInterp = (expr: string): boolean => {
+            const e = expr.trim();
+            return /\.\s*to_[if]\s*(?:\(\s*\))?$|^(?:Integer|Float)\s*\(/.test(e)
+                || /^(?:::)?[A-Z][A-Za-z0-9_]*(?:::[A-Z][A-Za-z0-9_]*)*$/.test(e)
+                || /^(?:quoted_\w+|\w+_quoted|(?:[\w:]+\.)?connection\.quote(?:_column_name|_table_name)?\s*\(|sanitize_sql\w*\s*\()/.test(e);
+        };
+        const rubySqliIdx = isRubyScriptOrMigration ? -1 : lines.findIndex(l => {
+            if (l.trim().startsWith('#') || !rubySqliRegex.test(l)) return false;
+            const interps = [...l.matchAll(/#\{([^}]+)\}/g)].map(m => m[1]);
+            return interps.length === 0 || !interps.every(isSafeRubySqlInterp);
+        });
         if (rubySqliIdx !== -1) {
             const matchLineIdx = rubySqliIdx;
             const lineNum = matchLineIdx !== -1 ? matchLineIdx + 1 : 1;
