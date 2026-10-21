@@ -472,6 +472,41 @@ def fetch():
     ignores: f('requirements.txt', 'requests>=2.20\nrequests-oauthlib==1.3.0\nrequests_toolbelt==0.9.1\n'),
   },
   {
+    ruleIds: [8801], name: 'PY-SEC-01 pickle.loads on request input vs loading own model file, symmetric codec, homework path, or prompt text',
+    detects: f('app/views.py', `import pickle, base64
+from flask import request
+
+def import_state():
+    return pickle.loads(base64.b64decode(request.args["d"]))
+`),
+    ignores: [
+      ...f('app/ml/inference.py', `import pickle
+
+def load_classifier(model_path: str):
+    with open(model_path, "rb") as f:
+        return pickle.load(f)
+`),
+      ...f('src/sentry/digests/codecs.py', `import pickle, zlib
+
+class CompressedPickleCodec:
+    def encode(self, value):
+        return zlib.compress(pickle.dumps(value))
+
+    def decode(self, value):
+        return pickle.loads(zlib.decompress(value))
+`),
+      ...f('cohorts/2026/02-experiment-tracking/train.py', `import pickle
+
+def load_dump(data):
+    return pickle.loads(data)
+`),
+      ...f('app/prompts/scanner_prompt.py', `SYSTEM_PROMPT = """
+Check for dangerous sinks such as pickle.loads() or cPickle.load() on untrusted payloads.
+"""
+`),
+    ],
+  },
+  {
     ruleIds: [9704], name: 'FINTECH-04 Stripe webhook using the body unverified vs one handing the signature to a service that calls constructEvent',
     detects: f('src/app/api/webhook/stripe/route.js', `import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
