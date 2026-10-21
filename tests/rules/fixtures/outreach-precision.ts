@@ -472,6 +472,25 @@ def fetch():
     ignores: f('requirements.txt', 'requests>=2.20\nrequests-oauthlib==1.3.0\nrequests_toolbelt==0.9.1\n'),
   },
   {
+    ruleIds: [16], name: 'SEC-16 innerHTML on message body or raw prop vs vendored jquery/bundle assets and shiki/prism/hljs syntax highlighters',
+    detects: [
+      ...f('src/components/HtmlPreview.tsx', 'export function HtmlPreview({ html }: { html: string }) {\n  return <div dangerouslySetInnerHTML={{ __html: html }} />;\n}\n'),
+      ...f('src/chat/render.ts', 'export function renderMsg(el: HTMLElement, message: { body: string }) {\n  el.innerHTML = message.body;\n}\n'),
+      // Search-term highlighting is not a syntax highlighter
+      ...f('src/search/results.ts', 'const highlight = (text: string, q: string) => text.replace(q, `<mark>${q}</mark>`);\nexport function show(el: HTMLElement, title: string, q: string) {\n  el.innerHTML = highlight(title, q);\n}\n'),
+    ],
+    ignores: [
+      ...f('lib/flipper/ui/public/js/jquery-3.6.0.slim.js', 'function html(elem, value) {\n  elem.innerHTML = value;\n}\n'),
+      // The word in prose (a changelog entry) is not a sink
+      ...f('data/changelog.ts', "export const CHANGELOG = [\n  { kind: 'Fixed', text: 'XSS checks on innerHTML and dangerouslySetInnerHTML now skip vendored scripts.' },\n];\n"),
+      ...f('public/js/foo-1.2.3.min.js', 'function set(el, v) { el.innerHTML = v; }\n'),
+      ...f('assets/js/bootstrap.bundle.min.js', 'function tip(el, v) { el.innerHTML = v; }\n'),
+      ...f('src/components/DocsCode.tsx', 'import { codeToHtml } from "shiki";\nexport async function DocsCode({ code }: { code: string }) {\n  const codeHTML = await codeToHtml(code, { lang: "ts", theme: "nord" });\n  return <div dangerouslySetInnerHTML={{ __html: codeHTML }} />;\n}\n'),
+      ...f('src/components/PrismBlock.tsx', 'import Prism from "prismjs";\nexport function PrismBlock({ src }: { src: string }) {\n  const codeHTML = Prism.highlight(src, Prism.languages.javascript, "javascript");\n  return <pre dangerouslySetInnerHTML={{ __html: codeHTML }} />;\n}\n'),
+      ...f('src/components/HljsBlock.tsx', 'import hljs from "highlight.js";\nexport function HljsBlock({ src }: { src: string }) {\n  const codeHTML = hljs.highlight(src, { language: "ts" }).value;\n  return <code dangerouslySetInnerHTML={{ __html: codeHTML }} />;\n}\n'),
+    ],
+  },
+  {
     ruleIds: [8801], name: 'PY-SEC-01 pickle.loads on request input vs loading own model file, symmetric codec, homework path, or prompt text',
     detects: [
       ...f('app/views.py', `import pickle, base64
