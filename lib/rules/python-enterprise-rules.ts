@@ -30,7 +30,8 @@ export function evaluatePythonEnterpriseRules(file: CodeFile, lines: string[], c
         .replace(/'(?:\\.|[^'\\])*'|"(?:\\.|[^"\\])*"/g, '""')
         .replace(/#.*$/gm, "");
     const reg_8801 = /\b(?:pickle|cPickle|_pickle)\.(?:loads?|Unpickler)\s*\(/i;
-    const hasUntrustedPickleInput = /\b(?:request\.(?:body|data|args|form|values|files|get_data|stream)|req\.(?:body|query|params)|sock\.recv|socket\.recv|rfile\.read|sys\.stdin)/i.test(pyCodeNoStrings);
+    // Cookies, headers and network fetches count too: a pickled cookie is the classic exploit
+    const hasUntrustedPickleInput = /\b(?:request\.(?:body|data|args|form|values|files|get_data|stream|cookies|headers)|req\.(?:body|query|params|cookies|headers)|sock\.recv|socket\.recv|\.recv\s*\(|rfile\.read|sys\.stdin|urlopen\s*\(|requests\.(?:get|post)\s*\()/i.test(pyCodeNoStrings);
     const isSymmetricPickleCodec = /\b(?:pickle|cPickle|_pickle)\.dumps?\s*\(/i.test(pyCodeNoStrings) && !hasUntrustedPickleInput;
     const pyLinesNoStrings = pyCodeNoStrings.split(/\r?\n/);
     const unsafePickleLineIdx = (!isPickleScriptOrHomeworkPath && !isSymmetricPickleCodec && reg_8801.test(pyCodeNoStrings))
@@ -39,13 +40,13 @@ export function evaluatePythonEnterpriseRules(file: CodeFile, lines: string[], c
             const loadCallMatch = /\b(?:pickle|cPickle|_pickle)\.load\s*\(\s*([A-Za-z_]\w*|open\s*\([^)]*\))/i.exec(lines[idx] || "");
             if (loadCallMatch) {
                 const arg = loadCallMatch[1].trim();
-                if (/^open\s*\(\s*(?:['"][^'"]+['"]|[A-Za-z_]\w*(?:model|path|file|checkpoint|weights|artifact|pkl|pickle)\w*)/i.test(arg)) {
+                if (/^open\s*\(\s*(?:['"][^'"]+['"]|\w*(?:model|checkpoint|weights)\w*)/i.test(arg)) {
                     return false;
                 }
                 if (/^[A-Za-z_]\w*$/.test(arg)) {
                     const windowStart = Math.max(0, idx - 12);
                     const funcWindow = lines.slice(windowStart, idx + 1).join("\n");
-                    const openVarRegex = new RegExp(String.raw`\bopen\s*\(\s*(?:r?['"][^'"]+['"]|[A-Za-z_]\w*(?:model|path|file|checkpoint|weights|artifact|pkl|pickle)[A-Za-z0-9_.]*)\s*(?:,\s*['"]rb['"])?[^)]*\)\s+as\s+${arg}\b|\b${arg}\s*=\s*open\s*\(\s*(?:r?['"][^'"]+['"]|[A-Za-z_]\w*(?:model|path|file|checkpoint|weights|artifact|pkl|pickle)[A-Za-z0-9_.]*)`, "i");
+                    const openVarRegex = new RegExp(String.raw`\bopen\s*\(\s*(?:r?['"][^'"]+['"]|\w*(?:model|checkpoint|weights)[A-Za-z0-9_.]*)\s*(?:,\s*['"]rb['"])?[^)]*\)\s+as\s+${arg}\b|\b${arg}\s*=\s*open\s*\(\s*(?:r?['"][^'"]+['"]|\w*(?:model|checkpoint|weights)[A-Za-z0-9_.]*)`, "i");
                     if (openVarRegex.test(funcWindow)) {
                         return false;
                     }

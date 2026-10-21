@@ -473,12 +473,30 @@ def fetch():
   },
   {
     ruleIds: [8801], name: 'PY-SEC-01 pickle.loads on request input vs loading own model file, symmetric codec, homework path, or prompt text',
-    detects: f('app/views.py', `import pickle, base64
+    detects: [
+      ...f('app/views.py', `import pickle, base64
 from flask import request
 
 def import_state():
     return pickle.loads(base64.b64decode(request.args["d"]))
 `),
+      // An uploaded file and a pickled cookie are attacker data even though the file also pickles
+      ...f('app/uploads.py', `import pickle
+
+def load_upload(upload_path):
+    with open(upload_path, "rb") as f:
+        return pickle.load(f)
+`),
+      ...f('app/session.py', `import pickle, base64
+from flask import request
+
+def save(resp, cart):
+    resp.set_cookie("cart", base64.b64encode(pickle.dumps(cart)).decode())
+
+def load():
+    return pickle.loads(base64.b64decode(request.cookies["cart"]))
+`),
+    ],
     ignores: [
       ...f('app/ml/inference.py', `import pickle
 
