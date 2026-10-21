@@ -784,18 +784,29 @@ export function evaluateSecurityRules(file: CodeFile, lines: string[], cleanCont
     // mx.eval() or a method named eval are not code execution
     const hasGlobalEval = !/\.(?:java|kt|kts|scala|cs|go|rs|swift|c|cc|cpp|h|hpp|dart)$/i.test(file.path);
     if (isCodeFile && hasGlobalEval && (cleanContent.includes('eval(') || cleanContent.includes('new Function('))) {
-        // mathjs.eval() and vm-style receivers still count; Redis Lua (redis/client.eval) and tensor libraries (mx.eval) do not
-        const evalRegex = /(?<![\w$])(?<!(?:redis|client|conn|connection|pipe|pipeline|mx|mlx|model|net|torch|tf)\.)(?<!\b(?:def|function|fun|func|void)\s+)eval\s*\([^)]+\)|\bnew\s+Function\s*\([^)]+\)/;
-        if (evalRegex.test(cleanContent)) {
-            const matchLineIdx = lines.findIndex(l => !l.trim().startsWith('//') && !l.trim().startsWith('*') && evalRegex.test(l));
-            const lineNum = matchLineIdx !== -1 ? matchLineIdx + 1 : 1;
+        // The global eval, or eval on a receiver that runs code (mathjs.eval, window.eval). Other methods named eval
+        // are not code execution: Redis Lua ($redis->eval, client().eval), tensors (mx.eval), curves (cv.eval), an
+        // embedded JS engine's context.eval. One line only: [^)] across lines matched where no line could be found.
+        const raw32 = (file.content || '').split('\n');
+        const evalRegex = /(?:(?<![\w$.>])|(?<=\b(?:math|mathjs|window|globalThis|global|self|top|parent)\.))(?<!\b(?:def|function|fun|func|void)\s+)eval\s*\([^)\n]+\)|\bnew\s+Function\s*\([^)\n]+\)/;
+        // Not a dynamic call: a typed method signature (eval(t: number): Vec3), or only a fixed string literal
+        const notDynamic = (l: string) => /\beval\s*\(\s*\w+\s*\??\s*:\s*[\w[{]/.test(l)
+            || /(?:\beval|\bnew\s+Function)\s*\(\s*(['"`])(?:(?!\1|\$\{)[^\\]|\\.)*\1\s*\)/.test(l) && !/(?:\beval|\bnew\s+Function)\s*\(\s*(['"`])(?:(?!\1)[^\\]|\\.)*\1\s*[+,]/.test(l);
+        const matchLineIdx = evalRegex.test(cleanContent)
+            ? lines.findIndex(l => !l.trim().startsWith('//') && !l.trim().startsWith('*') && evalRegex.test(l) && !notDynamic(l))
+            : -1;
+        if (matchLineIdx !== -1) {
+            const lineNum = matchLineIdx + 1;
+            // nosemgrep / eslint-disable no-eval / noqa: S307 / nosec on the line or just above: reviewed, keep as MEDIUM
+            const rawAround = `${raw32[matchLineIdx - 1] ?? ''}\n${raw32[matchLineIdx] ?? ''}`;
+            const reviewed32 = /nosemgrep|eslint-disable[^\n]*no-(?:implied-)?eval|noqa:\s*S307|#\s*nosec\b/i.test(rawAround);
             const snippet = lines.slice(Math.max(0, lineNum - 2), Math.min(lines.length, lineNum + 2)).join('\n');
             findings.push({
                 id: `real-find-${Date.now()}-${findingCounter.count++}`,
                 ruleId: 32,
                 type: 'SECURITY',
                 title: 'Dynamic Code Execution (eval / Function Remote Code Execution)',
-                severity: 'CRITICAL',
+                severity: reviewed32 ? 'MEDIUM' : 'CRITICAL',
                 category: 'Remote Code Execution',
                 filePath: file.path,
                 lineRange: `L${lineNum}`,
