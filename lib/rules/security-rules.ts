@@ -817,10 +817,33 @@ export function evaluateSecurityRules(file: CodeFile, lines: string[], cleanCont
         const cmdRequestRef = String.raw`\b(?:req(?:uest)?\.(?:query|body|params)\.\w+` + (cmdRequestVars.size ? '|' + [...cmdRequestVars].join('|') : '') + String.raw`)\b`;
         // Developer tooling (scripts/, bin/, tools/) receives no request input: only request-derived values count there
         const isDevTooling = /(?:^|\/)(?:scripts|bin|tools|\.husky)\//i.test(lowerPath);
+        const isBuildConfigOrTemplate = /(?:^|\/)(?:\.hygen|_templates)\//i.test(lowerPath) || /(?:^|\/)(?:postcss|tailwind|vite|next|webpack|rollup|tsup|esbuild|vitest|jest|babel|svelte|astro|nuxt)\.config\.[cm]?[jt]s$/i.test(lowerPath);
+        const isCliPackagePath = /(?:^|\/)(?:packages\/cli|cli|bin)\//i.test(lowerPath);
+        const literalAssignedVars = new Set<string>();
+        if (isCliPackagePath) {
+            for (const m of cleanContent.matchAll(/\b(?:const|let|var)\s+(\w+)\s*(?::[^=;]+)?=\s*(?:['"][^'"]+['"]|\[\s*(?:['"][^'"]+['"]\s*,?\s*)+\])/g)) {
+                literalAssignedVars.add(m[1]);
+            }
+            for (const m of cleanContent.matchAll(/\bfor\s*\(\s*(?:const|let|var)\s+(\w+)\s+of\s+\[\s*(?:['"][^'"]+['"]\s*,?\s*)+\]\s*\)/g)) {
+                literalAssignedVars.add(m[1]);
+            }
+            for (const m of cleanContent.matchAll(/\b(\w+)\s*=\s*['"][^'"]+['"]/g)) {
+                if (!cmdRequestVars.has(m[1])) literalAssignedVars.add(m[1]);
+            }
+        }
         const dynamicShell = String.raw`\x60[^\x60]*\$\{[^}]+\}|['"][^'"]*['"]\s*\+|[a-zA-Z0-9_.]+\s*\+|`;
         const cmdInjRegex = new RegExp(String.raw`(?:\b(?:child_process|cp|childProcess)\.(?:exec|execSync)\s*\(|(?<![.\w])exec\s*\(|(?<![.\w])execSync\s*\()\s*(?:` + (isDevTooling ? '' : dynamicShell) + cmdRequestRef + ')');
-        if (cmdInjRegex.test(cleanContent)) {
-            const matchLineIdx = lines.findIndex(l => !l.trim().startsWith('//') && !l.trim().startsWith('*') && cmdInjRegex.test(l));
+        const isSafeTemplateExec = (line: string): boolean => {
+            const tpl = /(?:\b(?:child_process|cp|childProcess)\.(?:exec|execSync)\s*\(|(?<![.\w])exec\s*\(|(?<![.\w])execSync\s*\()\s*`([^`]+)`/.exec(line);
+            if (!tpl) return false;
+            const exprs = [...tpl[1].matchAll(/\$\{\s*([^}]+?)\s*\}/g)].map((m) => m[1].trim());
+            if (exprs.length === 0) return false;
+            return exprs.every((e) => /^[A-Z][A-Z0-9_]*$/.test(e) || (isCliPackagePath && literalAssignedVars.has(e)));
+        };
+        const matchLineIdx = !isBuildConfigOrTemplate && cmdInjRegex.test(cleanContent)
+            ? lines.findIndex(l => !l.trim().startsWith('//') && !l.trim().startsWith('*') && cmdInjRegex.test(l) && !isSafeTemplateExec(l))
+            : -1;
+        if (matchLineIdx !== -1) {
             const lineNum = matchLineIdx !== -1 ? matchLineIdx + 1 : 1;
             const snippet = lines.slice(Math.max(0, lineNum - 2), Math.min(lines.length, lineNum + 2)).join('\n');
             findings.push({
