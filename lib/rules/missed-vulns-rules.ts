@@ -416,8 +416,15 @@ export function evaluateMissedVulnsRules(file: CodeFile, lines: string[], cleanC
   // GAP-23: every key of a request dict copied onto a model (for k, v in payload.items(): setattr(obj, k, v))
   if (isPy) {
     lines.forEach((l, i) => {
-      const loop = l.match(/^\s*for\s+(\w+)\s*,\s*(\w+)\s+in\s+(\w+(?:\.\w+)*(?:\(\))?)\.items\(\)\s*:/);
+      const loop = l.match(/^\s*for\s+(\w+)\s*,\s*(\w+)\s+in\s+([^\n:]+?)\.items\(\)\s*:/);
       if (!loop || isComment(l) || !/payload|body|data|update|changes|patch|request|json|form|params/i.test(loop[3])) return;
+      const iterExpr = loop[3].trim();
+      if (/^(?:\w+\.)?(?:validated_data|cleaned_data)$|\.(?:model_dump|dict)\s*\([^)]*\bexclude_unset\s*=\s*True\b/.test(iterExpr)) return;
+      if (/^\w+$/.test(iterExpr)) {
+        const prevBlock = lines.slice(Math.max(0, i - 10), i).join('\n');
+        const safeAssignRe = new RegExp(String.raw`\b` + iterExpr + String.raw`\s*(?::\s*[^=\n]+)?=\s*(?:(?:\w+\.)?(?:validated_data|cleaned_data)\b|[^\n]*\.(?:model_dump|dict)\s*\([^)]*\bexclude_unset\s*=\s*True\b)`);
+        if (safeAssignRe.test(prevBlock)) return;
+      }
       const win = lines.slice(i, i + 3).join('\n');
       if (new RegExp(String.raw`\bif\s+(?:not\s+)?` + loop[1] + String.raw`\s+(?:not\s+)?in\b`).test(win)) return;
       if (new RegExp(String.raw`\bsetattr\(\s*\w+\s*,\s*` + loop[1] + String.raw`\s*,\s*` + loop[2] + String.raw`\s*\)`).test(win)) {
