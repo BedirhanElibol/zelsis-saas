@@ -23,11 +23,20 @@ export interface InfraFacts {
   renamedAway: Set<string>;
   /** Static Next.js API routes -> body fields the handler destructures from req.json() without a default. */
   routeBodyFields: Map<string, { path: string; fields: string[] }>;
+  /**
+   * The app talks to Postgres (pg / postgres / Neon driver, jdbc:postgresql, TypeORM type 'postgres', Prisma
+   * provider postgresql). Postgres does not index foreign keys on its own; MySQL InnoDB does, so ORM index checks
+   * only make sense here.
+   */
+  usesPostgres: boolean;
 }
 
 export const emptyInfraFacts = (): InfraFacts => ({
   declaredEnv: null, dockerNodeMajors: [], enginesNodeMin: [], proxyBodyLimit: null, createdTables: new Set(), indexedColumns: new Map(), renamedAway: new Set(), routeBodyFields: new Map(),
+  usesPostgres: false,
 });
+
+const POSTGRES_SIGNAL = /"(?:pg|postgres|@neondatabase\/serverless|@vercel\/postgres|pg-promise)"\s*:|jdbc:postgresql:|\btype\s*:\s*['"]postgres['"]|\bprovider\s*=\s*"postgresql"|org\.postgresql:postgresql|<artifactId>postgresql<\/artifactId>|\bpsycopg2?\b|\basyncpg\b/;
 
 /** Down / rollback migrations: they undo their own up migration, so they say nothing about the final schema. */
 export const DOWN_MIGRATION = /(?:^|\/)down\.sql$|[._-]down\.sql$|(?:^|\/)rollbacks?\//i;
@@ -64,6 +73,8 @@ export function collectInfraFacts(files: CodeFile[]): InfraFacts {
       hasTemplate = true;
       for (const m of content.matchAll(/^\s*(?:export\s+)?([A-Za-z_][A-Za-z0-9_]*)\s*=/gm)) declared.add(m[1]);
     }
+    if (!facts.usesPostgres && /(?:^|\/)(?:package\.json|application[\w-]*\.(?:properties|ya?ml)|pom\.xml|build\.gradle(?:\.kts)?|schema\.prisma|requirements[\w-]*\.txt|pyproject\.toml|[\w-]*data-?source[\w.-]*\.[jt]s|ormconfig\.[jt]s(?:on)?)$/i.test(path)
+      && POSTGRES_SIGNAL.test(content)) facts.usesPostgres = true;
     if (/(?:^|\/)(?:docker-)?compose[\w.-]*\.ya?ml$/i.test(path)) {
       for (const m of content.matchAll(/^\s*-\s*['"]?([A-Za-z_][A-Za-z0-9_]*)(?:=|['"]?\s*$)/gm)) declared.add(m[1]);
       for (const m of content.matchAll(/^\s+([A-Z][A-Z0-9_]*)\s*:/gm)) declared.add(m[1]);

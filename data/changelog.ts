@@ -12,6 +12,13 @@ export interface ChangelogEntry {
 
 export const CHANGELOG: ChangelogEntry[] = [
   {
+    date: '2026-10-21',
+    title: 'Foreign key indexes in ORM entities',
+    changes: [
+      { kind: 'New', text: 'Missing foreign key indexes are now found in TypeORM entities (@ManyToOne with onDelete CASCADE or SET NULL) and JPA / Hibernate entities (@OnDelete), not only in SQL migrations. Only reported for Postgres apps, since MySQL indexes foreign keys itself, and an @Index on the relation, a class-level index or a migration index all count.' },
+    ],
+  },
+  {
     date: '2026-10-20',
     title: 'Races in more languages, poison messages and fewer false alarms',
     changes: [
