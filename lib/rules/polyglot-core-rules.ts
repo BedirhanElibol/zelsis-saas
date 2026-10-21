@@ -48,6 +48,9 @@ const SQL_VALUE_POSITION = new RegExp([
   String.raw`(?:=|<>|!=|<=?|>=?|\bLIKE|\bIN\s*\()\s*(?:\{[^}]+\}|#\{[^}]+\}|\$\{[^}]+\}|\$[a-z_]\w*|["\x60]\s*[+.]\s*\$?[a-z_])`,
 ].join('|'), 'i');
 
+/** The file reads outside input: request bodies, params, cookies, headers, uploads, sockets, stdin. */
+const UNTRUSTED_INPUT = /\b(?:request|req)\.(?:body|data|args|form|values|files|json|params|query|cookies|headers|get_data|stream|raw_post|POST|GET|COOKIES|FILES)\b|\bparams\[|\$_(?:GET|POST|REQUEST|COOKIE|FILES|SERVER)\b|\$request->|\bcookies\[|request_body|\brecv\s*\(|sys\.stdin|\bSTDIN\b|getInputStream\s*\(|HttpServletRequest|@RequestBody|\bupload/i;
+
 /** A non-constant identifier (lowercase start or member access), i.e. not FOO_BAR / Foo.class. */
 const DYN = String.raw`(?:[a-z_][\w]*(?:\.[\w]+|\[[^\]]*\]|\([^)]*\))*)`;
 
@@ -75,7 +78,7 @@ export function evaluatePolyglotCoreRules(file: CodeFile, lines: string[], clean
     // Ruby: SQL the ORM generated (#{scope.to_sql}), quote(), Model.table_name and CONSTANTS are not input
     .replace(/#\{\s*(?:[\w.:()]+\.to_sql|(?:\w+\.)*quote\w*\([^}]*\)|[\w:]+\.table_name|(?:[A-Z]\w*::)*[A-Z][A-Z0-9_]*)\s*\}/g, 'IDENT')
     // Numbers cannot change a query: #{limit.to_i}, #{user.id}, #{title.size}, #{Integer(x)}, {int(x)}
-    .replace(/(?:#\{|\{)\s*(?:@?[\w.]+\.(?:to_i|to_f|id|size|count|length)|Integer\([^)]*\)|Float\([^)]*\)|int\([^)]*\)|float\([^)]*\)|len\([^)]*\))\s*\}/g, 'IDENT')
+    .replace(/(?:#\{|\{)\s*(?:(?:::)?@?[\w.:]+\.(?:to_i|to_f|id|pid|size|count|length)|Integer\([^)]*\)|Float\([^)]*\)|int\([^)]*\)|float\([^)]*\)|len\([^)]*\))\s*\}/g, 'IDENT')
     // A fragment the code assembled on its own ({where}, {sql}, {marks}, #{conditions}, {', '.join(updates)},
     // {family_clause()}): where any user value enters is where that fragment is built, not this line
     .replace(/(?:#\{|\{)\s*(?:['"][^'"]*['"]\s*\.join\(\s*)?(?:\w+_)?(?:where|clause|clauses|sql|subquery|filters?|conditions?|marks|placeholders|cols|columns|fields|updates|set_clause|order_by|base_query|inner)(?:_\w+)?(?:\(\))?\s*\)?\s*\}/gi, 'IDENT')
@@ -93,7 +96,7 @@ export function evaluatePolyglotCoreRules(file: CodeFile, lines: string[], clean
   // Lines get the same treatment, so a finding points at the statement that is still dynamic, not at the first
   // query of the file that merely looks like one
   const normLines = lines.map((l) => normalize(pyConstants(l)));
-  const isDevTooling = /(?:^|\/)(?:scripts?|bin|tools|tasks|lib\/tasks|management\/commands)\/|(?:^|\/)(?:Rakefile|manage\.py|setup\.py|fabfile\.py|noxfile\.py)$/i.test(file.path);
+  const isDevTooling = /(?:^|\/)(?:scripts?|bin|tools|tasks|lib\/tasks|management\/commands|console\/commands|dev)\/|(?:^|\/)(?:Rakefile|manage\.py|setup\.py|fabfile\.py|noxfile\.py|install\.php|build\.php)$/i.test(file.path);
   const hits: Hit[] = [];
   const add = (h: Omit<Hit, 'lineIdx'>, lineRe: RegExp) => {
     const norm = firstLine(normLines, lineRe);
@@ -153,11 +156,15 @@ export function evaluatePolyglotCoreRules(file: CodeFile, lines: string[], clean
   const cmdByLang: Partial<Record<Exclude<Lang, null>, RegExp>> = {
     // A bare `...` only runs a command where an expression starts; inside "...", as in error messages
     // ("`#{k}` is not a valid attribute"), backticks are plain text
-    ruby: /(?:\bsystem|\bexec|\bspawn|IO\.popen|Open3\.\w+|%x)\s*[\(\{]?\s*["`][^"`\n]*#\{|(?<=(?:^|[=(,;]|\breturn|\bputs|&&|\|\|)[ \t]*)`[^`\n]*#\{/m,
+    // Kernel#system / exec / spawn, not a method of the same name (DB.exec "SET ...", connection.exec("SHOW ...")).
+    // A bare `...#{x}...` closes on the line and is followed by code, not prose ("`#{col}` and the foreign key")
+    ruby: /(?:(?<![.\w])(?:system|exec|spawn)|IO\.popen|Open3\.\w+|%x)\s*[\(\{]?\s*["`][^"`\n]*#\{|(?<=(?:^|[=(,;]|\breturn|\bputs|&&|\|\|)[ \t]*)`[^`\n]*#\{[^`\n]*`(?=\s*(?:$|[.;)\],}]|\bif\b|\bunless\b|\|\||&&|#))/m,
     // Global functions only: $pdo->exec() / $sqlite->exec() run SQL, not a shell
-    php: /(?<!->|::)\b(?:shell_exec|exec|system|passthru|popen|proc_open|pcntl_exec)\s*\(\s*(?:["'][^"'\n]*["']\s*\.\s*\$|"[^"\n]*\$\w|\$\w)/i,
+    php: /(?<!->|::)(?<!function\s{1,4})\b(?:shell_exec|exec|system|passthru|popen|proc_open|pcntl_exec)\s*\(\s*(?:["'][^"'\n]*["']\s*\.\s*\$|"[^"\n]*\$\w|\$\w)/i,
     // shell=True only counts when the command itself is built from values (f-string, +, %, .format) in the same call
-    python: /\b(?:os\.system|os\.popen|subprocess\.(?:call|run|Popen|check_output|check_call))\s*\((?=[^)]*(?:\+|%|\.format\(|f["']))/,
+    // An argument list (subprocess.run(["lsof", f"TCP:{port}"])) runs no shell, so values inside it are safe
+    // "..." % x is formatting; a bare % inside the command (celery's --pidfile=%n.pid) is not
+    python: /\b(?:os\.system|os\.popen|subprocess\.(?:call|run|Popen|check_output|check_call))\s*\((?!\s*\[)(?=[^)]*(?:\+\s*[\w(]|["']\s*%\s*[\w(\[{]|\.format\(|f["']))/,
     java: /(?:Runtime\.getRuntime\(\)\.exec|new\s+ProcessBuilder)\s*\([^)]*\+\s*[a-z_]/,
     kotlin: /(?:Runtime\.getRuntime\(\)\.exec|ProcessBuilder)\s*\([^)]*\$\{?[a-z_]/,
     csharp: /Process\.Start\s*\([^)]*(?:\+\s*[a-z_]|\$")/,
@@ -168,37 +175,56 @@ export function evaluatePolyglotCoreRules(file: CodeFile, lines: string[], clean
   // Python: cmd = f"..." / "..." + x / "...".format(x) on one line, then subprocess.*(cmd, shell=True) on another
   const pyShellVar = lang === 'python' && [...content.matchAll(/\b(\w+)\s*=\s*(?:f["']|["'][^"'\n]*["']\s*(?:\+|%)|["'][^"'\n]*["']\.format\()/g)]
     .some((m) => new RegExp(String.raw`subprocess\.\w+\(\s*` + m[1] + String.raw`\b[^)]*shell\s*=\s*True`).test(content));
-  if (cmd && !isDevTooling && (cmd.test(content) || pyShellVar)) {
+  // The command must sit on a line of its own: a match only across lines ([^)]* running past the call) is noise
+  // Escaped values (Shellwords.escape, escapeshellarg, shlex.quote, .shelljoin) and Ruby backticks inside a
+  // double-quoted string ("... (`#{ref}`).") are not commands built from raw input
+  const cmdLine = (l: string) => !!cmd && cmd.test(l)
+    && !/Shellwords\.escape|shellescape|escapeshell(?:arg|cmd)|shlex\.quote|\.shelljoin/.test(l)
+    && !(lang === 'ruby' && l.includes('`') && ((l.slice(0, l.indexOf('`')).match(/"/g) ?? []).length % 2 === 1));
+  // Normalized lines map 1:1 to the raw ones; a raw-only match is an interpolation the normalizer cleared (#{x.pid})
+  const cmdIdx = cmd && cmd.test(content) ? normLines.findIndex(cmdLine) : -1;
+  const cmdLocated = cmdIdx !== -1 || pyShellVar;
+  if (cmd && !isDevTooling && cmdLocated) {
     add({
       ruleId: 24102, code: 'CORE-02', severity: 'CRITICAL',
       title: 'OS Command Injection: Shell Command Built From Dynamic Values',
       why: 'A shell command string includes a variable, so input containing ; | && or $() runs extra commands on the server.',
       fix: 'Avoid the shell: pass an argument array (Open3.capture2(cmd, arg), subprocess.run([...]), ProcessBuilder(list), escapeshellarg) and validate input against an allowlist.'
-    }, cmd.test(content) ? cmd : /shell\s*=\s*True/);
+    }, cmdIdx !== -1 ? cmd : /shell\s*=\s*True/);
+    if (cmdIdx !== -1) hits[hits.length - 1].lineIdx = cmdIdx;
   }
 
   // CORE-03: deserialization of untrusted data
   const deserByLang: Partial<Record<Exclude<Lang, null>, RegExp>> = {
-    ruby: /\bMarshal\.(?:load|restore)\s*\(|\bYAML\.(?:unsafe_load|load)\s*\((?![^)]*permitted_classes)|\bOj\.load\s*\((?![^)]*mode:\s*:strict)/,
+    // Marshal.load(Marshal.dump(x)) is a deep copy; YAML.load is safe_load since Psych 4 (Ruby 3.1), unsafe_load is not
+    ruby: /\bMarshal\.(?:load|restore)\s*\((?!\s*Marshal\.dump\b)|\bYAML\.unsafe_load\s*\(|\bOj\.load\s*\((?![^)]*mode:\s*:(?:strict|compat|json))/,
     java: /\bnew\s+ObjectInputStream\s*\(|\.readObject\s*\(\s*\)|\bnew\s+XMLDecoder\s*\(|\bXStream\b[^;]*\.fromXML\s*\(/,
     kotlin: /\bObjectInputStream\s*\(|\.readObject\s*\(\s*\)/,
-    python: /\bpickle\.loads?\s*\(|\bcPickle\.loads?\s*\(|\bmarshal\.loads\s*\(|\bjsonpickle\.decode\s*\(|\byaml\.load\s*\((?![^)]*Loader\s*=\s*(?:yaml\.)?(?:Safe|CSafe)Loader)|\byaml\.unsafe_load\s*\(/,
+    python: /\bpickle\.loads?\s*\(|\bcPickle\.loads?\s*\(|\bmarshal\.loads\s*\(|\bjsonpickle\.decode\s*\(|\byaml\.load\s*\((?![^\n]*Loader\s*=\s*(?:yaml\.)?(?:Safe|CSafe|Full|CFull|Base|CBase)Loader)|\byaml\.unsafe_load\s*\(/,
     // The global function only: Serializable::unserialize() declarations and $this->unserialize() are methods;
     // allowed_classes => false cannot build objects
-    php: /(?<!->|::)(?<!function\s{1,4})\bunserialize\s*\(\s*\$(?![^)\n]*allowed_classes['"]\s*=>\s*false)/,
+    php: /(?<!->|::)(?<!function\s{1,4})\bunserialize\s*\(\s*\$(?![^)\n]*allowed_classes['"]\s*=>\s*(?:false|\[))/,
     csharp: /\bBinaryFormatter\b|\bLosFormatter\b|\bNetDataContractSerializer\b|TypeNameHandling\s*=\s*TypeNameHandling\.(?:All|Auto|Objects)/
   };
   const deser = deserByLang[lang as keyof typeof deserByLang];
   // ObjectInputStream behind an allowlist, or reading bytes the app wrote itself, cannot load attacker classes
   const guardedObjectStream = (lang === 'java' || lang === 'kotlin') && !/XMLDecoder|XStream/.test(content) && javaDeserializationIsSafe(content);
-  // Maintenance scripts and docs builds load the repo's own files
-  if (deser && !isDevTooling && deser.test(content) && !guardedObjectStream) {
+  // Maintenance scripts, docs builds, CI helpers and course homework load the repo's own files
+  const ownFilesOnly = isDevTooling || /(?:^|\/)(?:docs?|\.gitlab|\.github|homework|cohorts|notebooks)\//i.test(file.path);
+  if (deser && !ownFilesOnly && deser.test(content) && !guardedObjectStream) {
     add({
       ruleId: 24103, code: 'CORE-03', severity: 'CRITICAL',
       title: 'Insecure Deserialization of Untrusted Data',
       why: 'Native object deserializers (Marshal, pickle, ObjectInputStream, BinaryFormatter, unsafe YAML) can instantiate attacker-chosen classes and run code.',
       fix: 'Exchange data as JSON validated by a schema; for YAML use safe_load / SafeLoader; never deserialize native objects from requests, cookies or uploads.'
     }, deser);
+    // Blocking only when the file reads outside input; deserializing the app's own cache, queue or database rows is
+    // dangerous only if an attacker can write that storage, which a scan of this file cannot see
+    if (!UNTRUSTED_INPUT.test(content)) {
+      const h = hits[hits.length - 1];
+      h.severity = 'MEDIUM';
+      h.why = 'A native object deserializer (Marshal, pickle, unserialize, unsafe YAML) reads data here. Nothing in this file takes it from a request, but if an attacker can ever write that data (cache, queue, database, uploaded file) it can run code.';
+    }
   }
 
   // CORE-04: XML parsers with external entities enabled
