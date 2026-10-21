@@ -208,7 +208,10 @@ export function evaluateSecurityRules(file: CodeFile, lines: string[], cleanCont
     }
     // Rule 21 / SEC-21 (SEC-LOG-01): Potential Secret or PII Log Leakage
     const isCodeFile = /\.(?:tsx?|jsx?|mjs|cjs|py|go|rs|php|cs|java|rb|cpp|c|h|hpp)$/i.test(file.path);
-    if (isCodeFile && !lowerPath.endsWith('package.json')) {
+    // Not app logs: Bison / yacc generated parsers (YY_SYMBOL_PRINT on a token) and one-off scripts printing a
+    // developer's own token
+    const isGeneratedParserOrScript = /(?:^|\/)(?:scripts?|tools)\/|(?:^|\/)(?:parser|lexer)\.c$|\.tab\.[ch]$/i.test(lowerPath) || /\byy(?:token|lval|parse)\b|YY_SYMBOL_PRINT/.test(cleanContent);
+    if (isCodeFile && !isGeneratedParserOrScript && !lowerPath.endsWith('package.json')) {
         const logCallRegex = /(?:console\.(?:log|error|warn|info|debug)|logger\.(?:info|error|warn|debug)|print|System\.out\.println)\s*\(/i;
         const sensitiveVarRegex = /(?:\$\{[^}]*(?:[a-zA-Z0-9_]*(?:token|secret|password|passwd|apiKey|api_key|jwt)|authHeader)\b|(?:\+\s*|,\s*|:\s*)(?:[a-zA-Z0-9_.]+\.)?(?:[a-zA-Z0-9_]*(?:token|secret|password|passwd|apiKey|api_key|jwt)|authHeader)\b|\{\s*(?:[a-zA-Z0-9_]+(?::\s*[^,}]+)?,\s*)*(?:[a-zA-Z0-9_]*(?:token|secret|password|passwd|apiKey|api_key|jwt)|authHeader)\b|\(\s*(?:[a-zA-Z0-9_.]+\.)?(?:[a-zA-Z0-9_]*(?:token|secret|password|passwd|apiKey|api_key|jwt)|authHeader)\s*[\),]|(?:req\.headers(?:\.authorization)?|headers\[['"]authorization['"]\]))/i;
         // A fingerprint / digest / hint of a token is not the token
@@ -996,9 +999,18 @@ export function evaluateSecurityRules(file: CodeFile, lines: string[], cleanCont
     // Rule 37 / SEC-37: Broken Cryptographic Hash Function (MD5 / SHA-1)
     if (isCodeFile && cleanContent.includes('createHash')) {
         const weakHashRegex = /createHash\s*\(\s*['"](?:md5|sha1)['"]\s*\)|crypto\.createHash\(['"](?:md5|sha1)['"]\)/i;
-        if (weakHashRegex.test(cleanContent)) {
-            const matchLineIdx = lines.findIndex(l => !l.trim().startsWith('//') && !l.trim().startsWith('*') && weakHashRegex.test(l));
-            const lineNum = matchLineIdx !== -1 ? matchLineIdx + 1 : 1;
+        // Only when the hash protects something: a password, token, signature or session within 5 lines. SHA-1 for a
+        // BitTorrent info hash, a cache key, an ETag or a file checksum is not a security use.
+        const protectsSomething = (i: number) => {
+            const around = lines.slice(Math.max(0, i - 5), i + 6).join('\n');
+            return /passw|pwd|token|secret|signature|\bsign|hmac|auth|session|otp|api_?key|credential|salt/i.test(around)
+                && !/etag|cache_?key|cacheKey|checksum|info_?hash|fingerprint|dedup|content_?hash/i.test(lines[i]);
+        };
+        const matchLineIdx = weakHashRegex.test(cleanContent)
+            ? lines.findIndex((l, i) => !l.trim().startsWith('//') && !l.trim().startsWith('*') && weakHashRegex.test(l) && protectsSomething(i))
+            : -1;
+        if (matchLineIdx !== -1) {
+            const lineNum = matchLineIdx + 1;
             const snippet = lines.slice(Math.max(0, lineNum - 2), Math.min(lines.length, lineNum + 2)).join('\n');
             findings.push({
                 id: `real-find-${Date.now()}-${findingCounter.count++}`,

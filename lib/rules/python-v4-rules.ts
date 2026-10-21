@@ -6,6 +6,26 @@ import type { CodeFile } from '../scanner-engine';
 
 interface Hit { ruleId: number; code: string; title: string; severity: Finding['severity']; category: string; lineIdx: number; why: string; fix: string }
 
+const ESCAPED = /^\s*(?:escape|conditional_escape|format_html|escape_uri_path|urlencode|html\.escape)\s*\(/;
+
+/**
+ * Every value going into mark_safe is escaped first: mark_safe(f'<a href="{escape(url)}">{escape(name)}</a>') or
+ * mark_safe('... "%s"' % escape(x)). A raw value next to escaped ones still counts.
+ */
+function markSafeAllEscaped(line: string): boolean {
+  const fstr = /\bmark_safe\(\s*f(['"])(.*?)\1/.exec(line);
+  if (fstr) {
+    const values = [...fstr[2].matchAll(/\{([^{}]+)\}/g)].map((m) => m[1]);
+    return values.length > 0 && values.every((v) => ESCAPED.test(v));
+  }
+  const pct = /\bmark_safe\(\s*(['"]).*?\1\s*%\s*(\(([^()]|\([^()]*\))*\)|[^)]+)/.exec(line);
+  if (pct) {
+    const args = pct[2].replace(/^\(|\)$/g, '').split(/,(?![^()]*\))/).map((a) => a.trim()).filter(Boolean);
+    return args.length > 0 && args.every((a) => ESCAPED.test(a));
+  }
+  return false;
+}
+
 export function evaluatePythonV4Rules(file: CodeFile, lines: string[], cleanContent: string, findingCounter: {
   count: number;
 }): { findings: Finding[]; logs: string[] } {
@@ -39,7 +59,7 @@ export function evaluatePythonV4Rules(file: CodeFile, lines: string[], cleanCont
     if (/\.extra\([^)]*(?:where|select|tables)\s*=\s*[^)]*(?:f['"]|['"][^'"]*['"]\s*\%|['"][^'"]*['"]\.format\()/.test(l)) {
       add({ ruleId: 29002, code: 'PYF-02', title: 'Django extra() SQL Injection', severity: 'CRITICAL', category: 'Injection', lineIdx: i, why: 'Formatting strings into extra() clauses allows SQL injection.', fix: 'Use parameters for variables, or migrate to .annotate() / .filter().' });
     }
-    if (/\bmark_safe\(\s*(?:f['"]|['"][^'"]*['"]\s*\%|['"][^'"]*['"]\.format\(|[^)]*\+)/.test(l)) {
+    if (/\bmark_safe\(\s*(?:f['"]|['"][^'"]*['"]\s*\%|['"][^'"]*['"]\.format\(|[^)]*\+)/.test(l) && !markSafeAllEscaped(l)) {
       add({ ruleId: 29003, code: 'PYF-03', title: 'Django mark_safe XSS', severity: 'HIGH', category: 'Cross-Site Scripting', lineIdx: i, why: 'Passing dynamic strings to mark_safe disables HTML escaping, causing XSS.', fix: 'Use format_html() which safely escapes arguments instead of mark_safe().' });
     }
     if (/\bHTMLResponse\(\s*(?:content\s*=\s*)?(?:f['"][^'"]*\{\s*request\.|request\.)/.test(l)) {
