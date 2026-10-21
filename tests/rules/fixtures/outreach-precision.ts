@@ -491,6 +491,59 @@ def fetch():
     ],
   },
   {
+    ruleIds: [8801], name: 'PY-SEC-01 pickle.loads on request input vs loading own model file, symmetric codec, homework path, or prompt text',
+    detects: [
+      ...f('app/views.py', `import pickle, base64
+from flask import request
+
+def import_state():
+    return pickle.loads(base64.b64decode(request.args["d"]))
+`),
+      // An uploaded file and a pickled cookie are attacker data even though the file also pickles
+      ...f('app/uploads.py', `import pickle
+
+def load_upload(upload_path):
+    with open(upload_path, "rb") as f:
+        return pickle.load(f)
+`),
+      ...f('app/session.py', `import pickle, base64
+from flask import request
+
+def save(resp, cart):
+    resp.set_cookie("cart", base64.b64encode(pickle.dumps(cart)).decode())
+
+def load():
+    return pickle.loads(base64.b64decode(request.cookies["cart"]))
+`),
+    ],
+    ignores: [
+      ...f('app/ml/inference.py', `import pickle
+
+def load_classifier(model_path: str):
+    with open(model_path, "rb") as f:
+        return pickle.load(f)
+`),
+      ...f('src/sentry/digests/codecs.py', `import pickle, zlib
+
+class CompressedPickleCodec:
+    def encode(self, value):
+        return zlib.compress(pickle.dumps(value))
+
+    def decode(self, value):
+        return pickle.loads(zlib.decompress(value))
+`),
+      ...f('cohorts/2026/02-experiment-tracking/train.py', `import pickle
+
+def load_dump(data):
+    return pickle.loads(data)
+`),
+      ...f('app/prompts/scanner_prompt.py', `SYSTEM_PROMPT = """
+Check for dangerous sinks such as pickle.loads() or cPickle.load() on untrusted payloads.
+"""
+`),
+    ],
+  },
+  {
     ruleIds: [18031], name: 'RUBY-SEC-01 where/order with params interpolation vs numeric casts, constants, connection.quote and script/migrate/tasks files',
     detects: f('app/controllers/users_controller.rb', 'class UsersController < ApplicationController\n  def index\n    User.where("name = \'#{params[:name]}\'")\n  end\nend\n'),
     ignores: [
