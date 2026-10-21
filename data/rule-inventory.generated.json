@@ -1,8 +1,8 @@
 {
  "summary": {
-  "implementedRules": 1300,
-  "testedRules": 1294,
-  "preciseLocationRules": 1298,
+  "implementedRules": 1302,
+  "testedRules": 1296,
+  "preciseLocationRules": 1300,
   "catalogEntries": 1922,
   "catalogOnlyNotImplemented": 1396,
   "catalogPlaceholderMetadata": 1810
@@ -1590,7 +1590,7 @@
    "ruleId": 32,
    "code": "RULE-32",
    "title": "Dynamic Code Execution (eval / Function Remote Code Execution)",
-   "severity": "CRITICAL",
+   "severity": "UNKNOWN",
    "source": "lib/rules/security-rules.ts",
    "preciseLocation": true,
    "tested": true,
@@ -14392,6 +14392,26 @@
    "title": "${fk.table}.${fk.col} Cascades on Delete but No Migration Indexes It",
    "severity": "LOW",
    "source": "lib/rules/cross-layer-rules.ts",
+   "preciseLocation": true,
+   "tested": true,
+   "inCatalog": false
+  },
+  {
+   "ruleId": 30341,
+   "code": "RULE-30341",
+   "title": "Outside Call Retried in a Tight Loop With No Backoff",
+   "severity": "UNKNOWN",
+   "source": "lib/rules/resilience-rules.ts",
+   "preciseLocation": true,
+   "tested": true,
+   "inCatalog": false
+  },
+  {
+   "ruleId": 30342,
+   "code": "RULE-30342",
+   "title": "axios-retry Retries With No Delay",
+   "severity": "UNKNOWN",
+   "source": "lib/rules/resilience-rules.ts",
    "preciseLocation": true,
    "tested": true,
    "inCatalog": false

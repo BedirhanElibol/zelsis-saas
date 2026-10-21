@@ -18,6 +18,7 @@ import { evaluateZeroTrustRules } from '../rules/zero-trust-rules';
 import { evaluatePrivacyComplianceRules } from '../rules/privacy-compliance-rules';
 import { evaluateIacRules } from '../rules/iac-rules';
 import { evaluateChaosResilienceRules } from '../rules/chaos-resilience-rules';
+import { evaluateResilienceRules } from '../rules/resilience-rules';
 import { evaluateGraphqlSecurityRules } from '../rules/graphql-security-rules';
 import { evaluateModernFullstackRules } from '../rules/modern-fullstack-rules';
 import { evaluateWeb3SecurityRules } from '../rules/web3-security-rules';
@@ -205,6 +206,8 @@ export const RULE_ENGINES: ReadonlyArray<{ evaluate: RuleEngine; scanRawContent?
   { evaluate: evaluateIacRules },
   // 12. Enterprise Reliability & Chaos Engineering (CHAOS-01 to 48, Rule IDs 8401-8448)
   { evaluate: evaluateChaosResilienceRules },
+  // Retries that hammer a failing dependency: tight retry loops, axios-retry with no delay (RES-01..02, Rule IDs 30341-30342)
+  { evaluate: evaluateResilienceRules },
   // Wave 4 Enterprise Release Gate Engines (Milestone 1,100 Rules):
   // 13. GraphQL & Modern API Security (GQL-01 to 50, Rule IDs 8501-8550)
   { evaluate: evaluateGraphqlSecurityRules },

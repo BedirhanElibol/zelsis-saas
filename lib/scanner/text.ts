@@ -33,7 +33,8 @@ export async function yieldToMain(): Promise<void> {
 export function isTestFixturePath(path: string): boolean {
   const p = path.toLowerCase().replace(/\\/g, '/');
   // examples / samples / demos: sample apps shipped with a library, not the product itself
-  return /(?:^|\/)(?:tests?|unittests?|testing|testdata|testutils?|__tests__|__mocks__|__fixtures__|fixtures?|e2e|cypress|spec|seeds?|examples?|samples?|demos?)\//.test(p) ||
+  // .semgrep/ holds rule tests: code that is vulnerable on purpose
+  return /(?:^|\/)(?:tests?|unittests?|testing|testdata|testutils?|\.semgrep|__tests__|__mocks__|__fixtures__|fixtures?|e2e|cypress|spec|seeds?|examples?|samples?|demos?)\//.test(p) ||
     /\.(?:test|spec|e2e)\.[cm]?[jt]sx?$/.test(p) ||
     /(?:^|\/)(?:test_[^/]+|tests|conftest)\.py$|_test\.(?:py|go)$|_spec\.rb$|Tests?\.(?:java|cs|kt)$/.test(p);
 }
@@ -55,7 +56,7 @@ export const isSecretRuleId = (ruleId: number): boolean => ruleId === 1 || ruleI
 
 /** Third-party code copied into the repo (vendored libraries, bower/static lib folders, an embedded VS Code fork). */
 export const isVendoredPath = (path: string): boolean =>
-  /(?:^|\/)(?:vendor|third_party|bower_components|jspm_packages|static\/(?:js\/)?libs?|public\/(?:js\/)?libs?|assets\/(?:js\/)?(?:libs?|vendor)|wwwroot\/lib|code-oss|deps|externals?)\/|(?:^|\/)[a-z0-9_.-]+[-.]v?\d+\.\d+(?:\.\d+)?(?:[.-][a-z0-9_]+)*\.(?:[cm]?js|css)$|\.(?:min|slim(?:\.min)?)\.(?:[cm]?js|css)$/i.test(path.replace(/\\/g, '/'));
+  /(?:^|\/)(?:vendor|third_party|bower_components|jspm_packages|static\/(?:js\/)?libs?|public\/(?:js\/)?libs?|assets\/(?:js\/)?(?:libs?|vendor)|wwwroot\/lib|code-oss|deps|externals?)\/|(?:^|\/)static\/(?:[\w-]+\/){1,2}(?:js\/)?libs?\/|(?:^|\/)[a-z0-9_.-]+[-.]v?\d+\.\d+(?:\.\d+)?(?:[.-][a-z0-9_]+)*\.(?:[cm]?js|css)$|\.(?:min|slim(?:\.min)?)\.(?:[cm]?js|css)$/i.test(path.replace(/\\/g, '/'));
 
 /** Minified / generated bundles: very long average line length. */
 export function isMinifiedContent(content: string): boolean {
