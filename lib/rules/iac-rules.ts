@@ -26,7 +26,8 @@ export function evaluateIacRules(file: CodeFile, lines: string[], cleanContent: 
     // Terraform source with `#` comments blanked; rules below evaluate one resource block at a time
     const isTf = /\.tf$/i.test(lowerPath);
     const tf = isTf ? stripHashComments(cleanContent) : '';
-    const isYaml = isYamlPath(lowerPath);
+    const isYaml = isYamlPath(lowerPath) && !isHelmSubchartPath(lowerPath);
+    const isPodSecurityPolicy = /^\s*kind:\s*PodSecurityPolicy\b/m.test(cleanContent);
     // IAC-01: Security Group Ingress Open to World on SSH Port 22
     const iac01Line = isTf ? openIngressLine(tf, [22]) : -1;
     if (iac01Line !== -1) {
@@ -284,7 +285,7 @@ export function evaluateIacRules(file: CodeFile, lines: string[], cleanContent: 
         logs.push(`[${ts}] 🏗️ CRITICAL: IAC-10 finding in ${file.path}:${lineNum}`);
     }
     // IAC-12: Kubernetes Container Running with Host PID or IPC Namespace
-    const iac12Line = isYaml ? yamlLine(lines, /^\s*host(?:PID|IPC)\s*:\s*true\b/) : -1;
+    const iac12Line = isYaml && !isPodSecurityPolicy ? yamlLine(lines, /^\s*host(?:PID|IPC)\s*:\s*true\b/) : -1;
     if (iac12Line !== -1) {
         const matchLineIdx = iac12Line;
         const lineNum = matchLineIdx !== -1 ? matchLineIdx + 1 : 1;
@@ -802,6 +803,19 @@ export const stripHashComments = (content: string): string => content.replace(/^
 const lineAt = (content: string, index: number): number => content.slice(0, index).split('\n').length - 1;
 
 export const isYamlPath = (path: string): boolean => /\.ya?ml$/i.test(path);
+
+/**
+ * True for a bundled Helm dependency chart (`charts/<parent>/charts/<subchart>/...` or a path containing
+ * `/charts/` twice) or a bundled `charts/<third-party>/` under an operator/platform directory (e.g. `deploy/charts/prometheus/templates/...`).
+ * Keeps top-level application charts (`charts/myapp/templates/deployment.yaml`) scanned.
+ */
+export const isHelmSubchartPath = (path: string): boolean => {
+    const p = path.toLowerCase().replace(/\\/g, '/');
+    if (/(?:^|\/)charts\/[^/]+\/charts\/[^/]+\//.test(p)) return true;
+    if ((p.match(/(?:^|\/)charts\//g) || []).length >= 2) return true;
+    if (/(?:^|\/)charts\/(?:openebs|prometheus|grafana|redis|postgresql|mariadb|mysql|mongodb|kafka|zookeeper|rabbitmq|elasticsearch|fluentd|jaeger|cert-manager|ingress-nginx|traefik|minio|vault|consul|harbor|loki|tempo|argocd|argo-cd|bitnami)\//.test(p)) return true;
+    return false;
+};
 
 /**
  * `operator: Exists` line of a toleration with no `key` (tolerates every taint, including the control-plane
