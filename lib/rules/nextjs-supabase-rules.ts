@@ -98,7 +98,7 @@ function functionBlocks(src: string, opts: { exportedOnly: boolean }): FnBlock[]
 
 /** Caller verification inside a handler body: provider calls, local auth helpers, signed webhooks, cron secrets. */
 /** Routes that run before the caller has a session: sign-up, sign-in, one-time codes, password reset, OAuth callback. */
-const PUBLIC_AUTH_ROUTE = /\/(?:api\/)?(?:auth|login|log-in|signin|sign-in|signup|sign-up|register|otp|magic-link|send-code|verify-code|forgot-password|reset-password|callback)(?:\/|$)/;
+export const PUBLIC_AUTH_ROUTE = /\/(?:api\/)?(?:auth|login|log-in|signin|sign-in|signup|sign-up|register|otp|magic-link|send-code|verify-code|verify-email|forgot-password|reset-password|callback)(?:\/|$)/;
 /** Row or user creation through the service role. */
 const CREATE_ONLY = /\.(?:insert|upsert)\s*\(|\.auth\.admin\.(?:createUser|generateLink|inviteUserByEmail)\s*\(/;
 /** Anything that changes or removes existing data or users. */
