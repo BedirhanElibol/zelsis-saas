@@ -151,6 +151,12 @@ export default function sitemap(): MetadataRoute.Sitemap {
       priority: 0.6,
     },
     {
+      url: `${baseUrl}/open-source`,
+      lastModified: currentDate,
+      changeFrequency: 'monthly',
+      priority: 0.6,
+    },
+    {
       url: `${baseUrl}/guides/code-due-diligence`,
       lastModified: currentDate,
       changeFrequency: 'monthly',
@@ -182,6 +188,12 @@ export default function sitemap(): MetadataRoute.Sitemap {
     },
     {
       url: `${baseUrl}/blog/public-vs-secret-keys`,
+      lastModified: currentDate,
+      changeFrequency: 'monthly',
+      priority: 0.8,
+    },
+    {
+      url: `${baseUrl}/blog/sms-and-ai-bills`,
       lastModified: currentDate,
       changeFrequency: 'monthly',
       priority: 0.8,
