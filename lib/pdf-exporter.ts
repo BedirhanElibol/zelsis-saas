@@ -1,5 +1,6 @@
 import { Project, Finding } from '@/data/schema';
 import { buildSoc2Mapping } from '@/lib/soc2-mapping';
+import { FIX_SIZE_NOTE, fixSize } from '@/lib/fix-size';
 
 /**
  * Safe HTML Entity Escaping to eradicate Stored / DOM XSS in generated audit reports
@@ -163,8 +164,12 @@ export function generateAuditPdfReport(project: Project, options: AuditReportOpt
         <div style="margin-top: 8px; font-size: 12px; color: #a1a1aa;">
           <strong>Remediation:</strong> ${escapeHtml(f?.remediationPrompt ?? '')}
         </div>
+        <div style="margin-top: 4px; font-size: 12px; color: #a1a1aa;">
+          <strong>Fix size:</strong> ${escapeHtml(fixSize(f).size)}, ${escapeHtml(fixSize(f).kind)}
+        </div>
       </div>
     `).join('')}
+    ${openFindings.length > 0 ? `<p style="font-size: 11px; color: #71717a; margin-top: 10px;">${escapeHtml(FIX_SIZE_NOTE)}</p>` : ''}
   </div>
 
   ${options.includeSoc2 ? renderSoc2Section(project?.findings || []) : ''}
