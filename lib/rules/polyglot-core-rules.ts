@@ -34,7 +34,20 @@ function languageOf(path: string): Lang {
 }
 
 // SELECT needs a FROM in the same literal: UI text such as "Select at most {n} tickets" is not a query
-const SQL = String.raw`(?:(?<!<)\bSELECT\s+(?!value\s*=)[\w*][^"'\n]*?\bFROM\b|INSERT\s+INTO|UPDATE\s+\w+\s+SET|DELETE\s+FROM)`;
+// ... and SELECT right after a word of prose ("options for Select FormField from") is a sentence, not a query
+const SQL = String.raw`(?:(?<!<)(?<!\b(?:for|to|the|a|and|or|please|then|we|you|can|could|cannot|not|must|should|will)\s)\bSELECT\s+(?!value\s*=)[\w*][^"'\n]*?\bFROM\b|INSERT\s+INTO|UPDATE\s+\w+\s+SET|DELETE\s+FROM)`;
+/**
+ * A value spliced into the SQL rather than structure: inside SQL quotes ('{x}', '#{x}', '$x', '%s',
+ * '" + x + "'), or right after a comparison / LIKE / IN ( (= {x}, = " + x). DB-API %s without quotes is a bind
+ * parameter, so it does not count.
+ */
+const SQL_VALUE_POSITION = new RegExp([
+  // '{x}', '%{x}%' (LIKE), '$x', '%s', '%(name)s'
+  String.raw`'%?\s*(?:\{[^}]+\}|#\{[^}]+\}|\$\{[^}]+\}|\$[a-z_]\w*|%s|%\(\w+\)s)`,
+  String.raw`'%?["\x60]\s*[+.]\s*\$?[a-z_]`,
+  String.raw`(?:=|<>|!=|<=?|>=?|\bLIKE|\bIN\s*\()\s*(?:\{[^}]+\}|#\{[^}]+\}|\$\{[^}]+\}|\$[a-z_]\w*|["\x60]\s*[+.]\s*\$?[a-z_])`,
+].join('|'), 'i');
+
 /** A non-constant identifier (lowercase start or member access), i.e. not FOO_BAR / Foo.class. */
 const DYN = String.raw`(?:[a-z_][\w]*(?:\.[\w]+|\[[^\]]*\]|\([^)]*\))*)`;
 
@@ -55,19 +68,36 @@ export function evaluatePolyglotCoreRules(file: CodeFile, lines: string[], clean
   const withoutHashComments = lang === 'ruby' || lang === 'python' || lang === 'erb'
     ? cleanContent.replace(/^\s*#.*$/gm, '').replace(/<%#[\s\S]*?%>/g, '')
     : cleanContent;
-  // Framework-quoted identifiers and Python {MAX_IDS}-style module constants are not user input
-  const content = joinStatements(lang === 'python' ? withoutHashComments.replace(/\{[A-Z][A-Z0-9_]*\}/g, 'IDENT') : withoutHashComments)
+  // Framework-quoted identifiers and Python {MAX_IDS} / {_TABLE} module constants are not user input
+  const pyConstants = (t: string) => (lang === 'python' ? t.replace(/\{_?[A-Z][A-Z0-9_]*\}/g, 'IDENT') : t);
+  const normalize = (t: string) => t
     .replace(/#\{\s*(?:self\.class\.)?(?:quoted_table_name|table_name|connection\.quote\w*\([^}]*\)|sanitize_sql\w*\([^}]*\)|quote_column_name\([^}]*\))\s*\}/g, 'IDENT')
+    // Ruby: SQL the ORM generated (#{scope.to_sql}), quote(), Model.table_name and CONSTANTS are not input
+    .replace(/#\{\s*(?:[\w.:()]+\.to_sql|(?:\w+\.)*quote\w*\([^}]*\)|[\w:]+\.table_name|(?:[A-Z]\w*::)*[A-Z][A-Z0-9_]*)\s*\}/g, 'IDENT')
+    // Numbers cannot change a query: #{limit.to_i}, #{user.id}, #{title.size}, #{Integer(x)}, {int(x)}
+    .replace(/(?:#\{|\{)\s*(?:@?[\w.]+\.(?:to_i|to_f|id|size|count|length)|Integer\([^)]*\)|Float\([^)]*\)|int\([^)]*\)|float\([^)]*\)|len\([^)]*\))\s*\}/g, 'IDENT')
+    // A fragment the code assembled on its own ({where}, {sql}, {marks}, #{conditions}, {', '.join(updates)},
+    // {family_clause()}): where any user value enters is where that fragment is built, not this line
+    .replace(/(?:#\{|\{)\s*(?:['"][^'"]*['"]\s*\.join\(\s*)?(?:\w+_)?(?:where|clause|clauses|sql|subquery|filters?|conditions?|marks|placeholders|cols|columns|fields|updates|set_clause|order_by|base_query|inner)(?:_\w+)?(?:\(\))?\s*\)?\s*\}/gi, 'IDENT')
+    // Python placeholder lists: {','.join('?' * len(ids))}, {", ".join(["%s"] * n)}
+    .replace(/\{\s*['"][,\s]*['"]\s*\.join\(\s*(?:\[\s*)?['"](?:\?|%s|:\w+)['"]\s*\]?\s*\*[^}]*\)\s*\}/g, 'IDENT')
+    // PHP: a table name concatenated after FROM / INTO / UPDATE / JOIN ('... FROM ' . $table, $this->table())
+    .replace(/\b(FROM|INTO|UPDATE|JOIN|TABLE)\s*(['"])\s*\.\s*\$[\w>-]+(?:\([^)]*\))?/gi, '$1 IDENT$2')
     // A table name interpolated after FROM / INTO / UPDATE / JOIN / TABLE cannot be a bind parameter and is
     // almost always the app's own constant ("SELECT COUNT(*) FROM $TABLE"); values in WHERE / VALUES still count.
     .replace(/\b(FROM|INTO|UPDATE|JOIN|TABLE)(\s+[`"']?)(?:\$\{\s*\w+\s*\}|\$\w+|\\\(\s*\w+\s*\)|#\{\s*\w+\s*\}|\{\w+\})/gi, '$1$2IDENT')
     // A dynamic SET clause built from column names is safe when the query uses bind placeholders
     // (%s, ?, $1, :name) and passes a parameters argument. Values in quotes or unparameterized queries still count.
     .replace(/\bSET(\s+)(?:\{[a-zA-Z_]\w*\}|\$\{[a-zA-Z_]\w*\})(?=[^\n]*(?:%s|\?|\$\d|:\w+)[^"'\n]*["']\s*,\s*[\w([{])/gi, 'SET$1IDENT');
+  const content = normalize(joinStatements(pyConstants(withoutHashComments)));
+  // Lines get the same treatment, so a finding points at the statement that is still dynamic, not at the first
+  // query of the file that merely looks like one
+  const normLines = lines.map((l) => normalize(pyConstants(l)));
   const isDevTooling = /(?:^|\/)(?:scripts?|bin|tools|tasks|lib\/tasks|management\/commands)\/|(?:^|\/)(?:Rakefile|manage\.py|setup\.py|fabfile\.py|noxfile\.py)$/i.test(file.path);
   const hits: Hit[] = [];
   const add = (h: Omit<Hit, 'lineIdx'>, lineRe: RegExp) => {
-    const idx = firstLine(lines, lineRe);
+    const norm = firstLine(normLines, lineRe);
+    const idx = norm !== -1 ? norm : firstLine(lines, lineRe);
     hits.push({ ...h, lineIdx: idx === -1 ? 0 : idx });
   };
 
@@ -91,7 +121,7 @@ export function evaluatePolyglotCoreRules(file: CodeFile, lines: string[], clean
   };
   const sqlPatterns = sqlByLang[lang as keyof typeof sqlByLang] ?? [];
   // Migrations and maintenance scripts run SQL on the app's own data, not on request input
-  const notRequestPath = isDevTooling || /(?:^|\/)(?:db\/migrate|migrations?|\.semgrep)\//i.test(file.path);
+  const notRequestPath = isDevTooling || /(?:^|\/)(?:db\/(?:post_)?migrate|migrations?|alembic\/versions|\.semgrep)\//i.test(file.path);
   const sqlHit = notRequestPath ? undefined : sqlPatterns.find((re) => re.test(content));
   if (sqlHit) {
     add({
@@ -99,7 +129,24 @@ export function evaluatePolyglotCoreRules(file: CodeFile, lines: string[], clean
       title: 'SQL Injection: Query Built From Dynamic Values',
       why: 'The SQL text is assembled with string concatenation / interpolation, so a crafted value can change the query (read, modify or delete data).',
       fix: 'Use parameterized queries / bind variables (PreparedStatement, ActiveRecord placeholders, PDO prepare, cursor.execute(sql, params), SqlParameter).'
-    }, sqlPatterns.find((re) => lines.some((l) => re.test(l))) ?? new RegExp(SQL, 'i'));
+    }, sqlPatterns.find((re) => normLines.some((l) => re.test(l))) ?? sqlPatterns.find((re) => lines.some((l) => re.test(l))) ?? new RegExp(SQL, 'i'));
+    // Only a value placed into the SQL can carry an injection; structure the code assembles itself (column lists,
+    // table names, guards, unions) is advice: blocking a release on it would mostly block safe code.
+    // Judge every matching statement (a file can hold a safe one first), and point at a value-carrying one.
+    const h = hits[hits.length - 1];
+    const statements = [...content.matchAll(new RegExp(sqlHit.source, sqlHit.flags.includes('g') ? sqlHit.flags : sqlHit.flags + 'g'))]
+      .map((m) => content.slice(m.index!, m.index! + m[0].length + 120));
+    const valueStmt = statements.find((s) => SQL_VALUE_POSITION.test(s));
+    if (valueStmt) {
+      // Map the statement back to its first raw line (statements may span several lines)
+      const head = (/(?:SELECT|INSERT|UPDATE|DELETE)\b[^"'\n]{0,30}/i.exec(valueStmt)?.[0] ?? '').trim();
+      const at = head ? lines.findIndex((l) => l.includes(head)) : -1;
+      if (at !== -1) h.lineIdx = at;
+    } else {
+      h.severity = 'MEDIUM';
+      h.why = 'The SQL text is assembled from pieces (column lists, table names, conditions). No value is placed directly into it here, but if any piece can come from a request, the query can be changed.';
+      h.fix = 'Build the pieces only from fixed allow-lists (column and table names) and pass every value as a bind parameter.';
+    }
   }
 
   // CORE-02: OS command built from dynamic values
