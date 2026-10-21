@@ -10,6 +10,7 @@ export const AUTH_GUARD = new RegExp([
   String.raw`getServerSession\s*\(|\bgetSession\s*\(|getToken\s*\(`, // NextAuth / Auth0 / generic
   String.raw`verifyIdToken\s*\(|validateRequest\s*\(|validateSession\s*\(|getKindeServerSession|auth\.api\.getSession`, // Firebase, Lucia, Kinde, Better Auth
   String.raw`requireAuth|withAuth|ensureAuthenticated|isAuthenticated|passport\.authenticate|\breq(?:uest)?\.user\b`, // Express / Passport
+  String.raw`\b(?:require|assert|ensure)\w*(?:Admin|Auth|User|Session|Staff)\w*\s*\(`,
   String.raw`jwtVerify\s*\(|jwt\.verify\s*\(|verifyToken\s*\(|session\.user\b`,
   String.raw`login_required|Depends\(\s*get_current_user|IsAuthenticated|@UseGuards\(|authorize\s*\(` // Django, FastAPI, DRF, NestJS
 ].join('|'), 'i');

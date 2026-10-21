@@ -2,6 +2,7 @@ import type { Finding } from '@/data/schema';
 import type { CodeFile } from '../scanner-engine';
 import { AUTH_GUARD, isOutboundWebhookSender } from './shared/stack-signals';
 import { isPublicCatalogRead } from './missed-vulns-rules';
+import { PUBLIC_AUTH_ROUTE } from './nextjs-supabase-rules';
 import { isVendoredPath } from '../scanner/text';
 
 /** A real innerHTML write or React prop; the bare word in prose (a changelog line, a comment string) is not a sink. */
@@ -327,7 +328,7 @@ export function evaluateSecurityRules(file: CodeFile, lines: string[], cleanCont
     }
     // Rule 15 / SEC-15: Unauthenticated Next.js API Mutation Route Handler
     const isApiRoute = (lowerPath.includes('app/api/') || lowerPath.includes('pages/api/')) && /\.(?:ts|js)$/i.test(file.path);
-    const isPublicWebhookOrHealth = (lowerPath.includes('webhook') && !isOutboundWebhookSender(cleanContent)) || lowerPath.includes('health') || lowerPath.includes('ping') || lowerPath.includes('auth/callback');
+    const isPublicWebhookOrHealth = (lowerPath.includes('webhook') && !isOutboundWebhookSender(cleanContent)) || lowerPath.includes('health') || lowerPath.includes('ping') || PUBLIC_AUTH_ROUTE.test(lowerPath);
     if (isApiRoute && !isPublicWebhookOrHealth) {
         const hasMutationExport = /export\s+async\s+function\s+(?:POST|PUT|DELETE|PATCH)\b/.test(cleanContent);
         const hasAuthCheck = AUTH_GUARD.test(cleanContent) || /(?:auth|session|verify|apiKey|checkRateLimit|rateLimiter|req\.headers\.get\(['"]authorization['"]\))/i.test(cleanContent);
