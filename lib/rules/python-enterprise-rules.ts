@@ -148,8 +148,21 @@ export function evaluatePythonEnterpriseRules(file: CodeFile, lines: string[], c
     // PY-SEC-04: Python SQL Injection via String Interpolation (f-string / format / %)
     // f-string SQL passed straight to execute()/text() with a value interpolated after WHERE/SET/VALUES/LIKE/=/IN (identifier-only interpolation is left alone)
     const callRe_8804 = /(?:\.execute(?:many)?|(?<![\w.])text|sa\.text|sqlalchemy\.text)\s*\(\s*[fF](?:"[^"]*\b(?:SELECT|INSERT|UPDATE|DELETE)\b[^"]*(?:\bWHERE\b|\bSET\b|\bVALUES\b|\bLIKE\b|=|\bIN\s*\()[^"]*\{[^"]*"|'[^']*\b(?:SELECT|INSERT|UPDATE|DELETE)\b[^']*(?:\bWHERE\b|\bSET\b|\bVALUES\b|\bLIKE\b|=|\bIN\s*\()[^']*\{[^']*')/i;
-    const idx_8804 = pyFindLine(lines, callRe_8804, (_l, i) => {
-        const text = callText(lines, i, /(?:\.execute(?:many)?|(?<![\w.])text|sa\.text|sqlalchemy\.text)\s*\(/i);
+    const isPyScriptOrMigration8804 = /(?:^|\/)(?:scripts?|tools\/scripts?|bin|migrations?|alembic\/versions)\//i.test(lowerPath);
+    const importsSqlText8804 = /\bfrom\s+(?:sqlalchemy(?:\.\w+)*|sqlmodel)\s+import\s+[^\n]*\btext\b/.test(cleanContent);
+    const safePlaceholderVars8804 = new Set<string>();
+    for (const m of cleanContent.matchAll(/\b(\w+)\s*=\s*['"][,\s]+['"]\.join\s*\(\s*(?:['"][?%]s?['"]|['"]:\w+['"]|\[\s*['"][?%]s?['"]\s*\])/g)) {
+        safePlaceholderVars8804.add(m[1]);
+    }
+    const idx_8804 = isPyScriptOrMigration8804 ? -1 : pyFindLine(lines, callRe_8804, (l, i) => {
+        if (!/(?:\.execute(?:many)?|sa\.text|sqlalchemy\.text)\s*\(/i.test(l) && /\btext\s*\(/i.test(l) && !importsSqlText8804) {
+            return false;
+        }
+        const rawText = callText(lines, i, /(?:\.execute(?:many)?|(?<![\w.])text|sa\.text|sqlalchemy\.text)\s*\(/i);
+        const text = rawText.replace(/\{\s*(\w+)\s*\}/g, (full, v: string) => (
+            /^_?[A-Z][A-Z0-9_]*$/.test(v) || safePlaceholderVars8804.has(v) ? 'IDENT' : full
+        ));
+        if (!callRe_8804.test(text)) return false;
         // A dynamic SET clause built from column names is safe when the query uses bind placeholders
         // (%s, ?, $1, :name) and passes a separate parameters argument. Values in quotes or unparameterized queries still count.
         if (/\bSET\s+\{\w+\}/i.test(text) && /(?:%s|\?|\$\d|:\w+)[^"']*(?:["']\s*,\s*[\w([{]|["']\s*,\s*\n\s*[\w([{])/.test(text)) {
