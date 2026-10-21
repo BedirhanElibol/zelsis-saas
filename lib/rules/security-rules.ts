@@ -98,7 +98,8 @@ export function evaluateSecurityRules(file: CodeFile, lines: string[], cleanCont
     }
     // Rule 16: Dangerously Set Inner HTML (XSS) (SEC-16)
     const isCompiledBundle = file.path.includes('live-deployment/bundle-') || file.path.includes('/vendor/') || file.path.includes('node_modules') || isVendoredPath(file.path);
-    const isSyntaxHighlighted = /\b(?:codeToHtml|highlight(?:Auto|Element)?)\s*\(|\b(?:shiki|prism(?:js)?|hljs|highlight\.js)\b/i.test(cleanContent);
+    // Highlighter calls only: a bare highlight() is often search-term highlighting, itself a classic XSS sink
+    const isSyntaxHighlighted = /\bcodeToHtml\s*\(|\bhljs\.highlight\w*\s*\(|\bPrism\.highlight\w*\s*\(|\bfrom\s+['"]shiki['"]/.test(cleanContent);
     const isSafeMdxOrJsonLd = isCompiledBundle || isSyntaxHighlighted || file.path.includes('mdx-components') || file.path.includes('syntax-highlight') || cleanContent.includes('application/ld+json') || (/\bTHEMES\b/.test(cleanContent) && /<style\b[\s\S]{0,80}dangerouslySetInnerHTML/.test(cleanContent));
     // Same exclusions as the builtin rule 16: escaped interpolations, and icon / svg constants
     const escapesInterpolations = /\$\{\s*(?:esc|escape\w*|sanitize\w*|DOMPurify\.sanitize|encode\w*|h)\s*\(/i.test(cleanContent);

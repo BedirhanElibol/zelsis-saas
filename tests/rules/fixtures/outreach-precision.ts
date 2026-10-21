@@ -476,6 +476,8 @@ def fetch():
     detects: [
       ...f('src/components/HtmlPreview.tsx', 'export function HtmlPreview({ html }: { html: string }) {\n  return <div dangerouslySetInnerHTML={{ __html: html }} />;\n}\n'),
       ...f('src/chat/render.ts', 'export function renderMsg(el: HTMLElement, message: { body: string }) {\n  el.innerHTML = message.body;\n}\n'),
+      // Search-term highlighting is not a syntax highlighter
+      ...f('src/search/results.ts', 'const highlight = (text: string, q: string) => text.replace(q, `<mark>${q}</mark>`);\nexport function show(el: HTMLElement, title: string, q: string) {\n  el.innerHTML = highlight(title, q);\n}\n'),
     ],
     ignores: [
       ...f('lib/flipper/ui/public/js/jquery-3.6.0.slim.js', 'function html(elem, value) {\n  elem.innerHTML = value;\n}\n'),
