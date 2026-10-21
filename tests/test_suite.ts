@@ -875,10 +875,10 @@ async function runAllTests() {
 
   // 17.2 MYSQL-SEC-01 (MySQL Raw Query Injection)
   const mysqlFile: CodeFile = {
-    path: 'lib/db/mysql-client.ts',
+    path: 'lib/db/mysql_client.py',
     content: `
       export async function getUser(connection: any, id: string) {
-        return connection.query(\`SELECT * FROM users WHERE id = \${id}\`);
+        return cursor.execute(f"SELECT * FROM users WHERE id = {id}")
       }
     `
   };
