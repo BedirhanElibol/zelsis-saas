@@ -260,6 +260,18 @@ export async function runStaticCodeScan(inputFiles: CodeFile[], repoName: string
         testFixtureSkips++;
         return;
       }
+      // Firebase / Google client config ships its AIza API key to every app on purpose: it is not a secret
+      if (isSecretRuleId(f.ruleId) && /(?:^|\/)(?:GoogleService-Info\.plist|google-services\.json|firebase(?:-config)?\.(?:json|[jt]s))$/i.test(f.filePath) && /AIza/.test(String(f.snippet ?? ''))) {
+        testFixtureSkips++;
+        return;
+      }
+      // A key in tests, fixtures, docs or examples is usually a dummy: keep it visible (a real one still leaks)
+      // but do not block a release on it
+      if (isSecretRuleId(f.ruleId) && (isTestFixture || /(?:^|\/)(?:docs?|docs_src|examples?|samples?)\//i.test(f.filePath))
+          && (f.severity === 'CRITICAL' || f.severity === 'HIGH')) {
+        f.severity = 'MEDIUM';
+        f.reproductionSteps = [...(f.reproductionSteps ?? []), 'Found in a test, fixture or docs file, so it is most likely a dummy value. If it is a real key, revoke it: git history keeps it.'];
+      }
       // Feature: Dismiss Findings
       if (options.dismissals && options.dismissals.some(d => d.ruleId === f.ruleId && d.filePath === f.filePath)) {
         f.status = 'ACCEPTED_RISK';
