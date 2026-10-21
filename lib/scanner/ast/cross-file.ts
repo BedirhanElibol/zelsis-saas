@@ -18,7 +18,6 @@ export interface CrossFileAuth {
   /** Route path predicate from middleware.ts, or null when no middleware authenticates. */
   middleware: MiddlewareAuth | null;
   /** Module keys that verify a webhook signature (lib/services/billing.js calls stripe.webhooks.constructEvent). */
-  /** Module keys that verify a webhook signature (lib/services/billing.js calls stripe.webhooks.constructEvent). */
   webhookVerifiers: Set<string>;
   /** Module keys whose exported functions validate their payload with a strict Joi/Zod schema (without .unknown(true), .passthrough(), or role/roles/isAdmin keys). */
   schemaValidators: Set<string>;
@@ -273,7 +272,7 @@ function middlewareBypassable(files: CodeFile[]): boolean {
 function hasStrictSchemaValidation(content: string): boolean {
   if (!/\bJoi\.object\s*\(|\bz\.object\s*\(/.test(content)) return false;
   if (!/\.\s*(?:validate(?:Async)?|parse(?:Async)?|safeParse(?:Async)?)\s*\(/.test(content)) return false;
-  if (/\.unknown\s*\(\s*true\s*\)|\.passthrough\s*\(\s*\)/.test(content)) return false;
+  if (/\.unknown\s*\(\s*true\s*\)|\.passthrough\s*\(\s*\)|\.catchall\s*\(|allowUnknown\s*:\s*true/.test(content)) return false;
   const schemaMatches = [...content.matchAll(/\b(?:Joi|z)\.object\s*\(\s*\{([\s\S]*?)\}\s*\)/g)];
   if (schemaMatches.length === 0) return false;
   if (schemaMatches.some((m) => /\b(?:roles?|isAdmin|is_admin)\s*:/.test(m[1]))) return false;

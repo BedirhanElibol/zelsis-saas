@@ -78,7 +78,6 @@ export function calledWebhookVerifier(filePath: string, content: string, cross: 
   return null;
 }
 
-/** Why this route-level finding is guarded elsewhere, or null when nothing was found. */
 /** An imported binding from a module that validates payloads with a strict Joi/Zod schema, called with req.body/body (userCtrl.insert(req.body)). */
 export function calledSchemaValidator(filePath: string, content: string, cross: CrossFileAuth): { name: string; from: string } | null {
   if (!cross.schemaValidators || cross.schemaValidators.size === 0) return null;
