@@ -441,6 +441,59 @@ function checkCascadeForeignKeyIndex(path: string, c: string, ctx: RepoContext, 
   }
 }
 
+const snake = (s: string) => s.replace(/([a-z0-9])([A-Z])/g, '$1_$2').toLowerCase();
+
+/**
+ * XL-15 for ORM entities: a TypeORM @ManyToOne({ onDelete: 'CASCADE' | 'SET NULL' }) or a JPA @ManyToOne with
+ * Hibernate @OnDelete(action = CASCADE) on Postgres, with no @Index on the property, no class / @Table index naming
+ * the column, and no migration indexing it.
+ */
+function checkOrmCascadeForeignKeyIndex(path: string, c: string, ctx: RepoContext, add: Add) {
+  if (!ctx.infra.usesPostgres) return;
+  const isTs = /\.[cm]?ts$/i.test(path) && /@Entity\s*\(/.test(c) && /\bfrom\s+['"]typeorm['"]/.test(c);
+  const isJvm = /\.(?:java|kt)$/i.test(path) && /@Entity\b/.test(c) && /@OnDelete\s*\(/.test(c);
+  if (!isTs && !isJvm) return;
+  const entityTable = isTs
+    ? /@Entity\s*\(\s*(?:['"](\w+)['"]|\{[^}]*\bname\s*:\s*['"](\w+)['"])/.exec(c)
+    : /@Table\s*\([^)]*\bname\s*=\s*"(\w+)"/.exec(c);
+  const className = /\bclass\s+(\w+)/.exec(c)?.[1] ?? '';
+  const table = (entityTable?.[1] ?? entityTable?.[2] ?? snake(className)).toLowerCase();
+  // Class-level indexes: @Index(['userId']), @Index('idx', ['user']), @Table(indexes = @Index(columnList = "user_id"))
+  const classIndexed = [...c.matchAll(/@Index\s*\(\s*(?:['"][^'"]*['"]\s*,\s*)?\[([^\]]*)\]/g), ...c.matchAll(/columnList\s*=\s*"([^"]*)"/g)]
+    .map((m) => m[1].split(',')[0].replace(/['"\s]/g, '').toLowerCase());
+  const migrationIndexed = (col: string) => (ctx.infra.indexedColumns.get(table) ?? []).some((cols) => cols[0] === col);
+  const lines = c.split('\n');
+  lines.forEach((l, i) => {
+    if (!/@ManyToOne\b/.test(l)) return;
+    // The relation's decorator stack and the property it decorates
+    // Walk past this decorator and any that follow (balanced parentheses) to the property line
+    let end = i;
+    let depth = 0;
+    for (let j = i; j < lines.length - 1 && j - i < 20; j++) {
+      depth += (lines[j].match(/\(/g) ?? []).length - (lines[j].match(/\)/g) ?? []).length;
+      end = j;
+      if (depth <= 0 && !/^\s*@/.test(lines[j + 1])) break;
+    }
+    let start = i;
+    while (start > 0 && /^\s*@|^\s*[})\],]/.test(lines[start - 1])) start--;
+    const stack = lines.slice(start, end + 2).join('\n');
+    const cascades = isTs ? /onDelete\s*:\s*['"](?:CASCADE|SET NULL)['"]/i.test(stack) : /@OnDelete\s*\(\s*action\s*=\s*OnDeleteAction\.(?:CASCADE|SET_NULL)/.test(stack);
+    if (!cascades || /@Index\b/.test(stack)) return;
+    const prop = /(\w+)\s*[!?]?\s*:\s*[\w<>[\]| ]+;?\s*$/.exec(lines[end + 1] ?? '')?.[1] ?? /\s(\w+)\s*;\s*$/.exec(lines[end + 1] ?? '')?.[1] ?? '';
+    if (!prop) return;
+    const joinName = /@JoinColumn\s*\(\s*(?:\{[^}]*\bname\s*:\s*['"](\w+)['"]|[^)]*\bname\s*=\s*"(\w+)")/.exec(stack);
+    const colName = joinName?.[1] ?? joinName?.[2] ?? (isTs ? `${prop}Id` : `${snake(prop)}_id`);
+    const col = colName.toLowerCase();
+    if (classIndexed.some((x) => x === col || x === prop.toLowerCase() || x === `${prop.toLowerCase()}id`) || migrationIndexed(col) || migrationIndexed(snake(col))) return;
+    add({ ruleId: 30315, code: 'XL-15', severity: 'LOW', lineIdx: i, type: 'INFRA_DATABASE', category: 'Schema Optimization',
+      title: `${className || table}.${prop} Cascades on Delete but Nothing Indexes ${colName}`,
+      why: `The relation deletes or nulls ${className || table} rows when the parent goes away, and the app runs on Postgres, which does not index foreign key columns on its own. Each parent delete then scans the whole ${table} table for ${colName}, which gets slow and holds locks as it grows.`,
+      fix: isTs
+        ? `Add @Index() above the ${prop} relation (or @Index(['${prop}']) on the entity), then generate a migration.`
+        : `Add the column to the entity's indexes: @Table(indexes = @Index(columnList = "${colName}")), then add the migration.` });
+  });
+}
+
 // ---------------------------------------------------------------------------------------------------------------
 export function evaluateCrossLayerRules(file: CodeFile, lines: string[], cleanContent: string, findingCounter: {
   count: number;
@@ -467,6 +520,7 @@ export function evaluateCrossLayerRules(file: CodeFile, lines: string[], cleanCo
   checkSmsRateLimit(path, c, add);
   checkTenantFilter(path, c, add);
   checkCascadeForeignKeyIndex(path, c, context, add);
+  checkOrmCascadeForeignKeyIndex(path, c, context, add);
 
   const raw = (file.content || '').split('\n');
   const ts = new Date().toLocaleTimeString();

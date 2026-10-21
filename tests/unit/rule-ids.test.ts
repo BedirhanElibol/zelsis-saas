@@ -12,7 +12,7 @@ const sources = [
 ];
 
 /** Same rule emitted from two places or as language variants: one id on purpose. */
-const SHARED_ON_PURPOSE = new Set([1, 16, 18101, 23005]);
+const SHARED_ON_PURPOSE = new Set([1, 16, 18101, 23005, 30315]);
 
 test('every rule id belongs to one rule (evidence and ignores are keyed by id)', () => {
   const titlesById = new Map<number, Set<string>>();
