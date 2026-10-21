@@ -23,6 +23,11 @@ export const WEBHOOK_VERIFY_RULES: ReadonlySet<number> = new Set([
   8143, // ZERO-AUTH-43: webhook receiver without identity verification
 ]);
 
+/** Mass-assignment rules cleared when the handler passes req.body to an imported module that validates with a strict Joi/Zod schema. */
+export const SCHEMA_VALIDATED_RULES: ReadonlySet<number> = new Set([
+  25001, // SEC-API-01: Mass Assignment via Unvalidated Request Body
+]);
+
 /**
  * Rules where only an imported auth helper counts. Server Actions post to the page's own URL, so a middleware
  * matcher written for /api routes says nothing about them.
@@ -56,7 +61,8 @@ export function calledAuthHelper(filePath: string, content: string, cross: Cross
   return null;
 }
 
-const DEFAULT_IMPORT_RE = /import\s+([A-Za-z_$][\w$]*)\s*(?:,\s*\{[^}]*\})?\s*from\s*['"]([^'"]+)['"]/g;
+const DEFAULT_IMPORT_RE = /import\s+(?:\*\s+as\s+)?([A-Za-z_$][\w$]*)\s*(?:,\s*\{[^}]*\})?\s*from\s*['"]([^'"]+)['"]/g;
+const CJS_REQUIRE_RE = /(?:const|let|var)\s+([A-Za-z_$][\w$]*|\{[^}]*\})\s*=\s*require\s*\(\s*['"]([^'"]+)['"]\s*\)/g;
 
 /** An imported binding from a module that verifies webhook signatures, called here (BillingService.handleWebhook(body, sig)). */
 export function calledWebhookVerifier(filePath: string, content: string, cross: CrossFileAuth): { name: string; from: string } | null {
@@ -73,7 +79,31 @@ export function calledWebhookVerifier(filePath: string, content: string, cross: 
 }
 
 /** Why this route-level finding is guarded elsewhere, or null when nothing was found. */
+/** An imported binding from a module that validates payloads with a strict Joi/Zod schema, called with req.body/body (userCtrl.insert(req.body)). */
+export function calledSchemaValidator(filePath: string, content: string, cross: CrossFileAuth): { name: string; from: string } | null {
+  if (!cross.schemaValidators || cross.schemaValidators.size === 0) return null;
+  for (const re of [IMPORT_RE, DEFAULT_IMPORT_RE, CJS_REQUIRE_RE]) {
+    for (const m of content.matchAll(re)) {
+      const spec = m[2];
+      if (!resolveImport(filePath, spec).some((k) => cross.schemaValidators.has(k))) continue;
+      const rawBinding = m[1].trim();
+      const names = rawBinding.startsWith('{') || re === IMPORT_RE
+        ? rawBinding.replace(/^\{|\}$/g, '').split(',').map((p) => p.trim().split(/\s+(?:as|:)\s+/).pop()!.trim())
+        : [rawBinding];
+      const rest = content.slice(m.index! + m[0].length);
+      const local = names.find((n) => n && new RegExp(String.raw`\b${n.replace(/\$/g, '\\$')}\s*(?:\.\s*\w+\s*)?\(\s*(?:req\.body|body|await\s+(?:req|request)\.json\(\))`).test(rest));
+      if (local) return { name: local, from: spec };
+    }
+  }
+  return null;
+}
+
+/** Why this route-level finding is guarded elsewhere, or null when nothing was found. */
 export function guardElsewhere(ruleId: number, filePath: string, content: string, cross: CrossFileAuth): string | null {
+  if (SCHEMA_VALIDATED_RULES.has(ruleId)) {
+    const validator = calledSchemaValidator(filePath, content, cross);
+    if (validator) return `the handler passes the request body to ${validator.name} from ${validator.from}, which validates the payload with a schema`;
+  }
   if (WEBHOOK_VERIFY_RULES.has(ruleId)) {
     const verifier = calledWebhookVerifier(filePath, content, cross);
     if (verifier) return `the handler passes the request to ${verifier.name} from ${verifier.from}, which verifies the webhook signature`;
