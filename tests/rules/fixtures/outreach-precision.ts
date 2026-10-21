@@ -603,5 +603,40 @@ export async function POST(request: Request) {
 }
 `),
     ],
+  },
+  {
+    ruleIds: [25001], name: 'SEC-API-01 direct User.create(req.body) vs controller validating with a strict Joi schema before saving',
+    detects: f('server/routes/user.route.js', `import User from '../models/user.model';
+
+export async function createUser(req, res) {
+  const user = await User.create(req.body);
+  return res.json(user);
+}
+`),
+    ignores: [
+      ...f('server/routes/user.route.js', `import userCtrl from '../controllers/user.controller';
+
+export async function register(req, res) {
+  const user = await userCtrl.insert(req.body);
+  return res.json(user);
+}
+`),
+      ...f('server/controllers/user.controller.js', `import Joi from 'joi';
+import User from '../models/user.model';
+
+const userSchema = Joi.object({
+  fullname: Joi.string().required(),
+  email: Joi.string().email().required(),
+  password: Joi.string().required(),
+});
+
+async function insert(user) {
+  user = await userSchema.validateAsync(user, { abortEarly: false });
+  return await new User(user).save();
+}
+
+export default { insert };
+`),
+    ],
   }
 ];

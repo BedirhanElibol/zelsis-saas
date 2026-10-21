@@ -48,3 +48,37 @@ test('middleware whose matcher skips the route does not hide the finding', async
   const r = await scan([{ path: 'middleware.ts', content: middleware }]);
   assert.ok(r.findings.some((f) => f.ruleId === 15));
 });
+
+test('route passing req.body to a controller with strict Joi schema drops mass-assignment finding 25001', async () => {
+  const route = [
+    "const userCtrl = require('../controllers/user.controller');",
+    'async function insert(req, res) {',
+    '  let user = await userCtrl.insert(req.body);',
+    '  res.json(user);',
+    '}',
+  ].join('\n');
+  const safeCtrl = [
+    "const Joi = require('joi');",
+    'const userSchema = Joi.object({ fullname: Joi.string().required(), email: Joi.string().email() });',
+    'async function insert(user) {',
+    '  user = await Joi.validate(user, userSchema, { abortEarly: false });',
+    '  return await new User(user).save();',
+    '}',
+    'module.exports = { insert };',
+  ].join('\n');
+  const rSafe = await runStaticCodeScan([
+    { path: 'server/routes/user.route.js', content: route },
+    { path: 'server/controllers/user.controller.js', content: safeCtrl },
+  ], 'xfile-joi-safe');
+  assert.ok(!rSafe.findings.some((f) => f.ruleId === 25001 && f.filePath === 'server/routes/user.route.js'));
+  const v = rSafe.crossFileVerified?.find((x) => x.ruleId === 25001);
+  assert.ok(v, 'cross-file schema verification recorded');
+  assert.match(v.reason, /userCtrl/);
+
+  const unknownCtrl = safeCtrl.replace('Joi.object({ fullname: Joi.string().required(), email: Joi.string().email() })', 'Joi.object({ fullname: Joi.string().required() }).unknown(true)');
+  const rUnknown = await runStaticCodeScan([
+    { path: 'server/routes/user.route.js', content: route },
+    { path: 'server/controllers/user.controller.js', content: unknownCtrl },
+  ], 'xfile-joi-unknown');
+  assert.ok(rUnknown.findings.some((f) => f.ruleId === 25001 && f.filePath === 'server/routes/user.route.js'));
+});

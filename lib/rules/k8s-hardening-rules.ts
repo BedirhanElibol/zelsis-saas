@@ -5,7 +5,7 @@
 import { Finding } from "@/data/schema";
 import { CodeFile } from "../scanner-engine";
 import { locateMatchLine } from './shared/locate';
-import { capabilityAdds, yamlLine } from './iac-rules';
+import { capabilityAdds, isHelmSubchartPath, yamlLine } from './iac-rules';
 export interface K8sHardeningRuleResult {
     findings: Finding[];
     logs: string[];
@@ -17,7 +17,7 @@ export function evaluateK8sHardeningRules(file: CodeFile, lines: string[], clean
     const logs: string[] = [];
     const lowerPath = file.path.toLowerCase().replace(/\\/g, "/");
     // Skip self-referential catalogs, mocks, and non-k8s paths
-    if (lowerPath.includes("node_modules/") || lowerPath.endsWith(".d.ts")) {
+    if (lowerPath.includes("node_modules/") || lowerPath.endsWith(".d.ts") || isHelmSubchartPath(lowerPath) || /^\s*kind:\s*PodSecurityPolicy\b/m.test(cleanContent)) {
         return { findings, logs };
     }
     const isK8s = (lowerPath.endsWith(".yaml") || lowerPath.endsWith(".yml")) &&

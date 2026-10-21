@@ -7,6 +7,7 @@
  */
 import { Finding } from "@/data/schema";
 import { CodeFile } from "../scanner-engine";
+import { isHelmSubchartPath } from "./iac-rules";
 export interface LinuxKernelSecurityRuleResult {
     findings: Finding[];
     logs: string[];
@@ -20,7 +21,7 @@ export function evaluateLinuxKernelSecurityRules(file: CodeFile, lines: string[]
     const lowerPath = file.path.toLowerCase().replace(/\\/g, "/");
     // Skip non-container and non-infrastructure files
     if (
-        lowerPath.includes("node_modules/") || lowerPath.endsWith(".d.ts") ||
+        lowerPath.includes("node_modules/") || lowerPath.endsWith(".d.ts") || isHelmSubchartPath(lowerPath) ||
         (!/\.(ya?ml|dockerfile)$/i.test(file.path) && !/docker|k8s|pod_spec|container_security/i.test(lowerPath)) ||
         // Scan reports, docs and data files only mention the flag; a PodSecurityPolicy allows it rather than running a container
         /\.(?:json|md|txt|html|csv)$/i.test(lowerPath) || /^\s*kind:\s*PodSecurityPolicy\b/m.test(cleanContent)
