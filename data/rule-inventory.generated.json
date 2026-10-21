@@ -7669,7 +7669,7 @@
   {
    "ruleId": 18101,
    "code": "MYSQL-SEC-01",
-   "title": "MySQL Raw Query Injection via String Formatting",
+   "title": "MySQL Raw Query Injection via Python String Interpolation",
    "severity": "CRITICAL",
    "source": "lib/rules/multi-database-rules.ts",
    "preciseLocation": true,
