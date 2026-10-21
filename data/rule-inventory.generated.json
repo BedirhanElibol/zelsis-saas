@@ -1,8 +1,8 @@
 {
  "summary": {
-  "implementedRules": 1300,
-  "testedRules": 1294,
-  "preciseLocationRules": 1298,
+  "implementedRules": 1302,
+  "testedRules": 1296,
+  "preciseLocationRules": 1300,
   "catalogEntries": 1922,
   "catalogOnlyNotImplemented": 1396,
   "catalogPlaceholderMetadata": 1810
@@ -14392,6 +14392,26 @@
    "title": "${fk.table}.${fk.col} Cascades on Delete but No Migration Indexes It",
    "severity": "LOW",
    "source": "lib/rules/cross-layer-rules.ts",
+   "preciseLocation": true,
+   "tested": true,
+   "inCatalog": false
+  },
+  {
+   "ruleId": 30341,
+   "code": "RULE-30341",
+   "title": "Outside Call Retried in a Tight Loop With No Backoff",
+   "severity": "UNKNOWN",
+   "source": "lib/rules/resilience-rules.ts",
+   "preciseLocation": true,
+   "tested": true,
+   "inCatalog": false
+  },
+  {
+   "ruleId": 30342,
+   "code": "RULE-30342",
+   "title": "axios-retry Retries With No Delay",
+   "severity": "UNKNOWN",
+   "source": "lib/rules/resilience-rules.ts",
    "preciseLocation": true,
    "tested": true,
    "inCatalog": false

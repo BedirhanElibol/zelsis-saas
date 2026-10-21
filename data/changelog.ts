@@ -13,8 +13,12 @@ export interface ChangelogEntry {
 export const CHANGELOG: ChangelogEntry[] = [
   {
     date: '2026-10-21',
-    title: 'Foreign key indexes in ORM entities',
+    title: 'Fewer critical false alarms, retry storms and ORM indexes',
     changes: [
+      { kind: 'Improved', text: 'SQL injection is only reported as critical when a value is placed into the query (inside quotes, after = or LIKE, or concatenated in). Queries the code assembles from its own pieces, such as column lists, table names, conditions or ORM-generated SQL, are now medium advice, and numbers, record ids and constants are not treated as input.' },
+      { kind: 'Fixed', text: 'Missing-RLS checks understand RLS enabled in a loop over a list of tables, skip SQLite and Cloudflare D1 schemas and SQL in docs or examples, and no longer read table names from comments or format() templates.' },
+      { kind: 'Fixed', text: 'eval checks no longer report methods that happen to be called eval (Redis Lua scripts, math libraries, an embedded JavaScript engine), typed method signatures or fixed strings; lines the developer marked as reviewed (nosemgrep, eslint-disable no-eval, nosec) stay reported at medium.' },
+      { kind: 'New', text: 'Retries that hammer a failing service (advice only): a fetch, axios or requests call retried in a loop with no wait between attempts, and axios-retry set up without retryDelay, which retries instantly by default.' },
       { kind: 'New', text: 'Missing foreign key indexes are now found in TypeORM entities (@ManyToOne with onDelete CASCADE or SET NULL) and JPA / Hibernate entities (@OnDelete), not only in SQL migrations. Only reported for Postgres apps, since MySQL indexes foreign keys itself, and an @Index on the relation, a class-level index or a migration index all count.' },
     ],
   },
