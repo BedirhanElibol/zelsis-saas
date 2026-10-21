@@ -1590,7 +1590,7 @@
    "ruleId": 32,
    "code": "RULE-32",
    "title": "Dynamic Code Execution (eval / Function Remote Code Execution)",
-   "severity": "CRITICAL",
+   "severity": "UNKNOWN",
    "source": "lib/rules/security-rules.ts",
    "preciseLocation": true,
    "tested": true,
