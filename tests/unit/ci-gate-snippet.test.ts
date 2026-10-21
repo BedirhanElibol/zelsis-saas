@@ -22,3 +22,14 @@ test('docs and onboarding use the shared workflow, not hand-written snippets', (
     assert.ok(readFileSync(join(root, file), 'utf8').includes('buildGateWorkflow('), file);
   }
 });
+
+test('the gate accepts a GitHub Actions token longer than a classic PAT', async () => {
+  const { GateCheckRequestSchema } = await import('../../lib/validations/api-schemas');
+  const long = 'ghs_' + 'a'.repeat(1200);
+  assert.ok(GateCheckRequestSchema.safeParse({ repoUrl: 'https://github.com/a/b', githubToken: long }).success);
+});
+
+test('a rejected gate request prints which field failed', () => {
+  const yaml = buildGateWorkflow({ appUrl: 'https://example.test' });
+  assert.match(yaml, /\.details\[\]\? \| \.field \+ ": " \+ \.message/);
+});
