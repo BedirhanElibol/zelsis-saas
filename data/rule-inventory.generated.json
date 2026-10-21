@@ -1,7 +1,7 @@
 {
  "summary": {
   "implementedRules": 1300,
-  "testedRules": 1293,
+  "testedRules": 1294,
   "preciseLocationRules": 1297,
   "catalogEntries": 1922,
   "catalogOnlyNotImplemented": 1396,
@@ -2423,7 +2423,7 @@
    "severity": "CRITICAL",
    "source": "lib/rules/infra-rules.ts",
    "preciseLocation": true,
-   "tested": false,
+   "tested": true,
    "inCatalog": false
   },
   {
