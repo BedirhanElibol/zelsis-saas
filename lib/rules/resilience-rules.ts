@@ -56,7 +56,13 @@ export function evaluateResilienceRules(file: CodeFile, lines: string[], cleanCo
   // RES-01: retry loop around an outbound call with nothing waiting between attempts
   const retryWhy = 'The loop retries the call as soon as it fails. When the service is slow or down, every client does the same, so the retries add load right when it can least take it and the outage lasts longer.';
   if (isJs && OUTBOUND_JS.test(c)) {
-    for (const m of c.matchAll(/\b(?:for\s*\(\s*(?:let|var)\s+(\w+)\s*=\s*\d+\s*;[^;)]*<=?\s*(?:\d+|\w*(?:retr|attempt|tries|max)\w*)[^)]*\)|while\s*\(\s*(?:!\s*\w+\s*&&\s*)?\w*(?:attempt|retr|tries)\w*[^)]*\))/gi)) {
+    // A retry loop: its counter or bound is about attempts / retries (not pages, redirect hops or items), and a
+    // literal bound allows at least 3 attempts (one immediate retry is common and cheap)
+    for (const m of c.matchAll(/\b(?:for\s*\(\s*(?:let|var)\s+(\w+)\s*=\s*\d+\s*;[^;)]*<(=?)\s*(\d+|\w*(?:retr|attempt|tries)\w*)[^)]*\)|while\s*\(\s*(?:!\s*\w+\s*&&\s*)?\w*(?:attempt|retr|tries)\w*\s*(?:<(=?)\s*(\d+)|[^)]*)\))/gi)) {
+      const counter = m[1] ?? '';
+      const bound = m[3] ?? m[5];
+      if (m[1] && !/^(?:i|n|attempt\w*|retr\w*|tr(?:y|ies)\w*|tries)$/i.test(counter)) continue;
+      if (bound && /^\d+$/.test(bound) && Number(bound) + ((m[2] ?? m[4]) ? 1 : 0) < 3) continue;
       const block = braceBody(c, m.index! + m[0].length);
       if (!block) continue;
       const b = block.body;
@@ -68,7 +74,12 @@ export function evaluateResilienceRules(file: CodeFile, lines: string[], cleanCo
   }
   if (isPy && OUTBOUND_PY.test(c)) {
     lines.forEach((l, i) => {
-      if (!/^\s*(?:for\s+\w+\s+in\s+range\s*\(|while\s+(?:not\s+\w+\s+and\s+)?\w*(?:attempt|retr|tries)\w*)/i.test(l)) return;
+      const loop = /^\s*(?:for\s+(\w+)\s+in\s+range\s*\(\s*(?:\d+\s*,\s*)?([^)]*)\)|while\s+(?:not\s+\w+\s+and\s+)?\w*(?:attempt|retr|tries)\w*)/i.exec(l);
+      // The raw line keeps its comment: `for _ in range(10):  # max redirect hops`
+      if (!loop || /page|hop|redirect/i.test(lines[i] ?? '')) return;
+      // Same as JS: an attempt / retry counter (or _ with a retry-sized bound), at least 3 attempts when the bound is a literal
+      if (loop[1] && !/^(?:_\w*|i|n|attempt\w*|retr\w*|tr(?:y|ies)\w*)$/i.test(loop[1])) return;
+      if (loop[2] !== undefined && (/page|hop|redirect|item|row|batch|chunk/i.test(loop[2]) || (/^\d+$/.test(loop[2].trim()) && Number(loop[2]) < 3) || !/^\s*(?:\d+|\w*(?:retr|attempt|tries)\w*)\s*$/i.test(loop[2]))) return;
       const b = pyBlock(lines, i);
       if (!OUTBOUND_PY.test(b) || !/^\s*try\s*:/m.test(b) || !/^\s*except\b/m.test(b) || !/\b(?:return|break)\b/.test(b) || WAITS.test(b)) return;
       hits.push({ ruleId: 30341, code: 'RES-01', title: 'Outside Call Retried in a Tight Loop With No Backoff', lineIdx: i, why: retryWhy,
