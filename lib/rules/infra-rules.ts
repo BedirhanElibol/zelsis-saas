@@ -627,8 +627,24 @@ export function evaluateInfraRules(file: CodeFile, lines: string[], cleanContent
     if (isJsTsPy) {
         const mongoWhereRegex = /\$where\s*:/i;
         const mongoRawQueryRegex = /(?:collection|db\.[a-zA-Z0-9_]+)\.(?:find|findOne|update|delete|count)\s*\(\s*(?:req\.body|req\.query|params)\b/i;
-        if (mongoWhereRegex.test(cleanContent) || mongoRawQueryRegex.test(cleanContent)) {
-            const matchLineIdx = lines.findIndex(l => mongoWhereRegex.test(l) || mongoRawQueryRegex.test(l));
+        const gqlVarType = /^\s*(?:\[\s*)?(?:[A-Z]\w*|[a-z]+_(?:bool_exp|input|order_by|select_column|constraint|arr_rel_insert_input|obj_rel_insert_input)|\$\{\s*\w*(?:Type|Input|Exp|Filter)\w*\s*\})(?:\s*\]\s*!?)?(?:\s*!|\s*=\s*\{|\s*[,)])/;
+        const isGraphqlWhere = (line: string, idx: number): boolean => {
+            const m = /\$where\s*:\s*(.*)/i.exec(line);
+            if (!m) return false;
+            if (gqlVarType.test(m[1])) return true;
+            const win = lines.slice(Math.max(0, idx - 8), idx + 1).join('\n');
+            if (/\b(?:gql|graphql)\s*(?:`|\(\s*['"`])/.test(win)) return true;
+            if (/['"`]\s*(?:query|mutation|subscription)\b[\s\S]*\$where\s*:/i.test(win)) return true;
+            if (/\b(?:query|mutation|subscription)\s+(?:[A-Za-z_]\w*|\$\{[^}]+\})?\s*\([^)]*\$where\s*:/i.test(win)) return true;
+            return false;
+        };
+        const matchLineIdx = lines.findIndex((l, idx) => {
+            const t = l.trim();
+            if (t.startsWith('//') || t.startsWith('#') || t.startsWith('*')) return false;
+            if (mongoRawQueryRegex.test(l)) return true;
+            return mongoWhereRegex.test(l) && !isGraphqlWhere(l, idx);
+        });
+        if (matchLineIdx !== -1) {
             const lineNum = matchLineIdx !== -1 ? matchLineIdx + 1 : 1;
             const snippet = extractSnippet(lines, lineNum);
             findings.push({
