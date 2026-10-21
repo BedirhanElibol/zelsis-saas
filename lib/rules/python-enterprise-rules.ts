@@ -24,12 +24,40 @@ export function evaluatePythonEnterpriseRules(file: CodeFile, lines: string[], c
         return { findings, logs };
     const ts = new Date().toLocaleTimeString();
     // PY-SEC-01: Unsafe Pickle Deserialization (Remote Code Execution)
-    const reg_8801 = /(?:pickle|cPickle|_pickle)\.(?:loads?|Unpickler)/i;
-    if (reg_8801.test(cleanContent)) {
-        const linePattern = /(?:pickle|cPickle|_pickle)\.(?:loads?|Unpickler)/i;
-        const matchLineIdx = lines.findIndex(l => !l.trim().startsWith('#') && !l.trim().startsWith('"""') && linePattern.test(l));
-        const lineNum = matchLineIdx !== -1 ? matchLineIdx + 1 : 1;
-        const rawSnippet = matchLineIdx !== -1 ? lines[matchLineIdx].trim() : lines.find(l => !l.trim().startsWith('#'))?.trim() || "Unsafe Pickle Deserialization (Remote Code Execution)";
+    const isPickleScriptOrHomeworkPath = /(?:^|\/)(?:homework|cohorts|notebooks|scripts)\//i.test(lowerPath);
+    const pyCodeNoStrings = cleanContent
+        .replace(/"""[\s\S]*?"""|'''[\s\S]*?'''/g, (m) => m.replace(/[^\n]/g, " "))
+        .replace(/'(?:\\.|[^'\\])*'|"(?:\\.|[^"\\])*"/g, '""')
+        .replace(/#.*$/gm, "");
+    const reg_8801 = /\b(?:pickle|cPickle|_pickle)\.(?:loads?|Unpickler)\s*\(/i;
+    // Cookies, headers and network fetches count too: a pickled cookie is the classic exploit
+    const hasUntrustedPickleInput = /\b(?:request\.(?:body|data|args|form|values|files|get_data|stream|cookies|headers)|req\.(?:body|query|params|cookies|headers)|sock\.recv|socket\.recv|\.recv\s*\(|rfile\.read|sys\.stdin|urlopen\s*\(|requests\.(?:get|post)\s*\()/i.test(pyCodeNoStrings);
+    const isSymmetricPickleCodec = /\b(?:pickle|cPickle|_pickle)\.dumps?\s*\(/i.test(pyCodeNoStrings) && !hasUntrustedPickleInput;
+    const pyLinesNoStrings = pyCodeNoStrings.split(/\r?\n/);
+    const unsafePickleLineIdx = (!isPickleScriptOrHomeworkPath && !isSymmetricPickleCodec && reg_8801.test(pyCodeNoStrings))
+        ? pyLinesNoStrings.findIndex((strippedLine, idx) => {
+            if (!reg_8801.test(strippedLine)) return false;
+            const loadCallMatch = /\b(?:pickle|cPickle|_pickle)\.load\s*\(\s*([A-Za-z_]\w*|open\s*\([^)]*\))/i.exec(lines[idx] || "");
+            if (loadCallMatch) {
+                const arg = loadCallMatch[1].trim();
+                if (/^open\s*\(\s*(?:['"][^'"]+['"]|\w*(?:model|checkpoint|weights)\w*)/i.test(arg)) {
+                    return false;
+                }
+                if (/^[A-Za-z_]\w*$/.test(arg)) {
+                    const windowStart = Math.max(0, idx - 12);
+                    const funcWindow = lines.slice(windowStart, idx + 1).join("\n");
+                    const openVarRegex = new RegExp(String.raw`\bopen\s*\(\s*(?:r?['"][^'"]+['"]|\w*(?:model|checkpoint|weights)[A-Za-z0-9_.]*)\s*(?:,\s*['"]rb['"])?[^)]*\)\s+as\s+${arg}\b|\b${arg}\s*=\s*open\s*\(\s*(?:r?['"][^'"]+['"]|\w*(?:model|checkpoint|weights)[A-Za-z0-9_.]*)`, "i");
+                    if (openVarRegex.test(funcWindow)) {
+                        return false;
+                    }
+                }
+            }
+            return true;
+        })
+        : -1;
+    if (unsafePickleLineIdx !== -1) {
+        const lineNum = unsafePickleLineIdx + 1;
+        const rawSnippet = lines[unsafePickleLineIdx]?.trim() || "Unsafe Pickle Deserialization (Remote Code Execution)";
         findings.push({
             id: `py8801-${Date.now()}-${findingCounter.count++}`,
             ruleId: 8801,

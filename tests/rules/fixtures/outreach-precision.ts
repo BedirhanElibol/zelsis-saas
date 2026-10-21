@@ -472,39 +472,91 @@ def fetch():
     ignores: f('requirements.txt', 'requests>=2.20\nrequests-oauthlib==1.3.0\nrequests_toolbelt==0.9.1\n'),
   },
   {
-    ruleIds: [25001], name: 'SEC-API-01 direct User.create(req.body) vs controller validating with a strict Joi schema before saving',
-    detects: f('server/routes/user.route.js', `import User from '../models/user.model';
-
-export async function createUser(req, res) {
-  const user = await User.create(req.body);
-  return res.json(user);
-}
-`),
+    ruleIds: [16], name: 'SEC-16 innerHTML on message body or raw prop vs vendored jquery/bundle assets and shiki/prism/hljs syntax highlighters',
+    detects: [
+      ...f('src/components/HtmlPreview.tsx', 'export function HtmlPreview({ html }: { html: string }) {\n  return <div dangerouslySetInnerHTML={{ __html: html }} />;\n}\n'),
+      ...f('src/chat/render.ts', 'export function renderMsg(el: HTMLElement, message: { body: string }) {\n  el.innerHTML = message.body;\n}\n'),
+      // Search-term highlighting is not a syntax highlighter
+      ...f('src/search/results.ts', 'const highlight = (text: string, q: string) => text.replace(q, `<mark>${q}</mark>`);\nexport function show(el: HTMLElement, title: string, q: string) {\n  el.innerHTML = highlight(title, q);\n}\n'),
+    ],
     ignores: [
-      ...f('server/routes/user.route.js', `import userCtrl from '../controllers/user.controller';
+      ...f('lib/flipper/ui/public/js/jquery-3.6.0.slim.js', 'function html(elem, value) {\n  elem.innerHTML = value;\n}\n'),
+      // The word in prose (a changelog entry) is not a sink
+      ...f('data/changelog.ts', "export const CHANGELOG = [\n  { kind: 'Fixed', text: 'XSS checks on innerHTML and dangerouslySetInnerHTML now skip vendored scripts.' },\n];\n"),
+      ...f('public/js/foo-1.2.3.min.js', 'function set(el, v) { el.innerHTML = v; }\n'),
+      ...f('assets/js/bootstrap.bundle.min.js', 'function tip(el, v) { el.innerHTML = v; }\n'),
+      ...f('src/components/DocsCode.tsx', 'import { codeToHtml } from "shiki";\nexport async function DocsCode({ code }: { code: string }) {\n  const codeHTML = await codeToHtml(code, { lang: "ts", theme: "nord" });\n  return <div dangerouslySetInnerHTML={{ __html: codeHTML }} />;\n}\n'),
+      ...f('src/components/PrismBlock.tsx', 'import Prism from "prismjs";\nexport function PrismBlock({ src }: { src: string }) {\n  const codeHTML = Prism.highlight(src, Prism.languages.javascript, "javascript");\n  return <pre dangerouslySetInnerHTML={{ __html: codeHTML }} />;\n}\n'),
+      ...f('src/components/HljsBlock.tsx', 'import hljs from "highlight.js";\nexport function HljsBlock({ src }: { src: string }) {\n  const codeHTML = hljs.highlight(src, { language: "ts" }).value;\n  return <code dangerouslySetInnerHTML={{ __html: codeHTML }} />;\n}\n'),
+    ],
+  },
+  {
+    ruleIds: [8801], name: 'PY-SEC-01 pickle.loads on request input vs loading own model file, symmetric codec, homework path, or prompt text',
+    detects: [
+      ...f('app/views.py', `import pickle, base64
+from flask import request
 
-export async function register(req, res) {
-  const user = await userCtrl.insert(req.body);
-  return res.json(user);
-}
+def import_state():
+    return pickle.loads(base64.b64decode(request.args["d"]))
 `),
-      ...f('server/controllers/user.controller.js', `import Joi from 'joi';
-import User from '../models/user.model';
+      // An uploaded file and a pickled cookie are attacker data even though the file also pickles
+      ...f('app/uploads.py', `import pickle
 
-const userSchema = Joi.object({
-  fullname: Joi.string().required(),
-  email: Joi.string().email().required(),
-  password: Joi.string().required(),
-});
+def load_upload(upload_path):
+    with open(upload_path, "rb") as f:
+        return pickle.load(f)
+`),
+      ...f('app/session.py', `import pickle, base64
+from flask import request
 
-async function insert(user) {
-  user = await userSchema.validateAsync(user, { abortEarly: false });
-  return await new User(user).save();
-}
+def save(resp, cart):
+    resp.set_cookie("cart", base64.b64encode(pickle.dumps(cart)).decode())
 
-export default { insert };
+def load():
+    return pickle.loads(base64.b64decode(request.cookies["cart"]))
 `),
     ],
+    ignores: [
+      ...f('app/ml/inference.py', `import pickle
+
+def load_classifier(model_path: str):
+    with open(model_path, "rb") as f:
+        return pickle.load(f)
+`),
+      ...f('src/sentry/digests/codecs.py', `import pickle, zlib
+
+class CompressedPickleCodec:
+    def encode(self, value):
+        return zlib.compress(pickle.dumps(value))
+
+    def decode(self, value):
+        return pickle.loads(zlib.decompress(value))
+`),
+      ...f('cohorts/2026/02-experiment-tracking/train.py', `import pickle
+
+def load_dump(data):
+    return pickle.loads(data)
+`),
+      ...f('app/prompts/scanner_prompt.py', `SYSTEM_PROMPT = """
+Check for dangerous sinks such as pickle.loads() or cPickle.load() on untrusted payloads.
+"""
+`),
+    ],
+  },
+  {
+    ruleIds: [18031], name: 'RUBY-SEC-01 where/order with params interpolation vs numeric casts, constants, connection.quote and script/migrate/tasks files',
+    detects: f('app/controllers/users_controller.rb', 'class UsersController < ApplicationController\n  def index\n    User.where("name = \'#{params[:name]}\'")\n  end\nend\n'),
+    ignores: [
+      ...f('app/models/post.rb', 'class Post < ApplicationRecord\n  scope :popular, ->(limit, id, x, quoted_vector) {\n    having("count(*) >= #{limit.to_i}")\n      .where("id = #{id.to_i} AND rank > #{Integer(x)} AND score >= #{x.to_f}")\n      .where("kind = \'#{User::USER_FIELD_PREFIX}\' AND status = \'#{SOME_CONSTANT}\'")\n      .where("vec = #{quoted_vector} AND tag = #{connection.quote(x)} AND org = #{ActiveRecord::Base.connection.quote(x)} AND #{sanitize_sql([\'slug = ?\', x])}")\n  }\nend\n'),
+      ...f('script/backfill.rb', 'User.where("name = \'#{params[:name]}\'")\n'),
+      ...f('db/migrate/20260101_fix_users.rb', 'User.where("name = \'#{params[:name]}\'")\n'),
+      ...f('lib/tasks/cleanup.rake', 'User.where("name = \'#{params[:name]}\'")\n'),
+    ],
+  },
+  {
+    ruleIds: [18031], name: 'RUBY-SEC-01 order with params interpolation vs numeric cast',
+    detects: f('app/controllers/posts_controller.rb', 'class PostsController < ApplicationController\n  def index\n    Post.order("#{params[:sort]} DESC")\n  end\nend\n'),
+    ignores: f('app/controllers/posts_controller.rb', 'class PostsController < ApplicationController\n  def index\n    Post.having("count(*) >= #{params[:limit].to_i}")\n  end\nend\n'),
   },
   {
     ruleIds: [9704], name: 'FINTECH-04 Stripe webhook using the body unverified vs one handing the signature to a service that calls constructEvent',
@@ -549,6 +601,41 @@ export async function POST(request: Request) {
   const { data } = await ctx.supabase.from('webhook_endpoints').insert({ url: body.url, events: ['invoice.paid'] }).select().single();
   return Response.json(data);
 }
+`),
+    ],
+  },
+  {
+    ruleIds: [25001], name: 'SEC-API-01 direct User.create(req.body) vs controller validating with a strict Joi schema before saving',
+    detects: f('server/routes/user.route.js', `import User from '../models/user.model';
+
+export async function createUser(req, res) {
+  const user = await User.create(req.body);
+  return res.json(user);
+}
+`),
+    ignores: [
+      ...f('server/routes/user.route.js', `import userCtrl from '../controllers/user.controller';
+
+export async function register(req, res) {
+  const user = await userCtrl.insert(req.body);
+  return res.json(user);
+}
+`),
+      ...f('server/controllers/user.controller.js', `import Joi from 'joi';
+import User from '../models/user.model';
+
+const userSchema = Joi.object({
+  fullname: Joi.string().required(),
+  email: Joi.string().email().required(),
+  password: Joi.string().required(),
+});
+
+async function insert(user) {
+  user = await userSchema.validateAsync(user, { abortEarly: false });
+  return await new User(user).save();
+}
+
+export default { insert };
 `),
     ],
   }

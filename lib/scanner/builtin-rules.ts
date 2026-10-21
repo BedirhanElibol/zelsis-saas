@@ -1,8 +1,9 @@
 import type { Finding } from '@/data/schema';
 import type { CodeFile } from './types';
-import { evaluateSecurityRules } from '../rules/security-rules';
+import { evaluateSecurityRules, INNER_HTML_SINK } from '../rules/security-rules';
 import { isPublicCatalogRead } from '../rules/missed-vulns-rules';
 import { buildLiveFindings } from './live-checks';
+import { isVendoredPath } from './text';
 
 export interface BuiltinRuleContext {
   file: CodeFile;
@@ -115,11 +116,13 @@ export function evaluateBuiltinRules(ctx: BuiltinRuleContext): void {
   }
 
   // Rule 16: Dangerously Set Inner HTML (XSS)
-  const isCompiledBundle = file.path.includes('live-deployment/bundle-') || file.path.includes('/vendor/') || file.path.includes('node_modules');
-  const isSafeMdxOrJsonLd = isCompiledBundle || file.path.includes('mdx-components') || file.path.includes('syntax-highlight') || file.content.includes('application/ld+json') || (/\bTHEMES\b/.test(file.content) && /<style\b[\s\S]{0,80}dangerouslySetInnerHTML/.test(file.content));
+  const isCompiledBundle = file.path.includes('live-deployment/bundle-') || file.path.includes('/vendor/') || file.path.includes('node_modules') || isVendoredPath(file.path);
+  // Highlighter calls only: a bare highlight() is often search-term highlighting, itself a classic XSS sink
+  const isSyntaxHighlighted = /\bcodeToHtml\s*\(|\bhljs\.highlight\w*\s*\(|\bPrism\.highlight\w*\s*\(|\bfrom\s+['"]shiki['"]/.test(cleanContent);
+  const isSafeMdxOrJsonLd = isCompiledBundle || isSyntaxHighlighted || file.path.includes('mdx-components') || file.path.includes('syntax-highlight') || cleanContent.includes('application/ld+json') || (/\bTHEMES\b/.test(cleanContent) && /<style\b[\s\S]{0,80}dangerouslySetInnerHTML/.test(cleanContent));
   // A file that runs its interpolations through an escape / sanitize helper (${esc(x)}, ${escapeHtml(x)}, DOMPurify) builds escaped HTML
   const escapesInterpolations = /\$\{\s*(?:esc|escape\w*|sanitize\w*|DOMPurify\.sanitize|encode\w*|h)\s*\(/i.test(cleanContent);
-  const innerHtmlLineIdx = escapesInterpolations ? -1 : lines.findIndex(l => !l.trim().startsWith('//') && !l.trim().startsWith('/*') && (l.includes('dangerouslySetInnerHTML') || l.includes('innerHTML'))
+  const innerHtmlLineIdx = escapesInterpolations ? -1 : lines.findIndex(l => !l.trim().startsWith('//') && !l.trim().startsWith('/*') && INNER_HTML_SINK.test(l)
     && !/innerHTML\s*=\s*(?:(['"])(?:\\.|(?!\1).)*\1|`[^`$]*`)\s*;?\s*$/.test(l)
     // an icon / svg constant (button.innerHTML = icon) is markup the app owns
     && !/innerHTML\s*=\s*[\w.]*(?:icon|svg|spinner|logo|glyph)\w*(?:\s*\([^)]*\))?\s*;?\s*$/i.test(l));

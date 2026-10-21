@@ -1,6 +1,23 @@
 import { describe, it, test } from 'node:test';
 import assert from 'node:assert/strict';
 import { PUBLIC_ARTIFACT, isScannableTreePath, withPublicArtifactPaths } from '../../lib/scanner/scan-paths';
+import { isVendoredPath } from '../../lib/scanner/text';
+
+describe('isVendoredPath', () => {
+  it('detects versioned, slim, bundle and minified library assets anywhere in the tree', () => {
+    for (const p of [
+      'lib/flipper/ui/public/js/jquery-3.6.0.slim.js',
+      'public/assets/foo-1.2.3.min.js',
+      'app/static/bootstrap.bundle.min.js',
+      'vendor/d3.js',
+    ]) {
+      assert.equal(isVendoredPath(p), true, p);
+    }
+    for (const p of ['src/components/CodeBlock.tsx', 'app/page.tsx', 'lib/rules/security-rules.ts']) {
+      assert.equal(isVendoredPath(p), false, p);
+    }
+  });
+});
 
 describe('isScannableTreePath', () => {
   it('keeps CI workflows (.github is not .git)', () => {
