@@ -3,6 +3,7 @@ import type { CodeFile } from './types';
 import { evaluateSecurityRules } from '../rules/security-rules';
 import { isPublicCatalogRead } from '../rules/missed-vulns-rules';
 import { buildLiveFindings } from './live-checks';
+import { isVendoredPath } from './text';
 
 export interface BuiltinRuleContext {
   file: CodeFile;
@@ -115,8 +116,9 @@ export function evaluateBuiltinRules(ctx: BuiltinRuleContext): void {
   }
 
   // Rule 16: Dangerously Set Inner HTML (XSS)
-  const isCompiledBundle = file.path.includes('live-deployment/bundle-') || file.path.includes('/vendor/') || file.path.includes('node_modules');
-  const isSafeMdxOrJsonLd = isCompiledBundle || file.path.includes('mdx-components') || file.path.includes('syntax-highlight') || file.content.includes('application/ld+json') || (/\bTHEMES\b/.test(file.content) && /<style\b[\s\S]{0,80}dangerouslySetInnerHTML/.test(file.content));
+  const isCompiledBundle = file.path.includes('live-deployment/bundle-') || file.path.includes('/vendor/') || file.path.includes('node_modules') || isVendoredPath(file.path);
+  const isSyntaxHighlighted = /\b(?:codeToHtml|highlight(?:Auto|Element)?)\s*\(|\b(?:shiki|prism(?:js)?|hljs|highlight\.js)\b/i.test(cleanContent);
+  const isSafeMdxOrJsonLd = isCompiledBundle || isSyntaxHighlighted || file.path.includes('mdx-components') || file.path.includes('syntax-highlight') || cleanContent.includes('application/ld+json') || (/\bTHEMES\b/.test(cleanContent) && /<style\b[\s\S]{0,80}dangerouslySetInnerHTML/.test(cleanContent));
   // A file that runs its interpolations through an escape / sanitize helper (${esc(x)}, ${escapeHtml(x)}, DOMPurify) builds escaped HTML
   const escapesInterpolations = /\$\{\s*(?:esc|escape\w*|sanitize\w*|DOMPurify\.sanitize|encode\w*|h)\s*\(/i.test(cleanContent);
   const innerHtmlLineIdx = escapesInterpolations ? -1 : lines.findIndex(l => !l.trim().startsWith('//') && !l.trim().startsWith('/*') && (l.includes('dangerouslySetInnerHTML') || l.includes('innerHTML'))

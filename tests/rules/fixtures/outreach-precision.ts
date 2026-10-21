@@ -472,6 +472,21 @@ def fetch():
     ignores: f('requirements.txt', 'requests>=2.20\nrequests-oauthlib==1.3.0\nrequests_toolbelt==0.9.1\n'),
   },
   {
+    ruleIds: [16], name: 'SEC-16 innerHTML on message body or raw prop vs vendored jquery/bundle assets and shiki/prism/hljs syntax highlighters',
+    detects: [
+      ...f('src/components/HtmlPreview.tsx', 'export function HtmlPreview({ html }: { html: string }) {\n  return <div dangerouslySetInnerHTML={{ __html: html }} />;\n}\n'),
+      ...f('src/chat/render.ts', 'export function renderMsg(el: HTMLElement, message: { body: string }) {\n  el.innerHTML = message.body;\n}\n'),
+    ],
+    ignores: [
+      ...f('lib/flipper/ui/public/js/jquery-3.6.0.slim.js', 'function html(elem, value) {\n  elem.innerHTML = value;\n}\n'),
+      ...f('public/js/foo-1.2.3.min.js', 'function set(el, v) { el.innerHTML = v; }\n'),
+      ...f('assets/js/bootstrap.bundle.min.js', 'function tip(el, v) { el.innerHTML = v; }\n'),
+      ...f('src/components/DocsCode.tsx', 'import { codeToHtml } from "shiki";\nexport async function DocsCode({ code }: { code: string }) {\n  const codeHTML = await codeToHtml(code, { lang: "ts", theme: "nord" });\n  return <div dangerouslySetInnerHTML={{ __html: codeHTML }} />;\n}\n'),
+      ...f('src/components/PrismBlock.tsx', 'import Prism from "prismjs";\nexport function PrismBlock({ src }: { src: string }) {\n  const codeHTML = Prism.highlight(src, Prism.languages.javascript, "javascript");\n  return <pre dangerouslySetInnerHTML={{ __html: codeHTML }} />;\n}\n'),
+      ...f('src/components/HljsBlock.tsx', 'import hljs from "highlight.js";\nexport function HljsBlock({ src }: { src: string }) {\n  const codeHTML = hljs.highlight(src, { language: "ts" }).value;\n  return <code dangerouslySetInnerHTML={{ __html: codeHTML }} />;\n}\n'),
+    ],
+  },
+  {
     ruleIds: [9704], name: 'FINTECH-04 Stripe webhook using the body unverified vs one handing the signature to a service that calls constructEvent',
     detects: f('src/app/api/webhook/stripe/route.js', `import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";

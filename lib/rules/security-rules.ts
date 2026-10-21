@@ -2,6 +2,7 @@ import type { Finding } from '@/data/schema';
 import type { CodeFile } from '../scanner-engine';
 import { AUTH_GUARD, isOutboundWebhookSender } from './shared/stack-signals';
 import { isPublicCatalogRead } from './missed-vulns-rules';
+import { isVendoredPath } from '../scanner/text';
 export function evaluateSecurityRules(file: CodeFile, lines: string[], cleanContentOrCounter: string | {
     count: number;
 }, counterMaybe?: {
@@ -96,7 +97,9 @@ export function evaluateSecurityRules(file: CodeFile, lines: string[], cleanCont
         logs.push(`[${ts}] ⚠️ HIGH: SEC-08 Wildcard CORS configuration in ${file.path}:${lineNum}`);
     }
     // Rule 16: Dangerously Set Inner HTML (XSS) (SEC-16)
-    const isSafeMdxOrJsonLd = file.path.includes('mdx-components') || file.path.includes('syntax-highlight') || cleanContent.includes('application/ld+json') || (/\bTHEMES\b/.test(cleanContent) && /<style\b[\s\S]{0,80}dangerouslySetInnerHTML/.test(cleanContent));
+    const isCompiledBundle = file.path.includes('live-deployment/bundle-') || file.path.includes('/vendor/') || file.path.includes('node_modules') || isVendoredPath(file.path);
+    const isSyntaxHighlighted = /\b(?:codeToHtml|highlight(?:Auto|Element)?)\s*\(|\b(?:shiki|prism(?:js)?|hljs|highlight\.js)\b/i.test(cleanContent);
+    const isSafeMdxOrJsonLd = isCompiledBundle || isSyntaxHighlighted || file.path.includes('mdx-components') || file.path.includes('syntax-highlight') || cleanContent.includes('application/ld+json') || (/\bTHEMES\b/.test(cleanContent) && /<style\b[\s\S]{0,80}dangerouslySetInnerHTML/.test(cleanContent));
     // Same exclusions as the builtin rule 16: escaped interpolations, and icon / svg constants
     const escapesInterpolations = /\$\{\s*(?:esc|escape\w*|sanitize\w*|DOMPurify\.sanitize|encode\w*|h)\s*\(/i.test(cleanContent);
     const innerHtmlLineIdx = escapesInterpolations ? -1 : lines.findIndex(l => !l.trim().startsWith('//') && !l.trim().startsWith('/*') && (l.includes('dangerouslySetInnerHTML') || l.includes('innerHTML'))
