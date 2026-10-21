@@ -25,7 +25,13 @@ export function evaluateCloudNativeRules(file: CodeFile, lines: string[], cleanC
     const cleanLines = cleanContent.split('\n');
     // CLOUD-04: Docker Container Running as Default Root User
     if (file.path.toLowerCase().endsWith("dockerfile") && !/(?:^|\/)\.devcontainer\//.test(lowerPath) && !/USER\s+(?:[a-zA-Z0-9_-]+|\$\{?\w+\}?)/i.test(cleanContent)) {
-        const matchLineIdx = lines.findIndex(l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('*') && (/cloud-04|docker/i.test(l) || lines.indexOf(l) === 0));
+        let lastFromIdx = -1;
+        lines.forEach((l, idx) => {
+            if (/^\s*FROM\s+\S+/i.test(l)) lastFromIdx = idx;
+        });
+        const matchLineIdx = lastFromIdx !== -1
+            ? lastFromIdx
+            : lines.findIndex(l => !l.trim().startsWith('#') && !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('*') && l.trim().length > 0);
         const lineNum = matchLineIdx !== -1 ? matchLineIdx + 1 : 1;
         findings.push({
             id: `cloud04-${Date.now()}-${findingCounter.count++}`,
