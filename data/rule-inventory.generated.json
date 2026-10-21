@@ -5400,7 +5400,7 @@
    "ruleId": 8811,
    "code": "PY-SEC-11",
    "title": "Dynamic Code Execution via eval() or exec()",
-   "severity": "CRITICAL",
+   "severity": "UNKNOWN",
    "source": "lib/rules/python-enterprise-rules.ts",
    "preciseLocation": true,
    "tested": true,
