@@ -472,6 +472,21 @@ def fetch():
     ignores: f('requirements.txt', 'requests>=2.20\nrequests-oauthlib==1.3.0\nrequests_toolbelt==0.9.1\n'),
   },
   {
+    ruleIds: [18031], name: 'RUBY-SEC-01 where/order with params interpolation vs numeric casts, constants, connection.quote and script/migrate/tasks files',
+    detects: f('app/controllers/users_controller.rb', 'class UsersController < ApplicationController\n  def index\n    User.where("name = \'#{params[:name]}\'")\n  end\nend\n'),
+    ignores: [
+      ...f('app/models/post.rb', 'class Post < ApplicationRecord\n  scope :popular, ->(limit, id, x, quoted_vector) {\n    having("count(*) >= #{limit.to_i}")\n      .where("id = #{id.to_i} AND rank > #{Integer(x)} AND score >= #{x.to_f}")\n      .where("kind = \'#{User::USER_FIELD_PREFIX}\' AND status = \'#{SOME_CONSTANT}\'")\n      .where("vec = #{quoted_vector} AND tag = #{connection.quote(x)} AND org = #{ActiveRecord::Base.connection.quote(x)} AND #{sanitize_sql([\'slug = ?\', x])}")\n  }\nend\n'),
+      ...f('script/backfill.rb', 'User.where("name = \'#{params[:name]}\'")\n'),
+      ...f('db/migrate/20260101_fix_users.rb', 'User.where("name = \'#{params[:name]}\'")\n'),
+      ...f('lib/tasks/cleanup.rake', 'User.where("name = \'#{params[:name]}\'")\n'),
+    ],
+  },
+  {
+    ruleIds: [18031], name: 'RUBY-SEC-01 order with params interpolation vs numeric cast',
+    detects: f('app/controllers/posts_controller.rb', 'class PostsController < ApplicationController\n  def index\n    Post.order("#{params[:sort]} DESC")\n  end\nend\n'),
+    ignores: f('app/controllers/posts_controller.rb', 'class PostsController < ApplicationController\n  def index\n    Post.having("count(*) >= #{params[:limit].to_i}")\n  end\nend\n'),
+  },
+  {
     ruleIds: [9704], name: 'FINTECH-04 Stripe webhook using the body unverified vs one handing the signature to a service that calls constructEvent',
     detects: f('src/app/api/webhook/stripe/route.js', `import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
