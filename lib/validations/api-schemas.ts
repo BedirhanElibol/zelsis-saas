@@ -111,7 +111,8 @@ export const GateCheckRequestSchema = z
     targetUrl: z.string().max(2048).optional(),
     ref: z.string().max(256).optional(),
     base: z.string().max(256).optional(),
-    githubToken: z.string().max(256).optional(),
+    // GitHub Actions tokens can be far longer than classic PATs
+    githubToken: z.string().max(4096).optional(),
     slackWebhookUrl: z
       .string()
       .url('slackWebhookUrl must be a valid URL')

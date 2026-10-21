@@ -53,7 +53,7 @@ jobs:
           BODY=$(echo "$RESPONSE" | sed '$d')
 
           if [ "$HTTP_CODE" -ge 400 ] && [ "$HTTP_CODE" -lt 500 ]; then
-            echo "::error::Zelsis rejected the request (HTTP $HTTP_CODE): $(echo "$BODY" | jq -r '.error // "see log"'). Check the ZELSIS_API_KEY secret."
+            echo "::error::Zelsis rejected the request (HTTP $HTTP_CODE): $(echo "$BODY" | jq -r '[.error // "see log"] + [.details[]? | .field + ": " + .message] | join("; ")'). Check the ZELSIS_API_KEY secret."
             exit 1
           fi
 
