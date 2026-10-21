@@ -42,12 +42,17 @@ export function evaluateInfraRules(file: CodeFile, lines: string[], cleanContent
     // =========================================================================
     // RULE 3001 (INFRA-01): PostgreSQL Missing Row Level Security (RLS)
     // =========================================================================
-    const isSqlFile = lowerPath.endsWith('.sql') || lowerPath.includes('migration') || lowerPath.includes('schema');
+    // .sql, or app code whose path says migration / schema (not shell scripts or Go tooling that only mention it)
+    const isSqlFile = lowerPath.endsWith('.sql') || ((lowerPath.includes('migration') || lowerPath.includes('schema')) && /\.(?:[cm]?[jt]s|py|rb)$/.test(lowerPath));
     // RLS only protects tables that clients can query directly (Supabase / PostgREST); skip server-only databases
     if (isSqlFile && databaseExposedAt(context, file.path)) {
-        const tableRegex = /create\s+table\s+(?:if\s+not\s+exists\s+)?([a-zA-Z0-9_."]+)/gi;
+        // The name must be a real identifier: format('CREATE TABLE IF NOT EXISTS %I ...') and CREATE TABLE ... AS
+        // used to yield tables called "IF" and "AS"
+        const tableRegex = /create\s+table\s+(?:if\s+not\s+exists\s+)?(?!(?:if|as|example)\b)("?[a-zA-Z_][a-zA-Z0-9_."]*)(?=\s*\()/gi;
+        // SQL comments blanked with spaces (offsets and line numbers stay): "-- ... only the CREATE TABLE does" is prose
+        const sqlNoComments = cleanContent.replace(/--[^\n]*/g, (c) => ' '.repeat(c.length));
         let match: RegExpExecArray | null;
-        while ((match = tableRegex.exec(cleanContent)) !== null) {
+        while ((match = tableRegex.exec(sqlNoComments)) !== null) {
             const rawTableName = (match[1] || '').replace(/["']/g, '');
             const simpleName = rawTableName.includes('.') ? rawTableName.split('.').pop()! : rawTableName;
             // PostgREST exposes the public schema; auth.*, storage.*, extensions.* are not client-queryable tables

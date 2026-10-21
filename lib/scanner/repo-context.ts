@@ -105,6 +105,12 @@ export function buildRepoContext(files: CodeFile[]): RepoContext {
       for (const m of sql.matchAll(/ALTER\s+TABLE\s+(?:IF\s+EXISTS\s+)?(?:ONLY\s+)?([\w."]+)\s+ENABLE\s+ROW\s+LEVEL\s+SECURITY/gi)) {
         rlsEnabledTables.add(normalizeSqlName(m[1]));
       }
+      // Enabled in a loop over a table list: foreach t in array array['a','b'] loop execute format('alter table
+      // public.%I enable row level security', t). Every name in that array literal gets RLS.
+      for (const m of sql.matchAll(/\bARRAY\s*\[((?:\s*'[\w.]+'\s*,?)+)\]([\s\S]{0,600}?)ENABLE\s+ROW\s+LEVEL\s+SECURITY/gi)) {
+        if (!/%[Is]/.test(m[2])) continue;
+        for (const t of m[1].matchAll(/'([\w.]+)'/g)) rlsEnabledTables.add(normalizeSqlName(t[1]));
+      }
     }
     if (!/\.sql$/i.test(file.path || '')) continue;
     for (const m of (file.content || '').matchAll(/REVOKE\s+(?:EXECUTE|ALL)[^;]*?\bON\s+FUNCTION\s+([\w."]+)[^;]*?\bFROM\s+([^;]+);/gi)) {
@@ -233,6 +239,11 @@ export const emptyRepoContext = (): RepoContext => ({ hardenedSqlFunctions: new 
 /** Clients can query the tables this SQL file creates (see dbExposedDirs). */
 export function databaseExposedAt(context: Pick<RepoContext, 'exposesDatabaseToClients' | 'dbExposedDirs'>, path: string): boolean {
   if (!context.exposesDatabaseToClients) return false;
+  const p = path.replace(/\\/g, '/');
+  // SQLite / Cloudflare D1 have no RLS, and SQL in docs, blog posts, recipes or a client library's test database
+  // is not the app's schema
+  if (/sqlite|(?:^|\/)(?:d1|cloudflare)(?:\/|[-_])|\.d1\./i.test(p)) return false;
+  if (/(?:^|\/)(?:docs?|_blog|blog|content\/guides|recipes|examples?|samples?)\//i.test(p) && !/(?:^|\/)supabase\/migrations\//i.test(p)) return false;
   const dirs = context.dbExposedDirs;
-  return !dirs || dirs.some((d) => path.replace(/\\/g, '/').startsWith(d + '/'));
+  return !dirs || dirs.some((d) => p.startsWith(d + '/'));
 }
