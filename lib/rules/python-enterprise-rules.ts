@@ -339,18 +339,30 @@ export function evaluatePythonEnterpriseRules(file: CodeFile, lines: string[], c
         logs.push(`[${ts}] [PYTHON AUDIT] Found PY-SEC-10: Unrestricted Jinja2 Server-Side Template Injection (SSTI) at ${file.path}:${lineNum}`);
     }
     // PY-SEC-11: Dynamic Code Execution via eval() or exec()
-    const reg_8811 = /(?<![.\w])(?<!\bdef\s+)(?:eval|exec|compile)\s*\(\s*(?!'[^']*'|"[^"]*")[a-zA-Z0-9_]+/;
-    if (reg_8811.test(cleanContent)) {
-        const linePattern = /(?<![.\w])(?<!\bdef\s+)(?:eval|exec|compile)\s*\(/;
-        const matchLineIdx = lines.findIndex(l => !l.trim().startsWith('#') && !l.trim().startsWith('"""') && linePattern.test(l));
-        const lineNum = matchLineIdx !== -1 ? matchLineIdx + 1 : 1;
+    const importsReCompile = /^\s*from\s+(?:re|regex)\s+import\s+[^\n]*\bcompile\b/m.test(cleanContent);
+    const evalExecLineRe = /(?<![.\w])(?<!\bdef\s+)(?:eval|exec)\s*\(\s*(?![rbuRfF]*['"])[a-zA-Z_]\w*/;
+    const compileLineRe = /(?<![.\w])(?<!\bdef\s+)compile\s*\(\s*(?![rbuRfF]*['"])[a-zA-Z_]\w*[^;\n]*['"](?:exec|eval|single)['"]/;
+    const matchLineIdx_8811 = lines.findIndex((l) => {
+        const t = l.trim();
+        if (t.startsWith('#') || t.startsWith('"""') || t.startsWith("'''")) return false;
+        const codePart = l.replace(/#.*$/, '');
+        if (evalExecLineRe.test(codePart)) return true;
+        if (!importsReCompile && compileLineRe.test(codePart)) return true;
+        return false;
+    });
+    if (matchLineIdx_8811 !== -1) {
+        const matchLineIdx = matchLineIdx_8811;
+        const lineNum = matchLineIdx + 1;
+        const rawLine = lines[matchLineIdx] || '';
+        const hasReviewedSuppression = /#\s*(?:noqa(?:\s*:\s*[^#\n]*\bS102\b|\s*$|\s+#)|nosec\b)/i.test(rawLine);
+        const severity_8811 = hasReviewedSuppression ? "MEDIUM" : "CRITICAL";
         const rawSnippet = matchLineIdx !== -1 ? lines[matchLineIdx].trim() : lines.find(l => !l.trim().startsWith('#'))?.trim() || "Dynamic Code Execution via eval() or exec()";
         findings.push({
             id: `py8811-${Date.now()}-${findingCounter.count++}`,
             ruleId: 8811,
             type: 'SECURITY',
             title: "PY-SEC-11: Dynamic Code Execution via eval() or exec()",
-            severity: "CRITICAL",
+            severity: severity_8811,
             category: "Code Injection",
             filePath: file.path,
             lineRange: `L${lineNum}`,
