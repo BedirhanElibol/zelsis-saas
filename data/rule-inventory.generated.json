@@ -1,7 +1,7 @@
 {
  "summary": {
   "implementedRules": 1300,
-  "testedRules": 1293,
+  "testedRules": 1294,
   "preciseLocationRules": 1298,
   "catalogEntries": 1922,
   "catalogOnlyNotImplemented": 1396,
@@ -2423,7 +2423,7 @@
    "severity": "CRITICAL",
    "source": "lib/rules/infra-rules.ts",
    "preciseLocation": true,
-   "tested": false,
+   "tested": true,
    "inCatalog": false
   },
   {
@@ -5400,7 +5400,7 @@
    "ruleId": 8811,
    "code": "PY-SEC-11",
    "title": "Dynamic Code Execution via eval() or exec()",
-   "severity": "CRITICAL",
+   "severity": "UNKNOWN",
    "source": "lib/rules/python-enterprise-rules.ts",
    "preciseLocation": true,
    "tested": true,
@@ -7669,7 +7669,7 @@
   {
    "ruleId": 18101,
    "code": "MYSQL-SEC-01",
-   "title": "MySQL Raw Query Injection via String Formatting",
+   "title": "MySQL Raw Query Injection via Python String Interpolation",
    "severity": "CRITICAL",
    "source": "lib/rules/multi-database-rules.ts",
    "preciseLocation": true,
