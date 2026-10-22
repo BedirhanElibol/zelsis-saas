@@ -26,11 +26,6 @@ export async function setTimeout(tx: any) {
   await tx.execute(sql.raw(\`SET LOCAL statement_timeout = \${SWEEP_LONG_STATEMENT_TIMEOUT_MS}\`));
 }
 `),
-      ...f('packages/drizzle/src/traverse.ts', `import { sql } from 'drizzle-orm';
-export function incField(columnName: string, value: { $inc: number }) {
-  return sql.raw(\`\${columnName} + \${value.$inc}\`);
-}
-`),
       ...f('src/db/escaped.ts', `import { sql } from 'drizzle-orm';
 export function listen(topic: string) {
   return sql.raw(\`LISTEN \${escapeIdentifier(topic)}\`);
@@ -120,3 +115,15 @@ func (qb *QueryBuilder) WithAggregation(aggClause string) *QueryBuilder {
 `),
   },
 ];
+
+CASES.push({
+  ruleIds: [18104],
+  name: 'ORM-RAW-01 a request value named v is still caught; only the quoted map item is safe',
+  detects: f('src/repo/search.ts', `import { sql } from 'drizzle-orm';
+export async function search(db: any, req: any) {
+  const v = req.query.q;
+  return db.execute(sql.raw(\`SELECT * FROM posts WHERE title = '\${v}'\`));
+}
+`),
+  ignores: [],
+});

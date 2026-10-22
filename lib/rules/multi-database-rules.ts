@@ -304,13 +304,13 @@ export function evaluateMultiDatabaseRules(file: CodeFile, lines: string[], clea
         const hasValidatedIdList = /\b(?:Number|parseInt|BigInt)\s*\(|\b(?:isUUID|validateUUID|uuid\.validate|z\.string\(\)\.uuid)\b|\/(?:\^)?\[0-9a-f\]\{8\}-/i.test(cleanContent);
         const normalizeOrmSql = (s: string) => {
             let res = s
-                .replace(/\$\{\s*v\s*\}/g, 'v')
+                // only the quoted item inside .map((v) => `'${v}'`), not every variable called v
+                .replace(/\.map\(\s*\(?\s*(\w+)\s*\)?\s*=>\s*`'?\$\{\s*\1\s*\}'?`\s*\)/g, '.map(QUOTE)')
                 .replace(/\b(FROM|INTO|UPDATE|JOIN|TABLE(?:\s+IF\s+(?:NOT\s+)?EXISTS)?)(\s+[`"']?)(?:\$\{\s*[\w.]+\s*\})[`"']?/gi, '$1$2IDENT')
                 .replace(/\$\{\s*(?:[a-zA-Z0-9_.]+\.)?(?:escapeIdentifier|quoteIdentifier|quoteTable|quoteColumn)\s*\([^}]*\)\s*\}/g, 'IDENT')
                 .replace(/\$\{\s*[A-Z][A-Z0-9_]*\s*\}/g, 'CONST_NUM')
                 .replace(/\$\{\s*(?:enumValues|enumDef|enumVals|Object\.values\([^)]+\))(?:\.map\([^}]+\))?\.join\([^}]*\)\s*\}/g, 'ENUM_VAL')
-                .replace(/\$\{\s*(?:[a-zA-Z0-9_.]+\.)?(?:columnName|column|fieldName|tableName|table|alias|result)\s*\}/g, 'COL_IDENT')
-                .replace(/\$\{\s*(?:[a-zA-Z0-9_.]+\.)?(?:\$inc|to_i|to_f)\s*\}/g, '1')
+                .replace(/\$\{\s*(?:[a-zA-Z0-9_.]+\.)?(?:columnName|column|fieldName|tableName|table|alias)\s*\}/g, 'COL_IDENT')
                 .replace(/\$\{\s*(?:Number|parseInt|BigInt)\s*\([^}]+\)\s*\}/g, '1');
             if (hasValidatedIdList) {
                 res = res.replace(/\$\{\s*[\w.]+\.join\s*\(\s*['"],\s*['"]\s*\)\s*\}/g, 'IDENT_LIST');
