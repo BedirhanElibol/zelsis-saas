@@ -1269,13 +1269,66 @@ export function evaluatePythonEnterpriseRules(file: CodeFile, lines: string[], c
     }
     // PY-SEC-44: JWT Signature Verification Disabled in PyJWT
     // An id_token decoded right after the authorization-code exchange with the provider (OIDC Core 3.1.3.7) is not a bypass
+    const isDocOrKnowledge_8844 = /(?:^|\/)(?:knowledge|docs|docs_src|documentation|tutorials?|cookbook|courses?)\//i.test(lowerPath);
     const oidcIdTokenAfterExchange = /token_endpoint|fetch_token|authorization_code|grant_type/.test(cleanContent)
         && /jwt\.decode\s*\(\s*(?:\w+\.)?id_token\b/.test(cleanContent)
         && !/jwt\.decode\s*\(\s*(?!(?:\w+\.)?id_token\b)\w+[^)]*verify_signature['"]\s*:\s*False/.test(cleanContent);
-    const idx_8844 = oidcIdTokenAfterExchange ? -1 : (() => {
-        const direct = pyFindLine(lines, /jwt\.decode\s*\([^)]*(?:\bverify\s*=\s*False|['"]verify_signature['"]\s*:\s*False)/);
-        if (direct !== -1) return direct;
-        return pyFindLine(lines, /['"]verify_signature['"]\s*:\s*False/, (_l, i) => /jwt\.decode\s*\(/.test(lines.slice(Math.max(0, i - 4), i + 1).join('\n')));
+    const idx_8844 = (isDocOrKnowledge_8844 || oidcIdTokenAfterExchange) ? -1 : (() => {
+        const directRegex = /jwt\.decode\s*\([^)]*(?:\bverify\s*=\s*False|['"]verify_signature['"]\s*:\s*False)/;
+        const candidateIndices: number[] = [];
+        lines.forEach((l, i) => {
+            if (!l.trim().startsWith('#') && (directRegex.test(l) || (/['"]verify_signature['"]\s*:\s*False/.test(l) && /jwt\.decode\s*\(/.test(lines.slice(Math.max(0, i - 4), i + 1).join('\n'))))) {
+                candidateIndices.push(i);
+            }
+        });
+
+        for (const idx of candidateIndices) {
+            // Find enclosing Python function
+            let defIdx = -1;
+            let defIndent = 0;
+            for (let j = idx; j >= 0; j--) {
+                const m = lines[j].match(/^([ \t]*)(?:async\s+)?def\s+(\w+)\s*\(/);
+                if (m) {
+                    defIdx = j;
+                    defIndent = m[1].length;
+                    break;
+                }
+            }
+            let fnLines: string[] = [];
+            if (defIdx !== -1) {
+                let endFnIdx = lines.length;
+                for (let k = defIdx + 1; k < lines.length; k++) {
+                    const line = lines[k];
+                    if (line.trim().length > 0 && !line.trim().startsWith('#')) {
+                        const indent = line.match(/^[ \t]*/)?.[0].length ?? 0;
+                        if (indent <= defIndent) {
+                            endFnIdx = k;
+                            break;
+                        }
+                    }
+                }
+                fnLines = lines.slice(defIdx, endFnIdx);
+            } else {
+                fnLines = lines.slice(Math.max(0, idx - 15), Math.min(lines.length, idx + 25));
+            }
+            const fnText = fnLines.join('\n');
+
+            // 1. Followed in the same function by a verified jwt.decode(...)
+            const hasVerifiedDecode = /jwt\.decode\s*\([^)]*?(?:algorithms\s*=|key\s*=|secret|public_key|jwks|certs)[^)]*?\)/.test(fnText)
+                && !/jwt\.decode\s*\([^)]*?(?:algorithms\s*=|key\s*=|secret|public_key|jwks|certs)[^)]*?verify_signature['"]\s*:\s*False/.test(fnText);
+            // 2. Or key lookup / verification helpers (get_unverified_header, verify_*)
+            const hasKeyLookupOrVerify = /jwt\.get_unverified_header|jwt\.get_unverified_claims|get_unverified_header|verify_oauth_access_token|verify_external_idp_token|verify_credentials|verify_token|verify_jwt/.test(fnText);
+            // 3. Check if unverified result is used for identity
+            const hasIdentityUsage = /(?:payload|unverified|claims)\s*(?:\[\s*['"](?:sub|email|user|user_id|identity|username)['"]|\.get\s*\(\s*['"](?:sub|email|user|user_id|identity|username)['"])/.test(fnText)
+                || /\b(?:user_id|user_email|current_user|is_admin)\s*=\s*(?:payload|unverified|claims)/.test(fnText);
+
+            const isPeekOnly = (hasVerifiedDecode || hasKeyLookupOrVerify) || (!hasIdentityUsage && /_try_oauth_access_token|\.get\s*\(\s*['"](?:iss|kid|alg|typ|jti)['"]/.test(fnText));
+
+            if (!isPeekOnly) {
+                return idx;
+            }
+        }
+        return -1;
     })();
     if (idx_8844 !== -1) {
         const matchLineIdx = idx_8844;
