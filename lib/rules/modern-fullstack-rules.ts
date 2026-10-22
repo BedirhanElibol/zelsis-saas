@@ -22,9 +22,10 @@ export function evaluateModernFullstackRules(file: CodeFile, lines: string[], cl
     }
     const ts = new Date().toLocaleTimeString();
     // NEXT15-02: Client Component Props Exposing Server Secrets
-    if (cleanContent.includes('use client') && /(?:rawDbUser|dbCredentials|serviceRoleKey|adminSecret)/i.test(cleanContent) && !lowerPath.includes('test') && !lowerPath.includes('mock')) {
-        const matchLineIdx = locateMatchLine(lines, [/(?:rawDbUser|dbCredentials|serviceRoleKey|adminSecret)/i], l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('*'));
-        const lineNum = matchLineIdx !== -1 ? matchLineIdx + 1 : 1;
+    if (cleanContent.includes('use client') && /\b(?:rawDbUser|dbCredentials|serviceRoleKey|adminSecret)\b/.test(cleanContent) && !lowerPath.includes('test') && !lowerPath.includes('mock')) {
+        const matchLineIdx = locateMatchLine(lines, [/\b(?:rawDbUser|dbCredentials|serviceRoleKey|adminSecret)\b/], l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('*') && !/^\s*<\s*[A-Z]/.test(l) && !/\b(?:function|class|interface|type)\s+[A-Z]/.test(l));
+        if (matchLineIdx !== -1) {
+        const lineNum = matchLineIdx + 1;
         findings.push({
             id: `next15_8602-${Date.now()}-${findingCounter.count++}`,
             ruleId: 8602,
@@ -45,6 +46,7 @@ export function evaluateModernFullstackRules(file: CodeFile, lines: string[], cl
             falsePositive: false
         });
         logs.push(`[${ts}] ⚡ FULLSTACK NEXT15-02: Client Component Props Exposing Server Secrets in ${file.path}:${lineNum}`);
+        }
     }
     // NEXT15-05: Edge Middleware Header Injection via URL Parameters
     if (/middleware|(?:^|\/)(?:src\/)?proxy\.[cm]?[jt]s$/.test(lowerPath) && /headers\.set\s*\(\s*["']x-[\w-]*(?:user|tenant|org|role|admin|auth|account)[\w-]*["']\s*,\s*(?:req|request)\.nextUrl\.searchParams\.get/i.test(cleanContent) && !/sanitize/i.test(cleanContent)) {
