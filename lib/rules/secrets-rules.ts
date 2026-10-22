@@ -20,6 +20,12 @@ export function isDummyPlaceholder(line: string): boolean {
         return false;
     if (/-----BEGIN [A-Z0-9 ]*PRIVATE KEY-----(?:\\n|\s)*(?:\{\s*\}|%[sv]|\$\{[^}]+\})(?:\\n|\s)*-----END/i.test(line))
         return true;
+    if (/\*{3,}/.test(line))
+        return true;
+    if (/<[^>]{2,}>/.test(line))
+        return true;
+    if (/['"`][\s*xX•·\-_.]+['"`]/.test(line) && /[*xX•]/.test(line))
+        return true;
     return /placeholder|ghp_x{8,}|EXAMPLE|dummy|test_secret_12345|\bx{10,}\b|00000000/i.test(line);
 }
 export function maskSecretInLine(line: string, pattern: RegExp): string {
