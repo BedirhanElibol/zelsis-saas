@@ -154,10 +154,12 @@ function evaluate(path: string, raw: string, c: string, add: (h: Hit) => void, c
   }
 
   // FAKE-07: mock login left in the app (hard-coded password comparison / fake tokens)
-  if (!/(?:^|\/)(?:seed|mock|fixtures?)\w*\.[jt]sx?$/i.test(path)) {
+  if (!/(?:^|\/)(?:seed|mock|fixtures?|docs?|documentation|examples?|tutorials?)\w*\.[jt]sx?$/i.test(path) && !/(?:^|\/)(?:docs?|documentation|examples?|tutorials?)\//i.test(path) && !/\.mdx?$/i.test(path)) {
     for (const x of c.matchAll(/\b(\w*[pP]assword\w*)\s*===?\s*(['"`])([^'"`]{3,40})\2|(['"`])([^'"`]{3,40})\4\s*===?\s*(\w*[pP]assword\w*)\b/g)) {
+      const idName = x[1] ?? x[6];
+      if (/(?:[eE]rror(?:[cC]ode)?|[sS]tatus|[pP]olicy|[sS]trength|[vV]alidation)$/.test(idName)) continue;
       const val = x[3] ?? x[5];
-      if (/^(?:password|text|hidden|new-password|current-password|object|string|undefined|null|number|boolean|function)$/i.test(val)) continue; // input type, autocomplete, typeof
+      if (/^(?:password|text|hidden|new-password|current-password|object|string|undefined|null|number|boolean|function|pwned)$/i.test(val)) continue; // input type, autocomplete, typeof, error code
       if (/typeof\s+[\w.]*$/.test(c.slice(Math.max(0, x.index! - 40), x.index!))) continue;
       add({ ruleId: 29797, code: 'FAKE-07', severity: 'CRITICAL', category: 'Hardcoded Credentials', type: 'SECURITY', lineIdx: at(x.index!),
         title: 'Login Checks a Hard-Coded Password',

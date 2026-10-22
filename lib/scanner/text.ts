@@ -64,3 +64,39 @@ export function isMinifiedContent(content: string): boolean {
   const lineCount = content.split('\n').length;
   return content.length / lineCount > 400;
 }
+
+/**
+ * Files that are not part of the shipped application (documentation, knowledge bases,
+ * seeders, dev scripts, and local-only docker compose files).
+ * Non-secret findings in these paths are lowered to MEDIUM so they do not block a release gate.
+ * Secrets keep their existing behaviour.
+ */
+export function isNonAppPath(path: string): boolean {
+  if (!path) return false;
+  const p = path.replace(/\\/g, '/');
+
+  // docs: docs/, docs_src/, documentation/, content folders with markdown/mdx
+  // Keep blocking: API endpoints such as app/api/docs/route.ts are application routes, not documentation
+  const isAppEndpoint = /(?:^|\/)(?:app|src|server)\/api\//i.test(p) || /(?:^|\/)api\//i.test(p);
+  if (!isAppEndpoint && /(?:^|\/)(?:docs?|docs_src|documentation)\//i.test(p)) return true;
+  if (/\.(?:md|mdx)$/i.test(p)) return true;
+  if (/(?:^|\/)content\/(?:.*\/)?[^/]+\.(?:md|mdx)$/i.test(p)) return true;
+
+  // knowledge or teaching material: knowledge/, cookbook/, tutorials?/, courses?/, homework/
+  if (/(?:^|\/)(?:knowledge|cookbook|tutorials?|courses?|homework)\//i.test(p)) return true;
+
+  // seeders: database/seeders/, db/seeds?/, *.seed.[jt]s, *Seeder.php
+  if (/(?:^|\/)(?:database\/seeders|db\/seeds?)(?:\/|$|\.)/i.test(p)) return true;
+  if (/(?:^|\/)(?:[a-z0-9_.]+\.)?seeds?\.[cm]?[jt]sx?$/i.test(p)) return true;
+  if (/[a-z0-9_]*seeder\.php$/i.test(p)) return true;
+
+  // local or dev infra: docker-compose.(local|dev|development|test|sandbox).ya?ml, compose.(local|dev).ya?ml
+  if (/(?:^|\/)(?:docker-compose|compose)\.(?:local|dev|development|test|sandbox)\.ya?ml$/i.test(p)) return true;
+
+  // dev scripts at repo root: run_*.py, Makefile-style helpers, scripts/
+  if (/^run_[^/]+\.py$/i.test(p) || /(?:^|\/)run_[^/]+\.py$/i.test(p)) return true;
+  if (/(?:^|\/)scripts\/(?:.*\/)?(?:build|dev|test|lint|bench|check|ci|gen|format|preview|release|audit|mock|seed|deploy|run|tool)/i.test(p)) return true;
+  if (/^(?:Makefile|Rakefile|fabfile\.py|noxfile\.py|tasks\.py|manage\.py|setup\.py)$/i.test(p) || /(?:^|\/)(?:Rakefile|fabfile\.py|noxfile\.py)$/i.test(p)) return true;
+
+  return false;
+}

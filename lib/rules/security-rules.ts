@@ -299,35 +299,47 @@ export function evaluateSecurityRules(file: CodeFile, lines: string[], cleanCont
         }
     }
     // Rule 14 / SEC-14: Insecure JWT & Session Secret Hardcoded Fallbacks
-    const jwtFallbackRegex = /(?:JWT_SECRET|SESSION_SECRET|AUTH_SECRET|COOKIE_SECRET|NEXTAUTH_SECRET)\s*(?:\|\||\?\?)\s*['"`][^'"`]+['"`]/i;
+    const jwtFallbackRegex = /(?:JWT_SECRET|SESSION_SECRET|AUTH_SECRET|COOKIE_SECRET|NEXTAUTH_SECRET)\s*(?:\|\||\?\?)\s*['"`]([^'"`]+)['"`]/i;
+    const isMaskedSecretFallback = (val: string): boolean => {
+        if (!val) return false;
+        const s = val.trim();
+        return /\*{3,}/.test(s) || (/^[\s*xX•·\-_.]+$/.test(s) && /[*xX•]/.test(s)) || /^<[^>]+>$/.test(s);
+    };
     // The dev fallback is fine when the app refuses to start in production without the real secret:
     // if (process.env.NODE_ENV === "production" && !process.env.JWT_SECRET) throw ...
     const fallbackName = /(JWT_SECRET|SESSION_SECRET|AUTH_SECRET|COOKIE_SECRET|NEXTAUTH_SECRET)\s*(?:\|\||\?\?)/i.exec(cleanContent)?.[1];
     const productionGuard = fallbackName !== undefined && new RegExp(String.raw`production[^\n]{0,80}!\s*process\.env\.` + fallbackName + String.raw`\b[\s\S]{0,120}?(?:throw\b|process\.exit)|!\s*process\.env\.` + fallbackName + String.raw`\b[^\n]{0,80}production[\s\S]{0,120}?(?:throw\b|process\.exit)`).test(cleanContent);
     if (isCodeFile && !productionGuard && jwtFallbackRegex.test(cleanContent)) {
-        const matchLineIdx = lines.findIndex(l => !l.trim().startsWith('//') && jwtFallbackRegex.test(l));
-        const lineNum = matchLineIdx !== -1 ? matchLineIdx + 1 : 1;
-        const snippet = lines.slice(Math.max(0, lineNum - 2), Math.min(lines.length, lineNum + 2)).join('\n');
-        findings.push({
-            id: `real-find-${Date.now()}-${findingCounter.count++}`,
-            ruleId: 14,
-            type: 'SECURITY',
-            title: 'Insecure Hardcoded Fallback for Cryptographic Session / JWT Secret',
-            severity: 'CRITICAL',
-            category: 'Authentication & Tokens',
-            filePath: file.path,
-            lineRange: `L${lineNum}`,
-            snippet: snippet || lines[matchLineIdx] || "const secret = process.env.JWT_SECRET || 'secret';",
-            reproductionSteps: [
-                `Scanned authentication token signing in ${file.path}:${lineNum}.`,
-                'Detected hardcoded default fallback string for JWT/Session secret token, allowing attackers to forge arbitrary authentication cookies and tokens if environment variable is unset.'
-            ],
-            remediationPrompt: `Remove insecure default fallback in ${file.path}:${lineNum}. Enforce a strict runtime assertion: if (!process.env.JWT_SECRET) throw new Error('JWT_SECRET must be configured in production');`,
-            status: 'OPEN',
-            owner: 'Security Lead',
-            falsePositive: false
+        const matchLineIdx = lines.findIndex(l => {
+            if (l.trim().startsWith('//')) return false;
+            const m = jwtFallbackRegex.exec(l);
+            if (!m) return false;
+            return !isMaskedSecretFallback(m[1]);
         });
-        logs.push(`[${ts}] 🛑 CRITICAL: SEC-14 Insecure JWT secret fallback in ${file.path}:${lineNum}`);
+        if (matchLineIdx !== -1) {
+            const lineNum = matchLineIdx + 1;
+            const snippet = lines.slice(Math.max(0, lineNum - 2), Math.min(lines.length, lineNum + 2)).join('\n');
+            findings.push({
+                id: `real-find-${Date.now()}-${findingCounter.count++}`,
+                ruleId: 14,
+                type: 'SECURITY',
+                title: 'Insecure Hardcoded Fallback for Cryptographic Session / JWT Secret',
+                severity: 'CRITICAL',
+                category: 'Authentication & Tokens',
+                filePath: file.path,
+                lineRange: `L${lineNum}`,
+                snippet: snippet || lines[matchLineIdx] || "const secret = process.env.JWT_SECRET || 'secret';",
+                reproductionSteps: [
+                    `Scanned authentication token signing in ${file.path}:${lineNum}.`,
+                    'Detected hardcoded default fallback string for JWT/Session secret token, allowing attackers to forge arbitrary authentication cookies and tokens if environment variable is unset.'
+                ],
+                remediationPrompt: `Remove insecure default fallback in ${file.path}:${lineNum}. Enforce a strict runtime assertion: if (!process.env.JWT_SECRET) throw new Error('JWT_SECRET must be configured in production');`,
+                status: 'OPEN',
+                owner: 'Security Lead',
+                falsePositive: false
+            });
+            logs.push(`[${ts}] 🛑 CRITICAL: SEC-14 Insecure JWT secret fallback in ${file.path}:${lineNum}`);
+        }
     }
     // Rule 15 / SEC-15: Unauthenticated Next.js API Mutation Route Handler
     const isApiRoute = (lowerPath.includes('app/api/') || lowerPath.includes('pages/api/')) && /\.(?:ts|js)$/i.test(file.path);
@@ -712,10 +724,12 @@ export function evaluateSecurityRules(file: CodeFile, lines: string[], cleanCont
     }
     // Rule 4003 / LLM-03: Untrusted LLM Output Execution / eval (LLM05)
     if (isCodeFile) {
-        const untrustedLlmExecRegex = /(?:eval|child_process\.exec|execSync)\s*\([^)]*(?:completion|aiResponse|llmOutput|assistantMessage)/i;
-        if (untrustedLlmExecRegex.test(cleanContent)) {
-            const matchLineIdx = lines.findIndex(l => !l.trim().startsWith('//') && untrustedLlmExecRegex.test(l));
-            const lineNum = matchLineIdx !== -1 ? matchLineIdx + 1 : 1;
+        const isEvalOrBench = /(?:^|\/)(?:evals?|benchmarks?)\//i.test(file.path.replace(/\\/g, '/'));
+        const untrustedLlmExecRegex = /\b(?:eval|child_process\.exec|execSync)\s*\([^)]*\b(?:completion|aiResponse|llmOutput|assistantMessage)\b/i;
+        if (!isEvalOrBench && untrustedLlmExecRegex.test(cleanContent)) {
+            const matchLineIdx = lines.findIndex(l => !l.trim().startsWith('//') && !l.trim().startsWith('#') && untrustedLlmExecRegex.test(l));
+            if (matchLineIdx !== -1) {
+            const lineNum = matchLineIdx + 1;
             const snippet = lines.slice(Math.max(0, lineNum - 2), Math.min(lines.length, lineNum + 2)).join('\n');
             findings.push({
                 id: `real-find-${Date.now()}-${findingCounter.count++}`,
@@ -737,6 +751,7 @@ export function evaluateSecurityRules(file: CodeFile, lines: string[], cleanCont
                 falsePositive: false
             });
             logs.push(`[${ts}] 🛑 CRITICAL: LLM-03 Untrusted LLM execution in ${file.path}:${lineNum}`);
+            }
         }
     }
     // Rule 4004 / LLM-04: Insecure Vector Search / Cross-Tenant Retrieval
@@ -802,14 +817,20 @@ export function evaluateSecurityRules(file: CodeFile, lines: string[], cleanCont
             const lineNum = matchLineIdx + 1;
             // nosemgrep / eslint-disable no-eval / noqa: S307 / nosec on the line or just above: reviewed, keep as MEDIUM
             const rawAround = `${raw32[matchLineIdx - 1] ?? ''}\n${raw32[matchLineIdx] ?? ''}`;
-            const reviewed32 = /nosemgrep|eslint-disable[^\n]*no-(?:implied-)?eval|noqa:\s*S307|#\s*nosec\b/i.test(rawAround);
+            const reviewed32 = /nosemgrep|eslint-disable[^\n]*no-(?:implied-)?eval|oxlint-disable(?:-next-line)?[^\n]*no-eval|biome-ignore[^\n]*(?:lint\/security\/)?noGlobalEval|noqa:\s*S307|#\s*nosec\b/i.test(rawAround);
+            // new Function(code) compiling MDX in a design-system / docs app with no request input is MEDIUM
+            const hasRequestInput = /\breq(?:uest)?\.(?:query|body|params|headers|json\(\))\b|\bsearchParams\b/i.test(cleanContent);
+            const isMdxFunction = /\bnew\s+Function\b/.test(lines[matchLineIdx])
+                && /(?:mdx|markdown)/i.test(lowerPath)
+                && !hasRequestInput;
+            const isMedium = reviewed32 || isMdxFunction;
             const snippet = lines.slice(Math.max(0, lineNum - 2), Math.min(lines.length, lineNum + 2)).join('\n');
             findings.push({
                 id: `real-find-${Date.now()}-${findingCounter.count++}`,
                 ruleId: 32,
                 type: 'SECURITY',
                 title: 'Dynamic Code Execution (eval / Function Remote Code Execution)',
-                severity: reviewed32 ? 'MEDIUM' : 'CRITICAL',
+                severity: isMedium ? 'MEDIUM' : 'CRITICAL',
                 category: 'Remote Code Execution',
                 filePath: file.path,
                 lineRange: `L${lineNum}`,

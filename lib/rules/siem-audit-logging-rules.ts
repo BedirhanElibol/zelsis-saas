@@ -23,7 +23,7 @@ export function evaluateSiemAuditLoggingRules(file: CodeFile, lines: string[], c
     // Files using @/lib/logger automatically redact sensitive tokens, passwords, and PII.
     // Only values count: console.log('Getting Stripe Secret Key') logs a fixed string, not a secret.
     const LOG_CALL = /console\.(?:log|warn|info|debug)\s*\(([^)]*)\)/gi;
-    const SENSITIVE_VALUE = /(?:password|secret|apiKey|bearerToken)/i;
+    const SENSITIVE_VALUE = /(?<!has|is|hide)(?:password|secret|apiKey|bearerToken)/i;
     const logsSensitiveValue = (code: string) => [...code.matchAll(LOG_CALL)].some((m) => {
         const args = m[1]
             .replace(/`([^`]*)`/g, (_t, inner: string) => (inner.match(/\$\{[^}]*\}/g) || []).join(' '))
@@ -31,10 +31,11 @@ export function evaluateSiemAuditLoggingRules(file: CodeFile, lines: string[], c
         return SENSITIVE_VALUE.test(args);
     });
     // Docs, API collections (Postman JSON) and dev scripts that print a seeded test password do not log user data
-    const notAppCode = /\.(?:json|mdx?|txt|html)$/i.test(file.path) || /(?:^|\/)(?:scripts?|docs?|bin)\//i.test(file.path.replace(/\\/g, '/'));
+    const notAppCode = /\.(?:json|mdx?|txt|html)$/i.test(file.path) || /(?:^|\/)(?:scripts?|docs?|bin)\//i.test(file.path.replace(/\\/g, '/')) || /(?:\.register|\.setup|\.seed)\.[cm]?[jt]s$/i.test(file.path);
     if (!notAppCode && logsSensitiveValue(cleanContent) && !/logger\./i.test(cleanContent) && !/sanitizeLog/i.test(cleanContent)) {
         const matchLineIdx = lines.findIndex(l => !/^\s*(?:\/\/|--|#|\*)/.test(l) && logsSensitiveValue(l));
-        const lineNum = matchLineIdx !== -1 ? matchLineIdx + 1 : 1;
+        if (matchLineIdx !== -1) {
+        const lineNum = matchLineIdx + 1;
         findings.push({
             id: `audit-12101-${Date.now()}-${findingCounter.count++}`,
             ruleId: 12101,
@@ -54,6 +55,7 @@ export function evaluateSiemAuditLoggingRules(file: CodeFile, lines: string[], c
             falsePositive: false
         });
         logs.push(`[${ts}] [SIEM AUDIT] Found AUDIT-01: Plaintext Credentials or PII Leaked in Application Logs at ${file.path}:${lineNum}`);
+        }
     }
     return { findings, logs };
 }

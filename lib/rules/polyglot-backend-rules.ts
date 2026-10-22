@@ -452,7 +452,13 @@ export function evaluatePolyglotBackendRules(file: CodeFile, lines: string[], cl
             const e = expr.trim();
             return /\.\s*to_[if]\s*(?:\(\s*\))?$|^(?:Integer|Float)\s*\(/.test(e)
                 || /^(?:::)?[A-Z][A-Za-z0-9_]*(?:::[A-Z][A-Za-z0-9_]*)*$/.test(e)
-                || /^(?:quoted_\w+|\w+_quoted|(?:[\w:]+\.)?connection\.quote(?:_column_name|_table_name)?\s*\(|sanitize_sql\w*\s*\()/.test(e);
+                || /^(?:quoted_\w+|\w+_quoted|(?:[\w:]+\.)?connection\.quote(?:_column_name|_table_name)?\s*\(|sanitize_sql\w*\s*\()/.test(e)
+                || /^(?:@?[a-zA-Z0-9_.]*_id|@?id)$/.test(e)
+                || /\.(?:id|pid|size|count|length)$/.test(e)
+                || /\bto_sql(?:\(\s*\))?$/.test(e)
+                || /^(?:\w+_)?(?:where|clause|clauses|sql|subquery|filters?|conditions?)(?:_\w+)?(?:\(\s*\))?$/.test(e)
+                || /^(?:(?:\w+\.)?table_name|quoted_table_name)$/.test(e)
+                || /^\d+$/.test(e);
         };
         const rubySqliIdx = isRubyScriptOrMigration ? -1 : lines.findIndex(l => {
             if (l.trim().startsWith('#') || !rubySqliRegex.test(l)) return false;

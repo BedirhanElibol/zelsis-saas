@@ -286,8 +286,11 @@ export function evaluatePolyglotCoreRules(file: CodeFile, lines: string[], clean
   // CORE-06: dynamic file include (PHP)
   // The included variable is request-derived here, or never assigned in this file (set elsewhere, e.g. from $_GET)
   const includedVar = lang === 'php' ? content.match(/\b(?:include|require)(?:_once)?\s*\(?\s*\$([a-z_]\w*)\s*\)?\s*;/i)?.[1] : undefined;
-  if (includedVar && (new RegExp(String.raw`\$` + includedVar + String.raw`\s*=\s*[^;]*\$_(?:GET|POST|REQUEST|COOKIE)`).test(content) ||
-      !new RegExp(String.raw`\$` + includedVar + String.raw`\s*=`).test(content))) {
+  const isForeachLocalFile = Boolean(includedVar &&
+    new RegExp('foreach\\s*\\([^)]*\\bas\\s*(?:\\$[a-z_]\\w*\\s*=>\\s*)?\\$' + includedVar + '\\b').test(content) &&
+    /glob\s*\(|scandir\s*\(|DirectoryIterator|FilesystemIterator/i.test(content));
+  if (includedVar && !isForeachLocalFile && (new RegExp(String.raw`\$` + includedVar + String.raw`\s*=\s*[^;]*\$_(?:GET|POST|REQUEST|COOKIE)`).test(content) ||
+      (!new RegExp('foreach\\s*\\([^)]*\\bas\\s*(?:\\$[a-z_]\\w*\\s*=>\\s*)?\\$' + includedVar + '\\b').test(content) && !new RegExp(String.raw`\$` + includedVar + String.raw`\s*=`).test(content)))) {
     add({
       ruleId: 24106, code: 'CORE-06', severity: 'CRITICAL',
       title: 'File Inclusion: include/require With a Request-Controlled Path',
