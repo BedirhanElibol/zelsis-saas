@@ -802,14 +802,20 @@ export function evaluateSecurityRules(file: CodeFile, lines: string[], cleanCont
             const lineNum = matchLineIdx + 1;
             // nosemgrep / eslint-disable no-eval / noqa: S307 / nosec on the line or just above: reviewed, keep as MEDIUM
             const rawAround = `${raw32[matchLineIdx - 1] ?? ''}\n${raw32[matchLineIdx] ?? ''}`;
-            const reviewed32 = /nosemgrep|eslint-disable[^\n]*no-(?:implied-)?eval|noqa:\s*S307|#\s*nosec\b/i.test(rawAround);
+            const reviewed32 = /nosemgrep|eslint-disable[^\n]*no-(?:implied-)?eval|oxlint-disable(?:-next-line)?[^\n]*no-eval|biome-ignore[^\n]*(?:lint\/security\/)?noGlobalEval|noqa:\s*S307|#\s*nosec\b/i.test(rawAround);
+            // new Function(code) compiling MDX in a design-system / docs app with no request input is MEDIUM
+            const hasRequestInput = /\breq(?:uest)?\.(?:query|body|params|headers|json\(\))\b|\bsearchParams\b/i.test(cleanContent);
+            const isMdxFunction = /\bnew\s+Function\b/.test(lines[matchLineIdx])
+                && /(?:mdx|markdown)/i.test(lowerPath)
+                && !hasRequestInput;
+            const isMedium = reviewed32 || isMdxFunction;
             const snippet = lines.slice(Math.max(0, lineNum - 2), Math.min(lines.length, lineNum + 2)).join('\n');
             findings.push({
                 id: `real-find-${Date.now()}-${findingCounter.count++}`,
                 ruleId: 32,
                 type: 'SECURITY',
                 title: 'Dynamic Code Execution (eval / Function Remote Code Execution)',
-                severity: reviewed32 ? 'MEDIUM' : 'CRITICAL',
+                severity: isMedium ? 'MEDIUM' : 'CRITICAL',
                 category: 'Remote Code Execution',
                 filePath: file.path,
                 lineRange: `L${lineNum}`,
