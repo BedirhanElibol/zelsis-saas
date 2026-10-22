@@ -37,3 +37,10 @@ export const CASES: RuleCase[] = [
     ],
   },
 ];
+
+CASES.push({
+  ruleIds: [5012],
+  name: 'SEC-SECRET-12 a real key stays caught when the line also has a TypeScript generic or a block comment',
+  detects: f('src/billing/keys.ts', "export const keys: Record<string, string> = { stripe: 'whsec_9876543210abcdef9876543210abcdef' }; /*** billing ***/\n"),
+  ignores: [],
+});

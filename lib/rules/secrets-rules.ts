@@ -20,9 +20,10 @@ export function isDummyPlaceholder(line: string): boolean {
         return false;
     if (/-----BEGIN [A-Z0-9 ]*PRIVATE KEY-----(?:\\n|\s)*(?:\{\s*\}|%[sv]|\$\{[^}]+\})(?:\\n|\s)*-----END/i.test(line))
         return true;
-    if (/\*{3,}/.test(line))
+    // Masked values: judge the quoted string only, so a generic like Record<string, string> on the line does not hide a key
+    if (/['"`][^'"`\n]*\*{3,}[^'"`\n]*['"`]/.test(line))
         return true;
-    if (/<[^>]{2,}>/.test(line))
+    if (/['"`]<[^<>'"`\n]{2,}>['"`]/.test(line))
         return true;
     if (/['"`][\s*xX•·\-_.]+['"`]/.test(line) && /[*xX•]/.test(line))
         return true;
