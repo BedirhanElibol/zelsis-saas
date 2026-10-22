@@ -2,10 +2,14 @@
 
 Check your code with [Zelsis](https://zelsis.com) from the terminal or from an AI coding agent, before you push.
 
+Create an API key at [zelsis.com/dashboard](https://zelsis.com/dashboard) under Settings & API Keys, then set it and run a check:
+
 ```bash
-export ZELSIS_API_KEY=...   # Zelsis: Settings -> API keys
+export ZELSIS_API_KEY=your-key
 npx zelsis check
 ```
+
+On Windows PowerShell, set it with `$env:ZELSIS_API_KEY = "your-key"` for the current window, or keep it for every new window with `[Environment]::SetEnvironmentVariable("ZELSIS_API_KEY", "your-key", "User")`.
 
 `zelsis check` sends your uncommitted changes, plus the rest of the repository as context, and prints each finding with its file and line, what someone could do with it, and the fix. Only the files you changed decide the result:
 

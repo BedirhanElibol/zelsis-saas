@@ -3,7 +3,7 @@ import { execFileSync } from 'node:child_process';
 import { readFileSync, statSync } from 'node:fs';
 import { join } from 'node:path';
 
-export const VERSION = '0.1.0';
+export const VERSION = '0.1.1';
 export const DEFAULT_URL = 'https://zelsis.com';
 const MAX_FILE_BYTES = 512 * 1024;
 const MAX_TOTAL_BYTES = 3.5 * 1024 * 1024; // stays under the API's 4 MB limit with JSON overhead
@@ -73,9 +73,17 @@ export async function scanFiles({ url = DEFAULT_URL, apiKey, files, changed, pro
   return body;
 }
 
+export const MISSING_KEY_HELP = `ZELSIS_API_KEY is not set.
+
+Create a key at https://zelsis.com/dashboard under Settings & API Keys, then set it:
+  PowerShell (this window):  $env:ZELSIS_API_KEY = "your-key"
+  PowerShell (permanent):    [Environment]::SetEnvironmentVariable("ZELSIS_API_KEY", "your-key", "User")
+  bash / zsh:                export ZELSIS_API_KEY=your-key
+After the permanent setting, open a new terminal.`;
+
 /** Runs a check in `cwd` and returns the API result. Used by both the CLI and the MCP tool. */
 export async function runCheck({ cwd, all = false, base, url, apiKey }) {
-  if (!apiKey) throw new Error('Set ZELSIS_API_KEY. Create a key in Zelsis: Settings -> API keys.');
+  if (!apiKey) throw new Error(MISSING_KEY_HELP);
   const changed = all ? undefined : changedPaths(cwd, base);
   if (changed && changed.length === 0) return { gateStatus: 'PASSED', findings: [], filesScanned: 0, scope: 'changed', nothingChanged: true };
   const { files, skipped } = collectFiles(cwd, { changed: changed ?? [] });

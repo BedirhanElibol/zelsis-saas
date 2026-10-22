@@ -19,7 +19,7 @@ Options:
   --strict    Exit 1 on WARNING too, not only on FAILED
 
 Environment:
-  ZELSIS_API_KEY   Required. Create one in Zelsis: Settings -> API keys
+  ZELSIS_API_KEY   Required. Create one at https://zelsis.com/dashboard under Settings & API Keys
   ZELSIS_URL       Defaults to https://zelsis.com
 
 Files are scanned in memory on the Zelsis server and not stored.`;
