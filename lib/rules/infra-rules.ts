@@ -44,8 +44,9 @@ export function evaluateInfraRules(file: CodeFile, lines: string[], cleanContent
     // =========================================================================
     // .sql, or app code whose path says migration / schema (not shell scripts or Go tooling that only mention it)
     const isSqlFile = lowerPath.endsWith('.sql') || ((lowerPath.includes('migration') || lowerPath.includes('schema')) && /\.(?:[cm]?[jt]s|py|rb)$/.test(lowerPath));
+    const isSqlitePath = /(?:^|\/|\.)sqlite(?:\b|_|\.)/i.test(lowerPath) || lowerPath.endsWith('.sqlite.sql');
     // RLS only protects tables that clients can query directly (Supabase / PostgREST); skip server-only databases
-    if (isSqlFile && databaseExposedAt(context, file.path)) {
+    if (isSqlFile && !isSqlitePath && databaseExposedAt(context, file.path)) {
         // The name must be a real identifier: format('CREATE TABLE IF NOT EXISTS %I ...') and CREATE TABLE ... AS
         // used to yield tables called "IF" and "AS"
         const tableRegex = /create\s+table\s+(?:if\s+not\s+exists\s+)?(?!(?:if|as|example)\b)("?[a-zA-Z_][a-zA-Z0-9_."]*)(?=\s*\()/gi;
@@ -57,6 +58,13 @@ export function evaluateInfraRules(file: CodeFile, lines: string[], cleanContent
             const simpleName = rawTableName.includes('.') ? rawTableName.split('.').pop()! : rawTableName;
             // PostgREST exposes the public schema; auth.*, storage.*, extensions.* are not client-queryable tables
             if (rawTableName.includes('.') && !/^public\./i.test(rawTableName)) continue;
+            // Skip SQLite-only syntax or SQLite constants
+            const matchIdx = match.index;
+            const stmtSlice = cleanContent.slice(matchIdx, matchIdx + 500);
+            const isSqliteSyntax = /INTEGER\s+PRIMARY\s+KEY\s+AUTOINCREMENT|AUTOINCREMENT\b|datetime\s*\(\s*['"]now['"]\s*\)/i.test(stmtSlice);
+            const precedingText = cleanContent.slice(Math.max(0, matchIdx - 300), matchIdx);
+            const isSqliteConstant = /(?:const|let|var)\s+[A-Za-z0-9_]*sqlite[A-Za-z0-9_]*\s*=/i.test(precedingText);
+            if (isSqliteSyntax || isSqliteConstant) continue;
             // Check if RLS is enabled for this table anywhere in the file
             const rlsPattern = new RegExp(`alter\\s+table\\s+(?:if\\s+exists\\s+)?(?:[a-zA-Z0-9_."]+\\.)?${simpleName}\\s+enable\\s+row\\s+level\\s+security`, 'i');
             if (!rlsPattern.test(cleanContent) && !context.rlsEnabledTables.has(normalizeSqlName(rawTableName))) {

@@ -160,9 +160,16 @@ export function evaluateDatabaseRules(file: CodeFile, lines: string[], cleanCont
     }
     // DB-PERF-10: PostgreSQL Public Table Missing Row Level Security (RLS)
     // Only tables in the API-exposed public schema (unqualified or public.*); the finding points at that table's CREATE TABLE line
-    const tablesWithoutRls = [...cleanContent.matchAll(/CREATE\s+(?:UNLOGGED\s+)?TABLE\s+(?:IF\s+NOT\s+EXISTS\s+)?([\w."]+)/gi)]
+    const isSqlitePath_6010 = /(?:^|\/|\.)sqlite(?:\b|_|\.)/i.test(file.path.toLowerCase()) || file.path.toLowerCase().endsWith('.sqlite.sql');
+    const tablesWithoutRls = isSqlitePath_6010 ? [] : [...cleanContent.matchAll(/CREATE\s+(?:UNLOGGED\s+)?TABLE\s+(?:IF\s+NOT\s+EXISTS\s+)?([\w."]+)/gi)]
         .filter((m) => !/\./.test(m[1].replace(/"/g, '')) || /^"?public"?\./i.test(m[1]))
         .filter((m) => {
+            const stmtSlice = cleanContent.slice(m.index!, m.index! + 500);
+            const isSqliteSyntax = /INTEGER\s+PRIMARY\s+KEY\s+AUTOINCREMENT|AUTOINCREMENT\b|datetime\s*\(\s*['"]now['"]\s*\)/i.test(stmtSlice);
+            const preceding = cleanContent.slice(Math.max(0, m.index! - 300), m.index!);
+            const isSqliteConstant = /(?:const|let|var)\s+[A-Za-z0-9_]*sqlite[A-Za-z0-9_]*\s*=/i.test(preceding);
+            if (isSqliteSyntax || isSqliteConstant) return false;
+
             const t = normalizeSqlName(m[1]);
             return !context.rlsEnabledTables.has(t) && !new RegExp(String.raw`ALTER\s+TABLE\s+[^;]*\b` + t + String.raw`\b[^;]*ENABLE\s+ROW\s+LEVEL\s+SECURITY`, 'i').test(cleanContent);
         });
