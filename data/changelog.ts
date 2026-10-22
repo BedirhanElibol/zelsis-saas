@@ -12,6 +12,19 @@ export interface ChangelogEntry {
 
 export const CHANGELOG: ChangelogEntry[] = [
   {
+    date: '2026-10-22',
+    title: 'Docs, seeders and dev files no longer block a release',
+    changes: [
+      { kind: 'Improved', text: 'Findings in documentation, knowledge-base examples, seeders, local docker-compose files and dev scripts are reported at medium with a note, so they no longer fail the gate. The same code in the app itself still does. Leaked secrets keep their own handling.' },
+      { kind: 'Fixed', text: 'Masked values such as "******" or "<your-secret>" are not reported as secrets, and a session secret fallback is only reported when it is a real value.' },
+      { kind: 'Fixed', text: 'eval marked as reviewed with oxlint or Biome comments stays at medium, like eslint-disable, and so does new Function compiling MDX when no request input reaches it.' },
+      { kind: 'Fixed', text: 'jwt.decode without verification is not reported when the same function verifies the token afterwards (the usual read-the-key-id-first pattern).' },
+      { kind: 'Fixed', text: 'Missing-RLS checks skip SQLite tables recognised by their syntax or constant names.' },
+      { kind: 'Improved', text: 'Raw SQL built from schema enum values, constants, column names, escaped identifiers, record ids or query-builder clauses is not reported as injection in Drizzle, Ruby, Go and Rust code. Request values still are.' },
+      { kind: 'Fixed', text: 'Fewer reports on error codes compared with a password field, UI component names, PHP helper loaders, LLM evaluation scripts and log lines that only mention a secret. Third-party scripts without SRI on payment pages and old TLS versions are now high instead of critical.' },
+    ],
+  },
+  {
     date: '2026-10-21',
     title: 'Fewer critical false alarms, retry storms and ORM indexes',
     changes: [
