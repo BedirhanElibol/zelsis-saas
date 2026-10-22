@@ -101,7 +101,30 @@ export function evaluatePolyglotBackendRules(file: CodeFile, lines: string[], cl
         // Global shell functions only (not $pdo->exec / Foo::system), with request input or an unescaped
         // variable concatenated / interpolated into the command string.
         const phpCmdRegex = /(?<![\w>:$])(?:exec|shell_exec|system|passthru|proc_open|popen)\s*\(\s*(.*)/i;
+        const isSafePhpCmdVar = (arg: string) => {
+            const m = /^\s*\$(\w+)/.exec(arg);
+            if (!m) return false;
+            const varName = m[1];
+            // If the variable was constructed from escapeshellarg / escapeshellcmd, or internal git version command
+            const precedingCode = cleanContent.slice(0, cleanContent.indexOf(arg));
+            const assignRegex = new RegExp(`\\$${varName}\\s*=\\s*([^;]+);`, 'g');
+            const matches = [...precedingCode.matchAll(assignRegex)];
+            if (matches.length > 0) {
+                const lastAssign = matches[matches.length - 1][1];
+                if (!/\$/.test(lastAssign) || /^\s*['"]git\b/i.test(lastAssign) || /base_path\(['"]\.git['"]\)/i.test(lastAssign)) {
+                    return true;
+                }
+                if (/escapeshell(?:arg|cmd)|buildTimeoutCommand|\bgit\s+(?:describe|log|rev-list|diff|status|rev-parse|show)\b/i.test(lastAssign)) {
+                    return true;
+                }
+                if (/escapeshellarg/i.test(precedingCode) && /artisan\b/i.test(lastAssign)) {
+                    return true;
+                }
+            }
+            return false;
+        };
         const phpCmdTainted = (arg: string) => !/escapeshell(?:arg|cmd)\s*\(/i.test(arg) &&
+            !isSafePhpCmdVar(arg) &&
             (PHP_REQUEST_SOURCE.test(arg) || /^(?:"[^"]*"|'[^']*')\s*\.\s*\$\w+|^\$\w+\s*\.|^"[^"]*\$\w+/.test(arg));
         const phpCmdIdx = lines.findIndex(l => !l.trim().startsWith('//') && !l.trim().startsWith('#') && !l.trim().startsWith('*') && phpCmdRegex.test(l) && phpCmdTainted((phpCmdRegex.exec(l) as RegExpExecArray)[1]));
         if (phpCmdIdx !== -1) {

@@ -178,8 +178,32 @@ export function evaluatePolyglotCoreRules(file: CodeFile, lines: string[], clean
   // The command must sit on a line of its own: a match only across lines ([^)]* running past the call) is noise
   // Escaped values (Shellwords.escape, escapeshellarg, shlex.quote, .shelljoin) and Ruby backticks inside a
   // double-quoted string ("... (`#{ref}`).") are not commands built from raw input
+  const isPhpEscapedCommandVar = (l: string): boolean => {
+    if (lang !== 'php') return false;
+    const m = /(?:shell_exec|exec|system|passthru|popen|proc_open)\s*\(\s*\$(\w+)/i.exec(l);
+    if (!m) return false;
+    const varName = m[1];
+    // Check if the variable was built with escapeshellarg or buildTimeoutCommand
+    const preceding = content.slice(0, content.indexOf(l));
+    const assignRegex = new RegExp(`\\$${varName}\\s*=\\s*([^;]+);`, 'g');
+    const matches = [...preceding.matchAll(assignRegex)];
+    if (matches.length > 0) {
+      const lastAssign = matches[matches.length - 1][1];
+      if (!/\$/.test(lastAssign) || /^\s*['"]git\b/i.test(lastAssign) || /base_path\(['"]\.git['"]\)/i.test(lastAssign)) {
+        return true;
+      }
+      if (/escapeshell(?:arg|cmd)|buildTimeoutCommand|\bgit\s+(?:describe|log|rev-list|diff|status|rev-parse|show)\b/i.test(lastAssign)) {
+        return true;
+      }
+      if (/escapeshellarg/i.test(preceding) && /artisan\b/i.test(lastAssign)) {
+        return true;
+      }
+    }
+    return false;
+  };
   const cmdLine = (l: string) => !!cmd && cmd.test(l)
     && !/Shellwords\.escape|shellescape|escapeshell(?:arg|cmd)|shlex\.quote|\.shelljoin/.test(l)
+    && !isPhpEscapedCommandVar(l)
     && !(lang === 'ruby' && l.includes('`') && ((l.slice(0, l.indexOf('`')).match(/"/g) ?? []).length % 2 === 1));
   // Normalized lines map 1:1 to the raw ones; a raw-only match is an interpolation the normalizer cleared (#{x.pid})
   const cmdIdx = cmd && cmd.test(content) ? normLines.findIndex(cmdLine) : -1;
