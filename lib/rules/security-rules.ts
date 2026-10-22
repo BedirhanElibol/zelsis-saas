@@ -712,10 +712,12 @@ export function evaluateSecurityRules(file: CodeFile, lines: string[], cleanCont
     }
     // Rule 4003 / LLM-03: Untrusted LLM Output Execution / eval (LLM05)
     if (isCodeFile) {
-        const untrustedLlmExecRegex = /(?:eval|child_process\.exec|execSync)\s*\([^)]*(?:completion|aiResponse|llmOutput|assistantMessage)/i;
-        if (untrustedLlmExecRegex.test(cleanContent)) {
-            const matchLineIdx = lines.findIndex(l => !l.trim().startsWith('//') && untrustedLlmExecRegex.test(l));
-            const lineNum = matchLineIdx !== -1 ? matchLineIdx + 1 : 1;
+        const isEvalOrBench = /(?:^|\/)(?:evals?|benchmarks?)\//i.test(file.path.replace(/\\/g, '/'));
+        const untrustedLlmExecRegex = /\b(?:eval|child_process\.exec|execSync)\s*\([^)]*\b(?:completion|aiResponse|llmOutput|assistantMessage)\b/i;
+        if (!isEvalOrBench && untrustedLlmExecRegex.test(cleanContent)) {
+            const matchLineIdx = lines.findIndex(l => !l.trim().startsWith('//') && !l.trim().startsWith('#') && untrustedLlmExecRegex.test(l));
+            if (matchLineIdx !== -1) {
+            const lineNum = matchLineIdx + 1;
             const snippet = lines.slice(Math.max(0, lineNum - 2), Math.min(lines.length, lineNum + 2)).join('\n');
             findings.push({
                 id: `real-find-${Date.now()}-${findingCounter.count++}`,
@@ -737,6 +739,7 @@ export function evaluateSecurityRules(file: CodeFile, lines: string[], cleanCont
                 falsePositive: false
             });
             logs.push(`[${ts}] 🛑 CRITICAL: LLM-03 Untrusted LLM execution in ${file.path}:${lineNum}`);
+            }
         }
     }
     // Rule 4004 / LLM-04: Insecure Vector Search / Cross-Tenant Retrieval
