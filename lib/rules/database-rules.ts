@@ -332,8 +332,12 @@ export function evaluateDatabaseRules(file: CodeFile, lines: string[], cleanCont
     // DB-PERF-43: Unprepared Dynamic SQL Query Injections
     // Setup scripts create / drop databases by name (CREATE DATABASE "${dbName}"): DDL from config, not request input
     const isDbSetupScript = /(?:^|\/)(?:scripts?|migrations?|seeds?)\/|(?:^|\/)seed[^/]*\.[cm]?[jt]s$/i.test(file.path.replace(/\\/g, '/'));
-    if (!isDbSetupScript && /(?:db\.query|client\.query|prisma\.\$queryRawUnsafe)\s*\(\s*`(?!\s*(?:CREATE|DROP)\s+DATABASE\b)[^`]*\$\{/i.test(cleanContent)) {
-        const matchLineIdx = locateMatchLine(lines, [/(?:db\.query|client\.query|prisma\.\$queryRawUnsafe)\s*\(\s*`[^`]*\$\{/i], l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('*'));
+    const normalizeDynamicQuery = (s: string) => s
+        .replace(/\$\{\s*(?:[a-zA-Z0-9_.]+\.)?(?:escapeIdentifier|quoteIdentifier|escapeLiteral)\s*\([^)]*\)\s*\}/g, 'IDENT')
+        .replace(/\b(?:CREATE|DROP)\s+DATABASE(?:\s+IF\s+(?:NOT\s+)?EXISTS)?\s+[`"']?\$\{\s*[\w.]+\s*\}[`"']?/gi, 'CREATE DATABASE IDENT');
+    const cleanForQuery = normalizeDynamicQuery(cleanContent);
+    if (!isDbSetupScript && /(?:db\.query|client\.query|prisma\.\$queryRawUnsafe)\s*\(\s*`[^`]*\$\{/i.test(cleanForQuery)) {
+        const matchLineIdx = locateMatchLine(lines, [/(?:db\.query|client\.query|prisma\.\$queryRawUnsafe)\s*\(\s*`[^`]*\$\{/i], l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('*') && /(?:db\.query|client\.query|prisma\.\$queryRawUnsafe)\s*\(\s*`[^`]*\$\{/i.test(normalizeDynamicQuery(l)));
         const lineNum = matchLineIdx !== -1 ? matchLineIdx + 1 : 1;
         findings.push({
             id: `dbperf-${Date.now()}-${findingCounter.count++}`,
