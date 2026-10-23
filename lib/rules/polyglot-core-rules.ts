@@ -6,6 +6,7 @@
 import { Finding } from '@/data/schema';
 import { CodeFile } from '../scanner-engine';
 import { javaDeserializationIsSafe } from './shared/java-deserialization';
+import { UNTRUSTED_INPUT } from '../scanner/text';
 
 export interface PolyglotCoreRuleResult {
   findings: Finding[];
@@ -48,8 +49,6 @@ const SQL_VALUE_POSITION = new RegExp([
   String.raw`(?:=|<>|!=|<=?|>=?|\bLIKE|\bIN\s*\()\s*(?:\{[^}]+\}|#\{[^}]+\}|\$\{[^}]+\}|\$[a-z_]\w*|["\x60]\s*[+.]\s*\$?[a-z_])`,
 ].join('|'), 'i');
 
-/** The file reads outside input: request bodies, params, cookies, headers, uploads, sockets, stdin. */
-const UNTRUSTED_INPUT = /\b(?:request|req)\.(?:body|data|args|form|values|files|json|params|query|cookies|headers|get_data|stream|raw_post|POST|GET|COOKIES|FILES)\b|\bparams\[|\$_(?:GET|POST|REQUEST|COOKIE|FILES|SERVER)\b|\$request->|\bcookies\[|request_body|\brecv\s*\(|sys\.stdin|\bSTDIN\b|getInputStream\s*\(|HttpServletRequest|@RequestBody|\bupload/i;
 
 /** A non-constant identifier (lowercase start or member access), i.e. not FOO_BAR / Foo.class. */
 const DYN = String.raw`(?:[a-z_][\w]*(?:\.[\w]+|\[[^\]]*\]|\([^)]*\))*)`;

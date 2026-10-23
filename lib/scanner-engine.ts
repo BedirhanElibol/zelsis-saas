@@ -1,7 +1,7 @@
 import { evaluateAiCommentRules } from './rules/ai-comment-rules';
 import { Finding } from '@/data/schema';
 import type { CodeFile, ScanResult } from './scanner/types';
-import { isMinifiedContent, isNonAppPath, isSecretPatternFixture, isSecretRuleId, isTestFixturePath, isVendoredPath, stripComments, yieldToMain } from './scanner/text';
+import { hasUntrustedInput, isCriticalInjectionRule, isMinifiedContent, isNonAppPath, isSecretPatternFixture, isSecretRuleId, isTestFixturePath, isVendoredPath, stripComments, yieldToMain } from './scanner/text';
 import { parseZelsisIgnore } from './scanner/ignore-parser';
 import { parseZelsisRc } from './scanner/rc-config';
 import { calculateGateStatus, calculateReadinessScore, gateSeverity, gatingFindings } from './scanner/scoring';
@@ -49,7 +49,7 @@ import { buildDependencyFindings, OSV_RULE_ID, queryOsv, type DependencyAuditSum
 
 export type { CodeFile, ScanResult } from './scanner/types';
 export type { ZelsisRcConfig } from './scanner/rc-config';
-export { isSecretRuleId, isTestFixturePath, stripComments, yieldToMain } from './scanner/text';
+export { isSecretRuleId, isTestFixturePath, stripComments, yieldToMain, UNTRUSTED_INPUT, hasUntrustedInput, isCriticalInjectionRule, CRITICAL_INJECTION_RULES } from './scanner/text';
 export { parseZelsisIgnore, parseShipguardIgnore } from './scanner/ignore-parser';
 export { parseZelsisRc } from './scanner/rc-config';
 export { calculateGateStatus, calculateReadinessScore, gatingFindings } from './scanner/scoring';
@@ -279,6 +279,15 @@ export async function runStaticCodeScan(inputFiles: CodeFile[], repoName: string
         f.reproductionSteps = [
           ...(f.reproductionSteps ?? []),
           'Found outside the shipped application code (documentation, knowledge base, seeder, dev script or local dev environment).'
+        ];
+      }
+      // Critical injection rules require external input to be release-blocking: without request/untrusted
+      // input in the file, dynamic queries or commands are hardening concerns, not immediate CRITICAL blockers.
+      if (f.severity === 'CRITICAL' && isCriticalInjectionRule(f.ruleId) && !hasUntrustedInput(rawContent)) {
+        f.severity = 'HIGH';
+        f.reproductionSteps = [
+          ...(f.reproductionSteps ?? []),
+          'Downgraded from CRITICAL to HIGH: No untrusted user input (HTTP request, parameters, body, or external stream) was detected in this file.'
         ];
       }
       // Feature: Dismiss Findings

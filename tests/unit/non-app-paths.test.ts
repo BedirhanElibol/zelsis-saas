@@ -67,7 +67,7 @@ test('isNonAppPath keeps shipped application code blocking', () => {
 
 test('scanner engine lowers non-secret CRITICAL findings to MEDIUM in non-app paths', async () => {
   // Command injection in docs/main.py (exact inventree survey pattern)
-  const pyCode = 'import subprocess\ndef invoke_commands(command: str = "--list"):\n    tasks = here.parent.joinpath("tasks.py")\n    command = f"invoke -f {tasks} {command}"\n    assert subprocess.call(command, shell=True) == 0\n';
+  const pyCode = 'import subprocess\ndef invoke_commands(request):\n    tasks = here.parent.joinpath("tasks.py")\n    command = f"invoke -f {tasks} {request.args.get(\'cmd\')}"\n    assert subprocess.call(command, shell=True) == 0\n';
 
   const docsScan = await runStaticCodeScan([{ path: 'docs/main.py', content: pyCode }], 'test-docs', { dependencyAudit: false });
   const docsFindings = docsScan.findings.filter((f) => f.ruleId === 24102 || /Command Injection/i.test(f.title));
