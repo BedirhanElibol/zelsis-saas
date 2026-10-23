@@ -13,6 +13,14 @@ export interface ChangelogEntry {
 export const CHANGELOG: ChangelogEntry[] = [
   {
     date: '2026-10-23',
+    title: 'Critical injection findings need outside input',
+    changes: [
+      { kind: 'Improved', text: 'SQL, command and code injection findings (eval included) stay critical only when the file reads outside input, such as a request body, query string, route parameter, form, cookie or upload. Without it they are reported as high: still visible, but they no longer fail the gate on their own. eval of a stored database field stays critical.' },
+      { kind: 'Improved', text: 'Docker socket mounts, privileged containers and CAP_SYS_ADMIN are high instead of critical. An RLS policy with USING (true) is critical only when it allows writes; a read-only one is high, because public read is often intended.' },
+    ],
+  },
+  {
+    date: '2026-10-23',
     title: 'Fewer false alarms on internal commands, quoted SQL and test setups',
     changes: [
       { kind: 'Fixed', text: 'Command injection checks skip numeric process ids (taskkill, ps), read-only git commands and arguments passed through escapeshellarg, as long as no request value is on the line.' },
