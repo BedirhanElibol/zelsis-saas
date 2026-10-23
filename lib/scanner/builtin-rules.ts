@@ -36,9 +36,9 @@ export function evaluateBuiltinRules(ctx: BuiltinRuleContext): void {
     const isCommentedConfigOrExample = (l: string) => {
       const t = l.trim();
       if (!isCommentLine(l)) return false;
-      return /(?:config|setting|client|options?)\.[a-z0-9_.]*api[_-]?key/i.test(t) ||
-        /#\s*(?:config|openai|anthropic|stripe)\b/i.test(t) ||
-        /sk-[a-zA-Z0-9_.-]*(?:\.{3,}|your|example|dummy|test|replace|change|xxx)/i.test(t);
+      // Only placeholder-looking keys: a real key committed in a comment still leaks
+      return /sk-[a-zA-Z0-9_.-]*(?:\.{3,}|your|example|dummy|test|replace|change|xxx)/i.test(t) ||
+        /sk-(?:[a-z]+-)+[a-z]+(?![\w-])/.test(t);
     };
     const matchLineIdx = lines.findIndex(l => secretPattern.test(l) && !/placeholder|EXAMPLE|dummy|test_key/i.test(l) && !isCommentedConfigOrExample(l));
     if (matchLineIdx !== -1) {

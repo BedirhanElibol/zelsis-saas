@@ -34,8 +34,9 @@ export function isTestFixturePath(path: string): boolean {
   const p = path.toLowerCase().replace(/\\/g, '/');
   // examples / samples / demos: sample apps shipped with a library, not the product itself
   // .semgrep/ holds rule tests: code that is vulnerable on purpose
-  return /(?:^|\/)(?:tests?|unittests?|testing|testdata|testutils?|\.semgrep|__tests__|__mocks__|__fixtures__|fixtures?|experiments?|e2e|cypress|spec|seeds?|examples?|samples?|demos?)\//.test(p) ||
-    /\.(?:test|spec|e2e|global-setup|setup)\.[cm]?[jt]sx?$/.test(p) ||
+  return /(?:^|\/)(?:tests?|unittests?|testing|testdata|testutils?|\.semgrep|__tests__|__mocks__|__fixtures__|fixtures?|e2e|cypress|spec|seeds?|examples?|samples?|demos?)\//.test(p) ||
+    // *.setup.ts alone is too broad (db.setup.ts, passport.setup.js are app code); only test runner setups
+    /\.(?:test|spec|e2e|global-setup)\.[cm]?[jt]sx?$|(?:^|\/)(?:vitest|jest|playwright|test)\.setup\.[cm]?[jt]sx?$/.test(p) ||
     /(?:^|\/)(?:vitest|jest|playwright)\.config\.[cm]?[jt]sx?$/.test(p) ||
     /(?:^|\/)(?:global-setup|test-setup)\.[cm]?[jt]sx?$/.test(p) ||
     /(?:^|\/)[^/]*fixture[s]?\.(?:sql|[cm]?[jt]sx?|py|rb|json)$/i.test(p) ||

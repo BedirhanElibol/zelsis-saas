@@ -12,6 +12,16 @@ export interface ChangelogEntry {
 
 export const CHANGELOG: ChangelogEntry[] = [
   {
+    date: '2026-10-23',
+    title: 'Fewer false alarms on internal commands, quoted SQL and test setups',
+    changes: [
+      { kind: 'Fixed', text: 'Command injection checks skip numeric process ids (taskkill, ps), read-only git commands and arguments passed through escapeshellarg, as long as no request value is on the line.' },
+      { kind: 'Fixed', text: 'SQL built with quoted identifiers or upper-case constants next to bound parameters is not reported as injection, and Go log messages that contain the word "update" are no longer read as SQL.' },
+      { kind: 'Fixed', text: 'Logging whether a secret is set, such as secret ? "(set)" : "(not set)", is not reported as a leaked value, and code that only searches text for "eval(" is not reported as calling eval.' },
+      { kind: 'Improved', text: 'Test runner setups, experiment folders, fixture SQL and .env.test files are treated as non-app code. Placeholder keys made of words in comments are ignored; a real key in a comment is still reported.' },
+    ],
+  },
+  {
     date: '2026-10-22',
     title: 'Docs, seeders and dev files no longer block a release',
     changes: [

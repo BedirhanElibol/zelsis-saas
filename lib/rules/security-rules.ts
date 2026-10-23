@@ -31,9 +31,9 @@ export function evaluateSecurityRules(file: CodeFile, lines: string[], cleanCont
     const isCommentedConfigOrExample = (l: string) => {
         const t = l.trim();
         if (!isCommentLine(l)) return false;
-        return /(?:config|setting|client|options?)\.[a-z0-9_.]*api[_-]?key/i.test(t) ||
-            /#\s*(?:config|openai|anthropic|stripe)\b/i.test(t) ||
-            /sk-[a-zA-Z0-9_.-]*(?:\.{3,}|your|example|dummy|test|replace|change|xxx)/i.test(t);
+        // Only placeholder-looking keys: a real key committed in a comment still leaks
+        return /sk-[a-zA-Z0-9_.-]*(?:\.{3,}|your|example|dummy|test|replace|change|xxx)/i.test(t) ||
+            /sk-(?:[a-z]+-)+[a-z]+(?![\w-])/.test(t);
     };
     if (LIVE_KEY.test(cleanContent) || /api[_-]?key\s*=\s*["']sk-[a-zA-Z0-9_-]{20,}/i.test(cleanContent)) {
         const matchLineIdx = lines.findIndex(l => !isCommentLine(l) && !isCommentedConfigOrExample(l) && (LIVE_KEY.test(l) || /sk-[a-zA-Z0-9_-]{20,}/i.test(l)));
@@ -899,7 +899,10 @@ export function evaluateSecurityRules(file: CodeFile, lines: string[], cleanCont
         }
         const dynamicShell = String.raw`\x60[^\x60]*\$\{[^}]+\}|['"][^'"]*['"]\s*\+|[a-zA-Z0-9_.]+\s*\+|`;
         const cmdInjRegex = new RegExp(String.raw`(?:\b(?:child_process|cp|childProcess)\.(?:exec|execSync)\s*\(|(?<![.\w])exec\s*\(|(?<![.\w])execSync\s*\()\s*(?:` + (isDevTooling ? '' : dynamicShell) + cmdRequestRef + ')');
+        const requestOnLine = new RegExp(cmdRequestRef);
         const isSafeTemplateExec = (line: string): boolean => {
+            // A request value on the line is never safe, whatever the command
+            if (requestOnLine.test(line)) return false;
             // Taskkill or ps commands targeting numeric PIDs
             if (/taskkill\s+\/pid\s+|ps\s+-o\s+ppid=\s+-p\s+/i.test(line)) {
                 return true;
