@@ -163,6 +163,12 @@ export default function sitemap(): MetadataRoute.Sitemap {
       priority: 0.6,
     },
     {
+      url: `${baseUrl}/guides/zelsis-vs-coderabbit`,
+      lastModified: currentDate,
+      changeFrequency: 'monthly',
+      priority: 0.8,
+    },
+    {
       url: `${baseUrl}/guides/stripe-amount-cents`,
       lastModified: currentDate,
       changeFrequency: 'monthly',

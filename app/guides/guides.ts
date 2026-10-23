@@ -6,6 +6,12 @@ export interface GuideEntry {
 
 export const GUIDES: GuideEntry[] = [
   {
+    slug: 'zelsis-vs-coderabbit',
+    title: 'Zelsis vs CodeRabbit: five pull requests with planted flaws',
+    summary:
+      'Both tools reviewed the same five pull requests, each with one flaw written down in advance. What each found, what each missed, and how a reviewer differs from a release check.',
+  },
+  {
     slug: 'supabase-rls-testing',
     title: 'How to test Supabase RLS before you ship',
     summary:
