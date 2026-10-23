@@ -24,30 +24,43 @@ export function evaluateSecurityRules(file: CodeFile, lines: string[], cleanCont
     // Rule 1: Exposed Stripe/OpenAI API Keys (SEC-01)
     // An actual key body, not the prefix alone: docs and env templates write `sk_live_...` as a placeholder
     const LIVE_KEY = /sk_live_[a-zA-Z0-9]{16,}|sk-proj-[a-zA-Z0-9_-]{20,}/;
+    const isCommentLine = (l: string) => {
+        const t = l.trim();
+        return t.startsWith('//') || t.startsWith('*') || t.startsWith('#') || t.startsWith('--') || t.startsWith('/*') || t.startsWith(';');
+    };
+    const isCommentedConfigOrExample = (l: string) => {
+        const t = l.trim();
+        if (!isCommentLine(l)) return false;
+        // Only placeholder-looking keys: a real key committed in a comment still leaks
+        return /sk-[a-zA-Z0-9_.-]*(?:\.{3,}|your|example|dummy|test|replace|change|xxx)/i.test(t) ||
+            /sk-(?:[a-z]+-)+[a-z]+(?![\w-])/.test(t);
+    };
     if (LIVE_KEY.test(cleanContent) || /api[_-]?key\s*=\s*["']sk-[a-zA-Z0-9_-]{20,}/i.test(cleanContent)) {
-        const matchLineIdx = lines.findIndex(l => !l.trim().startsWith('//') && !l.trim().startsWith('*') && (LIVE_KEY.test(l) || /sk-[a-zA-Z0-9_-]{20,}/i.test(l)));
-        const lineNum = matchLineIdx !== -1 ? matchLineIdx + 1 : 1;
-        const snippet = lines.slice(Math.max(0, lineNum - 2), Math.min(lines.length, lineNum + 2)).join('\n');
-        findings.push({
-            id: `real-find-${Date.now()}-${findingCounter.count++}`,
-            ruleId: 1,
-            type: 'SECURITY',
-            title: 'Exposed Hardcoded OpenAI/Stripe Secret API Key',
-            severity: 'CRITICAL',
-            category: 'Secret Isolation',
-            filePath: file.path,
-            lineRange: `L${lineNum}`,
-            snippet: snippet || lines[matchLineIdx] || 'const API_KEY = "sk-live-..."',
-            reproductionSteps: [
-                `Scanned source file at ${file.path}:${lineNum}.`,
-                'Detected hardcoded live secret token pattern in client/server code.'
-            ],
-            remediationPrompt: `Extract secret API key in ${file.path} to process.env.OPENAI_API_KEY. Never commit secret tokens to version control.`,
-            status: 'OPEN',
-            owner: 'Security Architect',
-            falsePositive: false
-        });
-        logs.push(`[${ts}] 🛑 CRITICAL: SEC-01 Hardcoded Secret API Key in ${file.path}:${lineNum}`);
+        const matchLineIdx = lines.findIndex(l => !isCommentLine(l) && !isCommentedConfigOrExample(l) && (LIVE_KEY.test(l) || /sk-[a-zA-Z0-9_-]{20,}/i.test(l)));
+        if (matchLineIdx !== -1) {
+            const lineNum = matchLineIdx + 1;
+            const snippet = lines.slice(Math.max(0, lineNum - 2), Math.min(lines.length, lineNum + 2)).join('\n');
+            findings.push({
+                id: `real-find-${Date.now()}-${findingCounter.count++}`,
+                ruleId: 1,
+                type: 'SECURITY',
+                title: 'Exposed Hardcoded OpenAI/Stripe Secret API Key',
+                severity: 'CRITICAL',
+                category: 'Secret Isolation',
+                filePath: file.path,
+                lineRange: `L${lineNum}`,
+                snippet: snippet || lines[matchLineIdx] || 'const API_KEY = "sk-live-..."',
+                reproductionSteps: [
+                    `Scanned source file at ${file.path}:${lineNum}.`,
+                    'Detected hardcoded live secret token pattern in client/server code.'
+                ],
+                remediationPrompt: `Extract secret API key in ${file.path} to process.env.OPENAI_API_KEY. Never commit secret tokens to version control.`,
+                status: 'OPEN',
+                owner: 'Security Architect',
+                falsePositive: false
+            });
+            logs.push(`[${ts}] 🛑 CRITICAL: SEC-01 Hardcoded Secret API Key in ${file.path}:${lineNum}`);
+        }
     }
     // Rule 3: Supabase Permissive Row Level Security (RLS) (SEC-03)
     // Policies live in SQL; one scoped TO service_role only restates the service role's RLS bypass
@@ -807,9 +820,19 @@ export function evaluateSecurityRules(file: CodeFile, lines: string[], cleanCont
         // embedded JS engine's context.eval. One line only: [^)] across lines matched where no line could be found.
         const raw32 = (file.content || '').split('\n');
         const evalRegex = /(?:(?<![\w$.>])|(?<=\b(?:math|mathjs|window|globalThis|global|self|top|parent)\.))(?<!\b(?:def|function|fun|func|void)\s+)eval\s*\([^)\n]+\)|\bnew\s+Function\s*\([^)\n]+\)/;
-        // Not a dynamic call: a typed method signature (eval(t: number): Vec3), or only a fixed string literal
+        // Not a dynamic call: a typed method signature (eval(t: number): Vec3), only a fixed string literal,
+        // or a security validator/linter check (.includes('eval('), .indexOf('eval'), /eval\(/.test(s))
+        const isLiteralOrValidatorCheck = (l: string) => {
+            if (/\.(?:includes|indexOf|search|match|test|has|contains)\s*\([^)]*eval/i.test(l)) return true;
+            if (/\/(?:[^\n\\/]|\\.)*\beval\b(?:[^\n\\/]|\\.)*\/\s*\.\s*(?:test|exec)\s*\(/i.test(l)) return true;
+            const codeOnly = l
+                .replace(/(['"`])(?:(?!\1)[^\\]|\\.)*\1/g, '')
+                .replace(/\/(?:[^\n\\/]|\\.)+\/[gimsuy]*/g, '');
+            return !/\beval\s*\(/.test(codeOnly) && !/\bnew\s+Function\s*\(/.test(codeOnly);
+        };
         const notDynamic = (l: string) => /\beval\s*\(\s*\w+\s*\??\s*:\s*[\w[{]/.test(l)
-            || /(?:\beval|\bnew\s+Function)\s*\(\s*(['"`])(?:(?!\1|\$\{)[^\\]|\\.)*\1\s*\)/.test(l) && !/(?:\beval|\bnew\s+Function)\s*\(\s*(['"`])(?:(?!\1)[^\\]|\\.)*\1\s*[+,]/.test(l);
+            || /(?:\beval|\bnew\s+Function)\s*\(\s*(['"`])(?:(?!\1|\$\{)[^\\]|\\.)*\1\s*\)/.test(l) && !/(?:\beval|\bnew\s+Function)\s*\(\s*(['"`])(?:(?!\1)[^\\]|\\.)*\1\s*[+,]/.test(l)
+            || isLiteralOrValidatorCheck(l);
         const matchLineIdx = evalRegex.test(cleanContent)
             ? lines.findIndex(l => !l.trim().startsWith('//') && !l.trim().startsWith('*') && evalRegex.test(l) && !notDynamic(l))
             : -1;
@@ -876,12 +899,31 @@ export function evaluateSecurityRules(file: CodeFile, lines: string[], cleanCont
         }
         const dynamicShell = String.raw`\x60[^\x60]*\$\{[^}]+\}|['"][^'"]*['"]\s*\+|[a-zA-Z0-9_.]+\s*\+|`;
         const cmdInjRegex = new RegExp(String.raw`(?:\b(?:child_process|cp|childProcess)\.(?:exec|execSync)\s*\(|(?<![.\w])exec\s*\(|(?<![.\w])execSync\s*\()\s*(?:` + (isDevTooling ? '' : dynamicShell) + cmdRequestRef + ')');
+        const requestOnLine = new RegExp(cmdRequestRef);
         const isSafeTemplateExec = (line: string): boolean => {
+            // A request value on the line is never safe, whatever the command
+            if (requestOnLine.test(line)) return false;
+            // Taskkill or ps commands targeting numeric PIDs
+            if (/taskkill\s+\/pid\s+|ps\s+-o\s+ppid=\s+-p\s+/i.test(line)) {
+                return true;
+            }
+            // Template literal command
             const tpl = /(?:\b(?:child_process|cp|childProcess)\.(?:exec|execSync)\s*\(|(?<![.\w])exec\s*\(|(?<![.\w])execSync\s*\()\s*`([^`]+)`/.exec(line);
-            if (!tpl) return false;
-            const exprs = [...tpl[1].matchAll(/\$\{\s*([^}]+?)\s*\}/g)].map((m) => m[1].trim());
-            if (exprs.length === 0) return false;
-            return exprs.every((e) => /^[A-Z][A-Z0-9_]*$/.test(e) || (isCliPackagePath && literalAssignedVars.has(e)));
+            if (tpl) {
+                const cmdStr = tpl[1];
+                // Safe internal git/gh commands in tooling or packages
+                if (/^git\s+(?:rev-list|describe|log|diff|status|rev-parse|show)\b/i.test(cmdStr) || /^gh\s+repo\s+view\b/i.test(cmdStr)) {
+                    return true;
+                }
+                const exprs = [...cmdStr.matchAll(/\$\{\s*([^}]+?)\s*\}/g)].map((m) => m[1].trim());
+                if (exprs.length === 0) return false;
+                return exprs.every((e) => /^[A-Z][A-Z0-9_]*$/.test(e) || (isCliPackagePath && literalAssignedVars.has(e)) || /^(?:base|head|repoName|pkg\.name|agent|agentExec)$/.test(e));
+            }
+            // String concatenation command (e.g. 'taskkill /pid ' + pid)
+            if (/['"]taskkill\s+\/pid\s+['"]\s*\+\s*\w+|['"]ps\s+['"]\s*\+\s*\w+/i.test(line)) {
+                return true;
+            }
+            return false;
         };
         const matchLineIdx = !isBuildConfigOrTemplate && cmdInjRegex.test(cleanContent)
             ? lines.findIndex(l => !l.trim().startsWith('//') && !l.trim().startsWith('*') && cmdInjRegex.test(l) && !isSafeTemplateExec(l))

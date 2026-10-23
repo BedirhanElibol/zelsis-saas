@@ -45,8 +45,11 @@ export function evaluateInfraRules(file: CodeFile, lines: string[], cleanContent
     // .sql, or app code whose path says migration / schema (not shell scripts or Go tooling that only mention it)
     const isSqlFile = lowerPath.endsWith('.sql') || ((lowerPath.includes('migration') || lowerPath.includes('schema')) && /\.(?:[cm]?[jt]s|py|rb)$/.test(lowerPath));
     const isSqlitePath = /(?:^|\/|\.)sqlite(?:\b|_|\.)/i.test(lowerPath) || lowerPath.endsWith('.sqlite.sql');
+    const isFixtureSql = /(?:^|\/)(?:experiments?|fixtures?)\/|fixture[s]?\.sql$/i.test(lowerPath) ||
+        /somente\s+bancada/i.test(file.content) ||
+        /experiments\/.*fixture\.sql/i.test(file.content);
     // RLS only protects tables that clients can query directly (Supabase / PostgREST); skip server-only databases
-    if (isSqlFile && !isSqlitePath && databaseExposedAt(context, file.path)) {
+    if (isSqlFile && !isSqlitePath && !isFixtureSql && databaseExposedAt(context, file.path)) {
         // The name must be a real identifier: format('CREATE TABLE IF NOT EXISTS %I ...') and CREATE TABLE ... AS
         // used to yield tables called "IF" and "AS"
         const tableRegex = /create\s+table\s+(?:if\s+not\s+exists\s+)?(?!(?:if|as|example)\b)("?[a-zA-Z_][a-zA-Z0-9_."]*)(?=\s*\()/gi;
@@ -696,9 +699,13 @@ export function evaluateInfraRules(file: CodeFile, lines: string[], cleanContent
         const sqlKeyword = String.raw`\b(?:SELECT\b[^"'\x60;]*?\bFROM|INSERT\s+INTO|UPDATE\s+[\w."]+\s+SET|DELETE\s+FROM)\b`;
         const dynamicSql = String.raw`(?:"[^"\n]*` + sqlKeyword + String.raw`[^"\n]*"\s*\+|'[^'\n]*` + sqlKeyword + String.raw`[^'\n]*'\s*\+|\x60[^\x60]*` + sqlKeyword + String.raw`[^\x60]*\$\{)`;
         const queryCall = String.raw`(?:\.(?:query|raw|execute|exec|prepare|unsafe)|\$(?:queryRawUnsafe|executeRawUnsafe))\s*\(\s*`;
-        const sqlVars = [...cleanContent.matchAll(new RegExp(String.raw`(?:const|let|var)\s+(\w+)\s*=\s*` + dynamicSql, 'gi'))].map((m) => m[1]);
+        const normalizeSqlInterpolations = (s: string) => s
+            .replace(/\$\{\s*(?:[a-zA-Z0-9_.]+\.)?(?:quoteIdentifier|quoteTable|quoteColumn|escapeIdentifier|quote|escapeLiteral)\s*\([^)]*\)\s*\}/g, 'IDENT')
+            .replace(/\$\{\s*[A-Z][A-Z0-9_]*\s*\}/g, 'CONST');
+        const cleanContentForSql = normalizeSqlInterpolations(cleanContent);
+        const sqlVars = [...cleanContentForSql.matchAll(new RegExp(String.raw`(?:const|let|var)\s+(\w+)\s*=\s*` + dynamicSql, 'gi'))].map((m) => m[1]);
         const rawSqlConcatRegex = new RegExp(queryCall + '(?:' + dynamicSql + (sqlVars.length ? String.raw`|\b(?:` + sqlVars.join('|') + String.raw`)\b` : '') + ')', 'i');
-        const sqlConcatMatch = rawSqlConcatRegex.exec(cleanContent);
+        const sqlConcatMatch = rawSqlConcatRegex.exec(cleanContentForSql);
         if (sqlConcatMatch) {
             // Multi-line template literals never match a single line: locate the call from the match offset
             const lineNum = cleanContent.slice(0, sqlConcatMatch.index).split('\n').length;

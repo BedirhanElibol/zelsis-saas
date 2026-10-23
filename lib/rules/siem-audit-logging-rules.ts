@@ -22,10 +22,43 @@ export function evaluateSiemAuditLoggingRules(file: CodeFile, lines: string[], c
     // AUDIT-01: Plaintext Credentials or PII Leaked in Application Logs
     // Files using @/lib/logger automatically redact sensitive tokens, passwords, and PII.
     // Only values count: console.log('Getting Stripe Secret Key') logs a fixed string, not a secret.
-    const LOG_CALL = /console\.(?:log|warn|info|debug)\s*\(([^)]*)\)/gi;
     const SENSITIVE_VALUE = /(?<!has|is|hide)(?:password|secret|apiKey|bearerToken)/i;
-    const logsSensitiveValue = (code: string) => [...code.matchAll(LOG_CALL)].some((m) => {
-        const args = m[1]
+    const extractLogCalls = (code: string): string[] => {
+        const regex = /console\.(?:log|warn|info|debug)\s*\(/gi;
+        const calls: string[] = [];
+        let match: RegExpExecArray | null;
+        while ((match = regex.exec(code)) !== null) {
+            const startIdx = match.index + match[0].length;
+            let depth = 1;
+            let inSingle = false;
+            let inDouble = false;
+            let inBacktick = false;
+            let i = startIdx;
+            while (i < code.length && depth > 0) {
+                const ch = code[i];
+                const prev = i > 0 ? code[i - 1] : '';
+                if (prev !== '\\') {
+                    if (!inDouble && !inBacktick && ch === "'") inSingle = !inSingle;
+                    else if (!inSingle && !inBacktick && ch === '"') inDouble = !inDouble;
+                    else if (!inSingle && !inDouble && ch === '`') inBacktick = !inBacktick;
+                    else if (!inSingle && !inDouble && !inBacktick) {
+                        if (ch === '(') depth++;
+                        else if (ch === ')') depth--;
+                    }
+                }
+                if (depth === 0) break;
+                i++;
+            }
+            calls.push(code.slice(startIdx, i));
+        }
+        return calls;
+    };
+    const logsSensitiveValue = (code: string) => extractLogCalls(code).some((callContent) => {
+        const cleaned = callContent
+            // Ignore ternaries returning fixed status indicators or booleans where the variable is only checked for presence
+            .replace(/[\w$.]+\s*\?\s*(?:['"][^'"]*['"]|true|false|null)\s*:\s*(?:['"][^'"]*['"]|true|false|null)/g, '""')
+            .replace(/(?:Boolean\s*\([^)]*\)|!![\w$.]+)/g, '""');
+        const args = cleaned
             .replace(/`([^`]*)`/g, (_t, inner: string) => (inner.match(/\$\{[^}]*\}/g) || []).join(' '))
             .replace(/'[^'\n]*'|"[^"\n]*"/g, '""');
         return SENSITIVE_VALUE.test(args);

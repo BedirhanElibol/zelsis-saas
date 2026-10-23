@@ -340,7 +340,8 @@ export function evaluateDatabaseRules(file: CodeFile, lines: string[], cleanCont
     // Setup scripts create / drop databases by name (CREATE DATABASE "${dbName}"): DDL from config, not request input
     const isDbSetupScript = /(?:^|\/)(?:scripts?|migrations?|seeds?)\/|(?:^|\/)seed[^/]*\.[cm]?[jt]s$/i.test(file.path.replace(/\\/g, '/'));
     const normalizeDynamicQuery = (s: string) => s
-        .replace(/\$\{\s*(?:[a-zA-Z0-9_.]+\.)?(?:escapeIdentifier|quoteIdentifier|escapeLiteral)\s*\([^)]*\)\s*\}/g, 'IDENT')
+        .replace(/\$\{\s*(?:[a-zA-Z0-9_.]+\.)?(?:escapeIdentifier|quoteIdentifier|quoteTable|quoteColumn|escapeLiteral|quote)\s*\([^)]*\)\s*\}/g, 'IDENT')
+        .replace(/\$\{\s*[A-Z][A-Z0-9_]*\s*\}/g, 'CONST')
         .replace(/\b(?:CREATE|DROP)\s+DATABASE(?:\s+IF\s+(?:NOT\s+)?EXISTS)?\s+[`"']?\$\{\s*[\w.]+\s*\}[`"']?/gi, 'CREATE DATABASE IDENT');
     const cleanForQuery = normalizeDynamicQuery(cleanContent);
     if (!isDbSetupScript && /(?:db\.query|client\.query|prisma\.\$queryRawUnsafe)\s*\(\s*`[^`]*\$\{/i.test(cleanForQuery)) {

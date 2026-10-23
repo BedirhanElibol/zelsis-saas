@@ -29,7 +29,18 @@ export function evaluateBuiltinRules(ctx: BuiltinRuleContext): void {
   // Rule 1: Exposed Stripe/OpenAI API Keys (F-16: Scans comments, F-17: Masks secrets in snippet)
   const secretPattern = /sk_live_[a-zA-Z0-9]{20,}|sk-proj-[a-zA-Z0-9_-]{20,}|api[_-]?key\s*=\s*["']sk-[a-zA-Z0-9_-]{20,}["']/i;
   if (secretPattern.test(rawContent)) {
-    const matchLineIdx = lines.findIndex(l => secretPattern.test(l) && !/placeholder|EXAMPLE|dummy|test_key/i.test(l));
+    const isCommentLine = (l: string) => {
+      const t = l.trim();
+      return t.startsWith('//') || t.startsWith('*') || t.startsWith('#') || t.startsWith('--') || t.startsWith('/*') || t.startsWith(';');
+    };
+    const isCommentedConfigOrExample = (l: string) => {
+      const t = l.trim();
+      if (!isCommentLine(l)) return false;
+      // Only placeholder-looking keys: a real key committed in a comment still leaks
+      return /sk-[a-zA-Z0-9_.-]*(?:\.{3,}|your|example|dummy|test|replace|change|xxx)/i.test(t) ||
+        /sk-(?:[a-z]+-)+[a-z]+(?![\w-])/.test(t);
+    };
+    const matchLineIdx = lines.findIndex(l => secretPattern.test(l) && !/placeholder|EXAMPLE|dummy|test_key/i.test(l) && !isCommentedConfigOrExample(l));
     if (matchLineIdx !== -1) {
       const lineNum = matchLineIdx + 1;
       const rawLine = lines[matchLineIdx] || '';

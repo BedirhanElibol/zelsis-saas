@@ -46,6 +46,16 @@ test('isNonAppPath identifies repo root dev scripts and tooling', () => {
   assert.equal(isNonAppPath('manage.py'), true);
   assert.equal(isNonAppPath('Makefile'), true);
   assert.equal(isNonAppPath('Rakefile'), true);
+  assert.equal(isNonAppPath('setup.sh'), true);
+  assert.equal(isNonAppPath('install.sh'), true);
+});
+
+test('isNonAppPath identifies test environment files, fixtures, and setups', () => {
+  assert.equal(isNonAppPath('.env.testing'), true);
+  assert.equal(isNonAppPath('.env.test'), true);
+  assert.equal(isNonAppPath('experiments/workbench/fixture.sql'), true);
+  assert.equal(isNonAppPath('db/fixture.sql'), true);
+  assert.equal(isNonAppPath('vitest.global-setup.ts'), true);
 });
 
 test('isNonAppPath keeps shipped application code blocking', () => {
