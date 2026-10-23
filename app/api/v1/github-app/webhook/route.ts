@@ -2,7 +2,7 @@ import { parseLineRange } from '@/lib/ci-annotations';
 import { NextResponse } from 'next/server';
 import crypto from 'crypto';
 import { createClient } from '@supabase/supabase-js';
-import { CHECK_NAME, createGitHubAppClient, createCheckRun, updateCheckRun, postOrUpdatePRComment } from '@/lib/github/app';
+import { CHECK_NAME, RELEASE_CHECK_TITLE, createGitHubAppClient, createCheckRun, updateCheckRun, postOrUpdatePRComment } from '@/lib/github/app';
 import { fetchGithubRepositoryData } from '@/lib/github-api';
 import { getConfiguredAppUrl } from '@/lib/app-url';
 import { runStaticCodeScan } from '@/lib/scanner-engine';
@@ -235,12 +235,12 @@ async function handlePullRequest(payload: any, supabase: any) {
       // Complete Check Run
       await updateCheckRun(octokit, owner, repo, checkRun.id, 'completed', conclusion, {
         title: `${readinessScore}/100 Readiness Score`,
-        summary: `### ${CHECK_NAME}: **${gateStatus}**\n\n- **New Findings in PR:** ${newFindings.length}\n- **Existing Findings:** ${existingFindings.length}\n\n*Review annotations for details on new issues.*`,
+        summary: `### ${RELEASE_CHECK_TITLE}: **${gateStatus}**\n\n- **New Findings in PR:** ${newFindings.length}\n- **Existing Findings:** ${existingFindings.length}\n\n*Review annotations for details on new issues.*`,
         annotations
       });
 
       // Post/Update PR Comment
-      const commentBody = `### Zelsis PR Gate Results\n\n` +
+      const commentBody = `### ${RELEASE_CHECK_TITLE} Results\n\n` +
         `**Status:** ${gateStatus === 'PASSED' ? '✅ PASSED' : gateStatus === 'WARNING' ? '⚠️ WARNING' : '❌ FAILED'}\n` +
         `**Readiness Score:** ${readinessScore}/100\n\n` +
         `#### PR Findings Summary\n` +

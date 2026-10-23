@@ -28,3 +28,9 @@ test('PR comment caps medium findings at ten', () => {
 test('PR comment section is empty with only low findings', () => {
   assert.equal(topIssuesSection([finding('LOW', 'Console log')]), '');
 });
+
+test('check run keeps its name so required status checks still match', async () => {
+  const { CHECK_NAME, RELEASE_CHECK_TITLE } = await import('@/lib/github/app');
+  assert.equal(CHECK_NAME, 'Zelsis Security Gate');
+  assert.equal(RELEASE_CHECK_TITLE, 'Zelsis Release Check');
+});

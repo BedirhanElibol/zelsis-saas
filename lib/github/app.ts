@@ -22,8 +22,10 @@ export async function createGitHubAppClient(installationId: number) {
   return octokit;
 }
 
-/** Check run and PR comment name shown on pull requests. */
-export const CHECK_NAME = 'Zelsis Release Check';
+// Kept as-is: branch protection matches required status checks by name, so renaming would block merges
+export const CHECK_NAME = 'Zelsis Security Gate';
+/** Product name shown in the check run summary and PR comment. */
+export const RELEASE_CHECK_TITLE = 'Zelsis Release Check';
 const COMMENT_MARKER = '<!-- Zelsis Release Check -->';
 // Comments posted before the rename carry this marker; match it so they are updated, not duplicated
 const LEGACY_COMMENT_MARKER = '<!-- Zelsis Security Gate -->';
