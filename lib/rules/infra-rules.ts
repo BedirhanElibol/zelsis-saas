@@ -45,8 +45,11 @@ export function evaluateInfraRules(file: CodeFile, lines: string[], cleanContent
     // .sql, or app code whose path says migration / schema (not shell scripts or Go tooling that only mention it)
     const isSqlFile = lowerPath.endsWith('.sql') || ((lowerPath.includes('migration') || lowerPath.includes('schema')) && /\.(?:[cm]?[jt]s|py|rb)$/.test(lowerPath));
     const isSqlitePath = /(?:^|\/|\.)sqlite(?:\b|_|\.)/i.test(lowerPath) || lowerPath.endsWith('.sqlite.sql');
+    const isFixtureSql = /(?:^|\/)(?:experiments?|fixtures?)\/|fixture[s]?\.sql$/i.test(lowerPath) ||
+        /somente\s+bancada/i.test(file.content) ||
+        /experiments\/.*fixture\.sql/i.test(file.content);
     // RLS only protects tables that clients can query directly (Supabase / PostgREST); skip server-only databases
-    if (isSqlFile && !isSqlitePath && databaseExposedAt(context, file.path)) {
+    if (isSqlFile && !isSqlitePath && !isFixtureSql && databaseExposedAt(context, file.path)) {
         // The name must be a real identifier: format('CREATE TABLE IF NOT EXISTS %I ...') and CREATE TABLE ... AS
         // used to yield tables called "IF" and "AS"
         const tableRegex = /create\s+table\s+(?:if\s+not\s+exists\s+)?(?!(?:if|as|example)\b)("?[a-zA-Z_][a-zA-Z0-9_."]*)(?=\s*\()/gi;

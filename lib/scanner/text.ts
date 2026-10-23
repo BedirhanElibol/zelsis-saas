@@ -34,8 +34,12 @@ export function isTestFixturePath(path: string): boolean {
   const p = path.toLowerCase().replace(/\\/g, '/');
   // examples / samples / demos: sample apps shipped with a library, not the product itself
   // .semgrep/ holds rule tests: code that is vulnerable on purpose
-  return /(?:^|\/)(?:tests?|unittests?|testing|testdata|testutils?|\.semgrep|__tests__|__mocks__|__fixtures__|fixtures?|e2e|cypress|spec|seeds?|examples?|samples?|demos?)\//.test(p) ||
-    /\.(?:test|spec|e2e)\.[cm]?[jt]sx?$/.test(p) ||
+  return /(?:^|\/)(?:tests?|unittests?|testing|testdata|testutils?|\.semgrep|__tests__|__mocks__|__fixtures__|fixtures?|experiments?|e2e|cypress|spec|seeds?|examples?|samples?|demos?)\//.test(p) ||
+    /\.(?:test|spec|e2e|global-setup|setup)\.[cm]?[jt]sx?$/.test(p) ||
+    /(?:^|\/)(?:vitest|jest|playwright)\.config\.[cm]?[jt]sx?$/.test(p) ||
+    /(?:^|\/)(?:global-setup|test-setup)\.[cm]?[jt]sx?$/.test(p) ||
+    /(?:^|\/)[^/]*fixture[s]?\.(?:sql|[cm]?[jt]sx?|py|rb|json)$/i.test(p) ||
+    /(?:^|\/)\.env\.(?:test|testing)\b/i.test(p) ||
     /(?:^|\/)(?:test_[^/]+|tests|conftest)\.py$|_test\.(?:py|go)$|_spec\.rb$|Tests?\.(?:java|cs|kt)$/.test(p);
 }
 
@@ -90,13 +94,20 @@ export function isNonAppPath(path: string): boolean {
   if (/(?:^|\/)(?:[a-z0-9_.]+\.)?seeds?\.[cm]?[jt]sx?$/i.test(p)) return true;
   if (/[a-z0-9_]*seeder\.php$/i.test(p)) return true;
 
-  // local or dev infra: docker-compose.(local|dev|development|test|sandbox).ya?ml, compose.(local|dev).ya?ml
+  // local or dev infra: docker-compose.(local|dev|development|test|sandbox).ya?ml, compose.(local|dev).ya?ml, test environments
   if (/(?:^|\/)(?:docker-compose|compose)\.(?:local|dev|development|test|sandbox)\.ya?ml$/i.test(p)) return true;
+  if (/(?:^|\/)\.env\.(?:test|testing)\b/i.test(p)) return true;
 
-  // dev scripts at repo root: run_*.py, Makefile-style helpers, scripts/
+  // dev and setup scripts at repo root: setup.sh, run_*.py, Makefile-style helpers, scripts/
+  if (/(?:^|\/)(?:setup|install|configure|bootstrap|init|deploy)\.sh$/i.test(p)) return true;
   if (/^run_[^/]+\.py$/i.test(p) || /(?:^|\/)run_[^/]+\.py$/i.test(p)) return true;
   if (/(?:^|\/)scripts\/(?:.*\/)?(?:build|dev|test|lint|bench|check|ci|gen|format|preview|release|audit|mock|seed|deploy|run|tool)/i.test(p)) return true;
   if (/^(?:Makefile|Rakefile|fabfile\.py|noxfile\.py|tasks\.py|manage\.py|setup\.py)$/i.test(p) || /(?:^|\/)(?:Rakefile|fabfile\.py|noxfile\.py)$/i.test(p)) return true;
+
+  // workbench fixtures and test setups: experiments/, fixture.sql, global-setup
+  if (/(?:^|\/)(?:experiments?)\//i.test(p)) return true;
+  if (/(?:^|\/)[^/]*fixture[s]?\.sql$/i.test(p)) return true;
+  if (/(?:^|\/)[^/]*global-setup\.[cm]?[jt]sx?$/i.test(p)) return true;
 
   return false;
 }
