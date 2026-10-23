@@ -545,7 +545,7 @@ export function evaluateInfraRules(file: CodeFile, lines: string[], cleanContent
             ruleId: 3017,
             type: 'INFRA_DATABASE',
             title: 'Dangerous Host Docker Socket Mount (/var/run/docker.sock Exposed)',
-            severity: 'CRITICAL',
+            severity: 'HIGH',
             category: 'Container Security',
             filePath: file.path,
             lineRange: `L${lineNum}`,
