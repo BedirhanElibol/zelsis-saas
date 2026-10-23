@@ -2849,7 +2849,7 @@ export function evaluateSecretRules(file: CodeFile, lines: string[], rawContentO
         for (const n of freq.values()) bits -= (n / value.length) * Math.log2(n / value.length);
         return bits >= 3.5;
     };
-    const isTemplateFile = /\.(?:example|sample|template|dist)(?:\.[a-z]+)?$/.test(lowerPath);
+    const isTemplateFile = /\.(?:example|sample|template|dist)(?:\.[a-z]+)?$/.test(lowerPath) || /(?:^|\/)\.env\.(?:example|sample|template|test|testing)\b/.test(lowerPath);
     if (!isTemplateFile && pattern100.test(contentToScan)) {
         const matchLineIdx = lines.findIndex(l => pattern100.test(l) && !isDummyPlaceholder(l) && isRandomSecretValue(l));
         if (matchLineIdx !== -1) {

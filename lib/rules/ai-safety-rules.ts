@@ -82,31 +82,38 @@ export function evaluateAiSafetyRules(file: CodeFile, lines: string[], cleanCont
     }
     // LLM-SEC-17: Hardcoded Model Provider API Keys in Client-Side Bundles
     // A provider key under a client-exposed env prefix is inlined into the browser bundle (definition or use)
+    const isShellScript = /\.(?:sh|bash|zsh)$/i.test(lowerPath) || /(?:^|\/)setup\.sh$/i.test(lowerPath);
     const publicLlmKey = /\b(?:NEXT_PUBLIC|VITE|REACT_APP|EXPO_PUBLIC|PUBLIC|NUXT_PUBLIC)_(?:OPENAI|ANTHROPIC|GROQ|MISTRAL|GEMINI|GOOGLE_AI|COHERE|DEEPSEEK|OPENROUTER)_API_KEY\b/;
-    const llm17Line = cleanContent.split('\n').findIndex((l) => !l.trim().startsWith('#') && publicLlmKey.test(l));
-    if (llm17Line !== -1) {
-        const matchLineIdx = llm17Line;
-        const lineNum = matchLineIdx !== -1 ? matchLineIdx + 1 : 1;
-        findings.push({
-            id: `llmsec17-${Date.now()}-${findingCounter.count++}`,
-            ruleId: 8017,
-            type: 'SECURITY',
-            title: "LLM-SEC-17: Hardcoded Model Provider API Keys in Client-Side Bundles",
-            severity: 'CRITICAL',
-            category: "Secret Exposure",
-            filePath: file.path,
-            lineRange: `L${lineNum}`,
-            snippet: lines[matchLineIdx] || "<detected LLM-SEC-17 pattern>",
-            reproductionSteps: [
-                `Scanned source code in ${file.path}:${lineNum}.`,
-                "Detected Hardcoded Model Provider API Keys in Client-Side Bundles: Exposing OPENAI_API_KEY, ANTHROPIC_API_KEY, or COHERE_API_KEY inside client-accessible variables."
-            ],
-            remediationPrompt: "Remove AI secret keys from client code; invoke AI models only via protected server-side API routes.",
-            status: 'OPEN',
-            owner: 'Security & Release Engineering',
-            falsePositive: false
+    if (!isShellScript) {
+        const llm17Line = cleanContent.split('\n').findIndex((l) => {
+            const trimmed = l.trim();
+            if (trimmed.startsWith('#') || trimmed.startsWith('//') || /^\s*(?:echo|printf)\b/i.test(trimmed)) return false;
+            return publicLlmKey.test(l);
         });
-        logs.push(`[${ts}] 🤖 CRITICAL: LLM-SEC-17 finding in ${file.path}:${lineNum}`);
+        if (llm17Line !== -1) {
+            const matchLineIdx = llm17Line;
+            const lineNum = matchLineIdx !== -1 ? matchLineIdx + 1 : 1;
+            findings.push({
+                id: `llmsec17-${Date.now()}-${findingCounter.count++}`,
+                ruleId: 8017,
+                type: 'SECURITY',
+                title: "LLM-SEC-17: Hardcoded Model Provider API Keys in Client-Side Bundles",
+                severity: 'CRITICAL',
+                category: "Secret Exposure",
+                filePath: file.path,
+                lineRange: `L${lineNum}`,
+                snippet: lines[matchLineIdx] || "<detected LLM-SEC-17 pattern>",
+                reproductionSteps: [
+                    `Scanned source code in ${file.path}:${lineNum}.`,
+                    "Detected Hardcoded Model Provider API Keys in Client-Side Bundles: Exposing OPENAI_API_KEY, ANTHROPIC_API_KEY, or COHERE_API_KEY inside client-accessible variables."
+                ],
+                remediationPrompt: "Remove AI secret keys from client code; invoke AI models only via protected server-side API routes.",
+                status: 'OPEN',
+                owner: 'Security & Release Engineering',
+                falsePositive: false
+            });
+            logs.push(`[${ts}] 🤖 CRITICAL: LLM-SEC-17 finding in ${file.path}:${lineNum}`);
+        }
     }
     // LLM-SEC-56: Insecure Dynamic Model Selection via User Input
     if (/model:\s*req\.(?:body|json)\.model\b/i.test(cleanContent) && !/ALLOWED_MODELS|validModels|whitelist/i.test(cleanContent)) {

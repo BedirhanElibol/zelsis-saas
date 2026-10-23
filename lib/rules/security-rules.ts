@@ -24,30 +24,43 @@ export function evaluateSecurityRules(file: CodeFile, lines: string[], cleanCont
     // Rule 1: Exposed Stripe/OpenAI API Keys (SEC-01)
     // An actual key body, not the prefix alone: docs and env templates write `sk_live_...` as a placeholder
     const LIVE_KEY = /sk_live_[a-zA-Z0-9]{16,}|sk-proj-[a-zA-Z0-9_-]{20,}/;
+    const isCommentLine = (l: string) => {
+        const t = l.trim();
+        return t.startsWith('//') || t.startsWith('*') || t.startsWith('#') || t.startsWith('--') || t.startsWith('/*') || t.startsWith(';');
+    };
+    const isCommentedConfigOrExample = (l: string) => {
+        const t = l.trim();
+        if (!isCommentLine(l)) return false;
+        return /(?:config|setting|client|options?)\.[a-z0-9_.]*api[_-]?key/i.test(t) ||
+            /#\s*(?:config|openai|anthropic|stripe)\b/i.test(t) ||
+            /sk-[a-zA-Z0-9_.-]*(?:\.{3,}|your|example|dummy|test|replace|change|xxx)/i.test(t);
+    };
     if (LIVE_KEY.test(cleanContent) || /api[_-]?key\s*=\s*["']sk-[a-zA-Z0-9_-]{20,}/i.test(cleanContent)) {
-        const matchLineIdx = lines.findIndex(l => !l.trim().startsWith('//') && !l.trim().startsWith('*') && (LIVE_KEY.test(l) || /sk-[a-zA-Z0-9_-]{20,}/i.test(l)));
-        const lineNum = matchLineIdx !== -1 ? matchLineIdx + 1 : 1;
-        const snippet = lines.slice(Math.max(0, lineNum - 2), Math.min(lines.length, lineNum + 2)).join('\n');
-        findings.push({
-            id: `real-find-${Date.now()}-${findingCounter.count++}`,
-            ruleId: 1,
-            type: 'SECURITY',
-            title: 'Exposed Hardcoded OpenAI/Stripe Secret API Key',
-            severity: 'CRITICAL',
-            category: 'Secret Isolation',
-            filePath: file.path,
-            lineRange: `L${lineNum}`,
-            snippet: snippet || lines[matchLineIdx] || 'const API_KEY = "sk-live-..."',
-            reproductionSteps: [
-                `Scanned source file at ${file.path}:${lineNum}.`,
-                'Detected hardcoded live secret token pattern in client/server code.'
-            ],
-            remediationPrompt: `Extract secret API key in ${file.path} to process.env.OPENAI_API_KEY. Never commit secret tokens to version control.`,
-            status: 'OPEN',
-            owner: 'Security Architect',
-            falsePositive: false
-        });
-        logs.push(`[${ts}] 🛑 CRITICAL: SEC-01 Hardcoded Secret API Key in ${file.path}:${lineNum}`);
+        const matchLineIdx = lines.findIndex(l => !isCommentLine(l) && !isCommentedConfigOrExample(l) && (LIVE_KEY.test(l) || /sk-[a-zA-Z0-9_-]{20,}/i.test(l)));
+        if (matchLineIdx !== -1) {
+            const lineNum = matchLineIdx + 1;
+            const snippet = lines.slice(Math.max(0, lineNum - 2), Math.min(lines.length, lineNum + 2)).join('\n');
+            findings.push({
+                id: `real-find-${Date.now()}-${findingCounter.count++}`,
+                ruleId: 1,
+                type: 'SECURITY',
+                title: 'Exposed Hardcoded OpenAI/Stripe Secret API Key',
+                severity: 'CRITICAL',
+                category: 'Secret Isolation',
+                filePath: file.path,
+                lineRange: `L${lineNum}`,
+                snippet: snippet || lines[matchLineIdx] || 'const API_KEY = "sk-live-..."',
+                reproductionSteps: [
+                    `Scanned source file at ${file.path}:${lineNum}.`,
+                    'Detected hardcoded live secret token pattern in client/server code.'
+                ],
+                remediationPrompt: `Extract secret API key in ${file.path} to process.env.OPENAI_API_KEY. Never commit secret tokens to version control.`,
+                status: 'OPEN',
+                owner: 'Security Architect',
+                falsePositive: false
+            });
+            logs.push(`[${ts}] 🛑 CRITICAL: SEC-01 Hardcoded Secret API Key in ${file.path}:${lineNum}`);
+        }
     }
     // Rule 3: Supabase Permissive Row Level Security (RLS) (SEC-03)
     // Policies live in SQL; one scoped TO service_role only restates the service role's RLS bypass

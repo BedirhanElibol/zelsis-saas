@@ -631,7 +631,9 @@ export function evaluatePolyglotBackendRules(file: CodeFile, lines: string[], cl
     }
     // Firebase Firestore / Realtime DB Security Rules (*.rules, firebase.json)
     const isFirebaseRules = lowerPath.endsWith('.rules') || lowerPath.includes('firestore') || lowerPath.includes('firebase');
-    if (isFirebaseRules) {
+    const isTestOrSetup = /(?:^|\/)(?:tests?|__tests__|testing|setup|fixtures?)\/|\.(?:test|spec|global-setup|setup)\.[cm]?[jt]s$/i.test(lowerPath) ||
+        lowerPath.includes('global-setup');
+    if (isFirebaseRules && !isTestOrSetup) {
         const firebaseAllowAllRegex = /allow\s+(?:read\s*,\s*write|write\s*,\s*read|write|read)\s*:\s*if\s+true\s*;/i;
         if (firebaseAllowAllRegex.test(cleanContent)) {
             const matchLineIdx = lines.findIndex(l => !l.trim().startsWith('//') && firebaseAllowAllRegex.test(l));
