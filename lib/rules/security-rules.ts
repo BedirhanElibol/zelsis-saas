@@ -877,11 +877,27 @@ export function evaluateSecurityRules(file: CodeFile, lines: string[], cleanCont
         const dynamicShell = String.raw`\x60[^\x60]*\$\{[^}]+\}|['"][^'"]*['"]\s*\+|[a-zA-Z0-9_.]+\s*\+|`;
         const cmdInjRegex = new RegExp(String.raw`(?:\b(?:child_process|cp|childProcess)\.(?:exec|execSync)\s*\(|(?<![.\w])exec\s*\(|(?<![.\w])execSync\s*\()\s*(?:` + (isDevTooling ? '' : dynamicShell) + cmdRequestRef + ')');
         const isSafeTemplateExec = (line: string): boolean => {
+            // Taskkill or ps commands targeting numeric PIDs
+            if (/taskkill\s+\/pid\s+|ps\s+-o\s+ppid=\s+-p\s+/i.test(line)) {
+                return true;
+            }
+            // Template literal command
             const tpl = /(?:\b(?:child_process|cp|childProcess)\.(?:exec|execSync)\s*\(|(?<![.\w])exec\s*\(|(?<![.\w])execSync\s*\()\s*`([^`]+)`/.exec(line);
-            if (!tpl) return false;
-            const exprs = [...tpl[1].matchAll(/\$\{\s*([^}]+?)\s*\}/g)].map((m) => m[1].trim());
-            if (exprs.length === 0) return false;
-            return exprs.every((e) => /^[A-Z][A-Z0-9_]*$/.test(e) || (isCliPackagePath && literalAssignedVars.has(e)));
+            if (tpl) {
+                const cmdStr = tpl[1];
+                // Safe internal git/gh commands in tooling or packages
+                if (/^git\s+(?:rev-list|describe|log|diff|status|rev-parse|show)\b/i.test(cmdStr) || /^gh\s+repo\s+view\b/i.test(cmdStr)) {
+                    return true;
+                }
+                const exprs = [...cmdStr.matchAll(/\$\{\s*([^}]+?)\s*\}/g)].map((m) => m[1].trim());
+                if (exprs.length === 0) return false;
+                return exprs.every((e) => /^[A-Z][A-Z0-9_]*$/.test(e) || (isCliPackagePath && literalAssignedVars.has(e)) || /^(?:base|head|repoName|pkg\.name|agent|agentExec)$/.test(e));
+            }
+            // String concatenation command (e.g. 'taskkill /pid ' + pid)
+            if (/['"]taskkill\s+\/pid\s+['"]\s*\+\s*\w+|['"]ps\s+['"]\s*\+\s*\w+/i.test(line)) {
+                return true;
+            }
+            return false;
         };
         const matchLineIdx = !isBuildConfigOrTemplate && cmdInjRegex.test(cleanContent)
             ? lines.findIndex(l => !l.trim().startsWith('//') && !l.trim().startsWith('*') && cmdInjRegex.test(l) && !isSafeTemplateExec(l))
