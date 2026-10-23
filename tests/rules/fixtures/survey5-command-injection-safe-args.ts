@@ -42,6 +42,13 @@ function getGitVersion() {
     $content = exec($command);
     return $content;
 }
+function manageDocker($container, $net) {
+    $name = escapeshellarg($container);
+    exec("docker rm -f $name >/dev/null 2>&1");
+    $network = escapeshellarg($net);
+    $target = escapeshellarg($container);
+    @exec("docker network connect {$network} {$target} 2>&1");
+}
 `),
   },
 ];
