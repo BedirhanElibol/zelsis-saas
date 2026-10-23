@@ -1323,11 +1323,24 @@ export function evaluateSecurityRules(file: CodeFile, lines: string[], cleanCont
     // Rule 45 / SEC-45: Permissive Database Row Level Security (RLS) Bypass Policy
     if (cleanContent.includes('CREATE POLICY') && (cleanContent.includes('USING (true)') || cleanContent.includes('WITH CHECK (true)'))) {
         const rlsBypassRegex = /CREATE\s+POLICY\s+[^;]+(?:USING\s*\(\s*true\s*\)|WITH\s+CHECK\s*\(\s*true\s*\))/i;
-        if (cleanContent.split(';').some((stmt) => rlsBypassRegex.test(stmt) && !/\bTO\s+service_role\b/i.test(stmt))) {
-            // Policies span several lines: point at the USING (true) / WITH CHECK (true) of the first open policy
-            const open = [...cleanContent.matchAll(/CREATE\s+POLICY\s+[^;]+?(?:USING\s*\(\s*true\s*\)|WITH\s+CHECK\s*\(\s*true\s*\))[^;]*/gi)]
-                .find((s) => !/\bTO\s+service_role\b/i.test(s[0]));
-            const truePos = open ? open.index! + open[0].search(/(?:USING|WITH\s+CHECK)\s*\(\s*true\s*\)/i) : -1;
+        const openPolicies = [...cleanContent.matchAll(/CREATE\s+POLICY\s+[^;]+?(?:USING\s*\(\s*true\s*\)|WITH\s+CHECK\s*\(\s*true\s*\))[^;]*/gi)]
+            .filter((s) => !/\bTO\s+service_role\b/i.test(s[0]));
+
+        if (openPolicies.length > 0) {
+            // A policy is exclusively for SELECT when it specifies FOR SELECT and contains no write clauses (WITH CHECK, FOR ALL / INSERT / UPDATE / DELETE).
+            // When FOR is omitted in PostgreSQL, it defaults to FOR ALL (which permits writes).
+            const isSelectOnlyPolicy = (sql: string) =>
+                /\bFOR\s+SELECT\b/i.test(sql) &&
+                !/\bWITH\s+CHECK\b/i.test(sql) &&
+                !/\bFOR\s+(?:ALL|INSERT|UPDATE|DELETE)\b/i.test(sql);
+
+            const writePolicy = openPolicies.find((p) => !isSelectOnlyPolicy(p[0]));
+            const targetPolicy = writePolicy ?? openPolicies[0];
+            const isWriteBypass = Boolean(writePolicy);
+            const severity: Finding['severity'] = isWriteBypass ? 'CRITICAL' : 'HIGH';
+
+            // Policies span several lines: point at the USING (true) / WITH CHECK (true) of the target policy
+            const truePos = targetPolicy ? targetPolicy.index! + targetPolicy[0].search(/(?:USING|WITH\s+CHECK)\s*\(\s*true\s*\)/i) : -1;
             const matchLineIdx = truePos >= 0 ? cleanContent.slice(0, truePos).split('\n').length - 1 : lines.findIndex(l => !l.trim().startsWith('--') && rlsBypassRegex.test(l));
             const lineNum = matchLineIdx !== -1 ? matchLineIdx + 1 : 1;
             const snippet = lines.slice(Math.max(0, lineNum - 2), Math.min(lines.length, lineNum + 2)).join('\n');
@@ -1336,21 +1349,23 @@ export function evaluateSecurityRules(file: CodeFile, lines: string[], cleanCont
                 ruleId: 45,
                 type: 'SECURITY',
                 title: 'Permissive Database Row Level Security (RLS) Bypass Policy',
-                severity: 'CRITICAL',
+                severity, // severity: 'CRITICAL' in catalog; downgraded to HIGH for SELECT-only
                 category: 'Database Security',
                 filePath: file.path,
                 lineRange: `L${lineNum}`,
                 snippet: snippet || lines[matchLineIdx] || 'CREATE POLICY bypass ON table FOR ALL USING (true);',
                 reproductionSteps: [
                     `Scanned database migration or schema SQL at ${file.path}:${lineNum}.`,
-                    'Detected permissive RLS policy allowing universal access to table records.'
+                    isWriteBypass
+                        ? 'Detected permissive RLS policy allowing universal write or all access to table records.'
+                        : 'Detected permissive RLS policy allowing universal read (SELECT) access to table records.'
                 ],
                 remediationPrompt: `Scope RLS policy with explicit user ownership checks: auth.uid() = user_id in ${file.path}:${lineNum}.`,
                 status: 'OPEN',
                 owner: 'Database Lead',
                 falsePositive: false
             });
-            logs.push(`[${ts}] 🛑 CRITICAL: SEC-45 Permissive RLS policy bypass detected in ${file.path}:${lineNum}`);
+            logs.push(`[${ts}] ${isWriteBypass ? '🛑 CRITICAL' : '⚠️ HIGH'}: SEC-45 Permissive RLS policy bypass detected in ${file.path}:${lineNum}`);
         }
     }
     return { findings, logs };

@@ -44,7 +44,7 @@ export function evaluateLinuxKernelSecurityRules(file: CodeFile, lines: string[]
             ruleId: 15701,
             type: 'SECURITY',
             title: "KERN-SEC-01: Unrestricted Linux Root Capabilities (CAP_SYS_ADMIN) Retained in Container Workloads",
-            severity: "CRITICAL",
+            severity: "HIGH",
             category: "Capabilities Hardening",
             filePath: file.path,
             lineRange: `L${lineNum}`,

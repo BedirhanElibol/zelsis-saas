@@ -35,7 +35,7 @@ export function evaluateK8sHardeningRules(file: CodeFile, lines: string[], clean
             ruleId: 8901,
             type: 'INFRA_DATABASE',
             title: "K8S-01: Privileged Container Execution (privileged: true)",
-            severity: "CRITICAL",
+            severity: "HIGH",
             category: "Container Isolation",
             filePath: file.path,
             lineRange: `L${lineNum}`,
