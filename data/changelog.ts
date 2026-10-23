@@ -13,6 +13,13 @@ export interface ChangelogEntry {
 export const CHANGELOG: ChangelogEntry[] = [
   {
     date: '2026-10-23',
+    title: 'Only proven rules can fail the release gate',
+    changes: [
+      { kind: 'Improved', text: 'A critical finding fails the gate only when its rule has caught a documented flaw in the benchmark or has a reviewed true positive, or when it is a published advisory for a dependency version. Findings from other rules are still reported, as high, so they show up in the pull request without blocking the merge on their own.' },
+    ],
+  },
+  {
+    date: '2026-10-23',
     title: 'Critical injection findings need outside input',
     changes: [
       { kind: 'Improved', text: 'SQL, command and code injection findings (eval included) stay critical only when the file reads outside input, such as a request body, query string, route parameter, form, cookie or upload. Without it they are reported as high: still visible, but they no longer fail the gate on their own. eval of a stored database field stays critical.' },
