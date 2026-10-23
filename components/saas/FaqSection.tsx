@@ -52,8 +52,23 @@ export const FaqSection: React.FC = () => {
 
   if (faqs.length === 0) return null;
 
+  // Closed answers are not in the DOM, so search engines read the questions and answers from FAQPage markup
+  const faqJsonLd = {
+    '@context': 'https://schema.org',
+    '@type': 'FAQPage',
+    mainEntity: faqs.map((faq) => ({
+      '@type': 'Question',
+      name: faq.question,
+      acceptedAnswer: { '@type': 'Answer', text: faq.answer }
+    }))
+  };
+
   return (
     <section id="faq" className="py-24 sm:py-32 px-4 sm:px-6 lg:px-12 bg-[#0A0A0A] border-b border-white/10">
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(faqJsonLd).replace(/</g, '\\u003c') }}
+      />
       <div className="max-w-4xl mx-auto flex flex-col gap-12">
         {/* Section Header */}
         <div className="flex flex-col gap-4 text-center">
