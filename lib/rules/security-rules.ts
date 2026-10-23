@@ -820,9 +820,19 @@ export function evaluateSecurityRules(file: CodeFile, lines: string[], cleanCont
         // embedded JS engine's context.eval. One line only: [^)] across lines matched where no line could be found.
         const raw32 = (file.content || '').split('\n');
         const evalRegex = /(?:(?<![\w$.>])|(?<=\b(?:math|mathjs|window|globalThis|global|self|top|parent)\.))(?<!\b(?:def|function|fun|func|void)\s+)eval\s*\([^)\n]+\)|\bnew\s+Function\s*\([^)\n]+\)/;
-        // Not a dynamic call: a typed method signature (eval(t: number): Vec3), or only a fixed string literal
+        // Not a dynamic call: a typed method signature (eval(t: number): Vec3), only a fixed string literal,
+        // or a security validator/linter check (.includes('eval('), .indexOf('eval'), /eval\(/.test(s))
+        const isLiteralOrValidatorCheck = (l: string) => {
+            if (/\.(?:includes|indexOf|search|match|test|has|contains)\s*\([^)]*eval/i.test(l)) return true;
+            if (/\/(?:[^\n\\/]|\\.)*\beval\b(?:[^\n\\/]|\\.)*\/\s*\.\s*(?:test|exec)\s*\(/i.test(l)) return true;
+            const codeOnly = l
+                .replace(/(['"`])(?:(?!\1)[^\\]|\\.)*\1/g, '')
+                .replace(/\/(?:[^\n\\/]|\\.)+\/[gimsuy]*/g, '');
+            return !/\beval\s*\(/.test(codeOnly) && !/\bnew\s+Function\s*\(/.test(codeOnly);
+        };
         const notDynamic = (l: string) => /\beval\s*\(\s*\w+\s*\??\s*:\s*[\w[{]/.test(l)
-            || /(?:\beval|\bnew\s+Function)\s*\(\s*(['"`])(?:(?!\1|\$\{)[^\\]|\\.)*\1\s*\)/.test(l) && !/(?:\beval|\bnew\s+Function)\s*\(\s*(['"`])(?:(?!\1)[^\\]|\\.)*\1\s*[+,]/.test(l);
+            || /(?:\beval|\bnew\s+Function)\s*\(\s*(['"`])(?:(?!\1|\$\{)[^\\]|\\.)*\1\s*\)/.test(l) && !/(?:\beval|\bnew\s+Function)\s*\(\s*(['"`])(?:(?!\1)[^\\]|\\.)*\1\s*[+,]/.test(l)
+            || isLiteralOrValidatorCheck(l);
         const matchLineIdx = evalRegex.test(cleanContent)
             ? lines.findIndex(l => !l.trim().startsWith('//') && !l.trim().startsWith('*') && evalRegex.test(l) && !notDynamic(l))
             : -1;
