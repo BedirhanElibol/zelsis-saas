@@ -696,9 +696,13 @@ export function evaluateInfraRules(file: CodeFile, lines: string[], cleanContent
         const sqlKeyword = String.raw`\b(?:SELECT\b[^"'\x60;]*?\bFROM|INSERT\s+INTO|UPDATE\s+[\w."]+\s+SET|DELETE\s+FROM)\b`;
         const dynamicSql = String.raw`(?:"[^"\n]*` + sqlKeyword + String.raw`[^"\n]*"\s*\+|'[^'\n]*` + sqlKeyword + String.raw`[^'\n]*'\s*\+|\x60[^\x60]*` + sqlKeyword + String.raw`[^\x60]*\$\{)`;
         const queryCall = String.raw`(?:\.(?:query|raw|execute|exec|prepare|unsafe)|\$(?:queryRawUnsafe|executeRawUnsafe))\s*\(\s*`;
-        const sqlVars = [...cleanContent.matchAll(new RegExp(String.raw`(?:const|let|var)\s+(\w+)\s*=\s*` + dynamicSql, 'gi'))].map((m) => m[1]);
+        const normalizeSqlInterpolations = (s: string) => s
+            .replace(/\$\{\s*(?:[a-zA-Z0-9_.]+\.)?(?:quoteIdentifier|quoteTable|quoteColumn|escapeIdentifier|quote|escapeLiteral)\s*\([^)]*\)\s*\}/g, 'IDENT')
+            .replace(/\$\{\s*[A-Z][A-Z0-9_]*\s*\}/g, 'CONST');
+        const cleanContentForSql = normalizeSqlInterpolations(cleanContent);
+        const sqlVars = [...cleanContentForSql.matchAll(new RegExp(String.raw`(?:const|let|var)\s+(\w+)\s*=\s*` + dynamicSql, 'gi'))].map((m) => m[1]);
         const rawSqlConcatRegex = new RegExp(queryCall + '(?:' + dynamicSql + (sqlVars.length ? String.raw`|\b(?:` + sqlVars.join('|') + String.raw`)\b` : '') + ')', 'i');
-        const sqlConcatMatch = rawSqlConcatRegex.exec(cleanContent);
+        const sqlConcatMatch = rawSqlConcatRegex.exec(cleanContentForSql);
         if (sqlConcatMatch) {
             // Multi-line template literals never match a single line: locate the call from the match offset
             const lineNum = cleanContent.slice(0, sqlConcatMatch.index).split('\n').length;

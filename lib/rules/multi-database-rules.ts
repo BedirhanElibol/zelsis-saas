@@ -169,12 +169,18 @@ export function evaluateMultiDatabaseRules(file: CodeFile, lines: string[], clea
     const isJsTs = lowerPath.endsWith('.js') || lowerPath.endsWith('.ts') || lowerPath.endsWith('.mjs') || lowerPath.endsWith('.cjs');
     const isPy = lowerPath.endsWith('.py');
     const isMigrationFile = /(?:^|\/)(?:migrations?|predefinedmigrations)\//i.test(lowerPath);
-    if (isPy && !isMigrationFile) {
-        const sqlIdentCleanPy = cleanContent.replace(/\b(FROM|INTO|UPDATE|JOIN|TABLE)(\s+[`"']?)(?:\{\s*[\w.]+\s*\})[`"']?/gi, '$1$2IDENT');
+    const isIntrospection = /(?:^|\/)(?:introspection|schema_editor)\.py$/i.test(lowerPath);
+    if (isPy && !isMigrationFile && !isIntrospection) {
+        const sqlIdentCleanPy = cleanContent
+            .replace(/\b(FROM|INTO|UPDATE|JOIN|TABLE)(\s+[`"']?)(?:\{\s*[\w.]+\s*\})[`"']?/gi, '$1$2IDENT')
+            .replace(/%\s*(?:self\.)?(?:connection\.)?(?:ops\.)?quote_name\s*\([^)]*\)/gi, '% IDENT')
+            .replace(/%\s*\(\s*(?:(?:self\.)?(?:connection\.)?(?:ops\.)?quote_name\s*\([^)]*\)\s*,?\s*)+\)/gi, '% IDENT')
+            .replace(/\{\s*(?:self\.)?(?:connection\.)?(?:ops\.)?quote_name\s*\([^)]*\)\s*\}/gi, 'IDENT');
         const pyMysqlSqli = /cursor\.execute\s*\(\s*(?:f"[^"]*\b(?:SELECT|INSERT|UPDATE|DELETE)\b[^"]*\{[^}]+\}|f'[^']*\b(?:SELECT|INSERT|UPDATE|DELETE)\b[^']*\{[^}]+\}|["'][^"']*\b(?:SELECT|INSERT|UPDATE|DELETE)\b[^"']*["']\s*%\s*[a-zA-Z0-9_]+)/i;
         if (pyMysqlSqli.test(sqlIdentCleanPy)) {
             const matchLineIdx = lines.findIndex(l => !l.trim().startsWith('#') && pyMysqlSqli.test(l.replace(/\b(FROM|INTO|UPDATE|JOIN|TABLE)(\s+[`"']?)(?:\{\s*[\w.]+\s*\})[`"']?/gi, '$1$2IDENT')));
-            const lineNum = matchLineIdx !== -1 ? matchLineIdx + 1 : 1;
+            const m = pyMysqlSqli.exec(sqlIdentCleanPy);
+            const lineNum = matchLineIdx !== -1 ? matchLineIdx + 1 : (m ? cleanContent.slice(0, m.index).split('\n').length : 1);
             const snippet = extractSnippet(lines, lineNum);
             findings.push({
                 id: `mysql-py-${Date.now()}-${findingCounter.count++}`,
@@ -307,7 +313,7 @@ export function evaluateMultiDatabaseRules(file: CodeFile, lines: string[], clea
                 // only the quoted item inside .map((v) => `'${v}'`), not every variable called v
                 .replace(/\.map\(\s*\(?\s*(\w+)\s*\)?\s*=>\s*`'?\$\{\s*\1\s*\}'?`\s*\)/g, '.map(QUOTE)')
                 .replace(/\b(FROM|INTO|UPDATE|JOIN|TABLE(?:\s+IF\s+(?:NOT\s+)?EXISTS)?)(\s+[`"']?)(?:\$\{\s*[\w.]+\s*\})[`"']?/gi, '$1$2IDENT')
-                .replace(/\$\{\s*(?:[a-zA-Z0-9_.]+\.)?(?:escapeIdentifier|quoteIdentifier|quoteTable|quoteColumn)\s*\([^}]*\)\s*\}/g, 'IDENT')
+                .replace(/\$\{\s*(?:[a-zA-Z0-9_.]+\.)?(?:escapeIdentifier|quoteIdentifier|quoteTable|quoteColumn|quote|escapeLiteral)\s*\([^}]*\)\s*\}/g, 'IDENT')
                 .replace(/\$\{\s*[A-Z][A-Z0-9_]*\s*\}/g, 'CONST_NUM')
                 .replace(/\$\{\s*(?:enumValues|enumDef|enumVals|Object\.values\([^)]+\))(?:\.map\([^}]+\))?\.join\([^}]*\)\s*\}/g, 'ENUM_VAL')
                 .replace(/\$\{\s*(?:[a-zA-Z0-9_.]+\.)?(?:columnName|column|fieldName|tableName|table|alias)\s*\}/g, 'COL_IDENT')
