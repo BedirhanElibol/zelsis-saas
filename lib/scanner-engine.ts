@@ -283,7 +283,9 @@ export async function runStaticCodeScan(inputFiles: CodeFile[], repoName: string
       }
       // Critical injection rules require external input to be release-blocking: without request/untrusted
       // input in the file, dynamic queries or commands are hardening concerns, not immediate CRITICAL blockers.
-      if (f.severity === 'CRITICAL' && isCriticalInjectionRule(f.ruleId) && !hasUntrustedInput(rawContent)) {
+      // eval of a stored model field (Ruby eval(@record.attribute)) runs data a user saved earlier: keep it CRITICAL
+      const evalsStoredField = f.ruleId === 32 && /\beval\s*\(\s*@\w+\.\w+/.test(String(f.snippet ?? ''));
+      if (f.severity === 'CRITICAL' && isCriticalInjectionRule(f.ruleId) && !evalsStoredField && !hasUntrustedInput(rawContent)) {
         f.severity = 'HIGH';
         f.reproductionSteps = [
           ...(f.reproductionSteps ?? []),

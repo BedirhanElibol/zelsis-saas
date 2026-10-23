@@ -126,7 +126,8 @@ export const UNTRUSTED_INPUT = new RegExp([
   String.raw`\$request->`,
   String.raw`\bcookies\[`,
   String.raw`\brequest_body\b`,
-  String.raw`\b[a-zA-Z0-9_]*(?:r|req|request)\.(?:URL|FormValue|PostFormValue|Form|PostForm|MultipartForm|Body|Header|Cookie|Cookies)\b`,
+  // Only the request variable itself: a prefix like [a-z]*r matched user.header, parser.body, buffer.form
+  String.raw`\b(?:r|req|request)\.(?:URL|FormValue|PostFormValue|Form|PostForm|MultipartForm|Body|Header|Cookie|Cookies)\b`,
   String.raw`\b(?:c|ctx)\.(?:Query|DefaultQuery|Param|Params|PostForm|FormValue|FormFile|QueryParam|Bind|BindJSON|BindQuery|BindXML|BindYAML|BindHeader|BindUri|ShouldBind|ShouldBindJSON|ShouldBindQuery|ShouldBindXML|ShouldBindYAML|ShouldBindHeader|ShouldBindUri|ShouldBindBodyWith|GetHeader|GetRawData|BodyParser)\s*\(`,
   String.raw`\bhttp\.Request\b`,
   String.raw`\bHttpServletRequest\b`,
@@ -153,7 +154,9 @@ export function hasUntrustedInput(content: string): boolean {
  * where lack of external user input in the file downgrades the finding from CRITICAL to HIGH.
  */
 export const CRITICAL_INJECTION_RULES = new Set<number>([
-  33, 42,
+  32, 33, 42,
+  8811,
+  24106,
   3020, 3021,
   6043,
   8516, 8517,
