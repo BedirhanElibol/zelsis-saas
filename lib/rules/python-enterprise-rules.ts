@@ -79,12 +79,17 @@ export function evaluatePythonEnterpriseRules(file: CodeFile, lines: string[], c
         logs.push(`[${ts}] [PYTHON AUDIT] Found PY-SEC-01: Unsafe Pickle Deserialization (Remote Code Execution) at ${file.path}:${lineNum}`);
     }
     // PY-SEC-02: Insecure PyYAML load() Without SafeLoader
-    const reg_8802 = /yaml\.load\s*\([^,)]*\)(?!\s*,\s*Loader\s*=\s*(?:yaml\.)?SafeLoader)/i;
-    if (reg_8802.test(cleanContent)) {
-        const linePattern = /yaml\.load\s*\(/i;
-        const matchLineIdx = lines.findIndex(l => !l.trim().startsWith('#') && !l.trim().startsWith('"""') && linePattern.test(l));
-        const lineNum = matchLineIdx !== -1 ? matchLineIdx + 1 : 1;
-        const rawSnippet = matchLineIdx !== -1 ? lines[matchLineIdx].trim() : lines.find(l => !l.trim().startsWith('#'))?.trim() || "Insecure PyYAML load() Without SafeLoader";
+    const unsafeYamlIdx = pyLinesNoStrings.findIndex((strippedLine, idx) => {
+        if (!/\byaml\.load\s*\(/i.test(strippedLine)) return false;
+        const call = callText(lines, idx, /\byaml\.load\s*\(/i);
+        if (/Loader\s*=\s*(?:yaml\.)?(?:Safe|CSafe|Base|CBase)Loader\b/i.test(call)) {
+            return false;
+        }
+        return true;
+    });
+    if (unsafeYamlIdx !== -1) {
+        const lineNum = unsafeYamlIdx + 1;
+        const rawSnippet = lines[unsafeYamlIdx]?.trim() || "Insecure PyYAML load() Without SafeLoader";
         findings.push({
             id: `py8802-${Date.now()}-${findingCounter.count++}`,
             ruleId: 8802,
