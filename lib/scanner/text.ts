@@ -112,3 +112,60 @@ export function isNonAppPath(path: string): boolean {
 
   return false;
 }
+/**
+ * Untrusted user input pattern across supported languages and frameworks (HTTP requests, query strings,
+ * route parameters, request bodies, headers, cookies, uploads, stdin and sockets).
+ */
+export const UNTRUSTED_INPUT = new RegExp([
+  String.raw`\b(?:request|req)\.(?:body|data|args|form|values|files|json|params|query|query_params|path_params|cookies|headers|get_data|stream|raw_post|POST|GET|COOKIES|FILES|url|nextUrl|searchParams|getParameter|getInputStream|getReader|post|text|formData|blob|bytes|arrayBuffer)\b`,
+  String.raw`\b(?:request|req)\s*:\s*(?:Next)?Request\b`,
+  String.raw`\bsearchParams\.(?:get|getAll|has)\b`,
+  String.raw`\bparams\[`,
+  String.raw`\{[^\n}]*\b(?:params|searchParams)\b[^\n}]*\}[\s:]`,
+  String.raw`\$_(?:GET|POST|REQUEST|COOKIE|FILES|SERVER)\b`,
+  String.raw`\$request->`,
+  String.raw`\bcookies\[`,
+  String.raw`\brequest_body\b`,
+  String.raw`\b[a-zA-Z0-9_]*(?:r|req|request)\.(?:URL|FormValue|PostFormValue|Form|PostForm|MultipartForm|Body|Header|Cookie|Cookies)\b`,
+  String.raw`\b(?:c|ctx)\.(?:Query|DefaultQuery|Param|Params|PostForm|FormValue|FormFile|QueryParam|Bind|BindJSON|BindQuery|BindXML|BindYAML|BindHeader|BindUri|ShouldBind|ShouldBindJSON|ShouldBindQuery|ShouldBindXML|ShouldBindYAML|ShouldBindHeader|ShouldBindUri|ShouldBindBodyWith|GetHeader|GetRawData|BodyParser)\s*\(`,
+  String.raw`\bhttp\.Request\b`,
+  String.raw`\bHttpServletRequest\b`,
+  String.raw`@(?:RequestBody|RequestParam|PathVariable|RequestHeader|CookieValue)\b`,
+  String.raw`\bgetInputStream\s*\(`,
+  String.raw`\[\s*From(?:Body|Query|Route|Header|Form)\s*\]`,
+  String.raw`\bRequest\.(?:Query|Form|Body|Headers|Cookies)\b`,
+  String.raw`\b(?:ctx|context)\.(?:req|request|query|body|params|header|headers)\b`,
+  String.raw`\bAstro\.request\b`,
+  String.raw`\b(?:getText|getIntent|getExtras|getQueryParameter)\s*\(`,
+  String.raw`\brecv\s*\(`,
+  String.raw`\bsys\.stdin\b`,
+  String.raw`\bSTDIN\b`,
+  String.raw`\bupload\b`,
+].join('|'), 'i');
+
+export function hasUntrustedInput(content: string): boolean {
+  if (!content) return false;
+  return UNTRUSTED_INPUT.test(content);
+}
+
+/**
+ * Injection rules that represent injection/execution vulnerability classes
+ * where lack of external user input in the file downgrades the finding from CRITICAL to HIGH.
+ */
+export const CRITICAL_INJECTION_RULES = new Set<number>([
+  33, 42,
+  3020, 3021,
+  6043,
+  8516, 8517,
+  8810, 8830,
+  9001, 9002,
+  9605,
+  12002, 12503,
+  18001, 18003, 18011, 18021, 18031, 18033, 18041, 18101, 18102, 18104,
+  24101, 24102,
+  29002,
+]);
+
+export function isCriticalInjectionRule(ruleId: number): boolean {
+  return CRITICAL_INJECTION_RULES.has(ruleId);
+}
