@@ -121,7 +121,14 @@ export function evaluateFintechComplianceRules(file: CodeFile, lines: string[], 
     }
     // FINTECH-04: Insecure Webhook Signature Verification on Payment Callback
     const isWebhookCode = lowerPath.includes('webhook') || /\.(?:post|all)\s*\(\s*['"`][^'"`]*webhook/i.test(cleanContent);
-    if (isWebhookCode && (PAYMENT_SDK.test(lowerPath + cleanContent) || /(?:payment|billing|checkout|subscription|invoice|order)/i.test(lowerPath + cleanContent)) && REQUEST_BODY.test(cleanContent) && !WEBHOOK_VERIFY.test(cleanContent) && !CALLER_AUTH.test(cleanContent)) {
+    const isNonPaymentWebhook = /(?:gitlab|github|bitbucket|gitea|telegram|discord|slack|teams|bot|jira|linear)\b/i.test(lowerPath)
+        && !/stripe|paypal|paddle|razorpay|lemonsqueezy|polar|iyzi/i.test(lowerPath);
+    const isPaymentWebhook = !isNonPaymentWebhook && (
+        PAYMENT_SDK.test(lowerPath + cleanContent)
+        || /(?:^|\/)(?:payment|billing|checkout)\b/i.test(lowerPath)
+        || /(?:payment|billing|checkout|subscription|invoice)/i.test(lowerPath)
+    );
+    if (isWebhookCode && isPaymentWebhook && REQUEST_BODY.test(cleanContent) && !WEBHOOK_VERIFY.test(cleanContent) && !CALLER_AUTH.test(cleanContent)) {
         const matchLineIdx = locateMatchLine(lines, [PAYMENT_SDK, /(?:payment|billing|checkout|subscription|invoice|order)/i, REQUEST_BODY], l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('*'));
         const lineNum = matchLineIdx !== -1 ? matchLineIdx + 1 : 1;
         findings.push({
