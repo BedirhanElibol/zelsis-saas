@@ -161,7 +161,13 @@ export function evaluateDatabaseRules(file: CodeFile, lines: string[], cleanCont
     // DB-PERF-10: PostgreSQL Public Table Missing Row Level Security (RLS)
     // Only tables in the API-exposed public schema (unqualified or public.*); the finding points at that table's CREATE TABLE line
     const isSqlitePath_6010 = /(?:^|\/|\.)sqlite(?:\b|_|\.)/i.test(file.path.toLowerCase()) || file.path.toLowerCase().endsWith('.sqlite.sql');
-    const tablesWithoutRls = isSqlitePath_6010 ? [] : [...cleanContent.matchAll(/CREATE\s+(?:UNLOGGED\s+)?TABLE\s+(?:IF\s+NOT\s+EXISTS\s+)?([\w."]+)/gi)]
+    const isSqliteFile_6010 = isSqlitePath_6010 ||
+        /(?:drizzle-orm\/sqlite-core|better-sqlite3|\bsqlite3\b|\bsqliteTable\b|PRAGMA\s+[a-z_]+)/i.test(cleanContent);
+    // Strip SQL line comments (-- ...) and block comments (/* ... */) while preserving line breaks and character offsets
+    const sqlNoComments_6010 = cleanContent
+        .replace(/\/\*[\s\S]*?\*\//g, (m) => m.replace(/[^\r\n]/g, ' '))
+        .replace(/--[^\r\n]*/g, (m) => ' '.repeat(m.length));
+    const tablesWithoutRls = isSqliteFile_6010 ? [] : [...sqlNoComments_6010.matchAll(/CREATE\s+(?:UNLOGGED\s+)?TABLE\s+(?:IF\s+NOT\s+EXISTS\s+)?(?!(?:if|as|example)\b)("?[a-zA-Z_][a-zA-Z0-9_."]*)(?=\s*\()/gi)]
         .filter((m) => !/\./.test(m[1].replace(/"/g, '')) || /^"?public"?\./i.test(m[1]))
         .filter((m) => {
             const stmtSlice = cleanContent.slice(m.index!, m.index! + 500);

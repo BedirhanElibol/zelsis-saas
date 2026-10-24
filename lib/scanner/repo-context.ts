@@ -91,8 +91,11 @@ export function buildRepoContext(files: CodeFile[]): RepoContext {
   for (const file of files) {
     if (!hasHealthEndpoint && HEALTH_ROUTE.test(file.content || '')) hasHealthEndpoint = true;
     const path = (file.path || '').replace(/\\/g, '/');
-    if (/(?:^|\/)supabase\/(?:config\.toml|migrations\/)/i.test(path) || /postgrest\.conf$/i.test(path)) strongDbExposure = true;
-    else if (/(?:^|\/)package\.json$/.test(path) && !/node_modules\//.test(path) && /"@supabase\/(?:supabase-js|ssr|auth-helpers-\w+)"/.test(file.content || '')) {
+    if (/(?:^|\/)supabase\/(?:config\.toml|migrations\/)/i.test(path) || /postgrest\.conf$/i.test(path)) {
+      strongDbExposure = true;
+      const ws = path.replace(/\/?supabase\/(?:config\.toml|migrations\/).*/i, '');
+      supabaseWorkspaceDirs.push(ws);
+    } else if (/(?:^|\/)package\.json$/.test(path) && !/node_modules\//.test(path) && /"@supabase\/(?:supabase-js|ssr|auth-helpers-\w+)"/.test(file.content || '')) {
       supabaseWorkspaceDirs.push(path.replace(/(?:^|\/)package\.json$/, ''));
     }
     if (/(?:^|\/)package\.json$/.test(path) && !/node_modules\//.test(path)) {
@@ -101,7 +104,11 @@ export function buildRepoContext(files: CodeFile[]): RepoContext {
     }
     if (/\.sql$/i.test(path)) {
       const sql = file.content || '';
-      if (/GRANT[^;]*\bTO\s+(?:anon|authenticated|web_anon)\b/i.test(sql)) strongDbExposure = true;
+      if (/GRANT[^;]*\bTO\s+(?:anon|authenticated|web_anon)\b/i.test(sql)) {
+        strongDbExposure = true;
+        const dir = path.includes('/') ? path.slice(0, path.lastIndexOf('/')) : '';
+        if (dir) supabaseWorkspaceDirs.push(dir);
+      }
       for (const m of sql.matchAll(/ALTER\s+TABLE\s+(?:IF\s+EXISTS\s+)?(?:ONLY\s+)?([\w."]+)\s+ENABLE\s+ROW\s+LEVEL\s+SECURITY/gi)) {
         rlsEnabledTables.add(normalizeSqlName(m[1]));
       }
@@ -124,9 +131,9 @@ export function buildRepoContext(files: CodeFile[]): RepoContext {
       if (/SET\s+search_path/i.test(m[0])) hardenedSqlFunctions.add(normalizeSqlName(m[1]));
     }
   }
-  // A supabase-js dependency in the root package.json covers the whole repo
-  const dbExposedDirs = strongDbExposure || supabaseWorkspaceDirs.includes('') ? null : supabaseWorkspaceDirs;
-  const exposesDatabaseToClients = dbExposedDirs === null || dbExposedDirs.length > 0;
+  const uniqueDirs = [...new Set(supabaseWorkspaceDirs)];
+  const dbExposedDirs = uniqueDirs.length > 0 ? uniqueDirs : (strongDbExposure ? ['supabase'] : []);
+  const exposesDatabaseToClients = strongDbExposure || dbExposedDirs.length > 0;
   return {
     hardenedSqlFunctions, revokedSqlFunctions, rlsEnabledTables, exposesDatabaseToClients, dbExposedDirs, hasHealthEndpoint, nextMajorVersion,
     ...collectServerClientFacts(files), crossFileAuth: buildCrossFileAuth(files), infra: collectInfraFacts(files), ...collectProjectFacts(files)
@@ -245,5 +252,15 @@ export function databaseExposedAt(context: Pick<RepoContext, 'exposesDatabaseToC
   if (/sqlite|(?:^|\/)(?:d1|cloudflare)(?:\/|[-_])|\.d1\./i.test(p)) return false;
   if (/(?:^|\/)(?:docs?|_blog|blog|content\/guides|recipes|examples?|samples?)\//i.test(p) && !/(?:^|\/)supabase\/migrations\//i.test(p)) return false;
   const dirs = context.dbExposedDirs;
-  return !dirs || dirs.some((d) => p.startsWith(d + '/'));
+  if (dirs && dirs.length > 0) {
+    return dirs.some((d) => {
+      const prefix = d ? (d + '/') : '';
+      return (
+        p.startsWith(prefix + 'supabase/') ||
+        (Boolean(prefix) && p.startsWith(prefix) && /(?:^|\/)supabase\//i.test(p)) ||
+        (p.startsWith(prefix) && /(?:^|\/)(?:db|database)\/(?:schema|migrations)\b/i.test(p))
+      );
+    });
+  }
+  return /(?:^|\/)supabase\//i.test(p) || /postgrest/i.test(p);
 }
