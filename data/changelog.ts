@@ -12,6 +12,17 @@ export interface ChangelogEntry {
 
 export const CHANGELOG: ChangelogEntry[] = [
   {
+    date: '2026-10-24',
+    title: 'Finer precision for webhooks, RLS checks, and common build patterns',
+    changes: [
+      { kind: 'Fixed', text: 'Payment webhook verification rules are scoped to payment provider webhooks, recognizing signature adapters and secret headers while skipping non-payment events like issue trackers and chat bots.' },
+      { kind: 'Fixed', text: 'Database Row Level Security rules now focus strictly on client-exposed databases, ignoring commented-out SQL and SQLite table definitions.' },
+      { kind: 'Fixed', text: 'Safe YAML loaders like ruamel.yaml and commands using escapeshellarg are recognized as safe when no unescaped request input is present.' },
+      { kind: 'Fixed', text: 'Secret fallbacks in local, dev, mock or test files and non-auth cookies are reported at medium instead of failing the gate. Network requests starting with a fixed config or environment URL are not reported as SSRF.' },
+      { kind: 'Improved', text: 'SQL queries loading local files through DuckDB read_parquet or using table name constants alongside parameter placeholders are recognized as non-injections, keeping raw user input in query values strictly caught.' },
+    ],
+  },
+  {
     date: '2026-10-23',
     title: 'Only proven rules can fail the release gate',
     changes: [

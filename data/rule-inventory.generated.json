@@ -1440,7 +1440,7 @@
    "ruleId": 14,
    "code": "RULE-14",
    "title": "Insecure Hardcoded Fallback for Cryptographic Session / JWT Secret",
-   "severity": "CRITICAL",
+   "severity": "UNKNOWN",
    "source": "lib/rules/security-rules.ts",
    "preciseLocation": true,
    "tested": true,

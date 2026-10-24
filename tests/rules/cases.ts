@@ -348,7 +348,15 @@ export const RULE_CASES: RuleCase[] = [
     ruleIds: [3001, 6010],
     name: 'Table without Row Level Security',
     detects: f('supabase/migrations/002.sql', 'CREATE TABLE public.payments (id uuid primary key, user_id uuid, amount int);\n'),
-    ignores: f('supabase/migrations/002.sql', 'CREATE TABLE public.payments (id uuid primary key, user_id uuid, amount int);\nALTER TABLE public.payments ENABLE ROW LEVEL SECURITY;\nCREATE POLICY "own" ON public.payments FOR SELECT USING (auth.uid() = user_id);\n')
+    ignores: [
+      { path: 'supabase/migrations/002.sql', content: 'CREATE TABLE public.payments (id uuid primary key, user_id uuid, amount int);\nALTER TABLE public.payments ENABLE ROW LEVEL SECURITY;\nCREATE POLICY "own" ON public.payments FOR SELECT USING (auth.uid() = user_id);\n' },
+      // SQL line comments and block comments containing CREATE TABLE are not real table definitions
+      { path: 'supabase/migrations/003_comments.sql', content: '-- o baseline aplicado, e create table if not exists faz a reescrita virar no-op\n/* create table if not exists dummy (id int); */\nALTER TABLE public.payments ALTER COLUMN amount SET NOT NULL;\n' },
+      // SQLite schemas in TypeScript or drizzle-orm are not Postgres RLS tables
+      { path: 'packages/agent/src/session/schema.ts', content: 'import { sqliteTable, text } from "drizzle-orm/sqlite-core";\nconst sql = "CREATE TABLE IF NOT EXISTS chat_sessions (id TEXT PRIMARY KEY);";\n' },
+      // Standalone Postgres schemas outside supabase directory in a multi-tenant monorepo
+      { path: 'plugins/postgres/sql/bundles.sql', content: 'CREATE TABLE bundles (id serial primary key, name text);\n' }
+    ]
   },
   {
     ruleIds: [3001],
