@@ -1,5 +1,5 @@
 {
- "generatedAt": "2026-10-20",
+ "generatedAt": "2026-10-24",
  "corpus": [
   {
    "name": "vercel/nextjs-subscription-payments",
@@ -172,9 +172,9 @@
  ],
  "summary": {
   "cleanRepos": 17,
-  "cleanReposGateFailed": 5,
-  "cleanHighCriticalFindings": 36,
-  "cleanGatingHighCriticalFindings": 36,
+  "cleanReposGateFailed": 3,
+  "cleanHighCriticalFindings": 34,
+  "cleanGatingHighCriticalFindings": 34,
   "documentedFlaws": 43,
   "documentedFlawsDetected": 43,
   "recall": 1,
@@ -189,7 +189,7 @@
    "kind": "clean",
    "stack": "Next.js + Supabase + Stripe",
    "files": 68,
-   "scanMs": 964,
+   "scanMs": 1379,
    "gate": "WARNING",
    "score": 69,
    "critical": 0,
@@ -207,7 +207,7 @@
    "kind": "clean",
    "stack": "Next.js + Prisma + Stripe + NextAuth",
    "files": 140,
-   "scanMs": 1015,
+   "scanMs": 1359,
    "gate": "WARNING",
    "score": 90,
    "critical": 0,
@@ -225,9 +225,9 @@
    "kind": "clean",
    "stack": "FastAPI + React",
    "files": 206,
-   "scanMs": 1262,
+   "scanMs": 2094,
    "gate": "WARNING",
-   "score": 83,
+   "score": 86,
    "critical": 0,
    "high": 1,
    "medium": 5,
@@ -243,9 +243,9 @@
    "kind": "clean",
    "stack": "Express + Prisma",
    "files": 58,
-   "scanMs": 253,
+   "scanMs": 356,
    "gate": "FAILED",
-   "score": 35,
+   "score": 38,
    "critical": 2,
    "high": 1,
    "medium": 5,
@@ -267,7 +267,7 @@
    "kind": "clean",
    "stack": "Go + Gin",
    "files": 27,
-   "scanMs": 237,
+   "scanMs": 338,
    "gate": "PASSED",
    "score": 98,
    "critical": 0,
@@ -285,7 +285,7 @@
    "kind": "clean",
    "stack": "Laravel",
    "files": 40,
-   "scanMs": 122,
+   "scanMs": 184,
    "gate": "PASSED",
    "score": 100,
    "critical": 0,
@@ -303,15 +303,15 @@
    "kind": "clean",
    "stack": "Remix/React Router + Prisma + tRPC (production SaaS)",
    "files": 2481,
-   "scanMs": 22919,
+   "scanMs": 40655,
    "gate": "WARNING",
-   "score": 25,
+   "score": 37,
    "critical": 0,
-   "high": 5,
-   "medium": 92,
+   "high": 4,
+   "medium": 93,
    "low": 151,
    "experimental": 0,
-   "allHighCritical": 5,
+   "allHighCritical": 4,
    "detectedFramework": "React",
    "blockers": []
   },
@@ -321,7 +321,7 @@
    "kind": "clean",
    "stack": "TypeScript SDK",
    "files": 474,
-   "scanMs": 4514,
+   "scanMs": 8223,
    "gate": "FAILED",
    "score": 59,
    "critical": 1,
@@ -345,27 +345,17 @@
    "kind": "vulnerable",
    "stack": "Express + MongoDB",
    "files": 87,
-   "scanMs": 350,
+   "scanMs": 583,
    "gate": "FAILED",
    "score": 0,
-   "critical": 6,
-   "high": 4,
-   "medium": 11,
+   "critical": 3,
+   "high": 5,
+   "medium": 12,
    "low": 10,
    "experimental": 0,
-   "allHighCritical": 10,
+   "allHighCritical": 8,
    "detectedFramework": "Express",
    "blockers": [
-    {
-     "ruleId": 33,
-     "title": "Command Injection via Unsanitized Child Process Execution",
-     "reviewed": null
-    },
-    {
-     "ruleId": 3020,
-     "title": "MongoDB NoSQL Injection via $where JavaScript Evaluation or Raw Request Query Object",
-     "reviewed": null
-    },
     {
      "ruleId": 32,
      "title": "Dynamic Code Execution (eval / Function Remote Code Execution)",
@@ -389,11 +379,11 @@
    "kind": "vulnerable",
    "stack": "Express + Sequelize",
    "files": 21,
-   "scanMs": 126,
+   "scanMs": 215,
    "gate": "FAILED",
    "score": 0,
-   "critical": 6,
-   "high": 3,
+   "critical": 4,
+   "high": 5,
    "medium": 3,
    "low": 0,
    "experimental": 0,
@@ -419,11 +409,6 @@
      "ruleId": 29303,
      "title": "AST-03: SQL Injection: Request Input Reaches a Raw Query Through Variables (CWE-89)",
      "reviewed": null
-    },
-    {
-     "ruleId": 27211,
-     "title": "SCA: CVE-2020-7699 - Express-Fileupload Prototype Pollution to Remote Code Execution (express-fileupload@^0.4.0)",
-     "reviewed": null
     }
    ]
   },
@@ -432,46 +417,21 @@
    "sha": "1618a611b173b4bf114028e6e02549950606e29d",
    "kind": "vulnerable",
    "stack": "Express + Angular + Sequelize",
-   "files": 962,
-   "scanMs": 9628,
+   "files": 965,
+   "scanMs": 14320,
    "gate": "FAILED",
    "score": 0,
-   "critical": 54,
-   "high": 30,
-   "medium": 48,
-   "low": 67,
+   "critical": 14,
+   "high": 66,
+   "medium": 51,
+   "low": 68,
    "experimental": 0,
-   "allHighCritical": 84,
+   "allHighCritical": 80,
    "detectedFramework": "Express",
    "blockers": [
     {
-     "ruleId": 3020,
-     "title": "MongoDB NoSQL Injection via $where JavaScript Evaluation or Raw Request Query Object",
-     "reviewed": null
-    },
-    {
-     "ruleId": 18041,
-     "title": "NOSQL-SEC-01: MongoDB $where Arbitrary JavaScript Evaluation Injection",
-     "reviewed": null
-    },
-    {
-     "ruleId": 18102,
-     "title": "MONGO-SEC-01: MongoDB NoSQL Injection via $where or Unvalidated Object Filter",
-     "reviewed": null
-    },
-    {
      "ruleId": 29303,
      "title": "AST-03: SQL Injection: Request Input Reaches a Raw Query Through Variables (CWE-89)",
-     "reviewed": null
-    },
-    {
-     "ruleId": 13103,
-     "title": "SDP-03: Inbound Perimeter Firewall Ports Open to Public Internet",
-     "reviewed": null
-    },
-    {
-     "ruleId": 3021,
-     "title": "SQL Injection: String Concatenation in Node.js Database Client Query",
      "reviewed": null
     },
     {
@@ -480,13 +440,8 @@
      "reviewed": null
     },
     {
-     "ruleId": 32,
-     "title": "Dynamic Code Execution (eval / Function Remote Code Execution)",
-     "reviewed": null
-    },
-    {
-     "ruleId": 29797,
-     "title": "FAKE-07: Login Checks a Hard-Coded Password",
+     "ruleId": 3020,
+     "title": "MongoDB NoSQL Injection via $where JavaScript Evaluation or Raw Request Query Object",
      "reviewed": null
     },
     {
@@ -507,9 +462,9 @@
    "kind": "clean",
    "stack": "Java + Spring Boot",
    "files": 84,
-   "scanMs": 275,
+   "scanMs": 363,
    "gate": "WARNING",
-   "score": 74,
+   "score": 77,
    "critical": 0,
    "high": 1,
    "medium": 12,
@@ -525,9 +480,9 @@
    "kind": "clean",
    "stack": "C# + ASP.NET Core",
    "files": 350,
-   "scanMs": 832,
+   "scanMs": 1066,
    "gate": "WARNING",
-   "score": 80,
+   "score": 82,
    "critical": 0,
    "high": 2,
    "medium": 3,
@@ -543,9 +498,9 @@
    "kind": "clean",
    "stack": "Ruby on Rails (production service)",
    "files": 1698,
-   "scanMs": 3874,
+   "scanMs": 6957,
    "gate": "WARNING",
-   "score": 63,
+   "score": 67,
    "critical": 0,
    "high": 4,
    "medium": 4,
@@ -561,9 +516,9 @@
    "kind": "clean",
    "stack": "Python + Django (production site)",
    "files": 434,
-   "scanMs": 2614,
+   "scanMs": 4203,
    "gate": "WARNING",
-   "score": 68,
+   "score": 73,
    "critical": 0,
    "high": 1,
    "medium": 13,
@@ -579,15 +534,15 @@
    "kind": "vulnerable",
    "stack": "Java + Spring",
    "files": 635,
-   "scanMs": 2515,
+   "scanMs": 3805,
    "gate": "FAILED",
    "score": 0,
-   "critical": 13,
-   "high": 10,
-   "medium": 53,
-   "low": 146,
+   "critical": 12,
+   "high": 9,
+   "medium": 54,
+   "low": 145,
    "experimental": 0,
-   "allHighCritical": 23,
+   "allHighCritical": 21,
    "detectedFramework": "Spring Boot",
    "blockers": [
     {
@@ -613,25 +568,20 @@
    "kind": "vulnerable",
    "stack": "Ruby on Rails",
    "files": 187,
-   "scanMs": 942,
+   "scanMs": 1758,
    "gate": "FAILED",
    "score": 0,
-   "critical": 7,
-   "high": 11,
+   "critical": 4,
+   "high": 12,
    "medium": 3,
    "low": 5,
    "experimental": 0,
-   "allHighCritical": 18,
+   "allHighCritical": 16,
    "detectedFramework": "Ruby on Rails",
    "blockers": [
     {
      "ruleId": 32,
      "title": "Dynamic Code Execution (eval / Function Remote Code Execution)",
-     "reviewed": null
-    },
-    {
-     "ruleId": 29105,
-     "title": "BEF-05: Rails Request Input Chooses the Class or Method to Call",
      "reviewed": null
     },
     {
@@ -648,11 +598,6 @@
      "ruleId": 24101,
      "title": "CORE-01: SQL Injection: Query Built From Dynamic Values",
      "reviewed": "AntennaPod DBUpgrader concatenates a media file path into UPDATE … WHERE file_url='…', so a quote in the path breaks the query"
-    },
-    {
-     "ruleId": 24102,
-     "title": "CORE-02: OS Command Injection: Shell Command Built From Dynamic Values",
-     "reviewed": null
     }
    ]
   },
@@ -662,22 +607,17 @@
    "kind": "vulnerable",
    "stack": "PHP",
    "files": 195,
-   "scanMs": 571,
+   "scanMs": 1057,
    "gate": "FAILED",
    "score": 0,
-   "critical": 57,
-   "high": 25,
+   "critical": 50,
+   "high": 31,
    "medium": 5,
    "low": 0,
    "experimental": 0,
-   "allHighCritical": 82,
+   "allHighCritical": 81,
    "detectedFramework": null,
    "blockers": [
-    {
-     "ruleId": 29959,
-     "title": "CIG-17: Workflow Expands toJSON(secrets)",
-     "reviewed": null
-    },
     {
      "ruleId": 18001,
      "title": "PHP-SEC-01: SQL Injection via Unparameterized Query Concatenation",
@@ -699,11 +639,6 @@
      "reviewed": null
     },
     {
-     "ruleId": 13303,
-     "title": "CRYPTO-03: Insecure Legacy Cipher Modes Permitted (AES-ECB / Unauthenticated CBC)",
-     "reviewed": null
-    },
-    {
      "ruleId": 24106,
      "title": "CORE-06: File Inclusion: include/require With a Request-Controlled Path",
      "reviewed": null
@@ -721,30 +656,20 @@
    "kind": "vulnerable",
    "stack": "Python + Django",
    "files": 217,
-   "scanMs": 663,
+   "scanMs": 1205,
    "gate": "FAILED",
    "score": 0,
-   "critical": 13,
+   "critical": 10,
    "high": 28,
-   "medium": 41,
+   "medium": 42,
    "low": 39,
    "experimental": 0,
-   "allHighCritical": 41,
+   "allHighCritical": 38,
    "detectedFramework": null,
    "blockers": [
     {
-     "ruleId": 8801,
-     "title": "PY-SEC-01: Unsafe Pickle Deserialization (Remote Code Execution)",
-     "reviewed": null
-    },
-    {
      "ruleId": 24103,
      "title": "CORE-03: Insecure Deserialization of Untrusted Data",
-     "reviewed": null
-    },
-    {
-     "ruleId": 8802,
-     "title": "PY-SEC-02: Insecure PyYAML load() Without SafeLoader",
      "reviewed": null
     },
     {
@@ -763,6 +688,11 @@
      "reviewed": null
     },
     {
+     "ruleId": 8801,
+     "title": "PY-SEC-01: Unsafe Pickle Deserialization (Remote Code Execution)",
+     "reviewed": null
+    },
+    {
      "ruleId": 24101,
      "title": "CORE-01: SQL Injection: Query Built From Dynamic Values",
      "reviewed": "AntennaPod DBUpgrader concatenates a media file path into UPDATE … WHERE file_url='…', so a quote in the path breaks the query"
@@ -775,7 +705,7 @@
    "kind": "vulnerable",
    "stack": "Python + aiohttp",
    "files": 30,
-   "scanMs": 851,
+   "scanMs": 1606,
    "gate": "FAILED",
    "score": 31,
    "critical": 2,
@@ -804,7 +734,7 @@
    "kind": "clean",
    "stack": "Android (Java + Kotlin)",
    "files": 1161,
-   "scanMs": 5784,
+   "scanMs": 9152,
    "gate": "FAILED",
    "score": 65,
    "critical": 1,
@@ -828,23 +758,17 @@
    "kind": "clean",
    "stack": "Android (Java)",
    "files": 1143,
-   "scanMs": 4661,
-   "gate": "FAILED",
-   "score": 18,
-   "critical": 2,
-   "high": 5,
-   "medium": 3,
+   "scanMs": 7592,
+   "gate": "WARNING",
+   "score": 52,
+   "critical": 0,
+   "high": 6,
+   "medium": 4,
    "low": 7,
    "experimental": 0,
-   "allHighCritical": 7,
+   "allHighCritical": 6,
    "detectedFramework": null,
-   "blockers": [
-    {
-     "ruleId": 24101,
-     "title": "CORE-01: SQL Injection: Query Built From Dynamic Values",
-     "reviewed": "AntennaPod DBUpgrader concatenates a media file path into UPDATE … WHERE file_url='…', so a quote in the path breaks the query"
-    }
-   ]
+   "blockers": []
   },
   {
    "repo": "mastodon/mastodon-ios",
@@ -852,7 +776,7 @@
    "kind": "clean",
    "stack": "iOS (Swift)",
    "files": 932,
-   "scanMs": 2735,
+   "scanMs": 4437,
    "gate": "PASSED",
    "score": 89,
    "critical": 0,
@@ -870,15 +794,15 @@
    "kind": "vulnerable",
    "stack": "Android (Java)",
    "files": 59,
-   "scanMs": 118,
+   "scanMs": 187,
    "gate": "FAILED",
-   "score": 5,
-   "critical": 3,
+   "score": 28,
+   "critical": 2,
    "high": 4,
-   "medium": 0,
+   "medium": 1,
    "low": 0,
    "experimental": 0,
-   "allHighCritical": 7,
+   "allHighCritical": 6,
    "detectedFramework": "Android (Kotlin/Java)",
    "blockers": [
     {
@@ -894,7 +818,7 @@
    "kind": "vulnerable",
    "stack": "Android (Java)",
    "files": 90,
-   "scanMs": 207,
+   "scanMs": 292,
    "gate": "WARNING",
    "score": 77,
    "critical": 0,
@@ -912,7 +836,7 @@
    "kind": "vulnerable",
    "stack": "iOS (Swift)",
    "files": 129,
-   "scanMs": 431,
+   "scanMs": 682,
    "gate": "WARNING",
    "score": 86,
    "critical": 0,
@@ -930,9 +854,9 @@
    "kind": "clean",
    "stack": "Flutter (Dart) + Rust",
    "files": 734,
-   "scanMs": 4517,
+   "scanMs": 7812,
    "gate": "WARNING",
-   "score": 51,
+   "score": 48,
    "critical": 0,
    "high": 3,
    "medium": 19,
@@ -948,23 +872,17 @@
    "kind": "clean",
    "stack": "Rust + Actix + Diesel + Postgres (production service)",
    "files": 1442,
-   "scanMs": 3765,
-   "gate": "FAILED",
-   "score": 33,
-   "critical": 2,
-   "high": 0,
+   "scanMs": 6259,
+   "gate": "WARNING",
+   "score": 58,
+   "critical": 0,
+   "high": 2,
    "medium": 117,
    "low": 3,
    "experimental": 0,
    "allHighCritical": 2,
    "detectedFramework": "Rust (web)",
-   "blockers": [
-    {
-     "ruleId": 9605,
-     "title": "RUST-05: SQL Injection via format! String Interpolation in Query",
-     "reviewed": "Lemmy builds SQL with format! (sql_query in scheduled_tasks, batch_execute in schema_setup) from interpolated table names, clauses and intervals; internal callers today, but nothing stops user input reaching them (flagged for review by design)"
-    }
-   ]
+   "blockers": []
   }
  ],
  "recall": [
@@ -1297,6 +1215,7 @@
    "matchedBy": [
     "LLM-SEC-08: Insecure Deserialization of ML Weights (Pickle / PyTorch)",
     "PY-SEC-01: Unsafe Pickle Deserialization (Remote Code Execution)",
+    "PY-SEC-02: Insecure PyYAML load() Without SafeLoader",
     "CORE-03: Insecure Deserialization of Untrusted Data"
    ]
   },
@@ -1612,7 +1531,7 @@
   {
    "ruleId": 16,
    "title": "Unsanitized Direct InnerHTML DOM Mutation (XSS Risk)",
-   "severity": "HIGH",
+   "severity": "MEDIUM",
    "cleanRepos": [
     "documenso/documenso",
     "rubygems/rubygems.org",
@@ -2101,7 +2020,7 @@
   {
    "ruleId": 9605,
    "title": "RUST-05: SQL Injection via format! String Interpolation in Query",
-   "severity": "CRITICAL",
+   "severity": "HIGH",
    "cleanRepos": [
     "LemmyNet/lemmy"
    ],
@@ -2378,20 +2297,9 @@
    "vulnerableRepos": []
   },
   {
-   "ruleId": 33,
-   "title": "Command Injection via Unsanitized Child Process Execution",
-   "severity": "CRITICAL",
-   "cleanRepos": [],
-   "cleanFindings": 0,
-   "vulnerableRepos": [
-    "OWASP/NodeGoat",
-    "appsecco/dvna"
-   ]
-  },
-  {
    "ruleId": 3020,
    "title": "MongoDB NoSQL Injection via $where JavaScript Evaluation or Raw Request Query Object",
-   "severity": "CRITICAL",
+   "severity": "HIGH",
    "cleanRepos": [],
    "cleanFindings": 0,
    "vulnerableRepos": [
@@ -2472,7 +2380,7 @@
   {
    "ruleId": 13301,
    "title": "CRYPTO-01: Hardcoded Cryptographic Keys and Static Salts in Source Code",
-   "severity": "CRITICAL",
+   "severity": "MEDIUM",
    "cleanRepos": [],
    "cleanFindings": 0,
    "vulnerableRepos": [
@@ -2508,6 +2416,16 @@
    "cleanFindings": 0,
    "vulnerableRepos": [
     "OWASP/NodeGoat"
+   ]
+  },
+  {
+   "ruleId": 33,
+   "title": "Command Injection via Unsanitized Child Process Execution",
+   "severity": "CRITICAL",
+   "cleanRepos": [],
+   "cleanFindings": 0,
+   "vulnerableRepos": [
+    "appsecco/dvna"
    ]
   },
   {
@@ -2575,7 +2493,7 @@
   {
    "ruleId": 18041,
    "title": "NOSQL-SEC-01: MongoDB $where Arbitrary JavaScript Evaluation Injection",
-   "severity": "CRITICAL",
+   "severity": "HIGH",
    "cleanRepos": [],
    "cleanFindings": 0,
    "vulnerableRepos": [
@@ -2585,7 +2503,7 @@
   {
    "ruleId": 18102,
    "title": "MONGO-SEC-01: MongoDB NoSQL Injection via $where or Unvalidated Object Filter",
-   "severity": "CRITICAL",
+   "severity": "HIGH",
    "cleanRepos": [],
    "cleanFindings": 0,
    "vulnerableRepos": [
@@ -2921,7 +2839,7 @@
   {
    "ruleId": 24102,
    "title": "CORE-02: OS Command Injection: Shell Command Built From Dynamic Values",
-   "severity": "CRITICAL",
+   "severity": "HIGH",
    "cleanRepos": [],
    "cleanFindings": 0,
    "vulnerableRepos": [
@@ -2976,7 +2894,7 @@
   {
    "ruleId": 18003,
    "title": "PHP-SEC-03: OS Command Injection via shell_exec / system",
-   "severity": "CRITICAL",
+   "severity": "HIGH",
    "cleanRepos": [],
    "cleanFindings": 0,
    "vulnerableRepos": [
@@ -3047,16 +2965,6 @@
    "ruleId": 8008,
    "title": "LLM-SEC-08: Insecure Deserialization of ML Weights (Pickle / PyTorch)",
    "severity": "MEDIUM",
-   "cleanRepos": [],
-   "cleanFindings": 0,
-   "vulnerableRepos": [
-    "adeyosemanputra/pygoat"
-   ]
-  },
-  {
-   "ruleId": 8801,
-   "title": "PY-SEC-01: Unsafe Pickle Deserialization (Remote Code Execution)",
-   "severity": "CRITICAL",
    "cleanRepos": [],
    "cleanFindings": 0,
    "vulnerableRepos": [
@@ -3164,16 +3072,6 @@
    ]
   },
   {
-   "ruleId": 8814,
-   "title": "PY-SEC-14: Server-Side Request Forgery (SSRF) via Dynamic URL Fetch",
-   "severity": "HIGH",
-   "cleanRepos": [],
-   "cleanFindings": 0,
-   "vulnerableRepos": [
-    "adeyosemanputra/pygoat"
-   ]
-  },
-  {
    "ruleId": 29503,
    "title": "FLOW-03: Request Input Builds a File Path (Python)",
    "severity": "HIGH",
@@ -3186,6 +3084,26 @@
   {
    "ruleId": 21,
    "title": "Potential Secret or PII Log Leakage in Application Telemetry",
+   "severity": "HIGH",
+   "cleanRepos": [],
+   "cleanFindings": 0,
+   "vulnerableRepos": [
+    "adeyosemanputra/pygoat"
+   ]
+  },
+  {
+   "ruleId": 8801,
+   "title": "PY-SEC-01: Unsafe Pickle Deserialization (Remote Code Execution)",
+   "severity": "CRITICAL",
+   "cleanRepos": [],
+   "cleanFindings": 0,
+   "vulnerableRepos": [
+    "adeyosemanputra/pygoat"
+   ]
+  },
+  {
+   "ruleId": 8814,
+   "title": "PY-SEC-14: Server-Side Request Forgery (SSRF) via Dynamic URL Fetch",
    "severity": "HIGH",
    "cleanRepos": [],
    "cleanFindings": 0,
