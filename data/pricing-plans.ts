@@ -39,7 +39,7 @@ export const ZELSIS_PRICING_PLANS: PricingPlanItem[] = [
     name: 'Free Starter',
     priceMonthly: PLAN_PRICES.Free,
     isPopular: false,
-    description: 'Release-gate scans for hobbyists and public open-source repositories.',
+    description: 'Unlimited scans of public and private repositories, for trying Zelsis on your own projects.',
     features: [
       'Unlimited scans, public and private repositories',
       '3 saved projects',

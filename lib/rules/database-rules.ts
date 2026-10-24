@@ -7,7 +7,7 @@
  */
 import { Finding } from '@/data/schema';
 import { CodeFile } from '../scanner-engine';
-import { emptyRepoContext, normalizeSqlName, RepoContext } from '../scanner/repo-context';
+import { databaseExposedAt, emptyRepoContext, normalizeSqlName, RepoContext } from '../scanner/repo-context';
 import { locateMatchLine } from './shared/locate';
 export interface DatabaseRuleResult {
     findings: Finding[];
@@ -160,13 +160,26 @@ export function evaluateDatabaseRules(file: CodeFile, lines: string[], cleanCont
     }
     // DB-PERF-10: PostgreSQL Public Table Missing Row Level Security (RLS)
     // Only tables in the API-exposed public schema (unqualified or public.*); the finding points at that table's CREATE TABLE line
-    const tablesWithoutRls = [...cleanContent.matchAll(/CREATE\s+(?:UNLOGGED\s+)?TABLE\s+(?:IF\s+NOT\s+EXISTS\s+)?([\w."]+)/gi)]
+    const isSqlitePath_6010 = /(?:^|\/|\.)sqlite(?:\b|_|\.)/i.test(file.path.toLowerCase()) || file.path.toLowerCase().endsWith('.sqlite.sql');
+    const isSqliteFile_6010 = isSqlitePath_6010 ||
+        /(?:drizzle-orm\/sqlite-core|better-sqlite3|\bsqlite3\b|\bsqliteTable\b|PRAGMA\s+[a-z_]+)/i.test(cleanContent);
+    // Strip SQL line comments (-- ...) and block comments (/* ... */) while preserving line breaks and character offsets
+    const sqlNoComments_6010 = cleanContent
+        .replace(/\/\*[\s\S]*?\*\//g, (m) => m.replace(/[^\r\n]/g, ' '))
+        .replace(/--[^\r\n]*/g, (m) => ' '.repeat(m.length));
+    const tablesWithoutRls = isSqliteFile_6010 ? [] : [...sqlNoComments_6010.matchAll(/CREATE\s+(?:UNLOGGED\s+)?TABLE\s+(?:IF\s+NOT\s+EXISTS\s+)?(?!(?:if|as|example)\b)("?[a-zA-Z_][a-zA-Z0-9_."]*)(?=\s*\()/gi)]
         .filter((m) => !/\./.test(m[1].replace(/"/g, '')) || /^"?public"?\./i.test(m[1]))
         .filter((m) => {
+            const stmtSlice = cleanContent.slice(m.index!, m.index! + 500);
+            const isSqliteSyntax = /INTEGER\s+PRIMARY\s+KEY\s+AUTOINCREMENT|AUTOINCREMENT\b|datetime\s*\(\s*['"]now['"]\s*\)/i.test(stmtSlice);
+            const preceding = cleanContent.slice(Math.max(0, m.index! - 300), m.index!);
+            const isSqliteConstant = /(?:const|let|var)\s+[A-Za-z0-9_]*sqlite[A-Za-z0-9_]*\s*=/i.test(preceding);
+            if (isSqliteSyntax || isSqliteConstant) return false;
+
             const t = normalizeSqlName(m[1]);
             return !context.rlsEnabledTables.has(t) && !new RegExp(String.raw`ALTER\s+TABLE\s+[^;]*\b` + t + String.raw`\b[^;]*ENABLE\s+ROW\s+LEVEL\s+SECURITY`, 'i').test(cleanContent);
         });
-    if (context.exposesDatabaseToClients && tablesWithoutRls.length > 0 && file.path.endsWith(".sql")) {
+    if (databaseExposedAt(context, file.path) && tablesWithoutRls.length > 0 && file.path.endsWith(".sql")) {
         const matchLineIdx = cleanContent.slice(0, tablesWithoutRls[0].index).split('\n').length - 1;
         const lineNum = matchLineIdx !== -1 ? matchLineIdx + 1 : 1;
         findings.push({
@@ -330,8 +343,15 @@ export function evaluateDatabaseRules(file: CodeFile, lines: string[], cleanCont
         logs.push(`[${ts}] 🗄️ DB-PERF-38: Database Connection String with Plaintext Password in Repo detected (${file.path}:${lineNum})`);
     }
     // DB-PERF-43: Unprepared Dynamic SQL Query Injections
-    if (/(?:db\.query|client\.query|prisma\.\$queryRawUnsafe)\s*\(\s*`[^`]*\$\{/i.test(cleanContent)) {
-        const matchLineIdx = locateMatchLine(lines, [/(?:db\.query|client\.query|prisma\.\$queryRawUnsafe)\s*\(\s*`[^`]*\$\{/i], l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('*'));
+    // Setup scripts create / drop databases by name (CREATE DATABASE "${dbName}"): DDL from config, not request input
+    const isDbSetupScript = /(?:^|\/)(?:scripts?|migrations?|seeds?)\/|(?:^|\/)seed[^/]*\.[cm]?[jt]s$/i.test(file.path.replace(/\\/g, '/'));
+    const normalizeDynamicQuery = (s: string) => s
+        .replace(/\$\{\s*(?:[a-zA-Z0-9_.]+\.)?(?:escapeIdentifier|quoteIdentifier|quoteTable|quoteColumn|escapeLiteral|quote)\s*\([^)]*\)\s*\}/g, 'IDENT')
+        .replace(/\$\{\s*[A-Z][A-Z0-9_]*\s*\}/g, 'CONST')
+        .replace(/\b(?:CREATE|DROP)\s+DATABASE(?:\s+IF\s+(?:NOT\s+)?EXISTS)?\s+[`"']?\$\{\s*[\w.]+\s*\}[`"']?/gi, 'CREATE DATABASE IDENT');
+    const cleanForQuery = normalizeDynamicQuery(cleanContent);
+    if (!isDbSetupScript && /(?:db\.query|client\.query|prisma\.\$queryRawUnsafe)\s*\(\s*`[^`]*\$\{/i.test(cleanForQuery)) {
+        const matchLineIdx = locateMatchLine(lines, [/(?:db\.query|client\.query|prisma\.\$queryRawUnsafe)\s*\(\s*`[^`]*\$\{/i], l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('*') && /(?:db\.query|client\.query|prisma\.\$queryRawUnsafe)\s*\(\s*`[^`]*\$\{/i.test(normalizeDynamicQuery(l)));
         const lineNum = matchLineIdx !== -1 ? matchLineIdx + 1 : 1;
         findings.push({
             id: `dbperf-${Date.now()}-${findingCounter.count++}`,

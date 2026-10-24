@@ -6,6 +6,12 @@ export interface GuideEntry {
 
 export const GUIDES: GuideEntry[] = [
   {
+    slug: 'zelsis-vs-coderabbit',
+    title: 'Zelsis vs CodeRabbit: five pull requests with planted flaws',
+    summary:
+      'Both tools reviewed the same five pull requests, each with one flaw written down in advance. What each found, what each missed, and how a reviewer differs from a release check.',
+  },
+  {
     slug: 'supabase-rls-testing',
     title: 'How to test Supabase RLS before you ship',
     summary:
@@ -22,5 +28,11 @@ export const GUIDES: GuideEntry[] = [
     title: 'Stripe charges 100x less: amount must be in cents',
     summary:
       'Stripe amounts are integers in the smallest currency unit. How to convert prices safely and which currencies have no decimals.',
+  },
+  {
+    slug: 'code-due-diligence',
+    title: 'Check the code before you buy a SaaS app',
+    summary:
+      'How to get access to the repository, which findings cost you money after the sale, and what to verify by hand before you pay.',
   },
 ];

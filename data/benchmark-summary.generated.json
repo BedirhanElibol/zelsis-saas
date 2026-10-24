@@ -1,15 +1,15 @@
 {
- "generatedAt": "2026-10-15",
+ "generatedAt": "2026-10-24",
  "summary": {
   "cleanRepos": 17,
-  "cleanReposGateFailed": 5,
-  "cleanHighCriticalFindings": 36,
-  "cleanGatingHighCriticalFindings": 36,
+  "cleanReposGateFailed": 3,
+  "cleanHighCriticalFindings": 34,
+  "cleanGatingHighCriticalFindings": 34,
   "documentedFlaws": 43,
   "documentedFlawsDetected": 43,
   "recall": 1,
   "documentedFlawsBlockingGate": 41,
-  "rulesFiringOnClean": 75,
+  "rulesFiringOnClean": 77,
   "experimentalRules": 0
  },
  "repos": [
@@ -18,8 +18,8 @@
    "sha": "bdd0813",
    "kind": "clean",
    "stack": "Next.js + Supabase + Stripe",
-   "files": 67,
-   "scanMs": 520,
+   "files": 68,
+   "scanMs": 1379,
    "gate": "WARNING",
    "critical": 0,
    "high": 3
@@ -30,7 +30,7 @@
    "kind": "clean",
    "stack": "Next.js + Prisma + Stripe + NextAuth",
    "files": 140,
-   "scanMs": 573,
+   "scanMs": 1359,
    "gate": "WARNING",
    "critical": 0,
    "high": 1
@@ -40,8 +40,8 @@
    "sha": "cb740b6",
    "kind": "clean",
    "stack": "FastAPI + React",
-   "files": 204,
-   "scanMs": 969,
+   "files": 206,
+   "scanMs": 2094,
    "gate": "WARNING",
    "critical": 0,
    "high": 1
@@ -52,10 +52,17 @@
    "kind": "clean",
    "stack": "Express + Prisma",
    "files": 58,
-   "scanMs": 202,
+   "scanMs": 356,
    "gate": "FAILED",
    "critical": 2,
-   "high": 1
+   "high": 1,
+   "blockers": [
+    {
+     "ruleId": 14,
+     "title": "Insecure Hardcoded Fallback for Cryptographic Session / JWT Secret",
+     "reviewed": "node-express realworld: process.env.JWT_SECRET || 'superSecret' signs tokens with a guessable key when unset"
+    }
+   ]
   },
   {
    "repo": "gothinkster/golang-gin-realworld-example-app",
@@ -63,7 +70,7 @@
    "kind": "clean",
    "stack": "Go + Gin",
    "files": 27,
-   "scanMs": 155,
+   "scanMs": 338,
    "gate": "PASSED",
    "critical": 0,
    "high": 0
@@ -74,7 +81,7 @@
    "kind": "clean",
    "stack": "Laravel",
    "files": 40,
-   "scanMs": 84,
+   "scanMs": 184,
    "gate": "PASSED",
    "critical": 0,
    "high": 0
@@ -85,21 +92,28 @@
    "kind": "clean",
    "stack": "Remix/React Router + Prisma + tRPC (production SaaS)",
    "files": 2481,
-   "scanMs": 15480,
+   "scanMs": 40655,
    "gate": "WARNING",
    "critical": 0,
-   "high": 5
+   "high": 4
   },
   {
    "repo": "supabase/supabase-js",
    "sha": "a684cf9",
    "kind": "clean",
    "stack": "TypeScript SDK",
-   "files": 471,
-   "scanMs": 3158,
+   "files": 474,
+   "scanMs": 8223,
    "gate": "FAILED",
    "critical": 1,
-   "high": 1
+   "high": 1,
+   "blockers": [
+    {
+     "ruleId": 3,
+     "title": "Permissive Row Level Security (RLS) Policy (USING true)",
+     "reviewed": "USING (true) policy in supabase-js example migration: genuinely public table"
+    }
+   ]
   },
   {
    "repo": "OWASP/NodeGoat",
@@ -107,10 +121,10 @@
    "kind": "vulnerable",
    "stack": "Express + MongoDB",
    "files": 87,
-   "scanMs": 249,
+   "scanMs": 583,
    "gate": "FAILED",
-   "critical": 6,
-   "high": 4
+   "critical": 3,
+   "high": 5
   },
   {
    "repo": "appsecco/dvna",
@@ -118,21 +132,21 @@
    "kind": "vulnerable",
    "stack": "Express + Sequelize",
    "files": 21,
-   "scanMs": 66,
+   "scanMs": 215,
    "gate": "FAILED",
-   "critical": 6,
-   "high": 3
+   "critical": 4,
+   "high": 5
   },
   {
    "repo": "juice-shop/juice-shop",
    "sha": "1618a61",
    "kind": "vulnerable",
    "stack": "Express + Angular + Sequelize",
-   "files": 962,
-   "scanMs": 5803,
+   "files": 965,
+   "scanMs": 14320,
    "gate": "FAILED",
-   "critical": 54,
-   "high": 30
+   "critical": 14,
+   "high": 66
   },
   {
    "repo": "spring-projects/spring-petclinic",
@@ -140,7 +154,7 @@
    "kind": "clean",
    "stack": "Java + Spring Boot",
    "files": 84,
-   "scanMs": 156,
+   "scanMs": 363,
    "gate": "WARNING",
    "critical": 0,
    "high": 1
@@ -151,7 +165,7 @@
    "kind": "clean",
    "stack": "C# + ASP.NET Core",
    "files": 350,
-   "scanMs": 446,
+   "scanMs": 1066,
    "gate": "WARNING",
    "critical": 0,
    "high": 2
@@ -162,7 +176,7 @@
    "kind": "clean",
    "stack": "Ruby on Rails (production service)",
    "files": 1698,
-   "scanMs": 2801,
+   "scanMs": 6957,
    "gate": "WARNING",
    "critical": 0,
    "high": 4
@@ -173,7 +187,7 @@
    "kind": "clean",
    "stack": "Python + Django (production site)",
    "files": 434,
-   "scanMs": 1676,
+   "scanMs": 4203,
    "gate": "WARNING",
    "critical": 0,
    "high": 1
@@ -184,10 +198,10 @@
    "kind": "vulnerable",
    "stack": "Java + Spring",
    "files": 635,
-   "scanMs": 1934,
+   "scanMs": 3805,
    "gate": "FAILED",
-   "critical": 13,
-   "high": 10
+   "critical": 12,
+   "high": 9
   },
   {
    "repo": "OWASP/railsgoat",
@@ -195,10 +209,10 @@
    "kind": "vulnerable",
    "stack": "Ruby on Rails",
    "files": 187,
-   "scanMs": 706,
+   "scanMs": 1758,
    "gate": "FAILED",
-   "critical": 7,
-   "high": 11
+   "critical": 4,
+   "high": 12
   },
   {
    "repo": "digininja/DVWA",
@@ -206,10 +220,10 @@
    "kind": "vulnerable",
    "stack": "PHP",
    "files": 195,
-   "scanMs": 361,
+   "scanMs": 1057,
    "gate": "FAILED",
-   "critical": 57,
-   "high": 25
+   "critical": 50,
+   "high": 31
   },
   {
    "repo": "adeyosemanputra/pygoat",
@@ -217,10 +231,10 @@
    "kind": "vulnerable",
    "stack": "Python + Django",
    "files": 217,
-   "scanMs": 454,
+   "scanMs": 1205,
    "gate": "FAILED",
-   "critical": 13,
-   "high": 27
+   "critical": 10,
+   "high": 28
   },
   {
    "repo": "anxolerd/dvpwa",
@@ -228,7 +242,7 @@
    "kind": "vulnerable",
    "stack": "Python + aiohttp",
    "files": 30,
-   "scanMs": 591,
+   "scanMs": 1606,
    "gate": "FAILED",
    "critical": 2,
    "high": 3
@@ -239,10 +253,17 @@
    "kind": "clean",
    "stack": "Android (Java + Kotlin)",
    "files": 1161,
-   "scanMs": 4985,
+   "scanMs": 9152,
    "gate": "FAILED",
    "critical": 1,
-   "high": 0
+   "high": 0,
+   "blockers": [
+    {
+     "ruleId": 5015,
+     "title": "SEC-SECRET-15: Google Gemini / AI Studio API Key",
+     "reviewed": "NewPipe PoTokenWebView hardcodes a Google API key (AIza…, the YouTube web key, marked NOSONAR)"
+    }
+   ]
   },
   {
    "repo": "AntennaPod/AntennaPod",
@@ -250,18 +271,18 @@
    "kind": "clean",
    "stack": "Android (Java)",
    "files": 1143,
-   "scanMs": 3154,
-   "gate": "FAILED",
-   "critical": 2,
-   "high": 5
+   "scanMs": 7592,
+   "gate": "WARNING",
+   "critical": 0,
+   "high": 6
   },
   {
    "repo": "mastodon/mastodon-ios",
    "sha": "14c140c",
    "kind": "clean",
    "stack": "iOS (Swift)",
-   "files": 931,
-   "scanMs": 1746,
+   "files": 932,
+   "scanMs": 4437,
    "gate": "PASSED",
    "critical": 0,
    "high": 0
@@ -272,9 +293,9 @@
    "kind": "vulnerable",
    "stack": "Android (Java)",
    "files": 59,
-   "scanMs": 65,
+   "scanMs": 187,
    "gate": "FAILED",
-   "critical": 3,
+   "critical": 2,
    "high": 4
   },
   {
@@ -283,7 +304,7 @@
    "kind": "vulnerable",
    "stack": "Android (Java)",
    "files": 90,
-   "scanMs": 121,
+   "scanMs": 292,
    "gate": "WARNING",
    "critical": 0,
    "high": 3
@@ -294,7 +315,7 @@
    "kind": "vulnerable",
    "stack": "iOS (Swift)",
    "files": 129,
-   "scanMs": 227,
+   "scanMs": 682,
    "gate": "WARNING",
    "critical": 0,
    "high": 2
@@ -305,7 +326,7 @@
    "kind": "clean",
    "stack": "Flutter (Dart) + Rust",
    "files": 734,
-   "scanMs": 3010,
+   "scanMs": 7812,
    "gate": "WARNING",
    "critical": 0,
    "high": 3
@@ -316,10 +337,10 @@
    "kind": "clean",
    "stack": "Rust + Actix + Diesel + Postgres (production service)",
    "files": 1442,
-   "scanMs": 2563,
-   "gate": "FAILED",
-   "critical": 2,
-   "high": 0
+   "scanMs": 6259,
+   "gate": "WARNING",
+   "critical": 0,
+   "high": 2
   }
  ],
  "flaws": [

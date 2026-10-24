@@ -43,7 +43,7 @@ export const ProductCapabilities: React.FC = () => {
       title: 'Rules that know your stack',
       subtitle: 'OWASP Top 10, database access rules and cloud config, checked on every pull request.',
       description:
-        'Over a thousand rules for JavaScript, Python, Go, Ruby, PHP and Java apps catch injection, broken auth, leaked secrets, permissive database policies, wildcard CORS and containers that run as root before they ship.',
+        'Rules for JavaScript, Python, Go, Ruby, PHP and Java apps catch injection, broken auth, leaked secrets, permissive database policies, wildcard CORS and containers that run as root before they ship.',
       image: '/images/security_rules.png',
       alt: 'Zelsis Release Gate Rule Catalog and Policy Configurator',
       tag: 'RULES',
@@ -145,7 +145,7 @@ export const ProductCapabilities: React.FC = () => {
             <span>What it checks</span>
           </div>
           <h2 className="text-3xl sm:text-5xl font-extrabold text-[#EDEDED] tracking-tight">
-            Security checks built for how real apps break
+            Checks built for how real apps break
           </h2>
           <p className="text-base sm:text-lg text-[#A1A1AA] leading-relaxed font-sans">
             Secrets, database access rules, injection, auth and dependencies, each finding with the exact line and a fix you can paste into your AI assistant.

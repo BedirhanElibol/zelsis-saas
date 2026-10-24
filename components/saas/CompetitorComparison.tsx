@@ -38,7 +38,7 @@ export function CompetitorComparison() {
             Priced per account, not per developer.
           </h2>
           <p className="mt-4 text-lg text-zinc-400">
-            The established tools are excellent general-purpose platforms. Zelsis is built for small teams shipping web, mobile and SaaS apps and
+            The established tools are excellent general-purpose platforms. Zelsis is built for teams shipping web, mobile and SaaS apps and
             APIs: deep on the logic bugs that cause real incidents, at a flat price that does not grow with every hire.
           </p>
         </div>

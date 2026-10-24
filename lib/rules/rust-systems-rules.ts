@@ -143,13 +143,24 @@ export function evaluateRustSystemsRules(file: CodeFile, lines: string[], cleanC
     // structure and an interpolation; a bare keyword in an error message ("Failed to update {}") or a URL
     // ("internal/delete?alias={}") is not SQL.
     const SQL_SHAPE = /\bSELECT\b[\s\S]*?\bFROM\b|\bINSERT\s+INTO\b|\bUPDATE\s+[\w."{}]+\s+SET\b|\bDELETE\s+FROM\b/i;
+    const normalizeRustSqlLiteral = (lit: string): string => {
+        return lit
+            .replace(/\{\s*events_table\s*\}/gi, 'events_table')
+            .replace(/\{\s*(?:window_)?(?:function|func)\s*\}/gi, 'func_ident')
+            .replace(/\{\s*(?:seconds|minutes|hours|days)_in_interval\s*\}/gi, '123')
+            .replace(/\{\s*(?:[a-zA-Z0-9_]+_)?(?:select|group_by|order_by)\s*\}/gi, '/*clause*/')
+            .replace(/\{\s*(?:columns|dedup_subquery|order_by)\s*\}/gi, '/*clause*/');
+    };
     let rustSqlIndex = -1;
     const formatCall = /format!\s*\(\s*(r#*)?"/g;
     for (let m = formatCall.exec(cleanContent); m && rustSqlIndex === -1; m = formatCall.exec(cleanContent)) {
         const bodyStart = m.index + m[0].length;
         const end = m[1] !== undefined ? cleanContent.indexOf('"' + m[1].slice(1), bodyStart) : cleanContent.slice(bodyStart).search(/(?<!\\)"/) + bodyStart;
         const literal = cleanContent.slice(bodyStart, end < bodyStart ? undefined : end);
-        if (SQL_SHAPE.test(literal) && /\{[^{}]*\}/.test(literal.replace(/\{\{|\}\}/g, ''))) rustSqlIndex = m.index;
+        const afterQuote = end >= bodyStart ? cleanContent.slice(end + 1, end + 240) : '';
+        const onlyPlaceholderHelpers = /^\s*(?:,\s*(?:ph|placeholder|param|bind_param)\s*\(\s*\d+\s*\))+\s*\)/.test(afterQuote);
+        const normalizedLit = normalizeRustSqlLiteral(literal).replace(/\{\{|\}\}/g, '');
+        if ( !onlyPlaceholderHelpers && SQL_SHAPE.test(literal) && /\{[^{}]*\}/.test(normalizedLit)) rustSqlIndex = m.index;
     }
     if (rustSqlIndex === -1) {
         const queryFormat = /sqlx::query\s*\(\s*&format!\(/.exec(cleanContent);

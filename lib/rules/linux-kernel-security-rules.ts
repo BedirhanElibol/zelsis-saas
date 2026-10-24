@@ -7,6 +7,7 @@
  */
 import { Finding } from "@/data/schema";
 import { CodeFile } from "../scanner-engine";
+import { isHelmSubchartPath } from "./iac-rules";
 export interface LinuxKernelSecurityRuleResult {
     findings: Finding[];
     logs: string[];
@@ -20,8 +21,10 @@ export function evaluateLinuxKernelSecurityRules(file: CodeFile, lines: string[]
     const lowerPath = file.path.toLowerCase().replace(/\\/g, "/");
     // Skip non-container and non-infrastructure files
     if (
-        lowerPath.includes("node_modules/") || lowerPath.endsWith(".d.ts") ||
-        (!/\.(ya?ml|dockerfile)$/i.test(file.path) && !/docker|k8s|pod_spec|container_security/i.test(lowerPath))
+        lowerPath.includes("node_modules/") || lowerPath.endsWith(".d.ts") || isHelmSubchartPath(lowerPath) ||
+        (!/\.(ya?ml|dockerfile)$/i.test(file.path) && !/docker|k8s|pod_spec|container_security/i.test(lowerPath)) ||
+        // Scan reports, docs and data files only mention the flag; a PodSecurityPolicy allows it rather than running a container
+        /\.(?:json|md|txt|html|csv)$/i.test(lowerPath) || /^\s*kind:\s*PodSecurityPolicy\b/m.test(cleanContent)
     ) {
         return { findings, logs };
     }
@@ -29,7 +32,8 @@ export function evaluateLinuxKernelSecurityRules(file: CodeFile, lines: string[]
     const code = cleanContent.split('\n').map(l => (/^\s*#/.test(l) ? '' : l)).join('\n');
     const ts = new Date().toLocaleTimeString();
     // KERN-SEC-01: Unrestricted Linux Root Capabilities (CAP_SYS_ADMIN) Retained in Container Workloads
-    const privilegeGrant = /privileged\s*:\s*true|--privileged|--cap-add[=\s]+(?:CAP_)?(?:SYS_ADMIN|ALL)|(?:cap_add|add)\s*:[^\n]*(?:SYS_ADMIN|ALL)|(?:cap_add|add)\s*:\s*\n(?:\s*-\s*\S+\s*\n)*?\s*-\s*["']?(?:CAP_)?(?:SYS_ADMIN|ALL)\b/i.exec(code);
+    // \b keeps locale keys such as description_add: "... all ..." out
+    const privilegeGrant = /\bprivileged\s*:\s*true|--privileged|--cap-add[=\s]+(?:CAP_)?(?:SYS_ADMIN|ALL)\b|\b(?:cap_add|add)\s*:[^\n]*\b(?:SYS_ADMIN|ALL)\b|\b(?:cap_add|add)\s*:\s*\n(?:\s*-\s*\S+\s*\n)*?\s*-\s*["']?(?:CAP_)?(?:SYS_ADMIN|ALL)\b/i.exec(code);
     if (privilegeGrant && !/drop:\s*\[.*CAP_SYS_ADMIN.*\]/i.test(code)) {
         // Multi-line `add:` lists: point at the SYS_ADMIN / ALL entry, not the `add:` key.
         const entry = privilegeGrant[0].search(/(?:CAP_)?(?:SYS_ADMIN|ALL)\b|privileged/i);
@@ -40,7 +44,7 @@ export function evaluateLinuxKernelSecurityRules(file: CodeFile, lines: string[]
             ruleId: 15701,
             type: 'SECURITY',
             title: "KERN-SEC-01: Unrestricted Linux Root Capabilities (CAP_SYS_ADMIN) Retained in Container Workloads",
-            severity: "CRITICAL",
+            severity: "HIGH",
             category: "Capabilities Hardening",
             filePath: file.path,
             lineRange: `L${lineNum}`,

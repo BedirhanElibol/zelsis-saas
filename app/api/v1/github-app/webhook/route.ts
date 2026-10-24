@@ -2,12 +2,16 @@ import { parseLineRange } from '@/lib/ci-annotations';
 import { NextResponse } from 'next/server';
 import crypto from 'crypto';
 import { createClient } from '@supabase/supabase-js';
-import { createGitHubAppClient, createCheckRun, updateCheckRun, postOrUpdatePRComment } from '@/lib/github/app';
+import { CHECK_NAME, RELEASE_CHECK_TITLE, createGitHubAppClient, createCheckRun, updateCheckRun, postOrUpdatePRComment } from '@/lib/github/app';
 import { fetchGithubRepositoryData } from '@/lib/github-api';
 import { getConfiguredAppUrl } from '@/lib/app-url';
 import { runStaticCodeScan } from '@/lib/scanner-engine';
 import { calculateGateStatus, gatingFindings, calculateReadinessScore } from '@/lib/scanner/scoring';
 import { getOrgPolicy } from '@/lib/organization';
+import { addedLines, buildSuggestionComments } from '@/lib/github/suggestions';
+import { RISK_LABEL, type RiskKind } from '@/lib/scanner/risk-kind';
+import { blockingFindings } from '@/lib/ai-verify';
+import { aiDoubleCheck, aiReviewSection, aiVerifyAllowed } from '@/lib/github/ai-double-check';
 
 export const maxDuration = 300; // Allow 5 minutes for scan processing
 
@@ -135,7 +139,7 @@ async function handlePullRequest(payload: any, supabase: any) {
     const octokit = await createGitHubAppClient(installation.id);
 
     // Create Check Run indicating 'in_progress'
-    const checkRun = await createCheckRun(octokit, owner, repo, headSha, 'Zelsis Security Gate');
+    const checkRun = await createCheckRun(octokit, owner, repo, headSha, CHECK_NAME);
 
     try {
       // Find user via installation to apply their policy
@@ -178,14 +182,46 @@ async function handlePullRequest(payload: any, supabase: any) {
       const filesToScan = repoData.files;
       const changedFiles = repoData.changedFiles || [];
 
+      // The scanner empties file contents when it is done; keep the changed files for suggested fixes
+      const changedContent = new Map<string, string>(
+        filesToScan.filter((f: any) => changedFiles.includes(f.path)).map((f: any) => [f.path, f.content]),
+      );
+
       // Run code scan
+      const scanStartedAt = Date.now();
       const scanResult = await runStaticCodeScan(filesToScan, repository.full_name, { 
         dependencyAudit: false, 
         orgPolicy, 
         dismissals 
       });
+      const scanMs = Date.now() - scanStartedAt;
 
-      const { newFindings, existingFindings } = splitFindings(scanResult.findings, changedFiles);
+      const split = splitFindings(scanResult.findings, changedFiles);
+      const { existingFindings } = split;
+      let newFindings = split.newFindings;
+
+      // Opt-in AI double-check (Pro): may soften a block the code shown already guards; never adds or removes findings
+      let aiSection = '';
+      if (userId && blockingFindings(newFindings).length > 0) {
+        try {
+          if (await aiVerifyAllowed(supabase, userId)) {
+            const readFile = async (path: string): Promise<string | null> => {
+              try {
+                const { data } = await octokit.repos.getContent({ owner, repo, path, ref: headSha });
+                return !Array.isArray(data) && data.type === 'file' && 'content' in data ? Buffer.from(data.content, 'base64').toString('utf8') : null;
+              } catch {
+                return null;
+              }
+            };
+            const checked = await aiDoubleCheck(newFindings, new Set(filesToScan.map((f: any) => f.path)), readFile);
+            newFindings = checked.findings;
+            aiSection = aiReviewSection(checked.reviewed);
+          }
+        } catch (aiError) {
+          console.error('AI double-check skipped:', aiError);
+        }
+      }
+
       const annotations = generateAnnotations(newFindings);
 
       const gFindings = gatingFindings(newFindings);
@@ -199,12 +235,12 @@ async function handlePullRequest(payload: any, supabase: any) {
       // Complete Check Run
       await updateCheckRun(octokit, owner, repo, checkRun.id, 'completed', conclusion, {
         title: `${readinessScore}/100 Readiness Score`,
-        summary: `### Zelsis Security Gate: **${gateStatus}**\n\n- **New Findings in PR:** ${newFindings.length}\n- **Existing Findings:** ${existingFindings.length}\n\n*Review annotations for details on new issues.*`,
+        summary: `### ${RELEASE_CHECK_TITLE}: **${gateStatus}**\n\n- **New Findings in PR:** ${newFindings.length}\n- **Existing Findings:** ${existingFindings.length}\n\n*Review annotations for details on new issues.*`,
         annotations
       });
 
       // Post/Update PR Comment
-      const commentBody = `### Zelsis PR Gate Results\n\n` +
+      const commentBody = `### ${RELEASE_CHECK_TITLE} Results\n\n` +
         `**Status:** ${gateStatus === 'PASSED' ? '✅ PASSED' : gateStatus === 'WARNING' ? '⚠️ WARNING' : '❌ FAILED'}\n` +
         `**Readiness Score:** ${readinessScore}/100\n\n` +
         `#### PR Findings Summary\n` +
@@ -212,10 +248,50 @@ async function handlePullRequest(payload: any, supabase: any) {
         `- 🚨 **High:** ${gFindings.filter(f => f.severity === 'HIGH').length}\n` +
         `- ⚠️ **Medium:** ${gFindings.filter(f => f.severity === 'MEDIUM').length}\n` +
         `- ℹ️ **Low:** ${gFindings.filter(f => f.severity === 'LOW').length}\n\n` +
+        topIssuesSection(gFindings) +
+        verifiedSection(scanResult.crossFileVerified ?? [], changedFiles) +
+        aiSection +
         `_Scan includes ${newFindings.length} new issues and detected ${existingFindings.length} pre-existing issues._\n\n` +
-        `[View full report on Zelsis](${getConfiguredAppUrl()}/dashboard)`;
+        `[View full report on Zelsis](${getConfiguredAppUrl()}/dashboard)\n\n` +
+        scanFooter(scanMs, filesToScan.length, gFindings);
       
       await postOrUpdatePRComment(octokit, owner, repo, pull_request.number, commentBody);
+
+      // Record the PR gate run for the weekly summary (only for repositories saved as a project)
+      if (userId) {
+        try {
+          const { data: project } = await supabase
+            .from('projects')
+            .select('id')
+            .eq('user_id', userId)
+            .eq('repo_url', repoUrl)
+            .maybeSingle();
+          if (project?.id) {
+            await supabase.from('scans').insert({
+              project_id: project.id,
+              user_id: userId,
+              trigger_type: 'WEBHOOK',
+              readiness_score: readinessScore,
+              gate_status: gateStatus,
+              critical_count: gFindings.filter(f => f.severity === 'CRITICAL').length,
+              high_count: gFindings.filter(f => f.severity === 'HIGH').length,
+              medium_count: gFindings.filter(f => f.severity === 'MEDIUM').length,
+              low_count: gFindings.filter(f => f.severity === 'LOW').length,
+              scan_duration_ms: scanMs,
+            });
+          }
+        } catch (recordError) {
+          console.error('PR gate run not recorded:', recordError);
+        }
+      }
+
+      // One-click fixes: suggested changes on lines this PR added, for rules with a safe one-line fix.
+      // Best effort: a missing permission or API error must not change the gate result.
+      try {
+        await postSuggestedFixes(octokit, owner, repo, pull_request.number, headSha, newFindings, changedContent);
+      } catch (suggestionError) {
+        console.error('PR suggestion comments failed:', suggestionError);
+      }
 
     } catch (scanError: any) {
       console.error('PR Scan Error:', scanError);
@@ -227,10 +303,68 @@ async function handlePullRequest(payload: any, supabase: any) {
   }
 }
 
+async function postSuggestedFixes(
+  octokit: any, owner: string, repo: string, pullNumber: number, headSha: string,
+  findings: any[], contentByPath: Map<string, string>,
+) {
+  const prFiles = await octokit.paginate(octokit.rest.pulls.listFiles, { owner, repo, pull_number: pullNumber, per_page: 100 });
+  const addedByFile = new Map<string, Set<number>>(prFiles.map((f: any) => [f.filename, addedLines(f.patch)]));
+  const comments = buildSuggestionComments(findings, contentByPath, addedByFile);
+  if (comments.length === 0) return;
+
+  // A push re-runs the scan over the whole PR diff: skip suggestions already posted on the same line
+  const existing = await octokit.paginate(octokit.rest.pulls.listReviewComments, { owner, repo, pull_number: pullNumber, per_page: 100 });
+  const posted = new Set(existing.map((c: any) => `${c.path}:${c.line ?? c.original_line}:${c.body}`));
+  const fresh = comments.filter((c) => !posted.has(`${c.path}:${c.line}:${c.body}`));
+  if (fresh.length === 0) return;
+
+  await octokit.rest.pulls.createReview({
+    owner, repo, pull_number: pullNumber, commit_id: headSha, event: 'COMMENT',
+    body: 'Zelsis has a one-line fix for these. Review each one, then use "Commit suggestion".',
+    comments: fresh,
+  });
+}
+
 export function splitFindings(findings: any[], changedFiles: string[]) {
   const newFindings = findings.filter(f => changedFiles.includes(f.filePath));
   const existingFindings = findings.filter(f => !changedFiles.includes(f.filePath));
   return { newFindings, existingFindings };
+}
+
+/** Route findings in this PR that Zelsis dropped after finding the auth check in another file. */
+export function verifiedSection(verified: { filePath: string; reason: string }[], changedFiles: string[]): string {
+  const rows = verified.filter(v => changedFiles.includes(v.filePath)).slice(0, 5);
+  if (rows.length === 0) return '';
+  return `#### Checked across files\n${rows.map(v => `- \`${v.filePath}\`: not flagged, ${v.reason}.`).join('\n')}\n\n`;
+}
+
+/** Footer line: scan time, files and whether the change has blocking-level issues. */
+export function scanFooter(ms: number, files: number, findings: any[]): string {
+  const seconds = ms < 1000 ? '<1' : (ms / 1000).toFixed(1);
+  const critical = findings.filter(f => f.severity === 'CRITICAL').length;
+  const verdict = critical === 0 ? 'no critical issues in this change' : `${critical} critical issue${critical === 1 ? '' : 's'} in this change`;
+  return `<sub>⚡ Scanned ${files} files in ${seconds}s by [Zelsis](https://zelsis.com): ${verdict}.</sub>`;
+}
+
+function issueRow(f: any): string {
+  const line = parseLineRange(f.lineRange)?.[0];
+  const where = `\`${f.filePath}${line ? `:${line}` : ''}\``;
+  const risk = f.risk ? `**${RISK_LABEL[f.risk as RiskKind].toUpperCase()}:** ` : '';
+  return `- **${f.title}** (${where})${f.impact ? `\n  ${risk}${f.impact}` : ''}`;
+}
+
+/** Up to five blocking-level PR findings, then up to ten medium ones, with what someone can do with each. */
+export function topIssuesSection(findings: any[]): string {
+  const top = findings.filter(f => f.severity === 'CRITICAL' || f.severity === 'HIGH').slice(0, 5);
+  const medium = findings.filter(f => f.severity === 'MEDIUM');
+  if (top.length === 0 && medium.length === 0) return '';
+  const rows = top.map(issueRow);
+  if (medium.length > 0) {
+    if (top.length > 0) rows.push('', '**Medium**');
+    rows.push(...medium.slice(0, 10).map(issueRow));
+    if (medium.length > 10) rows.push(`- _and ${medium.length - 10} more medium findings_`);
+  }
+  return `#### What needs a look\n${rows.join('\n')}\n\n`;
 }
 
 export function generateAnnotations(findings: any[]) {
@@ -246,7 +380,7 @@ export function generateAnnotations(findings: any[]) {
       start_line: startLine,
       end_line: endLine,
       annotation_level: annotationLevel,
-      message: `${f.severity}: ${f.title}\n\n${f.category}`,
+      message: `${f.severity}: ${f.title}\n\n${f.impact ? `${f.impact}\n\n` : ''}${f.category}`,
       title: `Zelsis: ${f.title}`
     };
   });

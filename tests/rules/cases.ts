@@ -348,7 +348,15 @@ export const RULE_CASES: RuleCase[] = [
     ruleIds: [3001, 6010],
     name: 'Table without Row Level Security',
     detects: f('supabase/migrations/002.sql', 'CREATE TABLE public.payments (id uuid primary key, user_id uuid, amount int);\n'),
-    ignores: f('supabase/migrations/002.sql', 'CREATE TABLE public.payments (id uuid primary key, user_id uuid, amount int);\nALTER TABLE public.payments ENABLE ROW LEVEL SECURITY;\nCREATE POLICY "own" ON public.payments FOR SELECT USING (auth.uid() = user_id);\n')
+    ignores: [
+      { path: 'supabase/migrations/002.sql', content: 'CREATE TABLE public.payments (id uuid primary key, user_id uuid, amount int);\nALTER TABLE public.payments ENABLE ROW LEVEL SECURITY;\nCREATE POLICY "own" ON public.payments FOR SELECT USING (auth.uid() = user_id);\n' },
+      // SQL line comments and block comments containing CREATE TABLE are not real table definitions
+      { path: 'supabase/migrations/003_comments.sql', content: '-- o baseline aplicado, e create table if not exists faz a reescrita virar no-op\n/* create table if not exists dummy (id int); */\nALTER TABLE public.payments ALTER COLUMN amount SET NOT NULL;\n' },
+      // SQLite schemas in TypeScript or drizzle-orm are not Postgres RLS tables
+      { path: 'packages/agent/src/session/schema.ts', content: 'import { sqliteTable, text } from "drizzle-orm/sqlite-core";\nconst sql = "CREATE TABLE IF NOT EXISTS chat_sessions (id TEXT PRIMARY KEY);";\n' },
+      // Standalone Postgres schemas outside supabase directory in a multi-tenant monorepo
+      { path: 'plugins/postgres/sql/bundles.sql', content: 'CREATE TABLE bundles (id serial primary key, name text);\n' }
+    ]
   },
   {
     ruleIds: [3001],
@@ -391,6 +399,16 @@ export const RULE_CASES: RuleCase[] = [
     ignores: f('lib/calc.ts', 'export function calc(input: string) {\n  return JSON.parse(input);\n}\n')
   },
   {
+    ruleIds: [32],
+    name: 'Python eval on input vs Redis Lua eval, MLX eval and a Java method named eval',
+    detects: f('app/calc.py', 'def calc(expr):\n    return eval(expr)\n'),
+    ignores: [
+      ...f('app/locks.py', 'async def acquire(redis, key, token):\n    return await redis.eval(ACQUIRE_LUA, 1, key, token)\n'),
+      ...f('app/model.py', 'import mlx.core as mx\n\ndef step(x):\n    mx.eval(x)\n    return x\n'),
+      ...f('src/main/java/udtf/Labels.java', 'public class Labels {\n  public void eval(Integer id, String labels) {\n    collect(labels);\n  }\n}\n'),
+    ],
+  },
+  {
     ruleIds: [33],
     name: 'Command injection via shell exec',
     detects: f('app/api/ping/route.ts', "import { exec } from 'child_process';\nexport async function GET(req: Request) {\n  const host = new URL(req.url).searchParams.get('host');\n  exec(`ping -c 1 ${host}`);\n  return new Response('ok');\n}\n"),
@@ -419,6 +437,12 @@ export const RULE_CASES: RuleCase[] = [
     name: 'Unsanitized innerHTML',
     detects: f('components/Post.tsx', 'export const Post = ({ html }: { html: string }) => <div dangerouslySetInnerHTML={{ __html: html }} />;\n'),
     ignores: f('app/layout.tsx', 'const ld = { "@context": "https://schema.org" };\nexport const Ld = () => <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(ld) }} />;\n')
+  },
+  {
+    ruleIds: [16],
+    name: 'innerHTML set from a message vs from an icon helper call',
+    detects: f('src/views/inbox.js', 'export function show(el, message) {\n  el.innerHTML = message.body;\n}\n'),
+    ignores: f('src/views/selfsign.js', "import { icon } from './icons.js';\nexport function done(btn) {\n  btn.innerHTML = icon('check', 16, 2.4);\n}\n"),
   },
 
   // ─── Auth & crypto ────────────────────────────────────────────────────
@@ -469,8 +493,16 @@ export const RULE_CASES: RuleCase[] = [
     detects: f('app/api/chat/route.ts', "import OpenAI from 'openai';\nconst openai = new OpenAI();\nexport async function POST(req: Request) {\n  const { prompt } = await req.json();\n  return Response.json(await openai.chat.completions.create({ model: 'gpt-4o', max_tokens: 256, messages: [{ role: 'user', content: prompt }] }));\n}\n"),
     ignores: [
       { path: 'app/api/chat/route.ts', content: "import OpenAI from 'openai';\nimport { rateLimit } from '@/lib/rate-limit';\nconst openai = new OpenAI();\nexport async function POST(req: Request) {\n  await rateLimit(req);\n  const { prompt } = await req.json();\n  return Response.json(await openai.chat.completions.create({ model: 'gpt-4o', max_tokens: 256, messages: [{ role: 'user', content: prompt }] }));\n}\n" },
-      { path: 'app/api/login/route.ts', content: "export async function POST(req: Request) {\n  const body = await req.json();\n  return Response.json({ ok: Boolean(body.email) });\n}\n" }
+      { path: 'app/api/login/route.ts', content: "export async function POST(req: Request) {\n  const body = await req.json();\n  return Response.json({ ok: Boolean(body.email) });\n}\n" },
+      // Twilio's client.messages.create sends an SMS; it is not an AI call (SMS limits are XL-12's job)
+      { path: 'app/api/notify/route.ts', content: "import twilio from 'twilio';\nconst client = twilio(process.env.TWILIO_ACCOUNT_SID, process.env.TWILIO_AUTH_TOKEN);\nexport async function POST(req: Request) {\n  const { phone } = await req.json();\n  await client.messages.create({ to: phone, from: process.env.TWILIO_FROM, body: 'Your order shipped' });\n  return Response.json({ sent: true });\n}\n" }
     ]
+  },
+  {
+    ruleIds: [10402],
+    name: 'Anthropic messages.create endpoint without rate limiting is still an AI endpoint',
+    detects: f('app/api/assistant/route.ts', "import Anthropic from '@anthropic-ai/sdk';\nconst client = new Anthropic();\nexport async function POST(req: Request) {\n  const { prompt } = await req.json();\n  return Response.json(await client.messages.create({ model: 'claude-haiku-5-5', max_tokens: 256, messages: [{ role: 'user', content: prompt }] }));\n}\n"),
+    ignores: f('app/api/assistant/route.ts', "import Anthropic from '@anthropic-ai/sdk';\nimport { rateLimit } from '@/lib/rate-limit';\nconst client = new Anthropic();\nexport async function POST(req: Request) {\n  await rateLimit(req);\n  const { prompt } = await req.json();\n  return Response.json(await client.messages.create({ model: 'claude-haiku-5-5', max_tokens: 256, messages: [{ role: 'user', content: prompt }] }));\n}\n")
   },
 
   // ─── Logging ──────────────────────────────────────────────────────────

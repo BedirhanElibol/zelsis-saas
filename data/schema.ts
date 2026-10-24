@@ -18,6 +18,10 @@ export const FindingSchema = z.object({
   reproductionSteps: z.array(z.string()),
   remediationPrompt: z.string(),
   diffPatch: z.string().optional(),
+  /** One plain sentence on what someone can do with this issue (data/rule-impact.ts). */
+  impact: z.string().optional(),
+  /** Kind of damage: money, data, accounts, server, uptime (lib/scanner/risk-kind.ts). */
+  risk: z.enum(['FINANCIAL', 'DATA_LEAK', 'ACCOUNT_TAKEOVER', 'CODE_EXECUTION', 'DOWNTIME']).optional(),
   status: StatusEnum,
   owner: z.string().optional(),
   falsePositive: z.boolean().default(false),
@@ -25,6 +29,10 @@ export const FindingSchema = z.object({
   maturity: z.enum(['verified', 'unproven', 'experimental']).optional(),
   // Set by the server when fix text was withheld (Free tier); fetch it via /api/v1/scans/fix
   lockedFix: z.object({ jobId: z.string(), ref: z.string() }).optional(),
+  // Set when file, line and snippet were withheld (Free tier, private repository); only the folder is kept
+  lockedLocation: z.boolean().optional(),
+  // Opt-in AI double-check before a PR gate block (lib/ai-verify.ts): 'guarded' softened CRITICAL to HIGH
+  aiReview: z.object({ verdict: z.enum(['real', 'guarded', 'unsure']), reason: z.string(), model: z.string() }).optional(),
 });
 
 export interface ScanHistoryItem {

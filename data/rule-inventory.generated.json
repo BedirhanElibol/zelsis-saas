@@ -1,10 +1,10 @@
 {
  "summary": {
-  "implementedRules": 1268,
-  "testedRules": 1259,
-  "preciseLocationRules": 1265,
+  "implementedRules": 1302,
+  "testedRules": 1296,
+  "preciseLocationRules": 1300,
   "catalogEntries": 1922,
-  "catalogOnlyNotImplemented": 1397,
+  "catalogOnlyNotImplemented": 1396,
   "catalogPlaceholderMetadata": 1810
  },
  "catalogOnly": [
@@ -1072,7 +1072,6 @@
   12450,
   12501,
   12505,
-  12506,
   12507,
   12508,
   12509,
@@ -1441,7 +1440,7 @@
    "ruleId": 14,
    "code": "RULE-14",
    "title": "Insecure Hardcoded Fallback for Cryptographic Session / JWT Secret",
-   "severity": "CRITICAL",
+   "severity": "UNKNOWN",
    "source": "lib/rules/security-rules.ts",
    "preciseLocation": true,
    "tested": true,
@@ -1591,7 +1590,7 @@
    "ruleId": 32,
    "code": "RULE-32",
    "title": "Dynamic Code Execution (eval / Function Remote Code Execution)",
-   "severity": "CRITICAL",
+   "severity": "UNKNOWN",
    "source": "lib/rules/security-rules.ts",
    "preciseLocation": true,
    "tested": true,
@@ -2391,7 +2390,7 @@
    "ruleId": 3017,
    "code": "RULE-3017",
    "title": "Dangerous Host Docker Socket Mount (/var/run/docker.sock Exposed)",
-   "severity": "CRITICAL",
+   "severity": "HIGH",
    "source": "lib/rules/infra-rules.ts",
    "preciseLocation": true,
    "tested": true,
@@ -2424,7 +2423,7 @@
    "severity": "CRITICAL",
    "source": "lib/rules/infra-rules.ts",
    "preciseLocation": true,
-   "tested": false,
+   "tested": true,
    "inCatalog": false
   },
   {
@@ -3593,7 +3592,7 @@
    "title": "Docker Container Running as Default Root User",
    "severity": "HIGH",
    "source": "lib/rules/cloud-native-rules.ts",
-   "preciseLocation": false,
+   "preciseLocation": true,
    "tested": true,
    "inCatalog": true
   },
@@ -3950,7 +3949,7 @@
   {
    "ruleId": 7135,
    "code": "WEB-PERF-35",
-   "title": "Unkeyed React List Elements Forcing Full DOM Rebuild",
+   "title": "List Keyed by Array Index",
    "severity": "LOW",
    "source": "lib/rules/web-vitals-rules.ts",
    "preciseLocation": true,
@@ -5304,7 +5303,7 @@
    "severity": "CRITICAL",
    "source": "lib/rules/python-enterprise-rules.ts",
    "preciseLocation": true,
-   "tested": false,
+   "tested": true,
    "inCatalog": true
   },
   {
@@ -5401,7 +5400,7 @@
    "ruleId": 8811,
    "code": "PY-SEC-11",
    "title": "Dynamic Code Execution via eval() or exec()",
-   "severity": "CRITICAL",
+   "severity": "UNKNOWN",
    "source": "lib/rules/python-enterprise-rules.ts",
    "preciseLocation": true,
    "tested": true,
@@ -5434,7 +5433,7 @@
    "severity": "HIGH",
    "source": "lib/rules/python-enterprise-rules.ts",
    "preciseLocation": true,
-   "tested": false,
+   "tested": true,
    "inCatalog": true
   },
   {
@@ -5761,7 +5760,7 @@
    "ruleId": 8901,
    "code": "K8S-01",
    "title": "Privileged Container Execution (privileged: true)",
-   "severity": "CRITICAL",
+   "severity": "HIGH",
    "source": "lib/rules/k8s-hardening-rules.ts",
    "preciseLocation": true,
    "tested": true,
@@ -7061,7 +7060,7 @@
    "ruleId": 12301,
    "code": "TLS-01",
    "title": "Deprecated TLS 1.0 / 1.1 Protocols Permitted on Public Endpoints",
-   "severity": "CRITICAL",
+   "severity": "HIGH",
    "source": "lib/rules/tls-cryptography-rules.ts",
    "preciseLocation": true,
    "tested": true,
@@ -7112,6 +7111,16 @@
    "code": "MQ-04",
    "title": "Missing Publisher Confirms / Acknowledgments Leading to Data Loss",
    "severity": "MEDIUM",
+   "source": "lib/rules/message-broker-rules.ts",
+   "preciseLocation": true,
+   "tested": true,
+   "inCatalog": true
+  },
+  {
+   "ruleId": 12506,
+   "code": "MQ-06",
+   "title": "Failed Message Is Requeued Forever From the Error Handler",
+   "severity": "HIGH",
    "source": "lib/rules/message-broker-rules.ts",
    "preciseLocation": true,
    "tested": true,
@@ -7181,7 +7190,7 @@
    "ruleId": 12902,
    "code": "PCI4-02",
    "title": "PCI-DSS Req 6.4.3 Insecure Third-Party Scripts on Payment Pages",
-   "severity": "CRITICAL",
+   "severity": "HIGH",
    "source": "lib/rules/pci-dss-v4-rules.ts",
    "preciseLocation": true,
    "tested": true,
@@ -7431,7 +7440,7 @@
    "ruleId": 15701,
    "code": "KERN-SEC-01",
    "title": "Unrestricted Linux Root Capabilities (CAP_SYS_ADMIN) Retained in Container Workloads",
-   "severity": "CRITICAL",
+   "severity": "HIGH",
    "source": "lib/rules/linux-kernel-security-rules.ts",
    "preciseLocation": true,
    "tested": true,
@@ -7660,7 +7669,7 @@
   {
    "ruleId": 18101,
    "code": "MYSQL-SEC-01",
-   "title": "MySQL Raw Query Injection via String Formatting",
+   "title": "MySQL Raw Query Injection via Python String Interpolation",
    "severity": "CRITICAL",
    "source": "lib/rules/multi-database-rules.ts",
    "preciseLocation": true,
@@ -10763,6 +10772,16 @@
    "title": "Request Input Builds a File Path (Go)",
    "severity": "HIGH",
    "source": "lib/rules/py-go-flow-rules.ts",
+   "preciseLocation": true,
+   "tested": true,
+   "inCatalog": false
+  },
+  {
+   "ruleId": 29507,
+   "code": "FLOW-07",
+   "title": "${sink.model} Loaded by the Id in the URL Without an Ownership Check (Python)",
+   "severity": "HIGH",
+   "source": "lib/rules/iag-python-rules.ts",
    "preciseLocation": true,
    "tested": true,
    "inCatalog": false
@@ -14083,6 +14102,326 @@
    "title": "Error Stack Trace Rendered in the UI",
    "severity": "MEDIUM",
    "source": "lib/rules/ux-gemini-rules.ts",
+   "preciseLocation": true,
+   "tested": true,
+   "inCatalog": false
+  },
+  {
+   "ruleId": 30101,
+   "code": "RULE-30101",
+   "title": "${v} = http.request() Is Never Ended, So the Request Is Never Sent",
+   "severity": "HIGH",
+   "source": "lib/rules/logic-gemini2-rules.ts",
+   "preciseLocation": true,
+   "tested": true,
+   "inCatalog": false
+  },
+  {
+   "ruleId": 30102,
+   "code": "RULE-30102",
+   "title": "uncaughtException Handler Keeps the Process Running",
+   "severity": "MEDIUM",
+   "source": "lib/rules/logic-gemini2-rules.ts",
+   "preciseLocation": true,
+   "tested": true,
+   "inCatalog": false
+  },
+  {
+   "ruleId": 30104,
+   "code": "RULE-30104",
+   "title": "Object.${it[1]}(${e[1]}) on a Numeric Enum Lists Every Member Twice",
+   "severity": "MEDIUM",
+   "source": "lib/rules/logic-gemini2-rules.ts",
+   "preciseLocation": true,
+   "tested": true,
+   "inCatalog": false
+  },
+  {
+   "ruleId": 30105,
+   "code": "RULE-30105",
+   "title": "zlib.${m[1]}${m[2] ?? ",
+   "severity": "HIGH",
+   "source": "lib/rules/logic-gemini2-rules.ts",
+   "preciseLocation": true,
+   "tested": true,
+   "inCatalog": false
+  },
+  {
+   "ruleId": 30106,
+   "code": "RULE-30106",
+   "title": "${v} Has the g Flag and Is Reused With .test()",
+   "severity": "MEDIUM",
+   "source": "lib/rules/logic-gemini2-rules.ts",
+   "preciseLocation": true,
+   "tested": true,
+   "inCatalog": false
+  },
+  {
+   "ruleId": 30107,
+   "code": "RULE-30107",
+   "title": "${m[1]}() in a Request Handler Blocks the Event Loop",
+   "severity": "MEDIUM",
+   "source": "lib/rules/logic-gemini2-rules.ts",
+   "preciseLocation": true,
+   "tested": true,
+   "inCatalog": false
+  },
+  {
+   "ruleId": 30108,
+   "code": "RULE-30108",
+   "title": "Middleware catch Swallows the Error and Never Calls next()",
+   "severity": "MEDIUM",
+   "source": "lib/rules/logic-gemini2-rules.ts",
+   "preciseLocation": true,
+   "tested": true,
+   "inCatalog": false
+  },
+  {
+   "ruleId": 30109,
+   "code": "RULE-30109",
+   "title": "cookies().${m[1]}() Called While Rendering a Server Component",
+   "severity": "HIGH",
+   "source": "lib/rules/logic-gemini2-rules.ts",
+   "preciseLocation": true,
+   "tested": true,
+   "inCatalog": false
+  },
+  {
+   "ruleId": 30110,
+   "code": "RULE-30110",
+   "title": "sync.${p[2]} ${p[1]} Passed by Value",
+   "severity": "HIGH",
+   "source": "lib/rules/logic-gemini2-rules.ts",
+   "preciseLocation": true,
+   "tested": true,
+   "inCatalog": false
+  },
+  {
+   "ruleId": 30151,
+   "code": "RULE-30151",
+   "title": "Export Downloads an Empty File",
+   "severity": "HIGH",
+   "source": "lib/rules/logic-gemini2-rules.ts",
+   "preciseLocation": true,
+   "tested": true,
+   "inCatalog": false
+  },
+  {
+   "ruleId": 30152,
+   "code": "RULE-30152",
+   "title": "${m[1]} Are Hard-Coded in the Source",
+   "severity": "HIGH",
+   "source": "lib/rules/logic-gemini2-rules.ts",
+   "preciseLocation": true,
+   "tested": true,
+   "inCatalog": false
+  },
+  {
+   "ruleId": 30201,
+   "code": "RULE-30201",
+   "title": "Agent Loop Calls the Model With No Step Limit",
+   "severity": "MEDIUM",
+   "source": "lib/rules/logic-gemini2-rules.ts",
+   "preciseLocation": true,
+   "tested": true,
+   "inCatalog": false
+  },
+  {
+   "ruleId": 30202,
+   "code": "RULE-30202",
+   "title": "Agent Tool Runs ${fsCall[1]}() on a Path the Model Chose",
+   "severity": "HIGH",
+   "source": "lib/rules/logic-gemini2-rules.ts",
+   "preciseLocation": true,
+   "tested": true,
+   "inCatalog": false
+  },
+  {
+   "ruleId": 30251,
+   "code": "RULE-30251",
+   "title": "Node Inspector Exposed on All Interfaces (${m[0]})",
+   "severity": "CRITICAL",
+   "source": "lib/rules/logic-gemini2-rules.ts",
+   "preciseLocation": true,
+   "tested": true,
+   "inCatalog": false
+  },
+  {
+   "ruleId": 30252,
+   "code": "RULE-30252",
+   "title": "${m[1]} Is Downloaded Over an Unencrypted URL",
+   "severity": "HIGH",
+   "source": "lib/rules/logic-gemini2-rules.ts",
+   "preciseLocation": true,
+   "tested": true,
+   "inCatalog": false
+  },
+  {
+   "ruleId": 30301,
+   "code": "RULE-30301",
+   "title": "${name} Is Read by the Code but Declared in No Env Template or Deploy Config",
+   "severity": "MEDIUM",
+   "source": "lib/rules/cross-layer-rules.ts",
+   "preciseLocation": true,
+   "tested": true,
+   "inCatalog": false
+  },
+  {
+   "ruleId": 30302,
+   "code": "RULE-30302",
+   "title": "Dockerfile Uses Node ${d.major}, but ${engines.path} Requires Node ${engines.major}+",
+   "severity": "MEDIUM",
+   "source": "lib/rules/cross-layer-rules.ts",
+   "preciseLocation": true,
+   "tested": true,
+   "inCatalog": false
+  },
+  {
+   "ruleId": 30303,
+   "code": "RULE-30303",
+   "title": "App Accepts ${mb(bytes)} Uploads, but ${proxy.path} Stops Requests at ${mb(proxy.bytes)}",
+   "severity": "MEDIUM",
+   "source": "lib/rules/cross-layer-rules.ts",
+   "preciseLocation": true,
+   "tested": true,
+   "inCatalog": false
+  },
+  {
+   "ruleId": 30304,
+   "code": "RULE-30304",
+   "title": "Query Filters ",
+   "severity": "LOW",
+   "source": "lib/rules/cross-layer-rules.ts",
+   "preciseLocation": true,
+   "tested": true,
+   "inCatalog": false
+  },
+  {
+   "ruleId": 30305,
+   "code": "RULE-30305",
+   "title": "Browser Code Queries ",
+   "severity": "HIGH",
+   "source": "lib/rules/cross-layer-rules.ts",
+   "preciseLocation": true,
+   "tested": true,
+   "inCatalog": false
+  },
+  {
+   "ruleId": 30306,
+   "code": "RULE-30306",
+   "title": "Outbound HTTP Call Without a Timeout (Go)",
+   "severity": "MEDIUM",
+   "source": "lib/rules/cross-layer-rules.ts",
+   "preciseLocation": true,
+   "tested": true,
+   "inCatalog": false
+  },
+  {
+   "ruleId": 30307,
+   "code": "RULE-30307",
+   "title": "Balance or Stock Is Read, Changed in Code, Then Saved Without a Lock",
+   "severity": "HIGH",
+   "source": "lib/rules/cross-layer-rules.ts",
+   "preciseLocation": true,
+   "tested": true,
+   "inCatalog": false
+  },
+  {
+   "ruleId": 30308,
+   "code": "RULE-30308",
+   "title": "Per-User Data ",
+   "severity": "HIGH",
+   "source": "lib/rules/cross-layer-rules.ts",
+   "preciseLocation": true,
+   "tested": true,
+   "inCatalog": false
+  },
+  {
+   "ruleId": 30309,
+   "code": "RULE-30309",
+   "title": "",
+   "severity": "MEDIUM",
+   "source": "lib/rules/cross-layer-rules.ts",
+   "preciseLocation": true,
+   "tested": true,
+   "inCatalog": false
+  },
+  {
+   "ruleId": 30310,
+   "code": "RULE-30310",
+   "title": "Request to ${m[1]} Leaves Out ${missing.join(",
+   "severity": "MEDIUM",
+   "source": "lib/rules/cross-layer-rules.ts",
+   "preciseLocation": true,
+   "tested": true,
+   "inCatalog": false
+  },
+  {
+   "ruleId": 30311,
+   "code": "RULE-30311",
+   "title": "Payment Webhook Adds Credit Without Recording Which Events It Already Handled",
+   "severity": "HIGH",
+   "source": "lib/rules/cross-layer-rules.ts",
+   "preciseLocation": true,
+   "tested": true,
+   "inCatalog": false
+  },
+  {
+   "ruleId": 30312,
+   "code": "RULE-30312",
+   "title": "Endpoint Sends SMS Without a Rate Limit",
+   "severity": "HIGH",
+   "source": "lib/rules/cross-layer-rules.ts",
+   "preciseLocation": true,
+   "tested": true,
+   "inCatalog": false
+  },
+  {
+   "ruleId": 30313,
+   "code": "RULE-30313",
+   "title": "This ${model} Query Skips the Tenant Filter the Other ${model} Queries in This File Use",
+   "severity": "HIGH",
+   "source": "lib/rules/cross-layer-rules.ts",
+   "preciseLocation": true,
+   "tested": true,
+   "inCatalog": false
+  },
+  {
+   "ruleId": 30315,
+   "code": "RULE-30315",
+   "title": "${fk.table}.${fk.col} Cascades on Delete but No Migration Indexes It",
+   "severity": "LOW",
+   "source": "lib/rules/cross-layer-rules.ts",
+   "preciseLocation": true,
+   "tested": true,
+   "inCatalog": false
+  },
+  {
+   "ruleId": 30341,
+   "code": "RULE-30341",
+   "title": "Outside Call Retried in a Tight Loop With No Backoff",
+   "severity": "UNKNOWN",
+   "source": "lib/rules/resilience-rules.ts",
+   "preciseLocation": true,
+   "tested": true,
+   "inCatalog": false
+  },
+  {
+   "ruleId": 30342,
+   "code": "RULE-30342",
+   "title": "axios-retry Retries With No Delay",
+   "severity": "UNKNOWN",
+   "source": "lib/rules/resilience-rules.ts",
+   "preciseLocation": true,
+   "tested": true,
+   "inCatalog": false
+  },
+  {
+   "ruleId": 30401,
+   "code": "RULE-30401",
+   "title": "Token Is Decoded by Hand and Trusted Without a Signature Check",
+   "severity": "CRITICAL",
+   "source": "lib/rules/missing-guard-rules.ts",
    "preciseLocation": true,
    "tested": true,
    "inCatalog": false

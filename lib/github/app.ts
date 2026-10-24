@@ -22,12 +22,20 @@ export async function createGitHubAppClient(installationId: number) {
   return octokit;
 }
 
+// Kept as-is: branch protection matches required status checks by name, so renaming would block merges
+export const CHECK_NAME = 'Zelsis Security Gate';
+/** Product name shown in the check run summary and PR comment. */
+export const RELEASE_CHECK_TITLE = 'Zelsis Release Check';
+const COMMENT_MARKER = '<!-- Zelsis Release Check -->';
+// Comments posted before the rename carry this marker; match it so they are updated, not duplicated
+const LEGACY_COMMENT_MARKER = '<!-- Zelsis Security Gate -->';
+
 export async function createCheckRun(
   octokit: Octokit,
   owner: string,
   repo: string,
   headSha: string,
-  checkName: string = 'Zelsis Security Gate'
+  checkName: string = CHECK_NAME
 ) {
   const { data: checkRun } = await octokit.rest.checks.create({
     owner,
@@ -114,7 +122,7 @@ export async function postOrUpdatePRComment(
     issue_number: issueNumber,
   });
 
-  const zelsisComment = comments.find((c: any) => c.body?.includes('<!-- Zelsis Security Gate -->'));
+  const zelsisComment = comments.find((c: any) => c.body?.includes(COMMENT_MARKER) || c.body?.includes(LEGACY_COMMENT_MARKER));
 
   const finalBody = `<!-- Zelsis Security Gate -->\n${body}`;
 
