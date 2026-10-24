@@ -12,6 +12,9 @@ const EXCLUDE_DIRS = new Set([
   'tests',
   'scratch',
   '.gemini',
+  // benchmark / mobile corpora and agent worktrees: other people's code, not this repo
+  '.cache',
+  '.claude',
 ]);
 
 const VALID_EXTENSIONS = new Set([

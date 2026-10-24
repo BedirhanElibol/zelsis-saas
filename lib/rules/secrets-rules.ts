@@ -18,6 +18,15 @@ export interface SecretRuleResult {
 export function isDummyPlaceholder(line: string): boolean {
     if (!line || typeof line !== 'string')
         return false;
+    if (/-----BEGIN [A-Z0-9 ]*PRIVATE KEY-----(?:\\n|\s)*(?:\{\s*\}|%[sv]|\$\{[^}]+\})(?:\\n|\s)*-----END/i.test(line))
+        return true;
+    // Masked values: judge the quoted string only, so a generic like Record<string, string> on the line does not hide a key
+    if (/['"`][^'"`\n]*\*{3,}[^'"`\n]*['"`]/.test(line))
+        return true;
+    if (/['"`]<[^<>'"`\n]{2,}>['"`]/.test(line))
+        return true;
+    if (/['"`][\s*xX•·\-_.]+['"`]/.test(line) && /[*xX•]/.test(line))
+        return true;
     return /placeholder|ghp_x{8,}|EXAMPLE|dummy|test_secret_12345|\bx{10,}\b|00000000/i.test(line);
 }
 export function maskSecretInLine(line: string, pattern: RegExp): string {
@@ -36,6 +45,9 @@ export function maskSecretInLine(line: string, pattern: RegExp): string {
         return line;
     }
 }
+
+/** A key header used as a pattern or prefix check (scrubbers, key-type detection), not a key. */
+const KEY_HEADER_AS_PATTERN = /(?:startswith|startsWith|endswith|includes|indexOf|re\.compile|new\s+RegExp|regex\s*[:=]|\.test|\.match)\s*\(?\s*(?:r|b|rb)?["'`/][^"'`\n]*-----BEGIN|[=(:,]\s*\/-----BEGIN/;
 export function evaluateSecretRules(file: CodeFile, lines: string[], rawContentOrClean: string, findingCounter: {
     count: number;
 }): SecretRuleResult {
@@ -1284,7 +1296,7 @@ export function evaluateSecretRules(file: CodeFile, lines: string[], rawContentO
     // SEC-SECRET-45: RSA Private Key Block Exposure
     const pattern45 = /-----BEGIN RSA PRIVATE KEY-----/i;
     if (pattern45.test(contentToScan)) {
-        const matchLineIdx = lines.findIndex(l => pattern45.test(l) && !isDummyPlaceholder(l));
+        const matchLineIdx = lines.findIndex(l => pattern45.test(l) && !isDummyPlaceholder(l) && !KEY_HEADER_AS_PATTERN.test(l));
         if (matchLineIdx !== -1) {
             const lineNum = matchLineIdx + 1;
             findings.push({
@@ -1312,7 +1324,7 @@ export function evaluateSecretRules(file: CodeFile, lines: string[], rawContentO
     // SEC-SECRET-46: OpenSSH Private Key Block Exposure
     const pattern46 = /-----BEGIN OPENSSH PRIVATE KEY-----/i;
     if (pattern46.test(contentToScan)) {
-        const matchLineIdx = lines.findIndex(l => pattern46.test(l) && !isDummyPlaceholder(l));
+        const matchLineIdx = lines.findIndex(l => pattern46.test(l) && !isDummyPlaceholder(l) && !KEY_HEADER_AS_PATTERN.test(l));
         if (matchLineIdx !== -1) {
             const lineNum = matchLineIdx + 1;
             findings.push({
@@ -1394,9 +1406,11 @@ export function evaluateSecretRules(file: CodeFile, lines: string[], rawContentO
         }
     }
     // SEC-SECRET-49: Generic Private Key Block Exposure
-    const pattern49 = /-----BEGIN PRIVATE KEY-----/i;
+    // The header alone (a starts_with() assertion, a PEM parser) is not a key; require base64 key material after it
+    const pattern49 = /-----BEGIN PRIVATE KEY-----(?:\\n|\s|["'`])+[A-Za-z0-9+/]{40}/;
     if (pattern49.test(contentToScan)) {
-        const matchLineIdx = lines.findIndex(l => pattern49.test(l) && !isDummyPlaceholder(l));
+        const matchLineIdx = lines.findIndex((l, i) =>
+            l.includes('-----BEGIN PRIVATE KEY-----') && !isDummyPlaceholder(l) && pattern49.test(`${l}\n${lines[i + 1] ?? ''}`));
         if (matchLineIdx !== -1) {
             const lineNum = matchLineIdx + 1;
             findings.push({
@@ -2835,7 +2849,7 @@ export function evaluateSecretRules(file: CodeFile, lines: string[], rawContentO
         for (const n of freq.values()) bits -= (n / value.length) * Math.log2(n / value.length);
         return bits >= 3.5;
     };
-    const isTemplateFile = /\.(?:example|sample|template|dist)(?:\.[a-z]+)?$/.test(lowerPath);
+    const isTemplateFile = /\.(?:example|sample|template|dist)(?:\.[a-z]+)?$/.test(lowerPath) || /(?:^|\/)\.env\.(?:example|sample|template|test|testing)\b/.test(lowerPath);
     if (!isTemplateFile && pattern100.test(contentToScan)) {
         const matchLineIdx = lines.findIndex(l => pattern100.test(l) && !isDummyPlaceholder(l) && isRandomSecretValue(l));
         if (matchLineIdx !== -1) {

@@ -1,13 +1,19 @@
 name: Production Build & Deployment Pipeline
 
+# PRs into main are verified here; main is not re-run on push (it only receives verified PRs)
 on:
-  push:
-    branches:
-      - main
   pull_request:
     branches:
       - main
+    paths-ignore:
+      - '**/*.md'
+      - 'marketing-assets/**'
   workflow_dispatch:
+
+# A new push to the same PR cancels the run it replaces
+concurrency:
+  group: deploy-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
 
 jobs:
   validate-and-build:
@@ -74,11 +80,16 @@ jobs:
 
       - name: Install Playwright Chromium
         timeout-minutes: 12
-        # The apt/CDN download occasionally hangs; cap each attempt and retry instead of blocking the job
+        # The apt/CDN download occasionally hangs; cap each attempt and retry instead of blocking the job.
+        # timeout only stops npx: the apt-get it started keeps the dpkg lock, so clear it before the next try.
         run: |
           for attempt in 1 2 3; do
             timeout 240 npx playwright install --with-deps chromium && exit 0
             echo "Playwright install attempt $attempt failed or timed out, retrying"
+            sudo pkill -9 -x apt-get || true
+            sudo pkill -9 -x dpkg || true
+            sudo rm -f /var/lib/dpkg/lock-frontend /var/lib/dpkg/lock /var/lib/apt/lists/lock /var/cache/apt/archives/lock
+            sudo dpkg --configure -a || true
           done
           exit 1
 

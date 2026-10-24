@@ -322,7 +322,7 @@ export function evaluateLogicBugRules(file: CodeFile, lines: string[], cleanCont
   }
 
   // BUG-19: Next.js route handler builds a response but does not return it
-  if (/(?:^|\/)(?:app|src\/app)\/.*route\.[cm]?[jt]s$|(?:^|\/)middleware\.[jt]s$/i.test(path)) {
+  if (/(?:^|\/)(?:app|src\/app)\/.*route\.[cm]?[jt]s$|(?:^|\/)(?:middleware|proxy)\.[jt]s$/i.test(path)) {
     lines.forEach((l, i) => {
       if (!isComment(l) && /^\s*(?:NextResponse\.(?:json|redirect|rewrite)|Response\.(?:json|redirect)|new\s+(?:Next)?Response)\s*\(/.test(l)) {
         const prev = lines.slice(0, i).reverse().find((x) => x.trim() && !isComment(x)) || '';
@@ -352,6 +352,8 @@ function shipReadiness(path: string, lines: string[], c: string, add: (h: Hit) =
     // Fallbacks and dev-only branches are fine: env ?? 'http://localhost:3000', NODE_ENV === 'development' ? ... : ...
     if (/\?\?|\|\||NODE_ENV|isDev\b|IS_DEV|development|process\.env\.|import\.meta\.env|\bdev(?:elopment)?(?:Url|URL|Origin)\b/.test(l)) return;
     if (/^\s*(?:export\s+)?const\s+\w*(?:dev|local|test)\w*\s*=/i.test(l)) return;
+    // Else branch of a ternary: envUrl && envUrl.trim() ? envUrl : 'http://localhost:3000' (env read on an earlier line)
+    if (new RegExp(String.raw`\?[^:?]+:\s*` + m[1] + String.raw`https?:\/\/(?:localhost|127\.0\.0\.1)`).test(l)) return;
     // Startup logs, and allow-lists that also contain a real origin
     if (/\b(?:console|logger|log)\.\w+\s*\(|\bprint\s*\(/.test(l) || /['"`]https:\/\/(?!localhost|127\.)[^'"`]+['"`]/.test(l)) return;
     // Default parameter / destructuring default (callers pass the real URL) and the last branch of a multi-line fallback
@@ -380,6 +382,9 @@ function shipReadiness(path: string, lines: string[], c: string, add: (h: Hit) =
   lines.forEach((l, i) => {
     if (isComment(l) || !/process\.env\.(?:NEXT_PUBLIC_)?VERCEL_URL\b/.test(l) || /https?:\/\//.test(l)) return;
     if (!/(?:=|\(|\$\{|:)\s*process\.env\.(?:NEXT_PUBLIC_)?VERCEL_URL\b/.test(l)) return;
+    // Stored in a variable that is then given the protocol: `https://${vercelUrl}` / 'https://' + vercelUrl
+    const v = /\b(?:const|let|var)\s+(\w+)\s*=\s*process\.env\.(?:NEXT_PUBLIC_)?VERCEL_URL\b/.exec(l)?.[1];
+    if (v && new RegExp(String.raw`https?://\$\{\s*${v}\b|['"\x60]https?://['"\x60]\s*\+\s*${v}\b`).test(lines.slice(i + 1).join('\n'))) return;
     add({ ruleId: 29702, code: 'SHIP-02', severity: 'MEDIUM', category: 'Deployment Bug', lineIdx: i,
       title: 'VERCEL_URL Used as a Full URL (No https://, Changes Every Deployment)',
       why: 'VERCEL_URL is a bare host like my-app-abc123.vercel.app: without https:// fetch() and new URL() throw, and because it is the unique deployment URL, links and auth redirects point at a preview build instead of your domain.',

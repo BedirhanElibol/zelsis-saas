@@ -116,7 +116,7 @@ function generate(source: string): string {
 
 const samples: [number, string][] = [];
 const skipped: number[] = [];
-for (const m of src.matchAll(/const pattern\d+ = (\/.+\/[a-z]*);\n/g)) {
+for (const m of src.matchAll(/const pattern\d+ = (\/.+\/[a-z]*);\r?\n/g)) {
   const after = src.slice(m.index! + m[0].length, m.index! + m[0].length + 1500);
   const ruleId = Number(after.match(/ruleId:\s*(\d+),/)?.[1]);
   const regex = new Function(`return ${m[1]}`)() as RegExp;

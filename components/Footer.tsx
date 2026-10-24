@@ -14,7 +14,7 @@ export const Footer: React.FC = () => {
           <ZelsisLogo size="md" />
 
           <p className="text-sm leading-relaxed max-w-sm text-[#A1A1AA]">
-            Universal pre-flight release gate for modern web and cloud applications. Automated OWASP security clearance, WCAG 2.2 AA accessibility, and cloud infrastructure verification.
+            A release gate for web, mobile, SaaS, API and desktop apps. Logic, security, dependency, UI and privacy checks on every pull request.
           </p>
 
           <div className="flex flex-col gap-1.5 mt-2 text-xs font-mono text-zinc-400">
@@ -24,7 +24,7 @@ export const Footer: React.FC = () => {
               <ArrowUpRight size={12} />
             </span>
             <span>Support: reply within 2 business days</span>
-            <span className="text-[11px] text-zinc-400">Istanbul &amp; Global Edge Infrastructure</span>
+            <span className="text-[11px] text-zinc-400">Istanbul, Türkiye · Data stored in the EU (Ireland)</span>
           </div>
         </div>
 
@@ -45,6 +45,15 @@ export const Footer: React.FC = () => {
           <a href="/docs" className="text-sm hover:text-white transition-colors py-1.5 inline-block">
             Documentation
           </a>
+          <a href="/changelog" className="text-sm hover:text-white transition-colors py-1.5 inline-block">
+            Changelog
+          </a>
+          <a href="/agencies" className="text-sm hover:text-white transition-colors py-1.5 inline-block">
+            For agencies
+          </a>
+          <a href="/open-source" className="text-sm hover:text-white transition-colors py-1.5 inline-block">
+            For open source
+          </a>
         </div>
 
         {/* Col 3: SaaS Platform (4 cols) */}
@@ -55,9 +64,9 @@ export const Footer: React.FC = () => {
           <a href="/dashboard" className="inline-flex items-center min-h-[24px] text-sm text-white hover:underline transition-colors font-mono">
             Open dashboard →
           </a>
-          <span className="text-xs text-[#A1A1AA]">Deterministic Pre-Flight Vulnerability Clearance</span>
-          <span className="text-xs text-[#A1A1AA]">Automated WCAG 2.2 AA &amp; UX Audit Gates</span>
-          <span className="text-xs text-[#A1A1AA]">Cloud Infrastructure &amp; Container Hardening</span>
+          <span className="text-xs text-[#A1A1AA]">Security & logic checks</span>
+          <span className="text-xs text-[#A1A1AA]">Dependency & secret checks</span>
+          <span className="text-xs text-[#A1A1AA]">CI/CD & cloud config checks</span>
         </div>
 
 

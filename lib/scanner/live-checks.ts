@@ -364,9 +364,9 @@ export function buildLiveFindings(probe: LiveProbeResult, now: Date = new Date()
       snippet: `${cov.total - cov.answered} exposure paths were not checked: ${probe.host} answered with a bot-protection challenge.`,
       reproductionSteps: [
         `${cov.answered} of ${cov.total} exposure paths (.env, .git${probe.deepProbes ? ', dumps, credentials, debug pages, admin consoles' : ''}) got an answer before the host started challenging the scanner.`,
-        'Vercel and Cloudflare challenge an IP that requests many sensitive paths in a row; the challenge usually clears after a few minutes.'
+        'Hosts such as Vercel and Cloudflare challenge an IP that requests vulnerability-scanner paths (/.env, /dump.sql); spacing the requests out does not prevent it, and Vercel applies it before any firewall rule.'
       ],
-      remediationPrompt: `Re-run the scan in a few minutes to check the remaining paths. If it keeps happening, allow the Zelsis scanner (User-Agent "Zelsis-Release-Gate-Scanner") in the ${probe.host} firewall.`,
+      remediationPrompt: `Scan the repository behind ${probe.host} as well: on Vercel, Netlify and other static hosts these files can only be served from public/ or static/, which the repository scan checks (GAP-33). On Cloudflare or your own server, verify the domain in Settings and allow its x-zelsis-probe header in the firewall so every path gets checked.`,
       status: 'OPEN',
       falsePositive: false
     });

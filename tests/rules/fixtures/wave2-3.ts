@@ -304,13 +304,40 @@ export const CASES: RuleCase[] = [
   },
   {
     ruleIds: [7135],
-    name: 'reorderable todo list keyed by array index',
+    name: 'index-keyed list of inputs (a static index-keyed list is fine)',
+    detects: f('components/steps.tsx', src(
+      'export function Steps({ steps }: { steps: string[] }) {',
+      '  return (',
+      '    <ol>',
+      '      {steps.map((step, i) => (',
+      '        <li key={i}><input defaultValue={step} /></li>',
+      '      ))}',
+      '    </ol>',
+      '  );',
+      '}'
+    )),
+    ignores: f('components/steps.tsx', src(
+      'export function Steps({ steps }: { steps: string[] }) {',
+      '  return (',
+      '    <ol>',
+      '      {steps.map((step, i) => (',
+      '        <li key={i}>{step}</li>',
+      '      ))}',
+      '    </ol>',
+      '  );',
+      '}'
+    ))
+  },
+  {
+    ruleIds: [7135],
+    name: 'sortable todo list keyed by array index',
     detects: f('components/todo-list.tsx', src(
       "import type { Todo } from '@/lib/types';",
-      'export function TodoList({ todos }: { todos: Todo[] }) {',
+      'export function TodoList({ todos, sortBy }: { todos: Todo[]; sortBy: keyof Todo }) {',
+      '  const sorted = [...todos].sort((a, b) => String(a[sortBy]).localeCompare(String(b[sortBy])));',
       '  return (',
       '    <ul>',
-      '      {todos.map((todo, index) => (',
+      '      {sorted.map((todo, index) => (',
       '        <TodoItem key={index} todo={todo} />',
       '      ))}',
       '    </ul>',

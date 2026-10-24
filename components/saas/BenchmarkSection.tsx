@@ -4,7 +4,8 @@ import React, { useState } from 'react';
 import { m } from 'framer-motion';
 import { CheckCircle2, CircleAlert, CircleX, ExternalLink } from 'lucide-react';
 import benchmark from '@/data/benchmark-summary.generated.json';
-import { formatCount, RULE_COUNTS } from '@/lib/rule-status';
+import { formatCount } from '@/lib/rule-status';
+import { CORPUS_RECALL, corpusPct } from '@/data/corpus-recall';
 
 /**
  * Landing benchmark: every number here comes from scripts/benchmark/run.ts
@@ -17,6 +18,10 @@ const REPO_URL = (repo: string, sha: string) => `https://github.com/${repo}/tree
 const { summary } = benchmark;
 const cleanRepos = benchmark.repos.filter((r) => r.kind === 'clean');
 const cleanPassedOrWarned = cleanRepos.filter((r) => r.gate !== 'FAILED').length;
+const failedClean = cleanRepos.filter((r) => r.gate === 'FAILED');
+const scanTimes = benchmark.repos.map((r) => r.scanMs).sort((a, b) => a - b);
+const medianMs = scanTimes[Math.floor(scanTimes.length / 2)] ?? 0;
+const largest = [...benchmark.repos].sort((a, b) => b.files - a.files)[0];
 
 const GateBadge: React.FC<{ gate: string }> = ({ gate }) => {
   const style = gate === 'PASSED'
@@ -75,14 +80,14 @@ export const BenchmarkSection: React.FC = () => {
             detail={`${cleanRepos.length - cleanPassedOrWarned} failed on issues we reviewed as real.`}
           />
           <Stat
-            label="Active rules"
-            value={formatCount(RULE_COUNTS.gating)}
-            detail={`${formatCount(RULE_COUNTS.experimental)} more are experimental: reported, but never decide the gate.`}
+            label="Real-incident snippets caught"
+            value={`${corpusPct(CORPUS_RECALL.highCritical)}%`}
+            detail={`${CORPUS_RECALL.highCritical} of ${CORPUS_RECALL.total} flagged HIGH/CRITICAL, ${corpusPct(CORPUS_RECALL.withMedium)}% incl. MEDIUM. The misses are listed in What We Don't Check.`}
           />
           <Stat
-            label="Rules that can fail a release"
-            value={formatCount(RULE_COUNTS.canBlockRelease)}
-            detail={`Backed by test fixtures (${formatCount(RULE_COUNTS.fixtureTested)} rules), a caught benchmark flaw or a reviewed finding. Other rules can warn, not fail.`}
+            label="Median engine time"
+            value={`${(medianMs / 1000).toFixed(1)}s`}
+            detail={largest ? `Across ${benchmark.repos.length} projects. The largest, ${formatCount(largest.files)} files, took ${(largest.scanMs / 1000).toFixed(1)}s.` : ''}
           />
         </div>
 
@@ -178,6 +183,19 @@ export const BenchmarkSection: React.FC = () => {
                 </tbody>
               </table>
             </div>
+            {failedClean.length > 0 && (
+              <div className="p-4 sm:p-6 border-t border-white/10 bg-[#0E0E10]">
+                <h4 className="text-sm font-bold text-white">Why {failedClean.length} of these projects fail the gate</h4>
+                <p className="text-xs text-zinc-400 mt-1">Each blocking finding was checked by hand against the project&apos;s code.</p>
+                <ul className="mt-3 flex flex-col gap-2 text-xs text-zinc-300 leading-relaxed">
+                  {failedClean.flatMap((r) => ('blockers' in r && Array.isArray(r.blockers) ? r.blockers : []).map((b) => (
+                    <li key={`${r.repo}-${b.ruleId}`}>
+                      <span className="font-mono text-white">{r.repo}</span>: {b.reviewed ?? b.title}
+                    </li>
+                  )))}
+                </ul>
+              </div>
+            )}
           </m.div>
         )}
 
@@ -189,14 +207,14 @@ export const BenchmarkSection: React.FC = () => {
                 <li>{benchmark.repos.length} open-source repositories, each pinned to a commit so results are reproducible.</li>
                 <li>Recall: flaws documented by the vulnerable apps themselves, located in their source before scanning.</li>
                 <li>Noise: every HIGH/CRITICAL finding on clean projects is reviewed; rules that misfire become experimental.</li>
-                <li>Evidence: a CRITICAL finding fails the gate only if its rule has a test fixture, caught a documented flaw, or was reviewed as a true positive. Otherwise it warns.</li>
+                <li>Evidence: a CRITICAL finding fails the gate only if its rule caught a documented flaw or was reviewed as a true positive, or it is a published advisory for a dependency version. Otherwise it warns.</li>
                 <li>Engine time is the scan itself on one machine; downloading the repository is not included.</li>
               </ul>
             </div>
             <div className="p-6 rounded-2xl border border-white/10 bg-[#121214] flex flex-col gap-3">
               <h4 className="text-sm font-bold text-white">Current limits</h4>
               <ul className="text-xs text-zinc-400 leading-relaxed list-disc pl-4 flex flex-col gap-1.5">
-                <li>Rules are pattern-based static analysis, not full data-flow analysis: unusual code shapes can be missed.</li>
+                <li>Most rules are pattern-based. Checks across files (migrations, env templates, Dockerfiles, proxy configs) run for every language; the AST data-flow pass and auth-helper tracing cover JavaScript and TypeScript only, so unusual code shapes elsewhere can be missed.</li>
                 <li>The corpus covers JavaScript/TypeScript, Python, Go, PHP, Java, Ruby and C# projects; other languages are not yet benchmarked.</li>
                 <li>Dependency versions are checked against OSV.dev only when the repository has a lockfile or pinned manifest; the benchmark above measures pattern rules, not this lookup.</li>
                 <li>A small benchmark cannot prove the absence of false positives on every codebase. Report one and we add it.</li>

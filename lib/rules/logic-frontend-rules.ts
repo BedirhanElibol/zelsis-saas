@@ -111,7 +111,8 @@ function evaluate(path: string, c: string, add: (h: Hit) => void, context?: Repo
 
   if (isJsx) {
     // BUG-109: text input smaller than 16px on mobile (iOS Safari zooms the page on focus)
-    for (const x of c.matchAll(/<(input|textarea|select|Input|Textarea|SelectTrigger)\b/g)) {
+    // A stylesheet that sets form fields to 16px (usually inside a mobile media query) overrides text-xs classes
+    for (const x of context?.formFieldsMinFont16 ? [] : c.matchAll(/<(input|textarea|select|Input|Textarea|SelectTrigger)\b/g)) {
       const end = tagEnd(c, x.index!);
       if (end < 0) continue;
       const tag = c.slice(x.index!, end);

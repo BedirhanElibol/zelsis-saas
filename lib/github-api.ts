@@ -1,6 +1,6 @@
 import { CodeFile } from './scanner-engine';
 import { isDependencyFile } from '@/lib/scanner/dependencies';
-import { isScannableTreePath } from '@/lib/scanner/scan-paths';
+import { isScannableTreePath, withPublicArtifactPaths } from '@/lib/scanner/scan-paths';
 
 export interface FetchProgress {
   phase: 'connecting' | 'tree' | 'fetching';
@@ -694,7 +694,7 @@ export async function fetchGithubRepositoryData(
       });
     }
 
-    const codeFiles: CodeFile[] = fetchedFiles.filter((f): f is CodeFile => f !== null);
+    const codeFiles: CodeFile[] = withPublicArtifactPaths(treeData.tree || [], fetchedFiles.filter((f): f is CodeFile => f !== null));
 
     let changedFiles: string[] | undefined;
     if (base && ref) {

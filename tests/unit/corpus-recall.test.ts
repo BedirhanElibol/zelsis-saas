@@ -1,9 +1,10 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { measureRecall } from '../../scripts/benchmark/corpus-recall';
+import { CORPUS_RECALL } from '../../data/corpus-recall';
 
 /** /docs/boundaries publishes these numbers; a rule change that lowers them must update the page, not hide it. */
-const PUBLISHED = { total: 108, highCritical: 88, withMedium: 102 };
+const PUBLISHED = CORPUS_RECALL;
 
 test('real-incident corpus recall is at least what /docs/boundaries publishes', async () => {
   const r = await measureRecall();

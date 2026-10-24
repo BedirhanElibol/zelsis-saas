@@ -1092,7 +1092,7 @@ export function useDashboardState() {
         isLoggedIn: true,
         emailVerified: res.user?.emailVerified ?? true,
         expiresAt: resolvedExpiresAt,
-        status: resolvedTier !== 'Free' ? 'active' : 'active',
+        status: 'active',
         lastVerifiedAt: Date.now(),
       };
       setUser(loggedInUser);

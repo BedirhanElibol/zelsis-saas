@@ -5,9 +5,9 @@ import { ArrowRight } from 'lucide-react';
 import { GUIDES } from './guides';
 
 export const metadata: Metadata = {
-  title: 'Guides: Supabase and Stripe Bugs to Fix Before You Ship - Zelsis',
+  title: 'Guides: Bugs to Fix Before You Ship - Zelsis',
   description:
-    'Practical guides for AI-built web apps: testing Supabase RLS, fixing the user-delete foreign key error, and sending Stripe amounts in cents.',
+    'Practical guides for teams shipping web, mobile and SaaS apps: testing Supabase RLS, fixing the user-delete foreign key error, and sending Stripe amounts in cents.',
 };
 
 export default function GuidesIndexPage() {
@@ -15,7 +15,7 @@ export default function GuidesIndexPage() {
     <div className="space-y-6">
       <h1 className="text-3xl font-bold text-white mb-2">Guides</h1>
       <p className="text-zinc-400">
-        Short, practical fixes for bugs that show up again and again in apps built with Supabase, Stripe and AI coding tools. Each guide
+        Short, practical fixes for bugs that software teams ship again and again. Each guide
         shows the broken pattern, the fix, and how to check it yourself.
       </p>
       <ul className="space-y-3 list-none p-0 m-0">

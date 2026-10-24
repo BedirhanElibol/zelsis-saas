@@ -122,7 +122,10 @@ export function evaluateApiRules(file: CodeFile, lines: string[], cleanContent: 
     // The secret check may live in a shared helper (isAuthorizedCron / verifyCronSecret) imported by the route
     const cronGated = /\bCRON_SECRET\b|x-cron-secret|\b(?:isAuthorizedCron|verifyCron\w*|isCronRequest)\b/i.test(cleanContent)
       && /authorization|x-cron-secret|\b(?:isAuthorizedCron|verifyCron\w*|isCronRequest)\s*\(/i.test(getFuncMatch?.[0] ?? '');
-    const getBody = getFuncMatch && !cronGated ? getFuncMatch[0] : '';
+    // OAuth / app-install callbacks: the provider redirects with a GET, and a verified `state` stops cross-site triggering
+    const stateVerifiedCallback = /searchParams\.get\(\s*['"]state['"]\s*\)/.test(getFuncMatch?.[0] ?? '')
+      && /\b(?:verify|validate|check)\w*State\w*\s*\(|\bstate\s*!==?\s*[\w.]+|cookies\(\)\.get\(\s*['"][\w-]*state/i.test(getFuncMatch?.[0] ?? '');
+    const getBody = getFuncMatch && !cronGated && !stateVerifiedCallback ? getFuncMatch[0] : '';
     const sanitizedGetBody = getBody.replace(/createHmac\s*\([^)]*\)\s*\.update\s*\([^)]*\)/gi, '').replace(/createHash\s*\([^)]*\)\s*\.update\s*\([^)]*\)/gi, '');
     if (/(?:app\/api|pages\/api)/i.test(lowerPath) && sanitizedGetBody && /(?:\.(?:from|table|collection)\s*\([^)]*\)\s*\.(?:delete|update|insert|upsert)\b|\bprisma\.\w+\.(?:delete|update|create|upsert)(?:Many)?\s*\(|\bdb\.(?:delete|update|insert)\s*\(|DELETE\s+FROM|UPDATE\s+\w+\s+SET|INSERT\s+INTO)/i.test(sanitizedGetBody)) {
         const matchLineIdx = lines.findIndex(l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('*') && (/(?:\.(?:delete|update|insert|upsert|create)(?:Many)?\(|DELETE\s+FROM|UPDATE\s+\w+\s+SET|INSERT\s+INTO)/i.test(l) || /export\s+async\s+function\s+GET/i.test(l)));

@@ -8,7 +8,7 @@ import { canAccessLocalAudit } from '@/lib/env-config';
 import { validateSafeTargetUrl } from '@/lib/ssrf-guard';
 import { hasFixPromptAccess } from '@/lib/subscription-utils';
 import { getEffectivePlanTier, getOrgPolicy } from '@/lib/organization';
-import { redactScanResultFixes } from '@/lib/fix-gate';
+import { redactScanResultFixes, lockFindingLocations } from '@/lib/fix-gate';
 import { getSupabaseAdmin } from '@/lib/supabase-admin';
 import { FREE_PROJECT_LIMIT } from '@/lib/quota-manager';
 import { recordRescanAlert } from '@/lib/rescan-alerts';
@@ -406,6 +406,12 @@ export async function executeScanJob(options: ExecuteScanJobOptions): Promise<Sc
     if (!hasFixPromptAccess(userTier)) {
       const redacted = redactScanResultFixes(result, jobId);
       storedResult = redacted.result;
+      // Free on a private repository: one serious finding in full, the rest show folder, risk and impact only
+      if (userTier === 'Free' && repoIsPrivate === true) {
+        const locked = lockFindingLocations(storedResult, redacted.fixes);
+        storedResult = locked.result;
+        if (locked.lockedCount > 0) logger.info(`[Process Job] ${jobId}: ${locked.lockedCount} finding location(s) locked (Free, private repo).`);
+      }
       if (adminClient && authenticatedUserId) {
         const { error: fixesErr } = await adminClient
           .from('scan_job_fixes')

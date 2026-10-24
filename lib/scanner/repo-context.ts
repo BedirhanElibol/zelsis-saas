@@ -1,4 +1,5 @@
 import type { CodeFile } from './types';
+import { collectInfraFacts, emptyInfraFacts, type InfraFacts } from './infra-facts';
 import { buildCrossFileAuth, emptyCrossFileAuth, type CrossFileAuth } from './ast/cross-file';
 
 /**
@@ -8,6 +9,8 @@ import { buildCrossFileAuth, emptyCrossFileAuth, type CrossFileAuth } from './as
 export interface RepoContext {
   /** SQL functions given an explicit search_path anywhere in the repo (ALTER FUNCTION or a redefinition with SET search_path). */
   hardenedSqlFunctions: Set<string>;
+  /** SQL functions whose EXECUTE is revoked from PUBLIC / anon / authenticated in any migration (not callable by clients). */
+  revokedSqlFunctions: Set<string>;
   /** Tables with ROW LEVEL SECURITY enabled in any migration. */
   rlsEnabledTables: Set<string>;
   /**
@@ -15,6 +18,12 @@ export interface RepoContext {
    * so tables without RLS are exposed. Apps that only reach Postgres through their own server do not need RLS.
    */
   exposesDatabaseToClients: boolean;
+  /**
+   * Where that exposure applies: null for the whole repo (supabase/ folder, PostgREST config, GRANT ... TO anon),
+   * else the workspace folders whose package.json depends on supabase-js. In a monorepo an examples/ package using
+   * Supabase says nothing about the Prisma migrations of the main app.
+   */
+  dbExposedDirs: string[] | null;
   /** Some file serves a health / liveness / readiness route, so per-file "missing health check" rules stay quiet. */
   hasHealthEndpoint: boolean;
   /**
@@ -31,6 +40,8 @@ export interface RepoContext {
   sensitiveColumnsByModel: Map<string, string[]>;
   /** Exported auth helpers and the routes middleware.ts authenticates, for the AST flow rules. */
   crossFileAuth: CrossFileAuth;
+  /** Deploy, proxy and database declarations for the cross-layer rules (infra-facts.ts). */
+  infra: InfraFacts;
   /** Every scanned path (forward slashes, exact case), for import / route / segment lookups. */
   filePaths: Set<string>;
   /** Lowest pinned major version per dependency across package.json files (`react` -> 19). */
@@ -39,6 +50,20 @@ export interface RepoContext {
   expoPackageDirs: Set<string>;
   /** Facts read from next.config.*, or null when the repo has no next.config file. */
   nextConfig: NextConfigFacts | null;
+  /**
+   * Custom x-* request headers the app or its proxy sets itself (middleware requestHeaders.set, nginx
+   * proxy_set_header), lower-cased. A handler reading one of these is not trusting the client.
+   */
+  serverSetHeaders: Set<string>;
+  /** A stylesheet sets form fields to at least 16px (the iOS focus-zoom fix), so text-xs classes on inputs are overridden. */
+  formFieldsMinFont16: boolean;
+  /**
+   * The server is pinned to 127.0.0.1 / localhost, nothing binds 0.0.0.0 and the repo has no deploy config
+   * (Dockerfile, Procfile, fly.toml, render.yaml, app.yaml, vercel.json): a local app, not a public API.
+   */
+  loopbackOnlyServer: boolean;
+  /** PHP functions declared to return int (function user_id(): int); concatenating their result into SQL cannot inject. */
+  phpIntFunctions: Set<string>;
 }
 
 export interface NextConfigFacts {
@@ -57,16 +82,21 @@ const HEALTH_ROUTE = /['"`]\/(?:api\/)?(?:health(?:z|check)?|livez?|liveness|rea
 
 export function buildRepoContext(files: CodeFile[]): RepoContext {
   const hardenedSqlFunctions = new Set<string>();
+  const revokedSqlFunctions = new Set<string>();
   const rlsEnabledTables = new Set<string>();
-  let exposesDatabaseToClients = false;
+  let strongDbExposure = false;
+  const supabaseWorkspaceDirs: string[] = [];
   let hasHealthEndpoint = false;
   let nextMajorVersion: number | null = null;
   for (const file of files) {
     if (!hasHealthEndpoint && HEALTH_ROUTE.test(file.content || '')) hasHealthEndpoint = true;
     const path = (file.path || '').replace(/\\/g, '/');
-    if (/(?:^|\/)supabase\/(?:config\.toml|migrations\/)/i.test(path) || /postgrest\.conf$/i.test(path) ||
-        (/(?:^|\/)package\.json$/.test(path) && /"@supabase\/(?:supabase-js|ssr|auth-helpers-\w+)"/.test(file.content || ''))) {
-      exposesDatabaseToClients = true;
+    if (/(?:^|\/)supabase\/(?:config\.toml|migrations\/)/i.test(path) || /postgrest\.conf$/i.test(path)) {
+      strongDbExposure = true;
+      const ws = path.replace(/\/?supabase\/(?:config\.toml|migrations\/).*/i, '');
+      supabaseWorkspaceDirs.push(ws);
+    } else if (/(?:^|\/)package\.json$/.test(path) && !/node_modules\//.test(path) && /"@supabase\/(?:supabase-js|ssr|auth-helpers-\w+)"/.test(file.content || '')) {
+      supabaseWorkspaceDirs.push(path.replace(/(?:^|\/)package\.json$/, ''));
     }
     if (/(?:^|\/)package\.json$/.test(path) && !/node_modules\//.test(path)) {
       const pin = /"next"\s*:\s*"(?:npm:next@)?[\^~>=v\s]*(\d+)\b/.exec(file.content || '');
@@ -74,12 +104,25 @@ export function buildRepoContext(files: CodeFile[]): RepoContext {
     }
     if (/\.sql$/i.test(path)) {
       const sql = file.content || '';
-      if (/GRANT[^;]*\bTO\s+(?:anon|authenticated|web_anon)\b/i.test(sql)) exposesDatabaseToClients = true;
+      if (/GRANT[^;]*\bTO\s+(?:anon|authenticated|web_anon)\b/i.test(sql)) {
+        strongDbExposure = true;
+        const dir = path.includes('/') ? path.slice(0, path.lastIndexOf('/')) : '';
+        if (dir) supabaseWorkspaceDirs.push(dir);
+      }
       for (const m of sql.matchAll(/ALTER\s+TABLE\s+(?:IF\s+EXISTS\s+)?(?:ONLY\s+)?([\w."]+)\s+ENABLE\s+ROW\s+LEVEL\s+SECURITY/gi)) {
         rlsEnabledTables.add(normalizeSqlName(m[1]));
       }
+      // Enabled in a loop over a table list: foreach t in array array['a','b'] loop execute format('alter table
+      // public.%I enable row level security', t). Every name in that array literal gets RLS.
+      for (const m of sql.matchAll(/\bARRAY\s*\[((?:\s*'[\w.]+'\s*,?)+)\]([\s\S]{0,600}?)ENABLE\s+ROW\s+LEVEL\s+SECURITY/gi)) {
+        if (!/%[Is]/.test(m[2])) continue;
+        for (const t of m[1].matchAll(/'([\w.]+)'/g)) rlsEnabledTables.add(normalizeSqlName(t[1]));
+      }
     }
     if (!/\.sql$/i.test(file.path || '')) continue;
+    for (const m of (file.content || '').matchAll(/REVOKE\s+(?:EXECUTE|ALL)[^;]*?\bON\s+FUNCTION\s+([\w."]+)[^;]*?\bFROM\s+([^;]+);/gi)) {
+      if (/\b(?:public|anon|authenticated)\b/i.test(m[2])) revokedSqlFunctions.add(normalizeSqlName(m[1]));
+    }
     for (const m of (file.content || '').matchAll(/ALTER\s+FUNCTION\s+([\w."]+)\s*(?:\([^)]*\))?\s+SET\s+search_path/gi)) {
       hardenedSqlFunctions.add(normalizeSqlName(m[1]));
     }
@@ -88,22 +131,38 @@ export function buildRepoContext(files: CodeFile[]): RepoContext {
       if (/SET\s+search_path/i.test(m[0])) hardenedSqlFunctions.add(normalizeSqlName(m[1]));
     }
   }
+  const uniqueDirs = [...new Set(supabaseWorkspaceDirs)];
+  const dbExposedDirs = uniqueDirs.length > 0 ? uniqueDirs : (strongDbExposure ? ['supabase'] : []);
+  const exposesDatabaseToClients = strongDbExposure || dbExposedDirs.length > 0;
   return {
-    hardenedSqlFunctions, rlsEnabledTables, exposesDatabaseToClients, hasHealthEndpoint, nextMajorVersion,
-    ...collectServerClientFacts(files), crossFileAuth: buildCrossFileAuth(files), ...collectProjectFacts(files)
+    hardenedSqlFunctions, revokedSqlFunctions, rlsEnabledTables, exposesDatabaseToClients, dbExposedDirs, hasHealthEndpoint, nextMajorVersion,
+    ...collectServerClientFacts(files), crossFileAuth: buildCrossFileAuth(files), infra: collectInfraFacts(files), ...collectProjectFacts(files)
   };
 }
 
 /** Paths, dependency majors and next.config facts for the cross-file frontend rules. */
-function collectProjectFacts(files: CodeFile[]): Pick<RepoContext, 'filePaths' | 'packageMajors' | 'expoPackageDirs' | 'nextConfig'> {
+function collectProjectFacts(files: CodeFile[]): Pick<RepoContext, 'filePaths' | 'packageMajors' | 'expoPackageDirs' | 'nextConfig' | 'serverSetHeaders' | 'formFieldsMinFont16' | 'loopbackOnlyServer' | 'phpIntFunctions'> {
   const filePaths = new Set<string>();
   const packageMajors = new Map<string, number>();
   const expoPackageDirs = new Set<string>();
   let nextConfig: NextConfigFacts | null = null;
+  const serverSetHeaders = new Set<string>();
+  let formFieldsMinFont16 = false;
+  let bindsLoopback = false;
+  let bindsPublic = false;
+  let hasDeployConfig = false;
+  const phpIntFunctions = new Set<string>();
   for (const file of files) {
     const path = (file.path || '').replace(/\\/g, '/').replace(/^\.\//, '');
     filePaths.add(path);
     const content = file.content || '';
+    if (/\.php$/i.test(path)) for (const m of content.matchAll(/function\s+(\w+)\s*\([^)]*\)\s*:\s*int\b/g)) phpIntFunctions.add(m[1]);
+    if (/(?:^|\/)(?:Dockerfile|Procfile|fly\.toml|render\.ya?ml|app\.ya?ml|vercel\.json|netlify\.toml|railway\.json)$/i.test(path)) hasDeployConfig = true;
+    if (/\bhost\s*[:=]\s*(?:str\s*=\s*)?['"](?:127\.0\.0\.1|localhost)['"]|--host[=\s]+(?:127\.0\.0\.1|localhost)\b/.test(content)) bindsLoopback = true;
+    if (/\bhost\s*[:=]\s*(?:str\s*=\s*)?['"](?:0\.0\.0\.0|::)['"]|--host[=\s]+0\.0\.0\.0\b|['"]0\.0\.0\.0['"]/.test(content)) bindsPublic = true;
+    for (const m of content.matchAll(/\.(?:set|append)\(\s*['"`](x-[\w-]+)['"`]|proxy_set_header\s+(x-[\w-]+)/gi)) serverSetHeaders.add((m[1] || m[2]).toLowerCase());
+    if (!formFieldsMinFont16 && /\.(?:css|scss|sass|less)$/i.test(path)
+      && /\b(?:input|select|textarea)\b[^{}]*\{[^}]*font-size\s*:\s*(?:1[6-9]px|[2-9]\dpx|1(?:\.\d+)?rem|max\(\s*16px)/i.test(content)) formFieldsMinFont16 = true;
     if (/(?:^|\/)package\.json$/.test(path) && !/node_modules\//.test(path)) {
       for (const m of content.matchAll(/"(@?[\w./-]+)"\s*:\s*"(?:npm:[\w@./-]+@)?[\^~>=v\s]*(\d+)\.?/g)) {
         const prev = packageMajors.get(m[1]);
@@ -126,7 +185,7 @@ function collectProjectFacts(files: CodeFile[]): Pick<RepoContext, 'filePaths' |
       };
     }
   }
-  return { filePaths, packageMajors, expoPackageDirs, nextConfig };
+  return { filePaths, packageMajors, expoPackageDirs, nextConfig, serverSetHeaders, formFieldsMinFont16, loopbackOnlyServer: bindsLoopback && !bindsPublic && !hasDeployConfig, phpIntFunctions };
 }
 
 /** Column names that hold credentials or secrets (password hashes, tokens, API keys, TOTP seeds). */
@@ -182,4 +241,26 @@ function collectServerClientFacts(files: CodeFile[]): Pick<RepoContext, 'clientC
 }
 
 /** Without repo-wide knowledge, assume the database may be exposed (single-file scans keep RLS checks on). */
-export const emptyRepoContext = (): RepoContext => ({ hardenedSqlFunctions: new Set(), rlsEnabledTables: new Set(), exposesDatabaseToClients: true, hasHealthEndpoint: false, nextMajorVersion: null, clientComponentModules: new Set(), sensitiveColumnsByModel: new Map(), crossFileAuth: emptyCrossFileAuth(), filePaths: new Set(), packageMajors: new Map(), expoPackageDirs: new Set(), nextConfig: null });
+export const emptyRepoContext = (): RepoContext => ({ hardenedSqlFunctions: new Set(), revokedSqlFunctions: new Set(), rlsEnabledTables: new Set(), exposesDatabaseToClients: true, dbExposedDirs: null, hasHealthEndpoint: false, nextMajorVersion: null, clientComponentModules: new Set(), sensitiveColumnsByModel: new Map(), crossFileAuth: emptyCrossFileAuth(), infra: emptyInfraFacts(), filePaths: new Set(), packageMajors: new Map(), expoPackageDirs: new Set(), nextConfig: null, serverSetHeaders: new Set(), formFieldsMinFont16: false, loopbackOnlyServer: false, phpIntFunctions: new Set() });
+
+/** Clients can query the tables this SQL file creates (see dbExposedDirs). */
+export function databaseExposedAt(context: Pick<RepoContext, 'exposesDatabaseToClients' | 'dbExposedDirs'>, path: string): boolean {
+  if (!context.exposesDatabaseToClients) return false;
+  const p = path.replace(/\\/g, '/');
+  // SQLite / Cloudflare D1 have no RLS, and SQL in docs, blog posts, recipes or a client library's test database
+  // is not the app's schema
+  if (/sqlite|(?:^|\/)(?:d1|cloudflare)(?:\/|[-_])|\.d1\./i.test(p)) return false;
+  if (/(?:^|\/)(?:docs?|_blog|blog|content\/guides|recipes|examples?|samples?)\//i.test(p) && !/(?:^|\/)supabase\/migrations\//i.test(p)) return false;
+  const dirs = context.dbExposedDirs;
+  if (dirs && dirs.length > 0) {
+    return dirs.some((d) => {
+      const prefix = d ? (d + '/') : '';
+      return (
+        p.startsWith(prefix + 'supabase/') ||
+        (Boolean(prefix) && p.startsWith(prefix) && /(?:^|\/)supabase\//i.test(p)) ||
+        (p.startsWith(prefix) && /(?:^|\/)(?:db|database)\/(?:schema|migrations)\b/i.test(p))
+      );
+    });
+  }
+  return /(?:^|\/)supabase\//i.test(p) || /postgrest/i.test(p);
+}

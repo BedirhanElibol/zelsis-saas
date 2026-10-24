@@ -17,5 +17,17 @@ export const REVIEWED_TRUE_POSITIVES: Record<number, string> = {
   12605: 'Third-party GitHub Action referenced by mutable tag',
   23003: 'nextjs-subscription-payments: SECURITY DEFINER handle_new_user() without search_path',
   28005: 'supabase-js test migration: FOR ALL policy on storage.objects checks only bucket_id, so anyone can overwrite files',
-  23008:'nextjs-subscription-payments pins next 14.2.3, affected by CVE-2025-29927'
+  23008:'nextjs-subscription-payments pins next 14.2.3, affected by CVE-2025-29927',
+  5015: 'NewPipe PoTokenWebView hardcodes a Google API key (AIza…, the YouTube web key, marked NOSONAR)',
+  9303: 'AntennaPod sets usesCleartextTraffic="true" so podcast feeds and media can load over plain HTTP',
+  9305: 'AntennaPod MediaButtonReceiver and PlayerWidget are exported with the app\'s own custom actions (NOTIFY_BUTTON_RECEIVER, FORCE_WIDGET_UPDATE) that any app can send',
+  24101: 'AntennaPod DBUpgrader concatenates a media file path into UPDATE … WHERE file_url=\'…\', so a quote in the path breaks the query',
+  9605: 'Lemmy builds SQL with format! (sql_query in scheduled_tasks, batch_execute in schema_setup) from interpolated table names, clauses and intervals; internal callers today, but nothing stops user input reaching them (flagged for review by design)',
+  24104:'AntennaPod FeedHandler parses remote podcast feeds with a default SAXParserFactory and no DTD / external-entity hardening',
+  // Documented flaws planted in the public review-bench-app (BedirhanElibol/review-bench-app), written down before any tool ran
+  23004: 'review-bench-app PR 2: checkout takes the amount from the request body, so a client can pay 50 cents for a $29 plan',
+  30401: 'review-bench-app PR 3: parseToken decodes the token by hand and never checks the signature, so anyone can claim role: admin',
+  9704: 'review-bench-app PR 4: Stripe webhook grants credits without verifying the signature',
+  // Not a heuristic: the finding is a published advisory for the exact version in the lockfile
+  26001: 'Known vulnerable dependency version from the OSV.dev advisory database'
 };

@@ -6,9 +6,24 @@ import { ArrowRight, Terminal, ExternalLink, Lock, Loader2 } from 'lucide-react'
 import { useRouter } from 'next/navigation';
 import { normalizeRepoUrl } from '@/lib/github-api';
 import { ScanPreviewCard, ScanPreviewResult } from '@/components/saas/ScanPreviewCard';
-import benchmark from '@/data/benchmark-summary.generated.json';
 import { HeroGateMock } from './HeroGateMock';
 import { CODE_RETENTION_SHORT } from '@/lib/data-retention';
+
+/** Only stacks with their own rules and a benchmark project. */
+const WORKS_WITH = [
+  'JavaScript & TypeScript (Next.js, React, Express)',
+  'Python (Django, FastAPI, Flask)',
+  'Go',
+  'Ruby on Rails',
+  'PHP & Laravel',
+  'Java & Spring',
+  'C# & ASP.NET Core',
+  'Rust',
+  'iOS & Android (Swift, Kotlin, Flutter, React Native)',
+  'Supabase, Firebase & Postgres',
+  'Docker, Kubernetes & Terraform',
+  'GitHub Actions & GitLab CI',
+];
 
 interface SaasHeroProps {
   onOpenDashboard?: (repoUrl?: string) => void;
@@ -20,10 +35,11 @@ export const SaasHero: React.FC<SaasHeroProps> = ({ onOpenDashboard }) => {
   const [isScanning, setIsScanning] = useState(false);
 
   const sampleRepos = [
-    { label: 'Supabase + Stripe', value: 'vercel/nextjs-subscription-payments' },
-    { label: 'Next.js SaaS Starter', value: 'nextjs/saas-starter' },
-    { label: 'Express (Node)', value: 'expressjs/express' },
-    { label: 'FastAPI (Python)', value: 'fastapi/full-stack-fastapi-template' }
+    { label: 'Next.js + Supabase', value: 'vercel/nextjs-subscription-payments' },
+    { label: 'Express (Node)', value: 'gothinkster/node-express-realworld-example-app' },
+    { label: 'FastAPI (Python)', value: 'fastapi/full-stack-fastapi-template' },
+    { label: 'Go (Gin)', value: 'gothinkster/golang-gin-realworld-example-app' },
+    { label: 'Laravel (PHP)', value: 'laravel/laravel' }
   ];
 
   const [preview, setPreview] = useState<ScanPreviewResult | null>(null);
@@ -84,7 +100,7 @@ export const SaasHero: React.FC<SaasHeroProps> = ({ onOpenDashboard }) => {
           Find the flaws in your app <span className="text-emerald-400">before your users do.</span>
         </h1>
         <p className="text-base sm:text-lg lg:text-xl text-[#A1A1AA] max-w-3xl mx-auto leading-relaxed mt-6 mb-10 font-sans font-normal">
-          Zelsis checks your repo for leaked keys, broken auth, logic bugs, features that only look finished, vulnerable dependencies and risky CI/CD and cloud config, and blocks the pull request when something critical slips in. Paste a public repo and see the results in seconds.
+          Zelsis checks every pull request for logic bugs, security holes, vulnerable dependencies, UI and accessibility issues and privacy gaps, and fails the build when something critical gets in. Web, mobile, SaaS, API and desktop projects in JavaScript, Python, Go, Ruby, PHP, Java, C#, Swift and Kotlin, one flat price per account.
         </p>
 
         {/* Direct Repository Scan Command Bar */}
@@ -159,11 +175,11 @@ export const SaasHero: React.FC<SaasHeroProps> = ({ onOpenDashboard }) => {
           </div>
           <div className="flex items-center gap-2">
             <span className="w-1.5 h-1.5 rounded-full bg-white/40" />
-            <a href="#benchmark" className="inline-flex items-center min-h-[24px] hover:text-white transition-colors">Measured on {benchmark.repos.length} real projects</a>
+            <a href="#benchmark" className="inline-flex items-center min-h-[24px] hover:text-white transition-colors">Measured on real open-source projects</a>
           </div>
           <div className="flex items-center gap-2">
             <span className="w-1.5 h-1.5 rounded-full bg-white/40" />
-            <span>Free for public repos</span>
+            <span>Free plan, no credit card</span>
           </div>
         </m.div>
 
@@ -209,7 +225,8 @@ export const SaasHero: React.FC<SaasHeroProps> = ({ onOpenDashboard }) => {
 
           {/* Footer Ribbon inside Frame */}
           <div className="hidden sm:flex px-5 py-2.5 bg-[#0E0E10] border-t border-white/10 flex-wrap items-center gap-x-6 gap-y-1 text-xs font-mono text-zinc-400">
-            <span>Engine: <strong className="text-zinc-200 font-mono">pattern-based static analysis</strong></span>
+            <span>Engine: <strong className="text-zinc-200 font-mono">deterministic cross-layer rules + request-path tracing</strong></span>
+            <span>Gate: <strong className="text-zinc-200 font-mono">only proven critical findings block a merge</strong></span>
             <span>Coverage: <strong className="text-zinc-200 font-mono">OWASP Top 10, secrets, logic bugs, dependencies, CI/CD</strong></span>
           </div>
         </m.div>
@@ -220,13 +237,9 @@ export const SaasHero: React.FC<SaasHeroProps> = ({ onOpenDashboard }) => {
             Works with
           </span>
           <div className="flex flex-wrap items-center justify-center gap-6 sm:gap-8 text-xs font-mono text-zinc-400">
-            <span className="hover:text-white transition-colors">Next.js 15 (App Router)</span>
-            <span className="hover:text-white transition-colors">TypeScript 5.x</span>
-            <a href="https://github.com/fastapi/full-stack-fastapi-template" target="_blank" rel="noopener noreferrer" className="inline-flex items-center min-h-[24px] hover:text-white transition-colors underline decoration-white/20 underline-offset-4">Python / FastAPI</a>
-            <a href="https://github.com/django/djangoproject.com" target="_blank" rel="noopener noreferrer" className="inline-flex items-center min-h-[24px] hover:text-white transition-colors underline decoration-white/20 underline-offset-4">Django</a>
-            <a href="https://github.com/gothinkster/golang-gin-realworld-example-app" target="_blank" rel="noopener noreferrer" className="inline-flex items-center min-h-[24px] hover:text-white transition-colors underline decoration-white/20 underline-offset-4">Go / Gin</a>
-            <span className="hover:text-white transition-colors">Docker &amp; K8s</span>
-            <span className="hover:text-white transition-colors">Swift &amp; Kotlin (Mobile)</span>
+            {WORKS_WITH.map((s) => (
+              <span key={s} className="hover:text-white transition-colors">{s}</span>
+            ))}
           </div>
         </div>
       </div>

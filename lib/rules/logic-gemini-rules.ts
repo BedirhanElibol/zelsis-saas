@@ -12,11 +12,11 @@ import type { RepoContext } from '../scanner/repo-context';
 interface Hit { ruleId: number; code: string; title: string; severity: Finding['severity']; lineIdx: number; why: string; fix: string }
 type Add = (h: Hit) => void;
 
-const SKIP = /\.d\.ts$|(?:^|\/)node_modules\/|(?:^|\/)vendor\/|\.min\.js$|(?:^|\/)(?:tests?|__tests__|e2e|stories|__mocks__|fixtures?|testdata|seeds?)\/|\.(?:test|spec|stories)\.[jt]sx?$|_test\.(?:go|py)$|(?:^|\/)test_\w+\.py$|(?:^|\/)seed\.[jt]s$/i;
-const lineAt = (c: string, off: number) => { let n = 0; for (let i = 0; i < off && i < c.length; i++) if (c.charCodeAt(i) === 10) n++; return n; };
+export const SKIP = /\.d\.ts$|(?:^|\/)node_modules\/|(?:^|\/)vendor\/|\.min\.js$|(?:^|\/)(?:tests?|__tests__|e2e|stories|__mocks__|fixtures?|testdata|seeds?)\/|\.(?:test|spec|stories)\.[jt]sx?$|_test\.(?:go|py)$|(?:^|\/)test_\w+\.py$|(?:^|\/)seed\.[jt]s$/i;
+export const lineAt = (c: string, off: number) => { let n = 0; for (let i = 0; i < off && i < c.length; i++) if (c.charCodeAt(i) === 10) n++; return n; };
 
 /** Offset just past the bracket that closes the one at `open` (strings skipped), or -1. */
-function closeOf(c: string, open: number): number {
+export function closeOf(c: string, open: number): number {
   const pair: Record<string, string> = { '(': ')', '{': '}', '[': ']' };
   const stack: string[] = [];
   for (let i = open; i < c.length; i++) {
@@ -29,7 +29,7 @@ function closeOf(c: string, open: number): number {
 }
 
 /** Text of the `{ ... }` block that starts at the first `{` at or after `from`. */
-function blockAfter(c: string, from: number): { s: number; e: number } | null {
+export function blockAfter(c: string, from: number): { s: number; e: number } | null {
   const open = c.indexOf('{', from);
   if (open < 0) return null;
   const end = closeOf(c, open);
@@ -37,7 +37,7 @@ function blockAfter(c: string, from: number): { s: number; e: number } | null {
 }
 
 /** Number of top-level comma-separated arguments in the call whose `(` is at `open`. */
-function argCount(c: string, open: number): number {
+export function argCount(c: string, open: number): number {
   const end = closeOf(c, open);
   if (end < 0) return 0;
   const inner = c.slice(open + 1, end - 1);
@@ -133,7 +133,8 @@ function evaluateJs(path: string, c: string, add: Add) {
   // BUG-155: ReadonlyURLSearchParams from next/navigation mutated in place
   if (/from\s+['"]next\/navigation['"]/.test(c)) {
     for (const m of c.matchAll(/\b(?:const|let)\s+(\w+)\s*=\s*useSearchParams\(\)/g)) {
-      const r = new RegExp(`\\b${m[1]}\\.(?:set|delete|append|sort)\\(`, 'g');
+      // Not a property of another object: new URL(location.href).searchParams.delete() edits a fresh, mutable copy
+      const r = new RegExp(`(?<![.\\w$])${m[1]}\\.(?:set|delete|append|sort)\\(`, 'g');
       for (const u of c.matchAll(r)) add({ ruleId: 29826, code: 'BUG-155', severity: 'HIGH', lineIdx: at(u.index!),
         title: 'useSearchParams() Result Mutated Directly',
         why: 'next/navigation returns a ReadonlyURLSearchParams; set/delete/append throw at runtime, so the filter or pagination change crashes instead of updating the URL.',
@@ -198,6 +199,9 @@ function evaluateJs(path: string, c: string, add: Add) {
   // BUG-162: Drizzle update/delete without .where() changes every row of the table
   if (/from\s+['"]drizzle-orm/.test(c)) {
     for (const m of c.matchAll(/\b(\w+)\.(delete|update)\(\s*(\w+)\s*\)/g)) {
+      // Only a db/transaction handle or a declared table; cookies().delete(NAME), Map/Set.delete(key) are not queries
+      if (!/^(?:db|tx|trx|txn|database|drizzle|orm|conn|client)$/i.test(m[1])
+        && !new RegExp(`\\b${m[3]}\\s*=\\s*(?:pg|sqlite|mysql)Table\\(`).test(c)) continue;
       let end = m.index! + m[0].length;
       if (m[2] === 'update') {
         const set = /^\s*\.set\(/.exec(c.slice(end));
@@ -318,7 +322,8 @@ function evaluateJs(path: string, c: string, add: Add) {
   // BUG-176: dynamic route placeholder left in a link or navigation
   for (const m of c.matchAll(/(?:\bhref=\{?\s*|\brouter\.(?:push|replace)\(\s*|\bredirect\(\s*)(['"`])(\/[^'"`\n]*\[(?:\.\.\.)?\w+\][^'"`\n]*)\1(\s*[,)}]?)/g)) {
     if (m[0].startsWith('router') && m[3].trim() === ',') continue;
-    if (!/\[(?:\.\.\.)?[A-Za-z_]\w*\]/.test(m[2].replace(/\$\{[^}]*\}/g, ''))) continue;
+    const pathPart = m[2].split(/[?#]/)[0].replace(/\$\{[^}]*\}/g, '');
+    if (!/\[(?:\.\.\.)?[A-Za-z_]\w*\]/.test(pathPart)) continue;
     add({ ruleId: 29847, code: 'BUG-176', severity: 'HIGH', lineIdx: at(m.index!),
       title: `Route Placeholder Left in URL ${m[2].slice(0, 40)}`,
       why: 'The [param] segment is the file-system pattern, not a URL. Navigating to it opens a literal "[id]" path, so the page 404s or loads the wrong record.',
@@ -641,7 +646,7 @@ function evaluateJs2(path: string, c: string, add: Add, nextMajor: number) {
   }
 
   // BUG-212: BigInt mixed with a number literal
-  for (const m of c.matchAll(/\bBigInt\([^()]*\)\s*[-+*/%]\s*\d+(?![\dn.])/g)) add({ ruleId: 29889, code: 'BUG-212', severity: 'HIGH', lineIdx: at(m.index!),
+  for (const m of c.matchAll(/\bBigInt\([^()]*\)\s*[-+*/%]\s*\d[\d_]*(?![\dn._])/g)) add({ ruleId: 29889, code: 'BUG-212', severity: 'HIGH', lineIdx: at(m.index!),
     title: 'BigInt Combined With a Number',
     why: 'Arithmetic between BigInt and Number throws "Cannot mix BigInt and other types" (TypeError).',
     fix: 'Use a BigInt literal (1n) or convert explicitly with Number(…) / BigInt(…).' });
@@ -683,6 +688,9 @@ function evaluateJs2(path: string, c: string, add: Add, nextMajor: number) {
   for (const m of c.matchAll(/\btimingSafeEqual\(/g)) {
     const before = c.slice(Math.max(0, m.index! - 400), m.index!);
     if (/\.length\s*!==?|\.length\s*===?|byteLength/.test(before + c.slice(m.index!, m.index! + 120))) continue;
+    // Inside try { … } catch: the RangeError for a wrong length is caught and treated as a mismatch
+    const openTry = before.lastIndexOf('try');
+    if (openTry !== -1 && /\btry\s*\{/.test(before.slice(openTry)) && !/\}\s*catch\b/.test(before.slice(openTry)) && /\bcatch\b/.test(c.slice(m.index!, m.index! + 400))) continue;
     add({ ruleId: 29894, code: 'BUG-217', severity: 'MEDIUM', lineIdx: at(m.index!),
       title: 'timingSafeEqual Without a Length Check',
       why: 'timingSafeEqual throws "Input buffers must have the same byte length" (RangeError) for a wrong-length signature or token, so a bad request returns 500 instead of 401.',
@@ -691,7 +699,9 @@ function evaluateJs2(path: string, c: string, add: Add, nextMajor: number) {
 
   // BUG-218: Next.js 15+ cookies() / headers() used without await
   if (nextMajor >= 15) {
-    for (const m of c.matchAll(/(?<!await\s)(?<!await\s\()\b(cookies|headers|draftMode)\(\)\.(get|getAll|set|has|delete|isEnabled)\b/g)) add({ ruleId: 29895, code: 'BUG-218', severity: nextMajor >= 16 ? 'HIGH' : 'MEDIUM', lineIdx: at(m.index!),
+    // Skip mentions inside a string on the same line (docs, changelogs, error messages)
+    const inString = (i: number) => { const pre = c.slice(c.lastIndexOf('\n', i) + 1, i).replace(/\\./g, ''); return ['\'', '"', '`'].some((q) => pre.split(q).length % 2 === 0); };
+    for (const m of c.matchAll(/(?<!await\s)(?<!await\s\()\b(cookies|headers|draftMode)\(\)\.(get|getAll|set|has|delete|isEnabled)\b/g)) if (!inString(m.index!)) add({ ruleId: 29895, code: 'BUG-218', severity: nextMajor >= 16 ? 'HIGH' : 'MEDIUM', lineIdx: at(m.index!),
       title: `${m[1]}().${m[2]} Without await (Next.js ${nextMajor})`,
       why: `Since Next.js 15, ${m[1]}() returns a Promise${nextMajor >= 16 ? ' and synchronous access was removed' : ''}: ${m[1]}().${m[2]} reads a property of the Promise, which is undefined or throws.`,
       fix: `Await it: (await ${m[1]}()).${m[2]}(…).` });

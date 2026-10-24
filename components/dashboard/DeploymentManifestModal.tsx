@@ -54,7 +54,7 @@ on:
 
 jobs:
   release-gate:
-    name: Zelsis Quality & Security Gate
+    name: Zelsis Release Check
     runs-on: ubuntu-latest
     steps:
       - name: Checkout Repository
@@ -296,7 +296,7 @@ spec:
                 </h3>
                 <p className="text-xs text-[#A1A1AA] leading-relaxed">
                   Export production-grade CI/CD release gate pipelines for GitHub Actions, GitLab CI, Husky pre-commit hooks, Docker Compose, and Kubernetes.
-                  Available on <span className="text-white font-semibold">Pro</span> and <span className="text-white font-semibold">Enterprise</span> plans.
+                  Available on <span className="text-white font-semibold">Pro</span> and <span className="text-white font-semibold">Team</span> plans.
                 </p>
               </div>
               <div className="flex items-center gap-3 w-full max-w-xs">

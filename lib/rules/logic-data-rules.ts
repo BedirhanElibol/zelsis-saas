@@ -275,8 +275,15 @@ function evaluateJs(path: string, c: string, add: (h: Hit) => void) {
     const names = [...asyncNames].map(esc).join('|');
     const re = new RegExp(String.raw`(?:[(&|]\s*|!\s*)(${names})\s*\(`);
     cl.forEach((l, i) => {
-      if (!/\b(?:if|while)\s*\(/.test(l)) return;
-      const cond = l.slice(l.search(/\b(?:if|while)\s*\(/));
+      const kw = /\b(?:if|while)\s*\(/.exec(l);
+      if (!kw) return;
+      const start = kw.index + kw[0].length - 1;
+      let depth = 0, end = l.length;
+      for (let k = start; k < l.length; k++) {
+        if (l[k] === '(') depth++;
+        else if (l[k] === ')' && --depth === 0) { end = k + 1; break; }
+      }
+      const cond = l.slice(start, end);
       const m = re.exec(cond);
       if (!m || /\bawait\s*$/.test(cond.slice(0, m.index + m[0].indexOf(m[1])))) return;
       add({ ruleId: 29665, code: 'BUG-65', severity: 'HIGH', category: CAT, lineIdx: i,
@@ -338,7 +345,8 @@ function evaluateJs(path: string, c: string, add: (h: Hit) => void) {
   for (const m of c.matchAll(/\bconst\s*\{\s*data\s*(?::\s*(\w+))?\s*\}\s*=\s*await\s+[\w.]+(?:\s*\.\s*schema\([^)]*\))?\s*\.from\(\s*['"`][\w.-]+['"`]\s*\)\s*\.(insert|update|upsert|delete)\s*\(/g)) {
     const v = esc(m[1] || 'data');
     const rest = restOfFn(m.index!).slice(m[0].length);
-    if (new RegExp(String.raw`!\s*${v}\b|\b${v}\s*(?:===?|!==?)\s*(?:null|undefined)|\b${v}\s*\?\?`).test(rest)) continue;
+    // Absence handled before use: !data, data == null, data ?? x, data?.x, data && …, if (data) / if (data?.id)
+    if (new RegExp(String.raw`!\s*${v}\b|\b${v}\s*(?:===?|!==?)\s*(?:null|undefined)|\b${v}\s*\?\?|\b${v}\s*\?\.|\b${v}\s*&&|\bif\s*\(\s*${v}\b`).test(rest)) continue;
     const use = new RegExp(String.raw`\b${v}\s*!?\s*(?:\.|\[)\s*\w|\b(?:json|send)\(\s*${v}\b|\breturn\s+${v}\b`).exec(rest);
     if (!use) continue;
     add({ ruleId: 29668, code: 'BUG-68', severity: 'HIGH', category: CAT, lineIdx: lineAt(m.index!),

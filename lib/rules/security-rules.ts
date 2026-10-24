@@ -2,6 +2,11 @@ import type { Finding } from '@/data/schema';
 import type { CodeFile } from '../scanner-engine';
 import { AUTH_GUARD, isOutboundWebhookSender } from './shared/stack-signals';
 import { isPublicCatalogRead } from './missed-vulns-rules';
+import { PUBLIC_AUTH_ROUTE } from './nextjs-supabase-rules';
+import { isVendoredPath } from '../scanner/text';
+
+/** A real innerHTML write or React prop; the bare word in prose (a changelog line, a comment string) is not a sink. */
+export const INNER_HTML_SINK = /dangerouslySetInnerHTML\s*=|\.innerHTML\s*\+?=(?!=)/;
 export function evaluateSecurityRules(file: CodeFile, lines: string[], cleanContentOrCounter: string | {
     count: number;
 }, counterMaybe?: {
@@ -19,30 +24,43 @@ export function evaluateSecurityRules(file: CodeFile, lines: string[], cleanCont
     // Rule 1: Exposed Stripe/OpenAI API Keys (SEC-01)
     // An actual key body, not the prefix alone: docs and env templates write `sk_live_...` as a placeholder
     const LIVE_KEY = /sk_live_[a-zA-Z0-9]{16,}|sk-proj-[a-zA-Z0-9_-]{20,}/;
+    const isCommentLine = (l: string) => {
+        const t = l.trim();
+        return t.startsWith('//') || t.startsWith('*') || t.startsWith('#') || t.startsWith('--') || t.startsWith('/*') || t.startsWith(';');
+    };
+    const isCommentedConfigOrExample = (l: string) => {
+        const t = l.trim();
+        if (!isCommentLine(l)) return false;
+        // Only placeholder-looking keys: a real key committed in a comment still leaks
+        return /sk-[a-zA-Z0-9_.-]*(?:\.{3,}|your|example|dummy|test|replace|change|xxx)/i.test(t) ||
+            /sk-(?:[a-z]+-)+[a-z]+(?![\w-])/.test(t);
+    };
     if (LIVE_KEY.test(cleanContent) || /api[_-]?key\s*=\s*["']sk-[a-zA-Z0-9_-]{20,}/i.test(cleanContent)) {
-        const matchLineIdx = lines.findIndex(l => !l.trim().startsWith('//') && !l.trim().startsWith('*') && (LIVE_KEY.test(l) || /sk-[a-zA-Z0-9_-]{20,}/i.test(l)));
-        const lineNum = matchLineIdx !== -1 ? matchLineIdx + 1 : 1;
-        const snippet = lines.slice(Math.max(0, lineNum - 2), Math.min(lines.length, lineNum + 2)).join('\n');
-        findings.push({
-            id: `real-find-${Date.now()}-${findingCounter.count++}`,
-            ruleId: 1,
-            type: 'SECURITY',
-            title: 'Exposed Hardcoded OpenAI/Stripe Secret API Key',
-            severity: 'CRITICAL',
-            category: 'Secret Isolation',
-            filePath: file.path,
-            lineRange: `L${lineNum}`,
-            snippet: snippet || lines[matchLineIdx] || 'const API_KEY = "sk-live-..."',
-            reproductionSteps: [
-                `Scanned source file at ${file.path}:${lineNum}.`,
-                'Detected hardcoded live secret token pattern in client/server code.'
-            ],
-            remediationPrompt: `Extract secret API key in ${file.path} to process.env.OPENAI_API_KEY. Never commit secret tokens to version control.`,
-            status: 'OPEN',
-            owner: 'Security Architect',
-            falsePositive: false
-        });
-        logs.push(`[${ts}] 🛑 CRITICAL: SEC-01 Hardcoded Secret API Key in ${file.path}:${lineNum}`);
+        const matchLineIdx = lines.findIndex(l => !isCommentLine(l) && !isCommentedConfigOrExample(l) && (LIVE_KEY.test(l) || /sk-[a-zA-Z0-9_-]{20,}/i.test(l)));
+        if (matchLineIdx !== -1) {
+            const lineNum = matchLineIdx + 1;
+            const snippet = lines.slice(Math.max(0, lineNum - 2), Math.min(lines.length, lineNum + 2)).join('\n');
+            findings.push({
+                id: `real-find-${Date.now()}-${findingCounter.count++}`,
+                ruleId: 1,
+                type: 'SECURITY',
+                title: 'Exposed Hardcoded OpenAI/Stripe Secret API Key',
+                severity: 'CRITICAL',
+                category: 'Secret Isolation',
+                filePath: file.path,
+                lineRange: `L${lineNum}`,
+                snippet: snippet || lines[matchLineIdx] || 'const API_KEY = "sk-live-..."',
+                reproductionSteps: [
+                    `Scanned source file at ${file.path}:${lineNum}.`,
+                    'Detected hardcoded live secret token pattern in client/server code.'
+                ],
+                remediationPrompt: `Extract secret API key in ${file.path} to process.env.OPENAI_API_KEY. Never commit secret tokens to version control.`,
+                status: 'OPEN',
+                owner: 'Security Architect',
+                falsePositive: false
+            });
+            logs.push(`[${ts}] 🛑 CRITICAL: SEC-01 Hardcoded Secret API Key in ${file.path}:${lineNum}`);
+        }
     }
     // Rule 3: Supabase Permissive Row Level Security (RLS) (SEC-03)
     // Policies live in SQL; one scoped TO service_role only restates the service role's RLS bypass
@@ -96,8 +114,15 @@ export function evaluateSecurityRules(file: CodeFile, lines: string[], cleanCont
         logs.push(`[${ts}] ⚠️ HIGH: SEC-08 Wildcard CORS configuration in ${file.path}:${lineNum}`);
     }
     // Rule 16: Dangerously Set Inner HTML (XSS) (SEC-16)
-    const isSafeMdxOrJsonLd = file.path.includes('mdx-components') || file.path.includes('syntax-highlight') || cleanContent.includes('application/ld+json') || (/\bTHEMES\b/.test(cleanContent) && /<style\b[\s\S]{0,80}dangerouslySetInnerHTML/.test(cleanContent));
-    const innerHtmlLineIdx = lines.findIndex(l => !l.trim().startsWith('//') && !l.trim().startsWith('/*') && (l.includes('dangerouslySetInnerHTML') || l.includes('innerHTML')) && !/innerHTML\s*=\s*(?:(['"])(?:\\.|(?!\1).)*\1|`[^`$]*`)\s*;?\s*$/.test(l));
+    const isCompiledBundle = file.path.includes('live-deployment/bundle-') || file.path.includes('/vendor/') || file.path.includes('node_modules') || isVendoredPath(file.path);
+    // Highlighter calls only: a bare highlight() is often search-term highlighting, itself a classic XSS sink
+    const isSyntaxHighlighted = /\bcodeToHtml\s*\(|\bhljs\.highlight\w*\s*\(|\bPrism\.highlight\w*\s*\(|\bfrom\s+['"]shiki['"]/.test(cleanContent);
+    const isSafeMdxOrJsonLd = isCompiledBundle || isSyntaxHighlighted || file.path.includes('mdx-components') || file.path.includes('syntax-highlight') || cleanContent.includes('application/ld+json') || (/\bTHEMES\b/.test(cleanContent) && /<style\b[\s\S]{0,80}dangerouslySetInnerHTML/.test(cleanContent));
+    // Same exclusions as the builtin rule 16: escaped interpolations, and icon / svg constants
+    const escapesInterpolations = /\$\{\s*(?:esc|escape\w*|sanitize\w*|DOMPurify\.sanitize|encode\w*|h)\s*\(/i.test(cleanContent);
+    const innerHtmlLineIdx = escapesInterpolations ? -1 : lines.findIndex(l => !l.trim().startsWith('//') && !l.trim().startsWith('/*') && INNER_HTML_SINK.test(l)
+        && !/innerHTML\s*=\s*(?:(['"])(?:\\.|(?!\1).)*\1|`[^`$]*`)\s*;?\s*$/.test(l)
+        && !/innerHTML\s*=\s*[\w.]*(?:icon|svg|spinner|logo|glyph)\w*(?:\s*\([^)]*\))?\s*;?\s*$/i.test(l));
     if (!isSafeMdxOrJsonLd && (cleanContent.includes('dangerouslySetInnerHTML') || cleanContent.includes('innerHTML =')) && innerHtmlLineIdx !== -1) {
         const matchLineIdx = innerHtmlLineIdx;
         const lineNum = matchLineIdx !== -1 ? matchLineIdx + 1 : 1;
@@ -196,10 +221,14 @@ export function evaluateSecurityRules(file: CodeFile, lines: string[], cleanCont
     }
     // Rule 21 / SEC-21 (SEC-LOG-01): Potential Secret or PII Log Leakage
     const isCodeFile = /\.(?:tsx?|jsx?|mjs|cjs|py|go|rs|php|cs|java|rb|cpp|c|h|hpp)$/i.test(file.path);
-    if (isCodeFile && !lowerPath.endsWith('package.json')) {
+    // Not app logs: Bison / yacc generated parsers (YY_SYMBOL_PRINT on a token) and one-off scripts printing a
+    // developer's own token
+    const isGeneratedParserOrScript = /(?:^|\/)(?:scripts?|tools)\/|(?:^|\/)(?:parser|lexer)\.c$|\.tab\.[ch]$/i.test(lowerPath) || /\byy(?:token|lval|parse)\b|YY_SYMBOL_PRINT/.test(cleanContent);
+    if (isCodeFile && !isGeneratedParserOrScript && !lowerPath.endsWith('package.json')) {
         const logCallRegex = /(?:console\.(?:log|error|warn|info|debug)|logger\.(?:info|error|warn|debug)|print|System\.out\.println)\s*\(/i;
         const sensitiveVarRegex = /(?:\$\{[^}]*(?:[a-zA-Z0-9_]*(?:token|secret|password|passwd|apiKey|api_key|jwt)|authHeader)\b|(?:\+\s*|,\s*|:\s*)(?:[a-zA-Z0-9_.]+\.)?(?:[a-zA-Z0-9_]*(?:token|secret|password|passwd|apiKey|api_key|jwt)|authHeader)\b|\{\s*(?:[a-zA-Z0-9_]+(?::\s*[^,}]+)?,\s*)*(?:[a-zA-Z0-9_]*(?:token|secret|password|passwd|apiKey|api_key|jwt)|authHeader)\b|\(\s*(?:[a-zA-Z0-9_.]+\.)?(?:[a-zA-Z0-9_]*(?:token|secret|password|passwd|apiKey|api_key|jwt)|authHeader)\s*[\),]|(?:req\.headers(?:\.authorization)?|headers\[['"]authorization['"]\]))/i;
-        const safeMaskRegex = /(?:mask|redact|hash|\[REDACTED\]|\*\*\*)/i;
+        // A fingerprint / digest / hint of a token is not the token
+        const safeMaskRegex = /(?:mask|redact|hash|fingerprint|digest|hint|prefix|last4|\[REDACTED\]|\*\*\*)/i;
         let logMatchesInFile = 0;
         for (let idx = 0; idx < lines.length; idx++) {
             const line = lines[idx];
@@ -283,35 +312,56 @@ export function evaluateSecurityRules(file: CodeFile, lines: string[], cleanCont
         }
     }
     // Rule 14 / SEC-14: Insecure JWT & Session Secret Hardcoded Fallbacks
-    const jwtFallbackRegex = /(?:JWT_SECRET|SESSION_SECRET|AUTH_SECRET|COOKIE_SECRET|NEXTAUTH_SECRET)\s*(?:\|\||\?\?)\s*['"`][^'"`]+['"`]/i;
-    if (isCodeFile && jwtFallbackRegex.test(cleanContent)) {
-        const matchLineIdx = lines.findIndex(l => !l.trim().startsWith('//') && jwtFallbackRegex.test(l));
-        const lineNum = matchLineIdx !== -1 ? matchLineIdx + 1 : 1;
-        const snippet = lines.slice(Math.max(0, lineNum - 2), Math.min(lines.length, lineNum + 2)).join('\n');
-        findings.push({
-            id: `real-find-${Date.now()}-${findingCounter.count++}`,
-            ruleId: 14,
-            type: 'SECURITY',
-            title: 'Insecure Hardcoded Fallback for Cryptographic Session / JWT Secret',
-            severity: 'CRITICAL',
-            category: 'Authentication & Tokens',
-            filePath: file.path,
-            lineRange: `L${lineNum}`,
-            snippet: snippet || lines[matchLineIdx] || "const secret = process.env.JWT_SECRET || 'secret';",
-            reproductionSteps: [
-                `Scanned authentication token signing in ${file.path}:${lineNum}.`,
-                'Detected hardcoded default fallback string for JWT/Session secret token, allowing attackers to forge arbitrary authentication cookies and tokens if environment variable is unset.'
-            ],
-            remediationPrompt: `Remove insecure default fallback in ${file.path}:${lineNum}. Enforce a strict runtime assertion: if (!process.env.JWT_SECRET) throw new Error('JWT_SECRET must be configured in production');`,
-            status: 'OPEN',
-            owner: 'Security Lead',
-            falsePositive: false
+    const jwtFallbackRegex = /(?:JWT_SECRET|SESSION_SECRET|AUTH_SECRET|COOKIE_SECRET|NEXTAUTH_SECRET)\s*(?:\|\||\?\?)\s*['"`]([^'"`]+)['"`]/i;
+    const isMaskedSecretFallback = (val: string): boolean => {
+        if (!val) return false;
+        const s = val.trim();
+        return /\*{3,}/.test(s) || (/^[\s*xX•·\-_.]+$/.test(s) && /[*xX•]/.test(s)) || /^<[^>]+>$/.test(s);
+    };
+    // The dev fallback is fine when the app refuses to start in production without the real secret:
+    // if (process.env.NODE_ENV === "production" && !process.env.JWT_SECRET) throw ...
+    const fallbackName = /(JWT_SECRET|SESSION_SECRET|AUTH_SECRET|COOKIE_SECRET|NEXTAUTH_SECRET)\s*(?:\|\||\?\?)/i.exec(cleanContent)?.[1];
+    const productionGuard = fallbackName !== undefined && new RegExp(String.raw`production[^\n]{0,80}!\s*process\.env\.` + fallbackName + String.raw`\b[\s\S]{0,120}?(?:throw\b|process\.exit)|!\s*process\.env\.` + fallbackName + String.raw`\b[^\n]{0,80}production[\s\S]{0,120}?(?:throw\b|process\.exit)`).test(cleanContent);
+    if (isCodeFile && !productionGuard && jwtFallbackRegex.test(cleanContent)) {
+        const matchLineIdx = lines.findIndex(l => {
+            if (l.trim().startsWith('//')) return false;
+            const m = jwtFallbackRegex.exec(l);
+            if (!m) return false;
+            return !isMaskedSecretFallback(m[1]);
         });
-        logs.push(`[${ts}] 🛑 CRITICAL: SEC-14 Insecure JWT secret fallback in ${file.path}:${lineNum}`);
+        if (matchLineIdx !== -1) {
+            const lineNum = matchLineIdx + 1;
+            const isLocalDevTestOrShim = /(?:^|[\\/._-])(?:local|dev|test|mock|shim)(?:[\\/._-]|$)/i.test(lowerPath) ||
+                /\b(?:local|dev|test|mock|shim)\b/i.test(lowerPath);
+            const lineOrNear = [lines[matchLineIdx - 1], lines[matchLineIdx], lines[matchLineIdx + 1]].filter(Boolean).join(' ');
+            const isFlashOrToastCookie = /(?:flash|toast)/i.test(lineOrNear);
+            const isMedium = isLocalDevTestOrShim || isFlashOrToastCookie;
+            const snippet = lines.slice(Math.max(0, lineNum - 2), Math.min(lines.length, lineNum + 2)).join('\n');
+            findings.push({
+                id: `real-find-${Date.now()}-${findingCounter.count++}`,
+                ruleId: 14,
+                type: 'SECURITY',
+                title: 'Insecure Hardcoded Fallback for Cryptographic Session / JWT Secret',
+                severity: isMedium ? 'MEDIUM' : 'CRITICAL',
+                category: 'Authentication & Tokens',
+                filePath: file.path,
+                lineRange: `L${lineNum}`,
+                snippet: snippet || lines[matchLineIdx] || "const secret = process.env.JWT_SECRET || 'secret';",
+                reproductionSteps: [
+                    `Scanned authentication token signing in ${file.path}:${lineNum}.`,
+                    'Detected hardcoded default fallback string for JWT/Session secret token, allowing attackers to forge arbitrary authentication cookies and tokens if environment variable is unset.'
+                ],
+                remediationPrompt: `Remove insecure default fallback in ${file.path}:${lineNum}. Enforce a strict runtime assertion: if (!process.env.JWT_SECRET) throw new Error('JWT_SECRET must be configured in production');`,
+                status: 'OPEN',
+                owner: 'Security Lead',
+                falsePositive: false
+            });
+            logs.push(`[${ts}] ${isMedium ? '⚠️ MEDIUM' : '🛑 CRITICAL'}: SEC-14 Insecure JWT secret fallback in ${file.path}:${lineNum}`);
+        }
     }
     // Rule 15 / SEC-15: Unauthenticated Next.js API Mutation Route Handler
     const isApiRoute = (lowerPath.includes('app/api/') || lowerPath.includes('pages/api/')) && /\.(?:ts|js)$/i.test(file.path);
-    const isPublicWebhookOrHealth = (lowerPath.includes('webhook') && !isOutboundWebhookSender(cleanContent)) || lowerPath.includes('health') || lowerPath.includes('ping') || lowerPath.includes('auth/callback');
+    const isPublicWebhookOrHealth = (lowerPath.includes('webhook') && !isOutboundWebhookSender(cleanContent)) || lowerPath.includes('health') || lowerPath.includes('ping') || PUBLIC_AUTH_ROUTE.test(lowerPath);
     if (isApiRoute && !isPublicWebhookOrHealth) {
         const hasMutationExport = /export\s+async\s+function\s+(?:POST|PUT|DELETE|PATCH)\b/.test(cleanContent);
         const hasAuthCheck = AUTH_GUARD.test(cleanContent) || /(?:auth|session|verify|apiKey|checkRateLimit|rateLimiter|req\.headers\.get\(['"]authorization['"]\))/i.test(cleanContent);
@@ -692,10 +742,12 @@ export function evaluateSecurityRules(file: CodeFile, lines: string[], cleanCont
     }
     // Rule 4003 / LLM-03: Untrusted LLM Output Execution / eval (LLM05)
     if (isCodeFile) {
-        const untrustedLlmExecRegex = /(?:eval|child_process\.exec|execSync)\s*\([^)]*(?:completion|aiResponse|llmOutput|assistantMessage)/i;
-        if (untrustedLlmExecRegex.test(cleanContent)) {
-            const matchLineIdx = lines.findIndex(l => !l.trim().startsWith('//') && untrustedLlmExecRegex.test(l));
-            const lineNum = matchLineIdx !== -1 ? matchLineIdx + 1 : 1;
+        const isEvalOrBench = /(?:^|\/)(?:evals?|benchmarks?)\//i.test(file.path.replace(/\\/g, '/'));
+        const untrustedLlmExecRegex = /\b(?:eval|child_process\.exec|execSync)\s*\([^)]*\b(?:completion|aiResponse|llmOutput|assistantMessage)\b/i;
+        if (!isEvalOrBench && untrustedLlmExecRegex.test(cleanContent)) {
+            const matchLineIdx = lines.findIndex(l => !l.trim().startsWith('//') && !l.trim().startsWith('#') && untrustedLlmExecRegex.test(l));
+            if (matchLineIdx !== -1) {
+            const lineNum = matchLineIdx + 1;
             const snippet = lines.slice(Math.max(0, lineNum - 2), Math.min(lines.length, lineNum + 2)).join('\n');
             findings.push({
                 id: `real-find-${Date.now()}-${findingCounter.count++}`,
@@ -717,6 +769,7 @@ export function evaluateSecurityRules(file: CodeFile, lines: string[], cleanCont
                 falsePositive: false
             });
             logs.push(`[${ts}] 🛑 CRITICAL: LLM-03 Untrusted LLM execution in ${file.path}:${lineNum}`);
+            }
         }
     }
     // Rule 4004 / LLM-04: Insecure Vector Search / Cross-Tenant Retrieval
@@ -763,18 +816,53 @@ export function evaluateSecurityRules(file: CodeFile, lines: string[], cleanCont
     // weak hashes, Math.random, insecure cookies, open redirect, $where, secrets in config.
     // ==============================================================================
     // Rule 32 / SEC-32: Dynamic Code Execution / Remote Code Execution (eval, Function)
-    if (isCodeFile && (cleanContent.includes('eval(') || cleanContent.includes('new Function('))) {
-        const evalRegex = /\beval\s*\([^)]+\)|\bnew\s+Function\s*\([^)]+\)/;
-        if (evalRegex.test(cleanContent)) {
-            const matchLineIdx = lines.findIndex(l => !l.trim().startsWith('//') && !l.trim().startsWith('*') && evalRegex.test(l));
-            const lineNum = matchLineIdx !== -1 ? matchLineIdx + 1 : 1;
+    // Only languages with a global eval / Function constructor; Java, Go and the like have none, and redis.eval(),
+    // mx.eval() or a method named eval are not code execution
+    const hasGlobalEval = !/\.(?:java|kt|kts|scala|cs|go|rs|swift|c|cc|cpp|h|hpp|dart)$/i.test(file.path);
+    if (isCodeFile && hasGlobalEval && (cleanContent.includes('eval(') || cleanContent.includes('new Function('))) {
+        // The global eval, or eval on a receiver that runs code (mathjs.eval, window.eval). Other methods named eval
+        // are not code execution: Redis Lua ($redis->eval, client().eval), tensors (mx.eval), curves (cv.eval), an
+        // embedded JS engine's context.eval. One line only: [^)] across lines matched where no line could be found.
+        const raw32 = (file.content || '').split('\n');
+        const evalRegex = /(?:(?<![\w$.>])|(?<=\b(?:math|mathjs|window|globalThis|global|self|top|parent)\.))(?<!\b(?:def|function|fun|func|void)\s+)eval\s*\([^)\n]+\)|\bnew\s+Function\s*\([^)\n]+\)/;
+        // Not a dynamic call: a typed method signature (eval(t: number): Vec3), only a fixed string literal,
+        // or a security validator/linter check (.includes('eval('), .indexOf('eval'), /eval\(/.test(s))
+        const isLiteralOrValidatorCheck = (l: string) => {
+            if (/\.(?:includes|indexOf|search|match|test|has|contains)\s*\([^)]*eval/i.test(l)) return true;
+            if (/\/(?:[^\n\\/]|\\.)*\beval\b(?:[^\n\\/]|\\.)*\/\s*\.\s*(?:test|exec)\s*\(/i.test(l)) return true;
+            const codeOnly = l
+                .replace(/(['"`])(?:(?!\1)[^\\]|\\.)*\1/g, '')
+                .replace(/\/(?:[^\n\\/]|\\.)+\/[gimsuy]*/g, '');
+            return !/\beval\s*\(/.test(codeOnly) && !/\bnew\s+Function\s*\(/.test(codeOnly);
+        };
+        const notDynamic = (l: string) => /\beval\s*\(\s*\w+\s*\??\s*:\s*[\w[{]/.test(l)
+            || /(?:\beval|\bnew\s+Function)\s*\(\s*(['"`])(?:(?!\1|\$\{)[^\\]|\\.)*\1\s*\)/.test(l) && !/(?:\beval|\bnew\s+Function)\s*\(\s*(['"`])(?:(?!\1)[^\\]|\\.)*\1\s*[+,]/.test(l)
+            || isLiteralOrValidatorCheck(l);
+        const matchLineIdx = evalRegex.test(cleanContent)
+            ? lines.findIndex(l => !l.trim().startsWith('//') && !l.trim().startsWith('*') && evalRegex.test(l) && !notDynamic(l))
+            : -1;
+        if (matchLineIdx !== -1) {
+            const lineNum = matchLineIdx + 1;
+            // nosemgrep / eslint-disable no-eval / noqa: S307 / nosec on the line or just above: reviewed, keep as MEDIUM
+            const rawAround = `${raw32[matchLineIdx - 1] ?? ''}\n${raw32[matchLineIdx] ?? ''}`;
+            const reviewed32 = /nosemgrep|eslint-disable[^\n]*no-(?:implied-)?eval|oxlint-disable(?:-next-line)?[^\n]*no-eval|biome-ignore[^\n]*(?:lint\/security\/)?noGlobalEval|noqa:\s*S307|#\s*nosec\b/i.test(rawAround);
+            // new Function(code) compiling MDX in a design-system / docs app with no request input is MEDIUM
+            const hasRequestInput = /\breq(?:uest)?\.(?:query|body|params|headers|json\(\))\b|\bsearchParams\b/i.test(cleanContent);
+            const isMdxFunction = /\bnew\s+Function\b/.test(lines[matchLineIdx])
+                && /(?:mdx|markdown)/i.test(lowerPath)
+                && !hasRequestInput;
+            const isBrowserAssetDataHandler = /\bnew\s+Function\b/.test(lines[matchLineIdx])
+                && /(?:^|[\\/])(?:assets|public)[\\/]|(?:^|[\\/._-])framework\.js$/i.test(lowerPath)
+                && /(?:data-|\.dataset\b)/i.test(cleanContent)
+                && !hasRequestInput;
+            const isMedium = reviewed32 || isMdxFunction || isBrowserAssetDataHandler;
             const snippet = lines.slice(Math.max(0, lineNum - 2), Math.min(lines.length, lineNum + 2)).join('\n');
             findings.push({
                 id: `real-find-${Date.now()}-${findingCounter.count++}`,
                 ruleId: 32,
                 type: 'SECURITY',
                 title: 'Dynamic Code Execution (eval / Function Remote Code Execution)',
-                severity: 'CRITICAL',
+                severity: isMedium ? 'MEDIUM' : 'CRITICAL',
                 category: 'Remote Code Execution',
                 filePath: file.path,
                 lineRange: `L${lineNum}`,
@@ -788,11 +876,12 @@ export function evaluateSecurityRules(file: CodeFile, lines: string[], cleanCont
                 owner: 'Security Lead',
                 falsePositive: false
             });
-            logs.push(`[${ts}] 🛑 CRITICAL: SEC-32 Dynamic Code Execution detected in ${file.path}:${lineNum}`);
+            logs.push(`[${ts}] ${isMedium ? '⚠️ MEDIUM' : '🛑 CRITICAL'}: SEC-32 Dynamic Code Execution detected in ${file.path}:${lineNum}`);
         }
     }
     // Rule 33 / SEC-33: Command Injection via Unsanitized Child Process Execution
-    if (isCodeFile && (cleanContent.includes('child_process') || cleanContent.includes('execSync(') || cleanContent.includes('exec('))) {
+    // Only files that use child_process; db.exec() / sqlite.exec() / this.exec() run SQL or app code, not a shell
+    if (isCodeFile && cleanContent.includes('child_process')) {
         // Shell commands built from dynamic values, or passed a value that comes from the request.
         // A variable merely named `command` / `cmd` holding a constant is not injection.
         const cmdRequestVars = new Set<string>();
@@ -803,10 +892,52 @@ export function evaluateSecurityRules(file: CodeFile, lines: string[], cleanCont
         const cmdRequestRef = String.raw`\b(?:req(?:uest)?\.(?:query|body|params)\.\w+` + (cmdRequestVars.size ? '|' + [...cmdRequestVars].join('|') : '') + String.raw`)\b`;
         // Developer tooling (scripts/, bin/, tools/) receives no request input: only request-derived values count there
         const isDevTooling = /(?:^|\/)(?:scripts|bin|tools|\.husky)\//i.test(lowerPath);
+        const isBuildConfigOrTemplate = /(?:^|\/)(?:\.hygen|_templates)\//i.test(lowerPath) || /(?:^|\/)(?:postcss|tailwind|vite|next|webpack|rollup|tsup|esbuild|vitest|jest|babel|svelte|astro|nuxt)\.config\.[cm]?[jt]s$/i.test(lowerPath);
+        const isCliPackagePath = /(?:^|\/)(?:packages\/cli|cli|bin)\//i.test(lowerPath);
+        const literalAssignedVars = new Set<string>();
+        if (isCliPackagePath) {
+            for (const m of cleanContent.matchAll(/\b(?:const|let|var)\s+(\w+)\s*(?::[^=;]+)?=\s*(?:['"][^'"]+['"]|\[\s*(?:['"][^'"]+['"]\s*,?\s*)+\])/g)) {
+                literalAssignedVars.add(m[1]);
+            }
+            for (const m of cleanContent.matchAll(/\bfor\s*\(\s*(?:const|let|var)\s+(\w+)\s+of\s+\[\s*(?:['"][^'"]+['"]\s*,?\s*)+\]\s*\)/g)) {
+                literalAssignedVars.add(m[1]);
+            }
+            for (const m of cleanContent.matchAll(/\b(\w+)\s*=\s*['"][^'"]+['"]/g)) {
+                if (!cmdRequestVars.has(m[1])) literalAssignedVars.add(m[1]);
+            }
+        }
         const dynamicShell = String.raw`\x60[^\x60]*\$\{[^}]+\}|['"][^'"]*['"]\s*\+|[a-zA-Z0-9_.]+\s*\+|`;
-        const cmdInjRegex = new RegExp(String.raw`(?:child_process\.(?:exec|execSync)|\bexec\s*\(|\bexecSync\s*\()\s*(?:` + (isDevTooling ? '' : dynamicShell) + cmdRequestRef + ')');
-        if (cmdInjRegex.test(cleanContent)) {
-            const matchLineIdx = lines.findIndex(l => !l.trim().startsWith('//') && !l.trim().startsWith('*') && cmdInjRegex.test(l));
+        const cmdInjRegex = new RegExp(String.raw`(?:\b(?:child_process|cp|childProcess)\.(?:exec|execSync)\s*\(|(?<![.\w])exec\s*\(|(?<![.\w])execSync\s*\()\s*(?:` + (isDevTooling ? '' : dynamicShell) + cmdRequestRef + ')');
+        const requestOnLine = new RegExp(cmdRequestRef);
+        const isSafeTemplateExec = (line: string): boolean => {
+            // A request value on the line is never safe, whatever the command
+            if (requestOnLine.test(line)) return false;
+            // Taskkill or ps commands targeting numeric PIDs
+            if (/taskkill\s+\/pid\s+|ps\s+-o\s+ppid=\s+-p\s+/i.test(line)) {
+                return true;
+            }
+            // Template literal command
+            const tpl = /(?:\b(?:child_process|cp|childProcess)\.(?:exec|execSync)\s*\(|(?<![.\w])exec\s*\(|(?<![.\w])execSync\s*\()\s*`([^`]+)`/.exec(line);
+            if (tpl) {
+                const cmdStr = tpl[1];
+                // Safe internal git/gh commands in tooling or packages
+                if (/^git\s+(?:rev-list|describe|log|diff|status|rev-parse|show)\b/i.test(cmdStr) || /^gh\s+repo\s+view\b/i.test(cmdStr)) {
+                    return true;
+                }
+                const exprs = [...cmdStr.matchAll(/\$\{\s*([^}]+?)\s*\}/g)].map((m) => m[1].trim());
+                if (exprs.length === 0) return false;
+                return exprs.every((e) => /^[A-Z][A-Z0-9_]*$/.test(e) || (isCliPackagePath && literalAssignedVars.has(e)) || /^(?:base|head|repoName|pkg\.name|agent|agentExec)$/.test(e));
+            }
+            // String concatenation command (e.g. 'taskkill /pid ' + pid)
+            if (/['"]taskkill\s+\/pid\s+['"]\s*\+\s*\w+|['"]ps\s+['"]\s*\+\s*\w+/i.test(line)) {
+                return true;
+            }
+            return false;
+        };
+        const matchLineIdx = !isBuildConfigOrTemplate && cmdInjRegex.test(cleanContent)
+            ? lines.findIndex(l => !l.trim().startsWith('//') && !l.trim().startsWith('*') && cmdInjRegex.test(l) && !isSafeTemplateExec(l))
+            : -1;
+        if (matchLineIdx !== -1) {
             const lineNum = matchLineIdx !== -1 ? matchLineIdx + 1 : 1;
             const snippet = lines.slice(Math.max(0, lineNum - 2), Math.min(lines.length, lineNum + 2)).join('\n');
             findings.push({
@@ -832,16 +963,19 @@ export function evaluateSecurityRules(file: CodeFile, lines: string[], cleanCont
         }
     }
     // Rule 34 / SEC-34: Server-Side Request Forgery (SSRF) via Unvalidated HTTP Request
-    const httpClient = String.raw`(?:fetch|axios(?:\.(?:get|post|put|request|head))?|https?\.(?:get|request)|needle(?:\.(?:get|post|request))?|got(?:\.(?:get|post))?|request(?:\.(?:get|post))?|superagent\.(?:get|post)|undici\.request|ky(?:\.(?:get|post))?)`;
+    const httpClient = String.raw`(?:(?<![.\w$])fetch|\b(?:globalThis|window)\.fetch|axios(?:\.(?:get|post|put|request|head))?|https?\.(?:get|request)|needle(?:\.(?:get|post|request))?|got(?:\.(?:get|post))?|request(?:\.(?:get|post))?|superagent\.(?:get|post)|undici\.request|ky(?:\.(?:get|post))?)`;
     if (isCodeFile && new RegExp(httpClient + String.raw`\s*\(`).test(cleanContent)) {
         // Only URLs that come from the request: direct req.* access or variables assigned / destructured from it
         const requestVars = new Set<string>();
-        for (const m of cleanContent.matchAll(/(?:const|let|var)\s+(\w+)\s*=\s*[^;\n]*(?:\breq(?:uest)?\.(?:query|body|params)\b|searchParams\.get\(|\bformData\.get\()/g)) requestVars.add(m[1]);
+        for (const m of cleanContent.matchAll(/(?:const|let|var)\s+(\w+)\s*=\s*[^;\n]*(?:\breq(?:uest)?\.(?:query|body|params|nextUrl\.searchParams)\b|(?:req(?:uest)?\.(?:nextUrl\.)?)?searchParams\.get\(|\bformData\.get\()/g)) requestVars.add(m[1]);
         for (const m of cleanContent.matchAll(/(?:const|let|var)\s*\{([^}]*)\}\s*=\s*(?:await\s+)?(?:req(?:uest)?\.(?:query|body|params|json\(\))|request\.json\(\))/g)) {
             m[1].split(',').map((x) => x.split(':').pop()!.split('=')[0].trim()).filter(Boolean).forEach((x) => requestVars.add(x));
         }
-        const requestUrl = String.raw`(?:req(?:uest)?\.(?:query|body|params)\.\w+` + (requestVars.size ? String.raw`|\b(?:` + [...requestVars].filter((v) => /^\w+$/.test(v)).join('|') + String.raw`)\b` : '') + ')';
-        const ssrfRegex = new RegExp(httpClient + String.raw`\s*\(\s*(?:\x60[^\x60]*\$\{\s*` + requestUrl + String.raw`|new\s+URL\(\s*` + requestUrl + '|' + requestUrl + ')');
+        const requestDirect = String.raw`(?:\breq(?:uest)?\.(?:query|body|params)\.\w+|\breq(?:uest)?\.(?:nextUrl\.)?searchParams\.get\([^)]+\))`;
+        const requestUrl = String.raw`(?:` + requestDirect + (requestVars.size ? String.raw`|\b(?:` + [...requestVars].filter((v) => /^\w+$/.test(v)).join('|') + String.raw`)\b` : '') + ')';
+        // A fetch whose URL starts with a fixed origin from config/env (`${STORAGE_URL}/tickets/...`) and only
+        // appends a path is not SSRF. Only when the host/origin is variable or the entire URL is from the request:
+        const ssrfRegex = new RegExp(httpClient + String.raw`\s*\(\s*(?:\x60(?!\s*(?:https?:\/\/|\$\{\s*(?:process\.env\.|[A-Z0-9_]*(?:URL|HOST|ORIGIN|ENDPOINT|BASE|API)|config\.)[^\x60}]*\})\/)[^\x60]*\$\{\s*` + requestUrl + String.raw`|new\s+URL\(\s*` + requestUrl + '|' + requestUrl + ')');
         if (ssrfRegex.test(cleanContent) && !/validateSafeTargetUrl|isAllowedWebhookUrl|\b(?:ALLOWED|allowed|ALLOW|allow)\w*\.(?:has|includes)\(\s*\w+\.(?:hostname|host|origin)|\.(?:hostname|host|origin)\s*(?:===|!==)|isAllowed\w*\(|validate\w*Url\(|(?:assert|ensure|is)Safe\w*Url\(|ssrfGuard|ssrf-?(?:req-)?filter/i.test(cleanContent)) {
             const matchLineIdx = lines.findIndex(l => !l.trim().startsWith('//') && !l.trim().startsWith('*') && ssrfRegex.test(l));
             const lineNum = matchLineIdx !== -1 ? matchLineIdx + 1 : 1;
@@ -940,9 +1074,18 @@ export function evaluateSecurityRules(file: CodeFile, lines: string[], cleanCont
     // Rule 37 / SEC-37: Broken Cryptographic Hash Function (MD5 / SHA-1)
     if (isCodeFile && cleanContent.includes('createHash')) {
         const weakHashRegex = /createHash\s*\(\s*['"](?:md5|sha1)['"]\s*\)|crypto\.createHash\(['"](?:md5|sha1)['"]\)/i;
-        if (weakHashRegex.test(cleanContent)) {
-            const matchLineIdx = lines.findIndex(l => !l.trim().startsWith('//') && !l.trim().startsWith('*') && weakHashRegex.test(l));
-            const lineNum = matchLineIdx !== -1 ? matchLineIdx + 1 : 1;
+        // Only when the hash protects something: a password, token, signature or session within 5 lines. SHA-1 for a
+        // BitTorrent info hash, a cache key, an ETag or a file checksum is not a security use.
+        const protectsSomething = (i: number) => {
+            const around = lines.slice(Math.max(0, i - 5), i + 6).join('\n');
+            return /passw|pwd|token|secret|signature|\bsign|hmac|auth|session|otp|api_?key|credential|salt/i.test(around)
+                && !/etag|cache_?key|cacheKey|checksum|info_?hash|fingerprint|dedup|content_?hash/i.test(lines[i]);
+        };
+        const matchLineIdx = weakHashRegex.test(cleanContent)
+            ? lines.findIndex((l, i) => !l.trim().startsWith('//') && !l.trim().startsWith('*') && weakHashRegex.test(l) && protectsSomething(i))
+            : -1;
+        if (matchLineIdx !== -1) {
+            const lineNum = matchLineIdx + 1;
             const snippet = lines.slice(Math.max(0, lineNum - 2), Math.min(lines.length, lineNum + 2)).join('\n');
             findings.push({
                 id: `real-find-${Date.now()}-${findingCounter.count++}`,
@@ -967,7 +1110,8 @@ export function evaluateSecurityRules(file: CodeFile, lines: string[], cleanCont
         }
     }
     // Rule 38 / SEC-38: Insecure Cryptographic Pseudo-Random Generation (Math.random)
-    if (isCodeFile && !file.path.includes('live-deployment/bundle-') && cleanContent.includes('Math.random()')) {
+    const isRichTextPlugin = /(?:^|\/)(?:tiptap|prosemirror|lexical)\//i.test(file.path) || /@tiptap\/|prosemirror-/i.test(cleanContent);
+    if (isCodeFile && !isRichTextPlugin && !file.path.includes('live-deployment/bundle-') && cleanContent.includes('Math.random()')) {
         // Only values assigned to a security-named identifier (resetToken, sessionId, otpCode, apiKey...). A bare
         // Math.random().toString(36) is the usual way to build UI keys / temp ids and is not reported on its own.
         const mathRandomRegex = /\b\w*(?:token|secret|password|passwd|nonce|salt|otp|csrf|apiKey|api_key|sessionId|session_id|resetCode|verificationCode|inviteCode)\s*[=:]\s*[^;\n]*Math\.random\s*\(\)/i;
@@ -1004,7 +1148,12 @@ export function evaluateSecurityRules(file: CodeFile, lines: string[], cleanCont
         const jwtDecodeRegex = isPython
             ? /\bjwt\.decode\s*\((?:\s*\w+\s*\)|[^)]*verify_signature["']?\s*:\s*False|[^)]*verify\s*=\s*False)/
             : /\bjwt\.decode\s*\([^)]+\)/;
-        if (jwtDecodeRegex.test(cleanContent) && !cleanContent.includes('jwt.verify(')) {
+        // OIDC: an id_token read straight after the code exchange with the provider's token endpoint (over TLS) is
+        // trusted by OIDC Core 3.1.3.7, so decoding it without a signature check is the documented flow
+        const oidcIdTokenAfterExchange = isPython && /token_endpoint|fetch_token|authorization_code|grant_type/.test(cleanContent)
+            && /\bjwt\.decode\s*\(\s*(?:\w+\.)?id_token\b/.test(cleanContent)
+            && !/\bjwt\.decode\s*\(\s*(?!(?:\w+\.)?id_token\b)\w+(?:\s*\)|[^)]*verify_signature["']?\s*:\s*False|[^)]*verify\s*=\s*False)/.test(cleanContent);
+        if (jwtDecodeRegex.test(cleanContent) && !cleanContent.includes('jwt.verify(') && !oidcIdTokenAfterExchange) {
             const matchLineIdx = lines.findIndex(l => !l.trim().startsWith('//') && !l.trim().startsWith('*') && jwtDecodeRegex.test(l));
             const lineNum = matchLineIdx !== -1 ? matchLineIdx + 1 : 1;
             const snippet = lines.slice(Math.max(0, lineNum - 2), Math.min(lines.length, lineNum + 2)).join('\n');
@@ -1034,7 +1183,9 @@ export function evaluateSecurityRules(file: CodeFile, lines: string[], cleanCont
     if (isCodeFile && (cleanContent.includes('cookie(') || cleanContent.includes('cookies().set') || cleanContent.includes('response.cookies.set'))) {
         const insecureCookieRegex = /(?:res\.cookie|cookies\(\)\.set|response\.cookies\.set)\s*\([^)]*\{\s*[^}]*(?:httpOnly\s*:\s*false|secure\s*:\s*false)/i;
         if (insecureCookieRegex.test(cleanContent)) {
-            const matchLineIdx = lines.findIndex(l => !l.trim().startsWith('//') && !l.trim().startsWith('*') && insecureCookieRegex.test(l));
+            // The cookie call often spans lines (options object below it): locate by the match offset
+            const cookieAt = insecureCookieRegex.exec(cleanContent)?.index ?? -1;
+            const matchLineIdx = cookieAt >= 0 ? cleanContent.slice(0, cookieAt).split('\n').length - 1 : -1;
             const lineNum = matchLineIdx !== -1 ? matchLineIdx + 1 : 1;
             const snippet = lines.slice(Math.max(0, lineNum - 2), Math.min(lines.length, lineNum + 2)).join('\n');
             findings.push({
@@ -1184,8 +1335,25 @@ export function evaluateSecurityRules(file: CodeFile, lines: string[], cleanCont
     // Rule 45 / SEC-45: Permissive Database Row Level Security (RLS) Bypass Policy
     if (cleanContent.includes('CREATE POLICY') && (cleanContent.includes('USING (true)') || cleanContent.includes('WITH CHECK (true)'))) {
         const rlsBypassRegex = /CREATE\s+POLICY\s+[^;]+(?:USING\s*\(\s*true\s*\)|WITH\s+CHECK\s*\(\s*true\s*\))/i;
-        if (cleanContent.split(';').some((stmt) => rlsBypassRegex.test(stmt) && !/\bTO\s+service_role\b/i.test(stmt))) {
-            const matchLineIdx = lines.findIndex(l => !l.trim().startsWith('--') && rlsBypassRegex.test(l));
+        const openPolicies = [...cleanContent.matchAll(/CREATE\s+POLICY\s+[^;]+?(?:USING\s*\(\s*true\s*\)|WITH\s+CHECK\s*\(\s*true\s*\))[^;]*/gi)]
+            .filter((s) => !/\bTO\s+service_role\b/i.test(s[0]));
+
+        if (openPolicies.length > 0) {
+            // A policy is exclusively for SELECT when it specifies FOR SELECT and contains no write clauses (WITH CHECK, FOR ALL / INSERT / UPDATE / DELETE).
+            // When FOR is omitted in PostgreSQL, it defaults to FOR ALL (which permits writes).
+            const isSelectOnlyPolicy = (sql: string) =>
+                /\bFOR\s+SELECT\b/i.test(sql) &&
+                !/\bWITH\s+CHECK\b/i.test(sql) &&
+                !/\bFOR\s+(?:ALL|INSERT|UPDATE|DELETE)\b/i.test(sql);
+
+            const writePolicy = openPolicies.find((p) => !isSelectOnlyPolicy(p[0]));
+            const targetPolicy = writePolicy ?? openPolicies[0];
+            const isWriteBypass = Boolean(writePolicy);
+            const severity: Finding['severity'] = isWriteBypass ? 'CRITICAL' : 'HIGH';
+
+            // Policies span several lines: point at the USING (true) / WITH CHECK (true) of the target policy
+            const truePos = targetPolicy ? targetPolicy.index! + targetPolicy[0].search(/(?:USING|WITH\s+CHECK)\s*\(\s*true\s*\)/i) : -1;
+            const matchLineIdx = truePos >= 0 ? cleanContent.slice(0, truePos).split('\n').length - 1 : lines.findIndex(l => !l.trim().startsWith('--') && rlsBypassRegex.test(l));
             const lineNum = matchLineIdx !== -1 ? matchLineIdx + 1 : 1;
             const snippet = lines.slice(Math.max(0, lineNum - 2), Math.min(lines.length, lineNum + 2)).join('\n');
             findings.push({
@@ -1193,21 +1361,23 @@ export function evaluateSecurityRules(file: CodeFile, lines: string[], cleanCont
                 ruleId: 45,
                 type: 'SECURITY',
                 title: 'Permissive Database Row Level Security (RLS) Bypass Policy',
-                severity: 'CRITICAL',
+                severity, // severity: 'CRITICAL' in catalog; downgraded to HIGH for SELECT-only
                 category: 'Database Security',
                 filePath: file.path,
                 lineRange: `L${lineNum}`,
                 snippet: snippet || lines[matchLineIdx] || 'CREATE POLICY bypass ON table FOR ALL USING (true);',
                 reproductionSteps: [
                     `Scanned database migration or schema SQL at ${file.path}:${lineNum}.`,
-                    'Detected permissive RLS policy allowing universal access to table records.'
+                    isWriteBypass
+                        ? 'Detected permissive RLS policy allowing universal write or all access to table records.'
+                        : 'Detected permissive RLS policy allowing universal read (SELECT) access to table records.'
                 ],
                 remediationPrompt: `Scope RLS policy with explicit user ownership checks: auth.uid() = user_id in ${file.path}:${lineNum}.`,
                 status: 'OPEN',
                 owner: 'Database Lead',
                 falsePositive: false
             });
-            logs.push(`[${ts}] 🛑 CRITICAL: SEC-45 Permissive RLS policy bypass detected in ${file.path}:${lineNum}`);
+            logs.push(`[${ts}] ${isWriteBypass ? '🛑 CRITICAL' : '⚠️ HIGH'}: SEC-45 Permissive RLS policy bypass detected in ${file.path}:${lineNum}`);
         }
     }
     return { findings, logs };

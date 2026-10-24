@@ -28,6 +28,12 @@ const OTHER_FRAMEWORKS: [RegExp, RegExp, string][] = [
   [/^(?:pom\.xml|build\.gradle(?:\.kts)?)$/, /spring-boot/, 'Spring Boot'],
   [/^cargo\.toml$/, /\b(?:axum|actix-web|rocket)\b/, 'Rust (web)'],
   [/^pubspec\.yaml$/, /\bflutter\b/, 'Flutter'],
+  // Native store apps, after Flutter: a Flutter repo also carries ios/ and android/ host projects
+  [/^build\.gradle(?:\.kts)?$/, /com\.android\.application/, 'Android (Kotlin/Java)'],
+  [/^info\.plist$/, /LSRequiresIPhoneOS|UIApplicationSceneManifest|UILaunchStoryboardName/, 'iOS (Swift)'],
+  [/^package\.swift$/, /\.iOS\s*\(/, 'iOS (Swift)'],
+  [/^manifest\.json$/, /"com\.unity\./, 'Unity'],
+  [/\.csproj$/, /<UseMaui>\s*true/i, '.NET MAUI'],
   [/\.csproj$/, /Microsoft\.AspNetCore|Sdk="Microsoft\.NET\.Sdk\.Web"/, 'ASP.NET Core']
 ];
 

@@ -32,7 +32,7 @@ function rulesVersionJson(): string {
   const updatedAt = prev && prev.hash === digest ? prev.updatedAt : new Date().toISOString().slice(0, 10);
   return JSON.stringify({ hash: digest, updatedAt }, null, 1) + '\n';
 }
-/** Rules with evidence (fixture-tested, caught a documented flaw, or reviewed true positive): only these can block a release. */
+/** Rules with evidence (caught a documented flaw or a reviewed true positive): only these can block a release. */
 const EVIDENCE_OUT = join(root, 'data/rule-evidence.generated.json');
 
 export interface RuleRecord {
@@ -139,8 +139,9 @@ export function auditRules() {
 export function evidenceJson(audit: ReturnType<typeof auditRules>): string {
   const maturity = JSON.parse(readFileSync(join(root, 'data/rule-maturity.generated.json'), 'utf8')) as { benchmarkProven?: number[] };
   const implemented = new Set(audit.rules.map((r) => r.ruleId));
+  // Fixtures prove a rule matches the shape it was written for, not that its hits on real code are right:
+  // in the public-repo survey most CRITICALs from fixture-only rules were false alarms, so they report as HIGH.
   const ids = new Set<number>([
-    ...audit.rules.filter((r) => r.tested).map((r) => r.ruleId),
     ...(maturity.benchmarkProven ?? []),
     ...Object.keys(REVIEWED_TRUE_POSITIVES).map(Number)
   ]);

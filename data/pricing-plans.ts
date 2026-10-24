@@ -1,6 +1,5 @@
 import { z } from 'zod';
 
-import { formatCount, RULE_COUNTS } from '@/lib/rule-status';
 
 export const PricingPlanSchema = z.object({
   id: z.enum(['free', 'zelsis-core', 'shipguard-core', 'vibecare', 'zelsis-suite']),
@@ -40,11 +39,11 @@ export const ZELSIS_PRICING_PLANS: PricingPlanItem[] = [
     name: 'Free Starter',
     priceMonthly: PLAN_PRICES.Free,
     isPopular: false,
-    description: 'Release-gate scans for hobbyists and public open-source repositories.',
+    description: 'Unlimited scans of public and private repositories, for trying Zelsis on your own projects.',
     features: [
-      'Unlimited scans for public repositories',
-      '3 private repositories',
-      `All ${formatCount(RULE_COUNTS.gating)} active rules`,
+      'Unlimited scans, public and private repositories',
+      '3 saved projects',
+      'Every check, on every plan',
       '5 AI fix prompts / month',
       SUPPORT_TERMS.Free,
     ],
@@ -57,9 +56,9 @@ export const ZELSIS_PRICING_PLANS: PricingPlanItem[] = [
     isPopular: true,
     description: 'Unlimited scans of public and private repos, CI release gate and AI fix prompts.',
     features: [
-      'Unlimited scans (60 req/min rate limit)',
-      'Unlimited public & private repositories',
-      `All ${formatCount(RULE_COUNTS.gating)} active rules`,
+      'Unlimited scans',
+      'Unlimited saved projects',
+      'Every check, on every plan',
       'Unlimited AI fix prompts',
       'Printable PDF audit report',
       'GitHub Actions & CI/CD release gate',
@@ -70,7 +69,7 @@ export const ZELSIS_PRICING_PLANS: PricingPlanItem[] = [
   },
   {
     id: 'vibecare',
-    name: 'Zelsis Enterprise',
+    name: 'Zelsis Team',
     priceMonthly: PLAN_PRICES.Enterprise,
     isPopular: false,
     description: 'Pro for your whole team: shared workspace, one gate policy for every repo and SOC 2 control mapping.',
@@ -82,7 +81,7 @@ export const ZELSIS_PRICING_PLANS: PricingPlanItem[] = [
       'SOC 2 control-mapping appendix (PDF)',
       SUPPORT_TERMS.Enterprise,
     ],
-    buttonText: 'Upgrade to Enterprise',
+    buttonText: 'Upgrade to Team',
     polarCheckoutUrl: 'https://buy.polar.sh/polar_cl_M0yZJgYVCucd7U5gDz4oFTND6hdqvYPo65HJQ2334od',
   },
 ];

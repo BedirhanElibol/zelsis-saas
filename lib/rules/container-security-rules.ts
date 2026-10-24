@@ -5,7 +5,7 @@
 import { Finding } from "@/data/schema";
 import { CodeFile } from "../scanner-engine";
 import { locateMatchLine } from './shared/locate';
-import { isYamlPath, yamlLine } from './iac-rules';
+import { isHelmSubchartPath, isYamlPath, yamlLine } from './iac-rules';
 export interface ContainerSecurityRuleResult {
     findings: Finding[];
     logs: string[];
@@ -22,7 +22,7 @@ export function evaluateContainerSecurityRules(file: CodeFile, lines: string[], 
     }
     const ts = new Date().toLocaleTimeString();
     // CONTAINER-01: Privileged Container Execution with Full Host Access
-    const isYaml = isYamlPath(lowerPath);
+    const isYaml = isYamlPath(lowerPath) && !isHelmSubchartPath(lowerPath) && !/^\s*kind:\s*PodSecurityPolicy\b/m.test(cleanContent);
     const c01Line = isYaml && /securityContext\s*:/.test(cleanContent) ? yamlLine(lines, /^\s*privileged\s*:\s*true\b/) : -1;
     if (c01Line !== -1) {
         const matchLineIdx = c01Line;

@@ -1,4 +1,5 @@
 import React from 'react';
+import { CORPUS_RECALL, corpusPct } from '@/data/corpus-recall';
 
 export const metadata = { title: 'What We Don\'t Check - Zelsis Docs' };
 
@@ -12,10 +13,16 @@ export default function BoundariesPage() {
         <div className="bg-emerald-500/10 border border-emerald-500/20 p-4 rounded-lg mb-6">
           <h3 className="text-emerald-400 font-semibold mb-2">Measured Efficacy</h3>
           <p className="text-sm text-zinc-300">
-            On a corpus of <strong>108 vulnerable snippets modelled on public incidents and advisories</strong>, the engine flags{' '}
-            <strong>81% as HIGH/CRITICAL</strong> on the vulnerable line, and <strong>94%</strong> when MEDIUM findings are included.
+            On a corpus of <strong>{CORPUS_RECALL.total} vulnerable snippets modelled on public incidents and advisories</strong>, the engine flags{' '}
+            <strong>{corpusPct(CORPUS_RECALL.highCritical)}% as HIGH/CRITICAL</strong> on the vulnerable line, and <strong>{corpusPct(CORPUS_RECALL.withMedium)}%</strong> when MEDIUM findings are included.
             The corpus is <a href="/benchmark/real-incident-corpus.txt" className="underline hover:text-white">published here</a>, and our test suite
             re-measures it on every release.
+          </p>
+          <p className="text-sm text-zinc-300 mt-2">
+            <strong>What it misses there:</strong> the zip-slip snippet (adm-zip <code>extractAllTo</code>), on purpose: adm-zip blocks that attack
+            since 0.4.11, so flagging it would be a false alarm on current versions. The {CORPUS_RECALL.withMedium - CORPUS_RECALL.highCritical} snippets
+            that only reach MEDIUM are mostly issues rated MEDIUM by convention, such as open redirects, timing-unsafe signature comparisons and
+            GraphQL introspection.
           </p>
         </div>
       </section>
@@ -24,14 +31,18 @@ export default function BoundariesPage() {
         <h2 className="text-xl font-semibold text-white">1. Runtime and DAST</h2>
         <p>
           Zelsis is a Static Application Security Testing (SAST) tool. It analyzes source code at rest. 
-          We do not perform Dynamic Application Security Testing (DAST). We do not send payloads to your live endpoints, nor do we monitor runtime execution.
+          We do not perform Dynamic Application Security Testing (DAST): no attack payloads, no fuzzing, no runtime monitoring. A live-site scan reads your
+          pages and scripts and requests a fixed list of well-known file paths (such as /.env and /.git/config); the longer list of dump and admin paths
+          runs only on domains you have verified.
         </p>
       </section>
 
       <section className="space-y-4">
         <h2 className="text-xl font-semibold text-white">2. Complex Business Logic Flaws</h2>
         <p>
-          Our engine operates line-by-line and file-by-file. It cannot reason about complex, multi-step business logic flaws that span across multiple decoupled systems.
+          Most rules read one file at a time. A set of cross-file checks links code to migrations, env templates, Dockerfiles,
+          proxy configs and (for JavaScript and TypeScript) auth helpers and middleware. None of this reasons about multi-step
+          business logic that spans several decoupled systems.
         </p>
         <p className="text-zinc-300">Examples of limitations:</p>
         <ul className="list-disc pl-5 space-y-2">

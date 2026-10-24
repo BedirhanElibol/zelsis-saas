@@ -101,7 +101,7 @@ export async function createOrganization(_prev: OrgActionState, formData: FormDa
   if (!ctx) return fail('Please sign in again.');
 
   if ((await getOwnPlanTier(ctx.admin, ctx.user.id)) !== 'Enterprise') {
-    return fail('Team workspaces are part of Zelsis Enterprise.');
+    return fail('Team workspaces are part of Zelsis Team.');
   }
   if (await getOrgMembership(ctx.admin, ctx.user.id)) return fail('You already belong to a workspace.');
 
@@ -134,7 +134,7 @@ export async function createInvite(_prev: OrgActionState, formData: FormData): P
   if (isState(membership)) return membership;
 
   if ((await getOwnPlanTier(ctx.admin, membership.ownerId)) !== 'Enterprise') {
-    return fail("The workspace owner's Enterprise plan is not active.");
+    return fail("The workspace owner's Team plan is not active.");
   }
   if (input.role === 'admin' && membership.role !== 'owner') return fail('Only the owner can invite admins.');
   if ((await seatsInUse(ctx.admin, membership.orgId)) >= ENTERPRISE_SEAT_LIMIT) {

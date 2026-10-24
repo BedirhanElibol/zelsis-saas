@@ -298,10 +298,10 @@ export const Header: React.FC<HeaderProps> = ({
               {user?.tier === 'Pro' ? (
                 <span className="text-zinc-200">PRO · UNLIMITED</span>
               ) : user?.tier === 'Enterprise' ? (
-                <span className="text-white">ENTERPRISE</span>
+                <span className="text-white">TEAM</span>
               ) : (
-                <span className={quota.scansUsed >= quota.scansLimit ? 'text-rose-400 font-extrabold' : 'text-zinc-300'}>
-                  FREE · {Math.max(0, quota.scansLimit - quota.scansUsed)}/3 SCANS LEFT
+                <span className="text-zinc-300">
+                  FREE · {Math.max(0, quota.aiPromptsLimit - quota.aiPromptsUsed)}/{quota.aiPromptsLimit} FIX PROMPTS LEFT
                 </span>
               )}
             </button>

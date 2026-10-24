@@ -786,3 +786,70 @@ export async function POST(req: Request) {
   const { messages } = await req.json();
   return streamText({ model, messages, tools: { run: tool({ parameters: z.object({ cmd: z.string() }), execute: async ({ cmd }) => execSync(cmd).toString() }) } }).toDataStreamResponse(); <<V
 }
+=== idor-route-findunique | app/api/invoices/[id]/route.ts | IDOR: signed-in user reads any record by id (OWASP API1:2023 BOLA)
+import { auth } from '@/auth';
+import { prisma } from '@/lib/prisma';
+export async function GET(req: Request, { params }: { params: Promise<{ id: string }> }) {
+  const session = await auth();
+  if (!session) return new Response('Unauthorized', { status: 401 });
+  const { id } = await params;
+  const invoice = await prisma.invoice.findUnique({ where: { id } }); <<V
+  return Response.json(invoice);
+}
+=== nosql-login-object | src/routes/auth.js | NoSQL login bypass: { "password": { "$ne": null } } (OWASP NoSQL injection)
+router.post('/login', async (req, res) => {
+  const user = await User.findOne({ email: req.body.email, password: req.body.password }); <<V
+  if (!user) return res.status(401).end();
+  req.session.userId = user.id;
+  res.json({ ok: true });
+});
+=== cors-endswith | server/cors.js | CORS origin check by suffix: evilacme.com passes
+app.use((req, res, next) => {
+  const origin = req.headers.origin || '';
+  if (origin.endsWith('acme.com')) { <<V
+    res.setHeader('Access-Control-Allow-Origin', origin);
+    res.setHeader('Access-Control-Allow-Credentials', 'true');
+  }
+  next();
+});
+=== cors-regex-unanchored | server/app.ts | CORS origin regex without anchors: acme.com.evil.net passes
+const allowed = new RegExp(process.env.ALLOWED_ORIGIN || 'acme\.com');
+app.use(cors({ origin: (origin, cb) => cb(null, allowed.test(origin || '')), credentials: true })); <<V
+=== stripe-client-amount | app/api/checkout/route.ts | Payment amount taken from the request body (price tampering)
+export async function POST(req: Request) {
+  const { amount, name } = await req.json();
+  const session = await stripe.checkout.sessions.create({
+    mode: 'payment',
+    line_items: [{ quantity: 1, price_data: { currency: 'usd', unit_amount: amount, product_data: { name } } }], <<V
+    success_url: process.env.APP_URL + '/thanks',
+  });
+  return Response.json({ url: session.url });
+}
+=== s3-presign-client-key | app/api/upload/route.ts | Unauthenticated presigned upload with a client-chosen object key (overwrite others' files)
+export async function POST(req: Request) {
+  const { filename } = await req.json();
+  const url = await getSignedUrl(s3, new PutObjectCommand({ Bucket: process.env.BUCKET, Key: filename }), { expiresIn: 3600 }); <<V
+  return Response.json({ url });
+}
+=== reset-token-random | src/services/password.ts | Password reset token from Math.random (predictable)
+export async function requestReset(email: string) {
+  const token = Math.random().toString(36).slice(2); <<V
+  await db.passwordReset.create({ data: { email, token, expiresAt: new Date(Date.now() + 3600_000) } });
+  await sendResetEmail(email, token);
+}
+=== sendfile-query | src/routes/files.js | Path traversal through res.sendFile with a query parameter
+router.get('/download', (req, res) => {
+  res.sendFile(path.join(__dirname, '../uploads', req.query.name)); <<V
+});
+=== supabase-role-self-update | supabase/migrations/2_profiles.sql | Users update their own profile row, including role (Supabase privilege escalation)
+create table public.profiles (id uuid primary key references auth.users, name text, role text default 'user');
+alter table public.profiles enable row level security;
+create policy "users update own profile" on public.profiles for update using (auth.uid() = id); <<V
+=== llm-tool-shell | app/api/agent/route.ts | LLM agent tool runs shell commands chosen by the model (prompt injection to RCE)
+const tools = {
+  run_command: async ({ command }: { command: string }) => execSync(command).toString(), <<V
+};
+export async function POST(req: Request) {
+  const { messages } = await req.json();
+  return runAgent({ model: 'gpt-4o', messages, tools });
+}

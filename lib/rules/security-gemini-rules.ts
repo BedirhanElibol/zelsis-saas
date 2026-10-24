@@ -54,10 +54,12 @@ function evaluateJs(path: string, c: string, add: Add) {
   }
 
   // SECG-11: authenticated response marked cacheable by shared caches
-  const isHandler = /(?:^|\/)(?:route|middleware)\.[cm]?[jt]s$|(?:^|\/)(?:api|server|routes)\//i.test(path);
+  const isHandler = /(?:^|\/)(?:route|middleware|proxy)\.[cm]?[jt]s$|(?:^|\/)(?:api|server|routes)\//i.test(path);
   if (isHandler && /\b(?:auth\(\)|getServerSession\(|getSession\(|auth\.getUser\(|getUser\(|currentUser\(|cookies\(\)|req\.user\b|req\.session\b|verifyToken\(|getToken\()/.test(c)) {
     for (const m of c.matchAll(/['"]?Cache-Control['"]?\s*[:,]\s*['"`]([^'"`]*\b(?:public|s-maxage)\b[^'"`]*)['"`]/gi)) {
       if (/\b(?:private|no-store)\b/i.test(m[1])) continue;
+      // Static file handlers (build assets, the SPA shell) are the same for every user
+      if (/setHeaders|fastifyStatic|@fastify\/static|express\.static|serveStatic|sirv\(/.test(c.slice(Math.max(0, m.index! - 600), m.index!))) continue;
       add({ ruleId: 29910, code: 'SECG-11', severity: 'HIGH', category: 'Sensitive Data Exposure', cwe: 'CWE-524', lineIdx: at(m.index!),
         title: `Authenticated Response Sent With Cache-Control "${m[1].slice(0, 40)}"`,
         why: 'This handler reads the user session, but the response is marked cacheable by CDNs and proxies, so one user\'s data can be stored and served to the next visitor of the same URL.',
@@ -334,10 +336,14 @@ function evaluateLlm(path: string, c: string, add: Add) {
 }
 
 function evaluateRust(lines: string[], add: Add) {
+  // A client that reads the peer certificate (.tls_info(true)) and checks it itself pins it manually,
+  // the usual setup for self-signed LAN peers; that is not "verification off".
+  const joined = lines.join('\n');
+  const pinsManually = /\.tls_info\(\s*true\s*\)/.test(joined) && /fingerprint|verify_cert|peer_certificate/i.test(joined);
   lines.forEach((l, i) => {
     // SECG-19: reqwest TLS verification turned off
     const m = /\.danger_accept_invalid_(certs|hostnames)\(\s*true\s*\)/.exec(l);
-    if (m && !/^\s*\/\//.test(l)) add({ ruleId: 29918, code: 'SECG-19', severity: 'HIGH', category: 'Transport Security', cwe: 'CWE-295', lineIdx: i,
+    if (m && !pinsManually && !/^\s*\/\//.test(l)) add({ ruleId: 29918, code: 'SECG-19', severity: 'HIGH', category: 'Transport Security', cwe: 'CWE-295', lineIdx: i,
       title: `reqwest danger_accept_invalid_${m[1]}(true)`,
       why: 'Certificate checking is off, so anyone on the network path (Wi-Fi, proxy, compromised DNS) can impersonate the API and read or change the traffic, including tokens.',
       fix: 'Remove the call; for a private CA add it with .add_root_certificate(cert) instead.' });
@@ -355,8 +361,10 @@ function evaluateRuby(lines: string[], add: Add) {
   });
 }
 
-function evaluatePy(lines: string[], add: Add) {
+function evaluatePy(path: string, lines: string[], add: Add) {
   const src = lines.join('\n');
+  const isPyMigration = /(?:^|\/)(?:migrations?|alembic\/versions)\//i.test(path);
+  const importsSqlText = /\bfrom\s+(?:sqlalchemy(?:\.\w+)*|sqlmodel)\s+import\s+[^\n]*\btext\b/.test(src);
   // SECG-43: LangServe routes published without an auth dependency
   if (/\bfrom\s+langserve\b|\bimport\s+langserve\b/.test(src) && !/\bDepends\(|\bdependencies\s*=|add_middleware\(|APIKeyHeader|HTTPBearer|OAuth2PasswordBearer/.test(src)) {
     const k = lines.findIndex((l) => /^\s*add_routes\(/.test(l));
@@ -388,11 +396,17 @@ function evaluatePy(lines: string[], add: Add) {
       fix: `Fail at startup when it is missing: ${s[1]} = os.environ["…"] (no default).` });
 
     // SECG-12: SQLAlchemy text() fragment built with an f-string / format
-    const t = /\b(?:sa\.|sqlalchemy\.)?text\(\s*(?:[fF]['"][^'"]*\{|['"][^'"]*['"]\s*\.format\(|['"][^'"]*['"]\s*%\s*)/.exec(l);
-    if (t && !/\b(?:SELECT|INSERT|UPDATE|DELETE)\b/i.test(l)) add({ ruleId: 29911, code: 'SECG-12', severity: 'HIGH', category: 'SQL Injection', cwe: 'CWE-89', lineIdx: i,
+    const t = /\b(sa\.|sqlalchemy\.)?text\(\s*(?:[fF](?:"([^"\n]*\{[^"\n]*)"|'([^'\n]*\{[^'\n]*)')|(?:"([^"\n]*)"|'([^'\n]*)')\s*\.format\(|(?:"([^"\n]*)"|'([^'\n]*)')\s*%\s*)/.exec(l);
+    if (t && !isPyMigration && (Boolean(t[1]) || importsSqlText)) {
+      const strBody = t[2] ?? t[3] ?? t[4] ?? t[5] ?? t[6] ?? t[7] ?? '';
+      const interpMatches = [...strBody.matchAll(/\{\s*([^}]+?)\s*\}/g)];
+      const allUpperConstants = interpMatches.length > 0 && interpMatches.every((im) => /^_?[A-Z][A-Z0-9_]*$/.test(im[1]));
+      const looksLikeSqlFragment = /\b(?:SELECT\b[\s\S]*\bFROM|INSERT\s+INTO|UPDATE\b[\s\S]*\bSET|DELETE\s+FROM|DROP\s+(?:TABLE|INDEX|VIEW|SCHEMA)|ALTER\s+TABLE|CREATE\s+(?:TABLE|INDEX|VIEW)|WHERE|ORDER\s+BY|GROUP\s+BY|HAVING|JOIN|ASC|DESC|LIMIT|OFFSET|AND|OR|LIKE|ILIKE|IS\s+(?:NOT\s+)?NULL)\b|[=!<>]=|\.\b(?:order_by|filter|where|having|group_by|execute)\s*\(/i.test(l);
+      if (!allUpperConstants && looksLikeSqlFragment && !/\b(?:SELECT|INSERT|UPDATE|DELETE)\b/i.test(l)) add({ ruleId: 29911, code: 'SECG-12', severity: 'HIGH', category: 'SQL Injection', cwe: 'CWE-89', lineIdx: i,
       title: 'SQLAlchemy text() Fragment Built From an f-string',
       why: 'text() sends the string to the database as raw SQL; interpolating a filter, sort column or search term into it lets a request inject SQL (read other tenants, bypass filters).',
       fix: 'Use bound parameters: text("name = :name").bindparams(name=value), and map sort columns through an allow-list.' });
+    }
   });
 }
 
@@ -449,7 +463,7 @@ export function evaluateSecurityGeminiRules(file: CodeFile, lines: string[], cle
   const add: Add = (h) => { if (h.lineIdx >= 0 && !hits.some((x) => x.ruleId === h.ruleId && x.lineIdx === h.lineIdx)) hits.push(h); };
   const pl = c.replace(/\r/g, '').split('\n');
   if (/\.[cm]?[jt]sx?$/i.test(path)) { evaluateJs(path, c, add); evaluateLlm(path, c, add); }
-  else if (/\.py$/i.test(path)) evaluatePy(pl, add);
+  else if (/\.py$/i.test(path)) evaluatePy(path, pl, add);
   else if (/\.go$/i.test(path)) evaluateGo(pl, add);
   else if (/\.cs$/i.test(path)) evaluateCs(c, add);
   else if (/\.rs$/i.test(path)) evaluateRust(pl, add);

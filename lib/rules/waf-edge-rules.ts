@@ -4,7 +4,7 @@
  */
 import { Finding } from "@/data/schema";
 import { CodeFile } from "../scanner-engine";
-import { LLM_CALL, RATE_LIMIT_GUARD } from './shared/stack-signals';
+import { LLM_CALL, RATE_LIMIT_GUARD, callsLlm } from './shared/stack-signals';
 import { locateMatchLine } from './shared/locate';
 export interface WafEdgeRuleResult {
     findings: Finding[];
@@ -22,8 +22,8 @@ export function evaluateWafEdgeRules(file: CodeFile, lines: string[], cleanConte
     }
     const ts = new Date().toLocaleTimeString();
     // WAF-02: Missing Edge Rate Limiting on High-Cost AI Inference Endpoints
-    const callsAiInference = /chat\.completions|chat\/completions|messages\.create|responses\.create|generateText|streamText|generateObject|streamObject|from\s+['"](?:openai|@anthropic-ai\/sdk|@ai-sdk\/[\w-]+|ai|@google\/generative-ai|@google\/genai|@mistralai\/mistralai|groq-sdk|cohere-ai|replicate|together-ai|ollama)['"]|api\.openai\.com|api\.anthropic\.com|generativelanguage\.googleapis\.com|api\.mistral\.ai|api\.groq\.com|openrouter\.ai\/api|api\.together\.xyz|api\.cohere\.(?:ai|com)|api\.deepseek\.com|api\.x\.ai/i.test(cleanContent);
-    if ((callsAiInference || LLM_CALL.test(cleanContent)) && /export\s+async\s+function\s+POST/i.test(cleanContent) && !RATE_LIMIT_GUARD.test(cleanContent)) {
+    const callsAiInference = /chat\.completions|chat\/completions|responses\.create|generateText|streamText|generateObject|streamObject|from\s+['"](?:openai|@anthropic-ai\/sdk|@ai-sdk\/[\w-]+|ai|@google\/generative-ai|@google\/genai|@mistralai\/mistralai|groq-sdk|cohere-ai|replicate|together-ai|ollama)['"]|api\.openai\.com|api\.anthropic\.com|generativelanguage\.googleapis\.com|api\.mistral\.ai|api\.groq\.com|openrouter\.ai\/api|api\.together\.xyz|api\.cohere\.(?:ai|com)|api\.deepseek\.com|api\.x\.ai/i.test(cleanContent);
+    if ((callsAiInference || callsLlm(cleanContent)) && /export\s+async\s+function\s+POST/i.test(cleanContent) && !RATE_LIMIT_GUARD.test(cleanContent)) {
         const matchLineIdx = locateMatchLine(lines, [LLM_CALL, /export\s+async\s+function\s+POST/i], l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('*'));
         const lineNum = matchLineIdx !== -1 ? matchLineIdx + 1 : 1;
         findings.push({

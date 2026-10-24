@@ -120,6 +120,54 @@
       "sha": "a1d8f89fac2e57093189853c6527c2b01fc1d9c1",
       "kind": "vulnerable",
       "stack": "Python + aiohttp"
+    },
+    {
+      "name": "TeamNewPipe/NewPipe",
+      "sha": "ab57bd483bcabb48c67ffe8519a80440e1367a14",
+      "kind": "clean",
+      "stack": "Android (Java + Kotlin)"
+    },
+    {
+      "name": "AntennaPod/AntennaPod",
+      "sha": "3d105d598dfa582c6cb22ba40b56d11780366890",
+      "kind": "clean",
+      "stack": "Android (Java)"
+    },
+    {
+      "name": "mastodon/mastodon-ios",
+      "sha": "14c140cb2be0ec5a6a004bfb89f7b8d8f5436013",
+      "kind": "clean",
+      "stack": "iOS (Swift)"
+    },
+    {
+      "name": "payatu/diva-android",
+      "sha": "2bb63b531ba66c22563ac0911973389e2a0cb723",
+      "kind": "vulnerable",
+      "stack": "Android (Java)"
+    },
+    {
+      "name": "dineshshetty/Android-InsecureBankv2",
+      "sha": "3c8cc3a3ce45ed56d0f58f236b541b41f992e51f",
+      "kind": "vulnerable",
+      "stack": "Android (Java)"
+    },
+    {
+      "name": "prateek147/DVIA-v2",
+      "sha": "96466ab85569dbcd37c69b2d15d22ff666f57031",
+      "kind": "vulnerable",
+      "stack": "iOS (Swift)"
+    },
+    {
+      "name": "localsend/localsend",
+      "sha": "14f3a87426eedffaa9d87d011132eca5501abeb8",
+      "kind": "clean",
+      "stack": "Flutter (Dart) + Rust"
+    },
+    {
+      "name": "LemmyNet/lemmy",
+      "sha": "fc640cf86a130bc897d83dbd06d84c3c7d9b16e3",
+      "kind": "clean",
+      "stack": "Rust + Actix + Diesel + Postgres (production service)"
     }
   ]
 }
