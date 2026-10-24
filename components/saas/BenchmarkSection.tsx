@@ -207,7 +207,7 @@ export const BenchmarkSection: React.FC = () => {
                 <li>{benchmark.repos.length} open-source repositories, each pinned to a commit so results are reproducible.</li>
                 <li>Recall: flaws documented by the vulnerable apps themselves, located in their source before scanning.</li>
                 <li>Noise: every HIGH/CRITICAL finding on clean projects is reviewed; rules that misfire become experimental.</li>
-                <li>Evidence: a CRITICAL finding fails the gate only if its rule has a test fixture, caught a documented flaw, or was reviewed as a true positive. Otherwise it warns.</li>
+                <li>Evidence: a CRITICAL finding fails the gate only if its rule caught a documented flaw or was reviewed as a true positive, or it is a published advisory for a dependency version. Otherwise it warns.</li>
                 <li>Engine time is the scan itself on one machine; downloading the repository is not included.</li>
               </ul>
             </div>
