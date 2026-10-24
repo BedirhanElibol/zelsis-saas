@@ -331,13 +331,18 @@ export function evaluateSecurityRules(file: CodeFile, lines: string[], cleanCont
         });
         if (matchLineIdx !== -1) {
             const lineNum = matchLineIdx + 1;
+            const isLocalDevTestOrShim = /(?:^|[\\/._-])(?:local|dev|test|mock|shim)(?:[\\/._-]|$)/i.test(lowerPath) ||
+                /\b(?:local|dev|test|mock|shim)\b/i.test(lowerPath);
+            const lineOrNear = [lines[matchLineIdx - 1], lines[matchLineIdx], lines[matchLineIdx + 1]].filter(Boolean).join(' ');
+            const isFlashOrToastCookie = /(?:flash|toast)/i.test(lineOrNear);
+            const isMedium = isLocalDevTestOrShim || isFlashOrToastCookie;
             const snippet = lines.slice(Math.max(0, lineNum - 2), Math.min(lines.length, lineNum + 2)).join('\n');
             findings.push({
                 id: `real-find-${Date.now()}-${findingCounter.count++}`,
                 ruleId: 14,
                 type: 'SECURITY',
                 title: 'Insecure Hardcoded Fallback for Cryptographic Session / JWT Secret',
-                severity: 'CRITICAL',
+                severity: isMedium ? 'MEDIUM' : 'CRITICAL',
                 category: 'Authentication & Tokens',
                 filePath: file.path,
                 lineRange: `L${lineNum}`,
@@ -351,7 +356,7 @@ export function evaluateSecurityRules(file: CodeFile, lines: string[], cleanCont
                 owner: 'Security Lead',
                 falsePositive: false
             });
-            logs.push(`[${ts}] 🛑 CRITICAL: SEC-14 Insecure JWT secret fallback in ${file.path}:${lineNum}`);
+            logs.push(`[${ts}] ${isMedium ? '⚠️ MEDIUM' : '🛑 CRITICAL'}: SEC-14 Insecure JWT secret fallback in ${file.path}:${lineNum}`);
         }
     }
     // Rule 15 / SEC-15: Unauthenticated Next.js API Mutation Route Handler
@@ -846,7 +851,11 @@ export function evaluateSecurityRules(file: CodeFile, lines: string[], cleanCont
             const isMdxFunction = /\bnew\s+Function\b/.test(lines[matchLineIdx])
                 && /(?:mdx|markdown)/i.test(lowerPath)
                 && !hasRequestInput;
-            const isMedium = reviewed32 || isMdxFunction;
+            const isBrowserAssetDataHandler = /\bnew\s+Function\b/.test(lines[matchLineIdx])
+                && /(?:^|[\\/])(?:assets|public)[\\/]|(?:^|[\\/._-])framework\.js$/i.test(lowerPath)
+                && /(?:data-|\.dataset\b)/i.test(cleanContent)
+                && !hasRequestInput;
+            const isMedium = reviewed32 || isMdxFunction || isBrowserAssetDataHandler;
             const snippet = lines.slice(Math.max(0, lineNum - 2), Math.min(lines.length, lineNum + 2)).join('\n');
             findings.push({
                 id: `real-find-${Date.now()}-${findingCounter.count++}`,
@@ -867,7 +876,7 @@ export function evaluateSecurityRules(file: CodeFile, lines: string[], cleanCont
                 owner: 'Security Lead',
                 falsePositive: false
             });
-            logs.push(`[${ts}] 🛑 CRITICAL: SEC-32 Dynamic Code Execution detected in ${file.path}:${lineNum}`);
+            logs.push(`[${ts}] ${isMedium ? '⚠️ MEDIUM' : '🛑 CRITICAL'}: SEC-32 Dynamic Code Execution detected in ${file.path}:${lineNum}`);
         }
     }
     // Rule 33 / SEC-33: Command Injection via Unsanitized Child Process Execution
@@ -958,12 +967,15 @@ export function evaluateSecurityRules(file: CodeFile, lines: string[], cleanCont
     if (isCodeFile && new RegExp(httpClient + String.raw`\s*\(`).test(cleanContent)) {
         // Only URLs that come from the request: direct req.* access or variables assigned / destructured from it
         const requestVars = new Set<string>();
-        for (const m of cleanContent.matchAll(/(?:const|let|var)\s+(\w+)\s*=\s*[^;\n]*(?:\breq(?:uest)?\.(?:query|body|params)\b|searchParams\.get\(|\bformData\.get\()/g)) requestVars.add(m[1]);
+        for (const m of cleanContent.matchAll(/(?:const|let|var)\s+(\w+)\s*=\s*[^;\n]*(?:\breq(?:uest)?\.(?:query|body|params|nextUrl\.searchParams)\b|(?:req(?:uest)?\.(?:nextUrl\.)?)?searchParams\.get\(|\bformData\.get\()/g)) requestVars.add(m[1]);
         for (const m of cleanContent.matchAll(/(?:const|let|var)\s*\{([^}]*)\}\s*=\s*(?:await\s+)?(?:req(?:uest)?\.(?:query|body|params|json\(\))|request\.json\(\))/g)) {
             m[1].split(',').map((x) => x.split(':').pop()!.split('=')[0].trim()).filter(Boolean).forEach((x) => requestVars.add(x));
         }
-        const requestUrl = String.raw`(?:req(?:uest)?\.(?:query|body|params)\.\w+` + (requestVars.size ? String.raw`|\b(?:` + [...requestVars].filter((v) => /^\w+$/.test(v)).join('|') + String.raw`)\b` : '') + ')';
-        const ssrfRegex = new RegExp(httpClient + String.raw`\s*\(\s*(?:\x60[^\x60]*\$\{\s*` + requestUrl + String.raw`|new\s+URL\(\s*` + requestUrl + '|' + requestUrl + ')');
+        const requestDirect = String.raw`(?:\breq(?:uest)?\.(?:query|body|params)\.\w+|\breq(?:uest)?\.(?:nextUrl\.)?searchParams\.get\([^)]+\))`;
+        const requestUrl = String.raw`(?:` + requestDirect + (requestVars.size ? String.raw`|\b(?:` + [...requestVars].filter((v) => /^\w+$/.test(v)).join('|') + String.raw`)\b` : '') + ')';
+        // A fetch whose URL starts with a fixed origin from config/env (`${STORAGE_URL}/tickets/...`) and only
+        // appends a path is not SSRF. Only when the host/origin is variable or the entire URL is from the request:
+        const ssrfRegex = new RegExp(httpClient + String.raw`\s*\(\s*(?:\x60(?!\s*(?:https?:\/\/|\$\{\s*(?:process\.env\.|[A-Z0-9_]*(?:URL|HOST|ORIGIN|ENDPOINT|BASE|API)|config\.)[^\x60}]*\})\/)[^\x60]*\$\{\s*` + requestUrl + String.raw`|new\s+URL\(\s*` + requestUrl + '|' + requestUrl + ')');
         if (ssrfRegex.test(cleanContent) && !/validateSafeTargetUrl|isAllowedWebhookUrl|\b(?:ALLOWED|allowed|ALLOW|allow)\w*\.(?:has|includes)\(\s*\w+\.(?:hostname|host|origin)|\.(?:hostname|host|origin)\s*(?:===|!==)|isAllowed\w*\(|validate\w*Url\(|(?:assert|ensure|is)Safe\w*Url\(|ssrfGuard|ssrf-?(?:req-)?filter/i.test(cleanContent)) {
             const matchLineIdx = lines.findIndex(l => !l.trim().startsWith('//') && !l.trim().startsWith('*') && ssrfRegex.test(l));
             const lineNum = matchLineIdx !== -1 ? matchLineIdx + 1 : 1;
