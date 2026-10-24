@@ -14,14 +14,14 @@ const ROWS: { label: string; zelsis: string; aikido: string; snyk: string; semgr
   },
   {
     label: 'Free plan',
-    zelsis: 'Unlimited public repo scans, 3 private repos',
+    zelsis: 'Unlimited scans, 3 saved projects, 5 fix prompts / month',
     aikido: '2 users, 10 repos',
     snyk: '5 projects, 100 Code tests/mo',
     semgrep: 'Up to 10 contributors and 10 private repos',
   },
   {
     label: 'Focus',
-    zelsis: 'Next.js, Supabase and AI apps, plus accessibility and config checks',
+    zelsis: 'Logic bugs behind real incidents (auth, payments, caching, database rules), plus secrets, dependencies and CI/CD config, gated on every pull request',
     aikido: 'All-in-one platform (code, cloud, runtime)',
     snyk: 'Developer security platform',
     semgrep: 'Customizable SAST and supply chain',
@@ -38,8 +38,8 @@ export function CompetitorComparison() {
             Priced per account, not per developer.
           </h2>
           <p className="mt-4 text-lg text-zinc-400">
-            The established tools are excellent general-purpose platforms. Zelsis is narrower and cheaper: it goes deep on the
-            stack small teams ship with, at a flat price that does not grow with every teammate.
+            The established tools are excellent general-purpose platforms. Zelsis is built for teams shipping web, mobile and SaaS apps and
+            APIs: deep on the logic bugs that cause real incidents, at a flat price that does not grow with every hire.
           </p>
         </div>
 

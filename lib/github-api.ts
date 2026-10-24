@@ -1,5 +1,6 @@
 import { CodeFile } from './scanner-engine';
 import { isDependencyFile } from '@/lib/scanner/dependencies';
+import { isScannableTreePath, withPublicArtifactPaths } from '@/lib/scanner/scan-paths';
 
 export interface FetchProgress {
   phase: 'connecting' | 'tree' | 'fetching';
@@ -620,19 +621,7 @@ export async function fetchGithubRepositoryData(
           item.type === 'blob' &&
           typeof item.path === 'string' &&
           (!item.size || item.size <= (isDependencyFile(item.path) ? 8000000 : 2000000)) &&
-          (isDependencyFile(item.path) || /(\.(ts|tsx|js|jsx|json|css|sql|html|py|yml|yaml|toml|sh|ps1|c|cpp|cc|cxx|h|hpp|java|kt|kts|go|rs|php|cs|rb|swift|xml|plist|gradle|md|mdx|zelsisignore|shipguardignore)$)|(\.env(\.[a-zA-Z0-9_\-]+)?$)|((?:^|\/)(?:dockerfile|makefile|podfile)$)/i.test(item.path)) &&
-          !item.path.includes('node_modules') &&
-          !item.path.includes('.next') &&
-          !item.path.includes('.git') &&
-          !item.path.includes('dist/') &&
-          !item.path.includes('build/') &&
-          !item.path.includes('vendor/') &&
-          !item.path.includes('.agent') &&
-          !item.path.includes('.antigravity') &&
-          !item.path.includes('artifacts') &&
-          !item.path.includes('venv/') &&
-          !item.path.includes('.venv/') &&
-          !item.path.includes('__pycache__/')
+          isScannableTreePath(item.path)
       );
 
     if (signal?.aborted) return null;
@@ -705,7 +694,7 @@ export async function fetchGithubRepositoryData(
       });
     }
 
-    const codeFiles: CodeFile[] = fetchedFiles.filter((f): f is CodeFile => f !== null);
+    const codeFiles: CodeFile[] = withPublicArtifactPaths(treeData.tree || [], fetchedFiles.filter((f): f is CodeFile => f !== null));
 
     let changedFiles: string[] | undefined;
     if (base && ref) {

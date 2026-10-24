@@ -70,7 +70,7 @@ export const CicdAutomationView: React.FC<CicdAutomationViewProps> = ({
 
   const badgeAppUrl = getConfiguredAppUrl();
   const badgeUrl = badgeUrlFor(project, badgeAppUrl) ?? `${badgeAppUrl}/api/v1/badge?status=PASSED&score=100&label=Zelsis%20Gate`;
-  const badgeMarkdown = `[![Zelsis Gate](${badgeUrl})](${badgeAppUrl})`;
+  const badgeMarkdown = `[![Zelsis Gate](${badgeUrl})](${badgeAppUrl}/?ref=badge)`;
 
   const copyToClipboard = (text: string, setter: (val: boolean) => void) => {
     navigator.clipboard.writeText(text);
@@ -100,7 +100,7 @@ export const CicdAutomationView: React.FC<CicdAutomationViewProps> = ({
             <h2 className="text-lg font-extrabold text-[#EDEDED] mb-2">CI/CD Integration is a Pro Feature</h2>
             <p className="text-sm text-[#A1A1AA] leading-relaxed">
               Automate your release gate with GitHub Actions, Policy-as-Code enforcement, and CLI integration.
-              Available on <span className="text-white font-semibold">Pro</span> and <span className="text-white font-semibold">Enterprise</span> plans.
+              Available on <span className="text-white font-semibold">Pro</span> and <span className="text-white font-semibold">Team</span> plans.
             </p>
           </div>
           <div className="flex flex-col sm:flex-row gap-3 w-full max-w-xs">

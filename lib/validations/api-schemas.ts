@@ -111,7 +111,8 @@ export const GateCheckRequestSchema = z
     targetUrl: z.string().max(2048).optional(),
     ref: z.string().max(256).optional(),
     base: z.string().max(256).optional(),
-    githubToken: z.string().max(256).optional(),
+    // GitHub Actions tokens can be far longer than classic PATs
+    githubToken: z.string().max(4096).optional(),
     slackWebhookUrl: z
       .string()
       .url('slackWebhookUrl must be a valid URL')
@@ -230,6 +231,24 @@ export const ApiKeyRevokeSchema = z.object({
   keyId: z.string().uuid(),
 });
 
+/** Domain ownership actions (app/actions/site-verification.ts); the hostname is normalised server-side. */
+export const SiteDomainSchema = z.object({
+  accessToken: AccessTokenSchema,
+  hostname: z.string().trim().min(3, 'Enter a domain such as example.com').max(300),
+});
+
+/** Share link for the latest completed scan of a project (looked up by project id or repository URL). */
+export const ReportShareCreateSchema = z.object({
+  accessToken: AccessTokenSchema,
+  projectId: z.string().max(128).optional().default(''),
+  repoUrl: z.string().trim().min(1, 'Scan the project first').max(2048),
+});
+
+export const ReportShareRevokeSchema = z.object({
+  accessToken: AccessTokenSchema,
+  token: z.string().regex(/^[A-Za-z0-9_-]{43}$/, 'Invalid link'),
+});
+
 export const OrgNameSchema = z.object({
   accessToken: AccessTokenSchema,
   name: z.string().trim().min(2, 'Workspace name needs at least 2 characters').max(80),
@@ -238,7 +257,8 @@ export const OrgNameSchema = z.object({
 export const OrgInviteSchema = z.object({
   accessToken: AccessTokenSchema,
   role: z.enum(['admin', 'member']).default('member'),
-  email: z.string().trim().email('Invalid email address').optional().or(z.literal('')),
+  // Invites are bound to this address: only a user signed in with it can accept
+  email: z.string().trim().toLowerCase().email("Enter your teammate's email address"),
 });
 
 export const OrgAcceptInviteSchema = z.object({
@@ -289,4 +309,35 @@ export const OrgBrandingSchema = z.object({
     .optional()
     .transform((v) => v || null)
     .refine((v) => v === null || /^https:\/\/[^\s"'<>]+$/.test(v), 'Logo URL must start with https://'),
+});
+
+/** POST /api/v1/scan-files: local files sent by the zelsis CLI / MCP server. */
+export const SCAN_FILES_MAX_FILES = 3000;
+export const SCAN_FILES_MAX_FILE_BYTES = 512 * 1024;
+export const SCAN_FILES_MAX_TOTAL_BYTES = 4 * 1024 * 1024;
+
+export const ScanFilesRequestSchema = z.object({
+  projectName: z.string().max(200).optional(),
+  files: z
+    .array(z.object({
+      path: z.string().min(1).max(512).refine((p) => !p.startsWith('/') && !p.split(/[\/]/).includes('..'), 'path must be relative'),
+      content: z.string().max(SCAN_FILES_MAX_FILE_BYTES),
+    }))
+    .min(1)
+    .max(SCAN_FILES_MAX_FILES)
+    .refine((files) => files.reduce((n, f) => n + f.content.length, 0) <= SCAN_FILES_MAX_TOTAL_BYTES, 'files exceed the 4 MB total limit'),
+  /** Paths the caller changed; when set, only findings in these files decide the gate. */
+  changed: z.array(z.string().max(512)).max(SCAN_FILES_MAX_FILES).optional(),
+});
+export type ScanFilesRequest = z.infer<typeof ScanFilesRequestSchema>;
+
+export const TrustPageEnableSchema = z.object({
+  accessToken: AccessTokenSchema,
+  projectId: z.string().uuid('Save the project first'),
+  displayName: z.string().trim().min(1, 'Enter the name customers know').max(80),
+});
+
+export const TrustPageDisableSchema = z.object({
+  accessToken: AccessTokenSchema,
+  projectId: z.string().uuid('Invalid project'),
 });

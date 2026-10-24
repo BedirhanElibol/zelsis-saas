@@ -11,26 +11,27 @@ export const WorkflowSteps: React.FC = () => {
     {
       number: '01',
       badge: 'CONNECT & PRIVACY',
-      title: 'Connect a Repository, Scanned In Memory',
+      title: 'Connect a repository, scanned in memory',
       description:
-        'Paste a public GitHub repository, or connect private ones with a read-only GitHub token. Files are fetched into worker memory, scanned, and released.',
+        'Paste a public GitHub repository, or connect private ones through the Zelsis GitHub App (read-only, repositories you choose). Files are fetched into worker memory, scanned, and released.',
       codeSnippet: `# From the dashboard, or from any CI runner with one HTTP call
 $ curl -X POST ${getConfiguredAppUrl()}/api/v1/gate-check \\
+    -H "Authorization: Bearer $ZELSIS_API_KEY" \\
     -H "Content-Type: application/json" \\
-    -d '{"repoUrl": "your-org/your-app"}'
+    -d '{"repoUrl": "your-org/your-app", "ref": "'"$GIT_SHA"'"}'
 {"gateStatus": "PASSED", "readinessScore": 94, ...}`,
       features: [
         CODE_RETENTION_STATEMENT,
-        'Public repositories instantly, private ones with a read-only token',
+        'Public repositories instantly, private ones through the GitHub App',
         'GitHub Actions, GitLab CI and pre-commit configs generated for you'
       ]
     },
     {
       number: '02',
       badge: 'DEEP RELEASE AUDIT',
-      title: 'Real-Time Evaluation Across Security & Architecture Vectors',
+      title: 'Find logic, security and dependency issues in seconds',
       description:
-        'Deterministic release rules inspect your application layers simultaneously, isolating regressions before staging or production builds.',
+        'Deterministic rules check every layer of the app at once, so the same code always gets the same result and regressions are caught before they ship.',
       codeSnippet: `[EVALUATING PRODUCTION RELEASE GATES]
   [PASS] SEC-01: No hardcoded client secrets detected ......... PASSED
   [PASS] SEC-03: PostgreSQL Row Level Security enforces auth .. PASSED
@@ -38,7 +39,7 @@ $ curl -X POST ${getConfiguredAppUrl()}/api/v1/gate-check \\
   [PASS] INFRA-02: Container runs as dedicated non-root user .. PASSED
 [SCORE] 94/100 PRODUCTION READINESS ACHIEVED`,
       features: [
-        'OWASP Top 10, SSRF, injection, leaked secrets and Supabase RLS checks',
+        'OWASP Top 10, injection, leaked secrets, logic bugs and CI/CD checks',
         'Known-vulnerable dependencies looked up in OSV.dev from your lockfiles',
         'WCAG 2.2 accessibility, Docker and Kubernetes misconfiguration checks'
       ]
@@ -46,14 +47,16 @@ $ curl -X POST ${getConfiguredAppUrl()}/api/v1/gate-check \\
     {
       number: '03',
       badge: 'RELEASE CLEARANCE',
-      title: 'Gate the Release & Fix in One Click',
+      title: 'Gate the release and fix in one click',
       description:
         'Fail the CI job when the gate fails, export the result for change-control records, and copy a ready-made fix prompt for any AI coding assistant.',
       codeSnippet: `# .github/workflows/zelsis.yml (generated in the dashboard)
 - name: Zelsis release gate
   run: |
     STATUS=$(curl -s -X POST "$ZELSIS_URL/api/v1/gate-check" \\
-      -d '{"repoUrl":"\${{ github.repository }}"}' | jq -r .gateStatus)
+      -H "Authorization: Bearer \${{ secrets.ZELSIS_API_KEY }}" \\
+      -H "Content-Type: application/json" \\
+      -d '{"repoUrl":"\${{ github.repository }}","ref":"\${{ github.sha }}"}' | jq -r .gateStatus)
     [ "$STATUS" != "FAILED" ] || exit 1`,
       features: [
         'Export results as PDF, JSON, CSV, SARIF or Markdown',
@@ -146,9 +149,9 @@ $ curl -X POST ${getConfiguredAppUrl()}/api/v1/gate-check \\
                 <span className="w-2.5 h-2.5 rounded-full bg-red-500/80" />
                 <span className="w-2.5 h-2.5 rounded-full bg-amber-500/80" />
                 <span className="w-2.5 h-2.5 rounded-full bg-emerald-500/80" />
-                <span className="ml-2 text-zinc-300 font-semibold">terminal://runtime-eval</span>
+                <span className="ml-2 text-zinc-300 font-semibold">ci-gate.sh</span>
               </div>
-              <span className="text-[10px] text-zinc-400">BASH / JSON</span>
+              <span className="text-[10px] text-zinc-400">bash</span>
             </div>
             <pre className="p-4 sm:p-6 text-[11px] sm:text-xs font-mono text-zinc-300 overflow-x-auto leading-relaxed whitespace-pre font-normal selection:bg-white/20">
               {steps[activeStep].codeSnippet}

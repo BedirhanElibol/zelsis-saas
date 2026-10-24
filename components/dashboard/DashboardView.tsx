@@ -13,10 +13,12 @@ import { QuickChartWidget } from './QuickChartWidget';
 import { DashboardModals, ActiveModalType } from './DashboardModals';
 import { GateStatusBanner } from './GateStatusBanner';
 import { gateSeverity, gatingFindings } from '@/lib/scanner/scoring';
+import { withLiveStatus } from '@/lib/project-status';
+import { isScanOutdated, RULES_UPDATED_AT } from '@/lib/rules-version';
 import { OnboardingChecklist } from './OnboardingChecklist';
 import { DemoShowcaseBanner } from '../OverviewView';
 import { generateAuditPdfReport } from '@/lib/pdf-exporter';
-import { ShieldCheck, Code, Server } from 'lucide-react';
+import { ShieldCheck, Code, Server, RefreshCw } from 'lucide-react';
 import { ConnectTargetModal } from '../layout/ConnectTargetModal';
 import { ClipboardToastBadge, useClipboardToast } from '../ui/Toast';
 import { ComponentErrorBoundary } from '../common/ComponentErrorBoundary';
@@ -62,11 +64,11 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
     const p = (project && typeof project === 'object' && !('nativeEvent' in project) && (project as any).id)
       ? project
       : MOCK_PROJECTS[0];
-    return {
+    return withLiveStatus({
       ...p,
       name: p.name || 'Target Repository',
       framework: p.framework || 'Polyglot Web App',
-      lastScanAt: p.lastScanAt || 'Never audited',
+      lastScanAt: p.lastScanAt || (Array.isArray(p.findings) && p.findings.length ? 'Unknown' : 'Never audited'),
       readinessScore: typeof p.readinessScore === 'number' ? p.readinessScore : 100,
       gateStatus: p.gateStatus || 'PASSED',
       findings: Array.isArray(p.findings) ? p.findings : [],
@@ -75,7 +77,7 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
       mediumCount: typeof p.mediumCount === 'number' ? p.mediumCount : 0,
       lowCount: typeof p.lowCount === 'number' ? p.lowCount : 0,
       uiClicheCount: typeof p.uiClicheCount === 'number' ? p.uiClicheCount : 0,
-    };
+    });
   }, [project]);
 
   // Cmd+K / Ctrl+K keyboard shortcut listener for Knowledge Base
@@ -155,6 +157,23 @@ Enforce strict OWASP Top 10 compliance, fix the listed UI quality and accessibil
             className="shrink-0 min-h-[44px] px-4 rounded-xl bg-emerald-500 hover:bg-emerald-400 text-black text-sm font-bold"
           >
             Scan your repository
+          </button>
+        </div>
+      )}
+
+      {/* Results from a scan older than the current rules (fixed false positives, new checks) */}
+      {isScanOutdated(safeProject) && (
+        <div role="status" className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 rounded-xl border border-amber-500/30 bg-amber-500/10 px-4 py-3 text-sm">
+          <p className="m-0 text-amber-100">
+            These results come from an earlier scan. Zelsis&apos;s checks were improved on {RULES_UPDATED_AT} (fewer false alarms, new bug checks), so the score below may be out of date.
+          </p>
+          <button
+            type="button"
+            onClick={() => onTriggerScan(safeProject)}
+            className="inline-flex items-center justify-center gap-1.5 shrink-0 rounded-lg bg-amber-400 px-3 py-1.5 text-xs font-bold text-black hover:bg-amber-300 transition-colors"
+          >
+            <RefreshCw size={13} />
+            Re-scan now
           </button>
         </div>
       )}

@@ -29,7 +29,7 @@ export function RescanAlertsBanner() {
   if (alerts.length === 0) return null;
 
   return (
-    <div className="mb-6 space-y-3" role="region" aria-label="New findings from weekly rescans">
+    <div className="mb-6 space-y-3" role="region" aria-live="polite" aria-label="New findings from weekly rescans">
       {alerts.map((alert) => {
         const total = alert.newCritical + alert.newHigh;
         return (

@@ -13,7 +13,7 @@
  */
 import type { Finding } from '@/data/schema';
 import type { CodeFile } from '../scanner-engine';
-import { emptyRepoContext, normalizeSqlName, RepoContext } from '../scanner/repo-context';
+import { databaseExposedAt, emptyRepoContext, normalizeSqlName, RepoContext } from '../scanner/repo-context';
 import { DB_MUTATION } from './shared/stack-signals';
 export interface InfraRuleResult {
     findings: Finding[];
@@ -42,16 +42,36 @@ export function evaluateInfraRules(file: CodeFile, lines: string[], cleanContent
     // =========================================================================
     // RULE 3001 (INFRA-01): PostgreSQL Missing Row Level Security (RLS)
     // =========================================================================
-    const isSqlFile = lowerPath.endsWith('.sql') || lowerPath.includes('migration') || lowerPath.includes('schema');
+    // .sql, or app code whose path says migration / schema (not shell scripts or Go tooling that only mention it)
+    const isSqlFile = lowerPath.endsWith('.sql') || ((lowerPath.includes('migration') || lowerPath.includes('schema')) && /\.(?:[cm]?[jt]s|py|rb)$/.test(lowerPath));
+    const isSqlitePath = /(?:^|\/|\.)sqlite(?:\b|_|\.)/i.test(lowerPath) || lowerPath.endsWith('.sqlite.sql');
+    const isSqliteFile = isSqlitePath ||
+        /(?:drizzle-orm\/sqlite-core|better-sqlite3|\bsqlite3\b|\bsqliteTable\b|PRAGMA\s+[a-z_]+)/i.test(cleanContent);
+    const isFixtureSql = /(?:^|\/)(?:experiments?|fixtures?)\/|fixture[s]?\.sql$/i.test(lowerPath) ||
+        /somente\s+bancada/i.test(file.content) ||
+        /experiments\/.*fixture\.sql/i.test(file.content);
     // RLS only protects tables that clients can query directly (Supabase / PostgREST); skip server-only databases
-    if (isSqlFile && context.exposesDatabaseToClients) {
-        const tableRegex = /create\s+table\s+(?:if\s+not\s+exists\s+)?([a-zA-Z0-9_."]+)/gi;
+    if (isSqlFile && !isSqliteFile && !isFixtureSql && databaseExposedAt(context, file.path)) {
+        // The name must be a real identifier: format('CREATE TABLE IF NOT EXISTS %I ...') and CREATE TABLE ... AS
+        // used to yield tables called "IF" and "AS"
+        const tableRegex = /create\s+table\s+(?:if\s+not\s+exists\s+)?(?!(?:if|as|example)\b)("?[a-zA-Z_][a-zA-Z0-9_."]*)(?=\s*\()/gi;
+        // SQL comments blanked with spaces (offsets and line numbers stay): "-- ... only the CREATE TABLE does" is prose
+        const sqlNoComments = cleanContent
+            .replace(/\/\*[\s\S]*?\*\//g, (m) => m.replace(/[^\r\n]/g, ' '))
+            .replace(/--[^\r\n]*/g, (c) => ' '.repeat(c.length));
         let match: RegExpExecArray | null;
-        while ((match = tableRegex.exec(cleanContent)) !== null) {
+        while ((match = tableRegex.exec(sqlNoComments)) !== null) {
             const rawTableName = (match[1] || '').replace(/["']/g, '');
             const simpleName = rawTableName.includes('.') ? rawTableName.split('.').pop()! : rawTableName;
             // PostgREST exposes the public schema; auth.*, storage.*, extensions.* are not client-queryable tables
             if (rawTableName.includes('.') && !/^public\./i.test(rawTableName)) continue;
+            // Skip SQLite-only syntax or SQLite constants
+            const matchIdx = match.index;
+            const stmtSlice = cleanContent.slice(matchIdx, matchIdx + 500);
+            const isSqliteSyntax = /INTEGER\s+PRIMARY\s+KEY\s+AUTOINCREMENT|AUTOINCREMENT\b|datetime\s*\(\s*['"]now['"]\s*\)/i.test(stmtSlice);
+            const precedingText = cleanContent.slice(Math.max(0, matchIdx - 300), matchIdx);
+            const isSqliteConstant = /(?:const|let|var)\s+[A-Za-z0-9_]*sqlite[A-Za-z0-9_]*\s*=/i.test(precedingText);
+            if (isSqliteSyntax || isSqliteConstant) continue;
             // Check if RLS is enabled for this table anywhere in the file
             const rlsPattern = new RegExp(`alter\\s+table\\s+(?:if\\s+exists\\s+)?(?:[a-zA-Z0-9_."]+\\.)?${simpleName}\\s+enable\\s+row\\s+level\\s+security`, 'i');
             if (!rlsPattern.test(cleanContent) && !context.rlsEnabledTables.has(normalizeSqlName(rawTableName))) {
@@ -92,7 +112,7 @@ export function evaluateInfraRules(file: CodeFile, lines: string[], cleanContent
     if (isDockerfile) {
         const hasFrom = /^\s*FROM\s+/im.test(cleanContent);
         if (hasFrom) {
-            const hasNonRootUser = /^\s*USER\s+(?!root\b)[a-zA-Z0-9_-]+/im.test(cleanContent);
+            const hasNonRootUser = /^\s*USER\s+(?!root\b)(?:[a-zA-Z0-9_-]+|\$\{?\w+\}?)/im.test(cleanContent);
             const hasExplicitRoot = /^\s*USER\s+root\b/im.test(cleanContent);
             if (!hasNonRootUser || hasExplicitRoot) {
                 let lineNum = 1;
@@ -144,12 +164,21 @@ export function evaluateInfraRules(file: CodeFile, lines: string[], cleanContent
             if (['username', 'user', 'your_user', 'password', 'your_password', 'xxx'].includes(user.toLowerCase()) && ['password', 'pass', 'your_password', 'xxx', 'secret'].includes(password.toLowerCase())) {
                 continue;
             }
+            // A literal placeholder password (CI service containers, dev scripts) is not a leaked credential
+            if (['password', 'changeme', 'change_me', 'secret', 'example', 'placeholder'].includes(password.toLowerCase())) {
+                continue;
+            }
             // Skip common default local dev credentials
             if (['postgres', 'root', 'admin', 'test', 'demo'].includes(user.toLowerCase()) && ['postgres', 'root', 'admin', 'test', 'demo', ''].includes(password.toLowerCase())) {
                 continue;
             }
             // Loopback databases (local dev / CI service containers) hold no production data
             if (/^(?:localhost|127\.0\.0\.1|0\.0\.0\.0|host\.docker\.internal)$/i.test(dbMatch[3])) {
+                continue;
+            }
+            // A dotless host (db, mysql, database-postgres-main) is a Compose / CI service name: the password only
+            // opens a container on that stack's private network, which is a default to change, not a leaked credential
+            if (/^[a-z][\w-]*$/i.test(dbMatch[3]) && /(?:^|\/)(?:docker-compose[^/]*|compose[^/]*|container-compose[^/]*)\.ya?ml$|(?:^|\/)\.(?:github|forgejo|gitea|gitlab)\/|\.gitlab-ci\.ya?ml$|(?:^|\/)templates?\//i.test(lowerPath)) {
                 continue;
             }
             const lineNum = cleanContent.slice(0, dbMatch.index).split('\n').length;
@@ -378,7 +407,7 @@ export function evaluateInfraRules(file: CodeFile, lines: string[], cleanContent
     // Prisma's documented singleton factory (`const prismaClientSingleton = () => new PrismaClient()` cached on globalThis) is fine
     // Request-serving modules only (route handlers, API routes, server actions, Express/Lambda handlers); seed and
     // migration scripts that build one client in main() run once.
-    const isRequestModule = /(?:^|\/)(?:app\/.*\/route|pages\/api\/.*|middleware)\.[cm]?[jt]sx?$/.test(lowerPath) ||
+    const isRequestModule = /(?:^|\/)(?:app\/.*\/route|pages\/api\/.*|middleware|proxy)\.[cm]?[jt]sx?$/.test(lowerPath) ||
         /['"]use server['"]|\b(?:app|router)\.(?:get|post|put|patch|delete|all|use)\s*\(|export\s+(?:const|async\s+function|function)\s+handler\b/.test(cleanContent);
     const prismaPerRequestIdx = !isJsModule || !isRequestModule || /globalThis|global\.\w*prisma/i.test(cleanContent) ? -1 : lines.findIndex((l, i) => {
         if (!/new\s+PrismaClient\s*\(/.test(l) || /globalThis|global\./.test(l) || !/^\s+/.test(l)) return false;
@@ -480,7 +509,9 @@ export function evaluateInfraRules(file: CodeFile, lines: string[], cleanContent
     // =========================================================================
     // RULE 3016 (INFRA-16): Production Process Missing Graceful Shutdown (SIGTERM/SIGINT)
     // =========================================================================
-    const isCustomServer = (lowerPath.endsWith('server.js') || lowerPath.endsWith('server.ts')) && !lowerPath.includes('test');
+    // Dev / static / mock servers and scripts/ never take production traffic, so shutdown handling does not matter there
+    const isCustomServer = (lowerPath.endsWith('server.js') || lowerPath.endsWith('server.ts')) && !lowerPath.includes('test')
+        && !/(?:^|\/)(?:scripts|tools|dev)\/|(?:^|\/)(?:dev|static|mock)[-_.]?server\.[cm]?[jt]s$/.test(lowerPath);
     if (isCustomServer && cleanContent.includes('.listen(') && !cleanContent.includes('SIGTERM')) {
         const matchLineIdx = lines.findIndex(l => l.includes('.listen('));
         const lineNum = matchLineIdx !== -1 ? matchLineIdx + 1 : 1;
@@ -518,7 +549,7 @@ export function evaluateInfraRules(file: CodeFile, lines: string[], cleanContent
             ruleId: 3017,
             type: 'INFRA_DATABASE',
             title: 'Dangerous Host Docker Socket Mount (/var/run/docker.sock Exposed)',
-            severity: 'CRITICAL',
+            severity: 'HIGH',
             category: 'Container Security',
             filePath: file.path,
             lineRange: `L${lineNum}`,
@@ -616,8 +647,24 @@ export function evaluateInfraRules(file: CodeFile, lines: string[], cleanContent
     if (isJsTsPy) {
         const mongoWhereRegex = /\$where\s*:/i;
         const mongoRawQueryRegex = /(?:collection|db\.[a-zA-Z0-9_]+)\.(?:find|findOne|update|delete|count)\s*\(\s*(?:req\.body|req\.query|params)\b/i;
-        if (mongoWhereRegex.test(cleanContent) || mongoRawQueryRegex.test(cleanContent)) {
-            const matchLineIdx = lines.findIndex(l => mongoWhereRegex.test(l) || mongoRawQueryRegex.test(l));
+        const gqlVarType = /^\s*(?:\[\s*)?(?:[A-Z]\w*|[a-z]+_(?:bool_exp|input|order_by|select_column|constraint|arr_rel_insert_input|obj_rel_insert_input)|\$\{\s*\w*(?:Type|Input|Exp|Filter)\w*\s*\})(?:\s*\]\s*!?)?(?:\s*!|\s*=\s*\{|\s*[,)])/;
+        const isGraphqlWhere = (line: string, idx: number): boolean => {
+            const m = /\$where\s*:\s*(.*)/i.exec(line);
+            if (!m) return false;
+            if (gqlVarType.test(m[1])) return true;
+            const win = lines.slice(Math.max(0, idx - 8), idx + 1).join('\n');
+            if (/\b(?:gql|graphql)\s*(?:`|\(\s*['"`])/.test(win)) return true;
+            if (/['"`]\s*(?:query|mutation|subscription)\b[\s\S]*\$where\s*:/i.test(win)) return true;
+            if (/\b(?:query|mutation|subscription)\s+(?:[A-Za-z_]\w*|\$\{[^}]+\})?\s*\([^)]*\$where\s*:/i.test(win)) return true;
+            return false;
+        };
+        const matchLineIdx = lines.findIndex((l, idx) => {
+            const t = l.trim();
+            if (t.startsWith('//') || t.startsWith('#') || t.startsWith('*')) return false;
+            if (mongoRawQueryRegex.test(l)) return true;
+            return mongoWhereRegex.test(l) && !isGraphqlWhere(l, idx);
+        });
+        if (matchLineIdx !== -1) {
             const lineNum = matchLineIdx !== -1 ? matchLineIdx + 1 : 1;
             const snippet = extractSnippet(lines, lineNum);
             findings.push({
@@ -646,17 +693,26 @@ export function evaluateInfraRules(file: CodeFile, lines: string[], cleanContent
     // RULE 3021 (INFRA-21): Node.js Database SQL Query String Concatenation (SQLi)
     // =========================================================================
     const isJsTs = lowerPath.endsWith('.js') || lowerPath.endsWith('.ts') || lowerPath.endsWith('.mjs');
-    if (isJsTs && !lowerPath.includes('test') && !lowerPath.includes('spec')) {
+    // Migrations, seeds and maintenance scripts run SQL on the app's own data, not on request input
+    const notRequestPath = /(?:^|\/)(?:migrations?|seeds?|seeders|scripts?|umzug[^/]*)\/|(?:^|\/)seed[^/]*\.[cm]?[jt]s$/i.test(lowerPath);
+    if (isJsTs && !notRequestPath && !lowerPath.includes('test') && !lowerPath.includes('spec')) {
         // Raw SQL built by concatenation / interpolation, passed inline or through a variable to any query API
-        // (pg, mysql, sequelize.query, knex.raw, Prisma $queryRawUnsafe, TypeORM query, better-sqlite3 prepare/exec)
-        const sqlKeyword = String.raw`\b(?:SELECT|INSERT|UPDATE|DELETE)\b`;
+        // (pg, mysql, sequelize.query, knex.raw, Prisma $queryRawUnsafe, TypeORM query, better-sqlite3 prepare/exec).
+        // The literal must look like SQL (SELECT ... FROM, INSERT INTO, UPDATE x SET, DELETE FROM): with the i flag a
+        // bare keyword matched messages such as `Delete ${name}?`
+        const sqlKeyword = String.raw`\b(?:SELECT\b[^"'\x60;]*?\bFROM|INSERT\s+INTO|UPDATE\s+[\w."]+\s+SET|DELETE\s+FROM)\b`;
         const dynamicSql = String.raw`(?:"[^"\n]*` + sqlKeyword + String.raw`[^"\n]*"\s*\+|'[^'\n]*` + sqlKeyword + String.raw`[^'\n]*'\s*\+|\x60[^\x60]*` + sqlKeyword + String.raw`[^\x60]*\$\{)`;
         const queryCall = String.raw`(?:\.(?:query|raw|execute|exec|prepare|unsafe)|\$(?:queryRawUnsafe|executeRawUnsafe))\s*\(\s*`;
-        const sqlVars = [...cleanContent.matchAll(new RegExp(String.raw`(?:const|let|var)\s+(\w+)\s*=\s*` + dynamicSql, 'gi'))].map((m) => m[1]);
+        const normalizeSqlInterpolations = (s: string) => s
+            .replace(/\$\{\s*(?:[a-zA-Z0-9_.]+\.)?(?:quoteIdentifier|quoteTable|quoteColumn|escapeIdentifier|quote|escapeLiteral)\s*\([^)]*\)\s*\}/g, 'IDENT')
+            .replace(/\$\{\s*[A-Z][A-Z0-9_]*\s*\}/g, 'CONST');
+        const cleanContentForSql = normalizeSqlInterpolations(cleanContent);
+        const sqlVars = [...cleanContentForSql.matchAll(new RegExp(String.raw`(?:const|let|var)\s+(\w+)\s*=\s*` + dynamicSql, 'gi'))].map((m) => m[1]);
         const rawSqlConcatRegex = new RegExp(queryCall + '(?:' + dynamicSql + (sqlVars.length ? String.raw`|\b(?:` + sqlVars.join('|') + String.raw`)\b` : '') + ')', 'i');
-        if (rawSqlConcatRegex.test(cleanContent)) {
-            const matchLineIdx = lines.findIndex(l => rawSqlConcatRegex.test(l));
-            const lineNum = matchLineIdx !== -1 ? matchLineIdx + 1 : 1;
+        const sqlConcatMatch = rawSqlConcatRegex.exec(cleanContentForSql);
+        if (sqlConcatMatch) {
+            // Multi-line template literals never match a single line: locate the call from the match offset
+            const lineNum = cleanContent.slice(0, sqlConcatMatch.index).split('\n').length;
             const snippet = extractSnippet(lines, lineNum);
             findings.push({
                 id: `real-find-${Date.now()}-${findingCounter.count++}`,

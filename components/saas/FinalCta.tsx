@@ -3,7 +3,7 @@
 import React from 'react';
 import { ArrowRight, Terminal, ShieldCheck, Play } from 'lucide-react';
 import { useRouter } from 'next/navigation';
-import { CODE_RETENTION_STATEMENT } from '@/lib/data-retention';
+import { CODE_RETENTION_SHORT } from '@/lib/data-retention';
 
 export const FinalCta: React.FC = () => {
   const router = useRouter();
@@ -17,7 +17,7 @@ export const FinalCta: React.FC = () => {
         {/* Release Status Badge */}
         <div className="inline-flex items-center gap-2 px-3 py-1 rounded-md border border-white/10 bg-white/5 text-zinc-300 text-xs font-mono mb-6">
           <ShieldCheck size={14} className="text-zinc-400" />
-          <span className="uppercase tracking-wider font-semibold text-xs">Free for public repositories</span>
+          <span className="uppercase tracking-wider font-semibold text-xs">Free plan, no credit card</span>
         </div>
 
         {/* Big Headline */}
@@ -27,7 +27,7 @@ export const FinalCta: React.FC = () => {
 
         {/* Subtitle */}
         <p className="text-base sm:text-lg text-[#A1A1AA] max-w-2xl mx-auto mt-6 mb-10 font-sans leading-relaxed">
-          Scan a repository in seconds. {CODE_RETENTION_STATEMENT}
+          Scan a repository in seconds, then add the gate to your CI so the next critical bug never reaches production.
         </p>
 
         {/* CTA Buttons */}
@@ -52,7 +52,7 @@ export const FinalCta: React.FC = () => {
         {/* Footnote */}
         <div className="flex flex-wrap items-center justify-center gap-6 sm:gap-8 mt-8 text-xs font-mono text-zinc-400">
           <span>No install, no credit card</span>
-          <span>Code scanned in memory, never stored</span>
+          <span>{CODE_RETENTION_SHORT}</span>
           <span>Benchmark published, misses included</span>
         </div>
       </div>

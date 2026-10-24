@@ -49,9 +49,13 @@ export function evaluateEcommInventoryRules(file: CodeFile, lines: string[], cle
         logs.push(`[${ts}] [ECOMM AUDIT] Found ECOMM-01: Inventory Overselling Race Condition (Missing Row-Level Lock) at ${file.path}:${lineNum}`);
     }
     // ECOMM-02: Client-Supplied Price / Discount Tampering Vulnerability
-    const r10102Idx = lines.findIndex(l =>
+    // A bare `amount` (scroll amount, retry amount) is only money in a file that handles payments
+    const handlesPayments = /\b(?:currency|stripe|payment|charge|checkout|invoice|paypal|cents|subtotal)\b/i.test(cleanContent);
+    const r10102Idx = lines.findIndex(l => {
         // money amount taken straight from the request body instead of the server-side catalog
-        /(?:\btotal\s*\+?=|\bamount\s*:|\bunit_amount\s*:|\bprice\s*:)[^;\n]*\b(?:req\.body|body|input|payload)\.(?:items\[[^\]]*\]\.)?(?:price|amount|total|unitPrice|unit_amount)\b/.test(l));
+        const m = /(?:\btotal\s*\+?=|\b(amount)\s*:|\bunit_amount\s*:|\bprice\s*:)[^;\n]*\b(?:req\.body|body|input|payload)\.(?:items\[[^\]]*\]\.)?(price|amount|total|unitPrice|unit_amount)\b/.exec(l);
+        return Boolean(m && (handlesPayments || !(m[1] || m[2] === 'amount')));
+    });
     if (r10102Idx !== -1) {
         const matchLineIdx = r10102Idx;
         const lineNum = matchLineIdx !== -1 ? matchLineIdx + 1 : 1;

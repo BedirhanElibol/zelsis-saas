@@ -44,3 +44,11 @@ pnpm-lock.yaml
 dist/
 build/
 out/
+
+# SEO guides, blog posts and the real-bugs page show deliberately buggy code as examples
+app/guides/
+app/blog/
+app/docs/real-world-bugs/
+
+# Language-coverage probes are deliberately vulnerable snippets
+scripts/language-coverage.ts

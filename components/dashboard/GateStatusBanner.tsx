@@ -24,7 +24,8 @@ import {
   Table,
   FileText,
   ChevronDown,
-  ExternalLink
+  ExternalLink,
+  Link2
 } from 'lucide-react';
 import { exportFindingsToCsv, exportScorecardToJson } from '@/lib/export-utils';
 import { ActiveModalType } from './DashboardModals';
@@ -32,6 +33,9 @@ import { safeReplace, safeTrim, safeString, safeLower } from '@/lib/safe-utils';
 import { UNDETECTED_FRAMEWORK } from '@/lib/scanner/stack-detect';
 import { priceLabel } from '@/data/pricing-plans';
 import { fetchOrgBranding } from '@/lib/supabase';
+import { getActiveUserAuth } from '@/lib/supabase-client';
+import { createReportShare } from '@/app/actions/report-share';
+import { initialReportShareState } from '@/lib/report-share-state';
 
 interface GateStatusBannerProps {
   project: Project;
@@ -57,6 +61,7 @@ export const GateStatusBanner: React.FC<GateStatusBannerProps> = ({
   onOpenCheckout,
 }) => {
   const [isExportMenuOpen, setIsExportMenuOpen] = useState(false);
+  const [verifyNotice, setVerifyNotice] = useState<string | null>(null);
   const [isToolsMenuOpen, setIsToolsMenuOpen] = useState(false);
   const exportMenuRef = useRef<HTMLDivElement>(null);
   const toolsMenuRef = useRef<HTMLDivElement>(null);
@@ -114,6 +119,7 @@ export const GateStatusBanner: React.FC<GateStatusBannerProps> = ({
 
   return (
     <div
+      data-tour="gate"
       className={`bg-[#141414] border rounded-xl p-4 sm:p-6 lg:p-8 flex flex-col lg:flex-row items-start lg:items-center justify-between gap-5 sm:gap-6 ${
         gateStatus === 'FAILED'
           ? 'border-red-500/30'
@@ -192,7 +198,7 @@ export const GateStatusBanner: React.FC<GateStatusBannerProps> = ({
           </div>
 
           <p className="text-[11px] sm:text-xs text-[#A1A1AA] mt-1 flex flex-wrap items-center gap-x-3 gap-y-1 font-mono">
-            <span>
+            <span title="Starts at 100 and drops for each open finding, weighted by severity. It reflects what the rules found, not everything that could go wrong.">
               Readiness Score: <strong className="text-white font-mono">{readinessScore}/100</strong>
             </span>
             <span className={criticals.length > 0 ? 'text-red-400 font-bold' : 'text-[#A1A1AA]'}>
@@ -204,7 +210,28 @@ export const GateStatusBanner: React.FC<GateStatusBannerProps> = ({
             <span className="text-[#A1A1AA]">
               {uiCliches.length} UI Issues
             </span>
+            <span
+              title="Open critical and high findings. Your public trust page shows as verified once this reaches 0."
+              className={criticals.length + highs.length > 0 ? 'text-amber-300' : 'text-emerald-400'}
+            >
+              {criticals.length + highs.length > 0
+                ? `Trust page: ${criticals.length + highs.length} left to fix`
+                : 'Trust page: ready'}
+            </span>
+            {gateStatus === 'PASSED' && (
+              <a
+                href="/docs/boundaries"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="text-zinc-400 hover:text-white underline underline-offset-2"
+              >
+                What a pass doesn&apos;t cover
+              </a>
+            )}
           </p>
+          {verifyNotice && (
+            <p role="status" className="text-[11px] text-amber-300 mt-1">{verifyNotice}</p>
+          )}
         </div>
       </div>
 
@@ -276,6 +303,34 @@ export const GateStatusBanner: React.FC<GateStatusBannerProps> = ({
                   </span>
                 </div>
               </button>
+
+              {user?.tier !== 'Free' && (
+                <button
+                  onClick={async () => {
+                    setIsExportMenuOpen(false);
+                    // A read-only link to Zelsis' own copy of the scan lets the reader check the PDF was not edited
+                    const { accessToken } = await getActiveUserAuth();
+                    let verifyUrl: string | null = null;
+                    if (accessToken) {
+                      const fd = new FormData();
+                      fd.set('accessToken', accessToken);
+                      fd.set('projectId', safeProject.id || '');
+                      fd.set('repoUrl', safeProject.repoUrl || '');
+                      const res = await createReportShare(initialReportShareState, fd).catch(() => null);
+                      verifyUrl = res?.status === 'success' && res.url ? res.url : null;
+                    }
+                    setVerifyNotice(verifyUrl ? null : 'No cloud scan to link yet, so this PDF has no check link. Run a scan while signed in, then export again.');
+                    generateAuditPdfReport(safeProject, { verifyUrl });
+                  }}
+                  className="w-full text-left px-3 py-2 rounded-lg text-white hover:bg-white/10 flex items-center gap-2.5 transition-colors cursor-pointer"
+                >
+                  <Link2 size={14} className="text-zinc-400" />
+                  <div className="flex flex-col">
+                    <span className="font-bold">PDF with check link</span>
+                    <span className="text-[10px] text-[#A1A1AA]">Adds a read-only link (score and findings, no code) so readers can confirm the PDF was not edited</span>
+                  </div>
+                </button>
+              )}
 
               <button
                 onClick={async () => {
@@ -437,6 +492,20 @@ export const GateStatusBanner: React.FC<GateStatusBannerProps> = ({
                 <div className="flex flex-col">
                   <span className="font-bold">Release Gate Badge</span>
                   <span className="text-[10px] text-[#A1A1AA]">Live SVG embed for README</span>
+                </div>
+              </button>
+
+              <button
+                onClick={() => {
+                  onOpenModal('share');
+                  setIsToolsMenuOpen(false);
+                }}
+                className="w-full text-left px-3 py-2 rounded-lg text-white hover:bg-white/10 flex items-center gap-2.5 transition-colors cursor-pointer"
+              >
+                <Link2 size={14} className="text-zinc-400" />
+                <div className="flex flex-col">
+                  <span className="font-bold">Share Report Link</span>
+                  <span className="text-[10px] text-[#A1A1AA]">Read-only page, no code included</span>
                 </div>
               </button>
 

@@ -1,5 +1,6 @@
 import { runStaticCodeScan, CodeFile } from '@/lib/scanner-engine';
-import { fetchGithubRepositoryData } from '@/lib/github-api';
+import { installationTokenForRepo } from '@/lib/github/installations';
+import { fetchGithubRepositoryData, parseGithubUrl } from '@/lib/github-api';
 import { fetchWebsiteAuditData, isValidWebUrl } from '@/lib/website-scanner';
 import { dispatchWebhookAlerts } from '@/lib/notifications';
 import { logger } from '@/lib/logger';
@@ -7,10 +8,12 @@ import { canAccessLocalAudit } from '@/lib/env-config';
 import { validateSafeTargetUrl } from '@/lib/ssrf-guard';
 import { hasFixPromptAccess } from '@/lib/subscription-utils';
 import { getEffectivePlanTier, getOrgPolicy } from '@/lib/organization';
-import { redactScanResultFixes } from '@/lib/fix-gate';
+import { redactScanResultFixes, lockFindingLocations } from '@/lib/fix-gate';
 import { getSupabaseAdmin } from '@/lib/supabase-admin';
 import { FREE_PROJECT_LIMIT } from '@/lib/quota-manager';
 import { recordRescanAlert } from '@/lib/rescan-alerts';
+import { getVerifiedSite } from '@/lib/site-verification';
+import { botChallengeMessage } from '@/lib/bot-challenge';
 
 export interface ExecuteScanJobOptions {
   jobId: string;
@@ -167,12 +170,14 @@ export async function executeScanJob(options: ExecuteScanJobOptions): Promise<Sc
         throw new ScanJobError('SSRF blocked', 403);
       }
 
-      const webData = await fetchWebsiteAuditData(rawRepoUrl);
+      // Deep live probes (dump, credential and admin-console paths) only for domains the owner verified
+      const verifiedSite = await getVerifiedSite(adminClient, authenticatedUserId, rawRepoUrl);
+      const webData = await fetchWebsiteAuditData(rawRepoUrl, undefined, { deepProbes: Boolean(verifiedSite), probeKey: verifiedSite?.probeKey ?? undefined });
       if (webData?.error) {
         await updateJobState({
           status: 'FAILED',
           progress_percent: 0,
-          error_message: `Website Audit Error: ${webData.error}`
+          error_message: webData.error === 'CLOUDFLARE_BOT_PROTECTION' ? botChallengeMessage(rawRepoUrl, webData.challengeProvider) : `Website Audit Error: ${webData.error}`
         });
         throw new ScanJobError(webData.error, 502);
       }
@@ -180,7 +185,10 @@ export async function executeScanJob(options: ExecuteScanJobOptions): Promise<Sc
       resolvedTargetName = webData?.title || rawRepoUrl;
     } else {
       // GitHub Repository Fetch
-      const liveData = await fetchGithubRepositoryData(rawRepoUrl, githubToken);
+      // No token from the browser: use the GitHub App installation the user connected for this owner
+      const owner = parseGithubUrl(rawRepoUrl)?.owner;
+      const effectiveToken = githubToken || (authenticatedUserId && owner ? (await installationTokenForRepo(authenticatedUserId, owner)) ?? undefined : undefined);
+      const liveData = await fetchGithubRepositoryData(rawRepoUrl, effectiveToken);
 
       // A scheduled rescan has no token: a repo GitHub hides from anonymous reads is private (or gone),
       // so record that before failing and the weekly cron stops picking it up.
@@ -398,6 +406,12 @@ export async function executeScanJob(options: ExecuteScanJobOptions): Promise<Sc
     if (!hasFixPromptAccess(userTier)) {
       const redacted = redactScanResultFixes(result, jobId);
       storedResult = redacted.result;
+      // Free on a private repository: one serious finding in full, the rest show folder, risk and impact only
+      if (userTier === 'Free' && repoIsPrivate === true) {
+        const locked = lockFindingLocations(storedResult, redacted.fixes);
+        storedResult = locked.result;
+        if (locked.lockedCount > 0) logger.info(`[Process Job] ${jobId}: ${locked.lockedCount} finding location(s) locked (Free, private repo).`);
+      }
       if (adminClient && authenticatedUserId) {
         const { error: fixesErr } = await adminClient
           .from('scan_job_fixes')

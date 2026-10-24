@@ -24,12 +24,40 @@ export function evaluatePythonEnterpriseRules(file: CodeFile, lines: string[], c
         return { findings, logs };
     const ts = new Date().toLocaleTimeString();
     // PY-SEC-01: Unsafe Pickle Deserialization (Remote Code Execution)
-    const reg_8801 = /(?:pickle|cPickle|_pickle)\.(?:loads?|Unpickler)/i;
-    if (reg_8801.test(cleanContent)) {
-        const linePattern = /(?:pickle|cPickle|_pickle)\.(?:loads?|Unpickler)/i;
-        const matchLineIdx = lines.findIndex(l => !l.trim().startsWith('#') && !l.trim().startsWith('"""') && linePattern.test(l));
-        const lineNum = matchLineIdx !== -1 ? matchLineIdx + 1 : 1;
-        const rawSnippet = matchLineIdx !== -1 ? lines[matchLineIdx].trim() : lines.find(l => !l.trim().startsWith('#'))?.trim() || "Unsafe Pickle Deserialization (Remote Code Execution)";
+    const isPickleScriptOrHomeworkPath = /(?:^|\/)(?:homework|cohorts|notebooks|scripts)\//i.test(lowerPath);
+    const pyCodeNoStrings = cleanContent
+        .replace(/"""[\s\S]*?"""|'''[\s\S]*?'''/g, (m) => m.replace(/[^\n]/g, " "))
+        .replace(/'(?:\\.|[^'\\])*'|"(?:\\.|[^"\\])*"/g, '""')
+        .replace(/#.*$/gm, "");
+    const reg_8801 = /\b(?:pickle|cPickle|_pickle)\.(?:loads?|Unpickler)\s*\(/i;
+    // Cookies, headers and network fetches count too: a pickled cookie is the classic exploit
+    const hasUntrustedPickleInput = /\b(?:request\.(?:body|data|args|form|values|files|get_data|stream|cookies|headers)|req\.(?:body|query|params|cookies|headers)|sock\.recv|socket\.recv|\.recv\s*\(|rfile\.read|sys\.stdin|urlopen\s*\(|requests\.(?:get|post)\s*\()/i.test(pyCodeNoStrings);
+    const isSymmetricPickleCodec = /\b(?:pickle|cPickle|_pickle)\.dumps?\s*\(/i.test(pyCodeNoStrings) && !hasUntrustedPickleInput;
+    const pyLinesNoStrings = pyCodeNoStrings.split(/\r?\n/);
+    const unsafePickleLineIdx = (!isPickleScriptOrHomeworkPath && !isSymmetricPickleCodec && reg_8801.test(pyCodeNoStrings))
+        ? pyLinesNoStrings.findIndex((strippedLine, idx) => {
+            if (!reg_8801.test(strippedLine)) return false;
+            const loadCallMatch = /\b(?:pickle|cPickle|_pickle)\.load\s*\(\s*([A-Za-z_]\w*|open\s*\([^)]*\))/i.exec(lines[idx] || "");
+            if (loadCallMatch) {
+                const arg = loadCallMatch[1].trim();
+                if (/^open\s*\(\s*(?:['"][^'"]+['"]|\w*(?:model|checkpoint|weights)\w*)/i.test(arg)) {
+                    return false;
+                }
+                if (/^[A-Za-z_]\w*$/.test(arg)) {
+                    const windowStart = Math.max(0, idx - 12);
+                    const funcWindow = lines.slice(windowStart, idx + 1).join("\n");
+                    const openVarRegex = new RegExp(String.raw`\bopen\s*\(\s*(?:r?['"][^'"]+['"]|\w*(?:model|checkpoint|weights)[A-Za-z0-9_.]*)\s*(?:,\s*['"]rb['"])?[^)]*\)\s+as\s+${arg}\b|\b${arg}\s*=\s*open\s*\(\s*(?:r?['"][^'"]+['"]|\w*(?:model|checkpoint|weights)[A-Za-z0-9_.]*)`, "i");
+                    if (openVarRegex.test(funcWindow)) {
+                        return false;
+                    }
+                }
+            }
+            return true;
+        })
+        : -1;
+    if (unsafePickleLineIdx !== -1) {
+        const lineNum = unsafePickleLineIdx + 1;
+        const rawSnippet = lines[unsafePickleLineIdx]?.trim() || "Unsafe Pickle Deserialization (Remote Code Execution)";
         findings.push({
             id: `py8801-${Date.now()}-${findingCounter.count++}`,
             ruleId: 8801,
@@ -51,12 +79,19 @@ export function evaluatePythonEnterpriseRules(file: CodeFile, lines: string[], c
         logs.push(`[${ts}] [PYTHON AUDIT] Found PY-SEC-01: Unsafe Pickle Deserialization (Remote Code Execution) at ${file.path}:${lineNum}`);
     }
     // PY-SEC-02: Insecure PyYAML load() Without SafeLoader
-    const reg_8802 = /yaml\.load\s*\([^,)]*\)(?!\s*,\s*Loader\s*=\s*(?:yaml\.)?SafeLoader)/i;
-    if (reg_8802.test(cleanContent)) {
-        const linePattern = /yaml\.load\s*\(/i;
-        const matchLineIdx = lines.findIndex(l => !l.trim().startsWith('#') && !l.trim().startsWith('"""') && linePattern.test(l));
-        const lineNum = matchLineIdx !== -1 ? matchLineIdx + 1 : 1;
-        const rawSnippet = matchLineIdx !== -1 ? lines[matchLineIdx].trim() : lines.find(l => !l.trim().startsWith('#'))?.trim() || "Insecure PyYAML load() Without SafeLoader";
+    // Do not flag when ruamel.yaml is instantiated with typ="safe" or when SafeLoader is used
+    const isRuamelSafeYaml = /\bYAML\s*\([^)]*typ\s*=\s*['"]safe['"]|\btyp\s*=\s*['"]safe['"]/i.test(cleanContent);
+    const unsafeYamlIdx = !isRuamelSafeYaml ? pyLinesNoStrings.findIndex((strippedLine, idx) => {
+        if (!/\byaml\.load\s*\(/i.test(strippedLine)) return false;
+        const call = callText(lines, idx, /\byaml\.load\s*\(/i);
+        if (/Loader\s*=\s*(?:yaml\.)?(?:Safe|CSafe|Base|CBase)Loader\b/i.test(call)) {
+            return false;
+        }
+        return true;
+    }) : -1;
+    if (unsafeYamlIdx !== -1) {
+        const lineNum = unsafeYamlIdx + 1;
+        const rawSnippet = lines[unsafeYamlIdx]?.trim() || "Insecure PyYAML load() Without SafeLoader";
         findings.push({
             id: `py8802-${Date.now()}-${findingCounter.count++}`,
             ruleId: 8802,
@@ -119,7 +154,30 @@ export function evaluatePythonEnterpriseRules(file: CodeFile, lines: string[], c
     }
     // PY-SEC-04: Python SQL Injection via String Interpolation (f-string / format / %)
     // f-string SQL passed straight to execute()/text() with a value interpolated after WHERE/SET/VALUES/LIKE/=/IN (identifier-only interpolation is left alone)
-    const idx_8804 = pyFindLine(lines, /(?:\.execute(?:many)?|(?<![\w.])text|sa\.text|sqlalchemy\.text)\s*\(\s*[fF](?:"[^"]*\b(?:SELECT|INSERT|UPDATE|DELETE)\b[^"]*(?:\bWHERE\b|\bSET\b|\bVALUES\b|\bLIKE\b|=|\bIN\s*\()[^"]*\{[^"]*"|'[^']*\b(?:SELECT|INSERT|UPDATE|DELETE)\b[^']*(?:\bWHERE\b|\bSET\b|\bVALUES\b|\bLIKE\b|=|\bIN\s*\()[^']*\{[^']*')/i);
+    const callRe_8804 = /(?:\.execute(?:many)?|(?<![\w.])text|sa\.text|sqlalchemy\.text)\s*\(\s*[fF](?:"[^"]*\b(?:SELECT|INSERT|UPDATE|DELETE)\b[^"]*(?:\bWHERE\b|\bSET\b|\bVALUES\b|\bLIKE\b|=|\bIN\s*\()[^"]*\{[^"]*"|'[^']*\b(?:SELECT|INSERT|UPDATE|DELETE)\b[^']*(?:\bWHERE\b|\bSET\b|\bVALUES\b|\bLIKE\b|=|\bIN\s*\()[^']*\{[^']*')/i;
+    const isPyScriptOrMigration8804 = /(?:^|\/)(?:scripts?|tools\/scripts?|bin|migrations?|alembic\/versions)\//i.test(lowerPath);
+    const importsSqlText8804 = /\bfrom\s+(?:sqlalchemy(?:\.\w+)*|sqlmodel)\s+import\s+[^\n]*\btext\b/.test(cleanContent);
+    const safePlaceholderVars8804 = new Set<string>();
+    for (const m of cleanContent.matchAll(/\b(\w+)\s*=\s*['"][,\s]+['"]\.join\s*\(\s*(?:['"][?%]s?['"]|['"]:\w+['"]|\[\s*['"][?%]s?['"]\s*\])/g)) {
+        safePlaceholderVars8804.add(m[1]);
+    }
+    const idx_8804 = isPyScriptOrMigration8804 ? -1 : pyFindLine(lines, callRe_8804, (l, i) => {
+        if (!/(?:\.execute(?:many)?|sa\.text|sqlalchemy\.text)\s*\(/i.test(l) && /\btext\s*\(/i.test(l) && !importsSqlText8804) {
+            return false;
+        }
+        const rawText = callText(lines, i, /(?:\.execute(?:many)?|(?<![\w.])text|sa\.text|sqlalchemy\.text)\s*\(/i);
+        const text = rawText.replace(/\{\s*(\w+)\s*\}/g, (full, v: string) => (
+            /^_?[A-Z][A-Z0-9_]*$/.test(v) || safePlaceholderVars8804.has(v) ? 'IDENT' : full
+        ));
+        if (!callRe_8804.test(text)) return false;
+        // A dynamic SET clause built from column names is safe when the query uses bind placeholders
+        // (%s, ?, $1, :name) and passes a separate parameters argument. Values in quotes or unparameterized queries still count.
+        if (/\bSET\s+\{\w+\}/i.test(text) && /(?:%s|\?|\$\d|:\w+)[^"']*(?:["']\s*,\s*[\w([{]|["']\s*,\s*\n\s*[\w([{])/.test(text)) {
+            const withoutSetClause = text.replace(/\bSET\s+\{\w+\}/gi, 'SET IDENT');
+            if (!callRe_8804.test(withoutSetClause)) return false;
+        }
+        return true;
+    });
     if (idx_8804 !== -1) {
         const matchLineIdx = idx_8804;
         const lineNum = matchLineIdx !== -1 ? matchLineIdx + 1 : 1;
@@ -263,7 +321,7 @@ export function evaluatePythonEnterpriseRules(file: CodeFile, lines: string[], c
     // Settings-level signing secret assigned a real-looking literal (placeholders and dev/test settings are skipped)
     const idx_8809 = isDevSettingsPath(lowerPath) ? -1 : pyFindLine(lines, /^\s*(?:SECRET_KEY|JWT_SECRET(?:_KEY)?)\s*(?::\s*str\s*)?=\s*['"]([^'"\s]{16,})['"]\s*$/, (l) => {
         const value = /=\s*['"]([^'"\s]{16,})['"]/.exec(l)![1];
-        return !/change|replace|example|your|dummy|placeholder|xxx|\{|\$|<|test|sample/i.test(value);
+        return !/change|replace|example|your|dummy|placeholder|xxx|\$\{|\{\{|^\$|<|test|sample/i.test(value);
     });
     if (idx_8809 !== -1) {
         const matchLineIdx = idx_8809;
@@ -329,18 +387,30 @@ export function evaluatePythonEnterpriseRules(file: CodeFile, lines: string[], c
         logs.push(`[${ts}] [PYTHON AUDIT] Found PY-SEC-10: Unrestricted Jinja2 Server-Side Template Injection (SSTI) at ${file.path}:${lineNum}`);
     }
     // PY-SEC-11: Dynamic Code Execution via eval() or exec()
-    const reg_8811 = /(?<![.\w])(?:eval|exec|compile)\s*\(\s*(?!'[^']*'|"[^"]*")[a-zA-Z0-9_]+/;
-    if (reg_8811.test(cleanContent)) {
-        const linePattern = /(?<![.\w])(?:eval|exec|compile)\s*\(/;
-        const matchLineIdx = lines.findIndex(l => !l.trim().startsWith('#') && !l.trim().startsWith('"""') && linePattern.test(l));
-        const lineNum = matchLineIdx !== -1 ? matchLineIdx + 1 : 1;
+    const importsReCompile = /^\s*from\s+(?:re|regex)\s+import\s+[^\n]*\bcompile\b/m.test(cleanContent);
+    const evalExecLineRe = /(?<![.\w])(?<!\bdef\s+)(?:eval|exec)\s*\(\s*(?![rbuRfF]*['"])[a-zA-Z_]\w*/;
+    const compileLineRe = /(?<![.\w])(?<!\bdef\s+)compile\s*\(\s*(?![rbuRfF]*['"])[a-zA-Z_]\w*[^;\n]*['"](?:exec|eval|single)['"]/;
+    const matchLineIdx_8811 = lines.findIndex((l) => {
+        const t = l.trim();
+        if (t.startsWith('#') || t.startsWith('"""') || t.startsWith("'''")) return false;
+        const codePart = l.replace(/#.*$/, '');
+        if (evalExecLineRe.test(codePart)) return true;
+        if (!importsReCompile && compileLineRe.test(codePart)) return true;
+        return false;
+    });
+    if (matchLineIdx_8811 !== -1) {
+        const matchLineIdx = matchLineIdx_8811;
+        const lineNum = matchLineIdx + 1;
+        const rawLine = lines[matchLineIdx] || '';
+        const hasReviewedSuppression = /#\s*(?:noqa(?:\s*:\s*[^#\n]*\bS102\b|\s*$|\s+#)|nosec\b)/i.test(rawLine);
+        const severity_8811 = hasReviewedSuppression ? "MEDIUM" : "CRITICAL";
         const rawSnippet = matchLineIdx !== -1 ? lines[matchLineIdx].trim() : lines.find(l => !l.trim().startsWith('#'))?.trim() || "Dynamic Code Execution via eval() or exec()";
         findings.push({
             id: `py8811-${Date.now()}-${findingCounter.count++}`,
             ruleId: 8811,
             type: 'SECURITY',
             title: "PY-SEC-11: Dynamic Code Execution via eval() or exec()",
-            severity: "CRITICAL",
+            severity: severity_8811,
             category: "Code Injection",
             filePath: file.path,
             lineRange: `L${lineNum}`,
@@ -409,9 +479,15 @@ export function evaluatePythonEnterpriseRules(file: CodeFile, lines: string[], c
         logs.push(`[${ts}] [PYTHON AUDIT] Found PY-SEC-13: Insecure Temporary File Creation via tempfile.mktemp() at ${file.path}:${lineNum}`);
     }
     // PY-SEC-14: Server-Side Request Forgery (SSRF) via Dynamic URL Fetch
-    const reg_8814 = /(?:requests|httpx)\.(?:get|post|put|delete|request)\s*\(\s*(?:request\.(?:args|GET|POST|values|json)|url|target_url)/i;
-    if (reg_8814.test(cleanContent)) {
-        const linePattern = /(?:requests|httpx)\.(?:get|post|put|delete|request)\s*\(/i;
+    const ssrfDirect = /(?:requests|httpx)\.(?:get|post|put|delete|request)\s*\(\s*request\.(?:args|GET|POST|values|json)/i;
+    // A variable named url only counts in a web handler that reads request input and never checks the host;
+    // scripts, docs builds and jobs fetch URLs from their own config
+    const ssrfViaVar = /(?:requests|httpx)\.(?:get|post|put|delete|request)\s*\(\s*(?:url|target_url)\b/i.test(cleanContent)
+        && /\brequest\.(?:args|GET|POST|values|json|form|query_params|data)\b|\b(?:Query|Body|Form)\s*\(|@\w+\.(?:get|post|put|route)\s*\(/.test(cleanContent)
+        && !/(?:^|\/)(?:scripts?|bin|tools|docs?|tests?|jobs?|postrun|playbooks|migrations?)\//i.test(file.path)
+        && !/urlparse\([^)]*\)\.(?:hostname|netloc)|ALLOWED_HOSTS|allow_?list|white_?list|is_safe_url|validate_url|is_private|ipaddress\./i.test(cleanContent);
+    if (ssrfDirect.test(cleanContent) || ssrfViaVar) {
+        const linePattern = ssrfDirect.test(cleanContent) ? ssrfDirect : /(?:requests|httpx)\.(?:get|post|put|delete|request)\s*\(\s*(?:url|target_url)\b/i;
         const matchLineIdx = lines.findIndex(l => !l.trim().startsWith('#') && !l.trim().startsWith('"""') && linePattern.test(l));
         const lineNum = matchLineIdx !== -1 ? matchLineIdx + 1 : 1;
         const rawSnippet = matchLineIdx !== -1 ? lines[matchLineIdx].trim() : lines.find(l => !l.trim().startsWith('#'))?.trim() || "Server-Side Request Forgery (SSRF) via Dynamic URL Fetch";
@@ -1199,10 +1275,67 @@ export function evaluatePythonEnterpriseRules(file: CodeFile, lines: string[], c
         logs.push(`[${ts}] [PYTHON AUDIT] Found PY-SEC-43: Insecure Cipher Mode (ECB Mode in PyCryptodome / Cryptography) at ${file.path}:${lineNum}`);
     }
     // PY-SEC-44: JWT Signature Verification Disabled in PyJWT
-    const idx_8844 = (() => {
-        const direct = pyFindLine(lines, /jwt\.decode\s*\([^)]*(?:\bverify\s*=\s*False|['"]verify_signature['"]\s*:\s*False)/);
-        if (direct !== -1) return direct;
-        return pyFindLine(lines, /['"]verify_signature['"]\s*:\s*False/, (_l, i) => /jwt\.decode\s*\(/.test(lines.slice(Math.max(0, i - 4), i + 1).join('\n')));
+    // An id_token decoded right after the authorization-code exchange with the provider (OIDC Core 3.1.3.7) is not a bypass
+    const isDocOrKnowledge_8844 = /(?:^|\/)(?:knowledge|docs|docs_src|documentation|tutorials?|cookbook|courses?)\//i.test(lowerPath);
+    const oidcIdTokenAfterExchange = /token_endpoint|fetch_token|authorization_code|grant_type/.test(cleanContent)
+        && /jwt\.decode\s*\(\s*(?:\w+\.)?id_token\b/.test(cleanContent)
+        && !/jwt\.decode\s*\(\s*(?!(?:\w+\.)?id_token\b)\w+[^)]*verify_signature['"]\s*:\s*False/.test(cleanContent);
+    const idx_8844 = (isDocOrKnowledge_8844 || oidcIdTokenAfterExchange) ? -1 : (() => {
+        const directRegex = /jwt\.decode\s*\([^)]*(?:\bverify\s*=\s*False|['"]verify_signature['"]\s*:\s*False)/;
+        const candidateIndices: number[] = [];
+        lines.forEach((l, i) => {
+            if (!l.trim().startsWith('#') && (directRegex.test(l) || (/['"]verify_signature['"]\s*:\s*False/.test(l) && /jwt\.decode\s*\(/.test(lines.slice(Math.max(0, i - 4), i + 1).join('\n'))))) {
+                candidateIndices.push(i);
+            }
+        });
+
+        for (const idx of candidateIndices) {
+            // Find enclosing Python function
+            let defIdx = -1;
+            let defIndent = 0;
+            for (let j = idx; j >= 0; j--) {
+                const m = lines[j].match(/^([ \t]*)(?:async\s+)?def\s+(\w+)\s*\(/);
+                if (m) {
+                    defIdx = j;
+                    defIndent = m[1].length;
+                    break;
+                }
+            }
+            let fnLines: string[] = [];
+            if (defIdx !== -1) {
+                let endFnIdx = lines.length;
+                for (let k = defIdx + 1; k < lines.length; k++) {
+                    const line = lines[k];
+                    if (line.trim().length > 0 && !line.trim().startsWith('#')) {
+                        const indent = line.match(/^[ \t]*/)?.[0].length ?? 0;
+                        if (indent <= defIndent) {
+                            endFnIdx = k;
+                            break;
+                        }
+                    }
+                }
+                fnLines = lines.slice(defIdx, endFnIdx);
+            } else {
+                fnLines = lines.slice(Math.max(0, idx - 15), Math.min(lines.length, idx + 25));
+            }
+            const fnText = fnLines.join('\n');
+
+            // 1. Followed in the same function by a verified jwt.decode(...)
+            const hasVerifiedDecode = /jwt\.decode\s*\([^)]*?(?:algorithms\s*=|key\s*=|secret|public_key|jwks|certs)[^)]*?\)/.test(fnText)
+                && !/jwt\.decode\s*\([^)]*?(?:algorithms\s*=|key\s*=|secret|public_key|jwks|certs)[^)]*?verify_signature['"]\s*:\s*False/.test(fnText);
+            // 2. Or key lookup / verification helpers (get_unverified_header, verify_*)
+            const hasKeyLookupOrVerify = /jwt\.get_unverified_header|jwt\.get_unverified_claims|get_unverified_header|verify_oauth_access_token|verify_external_idp_token|verify_credentials|verify_token|verify_jwt/.test(fnText);
+            // 3. Check if unverified result is used for identity
+            const hasIdentityUsage = /(?:payload|unverified|claims)\s*(?:\[\s*['"](?:sub|email|user|user_id|identity|username)['"]|\.get\s*\(\s*['"](?:sub|email|user|user_id|identity|username)['"])/.test(fnText)
+                || /\b(?:user_id|user_email|current_user|is_admin)\s*=\s*(?:payload|unverified|claims)/.test(fnText);
+
+            const isPeekOnly = (hasVerifiedDecode || hasKeyLookupOrVerify) || (!hasIdentityUsage && /_try_oauth_access_token|\.get\s*\(\s*['"](?:iss|kid|alg|typ|jti)['"]/.test(fnText));
+
+            if (!isPeekOnly) {
+                return idx;
+            }
+        }
+        return -1;
     })();
     if (idx_8844 !== -1) {
         const matchLineIdx = idx_8844;

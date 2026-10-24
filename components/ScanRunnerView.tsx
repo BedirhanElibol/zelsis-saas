@@ -21,6 +21,7 @@ import { getSupabase } from '@/lib/supabase';
 import { getActiveUserAuth } from '@/lib/supabase-client';
 import { logger } from '@/lib/logger';
 import { priceLabel } from '@/data/pricing-plans';
+import { botChallengeMessage } from '@/lib/bot-challenge';
 
 // The rule engine is ~3 MB of JS: load it only when a scan actually runs, not with the dashboard
 const runStaticCodeScan: typeof import('@/lib/scanner-engine').runStaticCodeScan = async (...args) =>
@@ -34,6 +35,10 @@ const loadOrgPolicy = async (): Promise<string | null> => {
     return null;
   }
 };
+
+// Minimum on-screen scan time grows with the repo: 12s plus 15ms per file, capped at 30s.
+const minScanDurationMs = (fileCount: number) => Math.min(30_000, 12_000 + fileCount * 15);
+const LOG_STEP_MS = 120;
 
 interface ScanRunnerViewProps {
   project: Project;
@@ -77,6 +82,12 @@ export const ScanRunnerView: React.FC<ScanRunnerViewProps> = ({
   const [isFinished, setIsFinished] = useState<boolean>(false);
   const [scanResult, setScanResult] = useState<ScanResult | null>(null);
   const [queuedFilesCount, setQueuedFilesCount] = useState<number>(0);
+  const progressRef = useRef(0);
+  const fileCountRef = useRef(0);
+  useEffect(() => {
+    progressRef.current = progress;
+    fileCountRef.current = queuedFilesCount;
+  }, [progress, queuedFilesCount]);
   const [hasCopiedLogs, setHasCopiedLogs] = useState<boolean>(false);
   const [logSearchQuery, setLogSearchQuery] = useState<string>('');
   const [elapsedSeconds, setElapsedSeconds] = useState<number>(0);
@@ -170,6 +181,7 @@ export const ScanRunnerView: React.FC<ScanRunnerViewProps> = ({
     hasCompletedRef.current = false;
     hasConsumedQuotaRef.current = false;
     setCountdownSeconds(3);
+    const scanStartedAt = Date.now();
 
     async function executeLiveScan() {
       const userTier = user?.tier || 'Free';
@@ -255,13 +267,18 @@ export const ScanRunnerView: React.FC<ScanRunnerViewProps> = ({
       const startLogStream = (result: ScanResult) => {
         let currentIdx = 0;
         const realLogs = result.logs;
-        const stepIntervalMs = 25;
+        const startPct = Math.min(progressRef.current, 90);
+        // Replay the engine's real log lines so the whole scan takes at least minScanDurationMs: a result that
+        // flashes up in a second reads as if nothing was checked. Hidden tabs skip the pacing.
+        const remainingMs = Math.max(0, minScanDurationMs(fileCountRef.current) - (Date.now() - scanStartedAt));
+        const ticks = Math.max(1, Math.floor(remainingMs / LOG_STEP_MS));
+        const visibleBatch = Math.max(1, Math.ceil(realLogs.length / ticks));
 
         // PRIVACY-39: Desktop notification prompts are never requested automatically on stream start
 
         intervalRef.current = setInterval(() => {
           const isHidden = typeof document !== 'undefined' && document.hidden;
-          const batchSize = isHidden ? 25 : 3;
+          const batchSize = isHidden ? 25 : visibleBatch;
 
           if (currentIdx < realLogs.length) {
             const newLogItems: string[] = [];
@@ -276,10 +293,10 @@ export const ScanRunnerView: React.FC<ScanRunnerViewProps> = ({
             }
 
             setLogs((prev) => [...prev, ...newLogItems]);
-            const pct = Math.min(100, Math.round(25 + (currentIdx / realLogs.length) * 75));
+            const pct = Math.min(99, Math.round(startPct + (currentIdx / realLogs.length) * (100 - startPct)));
             setProgress(pct);
             if (typeof document !== 'undefined') {
-              document.title = `(${pct}%) Zelsis Audit | ${project.name}`;
+              document.title = `(${pct}%) Scanning | Zelsis`;
             }
           } else {
             if (intervalRef.current) clearInterval(intervalRef.current);
@@ -288,7 +305,7 @@ export const ScanRunnerView: React.FC<ScanRunnerViewProps> = ({
             setIsFinished(true);
 
             if (typeof document !== 'undefined') {
-              document.title = `Audit Complete | ${project.name}`;
+              document.title = `Scan complete | Zelsis`;
               if (document.hidden && typeof window !== 'undefined' && 'Notification' in window && Notification.permission === 'granted') {
                 new Notification(`Zelsis Audit Completed: ${project.name}`, {
                   body: `Release Gate Audit finished successfully with readiness score ${result.score}/100.`,
@@ -297,7 +314,7 @@ export const ScanRunnerView: React.FC<ScanRunnerViewProps> = ({
               }
             }
           }
-        }, stepIntervalMs);
+        }, LOG_STEP_MS);
       };
 
       if (isLocalOrSelfAudit) {
@@ -473,12 +490,14 @@ export const ScanRunnerView: React.FC<ScanRunnerViewProps> = ({
               onConsumeScanQuota();
             }
 
-            setLogs((prev) => [
-              ...prev,
-              `[${new Date().toLocaleTimeString()}] [SUCCESS] 🎉 Release Gate Audit Complete: Score ${resolvedResult.score}/100 [GATE: ${resolvedResult.gateStatus}].`,
-              `[${new Date().toLocaleTimeString()}] [REPORT] Preparing full audit report with ${resolvedResult.findings.length} findings...`
-            ]);
-            setIsFinished(true);
+            startLogStream({
+              ...resolvedResult,
+              logs: [
+                ...(resolvedResult.logs || []),
+                `[${new Date().toLocaleTimeString()}] [SUCCESS] 🎉 Release Gate Audit Complete: Score ${resolvedResult.score}/100 [GATE: ${resolvedResult.gateStatus}].`,
+                `[${new Date().toLocaleTimeString()}] [REPORT] Preparing full audit report with ${resolvedResult.findings.length} findings...`
+              ]
+            });
           } else if (job.status === 'FAILED') {
             hasFinishedProcessing = true;
             if (intervalRef.current) {
@@ -610,11 +629,11 @@ export const ScanRunnerView: React.FC<ScanRunnerViewProps> = ({
         // Check for Cloudflare bot challenge on web deployment target
         if (webData?.error === 'CLOUDFLARE_BOT_PROTECTION') {
           if (!isCancelled) {
-            setScanFailureReason(`Automated audit blocked by Cloudflare Bot Protection on "${project.repoUrl}". Disable bot challenge for scanner user-agents or run audit against a staging endpoint.`);
+            setScanFailureReason(botChallengeMessage(project.repoUrl, webData.challengeProvider));
             setLogs((prev) => [
               ...prev,
-              `[${new Date().toLocaleTimeString()}] [ERROR] 🛡️ CLOUDFLARE BOT PROTECTION: Automated audit blocked by Cloudflare Bot Protection on "${project.repoUrl}".`,
-              `[${new Date().toLocaleTimeString()}] [ACTION] Disable bot challenge for scanner user-agents or run audit against a staging endpoint.`
+              `[${new Date().toLocaleTimeString()}] [ERROR] 🛡️ BOT PROTECTION: "${project.repoUrl}" returned a ${webData.challengeProvider === 'vercel' ? 'Vercel Security Checkpoint' : 'Cloudflare challenge'} instead of the site.`,
+              `[${new Date().toLocaleTimeString()}] [ACTION] Scan the GitHub repository instead, or allow the Zelsis scanner in your firewall settings.`
             ]);
             setIsFinished(true);
           }
@@ -638,7 +657,7 @@ export const ScanRunnerView: React.FC<ScanRunnerViewProps> = ({
           if (!isCancelled) {
             const isCf = webData?.isCloudflareChallenge || webData?.error === 'CLOUDFLARE_BOT_PROTECTION';
             const failureReason = isCf
-              ? `Automated inspection blocked by Cloudflare bot protection for "${project.repoUrl}". Direct crawling is restricted by bot mitigation.`
+              ? botChallengeMessage(project.repoUrl, webData?.challengeProvider)
               : `Unable to reach target website "${project.repoUrl}". Verify the URL is live, accessible, and not blocking automated audits.`;
             setScanFailureReason(failureReason);
             setLogs((prev) => [
@@ -696,11 +715,11 @@ export const ScanRunnerView: React.FC<ScanRunnerViewProps> = ({
 
         if (liveData?.error === 'CLOUDFLARE_BOT_PROTECTION') {
           if (!isCancelled) {
-            setScanFailureReason(`Automated audit blocked by Cloudflare Bot Protection on "${project.repoUrl}". Disable bot challenge for scanner user-agents or run audit against a staging endpoint.`);
+            setScanFailureReason(botChallengeMessage(project.repoUrl, undefined));
             setLogs((prev) => [
               ...prev,
-              `[${new Date().toLocaleTimeString()}] [ERROR] 🛡️ CLOUDFLARE BOT PROTECTION: Automated audit blocked by Cloudflare Bot Protection on "${project.repoUrl}".`,
-              `[${new Date().toLocaleTimeString()}] [ACTION] Disable bot challenge for scanner user-agents or run audit against a staging endpoint.`
+              `[${new Date().toLocaleTimeString()}] [ERROR] 🛡️ BOT PROTECTION: "${project.repoUrl}" returned a bot-protection challenge instead of the site.`,
+              `[${new Date().toLocaleTimeString()}] [ACTION] Scan the GitHub repository instead, or allow the Zelsis scanner in your firewall settings.`
             ]);
             setIsFinished(true);
           }
@@ -869,7 +888,7 @@ export const ScanRunnerView: React.FC<ScanRunnerViewProps> = ({
       isCancelled = true;
       controller.abort();
       if (typeof document !== 'undefined') {
-        document.title = 'Zelsis | Release Gate SaaS';
+        document.title = 'Zelsis';
       }
       if (intervalRef.current) {
         clearInterval(intervalRef.current);

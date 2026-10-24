@@ -1,5 +1,7 @@
 import type { Finding } from '@/data/schema';
 import { validateSafeTargetUrl } from '@/lib/ssrf-guard';
+import { isChallengeResponse } from '@/lib/scanner/request-limiter';
+import { PROBE_HEADER } from '@/lib/site-verification-state';
 
 /**
  * Live deployment probes: files that should never be served (.env, .git), TLS certificate health,
@@ -9,7 +11,7 @@ import { validateSafeTargetUrl } from '@/lib/ssrf-guard';
 
 export interface ExposedFile {
   path: string;
-  kind: 'env' | 'git';
+  kind: 'env' | 'git' | ArtifactKind;
   /** What proved the exposure. Never contains secret values. */
   evidence: string;
 }
@@ -34,16 +36,65 @@ export interface LiveProbeResult {
   /** How plain http://host/ answers. 'unreachable' (port 80 closed) is fine. */
   plainHttp: 'redirects-to-https' | 'serves-content' | 'unreachable';
   insecureCookies: InsecureCookie[];
+  /** Whether the LIVE-08..12 artifact paths were checked (domain ownership verified). */
+  deepProbes?: boolean;
+  /** Exposure paths that got an HTTP answer vs. how many were planned (fewer when the host started challenging). */
+  probeCoverage?: { answered: number; total: number };
 }
 
 export interface LiveProbeOptions {
   fetchImpl?: typeof fetch;
   tlsInspect?: (host: string, ip: string | undefined, timeoutMs: number) => Promise<TlsInfo | null | undefined>;
   timeoutMs?: number;
+  /** Deploy-artifact and admin-console paths (LIVE-08..12): only for domains the user proved they own. */
+  deepProbes?: boolean;
+  /**
+   * Pause between exposure-path requests, sent one at a time. A quick run of 404s on /.env, /.git/config, /dump.sql…
+   * is a vulnerability-scanner signature: Vercel challenged the scanner IP after 13 of them in 1.3 s (2026-10-12).
+   * Spacing them out does not stop it (1.5 s apart was challenged on the 7th path, 2026-10-13): the path pattern
+   * triggers it, so the pause stays short and probeKey is the real way through.
+   */
+  probeIntervalMs?: number;
+  /** Sent as the x-zelsis-probe header on exposure probes so a verified owner's firewall rule can let them through. */
+  probeKey?: string;
 }
 
 const ENV_PATHS = ['/.env', '/.env.local', '/.env.production', '/.env.development'];
 const GIT_PATHS = ['/.git/config', '/.git/HEAD'];
+
+export type ArtifactKind = 'dump' | 'infra' | 'debug' | 'console' | 'deploy';
+interface ArtifactProbe {
+  path: string;
+  kind: ArtifactKind;
+  /** Admin consoles and debug pages are HTML; everything else must not be (SPA soft 404s are HTML). */
+  html?: boolean;
+  /** Evidence text when the body really is this artifact, otherwise null. Never returns secret values. */
+  match: (body: string) => string | null;
+}
+const has = (body: string, ...res: RegExp[]) => res.every((r) => r.test(body));
+const jsonKeys = (body: string, ...keys: string[]) => /^\s*[[{]/.test(body) && keys.every((k) => body.includes(`"${k}"`));
+
+/** Files and endpoints from deploy mistakes, each confirmed by a body signature (Gemini report LIVE-PROBE proposals). */
+export const ARTIFACT_PROBES: ArtifactProbe[] = [
+  ...['/dump.sql', '/backup.sql', '/db.sql', '/database.sql'].map((path): ArtifactProbe => ({ path, kind: 'dump',
+    match: (b) => /^--\s*(?:PostgreSQL database dump|MySQL dump|MariaDB dump)/m.test(b) ? 'SQL dump header' : has(b, /\bCREATE TABLE\b/i, /\bINSERT INTO\b/i) ? 'CREATE TABLE and INSERT statements' : null })),
+  { path: '/terraform.tfstate', kind: 'infra', match: (b) => jsonKeys(b, 'terraform_version', 'resources') ? 'Terraform state (terraform_version, resources)' : null },
+  { path: '/.aws/credentials', kind: 'infra', match: (b) => has(b, /^\s*\[[\w.-]+\]/m, /aws_access_key_id\s*=/) ? 'AWS credentials profile (values not stored)' : null },
+  { path: '/.npmrc', kind: 'infra', match: (b) => /_authToken\s*=/.test(b) ? 'npm registry _authToken (value not stored)' : null },
+  { path: '/.vscode/sftp.json', kind: 'infra', match: (b) => jsonKeys(b, 'host') && /"(?:password|privateKeyPath|passphrase)"\s*:/.test(b) ? 'SFTP deployment config with credentials (values not stored)' : null },
+  { path: '/debug/vars', kind: 'debug', match: (b) => jsonKeys(b, 'cmdline', 'memstats') ? 'Go expvar dump (cmdline, memstats)' : null },
+  { path: '/debug/pprof/', kind: 'debug', html: true, match: (b) => /Types of profiles available/i.test(b) ? 'Go pprof index' : null },
+  { path: '/phpinfo.php', kind: 'debug', html: true, match: (b) => has(b, /phpinfo\(\)/, /PHP Version/i) ? 'phpinfo() page' : null },
+  { path: '/server-status', kind: 'debug', html: true, match: (b) => /Apache Server Status for/i.test(b) ? 'Apache mod_status page' : null },
+  { path: '/storage/logs/laravel.log', kind: 'debug', match: (b) => /^\[\d{4}-\d\d-\d\d [\d:]+\] \w+\.(?:ERROR|WARNING|INFO|DEBUG|CRITICAL):/m.test(b) ? 'Laravel application log' : null },
+  { path: '/wp-content/debug.log', kind: 'debug', match: (b) => /PHP (?:Fatal error|Warning|Notice|Deprecated):/.test(b) ? 'WordPress debug log' : null },
+  { path: '/adminer.php', kind: 'console', html: true, match: (b) => /<title>[^<]*Adminer/i.test(b) ? 'Adminer database login' : null },
+  { path: '/phpmyadmin/', kind: 'console', html: true, match: (b) => /<title>[^<]*phpMyAdmin/i.test(b) ? 'phpMyAdmin login' : null },
+  { path: '/_cluster/health', kind: 'console', match: (b) => jsonKeys(b, 'cluster_name', 'number_of_nodes') ? 'Elasticsearch / OpenSearch cluster API' : null },
+  { path: '/docker-compose.yml', kind: 'deploy', match: (b) => has(b, /^services:\s*$/m, /^\s+(?:image|build):/m) ? 'Docker Compose file' : null },
+  { path: '/Dockerfile', kind: 'deploy', match: (b) => has(b, /^FROM\s+\S+/m, /^(?:RUN|COPY|CMD|ENTRYPOINT)\s/m) ? 'Dockerfile' : null },
+  { path: '/ecosystem.config.js', kind: 'deploy', match: (b) => /module\.exports\s*=\s*\{[\s\S]*\bapps\s*:/.test(b) ? 'PM2 ecosystem config' : null },
+];
 const MAX_BODY = 64 * 1024;
 const UA = 'Zelsis-Release-Gate-Scanner/3.5';
 
@@ -117,6 +168,14 @@ async function probePath(origin: string, path: string, fetchImpl: typeof fetch, 
   return null;
 }
 
+async function probeArtifact(origin: string, probe: ArtifactProbe, fetchImpl: typeof fetch, timeoutMs: number): Promise<ExposedFile | null> {
+  const res = await fetchNoRedirect(`${origin}${probe.path}`, fetchImpl, timeoutMs);
+  if (!res || res.status !== 200) return null;
+  if (!probe.html && (res.headers.get('content-type') || '').includes('text/html')) return null;
+  const evidence = probe.match(await readCapped(res));
+  return evidence ? { path: probe.path, kind: probe.kind, evidence } : null;
+}
+
 /** Errors that prove 443 does not serve TLS; anything else (timeouts, DNS hiccups) stays undetermined. */
 const NO_TLS_ERRORS = new Set(['ECONNREFUSED', 'ECONNRESET', 'EPROTO', 'ERR_SSL_WRONG_VERSION_NUMBER']);
 
@@ -142,15 +201,39 @@ export async function inspectTls(host: string, ip: string | undefined, timeoutMs
 export async function probeLiveSite(
   targetUrl: string,
   setCookies: string[],
-  { fetchImpl = globalThis.fetch, tlsInspect = inspectTls, timeoutMs = 5000 }: LiveProbeOptions = {}
+  { fetchImpl = globalThis.fetch, tlsInspect = inspectTls, timeoutMs = 5000, deepProbes = false, probeIntervalMs = 0, probeKey }: LiveProbeOptions = {}
 ): Promise<LiveProbeResult> {
   const target = new URL(targetUrl);
   const host = target.hostname;
   const check = await validateSafeTargetUrl(targetUrl);
   const ip = check.safe ? check.resolvedIp : undefined;
 
-  const [exposed, tlsInfo, plain] = await Promise.all([
-    Promise.all([...ENV_PATHS, ...GIT_PATHS].map((p) => probePath(target.origin, p, fetchImpl, timeoutMs))),
+  // Exposure paths go one at a time with a pause (see probeIntervalMs). answered counts real answers (a challenge page
+  // is not a check); after a challenge the remaining paths are not requested at all.
+  let answered = 0;
+  let challenged = false;
+  const counting = (async (input: RequestInfo | URL, init?: RequestInit) => {
+    const headers = probeKey ? { ...(init?.headers as Record<string, string> | undefined), [PROBE_HEADER]: probeKey } : init?.headers;
+    const r = await fetchImpl(input, { ...init, headers });
+    if (isChallengeResponse(r)) challenged = true; else answered++;
+    return r;
+  }) as typeof fetch;
+  const pathProbes: (() => Promise<ExposedFile | null>)[] = [
+    ...[...ENV_PATHS, ...GIT_PATHS].map((p) => () => probePath(target.origin, p, counting, timeoutMs)),
+    ...(deepProbes ? ARTIFACT_PROBES : []).map((p) => () => probeArtifact(target.origin, p, counting, timeoutMs)),
+  ];
+  const runPathProbes = async (): Promise<(ExposedFile | null)[]> => {
+    if (!probeIntervalMs) return Promise.all(pathProbes.map((run) => run()));
+    const out: (ExposedFile | null)[] = [];
+    for (let i = 0; i < pathProbes.length && !challenged; i++) {
+      if (i) await new Promise((r) => setTimeout(r, probeIntervalMs));
+      out.push(await pathProbes[i]());
+    }
+    return out;
+  };
+
+  const [probed, tlsInfo, plain] = await Promise.all([
+    runPathProbes(),
     // TLS handshakes to distant hosts can take several seconds; give them twice the HTTP budget
     check.safe ? tlsInspect(host, ip, timeoutMs * 2).catch(() => undefined) : Promise.resolve(undefined),
     fetchNoRedirect(`http://${host}/`, fetchImpl, timeoutMs)
@@ -168,10 +251,12 @@ export async function probeLiveSite(
 
   return {
     host,
-    exposedFiles: exposed.filter((e): e is ExposedFile => e !== null),
+    exposedFiles: probed.filter((e): e is ExposedFile => e !== null),
+    probeCoverage: { answered, total: pathProbes.length },
     ...(tlsInfo === undefined ? {} : { tls: tlsInfo }),
     plainHttp,
-    insecureCookies: findInsecureCookies(setCookies, target.protocol === 'https:')
+    insecureCookies: findInsecureCookies(setCookies, target.protocol === 'https:'),
+    deepProbes
   };
 }
 
@@ -220,6 +305,68 @@ export function buildLiveFindings(probe: LiveProbeResult, now: Date = new Date()
         'With .git exposed, tools like git-dumper can rebuild the source code and its full history, including secrets that were committed and later removed.'
       ],
       remediationPrompt: `Remove the .git directory from the deployed web root on ${probe.host} and deny /.git/ at the server or CDN. Audit the repository history for committed secrets and rotate them.`,
+      status: 'OPEN',
+      falsePositive: false
+    });
+  }
+
+  // LIVE-08..12: deploy artifacts and admin / debug endpoints, one finding per kind
+  const ARTIFACT_FINDINGS: Record<ArtifactKind, { ruleId: number; code: string; title: string; severity: Finding['severity']; category: string; why: string; fix: string }> = {
+    dump: { ruleId: 27008, code: 'LIVE-08', title: 'Database dump publicly downloadable', severity: 'CRITICAL', category: 'Exposed Files',
+      why: 'The dump contains your tables and rows (users, emails, password hashes, orders), readable by anyone who requests the URL.',
+      fix: 'Delete the dump from the web root, block *.sql at the server or CDN, and treat the data as breached (notify users if it holds personal data, rotate credentials it contains).' },
+    infra: { ruleId: 27009, code: 'LIVE-09', title: 'Cloud / deploy credentials publicly downloadable', severity: 'CRITICAL', category: 'Exposed Files',
+      why: 'These files hold cloud keys, registry tokens, server passwords or the full Terraform state (which stores secrets in plain text), giving direct access to your infrastructure.',
+      fix: 'Remove the files from the deployed folder, deny dotfiles and *.tfstate at the server or CDN, and rotate every credential they contain now.' },
+    debug: { ruleId: 27010, code: 'LIVE-10', title: 'Debug or log endpoint publicly reachable', severity: 'HIGH', category: 'Information Disclosure',
+      why: 'Debug pages and logs reveal environment variables, internal paths, request data, stack traces and sometimes session tokens; some (pprof) can also be used to slow the server down.',
+      fix: 'Disable the endpoint in production or restrict it to an internal network / authenticated admins, and keep log files outside the web root.' },
+    console: { ruleId: 27011, code: 'LIVE-11', title: 'Database / search admin console publicly reachable', severity: 'HIGH', category: 'Exposed Admin Interface',
+      why: 'An internet-facing database console is brute-forced constantly, and an Elasticsearch / OpenSearch HTTP API usually answers without any authentication.',
+      fix: 'Remove the console from production or put it behind a VPN / IP allow-list plus authentication; bind search clusters to a private network.' },
+    deploy: { ruleId: 27012, code: 'LIVE-12', title: 'Build / deployment configuration publicly downloadable', severity: 'MEDIUM', category: 'Exposed Files',
+      why: 'Deployment files reveal internal service names, ports, images and environment variable names (and sometimes values) that help an attacker map and target the system.',
+      fix: 'Serve only the build output (a dedicated public folder), not the project root, and deny these files at the server or CDN.' }
+  };
+  for (const kind of Object.keys(ARTIFACT_FINDINGS) as ArtifactKind[]) {
+    const files = probe.exposedFiles.filter((f) => f.kind === kind);
+    if (!files.length) continue;
+    const d = ARTIFACT_FINDINGS[kind];
+    findings.push({
+      id: `live-${kind}-${probe.host}`,
+      ruleId: d.ruleId,
+      type: 'SECURITY',
+      title: `${d.code}: ${d.title} (${files.map((f) => f.path).join(', ')})`,
+      severity: d.severity,
+      category: d.category,
+      filePath: `${target}${files[0].path}`,
+      lineRange: 'HTTP 200',
+      snippet: files.map((f) => `${f.path}: ${f.evidence}`).join('\n'),
+      reproductionSteps: [...files.map((f) => `GET ${target}${f.path} returned HTTP 200 (${f.evidence}).`), d.why],
+      remediationPrompt: `${d.fix} (${files.map((f) => f.path).join(', ')} on ${probe.host})`,
+      status: 'OPEN',
+      falsePositive: false
+    });
+  }
+
+  // LIVE-13: the host started challenging before every exposure path was checked; say so instead of implying a clean bill
+  const cov = probe.probeCoverage;
+  if (cov && cov.answered < cov.total) {
+    findings.push({
+      id: `live-coverage-${probe.host}`,
+      ruleId: 27013,
+      type: 'VIBEPOLISH',
+      title: `LIVE-13: Live exposure checks incomplete (${cov.answered}/${cov.total} paths checked)`,
+      severity: 'LOW',
+      category: 'Scan Coverage',
+      filePath: `${target}/`,
+      lineRange: 'HTTP',
+      snippet: `${cov.total - cov.answered} exposure paths were not checked: ${probe.host} answered with a bot-protection challenge.`,
+      reproductionSteps: [
+        `${cov.answered} of ${cov.total} exposure paths (.env, .git${probe.deepProbes ? ', dumps, credentials, debug pages, admin consoles' : ''}) got an answer before the host started challenging the scanner.`,
+        'Hosts such as Vercel and Cloudflare challenge an IP that requests vulnerability-scanner paths (/.env, /dump.sql); spacing the requests out does not prevent it, and Vercel applies it before any firewall rule.'
+      ],
+      remediationPrompt: `Scan the repository behind ${probe.host} as well: on Vercel, Netlify and other static hosts these files can only be served from public/ or static/, which the repository scan checks (GAP-33). On Cloudflare or your own server, verify the domain in Settings and allow its x-zelsis-probe header in the firewall so every path gets checked.`,
       status: 'OPEN',
       falsePositive: false
     });

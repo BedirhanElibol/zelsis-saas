@@ -1,5 +1,6 @@
 'use client';
 
+import { ProductTour } from './ProductTour';
 import React, { useState } from 'react';
 import { Project } from '@/data/schema';
 import { MOCK_PROJECTS } from '@/data/demo-data';
@@ -68,6 +69,7 @@ export const AppShell: React.FC<AppShellProps> = ({
 
   return (
     <div className="min-h-screen bg-[#0A0A0A] text-[#EDEDED] flex flex-col font-sans">
+      <ProductTour autoStart={Boolean(user?.isLoggedIn) && activeNav === 'dashboard'} />
       {/* Top Header with Layout Fixes & Auth Controls */}
       <Header
         projects={projects}
@@ -82,6 +84,7 @@ export const AppShell: React.FC<AppShellProps> = ({
         onOpenCheckout={onOpenCheckout}
         onNavigateSettings={() => onNavigate('settings')}
         onToggleMobileMenu={() => setIsMobileMenuOpen((prev) => !prev)}
+        onNavigate={onNavigate}
         quota={quota}
       />
 

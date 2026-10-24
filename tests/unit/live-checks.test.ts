@@ -4,7 +4,7 @@ import { buildLiveFindings, findInsecureCookies, parseEnvBody, probeLiveSite, ty
 import { runStaticCodeScan } from '@/lib/scanner-engine';
 
 /** Evidence fixture for the rule audit: each LIVE rule fires on a broken site and stays silent on a healthy one. */
-export const LIVE_CASE = { ruleIds: [27001, 27002, 27003, 27004, 27005, 27006, 27007], name: 'Live deployment probes' };
+export const LIVE_CASE = { ruleIds: [27001, 27002, 27003, 27004, 27005, 27006, 27007, 27008, 27009, 27010, 27011, 27012, 27013], name: 'Live deployment probes' };
 
 // Public IP literal: passes the SSRF guard without a DNS lookup.
 const HOST = '93.184.215.14';
@@ -130,4 +130,102 @@ test('scan engine turns liveProbe data in security-headers.json into findings', 
   };
   const result = await runStaticCodeScan([{ path: 'live-deployment/security-headers.json', content: JSON.stringify(headers) }], 'live');
   assert.ok(result.findings.some((f) => f.ruleId === 27001));
+});
+
+test('LIVE-08..12: deploy artifacts and admin consoles are confirmed from the body, values never stored', async () => {
+  const t = (body: string, type = 'text/plain'): Route => ({ status: 200, body, headers: { 'content-type': type } });
+  const probe = await probeLiveSite(`https://${HOST}/`, [], {
+    fetchImpl: fakeSite({
+      ...redirectHttp,
+      [`https://${HOST}/backup.sql`]: t('-- PostgreSQL database dump\nCREATE TABLE users (email text);\nINSERT INTO users VALUES (\'a@b.co\');\n'),
+      [`https://${HOST}/terraform.tfstate`]: t('{"version":4,"terraform_version":"1.9.0","resources":[{"type":"aws_db_instance","password":"tf-secret-pw"}]}', 'application/json'),
+      [`https://${HOST}/.npmrc`]: t('//registry.npmjs.org/:_authToken=npm_SECRETVALUE123\n'),
+      [`https://${HOST}/phpinfo.php`]: t('<html><title>PHP 8.3.1 - phpinfo()</title><h1>PHP Version 8.3.1</h1></html>', 'text/html'),
+      [`https://${HOST}/_cluster/health`]: t('{"cluster_name":"prod","status":"green","number_of_nodes":3}', 'application/json'),
+      [`https://${HOST}/Dockerfile`]: t('FROM node:22-alpine\nCOPY . .\nRUN npm ci\n'),
+    }),
+    tlsInspect: goodTls,
+    deepProbes: true
+  });
+  const findings = buildLiveFindings(probe, NOW);
+  const byId = (id: number) => findings.find((f) => f.ruleId === id);
+  assert.equal(byId(27008)?.severity, 'CRITICAL');
+  assert.match(byId(27009)!.title, /terraform\.tfstate, \/\.npmrc|\.npmrc, \/terraform\.tfstate/);
+  assert.equal(byId(27010)?.severity, 'HIGH');
+  assert.match(byId(27011)!.snippet, /Elasticsearch/);
+  assert.equal(byId(27012)?.severity, 'MEDIUM');
+  assert.doesNotMatch(JSON.stringify(findings), /tf-secret-pw|npm_SECRETVALUE123|a@b\.co/);
+});
+
+test('LIVE-08..12: SPA pages, HTML 404s and look-alike text do not count as artifacts', async () => {
+  const probe = await probeLiveSite(`https://${HOST}/`, [], {
+    fetchImpl: fakeSite({
+      ...redirectHttp,
+      [`https://${HOST}/dump.sql`]: { status: 200, body: 'Page not found', headers: { 'content-type': 'text/plain' } },
+      [`https://${HOST}/terraform.tfstate`]: { status: 200, body: '{"error":"not found"}', headers: { 'content-type': 'application/json' } },
+      [`https://${HOST}/Dockerfile`]: { status: 200, body: '<!doctype html><p>FROM our team</p><p>RUN fast</p>', headers: { 'content-type': 'text/html' } },
+      [`https://${HOST}/adminer.php`]: { status: 404, body: '<title>Adminer</title>', headers: { 'content-type': 'text/html' } },
+    }),
+    tlsInspect: goodTls,
+    deepProbes: true
+  });
+  assert.deepEqual(probe.exposedFiles, []);
+  assert.deepEqual(buildLiveFindings(probe, NOW), []);
+});
+
+test('LIVE-08..12 paths are not requested unless the domain is verified (deepProbes)', async () => {
+  const calls: string[] = [];
+  const probe = await probeLiveSite(`https://${HOST}/`, [], {
+    fetchImpl: fakeSite({ ...redirectHttp, [`https://${HOST}/backup.sql`]: { status: 200, body: '-- PostgreSQL database dump\n', headers: { 'content-type': 'text/plain' } } }, calls),
+    tlsInspect: goodTls
+  });
+  assert.equal(probe.deepProbes, false);
+  assert.ok(!calls.some((u) => /backup\.sql|terraform|adminer|phpinfo/.test(u)), 'no deep paths requested');
+  assert.equal(buildLiveFindings(probe, NOW).some((f) => f.ruleId === 27008), false);
+});
+
+test('paced probes go one at a time and stop at the first challenge; LIVE-13 reports the gap', async () => {
+  const calls: string[] = [];
+  let inFlight = 0; let peak = 0;
+  const base = fakeSite({ ...redirectHttp }, calls);
+  const fetchImpl = (async (url: string | URL, init?: RequestInit) => {
+    const u = String(url);
+    inFlight++; peak = Math.max(peak, inFlight);
+    try {
+      if (u.endsWith('/dump.sql')) return new Response('<title>Vercel Security Checkpoint</title>', { status: 403, headers: { 'x-vercel-mitigated': 'challenge', 'content-type': 'text/html' } });
+      return await base(url, init);
+    } finally { inFlight--; }
+  }) as typeof fetch;
+  const probe = await probeLiveSite(`https://${HOST}/`, [], { fetchImpl, tlsInspect: goodTls, deepProbes: true, probeIntervalMs: 5 });
+  const pathCalls = calls.filter((u) => !u.startsWith('http://'));
+  assert.equal(pathCalls.length, 6, '.env x4 and .git x2 answered, nothing after /dump.sql');
+  assert.ok(peak <= 2, `path probes were sequential (peak ${peak}, the plain-http check runs alongside)`);
+  assert.deepEqual(probe.probeCoverage, { answered: 6, total: 26 });
+  const gap = buildLiveFindings(probe, NOW).find((f) => f.ruleId === 27013);
+  assert.equal(gap?.type, 'VIBEPOLISH');
+  assert.match(gap!.title, /6\/26 paths checked/);
+});
+
+test('LIVE-13 stays silent when every exposure path was answered', async () => {
+  const probe = await probeLiveSite(`https://${HOST}/`, [], { fetchImpl: fakeSite(redirectHttp), tlsInspect: goodTls, deepProbes: true, probeIntervalMs: 1 });
+  assert.deepEqual(probe.probeCoverage, { answered: 26, total: 26 });
+  assert.equal(buildLiveFindings(probe, NOW).some((f) => f.ruleId === 27013), false);
+});
+
+test('the probe key header goes on exposure probes only, and only when a key is given', async () => {
+  const seen: { url: string; key: string | null }[] = [];
+  const base = fakeSite(redirectHttp);
+  const fetchImpl = (async (url: string | URL, init?: RequestInit) => {
+    seen.push({ url: String(url), key: new Headers(init?.headers).get('x-zelsis-probe') });
+    return base(url, init);
+  }) as typeof fetch;
+  await probeLiveSite(`https://${HOST}/`, [], { fetchImpl, tlsInspect: goodTls, deepProbes: true, probeKey: 'zp_test', probeIntervalMs: 1 });
+  const paths = seen.filter((s) => !s.url.startsWith('http://'));
+  assert.equal(paths.length, 26);
+  assert.ok(paths.every((s) => s.key === 'zp_test'));
+  assert.equal(seen.find((s) => s.url.startsWith('http://'))?.key, null, 'the plain-http redirect check is not a probe');
+
+  seen.length = 0;
+  await probeLiveSite(`https://${HOST}/`, [], { fetchImpl, tlsInspect: goodTls, deepProbes: true, probeIntervalMs: 1 });
+  assert.ok(seen.every((s) => s.key === null));
 });

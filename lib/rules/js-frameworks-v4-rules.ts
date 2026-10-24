@@ -493,6 +493,13 @@ export function evaluateJsFrameworksV4Rules(file: CodeFile, lines: string[], cle
         const l = lines[i];
         const regexLit = corsFile && /\borigin\s*:\s*\[?[^\]\n]*?\/((?:\\.|[^/\\\n])+)\/[gimsuy]*\s*[,\]}]/.exec(l);
         if (regexLit && /\\\.|\.(?:com|io|net|org|dev|app)/.test(regexLit[1]) && !/\$\)?$/.test(regexLit[1])) return /./;
+        // A regex kept in a variable and tested against the origin: allowed.test(origin) with new RegExp('acme\\.com') or /acme\.com/
+        const tested = corsFile && /\b(\w+)\.test\(\s*(?:origin|requestOrigin)\b/.exec(l);
+        if (tested) {
+          const decl = new RegExp(String.raw`\b` + tested[1] + String.raw`\s*=\s*(?:new\s+RegExp\(([^)\n]*)\)|\/((?:\\.|[^/\\\n])+)\/[gimsuy]*)`).exec(c);
+          const patterns = decl ? (decl[2] !== undefined ? [decl[2]] : [...(decl[1] ?? '').matchAll(/(['"`])((?:\\.|(?!\1).)*)\1/g)].map((s) => s[2])) : [];
+          if (patterns.some((p) => /\\\\?\.|\.(?:com|io|net|org|dev|app)\b/.test(p) && !(/^\^/.test(p) && /\$\)?$/.test(p)))) return /./;
+        }
         const strCheck = /\b(?:origin|requestOrigin|event\.origin|e\.origin|evt\.origin|msg\.origin|message\.origin)\??\.(includes|endsWith|startsWith|indexOf)\(\s*['"]([^'"]+)['"]\s*\)/.exec(l);
         if (!strCheck || !(corsFile || /\.origin/.test(strCheck[0]))) return null;
         const [, method, value] = strCheck;
@@ -513,6 +520,7 @@ export function evaluateJsFrameworksV4Rules(file: CodeFile, lines: string[], cle
       const honoJwt = /['"]hono\/jwt['"]/.test(c);
       const jose = /\b(?:SignJWT|jwtVerify)\b/.test(c);
       const betterAuth = /['"](?:better-auth|lucia)['"]/.test(c);
+      const authJs = /['"](?:next-auth|@auth\/[\w-]+)['"]/.test(c);
       const lit = String.raw`['"][^'"\s]{6,}['"]`;
       scan(/secret|keys|password|TextEncoder/, (i) => {
         const l = lines[i];
@@ -524,7 +532,8 @@ export function evaluateJsFrameworksV4Rules(file: CodeFile, lines: string[], cle
           jose && rx(String.raw`new\s+TextEncoder\(\s*\)\.encode\(\s*` + lit + String.raw`\s*\)`).test(l),
           rx(String.raw`\b(?:session|expressSession|cookieSession)\s*\(\s*\{[^}]*\b(?:secret|keys)\s*:\s*\[?\s*` + lit).test(l),
           rx(String.raw`getIronSession\s*(?:<[^>]*>)?\([^)]*\bpassword\s*:\s*` + lit).test(l),
-          betterAuth && rx(String.raw`^\s*secret\s*:\s*` + lit + String.raw`\s*,?\s*$`).test(l)
+          betterAuth && rx(String.raw`^\s*secret\s*:\s*` + lit + String.raw`\s*,?\s*$`).test(l),
+          authJs && rx(String.raw`(?:^|[{,]\s*)secret\s*:\s*` + lit).test(l)
         ];
         return checks.some(Boolean) ? /./ : null;
       }, (i) => add({ ruleId: 28925, code: 'JSF-25', severity: 'HIGH', category: 'Secrets Management', lineIdx: i,
@@ -536,7 +545,7 @@ export function evaluateJsFrameworksV4Rules(file: CodeFile, lines: string[], cle
     // JSF-26: JWT decoded without signature verification in server-side auth code
     if (/(?:^|\/)(?:middleware|proxy|hooks\.server|server|auth)\.[cm]?[jt]s$|(?:^|\/)(?:app\/.*\/route|pages\/api\/.*|server\/.*|src\/server\/.*|api\/.*|.*\.server)\.[cm]?[jt]s$|\+(?:page\.)?server\.[jt]s$/.test(path) &&
       !/jwtVerify|jwt\.verify|verifyToken|verifyJwt|verifyIdToken|\.verify\s*\(|getServerSession|\bauth\(\s*\)|getToken\s*\(|createRemoteJWKSet|clerk|\.auth\.getUser/i.test(c)) {
-      scan(/decodeJwt\s*\(|jwtDecode\s*\(|jwt_decode\s*\(/, () => /\b(?:decodeJwt|jwtDecode|jwt_decode)\s*(?:<[^>]*>)?\s*\(/,
+      scan(/decodeJwt|jwtDecode|jwt_decode/, () => /\b(?:decodeJwt|jwtDecode|jwt_decode)\s*(?:<[^>]*>)?\s*\(/,
         (i) => add({ ruleId: 28926, code: 'JSF-26', severity: 'HIGH', category: 'Authentication', lineIdx: i,
           title: 'Server Trusts JWT Claims Decoded Without Verifying the Signature (CWE-345)',
           why: 'decodeJwt / jwt-decode only base64-decode the payload; anyone can craft a token with role: "admin" or another user\'s sub and it is accepted here.',

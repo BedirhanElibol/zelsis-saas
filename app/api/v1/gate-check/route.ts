@@ -3,6 +3,8 @@ import { createClient } from '@supabase/supabase-js';
 import { runStaticCodeScan, CodeFile } from '@/lib/scanner-engine';
 import { fetchGithubRepositoryData, isValidGithubUrl, parseGithubUrl } from '@/lib/github-api';
 import { fetchWebsiteAuditData, isValidWebUrl } from '@/lib/website-scanner';
+import { getSupabaseAdmin } from '@/lib/supabase-admin';
+import { getVerifiedSite } from '@/lib/site-verification';
 import { dispatchWebhookAlerts } from '@/lib/notifications';
 import { checkRateLimit, createRateLimitResponse } from '@/lib/rate-limiter';
 import { GateCheckRequestSchema, validateRequestBody } from '@/lib/validations/api-schemas';
@@ -14,9 +16,10 @@ import { getEffectivePlanTier, getOrgPolicy } from '@/lib/organization';
 import { LOCKED_FIX_TEXT } from '@/lib/fix-gate';
 import { buildWorkflowAnnotations } from '@/lib/ci-annotations';
 import { calculateGateStatus, gatingFindings } from '@/lib/scanner/scoring';
+import { botChallengeMessage } from '@/lib/bot-challenge';
 
 // F-31: Bounded execution duration for static code scans (bounded to 30s for serverless SLA)
-export const maxDuration = 30;
+export const maxDuration = 90; // live scans pace exposure probes (~40 s) to avoid scanner-pattern blocking
 export const dynamic = 'force-dynamic';
 
 function isAllowedWebhookUrl(url: string): boolean {
@@ -295,7 +298,8 @@ export async function POST(req: NextRequest) {
       }
 
       logger.info(`[Gate Check] Initiating website audit for ${rawRepoUrl}`);
-      const webData = await fetchWebsiteAuditData(rawRepoUrl);
+      const verifiedSite = await getVerifiedSite(getSupabaseAdmin(), authenticatedUserId, rawRepoUrl);
+      const webData = await fetchWebsiteAuditData(rawRepoUrl, undefined, { deepProbes: Boolean(verifiedSite), probeKey: verifiedSite?.probeKey ?? undefined });
       filesToScan = webData?.files || [];
       targetName = webData?.title || rawRepoUrl;
 
@@ -304,7 +308,7 @@ export async function POST(req: NextRequest) {
           status: 'ERROR',
           gateStatus: 'FAILED',
           readinessScore: 0,
-          error: `Automated audit blocked by Cloudflare Bot Protection on "${rawRepoUrl}". Disable bot challenge for scanner user-agents or run audit against a staging endpoint.`,
+          error: botChallengeMessage(rawRepoUrl, webData.challengeProvider),
           timestamp: new Date().toISOString()
         }, { status: 403 });
       }

@@ -143,3 +143,41 @@ test('sendWorkspaceInviteEmail escapes the user-chosen workspace name', async ()
     else process.env.RESEND_API_KEY = origKey;
   }
 });
+
+test('sendEmail enforces contact@zelsis.com as sender and reply-to when unset or legacy/noreply', async () => {
+  const origKey = process.env.RESEND_API_KEY;
+  const origFrom = process.env.RESEND_FROM_EMAIL;
+  process.env.RESEND_API_KEY = 're_test_key';
+  delete process.env.RESEND_FROM_EMAIL;
+
+  let interceptedBody: Record<string, unknown> = {};
+  const fetchMock = mock.method(globalThis, 'fetch', async (_url: unknown, init?: RequestInit) => {
+    interceptedBody = JSON.parse(String(init?.body ?? '{}'));
+    return new Response(JSON.stringify({ id: 'msg_test' }), { status: 200 });
+  });
+
+  try {
+    // 1. Unset RESEND_FROM_EMAIL -> defaults to Zelsis <contact@zelsis.com>
+    await sendEmail({ to: 'user@example.com', subject: 'Hi', html: '<p>Hi</p>' });
+    assert.equal(interceptedBody.from, 'Zelsis <contact@zelsis.com>');
+    assert.equal(interceptedBody.reply_to, 'contact@zelsis.com');
+
+    // 2. Legacy onboarding@resend.dev -> overridden to Zelsis <contact@zelsis.com>
+    process.env.RESEND_FROM_EMAIL = 'Zelsis <onboarding@resend.dev>';
+    await sendEmail({ to: 'user@example.com', subject: 'Hi', html: '<p>Hi</p>' });
+    assert.equal(interceptedBody.from, 'Zelsis <contact@zelsis.com>');
+
+    // 3. Any noreply address -> overridden to Zelsis <contact@zelsis.com>
+    process.env.RESEND_FROM_EMAIL = 'Zelsis <noreply@zelsis.com>';
+    await sendEmail({ to: 'user@example.com', subject: 'Hi', html: '<p>Hi</p>', from: 'Zelsis <noreply@zelsis.com>' });
+    assert.equal(interceptedBody.from, 'Zelsis <contact@zelsis.com>');
+    assert.equal(interceptedBody.reply_to, 'contact@zelsis.com');
+  } finally {
+    fetchMock.mock.restore();
+    if (origKey !== undefined) process.env.RESEND_API_KEY = origKey;
+    else delete process.env.RESEND_API_KEY;
+    if (origFrom !== undefined) process.env.RESEND_FROM_EMAIL = origFrom;
+    else delete process.env.RESEND_FROM_EMAIL;
+  }
+});
+

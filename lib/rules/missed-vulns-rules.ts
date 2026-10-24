@@ -1,5 +1,5 @@
 /**
- * Vulnerabilities small teams ship that the other packs missed (GAP-01.., Rule IDs 28801-28899).
+ * Vulnerabilities apps ship that the other packs missed (GAP-01.., Rule IDs 28801-28899).
  * Found by a false-negative hunt over realistic snippets from public incidents and advisories
  * (Supabase / Firebase open data, mass assignment, client-controlled roles, leaked secrets in responses,
  * upload file names, template injection, postMessage token leaks). Each rule keys on a pattern that is
@@ -7,7 +7,8 @@
  */
 import { Finding } from '@/data/schema';
 import { CodeFile } from '../scanner-engine';
-import type { RepoContext } from '../scanner/repo-context';
+import { databaseExposedAt, type RepoContext } from '../scanner/repo-context';
+import { PUBLIC_ARTIFACT } from '../scanner/scan-paths';
 
 export interface MissedVulnsRuleResult {
   findings: Finding[];
@@ -15,6 +16,16 @@ export interface MissedVulnsRuleResult {
 }
 
 interface Hit { ruleId: number; code: string; title: string; severity: Finding['severity']; category: string; lineIdx: number; why: string; fix: string }
+
+/** Table names that hold per-user or confidential rows; a public read on them is a leak, not a catalog. */
+export const PRIVATE_TABLE = /^(?:users?|accounts?|messages?|chats?|chat_messages|conversations?|notes?|documents?|files?|orders?|payments?|invoices?|transactions?|subscriptions?|customers?|emails?|addresses|secrets?|tokens?|api_keys?|sessions?|private_\w+|\w+_private)$/i;
+
+/** Bucket names that signal per-user confidential files (avatars, images, public assets are meant to be readable). */
+const PRIVATE_BUCKET = /(?:^|[-_])(?:invoices?|receipts?|documents?|docs|private|contracts?|kyc|identity|ids|passports?|licen[cs]es?|medical|health|statements?|attachments?|backups?|exports?|reports?|resumes?|cvs?|payslips?|tax(?:es)?|secure|confidential|user[-_]?files)(?:$|[-_])/i;
+
+/** A SELECT USING (true) policy on a catalog table (products, prices): a deliberate public read. */
+export const isPublicCatalogRead = (stmt: string) => /\bFOR\s+SELECT\b/i.test(stmt)
+  && !PRIVATE_TABLE.test(stmt.match(/\bON\s+(?:"?\w+"?\.)?"?(\w+)"?/i)?.[1] || '');
 
 const lineAt = (content: string, offset: number) => content.slice(0, Math.max(0, offset)).split('\n').length - 1;
 const isComment = (l: string) => /^\s*(?:\/\/|\*|\/\*|#)/.test(l);
@@ -42,7 +53,7 @@ export function evaluateMissedVulnsRules(file: CodeFile, lines: string[], cleanC
   const add = (h: Hit) => { if (h.lineIdx >= 0 && !hits.some((x) => x.ruleId === h.ruleId && x.lineIdx === h.lineIdx)) hits.push(h); };
 
   // GAP-01: RLS policy that lets anyone UPDATE / DELETE every row (USING (true) / WITH CHECK (true))
-  if (/\.sql$/i.test(path) && (context?.exposesDatabaseToClients || /(?:^|\/)supabase\//i.test(path))) {
+  if (/\.sql$/i.test(path) && ((context && databaseExposedAt(context, path)) || /(?:^|\/)supabase\//i.test(path))) {
     const sql = cleanContent.split('\n').map((l) => l.replace(/--.*$/, '')).join('\n');
     let n = 0;
     for (const m of sql.matchAll(/CREATE\s+POLICY\b[^;]*;/gi)) {
@@ -57,6 +68,35 @@ export function evaluateMissedVulnsRules(file: CodeFile, lines: string[], cleanC
         why: `This ${cmd} policy evaluates to true for every row, so anyone holding the public anon key (or any signed-in user) can ${cmd === 'DELETE' ? 'delete' : 'overwrite'} other users' rows straight from the browser through /rest/v1.`,
         fix: 'Scope the policy to the row owner: USING (auth.uid() = user_id) WITH CHECK (auth.uid() = user_id), or drop the policy and write from the server with the service role.' });
       if (++n >= 3) break;
+    }
+    // GAP-17: SELECT USING (true) on a table that holds private data (public read of products/prices is normal)
+    let r = 0;
+    for (const m of sql.matchAll(/CREATE\s+POLICY\b[^;]*;/gi)) {
+      const stmt = m[0];
+      if (!/\bFOR\s+SELECT\b/i.test(stmt) || /\bTO\s+(?:service_role|postgres|supabase_admin)\b/i.test(stmt)) continue;
+      const table = stmt.match(/\bON\s+(?:"?\w+"?\.)?"?(\w+)"?/i)?.[1] || '';
+      if (!PRIVATE_TABLE.test(table)) continue;
+      const t = stmt.search(/\bUSING\s*\(\s*true\s*\)/i);
+      if (t === -1) continue;
+      add({ ruleId: 28817, code: 'GAP-17', severity: 'HIGH', category: 'Row Level Security', lineIdx: lineAt(sql, m.index! + t),
+        title: `RLS Policy Lets Anyone Read Every Row of ${table} (USING (true))`,
+        why: `The SELECT policy on ${table} is true for every row, so anyone holding the public anon key can download all of it from the browser through /rest/v1.`,
+        fix: `Scope the read to the owner: USING (auth.uid() = user_id), or expose only public columns through a view.` });
+      if (++r >= 3) break;
+    }
+    // GAP-21: storage SELECT policy that lets every caller read a private bucket (scoped by bucket_id only)
+    for (const m of sql.matchAll(/CREATE\s+POLICY\b[^;]*?\bON\s+"?storage"?\s*\.\s*"?objects"?\b([^;]*);/gi)) {
+      const rest = m[1];
+      if (!/\bFOR\s+SELECT\b/i.test(rest) || /\bTO\s+service_role\b/i.test(rest)) continue;
+      const using = rest.slice(Math.max(0, rest.search(/\bUSING\b/i)));
+      if (/auth\.(?:uid|jwt|email)\s*\(|\bowner(?:_id)?\b|foldername|\bselect\b|\b(?:is|has|can)_\w+\s*\(/i.test(using)) continue;
+      const bucket = rest.match(/\bbucket_id\s*=\s*'([\w-]+)'/i)?.[1] || '';
+      if (!PRIVATE_BUCKET.test(bucket)) continue;
+      add({ ruleId: 28821, code: 'GAP-21', severity: 'HIGH', category: 'Broken Access Control', lineIdx: lineAt(sql, m.index! + m[0].search(/\bbucket_id\b/i)),
+        title: `Storage Policy Lets Every Caller Read All Files in the "${bucket}" Bucket`,
+        why: `The SELECT policy on storage.objects only checks bucket_id = '${bucket}', so ${/\bTO\s+authenticated\b/i.test(rest) ? 'any signed-in user' : 'anyone with the anon key'} can list and download every other user's files in it.`,
+        fix: `Scope reads to the owner's folder: USING (bucket_id = '${bucket}' AND (storage.foldername(name))[1] = auth.uid()::text), and upload under \${user.id}/.` });
+      break;
     }
   }
 
@@ -167,8 +207,13 @@ export function evaluateMissedVulnsRules(file: CodeFile, lines: string[], cleanC
     // GAP-06: role / admin flag trusted from a custom request header
     lines.forEach((l, i) => {
       if (isComment(l)) return;
-      if (/(?:headers\.get\(\s*['"]x-(?:user-)?(?:role|admin|is-admin)['"]\s*\)|headers\[\s*['"]x-(?:user-)?(?:role|admin|is-admin)['"]\s*\])\s*[!=]==?\s*['"]/i.test(l)) {
-        add({ ruleId: 28806, code: 'GAP-06', severity: 'MEDIUM', category: 'Broken Access Control', lineIdx: i,
+      const hm = l.match(/(?:headers\.get\(\s*['"](x-(?:user-)?(?:role|admin|is-admin))['"]\s*\)|headers\[\s*['"](x-(?:user-)?(?:role|admin|is-admin))['"]\s*\])\s*[!=]==?\s*['"]/i);
+      if (hm) {
+        // Middleware or a proxy in this repo sets the header itself: the handler reads a server value
+        if (context?.serverSetHeaders.has((hm[1] || hm[2]).toLowerCase())) return;
+        // Whole repo scanned and nothing sets it: the client is the only source. A single file cannot tell.
+        const repoWide = (context?.filePaths.size ?? 0) > 1;
+        add({ ruleId: 28806, code: 'GAP-06', severity: repoWide ? 'HIGH' : 'MEDIUM', category: 'Broken Access Control', lineIdx: i,
           title: 'Admin Check Trusts a Custom Request Header',
           why: 'Clients can send any header. Unless a proxy or middleware strips and re-sets it on every request (the CVE-2025-29927 class of bypass), x-user-role: admin is attacker-controlled.',
           fix: 'Resolve the role from the verified session or token inside the handler instead of a forwarded header.' });
@@ -302,8 +347,11 @@ export function evaluateMissedVulnsRules(file: CodeFile, lines: string[], cleanC
     lines.forEach((l, i) => {
       if (isComment(l) || !/\bauth\.(?:signUp|updateUser)\s*\(/.test(l)) return;
       for (let k = i; k < Math.min(lines.length, i + 10); k++) {
-        if (/\bdata\s*:\s*\{[^}]*\b(?:role|roles|is_admin|isAdmin|admin|plan|tier|credits|permissions|is_pro|isPro|subscription_tier)\s*[:,}]/.test(lines[k])) {
-          add({ ruleId: 28815, code: 'GAP-15', severity: 'MEDIUM', category: 'Authorization', lineIdx: k,
+        const priv = lines[k].match(/\bdata\s*:\s*\{[^}]*\b(?:role|roles|is_admin|isAdmin|admin|plan|tier|credits|permissions|is_pro|isPro|subscription_tier)\s*([:,}])([^,}]*)/);
+        if (priv) {
+          // The value comes straight from the request: the user picks their own role or plan at sign-up
+          const fromRequest = priv[1] === ':' && /\b(?:formData\.get|form\.get|searchParams\.get|req(?:uest)?\.(?:body|query)|body\.)/.test(priv[2]);
+          add({ ruleId: 28815, code: 'GAP-15', severity: fromRequest ? 'HIGH' : 'MEDIUM', category: 'Authorization', lineIdx: k,
             title: 'Privilege Field Stored in User-Editable Supabase user_metadata',
             why: 'options.data / updateUser({ data }) writes raw_user_meta_data, which the user can change at any time with supabase.auth.updateUser(); any check that reads this role, plan or credit value can be self-granted.',
             fix: 'Keep privileges in app_metadata (set with the service role via auth.admin.updateUserById) or in a table users cannot write.' });
@@ -324,6 +372,18 @@ export function evaluateMissedVulnsRules(file: CodeFile, lines: string[], cleanC
         }
       });
     }
+
+    // GAP-18: Clerk middleware that lists the whole /api tree as public, so auth.protect() never runs for it
+    if (/\bclerkMiddleware\s*\(/.test(cleanContent)) {
+      for (const m of cleanContent.matchAll(/\b(?:const|let|var)\s+(\w*public\w*)\s*=\s*createRouteMatcher\s*\(\s*\[([^\]]*)\]/gi)) {
+        const wide = m[2].match(/['"](\/api(?:\(\.\*\)|\/\(\.\*\)|\/:path\*|\/\.\*)|\/\(api\|trpc\)\(\.\*\))['"]/);
+        if (!wide) continue;
+        add({ ruleId: 28818, code: 'GAP-18', severity: 'HIGH', category: 'Broken Access Control', lineIdx: lineAt(cleanContent, m.index! + m[0].indexOf(wide[0])),
+          title: `Clerk Middleware Marks Every API Route Public (${wide[1]})`,
+          why: `${m[1]} matches ${wide[1]}, so the middleware skips auth.protect() for every API route. Any handler that does not call auth() itself is open to anonymous requests.`,
+          fix: 'List only the routes that must be public (e.g. "/api/webhooks(.*)") and let every other API route go through auth.protect().' });
+      }
+    }
   }
 
   // GAP-13: Flask debug server (Werkzeug console) bound to every interface
@@ -337,6 +397,267 @@ export function evaluateMissedVulnsRules(file: CodeFile, lines: string[], cleanC
           title: 'Flask Debug Server Exposed on All Interfaces',
           why: 'debug=True enables the Werkzeug interactive debugger, which executes Python from the browser; host 0.0.0.0 makes it reachable from the network (container port, LAN, cloud VM).',
           fix: 'Serve with gunicorn/uvicorn in production and read debug from the environment: app.run(debug=os.getenv("FLASK_DEBUG") == "1") bound to 127.0.0.1.' });
+      }
+    });
+  }
+
+  // GAP-22: whole submitted form written to the database (Object.fromEntries(formData))
+  if (isJs && /Object\.fromEntries/.test(cleanContent)) {
+    lines.forEach((l, i) => {
+      if (!isComment(l) && /(?:\.(?:update|insert|upsert)\(\s*|\bdata\s*:\s*)(?:\{\s*\.\.\.)?Object\.fromEntries\(\s*(?:await\s+)?\w*(?:form|req)\w*(?:\.entries\(\))?\s*\)/i.test(l)) {
+        add({ ruleId: 28822, code: 'GAP-22', severity: 'HIGH', category: 'Mass Assignment', lineIdx: i,
+          title: 'Every Submitted Form Field Is Written to the Database (Object.fromEntries)',
+          why: 'Form fields come from the client, so a request can add role, plan, credits or user_id to the form and the update writes them as-is.',
+          fix: 'Parse the form with a Zod schema that lists the editable fields (schema.parse(Object.fromEntries(formData))) and write only the parsed object.' });
+      }
+    });
+  }
+
+  // GAP-23: every key of a request dict copied onto a model (for k, v in payload.items(): setattr(obj, k, v))
+  if (isPy) {
+    lines.forEach((l, i) => {
+      const loop = l.match(/^\s*for\s+(\w+)\s*,\s*(\w+)\s+in\s+([^\n:]+?)\.items\(\)\s*:/);
+      if (!loop || isComment(l) || !/payload|body|data|update|changes|patch|request|json|form|params/i.test(loop[3])) return;
+      const iterExpr = loop[3].trim();
+      if (/^(?:\w+\.)?(?:validated_data|cleaned_data)$|\.(?:model_dump|dict)\s*\([^)]*\bexclude_unset\s*=\s*True\b/.test(iterExpr)) return;
+      if (/^\w+$/.test(iterExpr)) {
+        const prevBlock = lines.slice(Math.max(0, i - 10), i).join('\n');
+        const safeAssignRe = new RegExp(String.raw`\b` + iterExpr + String.raw`\s*(?::\s*[^=\n]+)?=\s*(?:(?:\w+\.)?(?:validated_data|cleaned_data)\b|[^\n]*\.(?:model_dump|dict)\s*\([^)]*\bexclude_unset\s*=\s*True\b)`);
+        if (safeAssignRe.test(prevBlock)) return;
+      }
+      const win = lines.slice(i, i + 3).join('\n');
+      if (new RegExp(String.raw`\bif\s+(?:not\s+)?` + loop[1] + String.raw`\s+(?:not\s+)?in\b`).test(win)) return;
+      if (new RegExp(String.raw`\bsetattr\(\s*\w+\s*,\s*` + loop[1] + String.raw`\s*,\s*` + loop[2] + String.raw`\s*\)`).test(win)) {
+        add({ ruleId: 28823, code: 'GAP-23', severity: 'HIGH', category: 'Mass Assignment', lineIdx: i,
+          title: 'Every Request Field Is Copied Onto the Model (setattr loop)',
+          why: `Each key in ${loop[3]} becomes an attribute, so a request can set is_admin, role, balance or owner_id along with the fields the form shows.`,
+          fix: 'Validate with a Pydantic model that lists the editable fields and copy only those: for k, v in UserUpdate(**payload).model_dump(exclude_unset=True).items().' });
+      }
+    });
+  }
+
+  // GAP-24: Go handler reflects the request Origin while allowing credentials
+  if (/\.go$/i.test(path) && /Access-Control-Allow-Credentials["']?\s*,\s*["']true/i.test(cleanContent)) {
+    lines.forEach((l, i) => {
+      if (!isComment(l) && /Header\(\)\.(?:Set|Add)\(\s*"Access-Control-Allow-Origin"\s*,\s*\w+\.Header\.Get\(\s*"Origin"\s*\)\s*\)/.test(l)) {
+        add({ ruleId: 28824, code: 'GAP-24', severity: 'HIGH', category: 'Network & CORS', lineIdx: i,
+          title: 'CORS Reflects Any Origin With Credentials Allowed',
+          why: 'Echoing the request Origin together with Allow-Credentials: true lets any website make authenticated requests with the user\'s cookies and read the responses.',
+          fix: 'Compare the Origin against an allow-list of exact origins and only then echo it (and add Vary: Origin).' });
+      }
+    });
+  }
+
+  // GAP-25: Supabase Edge Function runs an auth.admin operation for any caller
+  if (/(?:^|\/)supabase\/functions\/.+\.[jt]s$/i.test(path) && /SERVICE_ROLE/.test(cleanContent)
+    && !/\.auth\.getUser\s*\(|getClaims\s*\(|jwtVerify|verify\w*\s*\(|headers\.get\(/i.test(cleanContent)) {
+    lines.forEach((l, i) => {
+      if (!isComment(l) && /\.auth\.admin\.(?:deleteUser|updateUserById|createUser|inviteUserByEmail|generateLink)\s*\(/.test(l)) {
+        add({ ruleId: 28825, code: 'GAP-25', severity: 'HIGH', category: 'Broken Access Control', lineIdx: i,
+          title: 'Edge Function Runs an Admin Auth Operation Without Checking the Caller',
+          why: 'Edge Functions accept the public anon key as a valid JWT by default, and this function never resolves the caller, so anyone can trigger the service-role admin call on any user.',
+          fix: 'Resolve the caller first (const { data: { user } } = await supabase.auth.getUser(token) from the Authorization header), check they may act on the target, and only then use the admin client.' });
+      }
+    });
+  }
+
+  const isNextConfig = /(?:^|\/)next\.config\.[cm]?[jt]s$/i.test(path);
+  // GAP-26: server secret inlined into the client bundle through next.config env
+  if (isNextConfig && /\benv\s*:\s*\{/.test(cleanContent)) {
+    const block = cleanContent.slice(cleanContent.search(/\benv\s*:\s*\{/));
+    const end = block.indexOf('}');
+    const start = cleanContent.length - block.length;
+    for (const m of block.slice(0, end).matchAll(/\b(\w*(?:SECRET|PRIVATE|SERVICE_ROLE|PASSWORD|DATABASE_URL|API_KEY|TOKEN)\w*)\s*:/gi)) {
+      if (/PUBLISHABLE|PUBLIC|ANON/i.test(m[1])) continue;
+      add({ ruleId: 28826, code: 'GAP-26', severity: 'CRITICAL', category: 'Secret Isolation', lineIdx: lineAt(cleanContent, start + m.index!),
+        title: `Server Secret ${m[1]} Inlined Into the Browser Bundle (next.config env)`,
+        why: 'Values in the next.config env block are replaced into client-side JavaScript at build time, so anyone can read this secret from the shipped bundle.',
+        fix: `Remove ${m[1]} from next.config env and read process.env.${m[1]} only in server code (route handlers, server actions, server components).` });
+    }
+  }
+
+  // GAP-27: rewrite whose destination host comes from the request path (open proxy / SSRF)
+  if (isNextConfig) {
+    lines.forEach((l, i) => {
+      if (!isComment(l) && /\bdestination\s*:\s*['"\x60]https?:\/\/:\w+/.test(l)) {
+        add({ ruleId: 28827, code: 'GAP-27', severity: 'HIGH', category: 'Server-Side Request Forgery', lineIdx: i,
+          title: 'Rewrite Destination Host Taken From the Request Path (Open Proxy)',
+          why: 'The host part of the destination is a path parameter, so a request can make the server fetch any URL, including internal services and cloud metadata endpoints, and return the response.',
+          fix: 'Hard-code the destination host (https://api.example.com/:path*) and keep only the path as a parameter.' });
+      }
+    });
+  }
+
+  // GAP-28: secret transformed before printing, which defeats GitHub log masking
+  if (/(?:^|\/)\.github\/workflows\/.+\.ya?ml$/i.test(path)) {
+    lines.forEach((l, i) => {
+      // Written to a file (> key.p8) or piped on into another command: nothing reaches the log
+      if (!isComment(l) && /\$\{\{\s*secrets\.\w+\s*\}\}[^|\n]*\|\s*(?:base64|rev|xxd|od|hexdump|sed|tr)\b/.test(l)
+        && !/\|\s*(?:base64|rev|xxd|od|hexdump|sed|tr)\b[^|\n]*(?:>\s*(?!&)\S|\|\s*\S)/.test(l)) {
+        add({ ruleId: 28828, code: 'GAP-28', severity: 'HIGH', category: 'Secrets Management', lineIdx: i,
+          title: 'Workflow Prints an Encoded Secret, Bypassing Log Masking',
+          why: 'GitHub masks only the literal secret value; base64 or other transforms print a different string that is not masked, and the log (public for public repos) reveals the secret.',
+          fix: 'Never echo secrets. Pass them to tools through env: and let the tool read them; if you need an encoded form, register it with ::add-mask:: before printing anything.' });
+      }
+    });
+  }
+
+  // GAP-29: secret baked into a Docker image layer
+  if (/(?:^|\/)Dockerfile(?:\.[\w-]+)?$/i.test(path)) {
+    lines.forEach((l, i) => {
+      if (isComment(l)) return;
+      const copyEnv = /^\s*(?:COPY|ADD)\s+(?:--\S+\s+)*\.env(?:\.(?!example|sample|template|dist)[\w.-]+)?\s/i.test(l);
+      const envSecret = /^\s*ENV\s+(\w*(?:SECRET|PRIVATE_KEY|SERVICE_ROLE|PASSWORD|API_KEY|_TOKEN)\w*)\s*[= ]\s*\S/i.exec(l);
+      if (!copyEnv && !(envSecret && !/PUBLIC|PUBLISHABLE/i.test(envSecret[1]))) return;
+      add({ ruleId: 28829, code: 'GAP-29', severity: 'HIGH', category: 'Secrets Management', lineIdx: i,
+        title: copyEnv ? 'Environment File Copied Into the Docker Image' : `Secret ${envSecret![1]} Stored in a Docker Image Layer`,
+        why: 'Image layers keep every file and ENV value; anyone who can pull the image (registry, CI cache, a leaked tarball) reads the secret with docker history or by unpacking the layer.',
+        fix: 'Pass secrets at runtime (docker run -e / orchestrator secrets) or with BuildKit RUN --mount=type=secret during the build; add .env to .dockerignore.' });
+    });
+  }
+
+  const isTemplate = /\.(?:example|sample|template|dist)(?:\.[a-z]+)?$/i.test(path);
+  // GAP-30: Supabase Supavisor pooler URI with the database password inline (SEC-SECRET-82 covers only db.<ref>.supabase.co)
+  if (!isTemplate) {
+    lines.forEach((l, i) => {
+      const m = /postgres(?:ql)?:\/\/postgres\.[a-z0-9]{15,25}:([^@\s'"`]{6,})@aws-\d+-[a-z0-9-]+\.pooler\.supabase\.com/i.exec(l);
+      if (!m || /\$\{|\$[A-Z_]|<|\[|YOUR|PASSWORD|placeholder/i.test(m[1])) return;
+      add({ ruleId: 28830, code: 'GAP-30', severity: 'CRITICAL', category: 'Secret Isolation', lineIdx: i,
+        title: 'Supabase Pooler Connection String With the Database Password Committed',
+        why: 'The pooler URI carries the postgres password, which bypasses RLS entirely: anyone with the repo can read and write every table.',
+        fix: 'Reset the database password in Supabase (Project Settings > Database) and read the URI from an environment variable such as DATABASE_URL.' });
+    });
+  }
+
+  // GAP-31: Convex production deploy/admin key in code (full read/write on every table)
+  if (!isTemplate) {
+    lines.forEach((l, i) => {
+      if (/\bprod:[a-z]+-[a-z]+-\d{2,4}\|[A-Za-z0-9+/=_-]{40,}/.test(l)) {
+        add({ ruleId: 28831, code: 'GAP-31', severity: 'CRITICAL', category: 'Secret Isolation', lineIdx: i,
+          title: 'Convex Production Deploy Key Committed',
+          why: 'A Convex prod deploy key grants admin access to the deployment: it can run any function and read or overwrite all data, skipping your auth checks.',
+          fix: 'Regenerate the deploy key in the Convex dashboard and provide it only through CONVEX_DEPLOY_KEY in CI or hosting secrets.' });
+      }
+    });
+  }
+
+  // GAP-32: Next.js server actions encryption key hard-coded in build/deploy config
+  if (/(?:^|\/)(?:Dockerfile(?:\.[\w-]+)?|docker-compose[\w.-]*\.ya?ml|compose\.ya?ml|next\.config\.[cm]?[jt]s|vercel\.json|\.github\/workflows\/[^/]+\.ya?ml)$/i.test(path)) {
+    lines.forEach((l, i) => {
+      if (!isComment(l) && /NEXT_SERVER_ACTIONS_ENCRYPTION_KEY['"]?\s*[:=\s]\s*['"]?[A-Za-z0-9+/]{32,}={0,2}/.test(l)) {
+        add({ ruleId: 28832, code: 'GAP-32', severity: 'HIGH', category: 'Secrets Management', lineIdx: i,
+          title: 'Next.js Server Actions Encryption Key Hard-Coded',
+          why: 'This key encrypts the variables that server actions capture from their closure; with it an attacker can read those values and forge action payloads.',
+          fix: 'Generate a new key and inject NEXT_SERVER_ACTIONS_ENCRYPTION_KEY at build time from a secret store (CI secret, Docker build secret), never as a literal.' });
+      }
+    });
+  }
+
+  // GAP-33: env file, dump, Terraform state, private key, backup or log inside a folder the host serves as-is
+  if (PUBLIC_ARTIFACT.test(path)) {
+    const name = path.split('/').pop() || path;
+    const critical = /^\.env|\.(?:sql|dump|sql\.gz|tfstate|tfstate\.backup|p12|pfx|pem)$|^id_/i.test(name);
+    add({ ruleId: 28833, code: 'GAP-33', severity: critical ? 'CRITICAL' : 'HIGH', category: 'Information Disclosure', lineIdx: 0,
+      title: `Sensitive File in a Public Web Folder (${name})`,
+      why: `Everything under public/ (or static/) is copied into the deployment and served as a plain file, so anyone can download ${path.replace(/^.*?(?:public|static)\//i, '/')} without signing in. On static hosts such as Vercel and Netlify this is the usual way such a file gets exposed.`,
+      fix: 'Delete the file from the public folder and from git history, then rotate every secret it held. Keep dumps, state files and keys outside the repository.' });
+  }
+
+  if (isJs) {
+    // GAP-34: service role key read in a 'use client' module (bundled for the browser)
+    // Each block comment ends at its first */ (no lazy [\s\S]*?), so files full of /** */ cannot backtrack exponentially
+    if (/^\s*(?:\/\/[^\n]*\n\s*|\/\*(?:[^*]|\*(?!\/))*\*\/\s*)*['"]use client['"]/.test(file.content)) {
+      const i = lines.findIndex((l) => !isComment(l) && /process\.env\.[A-Z_]*SERVICE_ROLE[A-Z_]*/.test(l));
+      add({ ruleId: 28834, code: 'GAP-34', severity: 'CRITICAL', category: 'Secrets Management', lineIdx: i,
+        title: "Supabase Service Role Key Used in a 'use client' Module",
+        why: "A 'use client' module is bundled for the browser. If the variable is exposed to the client it ships to every visitor, and the service role key skips every Row Level Security policy; if it is not, the client gets undefined and the code only works by accident on the server.",
+        fix: "Move the admin client into a server-only module (import 'server-only'; route handler or server action) and call it from the client through that boundary." });
+    }
+
+    // GAP-35: CORS wildcard origin together with credentials in static header config
+    if (/(?:^|\/)next\.config\.[cm]?[jt]s$/i.test(path) && /Access-Control-Allow-Credentials['"]?\s*,\s*value\s*:\s*['"]true/i.test(cleanContent)) {
+      const i = lines.findIndex((l) => /Access-Control-Allow-Origin['"]?\s*,\s*value\s*:\s*['"]\*['"]/i.test(l));
+      add({ ruleId: 28835, code: 'GAP-35', severity: 'MEDIUM', category: 'CORS Misconfiguration', lineIdx: i,
+        title: 'CORS Allows Any Origin with Credentials',
+        why: 'Browsers refuse credentialed responses for Access-Control-Allow-Origin: *, so cross-site calls with cookies fail. The usual next "fix" is to reflect the request Origin, which lets any website act as the signed-in user.',
+        fix: 'List the exact origins that may call the API with credentials, or drop Access-Control-Allow-Credentials if the API does not use cookies.' });
+    }
+
+    // GAP-36: user-controlled URL rendered as a link without a scheme check
+    // React 19 refuses javascript: URLs in href, so only older React is affected
+    if (/\.[jt]sx$/i.test(path) && (context?.packageMajors.get('react') ?? 0) < 19
+      && !/\b(?:safeUrl|sanitizeUrl|isSafeUrl|isValidUrl|sanitize|startsWith\(\s*['"]https?:)/.test(cleanContent)) {
+      const i = lines.findIndex((l) => !isComment(l) && /\bhref=\{\s*(?:props\.)?(?:profile|user|author|member|account|seller|owner|creator)\??\.(?:website|homepage|url|link|social\w*|portfolio\w*)\s*\}/i.test(l));
+      add({ ruleId: 28836, code: 'GAP-36', severity: 'MEDIUM', category: 'Cross-Site Scripting', lineIdx: i,
+        title: 'User-Supplied URL Rendered as a Link Without a Scheme Check',
+        why: 'A user can save "javascript:…" as their website; React 18 and older render it and the code runs for every visitor who clicks the link (React 19 blocks javascript: URLs, other schemes like data: still pass).',
+        fix: "Accept only http(s): check new URL(value).protocol is 'http:' or 'https:' when saving and before rendering, and add rel=\"noopener noreferrer\" for external links." });
+    }
+
+    // GAP-37: request body deep-merged into an object
+    {
+      const i = lines.findIndex((l) => !isComment(l) && /\b(?:_|lodash)\.(?:merge|mergeWith|defaultsDeep)\s*\((?:[^()]*,)?\s*req(?:uest)?\.(?:body|query)\s*[,)]/.test(l));
+      add({ ruleId: 28837, code: 'GAP-37', severity: 'MEDIUM', category: 'Mass Assignment', lineIdx: i,
+        title: 'Request Body Deep-Merged into an Object',
+        why: 'Every key the client sends lands in the result, including fields it should not control (role, plan, limits). With lodash older than 4.17.12 a "__proto__" key also pollutes Object.prototype for the whole process.',
+        fix: 'Validate the body with a schema (zod, joi) that lists the allowed fields, then merge only the parsed result.' });
+    }
+  }
+
+  // GAP-38: FastAPI route that changes or deletes data without an auth dependency
+  // A local app bound to 127.0.0.1 with no deploy config has no remote callers to authenticate
+  // Router- or app-wide auth in the same file (APIRouter / include_router / FastAPI with dependencies=[...]) covers every
+  // route; FastAPI's own docs_src tutorials are examples, not an app
+  if (isPy && !context?.loopbackOnlyServer && /\bfrom\s+fastapi\b/.test(cleanContent) && !/(?:^|\/)docs_src\//.test(path)
+    && !/(?:APIRouter|include_router|FastAPI)\([^)]*dependencies\s*=/.test(cleanContent)) {
+    lines.forEach((l, i) => {
+      const m = l.match(/^\s*@\w+\.(delete|put|patch)\(\s*['"]([^'"]*)['"]([^)]*)\)/);
+      if (!m || /dependencies\s*=/.test(m[3]) || /webhook|callback|health/i.test(m[2])) return;
+      // Signature: the def line(s) up to the closing "):"
+      let sig = '';
+      let sigEnd = i + 1;
+      for (let j = i + 1; j < Math.min(lines.length, i + 12); j++) {
+        sig += lines[j];
+        sigEnd = j;
+        if (/\)\s*(?:->[^:]*)?:\s*$/.test(lines[j])) break;
+      }
+      // An imperative auth check at the top of the body (require_operator(request), verify_admin(...)) also identifies the caller
+      const body = lines.slice(sigEnd + 1, sigEnd + 7).join('\n');
+      if (/^\s*(?:await\s+)?\w*\b(?:require|ensure|assert|check|verify|authorize|authenticate)_\w*(?:user|auth|admin|operator|owner|permission|role|login|token|session|access|member|staff)\w*\s*\(/im.test(body)) return;
+      if (!/^\s*(?:async\s+)?def\s/.test(lines[i + 1] || '')) return;
+      // Parameters only (not the function name). The caller is identified by an auth dependency (Depends(get_current_user_id)),
+      // an auth-named parameter (current_user: …) or an auth type (CurrentUser); a record id such as user_id: str is not one.
+      const params = sig.slice(sig.indexOf('(') + 1);
+      if (/(?:Depends|Security)\(\s*[\w.]*(?:user|auth|token|admin|current|verify|require|permission|principal|api_?key|owner|login|caller|session|account|member|identity)/i.test(params)
+        || /(?:^|[(,\s])(?!\w*_ids?\s*:)\w*(?:user|auth|admin|principal|token|api_?key|caller|account)\w*\s*:/i.test(params)
+        || /:\s*(?:Annotated\[\s*)?(?:Current\w+|\w*(?:Principal|AuthUser|AuthContext))\b/.test(params)) return;
+      add({ ruleId: 28838, code: 'GAP-38', severity: 'HIGH', category: 'Broken Access Control', lineIdx: i + 1,
+        title: `FastAPI ${m[1].toUpperCase()} Route Without an Auth Dependency (${m[2]})`,
+        why: 'Nothing in the route signature identifies the caller (no Depends(get_current_user), Security() or user parameter) and the router has no dependencies=, so anyone who can reach the API can call it.',
+        fix: 'Add current_user: User = Depends(get_current_user) (or router-level dependencies=[Depends(...)]) and check that the user may change this record.' });
+    });
+  }
+
+  // GAP-19: Auth.js / NextAuth links an OAuth sign-in to an existing account by e-mail alone
+  if (isJs && /next-auth|@auth\//.test(cleanContent)) {
+    lines.forEach((l, i) => {
+      if (!isComment(l) && /\ballowDangerousEmailAccountLinking\s*:\s*true\b/.test(l)) {
+        add({ ruleId: 28819, code: 'GAP-19', severity: 'MEDIUM', category: 'Authentication', lineIdx: i,
+          title: 'OAuth Account Linked to an Existing User by E-mail Alone (allowDangerousEmailAccountLinking)',
+          why: 'A sign-in from this provider is merged into any existing account with the same e-mail. If the provider (or a second one) lets users set an unverified address, an attacker registers the victim\'s e-mail there and signs in as the victim.',
+          fix: 'Remove the flag and let users link providers from their settings page while signed in, or keep it only for providers that guarantee verified e-mails.' });
+      }
+    });
+  }
+
+  // GAP-20: Laravel model with mass assignment fully open
+  if (/\.php$/i.test(path) && /\bextends\s+(?:Model|Authenticatable)\b/.test(cleanContent)) {
+    lines.forEach((l, i) => {
+      if (!isComment(l) && /^\s*protected\s+\$guarded\s*=\s*\[\s*\]\s*;/.test(l)) {
+        add({ ruleId: 28820, code: 'GAP-20', severity: 'MEDIUM', category: 'Mass Assignment', lineIdx: i,
+          title: 'Laravel Model Allows Mass Assignment of Every Column ($guarded = [])',
+          why: 'Model::create($request->all()) or ->update($request->all()) then writes any column the client sends, such as is_admin, role or balance.',
+          fix: 'Declare $fillable with the columns users may set, and pass $request->validated() instead of $request->all().' });
       }
     });
   }

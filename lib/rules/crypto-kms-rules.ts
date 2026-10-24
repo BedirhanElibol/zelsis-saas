@@ -20,7 +20,9 @@ export function evaluateCryptoKmsRules(file: CodeFile, lines: string[], cleanCon
     }
     const ts = new Date().toLocaleTimeString();
     // CRYPTO-01: Hardcoded Cryptographic Keys and Static Salts in Source Code
-    const hit_13301 = lines.findIndex((l) => /\b(?:aes_?key|AES_KEY|encryption_?key|ENCRYPTION_KEY|cipher_?key|CIPHER_KEY|crypto_?key|CRYPTO_KEY|salt|SALT|static_?salt|STATIC_SALT)\s*[:=]\s*(?:Buffer\.from\(\s*)?["'][A-Za-z0-9+/=_-]{16,}["']/i.test(l) && !/your|example|change|placeholder|dummy|xxxx|<|\.\.\./i.test(l));
+    const hit_13301 = lines.findIndex((l) => /\b(?:aes_?key|AES_KEY|encryption_?key|ENCRYPTION_KEY|cipher_?key|CIPHER_KEY|crypto_?key|CRYPTO_KEY|salt|SALT|static_?salt|STATIC_SALT)\s*[:=]\s*(?:Buffer\.from\(\s*)?["'][A-Za-z0-9+/=_-]{16,}["']/i.test(l) && !/your|example|change|placeholder|dummy|xxxx|<|\.\.\./i.test(l)
+        // A signing salt such as "sentry-slack-integration" is a namespace (Django signing, itsdangerous), not a secret
+        && !/\b(?:salt|SALT)\s*[:=]\s*["'][a-z][a-z0-9]*(?:[-_.:][a-z0-9]+)+["']/.test(l));
     if (hit_13301 !== -1) {
         const matchLineIdx = hit_13301;
         const lineNum = matchLineIdx !== -1 ? matchLineIdx + 1 : 1;

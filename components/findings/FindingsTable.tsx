@@ -1,11 +1,15 @@
 'use client';
 
 import React, { useState } from 'react';
+import { RiskBadge } from '@/components/findings/RiskBadge';
+import { LockedLocation } from '@/components/findings/LockedLocation';
+import { RiskDiagnosis } from '@/components/findings/RiskDiagnosis';
+import { CostEstimatePanel } from '@/components/findings/CostEstimatePanel';
 import { Finding, UserTier } from '@/data/schema';
 import { DEMO_AUDIT_FINDINGS } from '@/data/demo-data';
 import { BulkFixModal } from './BulkFixModal';
 import { DismissFindingModal } from './DismissFindingModal';
-import { Search, Filter, ArrowRight, Layers, Check, RotateCcw, Play, Copy, Lock, ShieldCheck, Database, Server, Sliders, AlertOctagon, GitCommit, ChevronDown, SearchX, ExternalLink, ShieldX } from 'lucide-react';
+import { Search, Filter, ArrowRight, Layers, Check, RotateCcw, Play, Copy, Lock, ShieldCheck, Database, Server, Sliders, AlertOctagon, GitCommit, ChevronDown, SearchX, ExternalLink, ShieldX, Bug } from 'lucide-react';
 import { ClipboardToastBadge, useClipboardToast } from '../ui/Toast';
 import { safeLower, safeString, safeTrim, safeReplace } from '@/lib/safe-utils';
 import { hasFixPromptAccess } from '@/lib/subscription-utils';
@@ -46,6 +50,20 @@ export const FindingsTable: React.FC<FindingsTableProps> = ({
   const [dismissFindingItem, setDismissFindingItem] = useState<Finding | null>(null);
   const [expandedCardIds, setExpandedCardIds] = useState<Set<string>>(new Set());
   const [showAdvisory, setShowAdvisory] = useState(false);
+  const tableRef = React.useRef<HTMLDivElement>(null);
+
+  // The sidebar's "Logic Bugs" entry (and ?findings=VIBECARE links) open this table on that pillar
+  React.useEffect(() => {
+    const open = (pillar: string) => {
+      setPillarFilter(pillar);
+      setTimeout(() => tableRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' }), 50);
+    };
+    const fromUrl = new URLSearchParams(window.location.search).get('findings');
+    if (fromUrl) open(fromUrl);
+    const onEvent = (e: Event) => open(String((e as CustomEvent).detail || 'ALL'));
+    window.addEventListener('zelsis:findings-tab', onEvent);
+    return () => window.removeEventListener('zelsis:findings-tab', onEvent);
+  }, []);
 
   // Default view: findings from verified rules only. Everything below (counts, tabs, bulk fix) uses this list.
   const advisoryCount = (Array.isArray(allFindings) ? allFindings : []).filter(isAdvisoryFinding).length;
@@ -110,6 +128,7 @@ export const FindingsTable: React.FC<FindingsTableProps> = ({
     { id: 'LEGAL_COMPLIANCE', label: 'Legal & Privacy' },
     { id: 'INFRA_DATABASE', label: 'Infra & DB' },
     { id: 'VIBEPOLISH', label: 'VibePolish UI' },
+    { id: 'VIBECARE', label: 'Logic Bugs' },
   ];
 
   const getPillarBadgeStyle = (type: string, category?: string) => {
@@ -124,6 +143,8 @@ export const FindingsTable: React.FC<FindingsTableProps> = ({
       ? 'bg-emerald-500/10 text-emerald-400 border-emerald-500/30'
       : type === 'VIBEPOLISH'
       ? 'bg-teal-500/10 text-teal-400 border-teal-500/30'
+      : type === 'VIBECARE'
+      ? 'bg-violet-500/10 text-violet-300 border-violet-500/30'
       : 'bg-blue-500/10 text-blue-400 border-blue-500/30';
   };
 
@@ -160,6 +181,9 @@ export const FindingsTable: React.FC<FindingsTableProps> = ({
     return matches ? [...new Set(matches.map((m) => m.toUpperCase()))] : [];
   };
 
+  // Only findings that carry a ready diff; every finding has a fix prompt, which is not a patch
+  const patchCount = findings.filter((f) => Boolean(f.diffPatch)).length;
+
   const filtered = safeFindings.filter((f) => {
     if (!f) return false;
     const safeSearch = safeLower(safeTrim(searchTerm));
@@ -177,13 +201,18 @@ export const FindingsTable: React.FC<FindingsTableProps> = ({
       pillarFilter === 'ALL' ||
       (pillarFilter === 'SCA_DEPS' ? isScaFinding(f) : f.type === pillarFilter);
 
-    return matchesSearch && matchesSeverity && matchesStatus && matchesPillar;
+    const matchesPatch = !hasDiffOnly || Boolean(f.diffPatch);
+
+    return matchesSearch && matchesSeverity && matchesStatus && matchesPillar && matchesPatch;
   });
 
   return (
-    <div className="bg-[#141414] border border-white/10 rounded-xl p-4 sm:p-6 flex flex-col gap-5 bg-[#141414] border-white/10">
+    <div ref={tableRef} data-tour="findings" className="scroll-mt-20 bg-[#141414] border border-white/10 rounded-xl p-4 sm:p-6 flex flex-col gap-5">
+      <RiskDiagnosis findings={findings} />
+      <CostEstimatePanel findings={findings} projectId={projectId} />
+
       {/* Snyk-Grade Release Readiness Radar & Category Breakdown Cards */}
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
+      <div className="grid grid-cols-2 lg:grid-cols-5 gap-3">
         {/* Card 1: Security & OWASP */}
         <button
           type="button"
@@ -303,6 +332,35 @@ export const FindingsTable: React.FC<FindingsTableProps> = ({
             Design tokens &amp; a11y gates
           </span>
         </button>
+        {/* Card 5: Logic bugs (reliability; never fails the gate) */}
+        <button
+          type="button"
+          onClick={() => setPillarFilter(pillarFilter === 'VIBECARE' ? 'ALL' : 'VIBECARE')}
+          className={`p-3.5 rounded-xl border text-left transition-all cursor-pointer flex flex-col justify-between gap-2.5 col-span-2 lg:col-span-1 ${
+            pillarFilter === 'VIBECARE'
+              ? 'bg-white/[0.08] border-white/30 shadow-sm'
+              : 'bg-[#0E0E10] border-white/10 hover:border-white/20 hover:bg-white/[0.02]'
+          }`}
+        >
+          <div className="flex items-center justify-between">
+            <span className="text-[11px] font-mono font-bold uppercase tracking-wider text-white flex items-center gap-1.5">
+              <Bug size={14} className="text-zinc-400" />
+              <span>Logic Bugs</span>
+            </span>
+            <span className="text-[10px] font-mono text-zinc-400 uppercase">Pillar</span>
+          </div>
+          <div className="flex items-baseline justify-between">
+            <span className="text-xl sm:text-2xl font-extrabold font-mono text-white">
+              {findings.filter(f => f.type === 'VIBECARE').length}
+            </span>
+            <span className="text-[10px] text-zinc-400 font-mono">
+              Reliability
+            </span>
+          </div>
+          <span className="text-[10px] text-zinc-400 truncate">
+            Bugs that break features
+          </span>
+        </button>
       </div>
 
       {/* Quick Triage Bar */}
@@ -331,9 +389,11 @@ export const FindingsTable: React.FC<FindingsTableProps> = ({
           <AlertOctagon size={12} />
           <span>Critical Only ({findings.filter(f => f.severity === 'CRITICAL').length})</span>
         </button>
+        {patchCount > 0 && (
         <button
           type="button"
           onClick={() => setHasDiffOnly(!hasDiffOnly)}
+          aria-pressed={hasDiffOnly}
           className={`px-2.5 py-1 rounded-md border text-[11px] transition-all cursor-pointer shrink-0 flex items-center gap-1 ${
             hasDiffOnly
               ? 'bg-white text-black font-bold border-white shadow-sm'
@@ -341,8 +401,9 @@ export const FindingsTable: React.FC<FindingsTableProps> = ({
           }`}
         >
           <GitCommit size={12} />
-          <span>Has 1-Click Code Patch ({findings.filter(f => Boolean(f.diffPatch || f.remediationPrompt)).length})</span>
+          <span>Has Code Patch ({patchCount})</span>
         </button>
+        )}
       </div>
 
       {advisoryCount > 0 && (
@@ -581,6 +642,8 @@ export const FindingsTable: React.FC<FindingsTableProps> = ({
                         ? 'Legal & Privacy'
                         : item.type === 'VIBEPOLISH'
                         ? 'VibePolish UI'
+                        : item.type === 'VIBECARE'
+                        ? 'Logic Bug'
                         : item.type}
                     </span>
                   </div>
@@ -602,6 +665,12 @@ export const FindingsTable: React.FC<FindingsTableProps> = ({
                     {item.maturity === 'experimental' && <ExperimentalBadge className="ml-2" />}
                     {item.maturity === 'unproven' && item.severity === 'CRITICAL' && <UnprovenBadge className="ml-2" />}
                   </h3>
+                  {(item.risk || item.impact) && (
+                    <p className="text-xs text-amber-200/90 mt-0.5 flex flex-wrap items-center gap-1.5">
+                      <RiskBadge risk={item.risk} />
+                      {item.impact}
+                    </p>
+                  )}
                   <div className="flex flex-wrap items-center gap-2 mt-1">
                     <span className="px-1.5 py-0.5 rounded bg-white/10 text-zinc-300 font-semibold text-[10px]">
                       {item.category}
@@ -612,10 +681,16 @@ export const FindingsTable: React.FC<FindingsTableProps> = ({
                 {/* Relative File Path & Line Range */}
                 <div className="flex items-center gap-1.5 text-[11px] font-mono text-zinc-400 min-w-0">
                   <span className="text-zinc-400 shrink-0">Path:</span>
-                  <span className="text-zinc-300 truncate" title={item.filePath}>
-                    {item.filePath}
-                  </span>
-                  <span className="text-zinc-400 shrink-0">({item.lineRange})</span>
+                  {item.lockedLocation ? (
+                    <LockedLocation folder={item.filePath} />
+                  ) : (
+                    <>
+                      <span className="text-zinc-300 truncate" title={item.filePath}>
+                        {item.filePath}
+                      </span>
+                      <span className="text-zinc-400 shrink-0">({item.lineRange})</span>
+                    </>
+                  )}
                 </div>
 
                 {/* Compact Expand/Collapse Details Toggle */}
@@ -887,7 +962,7 @@ export const FindingsTable: React.FC<FindingsTableProps> = ({
 
                   {/* Affected Area / File Path */}
                   <td className="py-3.5 px-4 font-mono text-[#A1A1AA] max-w-xs truncate">
-                    {item.filePath} ({item.lineRange})
+                    {item.lockedLocation ? <LockedLocation folder={item.filePath} /> : `${item.filePath} (${item.lineRange})`}
                   </td>
 
                   {/* Status */}

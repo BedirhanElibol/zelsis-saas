@@ -5,7 +5,7 @@
 import { Finding } from '@/data/schema';
 import { CodeFile } from '../scanner-engine';
 import { locateMatchLine } from './shared/locate';
-import { hclBlocks, hclLine, isYamlPath, openIngressLine, stripHashComments, tfResource, yamlLine } from './iac-rules';
+import { hclBlocks, hclLine, isHelmSubchartPath, isYamlPath, openIngressLine, stripHashComments, tfResource, yamlLine } from './iac-rules';
 export interface CloudNativeRuleResult {
     findings: Finding[];
     logs: string[];
@@ -24,8 +24,14 @@ export function evaluateCloudNativeRules(file: CodeFile, lines: string[], cleanC
     // Comment-stripped lines (same numbering as `lines`) for line-level rules
     const cleanLines = cleanContent.split('\n');
     // CLOUD-04: Docker Container Running as Default Root User
-    if (file.path.toLowerCase().endsWith("dockerfile") && !/(?:^|\/)\.devcontainer\//.test(lowerPath) && !/USER\s+[a-zA-Z0-9_-]+/i.test(cleanContent)) {
-        const matchLineIdx = lines.findIndex(l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('*') && (/cloud-04|docker/i.test(l) || lines.indexOf(l) === 0));
+    if (file.path.toLowerCase().endsWith("dockerfile") && !/(?:^|\/)\.devcontainer\//.test(lowerPath) && !/USER\s+(?:[a-zA-Z0-9_-]+|\$\{?\w+\}?)/i.test(cleanContent)) {
+        let lastFromIdx = -1;
+        lines.forEach((l, idx) => {
+            if (/^\s*FROM\s+\S+/i.test(l)) lastFromIdx = idx;
+        });
+        const matchLineIdx = lastFromIdx !== -1
+            ? lastFromIdx
+            : lines.findIndex(l => !l.trim().startsWith('#') && !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('*') && l.trim().length > 0);
         const lineNum = matchLineIdx !== -1 ? matchLineIdx + 1 : 1;
         findings.push({
             id: `cloud04-${Date.now()}-${findingCounter.count++}`,
@@ -133,7 +139,7 @@ export function evaluateCloudNativeRules(file: CodeFile, lines: string[], cleanC
     }
     // CLOUD-13: Kubernetes Pod Running with Privileged SecurityContext
     // Only `privileged: true` (allowPrivilegeEscalation: true is the Kubernetes default, a hardening gap rather than a privileged pod)
-    const cloud13Line = isYamlPath(lowerPath) && /^\s*apiVersion\s*:/m.test(cleanContent) ? yamlLine(lines, /^\s*privileged\s*:\s*true\b/) : -1;
+    const cloud13Line = isYamlPath(lowerPath) && !isHelmSubchartPath(lowerPath) && /^\s*apiVersion\s*:/m.test(cleanContent) && !/^\s*kind:\s*PodSecurityPolicy\b/m.test(cleanContent) ? yamlLine(lines, /^\s*privileged\s*:\s*true\b/) : -1;
     if (cloud13Line !== -1) {
         const matchLineIdx = cloud13Line;
         const lineNum = matchLineIdx !== -1 ? matchLineIdx + 1 : 1;

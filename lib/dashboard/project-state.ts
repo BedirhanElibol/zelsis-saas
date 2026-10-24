@@ -104,7 +104,7 @@ export function normalizeProject(p: Project, fallback: Project): Project {
     repoUrl: cleanRepoUrl,
     framework: p.framework || UNDETECTED_FRAMEWORK,
     providers: Array.isArray(p.providers) ? p.providers : [],
-    lastScanAt: p.lastScanAt || 'Never audited',
+    lastScanAt: p.lastScanAt || (Array.isArray(p.findings) && p.findings.length ? 'Earlier scan (date unknown)' : 'Never audited'),
     readinessScore: typeof p.readinessScore === 'number' ? p.readinessScore : 100,
     gateStatus: p.gateStatus || 'PASSED',
     criticalCount: typeof p.criticalCount === 'number' ? p.criticalCount : 0,
@@ -143,4 +143,27 @@ export function serializeProjectsForStorage(projects: Project[], allowLocalAudit
     return { ...safeProject, findings };
   });
   return JSON.stringify(stored);
+}
+
+/** One key per repository: "owner/repo", "https://github.com/owner/repo/" and "...repo.git" are the same project. */
+export function repoKey(url?: string): string {
+  return (url || '').trim().toLowerCase()
+    .replace(/^https?:\/\//, '').replace(/^www\./, '').replace(/^github\.com\//, '')
+    .replace(/\.git$/, '').replace(/\/+$/, '');
+}
+
+/** Collapses projects that point at the same repository, keeping the one with the most recent scan and findings. */
+export function dedupeProjects(projects: Project[]): Project[] {
+  const rank = (p: Project) => [Array.isArray(p.findings) && p.findings.length > 0 ? 1 : 0, p.lastScanIso || ""] as const;
+  const byKey = new Map<string, Project>();
+  const order: string[] = [];
+  for (const p of projects) {
+    const key = isLocalAuditProject(p) || !p.repoUrl ? `id:${p.id}` : repoKey(p.repoUrl);
+    const prev = byKey.get(key);
+    if (!prev) { byKey.set(key, p); order.push(key); continue; }
+    const [pf, pd] = rank(p);
+    const [qf, qd] = rank(prev);
+    if (pf > qf || (pf === qf && pd > qd)) byKey.set(key, p);
+  }
+  return order.map((k) => byKey.get(k)!);
 }

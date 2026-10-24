@@ -1,6 +1,8 @@
 'use client';
 
 import React, { useState, useEffect, useCallback } from 'react';
+import { RiskBadge } from '@/components/findings/RiskBadge';
+import { LockedLocation } from '@/components/findings/LockedLocation';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Finding, PlanUsageQuota } from '@/data/schema';
 import { UserProfile } from '@/components/auth/AuthModal';
@@ -12,6 +14,7 @@ import { getActiveUserAuth } from '@/lib/supabase-client';
 import type { StoredFix } from '@/lib/fix-gate';
 import { ExperimentalBadge, UnprovenBadge } from '@/components/findings/ExperimentalBadge';
 import { priceLabel } from '@/data/pricing-plans';
+import { incidentFor } from '@/data/incidents';
 
 export interface FindingDetailModalProps {
   isOpen: boolean;
@@ -136,6 +139,7 @@ export const FindingDetailModal: React.FC<FindingDetailModalProps> = ({
     ? { ...finding, remediationPrompt: 'Included in Zelsis Pro.', diffPatch: undefined }
     : fixSource;
   const cleanTitle = sanitizeContent(finding.title);
+  const incident = incidentFor(finding.ruleId);
   const cleanSteps = (finding.reproductionSteps || []).map(sanitizeContent);
 
   const diffText =
@@ -271,12 +275,33 @@ export const FindingDetailModal: React.FC<FindingDetailModalProps> = ({
                 {finding.maturity === 'experimental' && <ExperimentalBadge className="ml-2" />}
                 {finding.maturity === 'unproven' && finding.severity === 'CRITICAL' && <UnprovenBadge className="ml-2" />}
               </h2>
+              {(finding.risk || finding.impact) && (
+                <p className="text-sm text-amber-200/90 flex flex-wrap items-center gap-2">
+                  <RiskBadge risk={finding.risk} />
+                  {finding.impact}
+                </p>
+              )}
+              {incident && (
+                <p className="text-xs text-zinc-300 leading-relaxed border-l-2 border-amber-500/50 pl-3">
+                  <span className="text-amber-300 font-semibold">This has happened before ({incident.year}):</span>{' '}
+                  {incident.title}. {incident.what}{' '}
+                  <a href={incident.source.url} target="_blank" rel="noopener noreferrer" className="underline hover:text-white">
+                    {incident.source.label}
+                  </a>
+                </p>
+              )}
               <div className="text-xs font-mono text-emerald-400/90 flex items-center gap-2 flex-wrap">
-                <span className="text-zinc-300 font-bold">{finding.filePath}</span>
-                <span className="text-zinc-400">·</span>
-                <span className="bg-white/5 px-2 py-0.5 rounded text-zinc-300 font-bold border border-white/10">
-                  Line {finding.lineRange}
-                </span>
+                {finding.lockedLocation && !revealedFix?.location ? (
+                  <LockedLocation folder={finding.filePath} />
+                ) : (
+                  <>
+                    <span className="text-zinc-300 font-bold">{revealedFix?.location?.filePath ?? finding.filePath}</span>
+                    <span className="text-zinc-400">·</span>
+                    <span className="bg-white/5 px-2 py-0.5 rounded text-zinc-300 font-bold border border-white/10">
+                      Line {revealedFix?.location?.lineRange ?? finding.lineRange}
+                    </span>
+                  </>
+                )}
                 <span className="text-zinc-400">·</span>
                 <span className="text-zinc-400 capitalize">{(finding.status || 'OPEN').toLowerCase()}</span>
               </div>

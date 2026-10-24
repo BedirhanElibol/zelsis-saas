@@ -22,17 +22,63 @@ export function evaluateSiemAuditLoggingRules(file: CodeFile, lines: string[], c
     // AUDIT-01: Plaintext Credentials or PII Leaked in Application Logs
     // Files using @/lib/logger automatically redact sensitive tokens, passwords, and PII.
     // Only values count: console.log('Getting Stripe Secret Key') logs a fixed string, not a secret.
-    const LOG_CALL = /console\.(?:log|warn|info|debug)\s*\(([^)]*)\)/gi;
-    const SENSITIVE_VALUE = /(?:password|secret|apiKey|bearerToken)/i;
-    const logsSensitiveValue = (code: string) => [...code.matchAll(LOG_CALL)].some((m) => {
-        const args = m[1]
+    // SENSITIVE_VALUE: exclude boolean comparison variables like passwordMatch, isPasswordValid, etc.
+    const SENSITIVE_VALUE = /(?<!has|is|hide|validate|check|verify|_has|_is|_hide)(?:password|secret|apiKey|bearerToken)(?!(?:_?(?:match(?:es|ed)?|valid(?:ity)?|correct|check(?:ed)?|equals?))\b)/i;
+    const extractLogCalls = (code: string): string[] => {
+        const regex = /console\.(?:log|warn|info|debug)\s*\(/gi;
+        const calls: string[] = [];
+        let match: RegExpExecArray | null;
+        while ((match = regex.exec(code)) !== null) {
+            const startIdx = match.index + match[0].length;
+            let depth = 1;
+            let inSingle = false;
+            let inDouble = false;
+            let inBacktick = false;
+            let i = startIdx;
+            while (i < code.length && depth > 0) {
+                const ch = code[i];
+                const prev = i > 0 ? code[i - 1] : '';
+                if (prev !== '\\') {
+                    if (!inDouble && !inBacktick && ch === "'") inSingle = !inSingle;
+                    else if (!inSingle && !inBacktick && ch === '"') inDouble = !inDouble;
+                    else if (!inSingle && !inDouble && ch === '`') inBacktick = !inBacktick;
+                    else if (!inSingle && !inDouble && !inBacktick) {
+                        if (ch === '(') depth++;
+                        else if (ch === ')') depth--;
+                    }
+                }
+                if (depth === 0) break;
+                i++;
+            }
+            calls.push(code.slice(startIdx, i));
+        }
+        return calls;
+    };
+    const logsSensitiveValue = (code: string) => extractLogCalls(code).some((callContent) => {
+        const cleaned = callContent
+            // Ignore truncated or masked expressions like key?.slice(0, 3) or token.substring(0, 4)
+            .replace(/[\w$.?]+(?:\?\.)?(?:slice|substring|substr)\s*\([^)]*\)/g, '""')
+            // Ignore masking/redaction helper calls (e.g. mask(key), redact(secret))
+            .replace(/\b(?:mask|redact|obfuscate|truncate)\w*\s*\([^)]*\)/gi, '""')
+            // Ignore boolean comparisons (===, !==, ==, !=)
+            .replace(/[\w$.?]+\s*(?:===|!==|==|!=)\s*[^,)]+/g, '""')
+            // Ignore ternaries returning fixed status indicators or booleans where the variable is only checked for presence
+            .replace(/[\w$.]+\s*\?\s*(?:['"][^'"]*['"]|true|false|null)\s*:\s*(?:['"][^'"]*['"]|true|false|null)/g, '""')
+            .replace(/(?:Boolean\s*\([^)]*\)|!![\w$.]+)/g, '""');
+        const args = cleaned
             .replace(/`([^`]*)`/g, (_t, inner: string) => (inner.match(/\$\{[^}]*\}/g) || []).join(' '))
-            .replace(/'[^'\n]*'|"[^"\n]*"/g, '""');
+            .replace(/'(?:\\.|[^'\\])*'|"(?:\\.|[^"\\])*"/g, '""');
         return SENSITIVE_VALUE.test(args);
     });
-    if (logsSensitiveValue(cleanContent) && !/logger\./i.test(cleanContent) && !/sanitizeLog/i.test(cleanContent)) {
+    // Docs, administrative CLI commands, key generation utilities, and dev scripts do not log production user data
+    const normPath = file.path.replace(/\\/g, '/');
+    const notAppCode = /\.(?:json|mdx?|txt|html|sh|bash|zsh)$/i.test(file.path)
+        || /(?:^|\/)(?:scripts?|docs?|bin|commands?|console|docker\/utils)\//i.test(normPath)
+        || /(?:\.command|\.register|\.setup|\.seed)\.[cm]?[jt]s$/i.test(file.path);
+    if (!notAppCode && logsSensitiveValue(cleanContent) && !/logger\./i.test(cleanContent) && !/sanitizeLog/i.test(cleanContent)) {
         const matchLineIdx = lines.findIndex(l => !/^\s*(?:\/\/|--|#|\*)/.test(l) && logsSensitiveValue(l));
-        const lineNum = matchLineIdx !== -1 ? matchLineIdx + 1 : 1;
+        if (matchLineIdx !== -1) {
+        const lineNum = matchLineIdx + 1;
         findings.push({
             id: `audit-12101-${Date.now()}-${findingCounter.count++}`,
             ruleId: 12101,
@@ -52,6 +98,7 @@ export function evaluateSiemAuditLoggingRules(file: CodeFile, lines: string[], c
             falsePositive: false
         });
         logs.push(`[${ts}] [SIEM AUDIT] Found AUDIT-01: Plaintext Credentials or PII Leaked in Application Logs at ${file.path}:${lineNum}`);
+        }
     }
     return { findings, logs };
 }

@@ -1,6 +1,8 @@
 'use client';
 
+import { withLiveStatus } from '@/lib/project-status';
 import React, { useState, useEffect } from 'react';
+import { useSearchParams } from 'next/navigation';
 import { Project } from '@/data/schema';
 import { MOCK_PROJECTS } from '@/data/demo-data';
 import { FolderGit2, Plus, ArrowRight, Play, ExternalLink, ShieldCheck, Trash2, Layers, Lock, X } from 'lucide-react';
@@ -29,6 +31,8 @@ export const ProjectsView: React.FC<ProjectsViewProps> = ({
 }) => {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isQuotaModalOpen, setIsQuotaModalOpen] = useState(false);
+  // Result of the GitHub App install redirect (/api/v1/github-app/setup -> ?github=connected|error)
+  const githubResult = useSearchParams().get('github');
 
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
@@ -54,6 +58,16 @@ export const ProjectsView: React.FC<ProjectsViewProps> = ({
 
   return (
     <div className="flex flex-col gap-6">
+      {githubResult === 'connected' && (
+        <div role="status" className="rounded-xl border border-emerald-500/30 bg-emerald-500/10 px-4 py-3 text-sm text-emerald-100">
+          GitHub is connected. Click <strong>Connect New AI App</strong> and pick your repository from the list.
+        </div>
+      )}
+      {githubResult === 'error' && (
+        <div role="alert" className="rounded-xl border border-red-500/30 bg-red-500/10 px-4 py-3 text-sm text-red-200">
+          The GitHub connection did not finish. Please try again from Connect New AI App; if it keeps failing, write to us.
+        </div>
+      )}
       {/* Header */}
       <div className="relative overflow-hidden rounded-2xl border border-white/10 bg-[#141414] p-6 sm:p-8 shadow-lg">
         <div className="relative z-10 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-6">
@@ -224,7 +238,8 @@ export const ProjectsView: React.FC<ProjectsViewProps> = ({
             </button>
           </div>
         ) : (
-          projects.map((p) => {
+          projects.map((stored) => {
+            const p = withLiveStatus(stored);
             const isFailed = p.gateStatus === 'FAILED';
             const isWarning = p.gateStatus === 'WARNING';
 

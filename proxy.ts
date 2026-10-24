@@ -10,9 +10,8 @@ import { applyCanonicalSecurityHeaders } from '@/lib/security-headers';
  */
 
 const ALLOWED_ORIGINS = new Set([
-  'http://localhost:3000',
-  'http://localhost:3001',
-  'http://127.0.0.1:3000',
+  // Local dev servers only outside production: a page on someone's own machine is not a Zelsis origin
+  ...(process.env.NODE_ENV === 'production' ? [] : ['http://localhost:3000', 'http://localhost:3001', 'http://127.0.0.1:3000']),
   'https://zelsis.com',
   'https://zelsis-saas.vercel.app',
   'https://shipguard-saas.vercel.app'
@@ -47,7 +46,8 @@ if (vercelUrl) {
   }
 }
 
-export function middleware(req: NextRequest) {
+// Next.js 16 "proxy" (formerly middleware): runs before every matched request on the Node.js runtime
+export function proxy(req: NextRequest) {
   // SEC-03: Platform-authenticated client IP resolution (prevents spoofing via arbitrary x-forwarded-for)
   const isCfVerified = Boolean(req.headers.get('cf-ray') && req.headers.get('cf-connecting-ip'));
   const clientIp =

@@ -31,6 +31,274 @@ const FAKE_AWS_KEY = 'AKIA' + '2E0A8F3B244C9986';
 const FAKE_GITHUB_PAT = 'ghp' + '_R4nd0mT0k3nV4lu3F0rT3st1ngPurp0s3sAb';
 
 export const RULE_CASES: RuleCase[] = [
+  {
+    ruleIds: [1203],
+    name: 'UI-INTERACT-03 dialog form without a focus trap; a hand-written Tab trap is fine',
+    detects: f('components/InviteModal.tsx', 'export function InviteModal() {\n  return (\n    <div role="dialog" aria-modal="true">\n      <input name="email" />\n      <input name="name" />\n      <input name="team" />\n    </div>\n  );\n}\n'),
+    ignores: f('components/InviteModal.tsx', "export function InviteModal() {\n  const onKey = (e: KeyboardEvent) => {\n    if (e.key !== 'Tab') return;\n    if (e.shiftKey && document.activeElement === first) { e.preventDefault(); last.focus(); }\n  };\n  return (\n    <div role=\"dialog\" aria-modal=\"true\" onKeyDown={onKey}>\n      <input name=\"email\" />\n      <input name=\"name\" />\n      <input name=\"team\" />\n    </div>\n  );\n}\n")
+  },
+  {
+    ruleIds: [29742],
+    name: 'BUG-109 text-xs input zooms on iOS; a stylesheet that sets form fields to 16px on phones fixes it',
+    detects: f('components/search.tsx', 'export function Search() {\n  return <input type="text" className="w-full text-xs px-2" placeholder="Search" />;\n}\n'),
+    ignores: [
+      { path: 'components/search.tsx', content: 'export function Search() {\n  return <input type="text" className="w-full text-xs px-2" placeholder="Search" />;\n}\n' },
+      { path: 'app/globals.css', content: '@media (max-width: 640px) {\n  input, select, textarea { font-size: 16px !important; }\n}\n' },
+    ]
+  },
+  // ─── Real-incident corpus expansion (2026-10-14) ──────────────────────
+  {
+    ruleIds: [28924],
+    name: 'JSF-24 origin regex in a variable without anchors; an anchored ^…$ pattern is fine',
+    detects: f('server/app.ts', "const allowed = new RegExp(process.env.ALLOWED_ORIGIN || 'acme\\\\.com');\napp.use(cors({ origin: (origin, cb) => cb(null, allowed.test(origin || '')), credentials: true }));\n"),
+    ignores: f('server/app.ts', "const allowed = /^https:\\/\\/(?:app\\.)?acme\\.com$/;\napp.use(cors({ origin: (origin, cb) => cb(null, allowed.test(origin || '')), credentials: true }));\n")
+  },
+  {
+    ruleIds: [28016],
+    name: 'NEXT-SB-16 one-line table with a role column users can update; column-level grants are fine',
+    detects: f('supabase/migrations/2_profiles.sql', "create table public.profiles (id uuid primary key references auth.users, name text, role text default 'user');\nalter table public.profiles enable row level security;\ncreate policy \"users update own profile\" on public.profiles for update using (auth.uid() = id);\n"),
+    ignores: f('supabase/migrations/2_profiles.sql', "create table public.profiles (id uuid primary key references auth.users, name text, role text default 'user');\nalter table public.profiles enable row level security;\ncreate policy \"users update own profile\" on public.profiles for update using (auth.uid() = id);\nrevoke update on public.profiles from authenticated;\ngrant update (name) on public.profiles to authenticated;\n")
+  },
+  {
+    ruleIds: [28016],
+    name: 'NEXT-SB-16 members update their own row (role included); an admin-only policy via EXISTS is fine',
+    detects: f('supabase/migrations/3_members.sql', "create table public.tontine_members (\n  id uuid primary key,\n  group_id uuid not null,\n  user_id uuid not null,\n  role text not null default 'member'\n);\ncreate policy update_members on public.tontine_members for update using (\n  user_id = auth.uid() or exists (select 1 from public.tontine_members tm where tm.group_id = group_id and tm.user_id = auth.uid() and tm.role = 'admin')\n);\n"),
+    ignores: f('supabase/migrations/3_members.sql', "create table public.group_members (\n  id uuid primary key,\n  group_id uuid not null,\n  user_id uuid not null,\n  role text not null default 'member'\n);\ncreate policy \"Group admins can manage members\" on public.group_members for all using (\n  exists (select 1 from public.group_members gm where gm.group_id = group_members.group_id and gm.user_id = auth.uid() and gm.role = 'admin')\n);\n")
+  },
+  // ─── False positives found on 30 AI-built apps (2026-10-14) ───────────
+  {
+    ruleIds: [3016],
+    name: 'Production server without SIGTERM handling; a local dev server is fine',
+    detects: f('backend/server.js', "const app = require('express')();\napp.get('/health', (req, res) => res.send('ok'));\napp.listen(process.env.PORT || 3000);\n"),
+    ignores: f('dev-server.js', "const app = require('express')();\napp.get('/health', (req, res) => res.send('ok'));\napp.listen(3000, () => console.log('dev server on http://localhost:3000'));\n")
+  },
+  {
+    ruleIds: [29701],
+    name: 'SHIP-01 hardcoded localhost API URL; a ternary fallback after an env value is fine',
+    detects: f('src/context/SocketContext.tsx', "export function connect() {\n  return io('http://localhost:3000', { withCredentials: true });\n}\n"),
+    ignores: f('src/context/SocketContext.tsx', "export function connect() {\n  const envUrl = import.meta.env.VITE_API_BASE_URL;\n  const apiBase = envUrl && envUrl.trim() !== '' ? envUrl : 'http://localhost:3000';\n  return io(apiBase, { withCredentials: true });\n}\n")
+  },
+  {
+    ruleIds: [8201],
+    name: 'PRIVACY-01 password value logged; the word "password" in the message alone is fine',
+    detects: f('src/services/auth.ts', "export async function login(email: string, password: string) {\n  console.log('login attempt', email, password);\n}\n"),
+    ignores: f('src/services/auth.ts', "export async function check(error: unknown) {\n  console.error('Error checking password:', error);\n}\n")
+  },
+  {
+    ruleIds: [29622],
+    name: 'BUG-22 localStorage read while rendering a Next.js page; a Vite SPA page never renders on a server',
+    detects: [{ path: 'package.json', content: '{ "dependencies": { "next": "15.0.0", "react": "19.0.0" } }\n' }, { path: 'pages/dashboard.tsx', content: "export default function Dashboard() {\n  const user = localStorage.getItem('user');\n  return <p>{user}</p>;\n}\n" }],
+    ignores: [{ path: 'package.json', content: '{ "dependencies": { "react": "18.3.0", "vite": "5.0.0", "react-router-dom": "6.0.0" } }\n' }, { path: 'src/pages/Dashboard.tsx', content: "export default function Dashboard() {\n  const user = localStorage.getItem('user');\n  return <p>{user}</p>;\n}\n" }]
+  },
+  // ─── False positives found by scanning Zelsis itself (2026-10-14) ─────
+  {
+    ruleIds: [29702],
+    name: 'SHIP-02 bare VERCEL_URL used as a URL; a variable later given https:// is fine',
+    detects: f('lib/site-url.ts', "export const siteUrl = process.env.VERCEL_URL;\nexport const callback = new URL('/auth/callback', siteUrl);\n"),
+    ignores: f('lib/site-url.ts', "const vercelUrl = process.env.VERCEL_URL;\nexport const siteUrl = vercelUrl ? `https://${vercelUrl}` : 'http://localhost:3000';\n")
+  },
+  {
+    ruleIds: [29894],
+    name: 'BUG-217 timingSafeEqual on unknown lengths; inside try/catch the RangeError is handled',
+    detects: f('app/api/webhooks/route.ts', "export function verify(sig: string, expected: string) {\n  return crypto.timingSafeEqual(Buffer.from(sig), Buffer.from(expected));\n}\n"),
+    ignores: f('app/api/webhooks/route.ts', "export function verify(sig: string, expected: string) {\n  try {\n    return crypto.timingSafeEqual(Buffer.from(sig), Buffer.from(expected));\n  } catch {\n    return false;\n  }\n}\n")
+  },
+  {
+    ruleIds: [28007],
+    name: 'NEXT-SB-07 SECURITY DEFINER write; revoked from clients in a later migration is fine',
+    detects: f('supabase/migrations/1_quota.sql', 'create or replace function public.reserve_quota(p_user uuid)\nreturns void language plpgsql security definer as $$\nbegin\n  update public.profiles set scans_used = scans_used + 1 where id = p_user;\nend;\n$$;\n'),
+    ignores: [
+      { path: 'supabase/migrations/1_quota.sql', content: 'create or replace function public.reserve_quota(p_user uuid)\nreturns void language plpgsql security definer as $$\nbegin\n  update public.profiles set scans_used = scans_used + 1 where id = p_user;\nend;\n$$;\n' },
+      { path: 'supabase/migrations/2_harden.sql', content: 'REVOKE EXECUTE ON FUNCTION public.reserve_quota(uuid) FROM PUBLIC, anon, authenticated;\n' },
+    ]
+  },
+  {
+    ruleIds: [29826],
+    name: 'BUG-155 useSearchParams() result mutated; a new URL(...).searchParams copy is fine',
+    detects: f('app/search/filters.tsx', "'use client';\nimport { useSearchParams } from 'next/navigation';\nexport function Filters() {\n  const searchParams = useSearchParams();\n  searchParams.set('page', '1');\n  return null;\n}\n"),
+    ignores: f('app/search/filters.tsx', "'use client';\nimport { useSearchParams } from 'next/navigation';\nexport function Filters() {\n  const searchParams = useSearchParams();\n  const clean = new URL(window.location.href);\n  clean.searchParams.delete('page');\n  window.history.replaceState({}, '', clean.toString());\n  return searchParams.get('q');\n}\n")
+  },
+  {
+    ruleIds: [29668],
+    name: 'BUG-68 insert data used without checking; a guarded if (row?.id) is fine',
+    detects: f('lib/projects.ts', "export async function createProject(name: string) {\n  const { data: row } = await supabase.from('projects').insert({ name }).select('id').single();\n  return row.id;\n}\n"),
+    ignores: f('lib/projects.ts', "export async function createProject(name: string) {\n  let id: string | null = null;\n  const { data: row } = await supabase.from('projects').insert({ name }).select('id').maybeSingle();\n  if (row?.id) id = row.id;\n  return id;\n}\n")
+  },
+  {
+    ruleIds: [7215],
+    name: 'API-15 GET handler writes data; an OAuth callback that verifies state is fine',
+    detects: f('app/api/v1/subscribe/route.ts', "export async function GET(req: Request) {\n  const url = new URL(req.url);\n  await supabase.from('subscribers').insert({ email: url.searchParams.get('email') });\n  return Response.json({ ok: true });\n}\n"),
+    ignores: f('app/api/v1/github-app/setup/route.ts', "export async function GET(req: Request) {\n  const url = new URL(req.url);\n  const userId = verifyInstallState(url.searchParams.get('state') || '');\n  if (!userId) return new Response('bad state', { status: 400 });\n  await supabase.from('installations').upsert({ user_id: userId, installation_id: url.searchParams.get('installation_id') });\n  return Response.redirect('/dashboard');\n}\n")
+  },
+  {
+    ruleIds: [29762],
+    name: 'BUG-129 useSearchParams page with no Suspense; a default export that wraps it in <Suspense> is fine',
+    detects: [{ path: 'package.json', content: '{ "dependencies": { "next": "16.0.0" } }\n' }, { path: 'app/search/page.tsx', content: "'use client';\nimport { useSearchParams } from 'next/navigation';\nexport default function SearchPage() {\n  const q = useSearchParams().get('q');\n  return <p>{q}</p>;\n}\n" }],
+    ignores: [{ path: 'package.json', content: '{ "dependencies": { "next": "16.0.0" } }\n' }, { path: 'app/search/page.tsx', content: "'use client';\nimport { Suspense } from 'react';\nimport { useSearchParams } from 'next/navigation';\nexport default function SearchPage() {\n  return (\n    <Suspense fallback={null}>\n      <Results />\n    </Suspense>\n  );\n}\nfunction Results() {\n  const q = useSearchParams().get('q');\n  return <p>{q}</p>;\n}\n" }]
+  },
+  {
+    ruleIds: [24103, 18013],
+    name: 'CORE-03 / JAVA-SEC-03 request body deserialized; an allowlisting subclass is safe',
+    detects: f('src/main/java/com/acme/web/ImportController.java', 'public Object load(HttpServletRequest request) throws Exception {\n    ObjectInputStream in = new ObjectInputStream(request.getInputStream());\n    return in.readObject();\n}\n'),
+    ignores: f('src/main/java/com/acme/web/ImportController.java', 'class SafeInput extends ObjectInputStream {\n    SafeInput(InputStream in) throws IOException { super(in); }\n    @Override protected Class<?> resolveClass(ObjectStreamClass desc) throws IOException, ClassNotFoundException {\n        if (!ALLOWED.contains(desc.getName())) throw new InvalidClassException(desc.getName());\n        return super.resolveClass(desc);\n    }\n}\npublic Object load(HttpServletRequest request) throws Exception {\n    return new SafeInput(request.getInputStream()).readObject();\n}\n')
+  },
+  {
+    ruleIds: [24103, 18013],
+    name: 'CORE-03 / JAVA-SEC-03 deep clone of bytes the code just serialized is not untrusted input',
+    detects: f('src/main/java/com/acme/util/SerializationHelper.java', 'public static Object fromString(String s) throws Exception {\n    byte[] data = Base64.getDecoder().decode(s);\n    return new ObjectInputStream(new ByteArrayInputStream(data)).readObject();\n}\npublic static String toString(Serializable o) throws Exception {\n    ByteArrayOutputStream baos = new ByteArrayOutputStream();\n    new ObjectOutputStream(baos).writeObject(o);\n    return Base64.getEncoder().encodeToString(baos.toByteArray());\n}\n'),
+    ignores: f('src/main/java/com/acme/util/Cloner.java', 'public static <T> T deepCopy(T value) throws Exception {\n    ByteArrayOutputStream bytes = new ByteArrayOutputStream();\n    new ObjectOutputStream(bytes).writeObject(value);\n    return (T) new ObjectInputStream(new ByteArrayInputStream(bytes.toByteArray())).readObject();\n}\n')
+  },
+  // ─── Mobile (MOB-SEC-01..17) ──────────────────────────────────────────
+  {
+    ruleIds: [9301],
+    name: 'MOB-SEC-01 token in SharedPreferences; saving screen state in a Bundle is not storage',
+    detects: f('app/src/main/java/com/acme/auth/TokenStore.java', 'prefs.edit().putString("access_token", token).apply();\n'),
+    ignores: f('app/src/main/java/com/acme/feed/FeedActivity.java', 'protected void onSaveInstanceState(Bundle outState) {\n    outState.putString("password", password);\n}\n')
+  },
+  {
+    ruleIds: [9305],
+    name: 'MOB-SEC-05 exported receiver with a custom action; system-only actions are fine',
+    detects: f('app/src/main/AndroidManifest.xml', '<manifest xmlns:android="http://schemas.android.com/apk/res/android">\n  <application>\n    <receiver\n        android:name=".SyncReceiver"\n        android:exported="true">\n      <intent-filter>\n        <action android:name="com.acme.action.SYNC_NOW" />\n      </intent-filter>\n    </receiver>\n  </application>\n</manifest>\n'),
+    ignores: f('app/src/main/AndroidManifest.xml', '<manifest xmlns:android="http://schemas.android.com/apk/res/android">\n  <application>\n    <receiver\n        android:name=".BootReceiver"\n        android:exported="true">\n      <intent-filter>\n        <action android:name="android.intent.action.BOOT_COMPLETED" />\n      </intent-filter>\n    </receiver>\n  </application>\n</manifest>\n')
+  },
+  {
+    ruleIds: [9304],
+    name: 'MOB-SEC-04 Android trust-all TrustManager and hostname verifier',
+    detects: f('app/src/main/java/com/acme/net/Http.kt', 'class TrustAll : X509TrustManager {\n    override fun checkServerTrusted(chain: Array<X509Certificate>, authType: String) {}\n    override fun checkClientTrusted(chain: Array<X509Certificate>, authType: String) {}\n    override fun getAcceptedIssuers() = arrayOf<X509Certificate>()\n}\nval client = OkHttpClient.Builder().hostnameVerifier { _, _ -> true }.build()\n'),
+    ignores: f('app/src/main/java/com/acme/net/Http.kt', 'val client = OkHttpClient.Builder()\n    .certificatePinner(CertificatePinner.Builder().add("api.acme.com", "sha256/AAAA").build())\n    .build()\n')
+  },
+  {
+    ruleIds: [9304],
+    name: 'MOB-SEC-04 iOS session delegate accepts any server trust',
+    detects: f('Acme/Network/Session.swift', 'func urlSession(_ session: URLSession, didReceive challenge: URLAuthenticationChallenge, completionHandler: @escaping (URLSession.AuthChallengeDisposition, URLCredential?) -> Void) {\n    completionHandler(.useCredential, URLCredential(trust: challenge.protectionSpace.serverTrust!))\n}\n'),
+    ignores: f('Acme/Network/Session.swift', 'func urlSession(_ session: URLSession, didReceive challenge: URLAuthenticationChallenge, completionHandler: @escaping (URLSession.AuthChallengeDisposition, URLCredential?) -> Void) {\n    guard let trust = challenge.protectionSpace.serverTrust, SecTrustEvaluateWithError(trust, nil) else { return completionHandler(.cancelAuthenticationChallenge, nil) }\n    completionHandler(.useCredential, URLCredential(trust: trust))\n}\n')
+  },
+  {
+    ruleIds: [9306],
+    name: 'MOB-SEC-06 WebView file-URL access enabled',
+    detects: f('app/src/main/java/com/acme/HelpActivity.kt', 'webView.settings.javaScriptEnabled = true\nwebView.settings.allowUniversalAccessFromFileURLs = true\nwebView.loadUrl("file:///android_asset/help.html")\n'),
+    ignores: f('app/src/main/java/com/acme/HelpActivity.kt', 'webView.settings.javaScriptEnabled = true\nwebView.loadUrl("https://appassets.androidplatform.net/assets/help.html")\n')
+  },
+  {
+    ruleIds: [9309],
+    name: 'MOB-SEC-09 Kotlin AES defaults to ECB',
+    detects: f('app/src/main/java/com/acme/crypto/Box.kt', 'fun encrypt(key: SecretKey, data: ByteArray): ByteArray {\n    val cipher = Cipher.getInstance("AES")\n    cipher.init(Cipher.ENCRYPT_MODE, key)\n    return cipher.doFinal(data)\n}\n'),
+    ignores: f('app/src/main/java/com/acme/crypto/Box.kt', 'fun encrypt(key: SecretKey, data: ByteArray): ByteArray {\n    val cipher = Cipher.getInstance("AES/GCM/NoPadding")\n    cipher.init(Cipher.ENCRYPT_MODE, key)\n    return cipher.iv + cipher.doFinal(data)\n}\n')
+  },
+  {
+    ruleIds: [9310],
+    name: 'MOB-SEC-10 deep-link URL loaded into a WebView',
+    detects: f('app/src/main/java/com/acme/WebActivity.kt', 'override fun onCreate(savedInstanceState: Bundle?) {\n    super.onCreate(savedInstanceState)\n    val target = intent.dataString\n    webView.loadUrl(target!!)\n}\n'),
+    ignores: f('app/src/main/java/com/acme/WebActivity.kt', 'override fun onCreate(savedInstanceState: Bundle?) {\n    super.onCreate(savedInstanceState)\n    val target = intent.data ?: return\n    if (target.scheme == "https" && target.host in setOf("acme.com", "help.acme.com")) webView.loadUrl(target.toString())\n}\n')
+  },
+  {
+    ruleIds: [9311],
+    name: 'MOB-SEC-11 manifest marked debuggable (debug source set is fine)',
+    detects: f('app/src/main/AndroidManifest.xml', '<manifest xmlns:android="http://schemas.android.com/apk/res/android">\n    <application android:debuggable="true" android:label="Acme" />\n</manifest>\n'),
+    ignores: f('app/src/debug/AndroidManifest.xml', '<manifest xmlns:android="http://schemas.android.com/apk/res/android">\n    <application android:debuggable="true" android:label="Acme" />\n</manifest>\n')
+  },
+  {
+    ruleIds: [9312],
+    name: 'MOB-SEC-12 token written to Logcat',
+    detects: f('app/src/main/java/com/acme/auth/Login.kt', 'fun onLoggedIn(session: Session) {\n    Log.d(TAG, "logged in, token=${session.accessToken}")\n}\n'),
+    ignores: f('app/src/main/java/com/acme/auth/Login.kt', 'fun onLoggedIn(session: Session) {\n    Log.d(TAG, "logged in as ${session.userId}")\n    if (BuildConfig.DEBUG) {\n        Log.d(TAG, "token=${session.accessToken}")\n    }\n}\n')
+  },
+  {
+    ruleIds: [9312],
+    name: 'MOB-SEC-12 iOS prints the auth token',
+    detects: f('Acme/Auth/LoginViewModel.swift', 'func didLogin(_ session: Session) {\n    print("login ok \\(session.accessToken)")\n}\n'),
+    ignores: f('Acme/Auth/LoginViewModel.swift', 'func didLogin(_ session: Session) {\n    print("login ok \\(session.userId)")\n}\n')
+  },
+  {
+    ruleIds: [9318],
+    name: 'MOB-SEC-18 password written to a plist file',
+    detects: f('Acme/Storage/ProfileStore.swift', 'let data = NSMutableDictionary()\ndata.setValue(username, forKey: "username")\ndata.setValue(password, forKey: "password")\ndata.write(toFile: path, atomically: true)\n'),
+    ignores: f('Acme/Storage/ProfileStore.swift', 'let data = NSMutableDictionary()\ndata.setValue(username, forKey: "username")\ndata.write(toFile: path, atomically: true)\ntry keychain.set(password, key: "password")\n')
+  },
+  {
+    ruleIds: [9313],
+    name: 'MOB-SEC-13 Keychain item accessible always',
+    detects: f('Acme/Storage/Keychain.swift', 'let query: [String: Any] = [\n    kSecClass as String: kSecClassGenericPassword,\n    kSecAttrAccessible as String: kSecAttrAccessibleAlways,\n    kSecValueData as String: token,\n]\n'),
+    ignores: f('Acme/Storage/Keychain.swift', 'let query: [String: Any] = [\n    kSecClass as String: kSecClassGenericPassword,\n    kSecAttrAccessible as String: kSecAttrAccessibleAfterFirstUnlockThisDeviceOnly,\n    kSecValueData as String: token,\n]\n')
+  },
+  {
+    ruleIds: [9314],
+    name: 'MOB-SEC-14 SQLite rawQuery built by concatenation',
+    detects: f('app/src/main/java/com/acme/db/NotesDao.kt', 'fun find(title: String): Cursor =\n    db.rawQuery("SELECT * FROM notes WHERE title = \'" + title + "\'", null)\n'),
+    ignores: f('app/src/main/java/com/acme/db/NotesDao.kt', 'fun find(title: String): Cursor =\n    db.rawQuery("SELECT * FROM notes WHERE title = ?", arrayOf(title))\n')
+  },
+  {
+    ruleIds: [9315],
+    name: 'MOB-SEC-15 React Native token in AsyncStorage',
+    detects: f('src/auth/session.ts', "import AsyncStorage from '@react-native-async-storage/async-storage';\nexport async function saveSession(token: string) {\n  await AsyncStorage.setItem('accessToken', token);\n}\n"),
+    ignores: f('src/auth/session.ts', "import * as SecureStore from 'expo-secure-store';\nimport AsyncStorage from '@react-native-async-storage/async-storage';\nexport async function saveSession(token: string) {\n  await SecureStore.setItemAsync('accessToken', token);\n  await AsyncStorage.setItem('onboardingDone', 'true');\n}\n")
+  },
+  {
+    ruleIds: [9316],
+    name: 'MOB-SEC-16 world-readable preferences',
+    detects: f('app/src/main/java/com/acme/Prefs.java', 'SharedPreferences prefs = context.getSharedPreferences("session", Context.MODE_WORLD_READABLE);\n'),
+    ignores: f('app/src/main/java/com/acme/Prefs.java', 'SharedPreferences prefs = context.getSharedPreferences("session", Context.MODE_PRIVATE);\n')
+  },
+  {
+    ruleIds: [9317],
+    name: 'MOB-SEC-17 FileProvider root-path',
+    detects: f('app/src/main/res/xml/file_paths.xml', '<paths>\n    <root-path name="root" path="." />\n</paths>\n'),
+    ignores: f('app/src/main/res/xml/file_paths.xml', '<paths>\n    <cache-path name="shared" path="shared/" />\n</paths>\n')
+  },
+  {
+    ruleIds: [28007],
+    name: 'NEXT-SB-07 SECURITY DEFINER delete granted to clients; a guard helper (is_admin) counts as a caller check',
+    detects: f('supabase/migrations/1_fn.sql', 'create or replace function public.delete_account(target uuid)\nreturns void language plpgsql security definer as $$\nbegin\n  delete from public.profiles where id = target;\nend;\n$$;\ngrant execute on function public.delete_account(uuid) to anon, authenticated;\n'),
+    ignores: f('supabase/migrations/1_fn.sql', "create or replace function public.delete_account(target uuid)\nreturns void language plpgsql security definer as $$\nbegin\n  if not public.is_admin() then\n    raise exception 'admins only';\n  end if;\n  delete from public.profiles where id = target;\nend;\n$$;\ngrant execute on function public.delete_account(uuid) to authenticated;\n")
+  },
+  {
+    ruleIds: [28806],
+    name: 'GAP-06 admin header read in a repo where middleware sets it is not client-trusted',
+    detects: [{ path: 'app/api/admin/stats/route.ts', content: "export async function GET(req: Request) {\n  if (req.headers.get('x-user-role') !== 'admin') return new Response('no', { status: 403 });\n  return Response.json({ ok: true });\n}\n" }, { path: 'package.json', content: '{ "dependencies": { "next": "15.0.0" } }\n' }],
+    ignores: [{ path: 'app/api/admin/stats/route.ts', content: "export async function GET(req: Request) {\n  if (req.headers.get('x-user-role') !== 'admin') return new Response('no', { status: 403 });\n  return Response.json({ ok: true });\n}\n" }, { path: 'middleware.ts', content: "export async function middleware(req: NextRequest) {\n  const headers = new Headers(req.headers);\n  headers.set('x-user-role', await roleFromSession(req));\n  return NextResponse.next({ request: { headers } });\n}\n" }]
+  },
+  {
+    ruleIds: [28834],
+    name: "GAP-34 service role key in a 'use client' module",
+    detects: f('app/billing/client.tsx', "'use client';\nimport { createClient } from '@supabase/supabase-js';\nexport const admin = createClient(process.env.NEXT_PUBLIC_SUPABASE_URL!, process.env.SUPABASE_SERVICE_ROLE_KEY!);\n"),
+    ignores: f('app/billing/admin.ts', "import 'server-only';\nimport { createClient } from '@supabase/supabase-js';\nexport const admin = createClient(process.env.NEXT_PUBLIC_SUPABASE_URL!, process.env.SUPABASE_SERVICE_ROLE_KEY!);\n")
+  },
+  {
+    ruleIds: [28835],
+    name: 'GAP-35 next.config CORS wildcard with credentials',
+    detects: f('next.config.js', "module.exports = { async headers() { return [{ source: '/api/:path*', headers: [\n  { key: 'Access-Control-Allow-Credentials', value: 'true' },\n  { key: 'Access-Control-Allow-Origin', value: '*' },\n] }]; } };\n"),
+    ignores: f('next.config.js', "module.exports = { async headers() { return [{ source: '/api/:path*', headers: [\n  { key: 'Access-Control-Allow-Credentials', value: 'true' },\n  { key: 'Access-Control-Allow-Origin', value: 'https://app.example.com' },\n] }]; } };\n")
+  },
+  {
+    ruleIds: [28836],
+    name: 'GAP-36 user website rendered as href without a scheme check',
+    detects: f('components/profile-card.tsx', 'export function Card({ profile }: { profile: { name: string; website: string } }) {\n  return <a href={profile.website}>{profile.name}</a>;\n}\n'),
+    ignores: f('components/profile-card.tsx', "const safeUrl = (u: string) => (/^https?:/.test(u) ? u : '#');\nexport function Card({ profile }: { profile: { name: string; website: string } }) {\n  return <a href={safeUrl(profile.website)}>{profile.name}</a>;\n}\n")
+  },
+  {
+    ruleIds: [28837],
+    name: 'GAP-37 request body deep-merged with lodash',
+    detects: f('src/routes/settings.js', "const _ = require('lodash');\napp.post('/settings', (req, res) => {\n  const settings = _.merge({}, defaults, req.body);\n  res.json(settings);\n});\n"),
+    ignores: f('src/routes/settings.js', "const _ = require('lodash');\napp.post('/settings', (req, res) => {\n  const settings = _.merge({}, defaults, SettingsSchema.parse(req.body));\n  res.json(settings);\n});\n")
+  },
+  {
+    ruleIds: [28838],
+    name: 'GAP-38 FastAPI DELETE route without an auth dependency (user_id path param is not auth)',
+    detects: f('app/api/routes/users.py', 'from fastapi import APIRouter, Depends\nrouter = APIRouter()\n\n@router.delete("/users/{user_id}")\ndef delete_user(user_id: int, db: Session = Depends(get_db)):\n    db.query(User).filter(User.id == user_id).delete()\n'),
+    ignores: f('app/api/routes/alerts.py', 'from fastapi import APIRouter, Depends\nrouter = APIRouter()\n\n@router.delete("/{alert_id}")\nasync def delete_alert(\n    alert_id: str,\n    user_id: str = Depends(get_current_user_id),\n    db = Depends(get_db)\n):\n    await db.alerts.delete_one({"id": alert_id, "user_id": user_id})\n')
+  },
+  {
+    ruleIds: [28833],
+    name: 'GAP-33 SQL dump in the public folder (path-only entry, content not downloaded)',
+    detects: f('public/backup.sql', ''),
+    ignores: f('db/backup.sql', '')
+  },
+  {
+    ruleIds: [28833],
+    name: 'GAP-33 real env file in a nested static folder, not the shared example',
+    detects: f('apps/web/static/.env.production', 'DATABASE_URL=postgres://x\n'),
+    ignores: f('apps/web/static/.env.example', 'DATABASE_URL=\n')
+  },
   // ─── Secrets ──────────────────────────────────────────────────────────
   {
     ruleIds: [1],
@@ -80,7 +348,15 @@ export const RULE_CASES: RuleCase[] = [
     ruleIds: [3001, 6010],
     name: 'Table without Row Level Security',
     detects: f('supabase/migrations/002.sql', 'CREATE TABLE public.payments (id uuid primary key, user_id uuid, amount int);\n'),
-    ignores: f('supabase/migrations/002.sql', 'CREATE TABLE public.payments (id uuid primary key, user_id uuid, amount int);\nALTER TABLE public.payments ENABLE ROW LEVEL SECURITY;\nCREATE POLICY "own" ON public.payments FOR SELECT USING (auth.uid() = user_id);\n')
+    ignores: [
+      { path: 'supabase/migrations/002.sql', content: 'CREATE TABLE public.payments (id uuid primary key, user_id uuid, amount int);\nALTER TABLE public.payments ENABLE ROW LEVEL SECURITY;\nCREATE POLICY "own" ON public.payments FOR SELECT USING (auth.uid() = user_id);\n' },
+      // SQL line comments and block comments containing CREATE TABLE are not real table definitions
+      { path: 'supabase/migrations/003_comments.sql', content: '-- o baseline aplicado, e create table if not exists faz a reescrita virar no-op\n/* create table if not exists dummy (id int); */\nALTER TABLE public.payments ALTER COLUMN amount SET NOT NULL;\n' },
+      // SQLite schemas in TypeScript or drizzle-orm are not Postgres RLS tables
+      { path: 'packages/agent/src/session/schema.ts', content: 'import { sqliteTable, text } from "drizzle-orm/sqlite-core";\nconst sql = "CREATE TABLE IF NOT EXISTS chat_sessions (id TEXT PRIMARY KEY);";\n' },
+      // Standalone Postgres schemas outside supabase directory in a multi-tenant monorepo
+      { path: 'plugins/postgres/sql/bundles.sql', content: 'CREATE TABLE bundles (id serial primary key, name text);\n' }
+    ]
   },
   {
     ruleIds: [3001],
@@ -123,6 +399,16 @@ export const RULE_CASES: RuleCase[] = [
     ignores: f('lib/calc.ts', 'export function calc(input: string) {\n  return JSON.parse(input);\n}\n')
   },
   {
+    ruleIds: [32],
+    name: 'Python eval on input vs Redis Lua eval, MLX eval and a Java method named eval',
+    detects: f('app/calc.py', 'def calc(expr):\n    return eval(expr)\n'),
+    ignores: [
+      ...f('app/locks.py', 'async def acquire(redis, key, token):\n    return await redis.eval(ACQUIRE_LUA, 1, key, token)\n'),
+      ...f('app/model.py', 'import mlx.core as mx\n\ndef step(x):\n    mx.eval(x)\n    return x\n'),
+      ...f('src/main/java/udtf/Labels.java', 'public class Labels {\n  public void eval(Integer id, String labels) {\n    collect(labels);\n  }\n}\n'),
+    ],
+  },
+  {
     ruleIds: [33],
     name: 'Command injection via shell exec',
     detects: f('app/api/ping/route.ts', "import { exec } from 'child_process';\nexport async function GET(req: Request) {\n  const host = new URL(req.url).searchParams.get('host');\n  exec(`ping -c 1 ${host}`);\n  return new Response('ok');\n}\n"),
@@ -151,6 +437,12 @@ export const RULE_CASES: RuleCase[] = [
     name: 'Unsanitized innerHTML',
     detects: f('components/Post.tsx', 'export const Post = ({ html }: { html: string }) => <div dangerouslySetInnerHTML={{ __html: html }} />;\n'),
     ignores: f('app/layout.tsx', 'const ld = { "@context": "https://schema.org" };\nexport const Ld = () => <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(ld) }} />;\n')
+  },
+  {
+    ruleIds: [16],
+    name: 'innerHTML set from a message vs from an icon helper call',
+    detects: f('src/views/inbox.js', 'export function show(el, message) {\n  el.innerHTML = message.body;\n}\n'),
+    ignores: f('src/views/selfsign.js', "import { icon } from './icons.js';\nexport function done(btn) {\n  btn.innerHTML = icon('check', 16, 2.4);\n}\n"),
   },
 
   // ─── Auth & crypto ────────────────────────────────────────────────────
@@ -201,8 +493,16 @@ export const RULE_CASES: RuleCase[] = [
     detects: f('app/api/chat/route.ts', "import OpenAI from 'openai';\nconst openai = new OpenAI();\nexport async function POST(req: Request) {\n  const { prompt } = await req.json();\n  return Response.json(await openai.chat.completions.create({ model: 'gpt-4o', max_tokens: 256, messages: [{ role: 'user', content: prompt }] }));\n}\n"),
     ignores: [
       { path: 'app/api/chat/route.ts', content: "import OpenAI from 'openai';\nimport { rateLimit } from '@/lib/rate-limit';\nconst openai = new OpenAI();\nexport async function POST(req: Request) {\n  await rateLimit(req);\n  const { prompt } = await req.json();\n  return Response.json(await openai.chat.completions.create({ model: 'gpt-4o', max_tokens: 256, messages: [{ role: 'user', content: prompt }] }));\n}\n" },
-      { path: 'app/api/login/route.ts', content: "export async function POST(req: Request) {\n  const body = await req.json();\n  return Response.json({ ok: Boolean(body.email) });\n}\n" }
+      { path: 'app/api/login/route.ts', content: "export async function POST(req: Request) {\n  const body = await req.json();\n  return Response.json({ ok: Boolean(body.email) });\n}\n" },
+      // Twilio's client.messages.create sends an SMS; it is not an AI call (SMS limits are XL-12's job)
+      { path: 'app/api/notify/route.ts', content: "import twilio from 'twilio';\nconst client = twilio(process.env.TWILIO_ACCOUNT_SID, process.env.TWILIO_AUTH_TOKEN);\nexport async function POST(req: Request) {\n  const { phone } = await req.json();\n  await client.messages.create({ to: phone, from: process.env.TWILIO_FROM, body: 'Your order shipped' });\n  return Response.json({ sent: true });\n}\n" }
     ]
+  },
+  {
+    ruleIds: [10402],
+    name: 'Anthropic messages.create endpoint without rate limiting is still an AI endpoint',
+    detects: f('app/api/assistant/route.ts', "import Anthropic from '@anthropic-ai/sdk';\nconst client = new Anthropic();\nexport async function POST(req: Request) {\n  const { prompt } = await req.json();\n  return Response.json(await client.messages.create({ model: 'claude-haiku-5-5', max_tokens: 256, messages: [{ role: 'user', content: prompt }] }));\n}\n"),
+    ignores: f('app/api/assistant/route.ts', "import Anthropic from '@anthropic-ai/sdk';\nimport { rateLimit } from '@/lib/rate-limit';\nconst client = new Anthropic();\nexport async function POST(req: Request) {\n  await rateLimit(req);\n  const { prompt } = await req.json();\n  return Response.json(await client.messages.create({ model: 'claude-haiku-5-5', max_tokens: 256, messages: [{ role: 'user', content: prompt }] }));\n}\n")
   },
 
   // ─── Logging ──────────────────────────────────────────────────────────

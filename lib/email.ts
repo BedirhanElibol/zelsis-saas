@@ -1,5 +1,6 @@
 import { logger } from './logger';
 import { getConfiguredAppUrl } from './app-url';
+import { CONTACT_EMAIL } from './contact';
 
 export interface SendEmailOptions {
   to: string | string[];
@@ -29,8 +30,16 @@ export async function sendEmail(options: SendEmailOptions): Promise<SendEmailRes
     return { success: false, error: 'RESEND_API_KEY is not configured' };
   }
 
-  const defaultFrom = process.env.RESEND_FROM_EMAIL?.trim() || 'Zelsis <onboarding@resend.dev>';
-  const from = options.from || defaultFrom;
+  const configuredFrom = process.env.RESEND_FROM_EMAIL?.trim();
+  const isLegacyOrNoreply =
+    !configuredFrom ||
+    configuredFrom.includes('onboarding@resend.dev') ||
+    configuredFrom.includes('noreply@') ||
+    configuredFrom.toLowerCase().includes('shipguard');
+
+  const defaultFrom = isLegacyOrNoreply ? `Zelsis <${CONTACT_EMAIL}>` : configuredFrom;
+  const rawFrom = options.from || defaultFrom;
+  const from = rawFrom.includes('noreply@') ? `Zelsis <${CONTACT_EMAIL}>` : rawFrom;
   const to = Array.isArray(options.to) ? options.to : [options.to];
 
   try {
@@ -46,7 +55,8 @@ export async function sendEmail(options: SendEmailOptions): Promise<SendEmailRes
         subject: options.subject,
         html: options.html,
         text: options.text,
-        reply_to: options.replyTo,
+        // All outbound messages and customer replies route through the single verified contact mailbox
+        reply_to: options.replyTo || CONTACT_EMAIL,
         headers: options.headers,
       }),
       signal: AbortSignal.timeout(8000),
@@ -304,8 +314,8 @@ export async function sendFirstScanNudgeEmail(params: { toEmail: string; unsubsc
         Your first scan takes about a minute
       </h1>
       <p style="margin:0 0 12px 0;">
-        Paste a GitHub repository and Zelsis checks it for leaked keys, open Supabase RLS policies, broken auth,
-        vulnerable dependencies and risky cloud config, with the exact file and line for each finding.
+        Paste a GitHub repository and Zelsis checks it for leaked keys, broken auth, logic bugs,
+        vulnerable dependencies and risky CI/CD and cloud config, with the exact file and line for each finding.
       </p>
       <p style="margin:0 0 12px 0;">
         Public repositories are free and unlimited. On the free plan you can also scan up to three private repositories.
@@ -321,11 +331,81 @@ export async function sendFirstScanNudgeEmail(params: { toEmail: string; unsubsc
     `,
   });
 
-  const text = `Your first Zelsis scan takes about a minute.\n\nPaste a GitHub repository and Zelsis checks it for leaked keys, open Supabase RLS policies, broken auth, vulnerable dependencies and risky cloud config.\n\nScan a repository: ${scanUrl}\n\nUnsubscribe from product emails: ${unsubscribeUrl}`;
+  const text = `Your first Zelsis scan takes about a minute.\n\nPaste a GitHub repository and Zelsis checks it for leaked keys, broken auth, logic bugs, vulnerable dependencies and risky CI/CD and cloud config.\n\nScan a repository: ${scanUrl}\n\nUnsubscribe from product emails: ${unsubscribeUrl}`;
 
   return sendEmail({
     to: toEmail,
     subject: 'Run your first Zelsis scan',
+    html,
+    text,
+    headers: {
+      'List-Unsubscribe': `<${unsubscribeUrl}>`,
+      'List-Unsubscribe-Post': 'List-Unsubscribe=One-Click',
+    },
+  });
+}
+
+/**
+ * Friday summary of what the PR / CI gate did this week. Sent only to accounts with recorded gate runs,
+ * with a one-click unsubscribe like other product email.
+ */
+export async function sendWeeklyRiskSummaryEmail(params: {
+  toEmail: string;
+  unsubscribeUrl: string;
+  subject: string;
+  runs: number;
+  blocked: number;
+  warned: number;
+  criticalStopped: number;
+  highFlagged: number;
+  topProjects: { name: string; blocked: number }[];
+}): Promise<SendEmailResult> {
+  const { toEmail, unsubscribeUrl, subject, runs, blocked, warned, criticalStopped, highFlagged, topProjects } = params;
+  const appUrl = getConfiguredAppUrl();
+  const unsub = escapeHtml(unsubscribeUrl);
+  const stat = (value: number, label: string, color: string) =>
+    `<td style="padding:12px;text-align:center;border:1px solid rgba(255,255,255,0.08);border-radius:8px;">
+       <div style="font-size:22px;font-weight:700;color:${color};">${value}</div>
+       <div style="font-size:11px;color:#A1A1AA;">${label}</div>
+     </td>`;
+  const projectRows = topProjects.length
+    ? `<p style="margin:16px 0 6px 0;font-weight:700;color:#FFFFFF;">Where the gate stopped merges</p>
+       <ul style="margin:0;padding-left:18px;">${topProjects
+         .map((p) => `<li>${escapeHtml(p.name)}: ${p.blocked} blocked pull request${p.blocked === 1 ? '' : 's'}</li>`)
+         .join('')}</ul>`
+    : '';
+  const lead = blocked > 0
+    ? `Without the gate, these ${criticalStopped} critical issue${criticalStopped === 1 ? '' : 's'} would have been merged as written.`
+    : 'No pull request this week introduced a critical issue.';
+
+  const html = wrapHtmlTemplate({
+    title: subject,
+    contentHtml: `
+      <h1 style="margin:0 0 16px 0;font-size:20px;font-weight:700;color:#FFFFFF;letter-spacing:-0.3px;">${escapeHtml(subject)}</h1>
+      <p style="margin:0 0 16px 0;">${lead}</p>
+      <table role="presentation" cellspacing="6" style="width:100%;border-collapse:separate;">
+        <tr>
+          ${stat(runs, 'gate runs', '#FFFFFF')}
+          ${stat(blocked, 'blocked', '#F87171')}
+          ${stat(warned, 'warnings', '#FBBF24')}
+          ${stat(highFlagged, 'high issues flagged', '#FB923C')}
+        </tr>
+      </table>
+      ${projectRows}
+      <div style="margin:28px 0;text-align:center;">
+        <a href="${appUrl}/dashboard" style="display:inline-block;background-color:#10B981;color:#000000;font-weight:700;font-size:13px;padding:12px 28px;border-radius:8px;text-decoration:none;">
+          Open the dashboard
+        </a>
+      </div>
+      <p style="margin:20px 0 0 0;font-size:11px;color:#52525B;">
+        You get this on Fridays because Zelsis checks pull requests for your projects. <a href="${unsub}" style="color:#71717A;text-decoration:underline;">Unsubscribe from product emails</a>.
+      </p>`,
+  });
+  const text = `${subject}\n\n${lead}\n\nGate runs: ${runs}\nBlocked: ${blocked}\nWarnings: ${warned}\nHigh issues flagged: ${highFlagged}\n${topProjects.map((p) => `- ${p.name}: ${p.blocked} blocked`).join('\n')}\n\n${appUrl}/dashboard\n\nUnsubscribe: ${unsubscribeUrl}`;
+
+  return sendEmail({
+    to: toEmail,
+    subject,
     html,
     text,
     headers: {

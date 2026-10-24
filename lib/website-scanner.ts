@@ -2,6 +2,14 @@ import { CodeFile } from './scanner-engine';
 
 import { validateSafeTargetUrl, safeFetch } from '@/lib/ssrf-guard';
 import { probeLiveSite, type LiveProbeResult } from '@/lib/scanner/live-checks';
+import { analyzeBundles, lazyChunkUrls, sourceMapUrl } from './live-bundle-analyzer';
+import { createRequestLimiter } from '@/lib/scanner/request-limiter';
+import type { ChallengeProvider } from '@/lib/bot-challenge';
+
+/** Bundles are read in full for secrets (Vite/Lovable main bundles are 0.4-2 MB), within these limits. */
+const MAX_BUNDLE_BYTES = 5_000_000;
+const MAX_LAZY_CHUNKS = 20;
+const MAX_TOTAL_BUNDLE_BYTES = 15_000_000;
 
 export interface WebsiteAuditData {
   url: string;
@@ -14,6 +22,12 @@ export interface WebsiteAuditData {
   crawledPagesCount: number;
   liveProbe?: LiveProbeResult;
   isCloudflareChallenge?: boolean;
+  /** Which layer answered with the challenge (the error code stays CLOUDFLARE_BOT_PROTECTION for existing callers). */
+  challengeProvider?: ChallengeProvider;
+  /** The target started challenging part-way through, so subpages / bundles / probes after that point were skipped. */
+  challengedDuringScan?: boolean;
+  /** The first request the target challenged and how many requests had been sent by then (diagnoses rate vs path triggers). */
+  challengeTrigger?: { url: string; index: number };
   error?: 'CLOUDFLARE_BOT_PROTECTION' | string;
 }
 
@@ -38,7 +52,7 @@ export function isValidWebUrl(url: string): boolean {
  * 3. Auditing HTTP Security Headers (CSP, HSTS, X-Frame-Options, CORS)
  * 4. Scanning Client JS Bundles for leaked API secret keys
  */
-export async function fetchWebsiteAuditData(siteUrl: string, signal?: AbortSignal): Promise<WebsiteAuditData | null> {
+export async function fetchWebsiteAuditData(siteUrl: string, signal?: AbortSignal, options: { deepProbes?: boolean; probeKey?: string } = {}): Promise<WebsiteAuditData | null> {
   const formattedUrl = siteUrl.startsWith('http') ? siteUrl : `https://${siteUrl}`;
   const origin = new URL(formattedUrl).origin;
 
@@ -127,17 +141,21 @@ export async function fetchWebsiteAuditData(siteUrl: string, signal?: AbortSigna
   const isCfTitle = /<title[^>]*>(?:just a moment\.\.\.|attention required!\s*\|\s*cloudflare|cloudflare)<\/title>/i.test(htmlText);
   const hasCfIndicators = /challenges\.cloudflare\.com|cf-browser-verification|cf-turnstile|ray id:|\/cdn-cgi\/challenge-platform/i.test(htmlText);
 
-  if (isCfHtml || isCfHeader || ((statusCode === 403 || statusCode === 503) && (isCfServer || isCfTitle || hasCfIndicators)) || (isCfTitle && hasCfIndicators)) {
+  // Vercel's bot checkpoint answers 200/429 with a challenge page; scanning it would report a clean site that was never read
+  const isVercelChallenge = headers['x-vercel-mitigated'] === 'challenge' || /<title[^>]*>\s*Vercel Security Checkpoint\s*<\/title>/i.test(htmlText);
+
+  if (isVercelChallenge || isCfHtml || isCfHeader || ((statusCode === 403 || statusCode === 503) && (isCfServer || isCfTitle || hasCfIndicators)) || (isCfTitle && hasCfIndicators)) {
     return {
       url: formattedUrl,
       statusCode: statusCode === 200 ? 403 : statusCode,
       headers,
-      title: 'Cloudflare Bot Protection Challenge',
+      title: isVercelChallenge ? 'Vercel Bot Protection Challenge' : 'Cloudflare Bot Protection Challenge',
       files: [],
       securityHeadersMissing: [],
       discoveredButtonsCount: 0,
       crawledPagesCount: 0,
       isCloudflareChallenge: true,
+      challengeProvider: isVercelChallenge ? 'vercel' : 'cloudflare',
       error: 'CLOUDFLARE_BOT_PROTECTION'
     };
   }
@@ -178,13 +196,10 @@ export async function fetchWebsiteAuditData(siteUrl: string, signal?: AbortSigna
 
   const subpagesToCrawl = Array.from(subpageUrls).slice(0, 8);
 
-  // Server-only probes (.env/.git exposure, TLS, HTTP redirect, cookies); browser runs cannot open raw TLS sockets
-  const liveProbePromise = typeof window === 'undefined'
-    ? probeLiveSite(formattedUrl, setCookies).catch((err) => {
-        console.warn(`Live probes failed for ${formattedUrl}:`, err?.message || err);
-        return undefined;
-      })
-    : Promise.resolve(undefined);
+  // Every request after the homepage goes through one limiter: at most 4 in flight, starts spaced out, and nothing more
+  // is sent once the target challenges us (a burst makes Vercel / Cloudflare block the scanner IP for minutes)
+  const limiter = createRequestLimiter({ concurrency: 4, minIntervalMs: 120 });
+  const politeFetch = (url: string, init: Parameters<typeof safeFetch>[1]) => limiter.run(async () => limiter.note(await safeFetch(url, init), url));
 
   const isHealthy = statusCode >= 200 && statusCode < 400;
   const linkStatusText = statusCode === 200 ? '200 OK (Healthy Target)' : statusCode === 404 ? '404 Not Found (Broken Link)' : statusCode >= 500 ? `HTTP ${statusCode} Server Error (Dead Endpoint)` : `HTTP ${statusCode} Response`;
@@ -219,7 +234,7 @@ export async function fetchWebsiteAuditData(siteUrl: string, signal?: AbortSigna
   const subpagePromises = subpagesToCrawl.map(async (subUrl) => {
     const pathName = new URL(subUrl).pathname.replace(/[^a-zA-Z0-9_-]/g, '_');
     try {
-      const subRes = await safeFetch(subUrl, { 
+      const subRes = await politeFetch(subUrl, { 
         headers: { 'User-Agent': 'Zelsis-Release-Gate-Scanner/3.5' },
         maxRedirects: 3,
         signal: signal || AbortSignal.timeout(5000) 
@@ -248,6 +263,7 @@ export async function fetchWebsiteAuditData(siteUrl: string, signal?: AbortSigna
   const scriptMatches = Array.from(htmlText.matchAll(/<script[^>]+src=["']([^"']+)["']/g));
   const scriptSrcs = scriptMatches.map((m) => m[1]).slice(0, 6);
 
+  const fullBundles: { url: string; text: string }[] = [];
   const scriptPromises = scriptSrcs.map(async (src, i) => {
     let scriptUrl = src;
     if (src.startsWith('//')) {
@@ -261,13 +277,15 @@ export async function fetchWebsiteAuditData(siteUrl: string, signal?: AbortSigna
     }
 
     try {
-      const scriptRes = await safeFetch(scriptUrl, { 
+      const scriptRes = await politeFetch(scriptUrl, { 
         headers: { 'User-Agent': 'Zelsis-Release-Gate-Scanner/3.5' },
         maxRedirects: 3,
         signal: signal || AbortSignal.timeout(5000) 
       });
       if (scriptRes.ok) {
-        const scriptText = await scriptRes.text();
+        const scriptText = (await scriptRes.text()).slice(0, MAX_BUNDLE_BYTES);
+        fullBundles.push({ url: scriptUrl, text: scriptText });
+        // The general rules read the first 250 KB; the full text goes to the bundle analyzer below
         return {
           path: `live-deployment/bundle-${i + 1}.js`,
           content: scriptText.slice(0, 250000)
@@ -286,10 +304,54 @@ export async function fetchWebsiteAuditData(siteUrl: string, signal?: AbortSigna
     }
   }
 
-  const liveProbe = await liveProbePromise;
+  // Lazy chunks (same origin only) and public source maps, then secrets across the full bundles
+  try {
+    const chunkUrls = [...new Set(fullBundles.flatMap((b) => lazyChunkUrls(b.text, origin)))]
+      .filter((u) => u.startsWith(origin) && !fullBundles.some((b) => b.url === u))
+      .slice(0, MAX_LAZY_CHUNKS);
+    let budget = MAX_TOTAL_BUNDLE_BYTES - fullBundles.reduce((n, b) => n + b.text.length, 0);
+    const chunkResults = await Promise.allSettled(chunkUrls.map(async (u) => {
+      const res = await politeFetch(u, { headers: { 'User-Agent': 'Zelsis-Release-Gate-Scanner/3.5' }, maxRedirects: 2, signal: signal || AbortSignal.timeout(6000) });
+      return res.ok ? { url: u, text: (await res.text()).slice(0, MAX_BUNDLE_BYTES) } : null;
+    }));
+    for (const c of chunkResults) {
+      if (c.status !== 'fulfilled' || !c.value || budget <= 0) continue;
+      budget -= c.value.text.length;
+      fullBundles.push(c.value);
+    }
+    const publicSourceMaps: string[] = [];
+    for (const b of fullBundles.slice(0, 8)) {
+      const mapUrl = sourceMapUrl(b.text, b.url);
+      if (!mapUrl || !mapUrl.startsWith(origin)) continue;
+      try {
+        const mapRes = await politeFetch(mapUrl, { headers: { 'User-Agent': 'Zelsis-Release-Gate-Scanner/3.5' }, maxRedirects: 2, signal: signal || AbortSignal.timeout(4000) });
+        if (mapRes.ok && /"sources"\s*:/.test((await mapRes.text()).slice(0, 4000))) publicSourceMaps.push(mapUrl);
+      } catch { /* unreachable map is the good case */ }
+    }
+    if (fullBundles.length > 0) {
+      files.push({
+        path: 'live-deployment/bundle-analysis.json',
+        content: JSON.stringify({ ...analyzeBundles(fullBundles), publicSourceMaps }, null, 2)
+      });
+    }
+  } catch (err: unknown) {
+    console.warn('Bundle analysis skipped:', err instanceof Error ? err.message : String(err));
+  }
+
+  // Exposure probes (.env/.git, deploy artifacts, TLS, HTTP redirect, cookies) run last: requests for paths such as
+  // /.env or /phpmyadmin look like a vulnerability scanner and are the likeliest to get the IP challenged, so the pages
+  // and bundles above are read first. Server only: browser runs cannot open raw TLS sockets.
+  // Challenged while reading pages / bundles: the content is incomplete and the scan must fail rather than look clean
+  const contentChallenged = limiter.challenged;
+  const liveProbe = typeof window === 'undefined' && !contentChallenged
+    ? await probeLiveSite(formattedUrl, setCookies, { deepProbes: options.deepProbes === true, probeKey: options.probeKey, fetchImpl: limiter.fetch, probeIntervalMs: 300 }).catch((err) => {
+        console.warn(`Live probes failed for ${formattedUrl}:`, err?.message || err);
+        return undefined;
+      })
+    : undefined;
   if (liveProbe) {
     const headerFile = files.find((f) => f.path === 'live-deployment/security-headers.json');
-    if (headerFile) headerFile.content = JSON.stringify({ ...JSON.parse(headerFile.content), liveProbe }, null, 2);
+    if (headerFile) headerFile.content = JSON.stringify({ ...JSON.parse(headerFile.content), liveProbe, ...(limiter.challenged ? { probesIncomplete: true, challengeTrigger: limiter.trigger } : {}) }, null, 2);
   }
 
   return {
@@ -301,6 +363,10 @@ export async function fetchWebsiteAuditData(siteUrl: string, signal?: AbortSigna
     liveProbe,
     securityHeadersMissing,
     discoveredButtonsCount,
-    crawledPagesCount: subpagesToCrawl.length + 1
+    crawledPagesCount: subpagesToCrawl.length + 1,
+    // Challenged during the probes only: pages and bundles were read, the probes after the challenge were skipped
+    // (probesIncomplete). Challenged while reading content: an error, never a clean result for a site we could not read.
+    ...(limiter.challenged ? { challengedDuringScan: true, challengeTrigger: limiter.trigger, challengeProvider: limiter.provider } : {}),
+    ...(contentChallenged ? { isCloudflareChallenge: true, error: 'CLOUDFLARE_BOT_PROTECTION' } : {})
   };
 }

@@ -3,7 +3,6 @@
 import React from 'react';
 import { X, Check, Lock, Shield, ArrowRight, Zap, ExternalLink } from 'lucide-react';
 import { UserTier } from '@/data/schema';
-import { formatCount, RULE_COUNTS } from '@/lib/rule-status';
 import { ENTERPRISE_SEAT_LIMIT, PLAN_PRICES, SUPPORT_TERMS } from '@/data/pricing-plans';
 
 interface TierDetailsModalProps {
@@ -34,15 +33,15 @@ export const TierDetailsModal: React.FC<TierDetailsModalProps> = ({
     {
       category: 'Scan Volume & Code Access',
       items: [
-        { label: 'Monthly Live Audits', free: '3 Scans / mo', pro: 'Unlimited', enterprise: 'Unlimited' },
-        { label: 'Private Repositories', free: 'Public repos only', pro: 'Included (GitHub token)', enterprise: 'Included (GitHub token)' },
-        { label: 'Connected Projects', free: '1 Active Repo', pro: 'Unlimited Repos', enterprise: 'Unlimited Repos' }
+        { label: 'Monthly Live Audits', free: 'Unlimited', pro: 'Unlimited', enterprise: 'Unlimited' },
+        { label: 'Private Repositories', free: 'Included', pro: 'Included', enterprise: 'Included' },
+        { label: 'Connected Projects', free: '3 Projects', pro: 'Unlimited Projects', enterprise: 'Unlimited Projects' }
       ]
     },
     {
       category: 'Rule Engine & Analysis Depth',
       items: [
-        { label: 'Security & Bug Inventory', free: `All ${formatCount(RULE_COUNTS.gating)} active rules`, pro: `All ${formatCount(RULE_COUNTS.gating)} active rules`, enterprise: `All ${formatCount(RULE_COUNTS.gating)} active rules` },
+        { label: 'Security & Bug Inventory', free: 'Every check, on every plan', pro: 'Every check, on every plan', enterprise: 'Every check, on every plan' },
         { label: 'Secret Detection & RLS', free: 'Same rules on every plan', pro: 'Same rules on every plan', enterprise: 'Same rules on every plan' },
         { label: 'Large Repositories', free: 'Same engine on every plan', pro: 'Same engine on every plan', enterprise: 'Same engine on every plan' }
       ]
@@ -50,7 +49,7 @@ export const TierDetailsModal: React.FC<TierDetailsModalProps> = ({
     {
       category: 'AI Remediation & Patching',
       items: [
-        { label: '1-Click AI Fix Prompts', free: '1 Trial Prompt', pro: 'Unlimited 1-Click Fix Prompts', enterprise: 'Unlimited 1-Click Fix Prompts' },
+        { label: '1-Click AI Fix Prompts', free: '5 / month', pro: 'Unlimited 1-Click Fix Prompts', enterprise: 'Unlimited 1-Click Fix Prompts' },
         { label: 'Unified Git Diff Patches', free: 'Locked', pro: 'Instant Unified Diffs', enterprise: 'Instant Unified Diffs' }
       ]
     },
@@ -89,7 +88,7 @@ export const TierDetailsModal: React.FC<TierDetailsModalProps> = ({
               </h2>
             </div>
             <p className="text-xs text-zinc-400">
-              Clear breakdown of quotas, operational paywalls, and feature availability across Free, Pro, and Enterprise tiers.
+              Clear breakdown of quotas, operational paywalls, and feature availability across the Free, Pro and Team plans.
             </p>
           </div>
           <button
@@ -148,7 +147,7 @@ export const TierDetailsModal: React.FC<TierDetailsModalProps> = ({
                 </a>
               ) : currentTier === 'Enterprise' ? (
                 <div className="w-full py-2 px-3 rounded-lg bg-white/5 border border-white/10 text-zinc-400 font-medium text-xs text-center">
-                  Included in Enterprise
+                  Included in Team
                 </div>
               ) : (
                 <button
@@ -172,7 +171,7 @@ export const TierDetailsModal: React.FC<TierDetailsModalProps> = ({
                 </span>
               )}
               <div>
-                <span className="text-[10px] font-bold text-white uppercase tracking-wider">Enterprise Team</span>
+                <span className="text-[10px] font-bold text-white uppercase tracking-wider">Team</span>
                 <div className="text-2xl font-extrabold text-white mt-1 tabular-nums">${PLAN_PRICES.Enterprise} <span className="text-xs text-zinc-400 font-normal">/ month</span></div>
                 <p className="text-[11px] text-zinc-400 mt-1">Pro for the whole team: shared workspace, org gate policy &amp; SOC 2 reports.</p>
               </div>
@@ -191,7 +190,7 @@ export const TierDetailsModal: React.FC<TierDetailsModalProps> = ({
                   onClick={() => { onClose(); onSelectPlan('Enterprise'); }}
                   className="w-full py-2 px-3 rounded-lg bg-white text-black hover:bg-neutral-200 font-bold text-xs flex items-center justify-center gap-1.5 transition-all cursor-pointer"
                 >
-                  <span>Upgrade to Enterprise (${PLAN_PRICES.Enterprise})</span>
+                  <span>Upgrade to Team (${PLAN_PRICES.Enterprise})</span>
                   <ArrowRight size={13} />
                 </button>
               )}

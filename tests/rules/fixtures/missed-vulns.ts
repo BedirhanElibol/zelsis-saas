@@ -456,4 +456,289 @@ export async function GET(req: Request) {
 }
 `),
   },
+  {
+    ruleIds: [28817], name: 'GAP-17 public read of a private table (lowercase using (true))',
+    detects: f('supabase/migrations/20250102000000_policies.sql', `alter table public.messages enable row level security;
+create policy "Users can read messages" on public.messages
+  for select using (true);
+`),
+    ignores: f('supabase/migrations/20250102000000_policies.sql', `create policy "Allow public read-only access." on products for select using (true);
+create policy "Allow public read-only access." on prices for select using (true);
+create policy "Read own messages" on public.messages for select using (auth.uid() = user_id);
+create policy "Service reads" on public.messages for select to service_role using (true);
+`),
+  },
+  {
+    ruleIds: [3], name: 'SEC-03 ignores a deliberate public catalog read',
+    detects: f('supabase/migrations/001.sql', 'CREATE POLICY "read all" ON public.orders FOR SELECT USING (true);\n'),
+    ignores: f('supabase/migrations/001.sql', 'CREATE POLICY "public read" ON public.products FOR SELECT USING (true);\n'),
+  },
+  {
+    ruleIds: [28818], name: 'GAP-18 Clerk middleware marks the whole /api tree public',
+    detects: f('middleware.ts', `import { clerkMiddleware, createRouteMatcher } from '@clerk/nextjs/server';
+const isPublicRoute = createRouteMatcher(['/', '/sign-in(.*)', '/api(.*)']);
+export default clerkMiddleware(async (auth, req) => {
+  if (!isPublicRoute(req)) await auth.protect();
+});
+`),
+    ignores: f('middleware.ts', `import { clerkMiddleware, createRouteMatcher } from '@clerk/nextjs/server';
+const isPublicRoute = createRouteMatcher(['/', '/sign-in(.*)', '/api/webhooks(.*)']);
+export default clerkMiddleware(async (auth, req) => {
+  if (!isPublicRoute(req)) await auth.protect();
+});
+`),
+  },
+  {
+    ruleIds: [28819], name: 'GAP-19 NextAuth links accounts by e-mail alone',
+    detects: f('auth.ts', `import NextAuth from 'next-auth';
+import Google from 'next-auth/providers/google';
+export const { handlers, auth } = NextAuth({
+  providers: [Google({ allowDangerousEmailAccountLinking: true })],
+});
+`),
+    ignores: f('auth.ts', `import NextAuth from 'next-auth';
+import Google from 'next-auth/providers/google';
+export const { handlers, auth } = NextAuth({
+  providers: [Google({ allowDangerousEmailAccountLinking: false })],
+});
+`),
+  },
+  {
+    ruleIds: [28820], name: 'GAP-20 Laravel $guarded = []',
+    detects: f('app/Models/User.php', `<?php
+namespace App\Models;
+use Illuminate\Foundation\Auth\User as Authenticatable;
+class User extends Authenticatable
+{
+    protected $guarded = [];
+}
+`),
+    ignores: f('app/Models/User.php', `<?php
+namespace App\Models;
+use Illuminate\Foundation\Auth\User as Authenticatable;
+class User extends Authenticatable
+{
+    protected $fillable = ['name', 'email', 'password'];
+    protected $guarded = ['is_admin'];
+}
+`),
+  },
+  {
+    ruleIds: [28821], name: 'GAP-21 storage SELECT policy opens a private bucket to every user',
+    detects: f('supabase/migrations/20250101_storage.sql', `create policy "read invoices" on storage.objects for select to authenticated
+  using (bucket_id = 'invoices');
+`),
+    ignores: f('supabase/migrations/20250101_storage.sql', `create policy "public avatars" on storage.objects for select using (bucket_id = 'avatars');
+create policy "own invoices" on storage.objects for select to authenticated
+  using (bucket_id = 'invoices' and (storage.foldername(name))[1] = auth.uid()::text);
+`),
+  },
+  {
+    ruleIds: [28925], name: 'JSF-25 hardcoded Auth.js secret',
+    detects: f('auth.ts', `import NextAuth from 'next-auth';
+export const { handlers, auth } = NextAuth({ secret: 'supersecret123', providers: [] });
+`),
+    ignores: f('auth.ts', `import NextAuth from 'next-auth';
+export const { handlers, auth } = NextAuth({ secret: process.env.AUTH_SECRET, providers: [] });
+`),
+  },
+  {
+    ruleIds: [28926], name: 'JSF-26 generic jwtDecode<T>() call trusted for a role check',
+    detects: f('lib/auth.ts', `import { jwtDecode } from 'jwt-decode';
+export function isAdmin(token: string) {
+  const claims = jwtDecode<{ role: string }>(token);
+  return claims.role === 'admin';
+}
+`),
+    ignores: f('lib/auth.ts', `import { jwtVerify } from 'jose';
+export async function isAdmin(token: string, key: Uint8Array) {
+  const { payload } = await jwtVerify<{ role: string }>(token, key);
+  return payload.role === 'admin';
+}
+`),
+  },
+  {
+    ruleIds: [28822], name: 'GAP-22 server action writes Object.fromEntries(formData)',
+    detects: f('app/actions/profile.ts', `'use server';
+import { createClient } from '@/lib/supabase/server';
+export async function updateProfile(formData: FormData) {
+  const supabase = await createClient();
+  const { data: { user } } = await supabase.auth.getUser();
+  await supabase.from('profiles').update(Object.fromEntries(formData)).eq('id', user!.id);
+}
+`),
+    ignores: f('app/actions/profile.ts', `'use server';
+import { z } from 'zod';
+import { createClient } from '@/lib/supabase/server';
+const Profile = z.object({ name: z.string().max(80), bio: z.string().max(500) });
+export async function updateProfile(formData: FormData) {
+  const supabase = await createClient();
+  const { data: { user } } = await supabase.auth.getUser();
+  await supabase.from('profiles').update(Profile.parse(Object.fromEntries(formData))).eq('id', user!.id);
+}
+`),
+  },
+  {
+    ruleIds: [8809], name: 'PY-SEC-09 Django generated key containing $ is still a real secret',
+    detects: f('mysite/settings.py', `SECRET_KEY = 'django-insecure-9x$k2l!m3n4b5v6c7x8z9a0s1d2f3g4h5j6k7l8'
+`),
+    ignores: f('mysite/settings.py', `import os
+SECRET_KEY = os.environ['DJANGO_SECRET_KEY']
+`),
+  },
+  {
+    ruleIds: [28823], name: 'GAP-23 setattr loop over a request dict',
+    detects: f('app/api/users.py', `@router.patch("/me")
+def update_me(payload: dict, user=Depends(current_user), db=Depends(get_db)):
+    for k, v in payload.items():
+        setattr(user, k, v)
+    db.commit()
+    return user
+`),
+    ignores: f('app/api/users.py', `EDITABLE = {"name", "bio"}
+@router.patch("/me")
+def update_me(payload: dict, user=Depends(current_user), db=Depends(get_db)):
+    for k, v in payload.items():
+        if k in EDITABLE:
+            setattr(user, k, v)
+    db.commit()
+    return user
+`),
+  },
+  {
+    ruleIds: [28824], name: 'GAP-24 Go CORS reflects Origin with credentials',
+    detects: f('main.go', `package main
+import "net/http"
+func cors(w http.ResponseWriter, r *http.Request) {
+  w.Header().Set("Access-Control-Allow-Origin", r.Header.Get("Origin"))
+  w.Header().Set("Access-Control-Allow-Credentials", "true")
+}
+`),
+    ignores: f('main.go', `package main
+import "net/http"
+var allowed = map[string]bool{"https://app.example.com": true}
+func cors(w http.ResponseWriter, r *http.Request) {
+  if o := r.Header.Get("Origin"); allowed[o] {
+    w.Header().Set("Access-Control-Allow-Origin", o)
+    w.Header().Set("Access-Control-Allow-Credentials", "true")
+  }
+}
+`),
+  },
+  {
+    ruleIds: [28825], name: 'GAP-25 edge function deletes any user without resolving the caller',
+    detects: f('supabase/functions/delete-user/index.ts', `import { createClient } from 'jsr:@supabase/supabase-js@2';
+Deno.serve(async (req) => {
+  const { userId } = await req.json();
+  const admin = createClient(Deno.env.get('SUPABASE_URL')!, Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!);
+  await admin.auth.admin.deleteUser(userId);
+  return new Response('ok');
+});
+`),
+    ignores: f('supabase/functions/delete-user/index.ts', `import { createClient } from 'jsr:@supabase/supabase-js@2';
+Deno.serve(async (req) => {
+  const token = req.headers.get('Authorization')!.replace('Bearer ', '');
+  const admin = createClient(Deno.env.get('SUPABASE_URL')!, Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!);
+  const { data: { user } } = await admin.auth.getUser(token);
+  if (!user) return new Response('unauthorized', { status: 401 });
+  await admin.auth.admin.deleteUser(user.id);
+  return new Response('ok');
+});
+`),
+  },
+  {
+    ruleIds: [28826], name: 'GAP-26 next.config env inlines a server secret',
+    detects: f('next.config.js', `module.exports = {
+  env: { STRIPE_SECRET_KEY: process.env.STRIPE_SECRET_KEY },
+};
+`),
+    ignores: f('next.config.js', `module.exports = {
+  env: { NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY: process.env.STRIPE_PUBLISHABLE_KEY, APP_VERSION: '1.2.0' },
+};
+`),
+  },
+  {
+    ruleIds: [28827], name: 'GAP-27 rewrite destination host from a path param',
+    detects: f('next.config.js', `module.exports = {
+  async rewrites() {
+    return [{ source: '/proxy/:url*', destination: 'https://:url*' }];
+  },
+};
+`),
+    ignores: f('next.config.js', `module.exports = {
+  async rewrites() {
+    return [{ source: '/api/:path*', destination: 'https://api.example.com/:path*' }];
+  },
+};
+`),
+  },
+  {
+    ruleIds: [28828], name: 'GAP-28 workflow prints a base64-encoded secret',
+    detects: f('.github/workflows/ci.yml', `on: push
+jobs:
+  t:
+    runs-on: ubuntu-latest
+    steps:
+      - run: echo \${{ secrets.NPM_TOKEN }} | base64
+`),
+    ignores: f('.github/workflows/ci.yml', `on: push
+jobs:
+  t:
+    runs-on: ubuntu-latest
+    steps:
+      - run: npm publish
+        env:
+          NODE_AUTH_TOKEN: \${{ secrets.NPM_TOKEN }}
+`),
+  },
+  {
+    ruleIds: [28829], name: 'GAP-29 secret baked into a Docker image',
+    detects: f('Dockerfile', `FROM node:22-alpine
+ARG STRIPE_SECRET_KEY
+ENV STRIPE_SECRET_KEY=$STRIPE_SECRET_KEY
+COPY .env .env
+RUN npm ci && npm run build
+`),
+    ignores: f('Dockerfile', `FROM node:22-alpine
+ENV NODE_ENV=production
+COPY .env.example .env.example
+RUN --mount=type=secret,id=stripe STRIPE_SECRET_KEY=$(cat /run/secrets/stripe) npm run build
+`),
+  },
+  {
+    ruleIds: [28830], name: 'GAP-30 Supabase pooler URI with the password inline',
+    detects: f('lib/db.ts', `import { Pool } from 'pg';
+export const pool = new Pool({
+  connectionString: 'postgresql://postgres.abcdefghijklmnopqrst:Hq7vR2mKp9wZ@aws-0-eu-central-1.pooler.supabase.com:6543/postgres',
+});
+`),
+    ignores: f('lib/db.ts', `import { Pool } from 'pg';
+// postgresql://postgres.abcdefghijklmnopqrst:[YOUR-PASSWORD]@aws-0-eu-central-1.pooler.supabase.com:6543/postgres
+export const pool = new Pool({ connectionString: process.env.DATABASE_URL });
+const docs = 'postgresql://postgres.abcdefghijklmnopqrst:\${DB_PASSWORD}@aws-0-eu-central-1.pooler.supabase.com:6543/postgres';
+`),
+  },
+  {
+    ruleIds: [28831], name: 'GAP-31 Convex prod deploy key in code',
+    detects: f('scripts/seed.ts', `import { ConvexHttpClient } from 'convex/browser';
+const client = new ConvexHttpClient(process.env.CONVEX_URL!);
+(client as any).setAdminAuth('prod:happy-animal-123|eyJ2MiI6ImQ0ZjM2YjE4YzQ5ZTQ2N2E5MmQ3YjE1ZTBhOGMzZjJlIn0=');
+`),
+    ignores: f('scripts/seed.ts', `import { ConvexHttpClient } from 'convex/browser';
+const client = new ConvexHttpClient(process.env.CONVEX_URL!);
+(client as any).setAdminAuth(process.env.CONVEX_DEPLOY_KEY!);
+`),
+  },
+  {
+    ruleIds: [28832], name: 'GAP-32 server actions encryption key hard-coded',
+    detects: f('Dockerfile', `FROM node:22-alpine
+ENV NEXT_SERVER_ACTIONS_ENCRYPTION_KEY="K7gNU3sdo+OL0wNhqoVWhr3g6s1xYv72ol/pe/Unols="
+RUN npm ci && npm run build
+`),
+    ignores: f('Dockerfile', `FROM node:22-alpine
+ARG NEXT_SERVER_ACTIONS_ENCRYPTION_KEY
+ENV NEXT_SERVER_ACTIONS_ENCRYPTION_KEY=$NEXT_SERVER_ACTIONS_ENCRYPTION_KEY
+RUN npm ci && npm run build
+`),
+  },
 ];

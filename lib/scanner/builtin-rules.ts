@@ -1,7 +1,9 @@
 import type { Finding } from '@/data/schema';
 import type { CodeFile } from './types';
-import { evaluateSecurityRules } from '../rules/security-rules';
+import { evaluateSecurityRules, INNER_HTML_SINK } from '../rules/security-rules';
+import { isPublicCatalogRead } from '../rules/missed-vulns-rules';
 import { buildLiveFindings } from './live-checks';
+import { isVendoredPath } from './text';
 
 export interface BuiltinRuleContext {
   file: CodeFile;
@@ -27,7 +29,18 @@ export function evaluateBuiltinRules(ctx: BuiltinRuleContext): void {
   // Rule 1: Exposed Stripe/OpenAI API Keys (F-16: Scans comments, F-17: Masks secrets in snippet)
   const secretPattern = /sk_live_[a-zA-Z0-9]{20,}|sk-proj-[a-zA-Z0-9_-]{20,}|api[_-]?key\s*=\s*["']sk-[a-zA-Z0-9_-]{20,}["']/i;
   if (secretPattern.test(rawContent)) {
-    const matchLineIdx = lines.findIndex(l => secretPattern.test(l) && !/placeholder|EXAMPLE|dummy|test_key/i.test(l));
+    const isCommentLine = (l: string) => {
+      const t = l.trim();
+      return t.startsWith('//') || t.startsWith('*') || t.startsWith('#') || t.startsWith('--') || t.startsWith('/*') || t.startsWith(';');
+    };
+    const isCommentedConfigOrExample = (l: string) => {
+      const t = l.trim();
+      if (!isCommentLine(l)) return false;
+      // Only placeholder-looking keys: a real key committed in a comment still leaks
+      return /sk-[a-zA-Z0-9_.-]*(?:\.{3,}|your|example|dummy|test|replace|change|xxx)/i.test(t) ||
+        /sk-(?:[a-z]+-)+[a-z]+(?![\w-])/.test(t);
+    };
+    const matchLineIdx = lines.findIndex(l => secretPattern.test(l) && !/placeholder|EXAMPLE|dummy|test_key/i.test(l) && !isCommentedConfigOrExample(l));
     if (matchLineIdx !== -1) {
       const lineNum = matchLineIdx + 1;
       const rawLine = lines[matchLineIdx] || '';
@@ -59,7 +72,7 @@ export function evaluateBuiltinRules(ctx: BuiltinRuleContext): void {
 
   // Rule 3: Supabase Permissive Row Level Security (RLS)
   // Policies live in SQL; one scoped TO service_role only restates the service role's RLS bypass
-  if (/\.sql$/i.test(file.path) && cleanContent.split(';').some((stmt) => stmt.includes('USING (true)') && !/\bTO\s+service_role\b/i.test(stmt))) {
+  if (/\.sql$/i.test(file.path) && cleanContent.split(';').some((stmt) => stmt.includes('USING (true)') && !/\bTO\s+service_role\b/i.test(stmt) && !isPublicCatalogRead(stmt))) {
     const matchLineIdx = lines.findIndex(l => !l.trim().startsWith('--') && l.includes('USING (true)'));
     const lineNum = matchLineIdx !== -1 ? matchLineIdx + 1 : 1;
 
@@ -114,9 +127,16 @@ export function evaluateBuiltinRules(ctx: BuiltinRuleContext): void {
   }
 
   // Rule 16: Dangerously Set Inner HTML (XSS)
-  const isCompiledBundle = file.path.includes('live-deployment/bundle-') || file.path.includes('/vendor/') || file.path.includes('node_modules');
-  const isSafeMdxOrJsonLd = isCompiledBundle || file.path.includes('mdx-components') || file.path.includes('syntax-highlight') || file.content.includes('application/ld+json');
-  const innerHtmlLineIdx = lines.findIndex(l => !l.trim().startsWith('//') && !l.trim().startsWith('/*') && (l.includes('dangerouslySetInnerHTML') || l.includes('innerHTML')) && !/innerHTML\s*=\s*(?:(['"])(?:\\.|(?!\1).)*\1|`[^`$]*`)\s*;?\s*$/.test(l));
+  const isCompiledBundle = file.path.includes('live-deployment/bundle-') || file.path.includes('/vendor/') || file.path.includes('node_modules') || isVendoredPath(file.path);
+  // Highlighter calls only: a bare highlight() is often search-term highlighting, itself a classic XSS sink
+  const isSyntaxHighlighted = /\bcodeToHtml\s*\(|\bhljs\.highlight\w*\s*\(|\bPrism\.highlight\w*\s*\(|\bfrom\s+['"]shiki['"]/.test(cleanContent);
+  const isSafeMdxOrJsonLd = isCompiledBundle || isSyntaxHighlighted || file.path.includes('mdx-components') || file.path.includes('syntax-highlight') || cleanContent.includes('application/ld+json') || (/\bTHEMES\b/.test(cleanContent) && /<style\b[\s\S]{0,80}dangerouslySetInnerHTML/.test(cleanContent));
+  // A file that runs its interpolations through an escape / sanitize helper (${esc(x)}, ${escapeHtml(x)}, DOMPurify) builds escaped HTML
+  const escapesInterpolations = /\$\{\s*(?:esc|escape\w*|sanitize\w*|DOMPurify\.sanitize|encode\w*|h)\s*\(/i.test(cleanContent);
+  const innerHtmlLineIdx = escapesInterpolations ? -1 : lines.findIndex(l => !l.trim().startsWith('//') && !l.trim().startsWith('/*') && INNER_HTML_SINK.test(l)
+    && !/innerHTML\s*=\s*(?:(['"])(?:\\.|(?!\1).)*\1|`[^`$]*`)\s*;?\s*$/.test(l)
+    // an icon / svg constant (button.innerHTML = icon) is markup the app owns
+    && !/innerHTML\s*=\s*[\w.]*(?:icon|svg|spinner|logo|glyph)\w*(?:\s*\([^)]*\))?\s*;?\s*$/i.test(l));
   if (!isSafeMdxOrJsonLd && (cleanContent.includes('dangerouslySetInnerHTML') || cleanContent.includes('innerHTML =')) && innerHtmlLineIdx !== -1) {
     const matchLineIdx = innerHtmlLineIdx;
     const lineNum = matchLineIdx !== -1 ? matchLineIdx + 1 : 1;

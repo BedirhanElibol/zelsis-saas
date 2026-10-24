@@ -6,6 +6,7 @@
  *   npx tsx scripts/rule-audit.ts --check  # fail if the committed file is stale
  */
 import { readdirSync, readFileSync, writeFileSync, existsSync } from 'fs';
+import { createHash } from 'crypto';
 import { join } from 'path';
 import { REVIEWED_TRUE_POSITIVES } from './benchmark/reviewed';
 
@@ -13,7 +14,25 @@ const root = join(__dirname, '..');
 const OUT = join(root, 'data/rule-inventory.generated.json');
 /** Compact form for the UI bundle: counts plus the implemented rule IDs / codes. */
 const SUMMARY_OUT = join(root, 'data/rule-summary.generated.json');
-/** Rules with evidence (fixture-tested, caught a documented flaw, or reviewed true positive): only these can block a release. */
+const VERSION_OUT = join(root, 'data/rules-version.generated.json');
+
+/**
+ * Hash of the detection code (lib/rules, lib/scanner). The date moves only when the hash changes, so the dashboard
+ * can tell users that a scan predates rule improvements ("re-run for current results").
+ */
+function rulesVersionJson(): string {
+  const hash = createHash('sha1');
+  for (const dir of ['lib/rules', 'lib/scanner']) {
+    const walk = (d: string): string[] => readdirSync(join(root, d), { withFileTypes: true })
+      .flatMap((e) => (e.isDirectory() ? walk(`${d}/${e.name}`) : /\.ts$/.test(e.name) ? [`${d}/${e.name}`] : []));
+    for (const f of walk(dir).sort()) hash.update(f).update(readFileSync(join(root, f), 'utf8').replace(/\r\n/g, '\n'));
+  }
+  const digest = hash.digest('hex').slice(0, 16);
+  const prev = existsSync(VERSION_OUT) ? (JSON.parse(readFileSync(VERSION_OUT, 'utf8')) as { hash: string; updatedAt: string }) : null;
+  const updatedAt = prev && prev.hash === digest ? prev.updatedAt : new Date().toISOString().slice(0, 10);
+  return JSON.stringify({ hash: digest, updatedAt }, null, 1) + '\n';
+}
+/** Rules with evidence (caught a documented flaw or a reviewed true positive): only these can block a release. */
 const EVIDENCE_OUT = join(root, 'data/rule-evidence.generated.json');
 
 export interface RuleRecord {
@@ -120,8 +139,9 @@ export function auditRules() {
 export function evidenceJson(audit: ReturnType<typeof auditRules>): string {
   const maturity = JSON.parse(readFileSync(join(root, 'data/rule-maturity.generated.json'), 'utf8')) as { benchmarkProven?: number[] };
   const implemented = new Set(audit.rules.map((r) => r.ruleId));
+  // Fixtures prove a rule matches the shape it was written for, not that its hits on real code are right:
+  // in the public-repo survey most CRITICALs from fixture-only rules were false alarms, so they report as HIGH.
   const ids = new Set<number>([
-    ...audit.rules.filter((r) => r.tested).map((r) => r.ruleId),
     ...(maturity.benchmarkProven ?? []),
     ...Object.keys(REVIEWED_TRUE_POSITIVES).map(Number)
   ]);
@@ -153,7 +173,8 @@ if (require.main === module) {
     const current = existsSync(OUT) ? readFileSync(OUT, 'utf8') : '';
     const currentSummary = existsSync(SUMMARY_OUT) ? readFileSync(SUMMARY_OUT, 'utf8') : '';
     const currentEvidence = existsSync(EVIDENCE_OUT) ? readFileSync(EVIDENCE_OUT, 'utf8') : '';
-    if (current !== json || currentSummary !== summaryJson(JSON.parse(json)) || currentEvidence !== evidenceJson(JSON.parse(json))) {
+    const currentVersion = existsSync(VERSION_OUT) ? readFileSync(VERSION_OUT, 'utf8') : '';
+    if (current !== json || currentSummary !== summaryJson(JSON.parse(json)) || currentEvidence !== evidenceJson(JSON.parse(json)) || currentVersion !== rulesVersionJson()) {
       console.error('data/rule-inventory.generated.json is stale: run `npx tsx scripts/rule-audit.ts`');
       process.exit(1);
     }
@@ -162,6 +183,7 @@ if (require.main === module) {
     writeFileSync(OUT, json);
     writeFileSync(EVIDENCE_OUT, evidenceJson(JSON.parse(json)));
     writeFileSync(SUMMARY_OUT, summaryJson(JSON.parse(json)));
+    writeFileSync(VERSION_OUT, rulesVersionJson());
     console.log(JSON.parse(json).summary);
   }
 }

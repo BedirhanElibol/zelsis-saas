@@ -107,6 +107,9 @@ export const DemoShowcaseBanner: React.FC<DemoShowcaseBannerProps> = ({
           </button>
         </form>
         <span className="text-[10px] text-zinc-400 font-mono ml-auto hidden sm:block">No account required</span>
+        <a href="/docs/private-repos" className="text-[10px] text-emerald-400 hover:text-emerald-300 font-mono underline underline-offset-2 shrink-0">
+          Private repo? How to scan it
+        </a>
       </div>
     </div>
   );

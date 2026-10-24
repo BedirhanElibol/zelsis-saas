@@ -33,5 +33,5 @@ export interface WorkspaceSnapshot {
     brandLogoUrl: string | null;
   } | null;
   members: WorkspaceMember[];
-  invites: { id: string; role: 'admin' | 'member'; expiresAt: string }[];
+  invites: { id: string; role: 'admin' | 'member'; email: string; expiresAt: string }[];
 }

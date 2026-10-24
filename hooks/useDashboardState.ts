@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { Project, Finding } from '@/data/schema';
 import { MOCK_PROJECTS } from '@/data/demo-data';
-import { findUpdatedProject, isLocalAuditProject, normalizeProject, refreshFromCloud, serializeProjectsForStorage, updateMatchingFindings } from '@/lib/dashboard/project-state';
+import { dedupeProjects, findUpdatedProject, isLocalAuditProject, normalizeProject, refreshFromCloud, repoKey, serializeProjectsForStorage, updateMatchingFindings } from '@/lib/dashboard/project-state';
 import { useScanQuota } from '@/hooks/dashboard/useScanQuota';
 import { UserProfile } from '@/components/auth/AuthModal';
 import { supabaseSignIn, supabaseSignUp, supabaseSignOut, resolveVerifiedSession, fetchCloudProjects, getSupabase, mapSupabaseUserToProfile, syncUserProfileToSupabase, isPlatformAdminEmail } from '@/lib/supabase';
@@ -234,7 +234,7 @@ export function useDashboardState() {
           };
         });
 
-        setProjects(currentProjects);
+        setProjects(dedupeProjects(currentProjects));
 
         const savedSelectedId = localStorage.getItem('zelsis_selected_project_id') || localStorage.getItem('shipguard_selected_project_id');
         let chosenProject = currentProjects[0] || MOCK_PROJECTS[0];
@@ -464,7 +464,7 @@ export function useDashboardState() {
             const data = await res.json();
             if (data.verified && (data.tier === 'Pro' || data.tier === 'Enterprise')) {
               const upgradedTier: 'Pro' | 'Enterprise' = data.tier === 'Enterprise' ? 'Enterprise' : 'Pro';
-              const activeEmail = data.email || userEmail || 'subscriber@zelsis.com';
+              const activeEmail = data.email || userEmail || 'subscriber@example.com';
               const validExpiry = data.expiresAt || new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString();
               
               setUser((prev) => {
@@ -539,7 +539,7 @@ export function useDashboardState() {
     const mergeCloudProjects = async (accountEmail: string) => {
       const cloudProjects = await fetchCloudProjects();
       if (cloudProjects.length === 0) return;
-      const normalize = (url?: string) => (url || '').toLowerCase().replace(/\/+$/, '').replace(/\.git$/, '').trim();
+      const normalize = repoKey;
 
       const cloudByRepo = new Map(cloudProjects.filter((cp) => cp.repoUrl).map((cp) => [normalize(cp.repoUrl), cp]));
       setSelectedProject((sel) => {
@@ -557,8 +557,9 @@ export function useDashboardState() {
           if (updated !== p) refreshed = true;
           return updated;
         });
-        if (additions.length === 0 && !refreshed) return prev;
-        const next = [...current.filter((p) => p.id !== MOCK_PROJECTS[0].id), ...additions];
+        const deduped = dedupeProjects(current);
+        if (additions.length === 0 && !refreshed && deduped.length === current.length) return prev;
+        const next = dedupeProjects([...deduped.filter((p) => p.id !== MOCK_PROJECTS[0].id), ...additions]);
         const serialized = JSON.stringify(next);
         safeSetStorageItem('zelsis_projects', serialized);
         safeSetStorageItem(`zelsis_user_projects_${accountEmail}`, serialized);
@@ -1091,7 +1092,7 @@ export function useDashboardState() {
         isLoggedIn: true,
         emailVerified: res.user?.emailVerified ?? true,
         expiresAt: resolvedExpiresAt,
-        status: resolvedTier !== 'Free' ? 'active' : 'active',
+        status: 'active',
         lastVerifiedAt: Date.now(),
       };
       setUser(loggedInUser);
@@ -1158,7 +1159,7 @@ export function useDashboardState() {
 
       if (isUpgradingTier) {
         const planId = fields.tier === 'Enterprise' ? 'vibecare' : 'zelsis-core';
-        const validKey = generateLicenseKey(planId, updated.email || 'customer@zelsis.dev');
+        const validKey = generateLicenseKey(planId, updated.email || 'customer@example.com');
         localStorage.setItem('zelsis_license_key', validKey);
         localStorage.setItem('shipguard_license_key', validKey);
       }

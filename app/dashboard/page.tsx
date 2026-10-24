@@ -85,6 +85,8 @@ function DashboardContent() {
     handleSignOut,
     handleUpdateUserProfile,
   } = useDashboardState();
+  // New page from the sidebar: start at the top instead of the previous scroll position
+  useEffect(() => { window.scrollTo({ top: 0 }); }, [activeNav]);
 
   const [checkoutInitialPlan, setCheckoutInitialPlan] = useState<'Pro' | 'Enterprise'>('Pro');
   const [scanProjectOverride, setScanProjectOverride] = useState<Project | null>(null);

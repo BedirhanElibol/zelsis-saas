@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { installationTokenForRepo } from '@/lib/github/installations';
 import crypto from 'crypto';
 import { parseGithubUrl, prioritizeFilesForScan } from '@/lib/github-api';
 import { checkRateLimit, createRateLimitResponse } from '@/lib/rate-limiter';
@@ -6,6 +7,7 @@ import { GithubProxyQuerySchema, validateQueryParams } from '@/lib/validations/a
 import { logger } from '@/lib/logger';
 import { createClient } from '@supabase/supabase-js';
 import { isDependencyFile } from '@/lib/scanner/dependencies';
+import { isScannableTreePath, withPublicArtifactPaths } from '@/lib/scanner/scan-paths';
 import { isPlatformAdminEmail } from '@/lib/subscription-utils';
 import { getEffectivePlanTier } from '@/lib/organization';
 import { priceLabel } from '@/data/pricing-plans';
@@ -312,7 +314,8 @@ export async function GET(req: NextRequest) {
     req.headers.get('x-github-token')?.trim() ||
     req.cookies.get('sb-provider-token')?.value?.trim() ||
     req.cookies.get('github_token')?.value?.trim() ||
-    undefined;
+    // Connected through the Zelsis GitHub App: a short-lived read token for this owner, no PAT needed
+    (authenticatedUserId ? (await installationTokenForRepo(authenticatedUserId, owner)) ?? undefined : undefined);
 
   let activeToken = tokenPool.getEffectiveToken(userToken);
 
@@ -424,7 +427,7 @@ export async function GET(req: NextRequest) {
       return NextResponse.json({
         name: repoData.name || repo,
         fullName: repoData.full_name || `${owner}/${repo}`,
-        message: `Private repository scans are part of Zelsis Pro (${priceLabel('Pro')}). Sign in with a Pro or Enterprise account to scan this repository.`,
+        message: `Private repository scans are part of Zelsis Pro (${priceLabel('Pro')}). Sign in with a Pro or Team account to scan this repository.`,
         error: 'PLAN_REQUIRED',
         isPrivate: true,
         files: []
@@ -571,19 +574,7 @@ export async function GET(req: NextRequest) {
           item.type === 'blob' &&
           typeof item.path === 'string' &&
           (!item.size || item.size <= (isDependencyFile(item.path) ? 8000000 : 2000000)) &&
-          (isDependencyFile(item.path) || /(\.(ts|tsx|js|jsx|json|css|sql|html|py|yml|yaml|toml|sh|ps1|c|cpp|cc|cxx|h|hpp|java|kt|kts|go|rs|php|cs|rb|swift|xml|plist|gradle|md|mdx|zelsisignore|shipguardignore)$)|(\.env(\.[a-zA-Z0-9_\-]+)?$)|((?:^|\/)(?:dockerfile|makefile|podfile)$)/i.test(item.path)) &&
-          !item.path.includes('node_modules') &&
-          !item.path.includes('.next') &&
-          !item.path.includes('.git') &&
-          !item.path.includes('dist/') &&
-          !item.path.includes('build/') &&
-          !item.path.includes('vendor/') &&
-          !item.path.includes('.agent') &&
-          !item.path.includes('.antigravity') &&
-          !item.path.includes('artifacts') &&
-          !item.path.includes('venv/') &&
-          !item.path.includes('.venv/') &&
-          !item.path.includes('__pycache__/')
+          isScannableTreePath(item.path)
       );
 
     if (treeFiles.length === 0) {
@@ -662,11 +653,16 @@ export async function GET(req: NextRequest) {
       defaultBranch: activeBranch,
       stars: repoData.stargazers_count,
       language: repoData.language || 'TypeScript',
-      files: fetchedFiles,
+      files: withPublicArtifactPaths(treeData.tree || [], fetchedFiles),
       isPrivate: repoData.private || false
     };
 
     const payloadJson = JSON.stringify(responsePayload);
+    // Private repositories and signed-in callers get a response only they may see: a shared CDN copy keyed by
+    // the URL could hand one user's private files to the next caller. Anonymous public-repo scans stay cacheable.
+    const cacheControl = responsePayload.isPrivate || authHeaderRaw || req.headers.get('x-github-token')
+      ? 'private, no-store'
+      : 'public, s-maxage=60, stale-while-revalidate=300';
     const contentHash = crypto.createHash('sha256').update(payloadJson).digest('hex');
     const etag = `"${contentHash.slice(0, 16)}"`;
 
@@ -675,7 +671,7 @@ export async function GET(req: NextRequest) {
         status: 304,
         headers: {
           'ETag': etag,
-          'Cache-Control': 'public, s-maxage=60, stale-while-revalidate=300'
+          'Cache-Control': cacheControl
         }
       });
     }
@@ -685,7 +681,7 @@ export async function GET(req: NextRequest) {
       headers: {
         'Content-Type': 'application/json',
         'ETag': etag,
-        'Cache-Control': 'public, s-maxage=60, stale-while-revalidate=300'
+        'Cache-Control': cacheControl
       }
     });
   } catch (err: any) {

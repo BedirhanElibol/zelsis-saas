@@ -24,8 +24,20 @@ export function evaluatePrivacyComplianceRules(file: CodeFile, lines: string[], 
     }
     const ts = new Date().toLocaleTimeString();
     // PRIVACY-01: Plaintext PII Logged to Standard Output / Console
-    if (/console\.(?:log|info|warn|error)\s*\([^)]*(?:password|creditCard|ssn|rawSecret|userSecret)[^)]*\)/i.test(cleanContent) && !/test|spec|mock/i.test(lowerPath)) {
-        const matchLineIdx = locateMatchLine(lines, [/console\.(?:log|info|warn|error)\s*\([^)]*(?:password|creditCard|ssn|rawSecret|userSecret)[^)]*\)/i], l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('*'));
+    // The sensitive name must be a logged value (variable, property, ${…}), not just a word in the message:
+    // console.error('Error checking password:', error) logs the error, not the password
+    const logsSensitiveValue = (l: string) => {
+        const m = l.match(/console\.(?:log|info|warn|error)\s*\(([^)]*)\)/i);
+        if (!m) return false;
+        const values = m[1]
+            .replace(/`((?:[^`\\]|\\.)*)`/g, (_s, body: string) => ` ${[...body.matchAll(/\$\{([^}]*)\}/g)].map((x) => x[1]).join(' ')} `)
+            .replace(/'(?:[^'\\]|\\.)*'|"(?:[^"\\]|\\.)*"/g, '""');
+        return /(?:password|creditCard|ssn|rawSecret|userSecret)/i.test(values);
+    };
+    const privacy01Idx = /test|spec|mock/i.test(lowerPath) ? -1
+        : lines.findIndex(l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('*') && logsSensitiveValue(l));
+    if (privacy01Idx !== -1) {
+        const matchLineIdx = privacy01Idx;
         const lineNum = matchLineIdx !== -1 ? matchLineIdx + 1 : 1;
         findings.push({
             id: `privacy01-${Date.now()}-${findingCounter.count++}`,

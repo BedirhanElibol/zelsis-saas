@@ -189,7 +189,7 @@ jobs:
                 </h3>
                 <p className="text-xs text-[#A1A1AA] leading-relaxed">
                   Enforce automated pre-merge security gates on every Pull Request with GitHub Actions, GitLab CI, and CLI integration.
-                  Available on <span className="text-white font-semibold">Pro</span> and <span className="text-white font-semibold">Enterprise</span> plans.
+                  Available on <span className="text-white font-semibold">Pro</span> and <span className="text-white font-semibold">Team</span> plans.
                 </p>
               </div>
               <div className="flex items-center gap-3 w-full max-w-xs">

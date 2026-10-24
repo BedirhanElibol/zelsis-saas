@@ -9,7 +9,7 @@
 import type { Finding } from '@/data/schema';
 import type { CodeFile } from '../scanner-engine';
 import { AUTH_GUARD, WEBHOOK_VERIFY } from './shared/stack-signals';
-import { emptyRepoContext, normalizeSqlName, type RepoContext } from '../scanner/repo-context';
+import { databaseExposedAt, emptyRepoContext, normalizeSqlName, type RepoContext } from '../scanner/repo-context';
 
 interface Hit {
   ruleId: number;
@@ -97,6 +97,13 @@ function functionBlocks(src: string, opts: { exportedOnly: boolean }): FnBlock[]
 // ─── Shared signals ───────────────────────────────────────────────────────────────────────
 
 /** Caller verification inside a handler body: provider calls, local auth helpers, signed webhooks, cron secrets. */
+/** Routes that run before the caller has a session: sign-up, sign-in, one-time codes, password reset, OAuth callback. */
+export const PUBLIC_AUTH_ROUTE = /\/(?:api\/)?(?:auth|login|log-in|signin|sign-in|signup|sign-up|register|otp|magic-link|send-code|verify-code|verify-email|forgot-password|reset-password|callback)(?:\/|$)/;
+/** Row or user creation through the service role. */
+const CREATE_ONLY = /\.(?:insert|upsert)\s*\(|\.auth\.admin\.(?:createUser|generateLink|inviteUserByEmail)\s*\(/;
+/** Anything that changes or removes existing data or users. */
+const DESTRUCTIVE_WRITE = /\.(?:update|delete|remove|move)\s*\(|\.auth\.admin\.(?:deleteUser|updateUserById|signOut|mfa\.deleteFactor)\s*\(|\.rpc\s*\(/;
+
 const CALLER_CHECK = new RegExp([
   AUTH_GUARD.source,
   WEBHOOK_VERIFY.source,
@@ -201,11 +208,17 @@ export function evaluateNextjsSupabaseRules(file: CodeFile, lines: string[], cle
 
     // NEXT-SB-01: Server Action writes with the service-role client without verifying the caller
     if (useServerFile || /['"]use server['"]/.test(cleanContent)) {
+      // Same-file helpers that verify the caller (e.g. `async function authenticate(token) { ...auth.getUser(token)... }`)
+      const guardHelpers = functionBlocks(cleanContent, { exportedOnly: false })
+        .filter((h) => h.name && (CALLER_CHECK.test(h.body) || /\.auth\.getUser\s*\(/.test(h.body)))
+        .map((h) => h.name);
+      const callsGuardHelper = (body: string) =>
+        guardHelpers.some((name) => new RegExp(String.raw`\b${name}\s*\(`).test(body));
       for (const fn of functionBlocks(cleanContent, { exportedOnly: true })) {
         const isAction = useServerFile ? true : /^\s*['"]use server['"]/.test(fn.body);
         if (!isAction) continue;
         const writeAt = privilegedWrite(fn.body, admins);
-        if (writeAt === -1 || CALLER_CHECK.test(fn.body)) continue;
+        if (writeAt === -1 || CALLER_CHECK.test(fn.body) || callsGuardHelper(fn.body)) continue;
         hits.push({
           ruleId: 28001, code: 'NEXT-SB-01', severity: 'CRITICAL', type: 'SECURITY', category: 'Access Control',
           title: 'Server Action Uses the Service-Role Client Without Verifying the Caller',
@@ -223,6 +236,9 @@ export function evaluateNextjsSupabaseRules(file: CodeFile, lines: string[], cle
         if (!/^(?:GET|POST|PUT|PATCH|DELETE|default|handler)$/.test(fn.name)) continue;
         const writeAt = privilegedWrite(fn.body, admins);
         if (writeAt === -1 || CALLER_CHECK.test(fn.body)) continue;
+        // Sign-up / sign-in / one-time-code routes are called before there is a session by design, and creating the
+        // row is their job. Updates and deletes there are still reported.
+        if (PUBLIC_AUTH_ROUTE.test(lowerPath) && CREATE_ONLY.test(fn.body) && !DESTRUCTIVE_WRITE.test(fn.body)) continue;
         hits.push({
           ruleId: 28002, code: 'NEXT-SB-02', severity: 'CRITICAL', type: 'SECURITY', category: 'Access Control',
           title: 'Route Handler Uses the Service-Role Client Without Verifying the Caller',
@@ -425,7 +441,7 @@ export function evaluateNextjsSupabaseRules(file: CodeFile, lines: string[], cle
   }
 
   // ─── Supabase SQL migrations ────────────────────────────────────────────────────────────
-  if (/\.sql$/i.test(path) && context.exposesDatabaseToClients) {
+  if (/\.sql$/i.test(path) && databaseExposedAt(context, path)) {
     const sql = stripSqlComments(cleanContent);
     const sqlLines = sql.split('\n');
     const firstLine = (re: RegExp, from = 0) => {
@@ -503,11 +519,17 @@ export function evaluateNextjsSupabaseRules(file: CodeFile, lines: string[], cle
       if (!/SECURITY\s+DEFINER/i.test(header) || /RETURNS\s+(?:event_)?trigger\b/i.test(header)) continue;
       if (!/\b(?:INSERT\s+INTO|UPDATE\s+[\w."]+\s+SET|DELETE\s+FROM)\b/i.test(body)) continue;
       if (/auth\.(?:uid|jwt|role)\s*\(|current_user|session_user|request\.jwt|current_setting\s*\(/i.test(body)) continue;
+      // A guard helper such as IF NOT public.is_admin() THEN RAISE also checks the caller
+      if (/\bIF\s+(?:NOT\s+)?(?:\w+\.)?(?:is|has|can|check|assert|require)_\w+\s*\(/i.test(body)) continue;
       const short = normalizeSqlName(fullName);
+      // A later migration revoked EXECUTE from clients (hardening often ships separately from the function)
+      if (context.revokedSqlFunctions.has(short)) continue;
       if (new RegExp(String.raw`REVOKE[^;]*\bON\s+(?:FUNCTION\s+[\w."]*\b` + short + String.raw`\b|ALL\s+FUNCTIONS\s+IN\s+SCHEMA\s+"?public"?)`, 'i').test(sql)) continue;
       const hasParams = m[2].trim().length > 0;
+      // Granted to clients in this same migration and the caller chooses the target: anyone can run it on any row
+      const grantedToClients = new RegExp(String.raw`GRANT\s+(?:EXECUTE|ALL)[^;]*\bON\s+FUNCTION\s+[\w."]*\b` + short + String.raw`\b[^;]*\bTO\s+[^;]*\b(?:anon|authenticated|public)\b`, 'i').test(sql);
       hits.push({
-        ruleId: 28007, code: 'NEXT-SB-07', severity: 'MEDIUM', type: 'SECURITY', category: 'Database Privilege',
+        ruleId: 28007, code: 'NEXT-SB-07', severity: grantedToClients && hasParams ? 'HIGH' : 'MEDIUM', type: 'SECURITY', category: 'Database Privilege',
         title: 'SECURITY DEFINER Function Writes Data Without Checking the Caller',
         lineIdx: lineAt(sql, m.index!),
         why: `public.${short} bypasses RLS (SECURITY DEFINER) and is executable by anon and authenticated through supabase.rpc('${short}'), yet never checks auth.uid(), so anyone with the public anon key can run its writes${hasParams ? ' with arguments they choose' : ''}.`,
@@ -517,13 +539,20 @@ export function evaluateNextjsSupabaseRules(file: CodeFile, lines: string[], cle
     }
 
     // NEXT-SB-16: users may UPDATE their own row while it holds privilege/billing columns
-    for (const t of sql.matchAll(/CREATE\s+TABLE\s+(?:IF\s+NOT\s+EXISTS\s+)?((?:"?public"?\.)?"?(\w+)"?)\s*\(([\s\S]*?)\n\s*\)\s*;/gi)) {
+    // Multi-line tables (closing paren on its own line) and one-line tables (`create table t (id uuid, role text);`)
+    for (const t of sql.matchAll(/CREATE\s+TABLE\s+(?:IF\s+NOT\s+EXISTS\s+)?((?:"?public"?\.)?"?(\w+)"?)\s*\((?:([\s\S]*?)\n\s*\)|([^\n;]*)\))\s*;/gi)) {
       const table = t[2];
-      const privCol = t[3].match(/^\s*"?(role|is_admin|is_super_admin|credits|credit_balance|balance|plan|tier|subscription_status|subscription_tier|is_pro|is_premium|stripe_customer_id)"?\s+\w/im)?.[1];
+      const body = t[3] ?? t[4] ?? '';
+      const privCol = body.match(/(?:^|,)\s*"?(role|is_admin|is_super_admin|credits|credit_balance|balance|plan|tier|subscription_status|subscription_tier|is_pro|is_premium|stripe_customer_id)"?\s+\w/im)?.[1];
       if (!privCol) continue;
       const tableRef = String.raw`(?:"?public"?\.)?"?` + table + String.raw`"?`;
       const policy = new RegExp(String.raw`CREATE\s+POLICY[^;]*?\bON\s+` + tableRef + String.raw`\b[^;]*?\bFOR\s+(?:UPDATE|ALL)\b[^;]*?auth\.uid\(\)[^;]*;`, 'i').exec(sql);
       if (!policy) continue;
+      // The user edits their own row: the row's owner column compared to auth.uid() directly. An auth.uid() that only
+      // appears on an aliased subquery row (EXISTS (… gm.user_id = auth.uid() AND gm.role = 'admin')) is an admin gate.
+      const ownCol = String.raw`(?<![\w.])(?:` + table + String.raw`\.)?(?:id|user_id|owner_id|profile_id|account_id)`;
+      const uid = String.raw`(?:\(\s*select\s+)?auth\.uid\(\)\s*\)?`;
+      if (!new RegExp(ownCol + String.raw`\s*=\s*` + uid + '|' + uid + String.raw`\s*=\s*` + ownCol, 'i').test(policy[0])) continue;
       const columnGuard = new RegExp(String.raw`REVOKE\s+(?:UPDATE|ALL)[^;]*\bON\s+(?:TABLE\s+)?` + tableRef + String.raw`\b|GRANT\s+UPDATE\s*\([^)]*\)\s*ON\s+(?:TABLE\s+)?` + tableRef + String.raw`\b|CREATE\s+(?:OR\s+REPLACE\s+)?TRIGGER[^;]*BEFORE\s+(?:INSERT\s+OR\s+)?UPDATE[^;]*\bON\s+` + tableRef + String.raw`\b`, 'i');
       if (columnGuard.test(sql)) continue;
       hits.push({

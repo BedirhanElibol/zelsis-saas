@@ -1,10 +1,10 @@
 {
  "summary": {
-  "implementedRules": 894,
-  "testedRules": 886,
-  "preciseLocationRules": 891,
+  "implementedRules": 1302,
+  "testedRules": 1296,
+  "preciseLocationRules": 1300,
   "catalogEntries": 1922,
-  "catalogOnlyNotImplemented": 1401,
+  "catalogOnlyNotImplemented": 1396,
   "catalogPlaceholderMetadata": 1810
  },
  "catalogOnly": [
@@ -574,12 +574,8 @@
   9208,
   9209,
   9210,
-  9304,
-  9306,
   9307,
   9308,
-  9309,
-  9310,
   9401,
   9402,
   9404,
@@ -1076,7 +1072,6 @@
   12450,
   12501,
   12505,
-  12506,
   12507,
   12508,
   12509,
@@ -1445,10 +1440,10 @@
    "ruleId": 14,
    "code": "RULE-14",
    "title": "Insecure Hardcoded Fallback for Cryptographic Session / JWT Secret",
-   "severity": "CRITICAL",
+   "severity": "UNKNOWN",
    "source": "lib/rules/security-rules.ts",
    "preciseLocation": true,
-   "tested": false,
+   "tested": true,
    "inCatalog": false
   },
   {
@@ -1595,7 +1590,7 @@
    "ruleId": 32,
    "code": "RULE-32",
    "title": "Dynamic Code Execution (eval / Function Remote Code Execution)",
-   "severity": "CRITICAL",
+   "severity": "UNKNOWN",
    "source": "lib/rules/security-rules.ts",
    "preciseLocation": true,
    "tested": true,
@@ -2395,7 +2390,7 @@
    "ruleId": 3017,
    "code": "RULE-3017",
    "title": "Dangerous Host Docker Socket Mount (/var/run/docker.sock Exposed)",
-   "severity": "CRITICAL",
+   "severity": "HIGH",
    "source": "lib/rules/infra-rules.ts",
    "preciseLocation": true,
    "tested": true,
@@ -2428,7 +2423,7 @@
    "severity": "CRITICAL",
    "source": "lib/rules/infra-rules.ts",
    "preciseLocation": true,
-   "tested": false,
+   "tested": true,
    "inCatalog": false
   },
   {
@@ -3597,7 +3592,7 @@
    "title": "Docker Container Running as Default Root User",
    "severity": "HIGH",
    "source": "lib/rules/cloud-native-rules.ts",
-   "preciseLocation": false,
+   "preciseLocation": true,
    "tested": true,
    "inCatalog": true
   },
@@ -3954,7 +3949,7 @@
   {
    "ruleId": 7135,
    "code": "WEB-PERF-35",
-   "title": "Unkeyed React List Elements Forcing Full DOM Rebuild",
+   "title": "List Keyed by Array Index",
    "severity": "LOW",
    "source": "lib/rules/web-vitals-rules.ts",
    "preciseLocation": true,
@@ -5308,7 +5303,7 @@
    "severity": "CRITICAL",
    "source": "lib/rules/python-enterprise-rules.ts",
    "preciseLocation": true,
-   "tested": false,
+   "tested": true,
    "inCatalog": true
   },
   {
@@ -5405,7 +5400,7 @@
    "ruleId": 8811,
    "code": "PY-SEC-11",
    "title": "Dynamic Code Execution via eval() or exec()",
-   "severity": "CRITICAL",
+   "severity": "UNKNOWN",
    "source": "lib/rules/python-enterprise-rules.ts",
    "preciseLocation": true,
    "tested": true,
@@ -5438,7 +5433,7 @@
    "severity": "HIGH",
    "source": "lib/rules/python-enterprise-rules.ts",
    "preciseLocation": true,
-   "tested": false,
+   "tested": true,
    "inCatalog": true
   },
   {
@@ -5765,7 +5760,7 @@
    "ruleId": 8901,
    "code": "K8S-01",
    "title": "Privileged Container Execution (privileged: true)",
-   "severity": "CRITICAL",
+   "severity": "HIGH",
    "source": "lib/rules/k8s-hardening-rules.ts",
    "preciseLocation": true,
    "tested": true,
@@ -6302,6 +6297,16 @@
    "inCatalog": true
   },
   {
+   "ruleId": 9304,
+   "code": "RULE-9304",
+   "title": "TLS Certificate Validation Disabled",
+   "severity": "HIGH",
+   "source": "lib/rules/mobile-native-rules.ts",
+   "preciseLocation": true,
+   "tested": true,
+   "inCatalog": true
+  },
+  {
    "ruleId": 9305,
    "code": "MOB-SEC-05",
    "title": "Exported Android Component Lacking Permission Guard",
@@ -6310,6 +6315,116 @@
    "preciseLocation": true,
    "tested": true,
    "inCatalog": true
+  },
+  {
+   "ruleId": 9306,
+   "code": "RULE-9306",
+   "title": "WebView Lets file:// Pages Read Local Files",
+   "severity": "HIGH",
+   "source": "lib/rules/mobile-native-rules.ts",
+   "preciseLocation": true,
+   "tested": true,
+   "inCatalog": true
+  },
+  {
+   "ruleId": 9309,
+   "code": "RULE-9309",
+   "title": "Weak Encryption Mode or Cipher (ECB / DES)",
+   "severity": "HIGH",
+   "source": "lib/rules/mobile-native-rules.ts",
+   "preciseLocation": true,
+   "tested": true,
+   "inCatalog": true
+  },
+  {
+   "ruleId": 9310,
+   "code": "RULE-9310",
+   "title": "Deep-Link URL Loaded Into a WebView Without a Host Check",
+   "severity": "HIGH",
+   "source": "lib/rules/mobile-native-rules.ts",
+   "preciseLocation": true,
+   "tested": true,
+   "inCatalog": true
+  },
+  {
+   "ruleId": 9311,
+   "code": "RULE-9311",
+   "title": "App Manifest Marked Debuggable",
+   "severity": "HIGH",
+   "source": "lib/rules/mobile-native-rules.ts",
+   "preciseLocation": true,
+   "tested": true,
+   "inCatalog": false
+  },
+  {
+   "ruleId": 9312,
+   "code": "RULE-9312",
+   "title": "Secret Written to the Device Log",
+   "severity": "MEDIUM",
+   "source": "lib/rules/mobile-native-rules.ts",
+   "preciseLocation": true,
+   "tested": true,
+   "inCatalog": false
+  },
+  {
+   "ruleId": 9313,
+   "code": "RULE-9313",
+   "title": "Keychain Item Readable While the Device Is Locked",
+   "severity": "MEDIUM",
+   "source": "lib/rules/mobile-native-rules.ts",
+   "preciseLocation": true,
+   "tested": true,
+   "inCatalog": false
+  },
+  {
+   "ruleId": 9314,
+   "code": "RULE-9314",
+   "title": "SQLite Query Built by String Concatenation",
+   "severity": "HIGH",
+   "source": "lib/rules/mobile-native-rules.ts",
+   "preciseLocation": true,
+   "tested": true,
+   "inCatalog": false
+  },
+  {
+   "ruleId": 9315,
+   "code": "RULE-9315",
+   "title": "Auth Token Stored in Unencrypted AsyncStorage",
+   "severity": "HIGH",
+   "source": "lib/rules/mobile-native-rules.ts",
+   "preciseLocation": true,
+   "tested": true,
+   "inCatalog": false
+  },
+  {
+   "ruleId": 9316,
+   "code": "RULE-9316",
+   "title": "File or Preferences Created World-Readable",
+   "severity": "HIGH",
+   "source": "lib/rules/mobile-native-rules.ts",
+   "preciseLocation": true,
+   "tested": true,
+   "inCatalog": false
+  },
+  {
+   "ruleId": 9317,
+   "code": "RULE-9317",
+   "title": "FileProvider Exposes the Device Root",
+   "severity": "MEDIUM",
+   "source": "lib/rules/mobile-native-rules.ts",
+   "preciseLocation": true,
+   "tested": true,
+   "inCatalog": false
+  },
+  {
+   "ruleId": 9318,
+   "code": "RULE-9318",
+   "title": "Credentials Saved to a Plain File",
+   "severity": "HIGH",
+   "source": "lib/rules/mobile-native-rules.ts",
+   "preciseLocation": true,
+   "tested": true,
+   "inCatalog": false
   },
   {
    "ruleId": 9403,
@@ -6945,7 +7060,7 @@
    "ruleId": 12301,
    "code": "TLS-01",
    "title": "Deprecated TLS 1.0 / 1.1 Protocols Permitted on Public Endpoints",
-   "severity": "CRITICAL",
+   "severity": "HIGH",
    "source": "lib/rules/tls-cryptography-rules.ts",
    "preciseLocation": true,
    "tested": true,
@@ -6996,6 +7111,16 @@
    "code": "MQ-04",
    "title": "Missing Publisher Confirms / Acknowledgments Leading to Data Loss",
    "severity": "MEDIUM",
+   "source": "lib/rules/message-broker-rules.ts",
+   "preciseLocation": true,
+   "tested": true,
+   "inCatalog": true
+  },
+  {
+   "ruleId": 12506,
+   "code": "MQ-06",
+   "title": "Failed Message Is Requeued Forever From the Error Handler",
+   "severity": "HIGH",
    "source": "lib/rules/message-broker-rules.ts",
    "preciseLocation": true,
    "tested": true,
@@ -7065,7 +7190,7 @@
    "ruleId": 12902,
    "code": "PCI4-02",
    "title": "PCI-DSS Req 6.4.3 Insecure Third-Party Scripts on Payment Pages",
-   "severity": "CRITICAL",
+   "severity": "HIGH",
    "source": "lib/rules/pci-dss-v4-rules.ts",
    "preciseLocation": true,
    "tested": true,
@@ -7315,7 +7440,7 @@
    "ruleId": 15701,
    "code": "KERN-SEC-01",
    "title": "Unrestricted Linux Root Capabilities (CAP_SYS_ADMIN) Retained in Container Workloads",
-   "severity": "CRITICAL",
+   "severity": "HIGH",
    "source": "lib/rules/linux-kernel-security-rules.ts",
    "preciseLocation": true,
    "tested": true,
@@ -7428,7 +7553,7 @@
    "severity": "CRITICAL",
    "source": "lib/rules/polyglot-backend-rules.ts",
    "preciseLocation": true,
-   "tested": false,
+   "tested": true,
    "inCatalog": true
   },
   {
@@ -7544,7 +7669,7 @@
   {
    "ruleId": 18101,
    "code": "MYSQL-SEC-01",
-   "title": "MySQL Raw Query Injection via String Formatting",
+   "title": "MySQL Raw Query Injection via Python String Interpolation",
    "severity": "CRITICAL",
    "source": "lib/rules/multi-database-rules.ts",
    "preciseLocation": true,
@@ -7772,6 +7897,26 @@
    "inCatalog": false
   },
   {
+   "ruleId": 24109,
+   "code": "RULE-24109",
+   "title": "TLS Certificate Validation Disabled",
+   "severity": "HIGH",
+   "source": "lib/rules/polyglot-core-rules.ts",
+   "preciseLocation": true,
+   "tested": true,
+   "inCatalog": false
+  },
+  {
+   "ruleId": 24110,
+   "code": "RULE-24110",
+   "title": "Path Traversal: File Path Built From Request Input",
+   "severity": "HIGH",
+   "source": "lib/rules/polyglot-core-rules.ts",
+   "preciseLocation": true,
+   "tested": true,
+   "inCatalog": false
+  },
+  {
    "ruleId": 25001,
    "code": "SEC-API-01",
    "title": "Mass Assignment via Unvalidated Request Body (OWASP API3:2023)",
@@ -7886,6 +8031,66 @@
    "code": "LIVE-07",
    "title": "Session cookie set without ${[...new Set(probe.insecureCookies.flatMap((c) => c.missing))].join(",
    "severity": "MEDIUM",
+   "source": "lib/scanner/live-checks.ts",
+   "preciseLocation": true,
+   "tested": true,
+   "inCatalog": false
+  },
+  {
+   "ruleId": 27008,
+   "code": "RULE-27008",
+   "title": "Database dump publicly downloadable",
+   "severity": "CRITICAL",
+   "source": "lib/scanner/live-checks.ts",
+   "preciseLocation": true,
+   "tested": true,
+   "inCatalog": false
+  },
+  {
+   "ruleId": 27009,
+   "code": "RULE-27009",
+   "title": "Cloud / deploy credentials publicly downloadable",
+   "severity": "CRITICAL",
+   "source": "lib/scanner/live-checks.ts",
+   "preciseLocation": true,
+   "tested": true,
+   "inCatalog": false
+  },
+  {
+   "ruleId": 27010,
+   "code": "RULE-27010",
+   "title": "Debug or log endpoint publicly reachable",
+   "severity": "HIGH",
+   "source": "lib/scanner/live-checks.ts",
+   "preciseLocation": true,
+   "tested": true,
+   "inCatalog": false
+  },
+  {
+   "ruleId": 27011,
+   "code": "RULE-27011",
+   "title": "Database / search admin console publicly reachable",
+   "severity": "HIGH",
+   "source": "lib/scanner/live-checks.ts",
+   "preciseLocation": true,
+   "tested": true,
+   "inCatalog": false
+  },
+  {
+   "ruleId": 27012,
+   "code": "RULE-27012",
+   "title": "Build / deployment configuration publicly downloadable",
+   "severity": "MEDIUM",
+   "source": "lib/scanner/live-checks.ts",
+   "preciseLocation": true,
+   "tested": true,
+   "inCatalog": false
+  },
+  {
+   "ruleId": 27013,
+   "code": "LIVE-13",
+   "title": "Live exposure checks incomplete (${cov.answered}/${cov.total} paths checked)",
+   "severity": "LOW",
    "source": "lib/scanner/live-checks.ts",
    "preciseLocation": true,
    "tested": true,
@@ -8055,7 +8260,7 @@
    "ruleId": 28007,
    "code": "RULE-28007",
    "title": "SECURITY DEFINER Function Writes Data Without Checking the Caller",
-   "severity": "MEDIUM",
+   "severity": "UNKNOWN",
    "source": "lib/rules/nextjs-supabase-rules.ts",
    "preciseLocation": true,
    "tested": true,
@@ -9475,7 +9680,7 @@
    "ruleId": 28806,
    "code": "RULE-28806",
    "title": "Admin Check Trusts a Custom Request Header",
-   "severity": "MEDIUM",
+   "severity": "UNKNOWN",
    "source": "lib/rules/missed-vulns-rules.ts",
    "preciseLocation": true,
    "tested": true,
@@ -9565,7 +9770,7 @@
    "ruleId": 28815,
    "code": "RULE-28815",
    "title": "Privilege Field Stored in User-Editable Supabase user_metadata",
-   "severity": "MEDIUM",
+   "severity": "UNKNOWN",
    "source": "lib/rules/missed-vulns-rules.ts",
    "preciseLocation": true,
    "tested": true,
@@ -9576,6 +9781,226 @@
    "code": "RULE-28816",
    "title": "Storage Upload Path Is Only the Client File Name",
    "severity": "MEDIUM",
+   "source": "lib/rules/missed-vulns-rules.ts",
+   "preciseLocation": true,
+   "tested": true,
+   "inCatalog": false
+  },
+  {
+   "ruleId": 28817,
+   "code": "RULE-28817",
+   "title": "RLS Policy Lets Anyone Read Every Row of ${table} (USING (true))",
+   "severity": "HIGH",
+   "source": "lib/rules/missed-vulns-rules.ts",
+   "preciseLocation": true,
+   "tested": true,
+   "inCatalog": false
+  },
+  {
+   "ruleId": 28818,
+   "code": "RULE-28818",
+   "title": "Clerk Middleware Marks Every API Route Public (${wide[1]})",
+   "severity": "HIGH",
+   "source": "lib/rules/missed-vulns-rules.ts",
+   "preciseLocation": true,
+   "tested": true,
+   "inCatalog": false
+  },
+  {
+   "ruleId": 28819,
+   "code": "RULE-28819",
+   "title": "OAuth Account Linked to an Existing User by E-mail Alone (allowDangerousEmailAccountLinking)",
+   "severity": "MEDIUM",
+   "source": "lib/rules/missed-vulns-rules.ts",
+   "preciseLocation": true,
+   "tested": true,
+   "inCatalog": false
+  },
+  {
+   "ruleId": 28820,
+   "code": "RULE-28820",
+   "title": "Laravel Model Allows Mass Assignment of Every Column ($guarded = [])",
+   "severity": "MEDIUM",
+   "source": "lib/rules/missed-vulns-rules.ts",
+   "preciseLocation": true,
+   "tested": true,
+   "inCatalog": false
+  },
+  {
+   "ruleId": 28821,
+   "code": "RULE-28821",
+   "title": "Storage Policy Lets Every Caller Read All Files in the ",
+   "severity": "HIGH",
+   "source": "lib/rules/missed-vulns-rules.ts",
+   "preciseLocation": true,
+   "tested": true,
+   "inCatalog": false
+  },
+  {
+   "ruleId": 28822,
+   "code": "RULE-28822",
+   "title": "Every Submitted Form Field Is Written to the Database (Object.fromEntries)",
+   "severity": "HIGH",
+   "source": "lib/rules/missed-vulns-rules.ts",
+   "preciseLocation": true,
+   "tested": true,
+   "inCatalog": false
+  },
+  {
+   "ruleId": 28823,
+   "code": "RULE-28823",
+   "title": "Every Request Field Is Copied Onto the Model (setattr loop)",
+   "severity": "HIGH",
+   "source": "lib/rules/missed-vulns-rules.ts",
+   "preciseLocation": true,
+   "tested": true,
+   "inCatalog": false
+  },
+  {
+   "ruleId": 28824,
+   "code": "RULE-28824",
+   "title": "CORS Reflects Any Origin With Credentials Allowed",
+   "severity": "HIGH",
+   "source": "lib/rules/missed-vulns-rules.ts",
+   "preciseLocation": true,
+   "tested": true,
+   "inCatalog": false
+  },
+  {
+   "ruleId": 28825,
+   "code": "RULE-28825",
+   "title": "Edge Function Runs an Admin Auth Operation Without Checking the Caller",
+   "severity": "HIGH",
+   "source": "lib/rules/missed-vulns-rules.ts",
+   "preciseLocation": true,
+   "tested": true,
+   "inCatalog": false
+  },
+  {
+   "ruleId": 28826,
+   "code": "RULE-28826",
+   "title": "Server Secret ${m[1]} Inlined Into the Browser Bundle (next.config env)",
+   "severity": "CRITICAL",
+   "source": "lib/rules/missed-vulns-rules.ts",
+   "preciseLocation": true,
+   "tested": true,
+   "inCatalog": false
+  },
+  {
+   "ruleId": 28827,
+   "code": "RULE-28827",
+   "title": "Rewrite Destination Host Taken From the Request Path (Open Proxy)",
+   "severity": "HIGH",
+   "source": "lib/rules/missed-vulns-rules.ts",
+   "preciseLocation": true,
+   "tested": true,
+   "inCatalog": false
+  },
+  {
+   "ruleId": 28828,
+   "code": "RULE-28828",
+   "title": "Workflow Prints an Encoded Secret, Bypassing Log Masking",
+   "severity": "HIGH",
+   "source": "lib/rules/missed-vulns-rules.ts",
+   "preciseLocation": true,
+   "tested": true,
+   "inCatalog": false
+  },
+  {
+   "ruleId": 28829,
+   "code": "RULE-28829",
+   "title": "",
+   "severity": "HIGH",
+   "source": "lib/rules/missed-vulns-rules.ts",
+   "preciseLocation": true,
+   "tested": true,
+   "inCatalog": false
+  },
+  {
+   "ruleId": 28830,
+   "code": "RULE-28830",
+   "title": "Supabase Pooler Connection String With the Database Password Committed",
+   "severity": "CRITICAL",
+   "source": "lib/rules/missed-vulns-rules.ts",
+   "preciseLocation": true,
+   "tested": true,
+   "inCatalog": false
+  },
+  {
+   "ruleId": 28831,
+   "code": "RULE-28831",
+   "title": "Convex Production Deploy Key Committed",
+   "severity": "CRITICAL",
+   "source": "lib/rules/missed-vulns-rules.ts",
+   "preciseLocation": true,
+   "tested": true,
+   "inCatalog": false
+  },
+  {
+   "ruleId": 28832,
+   "code": "RULE-28832",
+   "title": "Next.js Server Actions Encryption Key Hard-Coded",
+   "severity": "HIGH",
+   "source": "lib/rules/missed-vulns-rules.ts",
+   "preciseLocation": true,
+   "tested": true,
+   "inCatalog": false
+  },
+  {
+   "ruleId": 28833,
+   "code": "RULE-28833",
+   "title": "Sensitive File in a Public Web Folder (${name})",
+   "severity": "UNKNOWN",
+   "source": "lib/rules/missed-vulns-rules.ts",
+   "preciseLocation": true,
+   "tested": true,
+   "inCatalog": false
+  },
+  {
+   "ruleId": 28834,
+   "code": "RULE-28834",
+   "title": "Supabase Service Role Key Used in a ",
+   "severity": "CRITICAL",
+   "source": "lib/rules/missed-vulns-rules.ts",
+   "preciseLocation": true,
+   "tested": true,
+   "inCatalog": false
+  },
+  {
+   "ruleId": 28835,
+   "code": "RULE-28835",
+   "title": "CORS Allows Any Origin with Credentials",
+   "severity": "MEDIUM",
+   "source": "lib/rules/missed-vulns-rules.ts",
+   "preciseLocation": true,
+   "tested": true,
+   "inCatalog": false
+  },
+  {
+   "ruleId": 28836,
+   "code": "RULE-28836",
+   "title": "User-Supplied URL Rendered as a Link Without a Scheme Check",
+   "severity": "MEDIUM",
+   "source": "lib/rules/missed-vulns-rules.ts",
+   "preciseLocation": true,
+   "tested": true,
+   "inCatalog": false
+  },
+  {
+   "ruleId": 28837,
+   "code": "RULE-28837",
+   "title": "Request Body Deep-Merged into an Object",
+   "severity": "MEDIUM",
+   "source": "lib/rules/missed-vulns-rules.ts",
+   "preciseLocation": true,
+   "tested": true,
+   "inCatalog": false
+  },
+  {
+   "ruleId": 28838,
+   "code": "RULE-28838",
+   "title": "FastAPI ${m[1].toUpperCase()} Route Without an Auth Dependency (${m[2]})",
+   "severity": "HIGH",
    "source": "lib/rules/missed-vulns-rules.ts",
    "preciseLocation": true,
    "tested": true,
@@ -10347,6 +10772,3656 @@
    "title": "Request Input Builds a File Path (Go)",
    "severity": "HIGH",
    "source": "lib/rules/py-go-flow-rules.ts",
+   "preciseLocation": true,
+   "tested": true,
+   "inCatalog": false
+  },
+  {
+   "ruleId": 29507,
+   "code": "FLOW-07",
+   "title": "${sink.model} Loaded by the Id in the URL Without an Ownership Check (Python)",
+   "severity": "HIGH",
+   "source": "lib/rules/iag-python-rules.ts",
+   "preciseLocation": true,
+   "tested": true,
+   "inCatalog": false
+  },
+  {
+   "ruleId": 29601,
+   "code": "RULE-29601",
+   "title": "Database Write Is Never Awaited, So It Never Runs (${sb ? ",
+   "severity": "HIGH",
+   "source": "lib/rules/logic-bug-rules.ts",
+   "preciseLocation": true,
+   "tested": true,
+   "inCatalog": false
+  },
+  {
+   "ruleId": 29602,
+   "code": "RULE-29602",
+   "title": "redirect() Inside try/catch Is Swallowed by the catch Block",
+   "severity": "HIGH",
+   "source": "lib/rules/logic-bug-rules.ts",
+   "preciseLocation": true,
+   "tested": true,
+   "inCatalog": false
+  },
+  {
+   "ruleId": 29603,
+   "code": "RULE-29603",
+   "title": "Async Function Passed Directly to useEffect",
+   "severity": "MEDIUM",
+   "source": "lib/rules/logic-bug-rules.ts",
+   "preciseLocation": true,
+   "tested": true,
+   "inCatalog": false
+  },
+  {
+   "ruleId": 29604,
+   "code": "RULE-29604",
+   "title": "useEffect Without a Dependency Array Sets State (Infinite Render Loop)",
+   "severity": "HIGH",
+   "source": "lib/rules/logic-bug-rules.ts",
+   "preciseLocation": true,
+   "tested": true,
+   "inCatalog": false
+  },
+  {
+   "ruleId": 29605,
+   "code": "RULE-29605",
+   "title": "${kind} Started in useEffect Without Cleanup",
+   "severity": "MEDIUM",
+   "source": "lib/rules/logic-bug-rules.ts",
+   "preciseLocation": true,
+   "tested": true,
+   "inCatalog": false
+  },
+  {
+   "ruleId": 29606,
+   "code": "RULE-29606",
+   "title": "async Callback in forEach Is Never Awaited",
+   "severity": "HIGH",
+   "source": "lib/rules/logic-bug-rules.ts",
+   "preciseLocation": true,
+   "tested": true,
+   "inCatalog": false
+  },
+  {
+   "ruleId": 29607,
+   "code": "RULE-29607",
+   "title": "Supabase .range() End Is Inclusive (Off-by-One Pagination)",
+   "severity": "MEDIUM",
+   "source": "lib/rules/logic-bug-rules.ts",
+   "preciseLocation": true,
+   "tested": true,
+   "inCatalog": false
+  },
+  {
+   "ruleId": 29608,
+   "code": "RULE-29608",
+   "title": "Comparison With NaN Is Always False",
+   "severity": "MEDIUM",
+   "source": "lib/rules/logic-bug-rules.ts",
+   "preciseLocation": true,
+   "tested": true,
+   "inCatalog": false
+  },
+  {
+   "ruleId": 29609,
+   "code": "RULE-29609",
+   "title": "State Array ${m[1]} Mutated In Place With .${m[2]}()",
+   "severity": "MEDIUM",
+   "source": "lib/rules/logic-bug-rules.ts",
+   "preciseLocation": true,
+   "tested": true,
+   "inCatalog": false
+  },
+  {
+   "ruleId": 29610,
+   "code": "RULE-29610",
+   "title": "Stripe ${m[1]} Given in Dollars Instead of Cents",
+   "severity": "HIGH",
+   "source": "lib/rules/logic-bug-rules.ts",
+   "preciseLocation": true,
+   "tested": true,
+   "inCatalog": false
+  },
+  {
+   "ruleId": 29611,
+   "code": "RULE-29611",
+   "title": "localStorage Read at Module Load Crashes Server Rendering",
+   "severity": "HIGH",
+   "source": "lib/rules/logic-bug-rules.ts",
+   "preciseLocation": true,
+   "tested": true,
+   "inCatalog": false
+  },
+  {
+   "ruleId": 29613,
+   "code": "RULE-29613",
+   "title": "Error Swallowed, Then Success Shown to the User",
+   "severity": "MEDIUM",
+   "source": "lib/rules/logic-bug-rules.ts",
+   "preciseLocation": true,
+   "tested": true,
+   "inCatalog": false
+  },
+  {
+   "ruleId": 29614,
+   "code": "RULE-29614",
+   "title": "INSERT Policy Uses USING Instead of WITH CHECK (Migration Fails)",
+   "severity": "HIGH",
+   "source": "lib/rules/logic-bug-rules.ts",
+   "preciseLocation": true,
+   "tested": true,
+   "inCatalog": false
+  },
+  {
+   "ruleId": 29615,
+   "code": "RULE-29615",
+   "title": "Signup Trigger Function ${fn} Is Not SECURITY DEFINER (Every Signup Fails)",
+   "severity": "HIGH",
+   "source": "lib/rules/logic-bug-rules.ts",
+   "preciseLocation": true,
+   "tested": true,
+   "inCatalog": false
+  },
+  {
+   "ruleId": 29616,
+   "code": "RULE-29616",
+   "title": "Policy Compares auth.uid() With ${table}.id Instead of ${ownerCol[1]}",
+   "severity": "HIGH",
+   "source": "lib/rules/logic-bug-rules.ts",
+   "preciseLocation": true,
+   "tested": true,
+   "inCatalog": false
+  },
+  {
+   "ruleId": 29617,
+   "code": "RULE-29617",
+   "title": "Foreign Key to auth.users Has No ON DELETE Rule (User Deletion Fails)",
+   "severity": "MEDIUM",
+   "source": "lib/rules/logic-bug-rules.ts",
+   "preciseLocation": true,
+   "tested": true,
+   "inCatalog": false
+  },
+  {
+   "ruleId": 29618,
+   "code": "RULE-29618",
+   "title": "Response Sent Without return; Handler Continues and Responds Again",
+   "severity": "HIGH",
+   "source": "lib/rules/logic-bug-rules.ts",
+   "preciseLocation": true,
+   "tested": true,
+   "inCatalog": false
+  },
+  {
+   "ruleId": 29619,
+   "code": "RULE-29619",
+   "title": "Route Handler Creates a Response but Never Returns It",
+   "severity": "HIGH",
+   "source": "lib/rules/logic-bug-rules.ts",
+   "preciseLocation": true,
+   "tested": true,
+   "inCatalog": false
+  },
+  {
+   "ruleId": 29620,
+   "code": "RULE-29620",
+   "title": "Hydration Mismatch: ${x[1].replace(/\\s*\\(\\s*\\)/, ",
+   "severity": "MEDIUM",
+   "source": "lib/rules/logic-react-next-rules.ts",
+   "preciseLocation": true,
+   "tested": true,
+   "inCatalog": false
+  },
+  {
+   "ruleId": 29621,
+   "code": "RULE-29621",
+   "title": "Hydration Mismatch: Date Formatted With the Runtime Time Zone During Render",
+   "severity": "MEDIUM",
+   "source": "lib/rules/logic-react-next-rules.ts",
+   "preciseLocation": true,
+   "tested": true,
+   "inCatalog": false
+  },
+  {
+   "ruleId": 29622,
+   "code": "RULE-29622",
+   "title": "${g} Read During Render Crashes Server Rendering",
+   "severity": "HIGH",
+   "source": "lib/rules/logic-react-next-rules.ts",
+   "preciseLocation": true,
+   "tested": true,
+   "inCatalog": false
+  },
+  {
+   "ruleId": 29623,
+   "code": "RULE-29623",
+   "title": "Hydration Mismatch: Render Output Branches on typeof window",
+   "severity": "MEDIUM",
+   "source": "lib/rules/logic-react-next-rules.ts",
+   "preciseLocation": true,
+   "tested": true,
+   "inCatalog": false
+  },
+  {
+   "ruleId": 29624,
+   "code": "RULE-29624",
+   "title": "${x[3]}() Called During Render (Infinite Re-render Loop)",
+   "severity": "HIGH",
+   "source": "lib/rules/logic-react-next-rules.ts",
+   "preciseLocation": true,
+   "tested": true,
+   "inCatalog": false
+  },
+  {
+   "ruleId": 29625,
+   "code": "RULE-29625",
+   "title": "${x[1]}={${x[2]}(...)} Calls the Setter During Render",
+   "severity": "HIGH",
+   "source": "lib/rules/logic-react-next-rules.ts",
+   "preciseLocation": true,
+   "tested": true,
+   "inCatalog": false
+  },
+  {
+   "ruleId": 29626,
+   "code": "RULE-29626",
+   "title": "Stale State: Callback Registered Once Reads ${st} From the First Render",
+   "severity": "HIGH",
+   "source": "lib/rules/logic-react-next-rules.ts",
+   "preciseLocation": true,
+   "tested": true,
+   "inCatalog": false
+  },
+  {
+   "ruleId": 29627,
+   "code": "RULE-29627",
+   "title": "Prop ${src} Copied Into State ${x[1]} That Never Updates",
+   "severity": "MEDIUM",
+   "source": "lib/rules/logic-react-next-rules.ts",
+   "preciseLocation": true,
+   "tested": true,
+   "inCatalog": false
+  },
+  {
+   "ruleId": 29628,
+   "code": "RULE-29628",
+   "title": "${x[1]} Dependency ${fresh.length > 30 ? ",
+   "severity": "UNKNOWN",
+   "source": "lib/rules/logic-react-next-rules.ts",
+   "preciseLocation": true,
+   "tested": true,
+   "inCatalog": false
+  },
+  {
+   "ruleId": 29629,
+   "code": "RULE-29629",
+   "title": "${x[1]} With [] Reads ${st} (Frozen at the First Render)",
+   "severity": "MEDIUM",
+   "source": "lib/rules/logic-react-next-rules.ts",
+   "preciseLocation": true,
+   "tested": true,
+   "inCatalog": false
+  },
+  {
+   "ruleId": 29630,
+   "code": "RULE-29630",
+   "title": "useEffect Updates Its Own Dependency ${st} (Infinite Loop)",
+   "severity": "HIGH",
+   "source": "lib/rules/logic-react-next-rules.ts",
+   "preciseLocation": true,
+   "tested": true,
+   "inCatalog": false
+  },
+  {
+   "ruleId": 29631,
+   "code": "RULE-29631",
+   "title": "Random key (${r[1]}()) Remounts the Element on Every Render",
+   "severity": "MEDIUM",
+   "source": "lib/rules/logic-react-next-rules.ts",
+   "preciseLocation": true,
+   "tested": true,
+   "inCatalog": false
+  },
+  {
+   "ruleId": 29632,
+   "code": "RULE-29632",
+   "title": "Index key on ${arr}, Which Is Deleted From: Inputs Show the Wrong Row",
+   "severity": "MEDIUM",
+   "source": "lib/rules/logic-react-next-rules.ts",
+   "preciseLocation": true,
+   "tested": true,
+   "inCatalog": false
+  },
+  {
+   "ruleId": 29633,
+   "code": "RULE-29633",
+   "title": "<${t.name}> Has ${valueAttr ? ",
+   "severity": "HIGH",
+   "source": "lib/rules/logic-react-next-rules.ts",
+   "preciseLocation": true,
+   "tested": true,
+   "inCatalog": false
+  },
+  {
+   "ruleId": 29634,
+   "code": "RULE-29634",
+   "title": "Form onSubmit Sends a Request Without preventDefault (Page Reloads)",
+   "severity": "HIGH",
+   "source": "lib/rules/logic-react-next-rules.ts",
+   "preciseLocation": true,
+   "tested": true,
+   "inCatalog": false
+  },
+  {
+   "ruleId": 29635,
+   "code": "RULE-29635",
+   "title": "<button> Without type Inside a Form Also Submits It",
+   "severity": "MEDIUM",
+   "source": "lib/rules/logic-react-next-rules.ts",
+   "preciseLocation": true,
+   "tested": true,
+   "inCatalog": false
+  },
+  {
+   "ruleId": 29636,
+   "code": "RULE-29636",
+   "title": "Payment Button Can Be Clicked Again While the Charge Is Pending",
+   "severity": "HIGH",
+   "source": "lib/rules/logic-react-next-rules.ts",
+   "preciseLocation": true,
+   "tested": true,
+   "inCatalog": false
+  },
+  {
+   "ruleId": 29637,
+   "code": "RULE-29637",
+   "title": "Request API Used Without await: ${x[1]}() (Next.js 16)",
+   "severity": "HIGH",
+   "source": "lib/rules/logic-react-next-rules.ts",
+   "preciseLocation": true,
+   "tested": true,
+   "inCatalog": false
+  },
+  {
+   "ruleId": 29638,
+   "code": "RULE-29638",
+   "title": "${name} Exported From a ",
+   "severity": "HIGH",
+   "source": "lib/rules/logic-react-next-rules.ts",
+   "preciseLocation": true,
+   "tested": true,
+   "inCatalog": false
+  },
+  {
+   "ruleId": 29639,
+   "code": "RULE-29639",
+   "title": "Async Client Component ${k.name}",
+   "severity": "HIGH",
+   "source": "lib/rules/logic-react-next-rules.ts",
+   "preciseLocation": true,
+   "tested": true,
+   "inCatalog": false
+  },
+  {
+   "ruleId": 29640,
+   "code": "RULE-29640",
+   "title": "Server-Only Import in a Client Component: ",
+   "severity": "HIGH",
+   "source": "lib/rules/logic-react-next-rules.ts",
+   "preciseLocation": true,
+   "tested": true,
+   "inCatalog": false
+  },
+  {
+   "ruleId": 29641,
+   "code": "RULE-29641",
+   "title": "${x[1]}() Called From a Client Event Handler",
+   "severity": "HIGH",
+   "source": "lib/rules/logic-react-next-rules.ts",
+   "preciseLocation": true,
+   "tested": true,
+   "inCatalog": false
+  },
+  {
+   "ruleId": 29642,
+   "code": "RULE-29642",
+   "title": "next/router Imported in the App Router",
+   "severity": "HIGH",
+   "source": "lib/rules/logic-react-next-rules.ts",
+   "preciseLocation": true,
+   "tested": true,
+   "inCatalog": false
+  },
+  {
+   "ruleId": 29643,
+   "code": "RULE-29643",
+   "title": "force-static Route Handler Reads the Request",
+   "severity": "HIGH",
+   "source": "lib/rules/logic-react-next-rules.ts",
+   "preciseLocation": true,
+   "tested": true,
+   "inCatalog": false
+  },
+  {
+   "ruleId": 29644,
+   "code": "RULE-29644",
+   "title": "",
+   "severity": "HIGH",
+   "source": "lib/rules/logic-react-next-rules.ts",
+   "preciseLocation": true,
+   "tested": true,
+   "inCatalog": false
+  },
+  {
+   "ruleId": 29645,
+   "code": "RULE-29645",
+   "title": "",
+   "severity": "HIGH",
+   "source": "lib/rules/logic-react-next-rules.ts",
+   "preciseLocation": true,
+   "tested": true,
+   "inCatalog": false
+  },
+  {
+   "ruleId": 29646,
+   "code": "RULE-29646",
+   "title": "Client-Only Code in a Server Component: ${h[1]}()",
+   "severity": "HIGH",
+   "source": "lib/rules/logic-react-next-rules.ts",
+   "preciseLocation": true,
+   "tested": true,
+   "inCatalog": false
+  },
+  {
+   "ruleId": 29647,
+   "code": "RULE-29647",
+   "title": "${/global-error/.test(path) ? ",
+   "severity": "HIGH",
+   "source": "lib/rules/logic-react-next-rules.ts",
+   "preciseLocation": true,
+   "tested": true,
+   "inCatalog": false
+  },
+  {
+   "ruleId": 29648,
+   "code": "RULE-29648",
+   "title": "<Image fill> Without sizes Downloads a Full-Viewport-Width Image",
+   "severity": "LOW",
+   "source": "lib/rules/logic-react-next-rules.ts",
+   "preciseLocation": true,
+   "tested": true,
+   "inCatalog": false
+  },
+  {
+   "ruleId": 29649,
+   "code": "RULE-29649",
+   "title": "",
+   "severity": "HIGH",
+   "source": "lib/rules/logic-react-next-rules.ts",
+   "preciseLocation": true,
+   "tested": true,
+   "inCatalog": false
+  },
+  {
+   "ruleId": 29650,
+   "code": "RULE-29650",
+   "title": "text-${col} on bg-${col}: Invisible Text",
+   "severity": "MEDIUM",
+   "source": "lib/rules/logic-react-next-rules.ts",
+   "preciseLocation": true,
+   "tested": true,
+   "inCatalog": false
+  },
+  {
+   "ruleId": 29651,
+   "code": "RULE-29651",
+   "title": "Fixed ${wide[0]} Width Overflows Phone Screens",
+   "severity": "MEDIUM",
+   "source": "lib/rules/logic-react-next-rules.ts",
+   "preciseLocation": true,
+   "tested": true,
+   "inCatalog": false
+  },
+  {
+   "ruleId": 29652,
+   "code": "RULE-29652",
+   "title": "{${x[1]}.length && ...} Renders ",
+   "severity": "MEDIUM",
+   "source": "lib/rules/logic-react-next-rules.ts",
+   "preciseLocation": true,
+   "tested": true,
+   "inCatalog": false
+  },
+  {
+   "ruleId": 29653,
+   "code": "RULE-29653",
+   "title": "State ${st} Mutated In Place, Then Set With the Same Reference",
+   "severity": "HIGH",
+   "source": "lib/rules/logic-react-next-rules.ts",
+   "preciseLocation": true,
+   "tested": true,
+   "inCatalog": false
+  },
+  {
+   "ruleId": 29654,
+   "code": "RULE-29654",
+   "title": "router.${what} Does Not Exist on the next/navigation Router",
+   "severity": "HIGH",
+   "source": "lib/rules/logic-react-next-rules.ts",
+   "preciseLocation": true,
+   "tested": true,
+   "inCatalog": false
+  },
+  {
+   "ruleId": 29655,
+   "code": "RULE-29655",
+   "title": "${x[1]} in the App Router",
+   "severity": "HIGH",
+   "source": "lib/rules/logic-react-next-rules.ts",
+   "preciseLocation": true,
+   "tested": true,
+   "inCatalog": false
+  },
+  {
+   "ruleId": 29656,
+   "code": "RULE-29656",
+   "title": "",
+   "severity": "HIGH",
+   "source": "lib/rules/logic-react-next-rules.ts",
+   "preciseLocation": true,
+   "tested": true,
+   "inCatalog": false
+  },
+  {
+   "ruleId": 29657,
+   "code": "RULE-29657",
+   "title": "${/proxy\\./.test(path) ? ",
+   "severity": "HIGH",
+   "source": "lib/rules/logic-react-next-rules.ts",
+   "preciseLocation": true,
+   "tested": true,
+   "inCatalog": false
+  },
+  {
+   "ruleId": 29658,
+   "code": "RULE-29658",
+   "title": "Form action Handler Treats Its Argument as an Event",
+   "severity": "HIGH",
+   "source": "lib/rules/logic-react-next-rules.ts",
+   "preciseLocation": true,
+   "tested": true,
+   "inCatalog": false
+  },
+  {
+   "ruleId": 29659,
+   "code": "RULE-29659",
+   "title": "${x[1]}() Called ${why === ",
+   "severity": "HIGH",
+   "source": "lib/rules/logic-react-next-rules.ts",
+   "preciseLocation": true,
+   "tested": true,
+   "inCatalog": false
+  },
+  {
+   "ruleId": 29660,
+   "code": "RULE-29660",
+   "title": "${m[1]}() Is Not Awaited in a Serverless Handler",
+   "severity": "HIGH",
+   "source": "lib/rules/logic-data-rules.ts",
+   "preciseLocation": true,
+   "tested": true,
+   "inCatalog": false
+  },
+  {
+   "ruleId": 29661,
+   "code": "RULE-29661",
+   "title": "Promise Returned Without await Inside try: catch Never Runs",
+   "severity": "MEDIUM",
+   "source": "lib/rules/logic-data-rules.ts",
+   "preciseLocation": true,
+   "tested": true,
+   "inCatalog": false
+  },
+  {
+   "ruleId": 29662,
+   "code": "RULE-29662",
+   "title": ".map(async ...) Result Used as Data Without Promise.all",
+   "severity": "HIGH",
+   "source": "lib/rules/logic-data-rules.ts",
+   "preciseLocation": true,
+   "tested": true,
+   "inCatalog": false
+  },
+  {
+   "ruleId": 29663,
+   "code": "RULE-29663",
+   "title": "async Callback in .${m[1]}() Is Always Truthy",
+   "severity": "HIGH",
+   "source": "lib/rules/logic-data-rules.ts",
+   "preciseLocation": true,
+   "tested": true,
+   "inCatalog": false
+  },
+  {
+   "ruleId": 29664,
+   "code": "RULE-29664",
+   "title": "async reduce() Uses the Accumulator Without Awaiting It",
+   "severity": "HIGH",
+   "source": "lib/rules/logic-data-rules.ts",
+   "preciseLocation": true,
+   "tested": true,
+   "inCatalog": false
+  },
+  {
+   "ruleId": 29665,
+   "code": "RULE-29665",
+   "title": "async ${m[1]}() Used in a Condition Without await",
+   "severity": "HIGH",
+   "source": "lib/rules/logic-data-rules.ts",
+   "preciseLocation": true,
+   "tested": true,
+   "inCatalog": false
+  },
+  {
+   "ruleId": 29666,
+   "code": "RULE-29666",
+   "title": "${w[1]} Updated From a Stale Read (Lost Update Race)",
+   "severity": "UNKNOWN",
+   "source": "lib/rules/logic-data-rules.ts",
+   "preciseLocation": true,
+   "tested": true,
+   "inCatalog": false
+  },
+  {
+   "ruleId": 29667,
+   "code": "RULE-29667",
+   "title": ".single() Errors on 0 Rows, So the ",
+   "severity": "MEDIUM",
+   "source": "lib/rules/logic-data-rules.ts",
+   "preciseLocation": true,
+   "tested": true,
+   "inCatalog": false
+  },
+  {
+   "ruleId": 29668,
+   "code": "RULE-29668",
+   "title": "Supabase ${m[2]}() Error Is Discarded but Its data Is Used",
+   "severity": "HIGH",
+   "source": "lib/rules/logic-data-rules.ts",
+   "preciseLocation": true,
+   "tested": true,
+   "inCatalog": false
+  },
+  {
+   "ruleId": 29669,
+   "code": "RULE-29669",
+   "title": "${m[1]}: ${op} * 100 Is Not Rounded to an Integer",
+   "severity": "HIGH",
+   "source": "lib/rules/logic-data-rules.ts",
+   "preciseLocation": true,
+   "tested": true,
+   "inCatalog": false
+  },
+  {
+   "ruleId": 29670,
+   "code": "RULE-29670",
+   "title": "${m[1]} Rounds to Whole Dollars Before Converting to Cents",
+   "severity": "HIGH",
+   "source": "lib/rules/logic-data-rules.ts",
+   "preciseLocation": true,
+   "tested": true,
+   "inCatalog": false
+  },
+  {
+   "ruleId": 29671,
+   "code": "RULE-29671",
+   "title": "toFixed() String Added to a Number (Concatenation, Not Addition)",
+   "severity": "MEDIUM",
+   "source": "lib/rules/logic-data-rules.ts",
+   "preciseLocation": true,
+   "tested": true,
+   "inCatalog": false
+  },
+  {
+   "ruleId": 29672,
+   "code": "RULE-29672",
+   "title": "Input String Added to a Number (String Concatenation)",
+   "severity": "MEDIUM",
+   "source": "lib/rules/logic-data-rules.ts",
+   "preciseLocation": true,
+   "tested": true,
+   "inCatalog": false
+  },
+  {
+   "ruleId": 29673,
+   "code": "RULE-29673",
+   "title": "checkout.session.completed Fulfilled Without Checking payment_status",
+   "severity": "HIGH",
+   "source": "lib/rules/logic-data-rules.ts",
+   "preciseLocation": true,
+   "tested": true,
+   "inCatalog": false
+  },
+  {
+   "ruleId": 29674,
+   "code": "RULE-29674",
+   "title": "Subscription Access Granted Without Checking subscription.status",
+   "severity": "HIGH",
+   "source": "lib/rules/logic-data-rules.ts",
+   "preciseLocation": true,
+   "tested": true,
+   "inCatalog": false
+  },
+  {
+   "ruleId": 29675,
+   "code": "RULE-29675",
+   "title": "Stripe Timestamp ${f.split(",
+   "severity": "HIGH",
+   "source": "lib/rules/logic-data-rules.ts",
+   "preciseLocation": true,
+   "tested": true,
+   "inCatalog": false
+  },
+  {
+   "ruleId": 29676,
+   "code": "RULE-29676",
+   "title": "Date-Only String Parsed as UTC, Then Read in Local Time (Off by One Day)",
+   "severity": "MEDIUM",
+   "source": "lib/rules/logic-data-rules.ts",
+   "preciseLocation": true,
+   "tested": true,
+   "inCatalog": false
+  },
+  {
+   "ruleId": 29677,
+   "code": "RULE-29677",
+   "title": "getMonth() Is 0-Based (Month Off by One)",
+   "severity": "MEDIUM",
+   "source": "lib/rules/logic-data-rules.ts",
+   "preciseLocation": true,
+   "tested": true,
+   "inCatalog": false
+  },
+  {
+   "ruleId": 29678,
+   "code": "RULE-29678",
+   "title": "",
+   "severity": "MEDIUM",
+   "source": "lib/rules/logic-data-rules.ts",
+   "preciseLocation": true,
+   "tested": true,
+   "inCatalog": false
+  },
+  {
+   "ruleId": 29679,
+   "code": "RULE-29679",
+   "title": "Date Objects Compared With == / ===",
+   "severity": "MEDIUM",
+   "source": "lib/rules/logic-data-rules.ts",
+   "preciseLocation": true,
+   "tested": true,
+   "inCatalog": false
+  },
+  {
+   "ruleId": 29680,
+   "code": "RULE-29680",
+   "title": "toISOString() Used as the User",
+   "severity": "MEDIUM",
+   "source": "lib/rules/logic-data-rules.ts",
+   "preciseLocation": true,
+   "tested": true,
+   "inCatalog": false
+  },
+  {
+   "ruleId": 29681,
+   "code": "RULE-29681",
+   "title": "Date Mutated In Place, Then Used Again",
+   "severity": "MEDIUM",
+   "source": "lib/rules/logic-data-rules.ts",
+   "preciseLocation": true,
+   "tested": true,
+   "inCatalog": false
+  },
+  {
+   "ruleId": 29682,
+   "code": "RULE-29682",
+   "title": "${v} Used Without a Null Check After Fetching It",
+   "severity": "MEDIUM",
+   "source": "lib/rules/logic-data-rules.ts",
+   "preciseLocation": true,
+   "tested": true,
+   "inCatalog": false
+  },
+  {
+   "ruleId": 29683,
+   "code": "RULE-29683",
+   "title": "Email Stored Lowercased but Looked Up Case-Sensitively",
+   "severity": "MEDIUM",
+   "source": "lib/rules/logic-data-rules.ts",
+   "preciseLocation": true,
+   "tested": true,
+   "inCatalog": false
+  },
+  {
+   "ruleId": 29684,
+   "code": "RULE-29684",
+   "title": "Numbers Sorted With the Default .sort() (Compared as Strings)",
+   "severity": "MEDIUM",
+   "source": "lib/rules/logic-data-rules.ts",
+   "preciseLocation": true,
+   "tested": true,
+   "inCatalog": false
+  },
+  {
+   "ruleId": 29685,
+   "code": "RULE-29685",
+   "title": "",
+   "severity": "MEDIUM",
+   "source": "lib/rules/logic-data-rules.ts",
+   "preciseLocation": true,
+   "tested": true,
+   "inCatalog": false
+  },
+  {
+   "ruleId": 29686,
+   "code": "RULE-29686",
+   "title": "typeof Never Returns ",
+   "severity": "MEDIUM",
+   "source": "lib/rules/logic-data-rules.ts",
+   "preciseLocation": true,
+   "tested": true,
+   "inCatalog": false
+  },
+  {
+   "ruleId": 29687,
+   "code": "RULE-29687",
+   "title": "Assignment ${m[1]} = ${m[2]} Inside if (Should Be ===)",
+   "severity": "HIGH",
+   "source": "lib/rules/logic-data-rules.ts",
+   "preciseLocation": true,
+   "tested": true,
+   "inCatalog": false
+  },
+  {
+   "ruleId": 29688,
+   "code": "RULE-29688",
+   "title": "Math.round(x * ${m[2]} / ${m[2]}) Does Not Round to Decimals",
+   "severity": "MEDIUM",
+   "source": "lib/rules/logic-data-rules.ts",
+   "preciseLocation": true,
+   "tested": true,
+   "inCatalog": false
+  },
+  {
+   "ruleId": 29689,
+   "code": "RULE-29689",
+   "title": "Delete and Insert on ${t} Run in Parallel (Promise.all)",
+   "severity": "HIGH",
+   "source": "lib/rules/logic-data-rules.ts",
+   "preciseLocation": true,
+   "tested": true,
+   "inCatalog": false
+  },
+  {
+   "ruleId": 29690,
+   "code": "RULE-29690",
+   "title": "response.json() Is Not Awaited",
+   "severity": "HIGH",
+   "source": "lib/rules/logic-data-rules.ts",
+   "preciseLocation": true,
+   "tested": true,
+   "inCatalog": false
+  },
+  {
+   "ruleId": 29691,
+   "code": "RULE-29691",
+   "title": "Mutable Default Argument ${v}=${p[2]} Is Shared Between Calls",
+   "severity": "MEDIUM",
+   "source": "lib/rules/logic-data-rules.ts",
+   "preciseLocation": true,
+   "tested": true,
+   "inCatalog": false
+  },
+  {
+   "ruleId": 29692,
+   "code": "RULE-29692",
+   "title": "\\",
+   "severity": "MEDIUM",
+   "source": "lib/rules/logic-data-rules.ts",
+   "preciseLocation": true,
+   "tested": true,
+   "inCatalog": false
+  },
+  {
+   "ruleId": 29693,
+   "code": "RULE-29693",
+   "title": "datetime.utcnow().timestamp() Is Off by the Server UTC Offset",
+   "severity": "MEDIUM",
+   "source": "lib/rules/logic-data-rules.ts",
+   "preciseLocation": true,
+   "tested": true,
+   "inCatalog": false
+  },
+  {
+   "ruleId": 29701,
+   "code": "RULE-29701",
+   "title": "Hardcoded localhost ${ctx} (${m[2].slice(0, 40)}) Breaks in Production",
+   "severity": "UNKNOWN",
+   "source": "lib/rules/logic-bug-rules.ts",
+   "preciseLocation": true,
+   "tested": true,
+   "inCatalog": false
+  },
+  {
+   "ruleId": 29702,
+   "code": "RULE-29702",
+   "title": "VERCEL_URL Used as a Full URL (No https://, Changes Every Deployment)",
+   "severity": "MEDIUM",
+   "source": "lib/rules/logic-bug-rules.ts",
+   "preciseLocation": true,
+   "tested": true,
+   "inCatalog": false
+  },
+  {
+   "ruleId": 29703,
+   "code": "RULE-29703",
+   "title": "Whole Site Marked noindex / Disallowed for Search Engines",
+   "severity": "HIGH",
+   "source": "lib/rules/logic-bug-rules.ts",
+   "preciseLocation": true,
+   "tested": true,
+   "inCatalog": false
+  },
+  {
+   "ruleId": 29704,
+   "code": "RULE-29704",
+   "title": "Field default=${m[1]} Is Evaluated Once, at Import",
+   "severity": "MEDIUM",
+   "source": "lib/rules/logic-python-rules.ts",
+   "preciseLocation": true,
+   "tested": true,
+   "inCatalog": false
+  },
+  {
+   "ruleId": 29705,
+   "code": "RULE-29705",
+   "title": "${m[1]} Uses auto_now=True and Changes on Every Save",
+   "severity": "MEDIUM",
+   "source": "lib/rules/logic-python-rules.ts",
+   "preciseLocation": true,
+   "tested": true,
+   "inCatalog": false
+  },
+  {
+   "ruleId": 29706,
+   "code": "RULE-29706",
+   "title": "${m[1]} Flag Read as a String: ",
+   "severity": "MEDIUM",
+   "source": "lib/rules/logic-python-rules.ts",
+   "preciseLocation": true,
+   "tested": true,
+   "inCatalog": false
+  },
+  {
+   "ruleId": 29707,
+   "code": "RULE-29707",
+   "title": "int(price * 100) Truncates Floats and Loses a Cent",
+   "severity": "MEDIUM",
+   "source": "lib/rules/logic-python-rules.ts",
+   "preciseLocation": true,
+   "tested": true,
+   "inCatalog": false
+  },
+  {
+   "ruleId": 29708,
+   "code": "RULE-29708",
+   "title": "${m[1]} Is Always None: ${fn}() Works in Place",
+   "severity": "MEDIUM",
+   "source": "lib/rules/logic-python-rules.ts",
+   "preciseLocation": true,
+   "tested": true,
+   "inCatalog": false
+  },
+  {
+   "ruleId": 29709,
+   "code": "RULE-29709",
+   "title": "Background Task Queued Before the Transaction Commits",
+   "severity": "MEDIUM",
+   "source": "lib/rules/logic-python-rules.ts",
+   "preciseLocation": true,
+   "tested": true,
+   "inCatalog": false
+  },
+  {
+   "ruleId": 29710,
+   "code": "RULE-29710",
+   "title": "${d[1]}() Returns the Session, So It Is Never Closed",
+   "severity": "MEDIUM",
+   "source": "lib/rules/logic-python-rules.ts",
+   "preciseLocation": true,
+   "tested": true,
+   "inCatalog": false
+  },
+  {
+   "ruleId": 29711,
+   "code": "RULE-29711",
+   "title": "Error Returned With HTTP 200 OK",
+   "severity": "MEDIUM",
+   "source": "lib/rules/logic-python-rules.ts",
+   "preciseLocation": true,
+   "tested": true,
+   "inCatalog": false
+  },
+  {
+   "ruleId": 29712,
+   "code": "RULE-29712",
+   "title": "Missing f Prefix: ",
+   "severity": "LOW",
+   "source": "lib/rules/logic-python-rules.ts",
+   "preciseLocation": true,
+   "tested": true,
+   "inCatalog": false
+  },
+  {
+   "ruleId": 29713,
+   "code": "RULE-29713",
+   "title": "${m[2].toUpperCase()} ${m[4]} Is Registered Twice",
+   "severity": "MEDIUM",
+   "source": "lib/rules/logic-python-rules.ts",
+   "preciseLocation": true,
+   "tested": true,
+   "inCatalog": false
+  },
+  {
+   "ruleId": 29714,
+   "code": "RULE-29714",
+   "title": "Naive datetime.now() Mixed With Django Timezone-Aware Dates",
+   "severity": "MEDIUM",
+   "source": "lib/rules/logic-python-rules.ts",
+   "preciseLocation": true,
+   "tested": true,
+   "inCatalog": false
+  },
+  {
+   "ruleId": 29715,
+   "code": "RULE-29715",
+   "title": "${t.trim().split(/\\s/)[0]} Inside finally Swallows Exceptions",
+   "severity": "MEDIUM",
+   "source": "lib/rules/logic-python-rules.ts",
+   "preciseLocation": true,
+   "tested": true,
+   "inCatalog": false
+  },
+  {
+   "ruleId": 29716,
+   "code": "RULE-29716",
+   "title": "${m[1].replace(/\\($/, ",
+   "severity": "MEDIUM",
+   "source": "lib/rules/logic-python-rules.ts",
+   "preciseLocation": true,
+   "tested": true,
+   "inCatalog": false
+  },
+  {
+   "ruleId": 29740,
+   "code": "RULE-29740",
+   "title": "Tailwind Class Built at Runtime (${x[1]}-\\${...}) Is Never Generated",
+   "severity": "MEDIUM",
+   "source": "lib/rules/logic-frontend-rules.ts",
+   "preciseLocation": true,
+   "tested": true,
+   "inCatalog": false
+  },
+  {
+   "ruleId": 29741,
+   "code": "RULE-29741",
+   "title": "${name} Typed and Read Synchronously (Next.js ${context?.nextMajorVersion}+)",
+   "severity": "UNKNOWN",
+   "source": "lib/rules/logic-frontend-rules.ts",
+   "preciseLocation": true,
+   "tested": true,
+   "inCatalog": false
+  },
+  {
+   "ruleId": 29742,
+   "code": "RULE-29742",
+   "title": "Form Field Uses ${small} on Mobile: iOS Zooms In on Focus",
+   "severity": "LOW",
+   "source": "lib/rules/logic-frontend-rules.ts",
+   "preciseLocation": true,
+   "tested": true,
+   "inCatalog": false
+  },
+  {
+   "ruleId": 29743,
+   "code": "RULE-29743",
+   "title": "useFormStatus() Called in ${decl[1] || decl[2]}, Which Renders the <form> Itself",
+   "severity": "MEDIUM",
+   "source": "lib/rules/logic-frontend-rules.ts",
+   "preciseLocation": true,
+   "tested": true,
+   "inCatalog": false
+  },
+  {
+   "ruleId": 29744,
+   "code": "RULE-29744",
+   "title": "${x[1]} Has No Title",
+   "severity": "LOW",
+   "source": "lib/rules/logic-frontend-rules.ts",
+   "preciseLocation": true,
+   "tested": true,
+   "inCatalog": false
+  },
+  {
+   "ruleId": 29745,
+   "code": "RULE-29745",
+   "title": "JSON.parse(localStorage...) Without try/catch",
+   "severity": "MEDIUM",
+   "source": "lib/rules/logic-frontend-rules.ts",
+   "preciseLocation": true,
+   "tested": true,
+   "inCatalog": false
+  },
+  {
+   "ruleId": 29746,
+   "code": "RULE-29746",
+   "title": "<Image fill> Inside a Parent Without position: relative",
+   "severity": "MEDIUM",
+   "source": "lib/rules/logic-frontend-rules.ts",
+   "preciseLocation": true,
+   "tested": true,
+   "inCatalog": false
+  },
+  {
+   "ruleId": 29747,
+   "code": "RULE-29747",
+   "title": "Element Only Appears on Hover (${shown})",
+   "severity": "LOW",
+   "source": "lib/rules/logic-frontend-rules.ts",
+   "preciseLocation": true,
+   "tested": true,
+   "inCatalog": false
+  },
+  {
+   "ruleId": 29748,
+   "code": "RULE-29748",
+   "title": "Edge Runtime Route Imports Node-Only ",
+   "severity": "HIGH",
+   "source": "lib/rules/logic-frontend-rules.ts",
+   "preciseLocation": true,
+   "tested": true,
+   "inCatalog": false
+  },
+  {
+   "ruleId": 29749,
+   "code": "RULE-29749",
+   "title": "Middleware Matcher Also Runs on _next/static Assets and Images",
+   "severity": "LOW",
+   "source": "lib/rules/logic-frontend-rules.ts",
+   "preciseLocation": true,
+   "tested": true,
+   "inCatalog": false
+  },
+  {
+   "ruleId": 29750,
+   "code": "RULE-29750",
+   "title": "<${x[1]} asChild> Has ${n} Children",
+   "severity": "HIGH",
+   "source": "lib/rules/logic-frontend-rules.ts",
+   "preciseLocation": true,
+   "tested": true,
+   "inCatalog": false
+  },
+  {
+   "ruleId": 29751,
+   "code": "RULE-29751",
+   "title": "<html> Lacks suppressHydrationWarning With next-themes",
+   "severity": "LOW",
+   "source": "lib/rules/logic-frontend-rules.ts",
+   "preciseLocation": true,
+   "tested": true,
+   "inCatalog": false
+  },
+  {
+   "ruleId": 29752,
+   "code": "RULE-29752",
+   "title": "Search Request in useEffect Can Show Results for an Old Query",
+   "severity": "MEDIUM",
+   "source": "lib/rules/logic-frontend-rules.ts",
+   "preciseLocation": true,
+   "tested": true,
+   "inCatalog": false
+  },
+  {
+   "ruleId": 29753,
+   "code": "RULE-29753",
+   "title": "useMutation Never Invalidates the Queries This File Shows",
+   "severity": "LOW",
+   "source": "lib/rules/logic-frontend-rules.ts",
+   "preciseLocation": true,
+   "tested": true,
+   "inCatalog": false
+  },
+  {
+   "ruleId": 29755,
+   "code": "RULE-29755",
+   "title": "Stripe ${x[1]} Is a Relative Path (${x[3]})",
+   "severity": "HIGH",
+   "source": "lib/rules/logic-frontend-rules.ts",
+   "preciseLocation": true,
+   "tested": true,
+   "inCatalog": false
+  },
+  {
+   "ruleId": 29756,
+   "code": "RULE-29756",
+   "title": "Destructuring a Reactive Object Loses Reactivity",
+   "severity": "MEDIUM",
+   "source": "lib/rules/logic-frontend-rules.ts",
+   "preciseLocation": true,
+   "tested": true,
+   "inCatalog": false
+  },
+  {
+   "ruleId": 29757,
+   "code": "RULE-29757",
+   "title": "Platform.OS Compared With ",
+   "severity": "MEDIUM",
+   "source": "lib/rules/logic-frontend-rules.ts",
+   "preciseLocation": true,
+   "tested": true,
+   "inCatalog": false
+  },
+  {
+   "ruleId": 29758,
+   "code": "RULE-29758",
+   "title": "Import ",
+   "severity": "HIGH",
+   "source": "lib/rules/logic-crossfile-rules.ts",
+   "preciseLocation": true,
+   "tested": true,
+   "inCatalog": false
+  },
+  {
+   "ruleId": 29759,
+   "code": "RULE-29759",
+   "title": "Link to ${href}, but No Page Exists at That Route",
+   "severity": "MEDIUM",
+   "source": "lib/rules/logic-crossfile-rules.ts",
+   "preciseLocation": true,
+   "tested": true,
+   "inCatalog": false
+  },
+  {
+   "ruleId": 29760,
+   "code": "RULE-29760",
+   "title": "next/image Loads ${host}, Which next.config Does Not Allow",
+   "severity": "HIGH",
+   "source": "lib/rules/logic-crossfile-rules.ts",
+   "preciseLocation": true,
+   "tested": true,
+   "inCatalog": false
+  },
+  {
+   "ruleId": 29761,
+   "code": "RULE-29761",
+   "title": "${what} in an App Built With output: ",
+   "severity": "HIGH",
+   "source": "lib/rules/logic-crossfile-rules.ts",
+   "preciseLocation": true,
+   "tested": true,
+   "inCatalog": false
+  },
+  {
+   "ruleId": 29762,
+   "code": "RULE-29762",
+   "title": "useSearchParams() in a Client Page Without a Suspense Boundary",
+   "severity": "HIGH",
+   "source": "lib/rules/logic-crossfile-rules.ts",
+   "preciseLocation": true,
+   "tested": true,
+   "inCatalog": false
+  },
+  {
+   "ruleId": 29763,
+   "code": "RULE-29763",
+   "title": "${x[1]} Selector Returns a New ${x[3].startsWith(",
+   "severity": "HIGH",
+   "source": "lib/rules/logic-crossfile-rules.ts",
+   "preciseLocation": true,
+   "tested": true,
+   "inCatalog": false
+  },
+  {
+   "ruleId": 29764,
+   "code": "RULE-29764",
+   "title": "process.env.${x[1]} Is Undefined in the Expo App",
+   "severity": "MEDIUM",
+   "source": "lib/rules/logic-crossfile-rules.ts",
+   "preciseLocation": true,
+   "tested": true,
+   "inCatalog": false
+  },
+  {
+   "ruleId": 29765,
+   "code": "RULE-29765",
+   "title": "${name}.defaultProps Is Ignored in React 19",
+   "severity": "MEDIUM",
+   "source": "lib/rules/logic-crossfile-rules.ts",
+   "preciseLocation": true,
+   "tested": true,
+   "inCatalog": false
+  },
+  {
+   "ruleId": 29780,
+   "code": "RULE-29780",
+   "title": "${x[1]} Selector Calls .${x[3]}() on Store State",
+   "severity": "MEDIUM",
+   "source": "lib/rules/logic-corpus-rules.ts",
+   "preciseLocation": true,
+   "tested": true,
+   "inCatalog": false
+  },
+  {
+   "ruleId": 29781,
+   "code": "RULE-29781",
+   "title": "${name}() Called While ${comp.name} Renders",
+   "severity": "HIGH",
+   "source": "lib/rules/logic-corpus-rules.ts",
+   "preciseLocation": true,
+   "tested": true,
+   "inCatalog": false
+  },
+  {
+   "ruleId": 29782,
+   "code": "RULE-29782",
+   "title": "onValueChange Receives a Value, Not an Event (${x[1]}.target)",
+   "severity": "HIGH",
+   "source": "lib/rules/logic-corpus-rules.ts",
+   "preciseLocation": true,
+   "tested": true,
+   "inCatalog": false
+  },
+  {
+   "ruleId": 29783,
+   "code": "RULE-29783",
+   "title": "register(${x[2]}) Spread Onto <${x[1]}>, Which Has No Native Input",
+   "severity": "MEDIUM",
+   "source": "lib/rules/logic-corpus-rules.ts",
+   "preciseLocation": true,
+   "tested": true,
+   "inCatalog": false
+  },
+  {
+   "ruleId": 29784,
+   "code": "RULE-29784",
+   "title": "aria-hidden=",
+   "severity": "MEDIUM",
+   "source": "lib/rules/logic-corpus-rules.ts",
+   "preciseLocation": true,
+   "tested": true,
+   "inCatalog": false
+  },
+  {
+   "ruleId": 29785,
+   "code": "RULE-29785",
+   "title": "Route Param ${v} May Be an Array: ${v}.${use[1]}() Can Crash",
+   "severity": "MEDIUM",
+   "source": "lib/rules/logic-corpus-rules.ts",
+   "preciseLocation": true,
+   "tested": true,
+   "inCatalog": false
+  },
+  {
+   "ruleId": 29786,
+   "code": "RULE-29786",
+   "title": "Form Action Returns an Error Without fail()",
+   "severity": "MEDIUM",
+   "source": "lib/rules/logic-corpus-rules.ts",
+   "preciseLocation": true,
+   "tested": true,
+   "inCatalog": false
+  },
+  {
+   "ruleId": 29787,
+   "code": "RULE-29787",
+   "title": "Background Task Receives the Request Session ",
+   "severity": "HIGH",
+   "source": "lib/rules/logic-corpus-rules.ts",
+   "preciseLocation": true,
+   "tested": true,
+   "inCatalog": false
+  },
+  {
+   "ruleId": 29788,
+   "code": "RULE-29788",
+   "title": "Path Parameter ${name} Has No Type, So It Is Always a String",
+   "severity": "MEDIUM",
+   "source": "lib/rules/logic-corpus-rules.ts",
+   "preciseLocation": true,
+   "tested": true,
+   "inCatalog": false
+  },
+  {
+   "ruleId": 29789,
+   "code": "RULE-29789",
+   "title": "Naive datetime.now() Compared in a File That Uses Aware Datetimes",
+   "severity": "MEDIUM",
+   "source": "lib/rules/logic-corpus-rules.ts",
+   "preciseLocation": true,
+   "tested": true,
+   "inCatalog": false
+  },
+  {
+   "ruleId": 29790,
+   "code": "RULE-29790",
+   "title": "${m[2]}.${m[3]}() Without return: the Handler Keeps Running",
+   "severity": "HIGH",
+   "source": "lib/rules/logic-corpus-rules.ts",
+   "preciseLocation": true,
+   "tested": true,
+   "inCatalog": false
+  },
+  {
+   "ruleId": 29791,
+   "code": "RULE-29791",
+   "title": "${x[1]} Is Still a Placeholder (",
+   "severity": "HIGH",
+   "source": "lib/rules/logic-fake-rules.ts",
+   "preciseLocation": true,
+   "tested": true,
+   "inCatalog": false
+  },
+  {
+   "ruleId": 29792,
+   "code": "RULE-29792",
+   "title": "${fn.name}() Fakes the Request With a Timer",
+   "severity": "HIGH",
+   "source": "lib/rules/logic-fake-rules.ts",
+   "preciseLocation": true,
+   "tested": true,
+   "inCatalog": false
+  },
+  {
+   "ruleId": 29793,
+   "code": "RULE-29793",
+   "title": "The Real Request Is Commented Out, but Success Is Still Shown",
+   "severity": "HIGH",
+   "source": "lib/rules/logic-fake-rules.ts",
+   "preciseLocation": true,
+   "tested": true,
+   "inCatalog": false
+  },
+  {
+   "ruleId": 29794,
+   "code": "RULE-29794",
+   "title": "${fn.name}() Shows Success Without Sending Anything",
+   "severity": "HIGH",
+   "source": "lib/rules/logic-fake-rules.ts",
+   "preciseLocation": true,
+   "tested": true,
+   "inCatalog": false
+  },
+  {
+   "ruleId": 29795,
+   "code": "RULE-29795",
+   "title": "",
+   "severity": "MEDIUM",
+   "source": "lib/rules/logic-fake-rules.ts",
+   "preciseLocation": true,
+   "tested": true,
+   "inCatalog": false
+  },
+  {
+   "ruleId": 29796,
+   "code": "RULE-29796",
+   "title": "Link Points to ",
+   "severity": "LOW",
+   "source": "lib/rules/logic-fake-rules.ts",
+   "preciseLocation": true,
+   "tested": true,
+   "inCatalog": false
+  },
+  {
+   "ruleId": 29797,
+   "code": "RULE-29797",
+   "title": "Login Checks a Hard-Coded Password",
+   "severity": "CRITICAL",
+   "source": "lib/rules/logic-fake-rules.ts",
+   "preciseLocation": true,
+   "tested": true,
+   "inCatalog": false
+  },
+  {
+   "ruleId": 29798,
+   "code": "RULE-29798",
+   "title": "removeEventListener(${x[1]}) Gets a New Function, So Nothing Is Removed",
+   "severity": "MEDIUM",
+   "source": "lib/rules/logic-fake-rules.ts",
+   "preciseLocation": true,
+   "tested": true,
+   "inCatalog": false
+  },
+  {
+   "ruleId": 29799,
+   "code": "RULE-29799",
+   "title": "process.env.${x[1]} in a Vite App Is Undefined in the Browser",
+   "severity": "HIGH",
+   "source": "lib/rules/logic-fake-rules.ts",
+   "preciseLocation": true,
+   "tested": true,
+   "inCatalog": false
+  },
+  {
+   "ruleId": 29800,
+   "code": "RULE-29800",
+   "title": "setTimeout of ${Math.round(ms / 60000)} min in a Serverless Function Never Fires",
+   "severity": "HIGH",
+   "source": "lib/rules/logic-fake-rules.ts",
+   "preciseLocation": true,
+   "tested": true,
+   "inCatalog": false
+  },
+  {
+   "ruleId": 29801,
+   "code": "RULE-29801",
+   "title": "Both Branches of the Ternary Are ${x[1].slice(0, 40)}",
+   "severity": "MEDIUM",
+   "source": "lib/rules/logic-fake-rules.ts",
+   "preciseLocation": true,
+   "tested": true,
+   "inCatalog": false
+  },
+  {
+   "ruleId": 29802,
+   "code": "RULE-29802",
+   "title": "Row Saved With ${m[1]}: ${m[2]} (null When Signed Out)",
+   "severity": "MEDIUM",
+   "source": "lib/rules/logic-fake-rules.ts",
+   "preciseLocation": true,
+   "tested": true,
+   "inCatalog": false
+  },
+  {
+   "ruleId": 29803,
+   "code": "RULE-29803",
+   "title": "Test-Mode Payment Key Hard-Coded (${x[2].slice(0, 9)}...)",
+   "severity": "MEDIUM",
+   "source": "lib/rules/logic-fake-rules.ts",
+   "preciseLocation": true,
+   "tested": true,
+   "inCatalog": false
+  },
+  {
+   "ruleId": 29804,
+   "code": "RULE-29804",
+   "title": "Auth Returns a Fake Token (",
+   "severity": "HIGH",
+   "source": "lib/rules/logic-fake-rules.ts",
+   "preciseLocation": true,
+   "tested": true,
+   "inCatalog": false
+  },
+  {
+   "ruleId": 29805,
+   "code": "LIVE-01",
+   "title": "Supabase ${s.kind === ",
+   "severity": "CRITICAL",
+   "source": "lib/rules/live-bundle-rules.ts",
+   "preciseLocation": true,
+   "tested": false,
+   "inCatalog": false
+  },
+  {
+   "ruleId": 29806,
+   "code": "LIVE-02",
+   "title": "${s.kind} Is in Your Website",
+   "severity": "UNKNOWN",
+   "source": "lib/rules/live-bundle-rules.ts",
+   "preciseLocation": true,
+   "tested": false,
+   "inCatalog": false
+  },
+  {
+   "ruleId": 29807,
+   "code": "LIVE-03",
+   "title": "Source Maps Are Public, So Your Original Source Code Can Be Downloaded",
+   "severity": "MEDIUM",
+   "source": "lib/rules/live-bundle-rules.ts",
+   "preciseLocation": true,
+   "tested": false,
+   "inCatalog": false
+  },
+  {
+   "ruleId": 29820,
+   "code": "RULE-29820",
+   "title": "Write Inside $transaction Uses ${outer} Instead of ${tx}",
+   "severity": "HIGH",
+   "source": "lib/rules/logic-gemini-rules.ts",
+   "preciseLocation": true,
+   "tested": true,
+   "inCatalog": false
+  },
+  {
+   "ruleId": 29821,
+   "code": "RULE-29821",
+   "title": "Action ${name} for useActionState Takes Only (formData)",
+   "severity": "HIGH",
+   "source": "lib/rules/logic-gemini-rules.ts",
+   "preciseLocation": true,
+   "tested": true,
+   "inCatalog": false
+  },
+  {
+   "ruleId": 29822,
+   "code": "RULE-29822",
+   "title": "catch Reads err.response.status but fetch Does Not Reject on HTTP Errors",
+   "severity": "MEDIUM",
+   "source": "lib/rules/logic-gemini-rules.ts",
+   "preciseLocation": true,
+   "tested": true,
+   "inCatalog": false
+  },
+  {
+   "ruleId": 29823,
+   "code": "RULE-29823",
+   "title": "forEach Calls Async ${m[1]} Without Awaiting It",
+   "severity": "HIGH",
+   "source": "lib/rules/logic-gemini-rules.ts",
+   "preciseLocation": true,
+   "tested": true,
+   "inCatalog": false
+  },
+  {
+   "ruleId": 29824,
+   "code": "RULE-29824",
+   "title": "Array.fill() With an Object Shares the Same Reference in Every Slot",
+   "severity": "MEDIUM",
+   "source": "lib/rules/logic-gemini-rules.ts",
+   "preciseLocation": true,
+   "tested": true,
+   "inCatalog": false
+  },
+  {
+   "ruleId": 29825,
+   "code": "RULE-29825",
+   "title": "${m[1] ?? m[2]} Handler Reads params From the Request Argument",
+   "severity": "HIGH",
+   "source": "lib/rules/logic-gemini-rules.ts",
+   "preciseLocation": true,
+   "tested": true,
+   "inCatalog": false
+  },
+  {
+   "ruleId": 29826,
+   "code": "RULE-29826",
+   "title": "useSearchParams() Result Mutated Directly",
+   "severity": "HIGH",
+   "source": "lib/rules/logic-gemini-rules.ts",
+   "preciseLocation": true,
+   "tested": true,
+   "inCatalog": false
+  },
+  {
+   "ruleId": 29827,
+   "code": "RULE-29827",
+   "title": "",
+   "severity": "HIGH",
+   "source": "lib/rules/logic-gemini-rules.ts",
+   "preciseLocation": true,
+   "tested": true,
+   "inCatalog": false
+  },
+  {
+   "ruleId": 29828,
+   "code": "RULE-29828",
+   "title": "Pagination Skips the First Page (${page} * ${m[2]} With 1-Based ${page})",
+   "severity": "HIGH",
+   "source": "lib/rules/logic-gemini-rules.ts",
+   "preciseLocation": true,
+   "tested": true,
+   "inCatalog": false
+  },
+  {
+   "ruleId": 29829,
+   "code": "RULE-29829",
+   "title": "Response.redirect() Called With a Relative Path",
+   "severity": "HIGH",
+   "source": "lib/rules/logic-gemini-rules.ts",
+   "preciseLocation": true,
+   "tested": true,
+   "inCatalog": false
+  },
+  {
+   "ruleId": 29831,
+   "code": "RULE-29831",
+   "title": "${j[1]}.text() Read After ${j[1]}.json() Consumed the Body",
+   "severity": "MEDIUM",
+   "source": "lib/rules/logic-gemini-rules.ts",
+   "preciseLocation": true,
+   "tested": true,
+   "inCatalog": false
+  },
+  {
+   "ruleId": 29832,
+   "code": "RULE-29832",
+   "title": "${m[1]}() Called With a Regex Without the g Flag",
+   "severity": "HIGH",
+   "source": "lib/rules/logic-gemini-rules.ts",
+   "preciseLocation": true,
+   "tested": true,
+   "inCatalog": false
+  },
+  {
+   "ruleId": 29833,
+   "code": "RULE-29833",
+   "title": "Drizzle ${m[2]}(${m[3]}) Without .where() Affects Every Row",
+   "severity": "HIGH",
+   "source": "lib/rules/logic-gemini-rules.ts",
+   "preciseLocation": true,
+   "tested": true,
+   "inCatalog": false
+  },
+  {
+   "ruleId": 29834,
+   "code": "RULE-29834",
+   "title": "${m[2]}() Compares a New Object/Array Literal by Reference",
+   "severity": "MEDIUM",
+   "source": "lib/rules/logic-gemini-rules.ts",
+   "preciseLocation": true,
+   "tested": true,
+   "inCatalog": false
+  },
+  {
+   "ruleId": 29835,
+   "code": "RULE-29835",
+   "title": "new Promise() With an async Executor",
+   "severity": "MEDIUM",
+   "source": "lib/rules/logic-gemini-rules.ts",
+   "preciseLocation": true,
+   "tested": true,
+   "inCatalog": false
+  },
+  {
+   "ruleId": 29836,
+   "code": "RULE-29836",
+   "title": "fetch() With a Relative URL in Server Code",
+   "severity": "HIGH",
+   "source": "lib/rules/logic-gemini-rules.ts",
+   "preciseLocation": true,
+   "tested": true,
+   "inCatalog": false
+  },
+  {
+   "ruleId": 29837,
+   "code": "RULE-29837",
+   "title": ".${m[1]}(column, null) Never Matches NULL Rows",
+   "severity": "HIGH",
+   "source": "lib/rules/logic-gemini-rules.ts",
+   "preciseLocation": true,
+   "tested": true,
+   "inCatalog": false
+  },
+  {
+   "ruleId": 29838,
+   "code": "RULE-29838",
+   "title": "${n} Modified While Looping Over It",
+   "severity": "HIGH",
+   "source": "lib/rules/logic-gemini-rules.ts",
+   "preciseLocation": true,
+   "tested": true,
+   "inCatalog": false
+  },
+  {
+   "ruleId": 29839,
+   "code": "RULE-29839",
+   "title": "Date Format ",
+   "severity": "HIGH",
+   "source": "lib/rules/logic-gemini-rules.ts",
+   "preciseLocation": true,
+   "tested": true,
+   "inCatalog": false
+  },
+  {
+   "ruleId": 29840,
+   "code": "RULE-29840",
+   "title": "Number Parsed Back From toLocaleString() Output",
+   "severity": "MEDIUM",
+   "source": "lib/rules/logic-gemini-rules.ts",
+   "preciseLocation": true,
+   "tested": true,
+   "inCatalog": false
+  },
+  {
+   "ruleId": 29841,
+   "code": "RULE-29841",
+   "title": "async Function Passed to use${m[1]}",
+   "severity": "HIGH",
+   "source": "lib/rules/logic-gemini-rules.ts",
+   "preciseLocation": true,
+   "tested": true,
+   "inCatalog": false
+  },
+  {
+   "ruleId": 29842,
+   "code": "RULE-29842",
+   "title": "while (… .exec()) Loop Never Advances",
+   "severity": "HIGH",
+   "source": "lib/rules/logic-gemini-rules.ts",
+   "preciseLocation": true,
+   "tested": true,
+   "inCatalog": false
+  },
+  {
+   "ruleId": 29843,
+   "code": "RULE-29843",
+   "title": "${r[1]} Inside finally Overrides the try/catch Result",
+   "severity": "MEDIUM",
+   "source": "lib/rules/logic-gemini-rules.ts",
+   "preciseLocation": true,
+   "tested": true,
+   "inCatalog": false
+  },
+  {
+   "ruleId": 29844,
+   "code": "RULE-29844",
+   "title": "Promise.${m[1]}() Given Separate Arguments Instead of an Array",
+   "severity": "HIGH",
+   "source": "lib/rules/logic-gemini-rules.ts",
+   "preciseLocation": true,
+   "tested": true,
+   "inCatalog": false
+  },
+  {
+   "ruleId": 29845,
+   "code": "RULE-29845",
+   "title": "Plain Object Passed as a Response Body",
+   "severity": "HIGH",
+   "source": "lib/rules/logic-gemini-rules.ts",
+   "preciseLocation": true,
+   "tested": true,
+   "inCatalog": false
+  },
+  {
+   "ruleId": 29846,
+   "code": "RULE-29846",
+   "title": "Plain Object Passed to new ${m[1]}()",
+   "severity": "HIGH",
+   "source": "lib/rules/logic-gemini-rules.ts",
+   "preciseLocation": true,
+   "tested": true,
+   "inCatalog": false
+  },
+  {
+   "ruleId": 29847,
+   "code": "RULE-29847",
+   "title": "Route Placeholder Left in URL ${m[2].slice(0, 40)}",
+   "severity": "HIGH",
+   "source": "lib/rules/logic-gemini-rules.ts",
+   "preciseLocation": true,
+   "tested": true,
+   "inCatalog": false
+  },
+  {
+   "ruleId": 29848,
+   "code": "RULE-29848",
+   "title": "${m[1]}() Arguments Swapped",
+   "severity": "HIGH",
+   "source": "lib/rules/logic-gemini-rules.ts",
+   "preciseLocation": true,
+   "tested": true,
+   "inCatalog": false
+  },
+  {
+   "ruleId": 29849,
+   "code": "RULE-29849",
+   "title": "timedelta.seconds Used as the Total Duration",
+   "severity": "MEDIUM",
+   "source": "lib/rules/logic-gemini-rules.ts",
+   "preciseLocation": true,
+   "tested": true,
+   "inCatalog": false
+  },
+  {
+   "ruleId": 29850,
+   "code": "RULE-29850",
+   "title": "NaN Lookup That Can Never Match",
+   "severity": "HIGH",
+   "source": "lib/rules/logic-gemini-rules.ts",
+   "preciseLocation": true,
+   "tested": true,
+   "inCatalog": false
+  },
+  {
+   "ruleId": 29851,
+   "code": "RULE-29851",
+   "title": "new URL() Called With Only a Relative Path",
+   "severity": "HIGH",
+   "source": "lib/rules/logic-gemini-rules.ts",
+   "preciseLocation": true,
+   "tested": true,
+   "inCatalog": false
+  },
+  {
+   "ruleId": 29852,
+   "code": "RULE-29852",
+   "title": "${n}.abort() Cancels Nothing (signal Never Passed)",
+   "severity": "MEDIUM",
+   "source": "lib/rules/logic-gemini-rules.ts",
+   "preciseLocation": true,
+   "tested": true,
+   "inCatalog": false
+  },
+  {
+   "ruleId": 29853,
+   "code": "RULE-29853",
+   "title": "map(parseInt) Uses the Index as the Radix",
+   "severity": "HIGH",
+   "source": "lib/rules/logic-gemini-rules.ts",
+   "preciseLocation": true,
+   "tested": true,
+   "inCatalog": false
+  },
+  {
+   "ruleId": 29854,
+   "code": "RULE-29854",
+   "title": "sort() Comparator Returns a Boolean",
+   "severity": "HIGH",
+   "source": "lib/rules/logic-gemini-rules.ts",
+   "preciseLocation": true,
+   "tested": true,
+   "inCatalog": false
+  },
+  {
+   "ruleId": 29855,
+   "code": "RULE-29855",
+   "title": "Coroutine ${m[1]}() Called Without await",
+   "severity": "HIGH",
+   "source": "lib/rules/logic-gemini-rules.ts",
+   "preciseLocation": true,
+   "tested": true,
+   "inCatalog": false
+  },
+  {
+   "ruleId": 29856,
+   "code": "RULE-29856",
+   "title": "Money Converted to Cents by Truncating amount * 100",
+   "severity": "MEDIUM",
+   "source": "lib/rules/logic-gemini-rules.ts",
+   "preciseLocation": true,
+   "tested": true,
+   "inCatalog": false
+  },
+  {
+   "ruleId": 29857,
+   "code": "RULE-29857",
+   "title": "Strings From toFixed() Concatenated Instead of Added",
+   "severity": "HIGH",
+   "source": "lib/rules/logic-gemini-rules.ts",
+   "preciseLocation": true,
+   "tested": true,
+   "inCatalog": false
+  },
+  {
+   "ruleId": 29858,
+   "code": "RULE-29858",
+   "title": "Number.${m[1]}() Called on an Unparsed String",
+   "severity": "MEDIUM",
+   "source": "lib/rules/logic-gemini-rules.ts",
+   "preciseLocation": true,
+   "tested": true,
+   "inCatalog": false
+  },
+  {
+   "ruleId": 29859,
+   "code": "RULE-29859",
+   "title": "Set-Cookie Header Overwritten by a Second set()",
+   "severity": "MEDIUM",
+   "source": "lib/rules/logic-gemini-rules.ts",
+   "preciseLocation": true,
+   "tested": true,
+   "inCatalog": false
+  },
+  {
+   "ruleId": 29860,
+   "code": "RULE-29860",
+   "title": "FileList Appended to FormData as a Single Value",
+   "severity": "HIGH",
+   "source": "lib/rules/logic-gemini-rules.ts",
+   "preciseLocation": true,
+   "tested": true,
+   "inCatalog": false
+  },
+  {
+   "ruleId": 29861,
+   "code": "RULE-29861",
+   "title": "${fn.name}() Only Changes Local State",
+   "severity": "HIGH",
+   "source": "lib/rules/logic-fake-rules.ts",
+   "preciseLocation": true,
+   "tested": true,
+   "inCatalog": false
+  },
+  {
+   "ruleId": 29862,
+   "code": "RULE-29862",
+   "title": "Discount Code ",
+   "severity": "HIGH",
+   "source": "lib/rules/logic-fake-rules.ts",
+   "preciseLocation": true,
+   "tested": true,
+   "inCatalog": false
+  },
+  {
+   "ruleId": 29863,
+   "code": "RULE-29863",
+   "title": "${fn.name}() Accepts the Code Without Checking It on a Server",
+   "severity": "CRITICAL",
+   "source": "lib/rules/logic-fake-rules.ts",
+   "preciseLocation": true,
+   "tested": true,
+   "inCatalog": false
+  },
+  {
+   "ruleId": 29864,
+   "code": "RULE-29864",
+   "title": "",
+   "severity": "MEDIUM",
+   "source": "lib/rules/logic-fake-rules.ts",
+   "preciseLocation": true,
+   "tested": true,
+   "inCatalog": false
+  },
+  {
+   "ruleId": 29865,
+   "code": "RULE-29865",
+   "title": "${fn.name}() Creates Recovery Codes Only in the Browser",
+   "severity": "HIGH",
+   "source": "lib/rules/logic-fake-rules.ts",
+   "preciseLocation": true,
+   "tested": true,
+   "inCatalog": false
+  },
+  {
+   "ruleId": 29866,
+   "code": "RULE-29866",
+   "title": "Text Saved With a PDF Content Type",
+   "severity": "HIGH",
+   "source": "lib/rules/logic-fake-rules.ts",
+   "preciseLocation": true,
+   "tested": true,
+   "inCatalog": false
+  },
+  {
+   "ruleId": 29867,
+   "code": "RULE-29867",
+   "title": "fetch() Sends a body Without a method",
+   "severity": "HIGH",
+   "source": "lib/rules/logic-gemini-rules.ts",
+   "preciseLocation": true,
+   "tested": true,
+   "inCatalog": false
+  },
+  {
+   "ruleId": 29868,
+   "code": "RULE-29868",
+   "title": "multipart/form-data Content-Type Set by Hand on a FormData Upload",
+   "severity": "HIGH",
+   "source": "lib/rules/logic-gemini-rules.ts",
+   "preciseLocation": true,
+   "tested": true,
+   "inCatalog": false
+  },
+  {
+   "ruleId": 29869,
+   "code": "RULE-29869",
+   "title": "${r[1]}.current Used as a Hook Dependency",
+   "severity": "MEDIUM",
+   "source": "lib/rules/logic-gemini-rules.ts",
+   "preciseLocation": true,
+   "tested": true,
+   "inCatalog": false
+  },
+  {
+   "ruleId": 29870,
+   "code": "RULE-29870",
+   "title": "State ${m[1]} Mutated With .${s[1]}()",
+   "severity": "HIGH",
+   "source": "lib/rules/logic-gemini-rules.ts",
+   "preciseLocation": true,
+   "tested": true,
+   "inCatalog": false
+  },
+  {
+   "ruleId": 29871,
+   "code": "RULE-29871",
+   "title": "${r[1]}() Called Inside unstable_cache",
+   "severity": "HIGH",
+   "source": "lib/rules/logic-gemini-rules.ts",
+   "preciseLocation": true,
+   "tested": true,
+   "inCatalog": false
+  },
+  {
+   "ruleId": 29872,
+   "code": "RULE-29872",
+   "title": "reduce() Callback Never Returns the Accumulator",
+   "severity": "HIGH",
+   "source": "lib/rules/logic-gemini-rules.ts",
+   "preciseLocation": true,
+   "tested": true,
+   "inCatalog": false
+  },
+  {
+   "ruleId": 29873,
+   "code": "RULE-29873",
+   "title": "${n} Read With Object.keys / Spread",
+   "severity": "HIGH",
+   "source": "lib/rules/logic-gemini-rules.ts",
+   "preciseLocation": true,
+   "tested": true,
+   "inCatalog": false
+  },
+  {
+   "ruleId": 29874,
+   "code": "RULE-29874",
+   "title": "use(fetch(…)) Called During Render",
+   "severity": "HIGH",
+   "source": "lib/rules/logic-gemini-rules.ts",
+   "preciseLocation": true,
+   "tested": true,
+   "inCatalog": false
+  },
+  {
+   "ruleId": 29875,
+   "code": "RULE-29875",
+   "title": "String ${m[1].slice(0, 30)} + Number Is Concatenated",
+   "severity": "HIGH",
+   "source": "lib/rules/logic-gemini-rules.ts",
+   "preciseLocation": true,
+   "tested": true,
+   "inCatalog": false
+  },
+  {
+   "ruleId": 29876,
+   "code": "RULE-29876",
+   "title": "Value Encoded Twice for URLSearchParams",
+   "severity": "MEDIUM",
+   "source": "lib/rules/logic-gemini-rules.ts",
+   "preciseLocation": true,
+   "tested": true,
+   "inCatalog": false
+  },
+  {
+   "ruleId": 29877,
+   "code": "RULE-29877",
+   "title": "btoa(JSON.stringify(…)) Breaks on Non-ASCII Text",
+   "severity": "MEDIUM",
+   "source": "lib/rules/logic-gemini-rules.ts",
+   "preciseLocation": true,
+   "tested": true,
+   "inCatalog": false
+  },
+  {
+   "ruleId": 29878,
+   "code": "RULE-29878",
+   "title": "Intl Currency Format Without a currency Code",
+   "severity": "HIGH",
+   "source": "lib/rules/logic-gemini-rules.ts",
+   "preciseLocation": true,
+   "tested": true,
+   "inCatalog": false
+  },
+  {
+   "ruleId": 29879,
+   "code": "RULE-29879",
+   "title": "flatMap() With an async Callback",
+   "severity": "HIGH",
+   "source": "lib/rules/logic-gemini-rules.ts",
+   "preciseLocation": true,
+   "tested": true,
+   "inCatalog": false
+  },
+  {
+   "ruleId": 29880,
+   "code": "RULE-29880",
+   "title": "useContext(${m[1]}.Provider) Instead of useContext(${m[1]})",
+   "severity": "HIGH",
+   "source": "lib/rules/logic-gemini-rules.ts",
+   "preciseLocation": true,
+   "tested": true,
+   "inCatalog": false
+  },
+  {
+   "ruleId": 29881,
+   "code": "RULE-29881",
+   "title": "Stream Parser Does Not Handle the [DONE] Message",
+   "severity": "HIGH",
+   "source": "lib/rules/logic-gemini-rules.ts",
+   "preciseLocation": true,
+   "tested": true,
+   "inCatalog": false
+  },
+  {
+   "ruleId": 29882,
+   "code": "RULE-29882",
+   "title": "${m[1]}() Callback Returns an Object Literal",
+   "severity": "HIGH",
+   "source": "lib/rules/logic-gemini-rules.ts",
+   "preciseLocation": true,
+   "tested": true,
+   "inCatalog": false
+  },
+  {
+   "ruleId": 29883,
+   "code": "RULE-29883",
+   "title": "generateMetadata Calls ${r[1]}()",
+   "severity": "HIGH",
+   "source": "lib/rules/logic-gemini-rules.ts",
+   "preciseLocation": true,
+   "tested": true,
+   "inCatalog": false
+  },
+  {
+   "ruleId": 29884,
+   "code": "RULE-29884",
+   "title": "Math.${m[1]}(${m[2]}) Given an Array",
+   "severity": "HIGH",
+   "source": "lib/rules/logic-gemini-rules.ts",
+   "preciseLocation": true,
+   "tested": true,
+   "inCatalog": false
+  },
+  {
+   "ruleId": 29885,
+   "code": "RULE-29885",
+   "title": "new URL(req.url) Without a Base in a Node Server",
+   "severity": "HIGH",
+   "source": "lib/rules/logic-gemini-rules.ts",
+   "preciseLocation": true,
+   "tested": true,
+   "inCatalog": false
+  },
+  {
+   "ruleId": 29886,
+   "code": "RULE-29886",
+   "title": "Caught ${n} Copied With Spread / JSON.stringify",
+   "severity": "MEDIUM",
+   "source": "lib/rules/logic-gemini-rules.ts",
+   "preciseLocation": true,
+   "tested": true,
+   "inCatalog": false
+  },
+  {
+   "ruleId": 29887,
+   "code": "RULE-29887",
+   "title": "setMonth(getMonth() ± n) Skips Short Months",
+   "severity": "MEDIUM",
+   "source": "lib/rules/logic-gemini-rules.ts",
+   "preciseLocation": true,
+   "tested": true,
+   "inCatalog": false
+  },
+  {
+   "ruleId": 29888,
+   "code": "RULE-29888",
+   "title": "${m[1]}.test() on a Global Regex Alternates Between true and false",
+   "severity": "HIGH",
+   "source": "lib/rules/logic-gemini-rules.ts",
+   "preciseLocation": true,
+   "tested": true,
+   "inCatalog": false
+  },
+  {
+   "ruleId": 29889,
+   "code": "RULE-29889",
+   "title": "BigInt Combined With a Number",
+   "severity": "HIGH",
+   "source": "lib/rules/logic-gemini-rules.ts",
+   "preciseLocation": true,
+   "tested": true,
+   "inCatalog": false
+  },
+  {
+   "ruleId": 29890,
+   "code": "RULE-29890",
+   "title": "JSON.stringify(${m[1]}) on a ${kind} Sends {}",
+   "severity": "HIGH",
+   "source": "lib/rules/logic-gemini-rules.ts",
+   "preciseLocation": true,
+   "tested": true,
+   "inCatalog": false
+  },
+  {
+   "ruleId": 29891,
+   "code": "RULE-29891",
+   "title": ".in() Filter Given a String Instead of an Array",
+   "severity": "HIGH",
+   "source": "lib/rules/logic-gemini-rules.ts",
+   "preciseLocation": true,
+   "tested": true,
+   "inCatalog": false
+  },
+  {
+   "ruleId": 29892,
+   "code": "RULE-29892",
+   "title": "textSearch() on User Input Uses to_tsquery Syntax",
+   "severity": "MEDIUM",
+   "source": "lib/rules/logic-gemini-rules.ts",
+   "preciseLocation": true,
+   "tested": true,
+   "inCatalog": false
+  },
+  {
+   "ruleId": 29893,
+   "code": "RULE-29893",
+   "title": "JWT expiresIn Given in Milliseconds",
+   "severity": "HIGH",
+   "source": "lib/rules/logic-gemini-rules.ts",
+   "preciseLocation": true,
+   "tested": true,
+   "inCatalog": false
+  },
+  {
+   "ruleId": 29894,
+   "code": "RULE-29894",
+   "title": "timingSafeEqual Without a Length Check",
+   "severity": "MEDIUM",
+   "source": "lib/rules/logic-gemini-rules.ts",
+   "preciseLocation": true,
+   "tested": true,
+   "inCatalog": false
+  },
+  {
+   "ruleId": 29895,
+   "code": "RULE-29895",
+   "title": "${m[1]}().${m[2]} Without await (Next.js ${nextMajor})",
+   "severity": "UNKNOWN",
+   "source": "lib/rules/logic-gemini-rules.ts",
+   "preciseLocation": true,
+   "tested": true,
+   "inCatalog": false
+  },
+  {
+   "ruleId": 29897,
+   "code": "RULE-29897",
+   "title": "os.path.join() With an Absolute Second Path",
+   "severity": "HIGH",
+   "source": "lib/rules/logic-gemini-rules.ts",
+   "preciseLocation": true,
+   "tested": true,
+   "inCatalog": false
+  },
+  {
+   "ruleId": 29898,
+   "code": "RULE-29898",
+   "title": "Module Variable ${a[1]} Updated Without ",
+   "severity": "HIGH",
+   "source": "lib/rules/logic-gemini-rules.ts",
+   "preciseLocation": true,
+   "tested": true,
+   "inCatalog": false
+  },
+  {
+   "ruleId": 29899,
+   "code": "RULE-29899",
+   "title": "${r[1]}.read() Called a Second Time Without seek(0)",
+   "severity": "MEDIUM",
+   "source": "lib/rules/logic-gemini-rules.ts",
+   "preciseLocation": true,
+   "tested": true,
+   "inCatalog": false
+  },
+  {
+   "ruleId": 29900,
+   "code": "RULE-29900",
+   "title": "Upload Saved Using the Client File Name",
+   "severity": "HIGH",
+   "source": "lib/rules/security-gemini-rules.ts",
+   "preciseLocation": true,
+   "tested": true,
+   "inCatalog": false
+  },
+  {
+   "ruleId": 29901,
+   "code": "RULE-29901",
+   "title": "http.FileServer Serves the Working Directory",
+   "severity": "HIGH",
+   "source": "lib/rules/security-gemini-rules.ts",
+   "preciseLocation": true,
+   "tested": true,
+   "inCatalog": false
+  },
+  {
+   "ruleId": 29902,
+   "code": "RULE-29902",
+   "title": "Static Server Allows Dotfiles (dotfiles: ",
+   "severity": "HIGH",
+   "source": "lib/rules/security-gemini-rules.ts",
+   "preciseLocation": true,
+   "tested": true,
+   "inCatalog": false
+  },
+  {
+   "ruleId": 29903,
+   "code": "RULE-29903",
+   "title": "Query Parser Configured With allowPrototypes: true",
+   "severity": "HIGH",
+   "source": "lib/rules/security-gemini-rules.ts",
+   "preciseLocation": true,
+   "tested": true,
+   "inCatalog": false
+  },
+  {
+   "ruleId": 29905,
+   "code": "RULE-29905",
+   "title": "jwt.decode Accepts Both RSA/EC and HMAC Algorithms",
+   "severity": "CRITICAL",
+   "source": "lib/rules/security-gemini-rules.ts",
+   "preciseLocation": true,
+   "tested": true,
+   "inCatalog": false
+  },
+  {
+   "ruleId": 29906,
+   "code": "RULE-29906",
+   "title": "Global ValidationPipe Without whitelist: true",
+   "severity": "MEDIUM",
+   "source": "lib/rules/security-gemini-rules.ts",
+   "preciseLocation": true,
+   "tested": true,
+   "inCatalog": false
+  },
+  {
+   "ruleId": 29907,
+   "code": "RULE-29907",
+   "title": "SAML ${m[1]}: false",
+   "severity": "CRITICAL",
+   "source": "lib/rules/security-gemini-rules.ts",
+   "preciseLocation": true,
+   "tested": true,
+   "inCatalog": false
+  },
+  {
+   "ruleId": 29908,
+   "code": "RULE-29908",
+   "title": "Spring Boot Actuator Exposes ${prop ? prop[1] : ",
+   "severity": "HIGH",
+   "source": "lib/rules/security-gemini-rules.ts",
+   "preciseLocation": true,
+   "tested": true,
+   "inCatalog": false
+  },
+  {
+   "ruleId": 29909,
+   "code": "RULE-29909",
+   "title": "CORS Allows Any Origin With Credentials",
+   "severity": "HIGH",
+   "source": "lib/rules/security-gemini-rules.ts",
+   "preciseLocation": true,
+   "tested": true,
+   "inCatalog": false
+  },
+  {
+   "ruleId": 29910,
+   "code": "RULE-29910",
+   "title": "Authenticated Response Sent With Cache-Control ",
+   "severity": "HIGH",
+   "source": "lib/rules/security-gemini-rules.ts",
+   "preciseLocation": true,
+   "tested": true,
+   "inCatalog": false
+  },
+  {
+   "ruleId": 29911,
+   "code": "RULE-29911",
+   "title": "SQLAlchemy text() Fragment Built From an f-string",
+   "severity": "HIGH",
+   "source": "lib/rules/security-gemini-rules.ts",
+   "preciseLocation": true,
+   "tested": true,
+   "inCatalog": false
+  },
+  {
+   "ruleId": 29912,
+   "code": "RULE-29912",
+   "title": "getPublicUrl() on the Private ",
+   "severity": "HIGH",
+   "source": "lib/rules/security-gemini-rules.ts",
+   "preciseLocation": true,
+   "tested": true,
+   "inCatalog": false
+  },
+  {
+   "ruleId": 29913,
+   "code": "RULE-29913",
+   "title": "JWT kid Header Used to Load the Verification Key From Disk",
+   "severity": "CRITICAL",
+   "source": "lib/rules/security-gemini-rules.ts",
+   "preciseLocation": true,
+   "tested": true,
+   "inCatalog": false
+  },
+  {
+   "ruleId": 29914,
+   "code": "RULE-29914",
+   "title": "Secret Token Matched by Pattern: ${m[2]} via .${m[1]}()",
+   "severity": "HIGH",
+   "source": "lib/rules/security-gemini-rules.ts",
+   "preciseLocation": true,
+   "tested": true,
+   "inCatalog": false
+  },
+  {
+   "ruleId": 29916,
+   "code": "RULE-29916",
+   "title": "JWT Signed Without an Expiry",
+   "severity": "MEDIUM",
+   "source": "lib/rules/security-gemini-rules.ts",
+   "preciseLocation": true,
+   "tested": true,
+   "inCatalog": false
+  },
+  {
+   "ruleId": 29917,
+   "code": "RULE-29917",
+   "title": "Request Input Passed as an Argument to ${m[1]}",
+   "severity": "HIGH",
+   "source": "lib/rules/security-gemini-rules.ts",
+   "preciseLocation": true,
+   "tested": true,
+   "inCatalog": false
+  },
+  {
+   "ruleId": 29918,
+   "code": "RULE-29918",
+   "title": "reqwest danger_accept_invalid_${m[1]}(true)",
+   "severity": "HIGH",
+   "source": "lib/rules/security-gemini-rules.ts",
+   "preciseLocation": true,
+   "tested": true,
+   "inCatalog": false
+  },
+  {
+   "ruleId": 29919,
+   "code": "RULE-29919",
+   "title": "${s[1]} Falls Back to a Hard-Coded Value",
+   "severity": "HIGH",
+   "source": "lib/rules/security-gemini-rules.ts",
+   "preciseLocation": true,
+   "tested": true,
+   "inCatalog": false
+  },
+  {
+   "ruleId": 29920,
+   "code": "RULE-29920",
+   "title": "open() Called With a Request Parameter",
+   "severity": "CRITICAL",
+   "source": "lib/rules/security-gemini-rules.ts",
+   "preciseLocation": true,
+   "tested": true,
+   "inCatalog": false
+  },
+  {
+   "ruleId": 29921,
+   "code": "RULE-29921",
+   "title": "req.signedCookies Used but cookieParser() Has No Secret",
+   "severity": "HIGH",
+   "source": "lib/rules/security-gemini-rules.ts",
+   "preciseLocation": true,
+   "tested": true,
+   "inCatalog": false
+  },
+  {
+   "ruleId": 29922,
+   "code": "RULE-29922",
+   "title": "Directory Listing Enabled With serve-index",
+   "severity": "MEDIUM",
+   "source": "lib/rules/security-gemini-rules.ts",
+   "preciseLocation": true,
+   "tested": true,
+   "inCatalog": false
+  },
+  {
+   "ruleId": 29923,
+   "code": "RULE-29923",
+   "title": "Response Content-Type Chosen by the Request",
+   "severity": "HIGH",
+   "source": "lib/rules/security-gemini-rules.ts",
+   "preciseLocation": true,
+   "tested": true,
+   "inCatalog": false
+  },
+  {
+   "ruleId": 29924,
+   "code": "RULE-29924",
+   "title": "Access Decided by localStorage ",
+   "severity": "MEDIUM",
+   "source": "lib/rules/security-gemini-rules.ts",
+   "preciseLocation": true,
+   "tested": true,
+   "inCatalog": false
+  },
+  {
+   "ruleId": 29925,
+   "code": "RULE-29925",
+   "title": "Checkout ${m[1]} Taken From the Request",
+   "severity": "MEDIUM",
+   "source": "lib/rules/security-gemini-rules.ts",
+   "preciseLocation": true,
+   "tested": true,
+   "inCatalog": false
+  },
+  {
+   "ruleId": 29926,
+   "code": "RULE-29926",
+   "title": "Access Token Sent in the URL Query String",
+   "severity": "MEDIUM",
+   "source": "lib/rules/security-gemini-rules.ts",
+   "preciseLocation": true,
+   "tested": true,
+   "inCatalog": false
+  },
+  {
+   "ruleId": 29927,
+   "code": "RULE-29927",
+   "title": "MCP ${m[1]} Without DNS-Rebinding Protection",
+   "severity": "MEDIUM",
+   "source": "lib/rules/security-gemini-rules.ts",
+   "preciseLocation": true,
+   "tested": true,
+   "inCatalog": false
+  },
+  {
+   "ruleId": 29928,
+   "code": "RULE-29928",
+   "title": "LLM Output Field ${m[1]} Used as an Access Decision",
+   "severity": "HIGH",
+   "source": "lib/rules/security-gemini-rules.ts",
+   "preciseLocation": true,
+   "tested": true,
+   "inCatalog": false
+  },
+  {
+   "ruleId": 29929,
+   "code": "RULE-29929",
+   "title": "Read-Only SQL Enforced by a ",
+   "severity": "HIGH",
+   "source": "lib/rules/security-gemini-rules.ts",
+   "preciseLocation": true,
+   "tested": true,
+   "inCatalog": false
+  },
+  {
+   "ruleId": 29930,
+   "code": "RULE-29930",
+   "title": "process.env Returned or Serialized Whole",
+   "severity": "CRITICAL",
+   "source": "lib/rules/security-gemini-rules.ts",
+   "preciseLocation": true,
+   "tested": true,
+   "inCatalog": false
+  },
+  {
+   "ruleId": 29931,
+   "code": "RULE-29931",
+   "title": "${m[1]} Chosen by the Caller",
+   "severity": "HIGH",
+   "source": "lib/rules/security-gemini-rules.ts",
+   "preciseLocation": true,
+   "tested": true,
+   "inCatalog": false
+  },
+  {
+   "ruleId": 29932,
+   "code": "RULE-29932",
+   "title": "Prompt Template Built From User Input",
+   "severity": "HIGH",
+   "source": "lib/rules/security-gemini-rules.ts",
+   "preciseLocation": true,
+   "tested": true,
+   "inCatalog": false
+  },
+  {
+   "ruleId": 29933,
+   "code": "RULE-29933",
+   "title": "LLM Called in a Loop With No Attempt Limit",
+   "severity": "HIGH",
+   "source": "lib/rules/security-gemini-rules.ts",
+   "preciseLocation": true,
+   "tested": true,
+   "inCatalog": false
+  },
+  {
+   "ruleId": 29934,
+   "code": "RULE-29934",
+   "title": "Agent Tool Sends Server Credentials to a Model-Chosen URL",
+   "severity": "CRITICAL",
+   "source": "lib/rules/security-gemini-rules.ts",
+   "preciseLocation": true,
+   "tested": true,
+   "inCatalog": false
+  },
+  {
+   "ruleId": 29936,
+   "code": "RULE-29936",
+   "title": "Agent Tool Writes or Deletes a Model-Chosen Path",
+   "severity": "CRITICAL",
+   "source": "lib/rules/security-gemini-rules.ts",
+   "preciseLocation": true,
+   "tested": true,
+   "inCatalog": false
+  },
+  {
+   "ruleId": 29938,
+   "code": "RULE-29938",
+   "title": "Raw ${m[1]} From the AI SDK Sent to the Client",
+   "severity": "MEDIUM",
+   "source": "lib/rules/security-gemini-rules.ts",
+   "preciseLocation": true,
+   "tested": true,
+   "inCatalog": false
+  },
+  {
+   "ruleId": 29939,
+   "code": "RULE-29939",
+   "title": "Browser Tool Runs Model-Written Script (page.${m[1]})",
+   "severity": "CRITICAL",
+   "source": "lib/rules/security-gemini-rules.ts",
+   "preciseLocation": true,
+   "tested": true,
+   "inCatalog": false
+  },
+  {
+   "ruleId": 29940,
+   "code": "RULE-29940",
+   "title": "MCP Client Connects to a Server URL From the Request",
+   "severity": "CRITICAL",
+   "source": "lib/rules/security-gemini-rules.ts",
+   "preciseLocation": true,
+   "tested": true,
+   "inCatalog": false
+  },
+  {
+   "ruleId": 29942,
+   "code": "RULE-29942",
+   "title": "LangServe add_routes() Without Authentication",
+   "severity": "HIGH",
+   "source": "lib/rules/security-gemini-rules.ts",
+   "preciseLocation": true,
+   "tested": true,
+   "inCatalog": false
+  },
+  {
+   "ruleId": 29943,
+   "code": "RULE-29943",
+   "title": "ingress-nginx ${m[1]}-snippet Annotation",
+   "severity": "HIGH",
+   "source": "lib/rules/cicd-cloud-gemini-rules.ts",
+   "preciseLocation": true,
+   "tested": true,
+   "inCatalog": false
+  },
+  {
+   "ruleId": 29944,
+   "code": "RULE-29944",
+   "title": "pip --extra-index-url Allows Dependency Confusion",
+   "severity": "HIGH",
+   "source": "lib/rules/cicd-cloud-gemini-rules.ts",
+   "preciseLocation": true,
+   "tested": true,
+   "inCatalog": false
+  },
+  {
+   "ruleId": 29945,
+   "code": "RULE-29945",
+   "title": "Lockfile Integrity Checks Disabled",
+   "severity": "MEDIUM",
+   "source": "lib/rules/cicd-cloud-gemini-rules.ts",
+   "preciseLocation": true,
+   "tested": true,
+   "inCatalog": false
+  },
+  {
+   "ruleId": 29946,
+   "code": "RULE-29946",
+   "title": "Service Uses externalIPs",
+   "severity": "MEDIUM",
+   "source": "lib/rules/cicd-cloud-gemini-rules.ts",
+   "preciseLocation": true,
+   "tested": true,
+   "inCatalog": false
+  },
+  {
+   "ruleId": 29947,
+   "code": "RULE-29947",
+   "title": "Pull Request Jobs Run on a Self-Hosted Runner",
+   "severity": "HIGH",
+   "source": "lib/rules/cicd-cloud-gemini-rules.ts",
+   "preciseLocation": true,
+   "tested": true,
+   "inCatalog": false
+  },
+  {
+   "ruleId": 29948,
+   "code": "RULE-29948",
+   "title": "nginx Trusts Client IP Headers From ${m[1]}",
+   "severity": "HIGH",
+   "source": "lib/rules/cicd-cloud-gemini-rules.ts",
+   "preciseLocation": true,
+   "tested": true,
+   "inCatalog": false
+  },
+  {
+   "ruleId": 29949,
+   "code": "RULE-29949",
+   "title": "Redis protected-mode no Without a Password",
+   "severity": "HIGH",
+   "source": "lib/rules/cicd-cloud-gemini-rules.ts",
+   "preciseLocation": true,
+   "tested": true,
+   "inCatalog": false
+  },
+  {
+   "ruleId": 29950,
+   "code": "RULE-29950",
+   "title": "Dependency Installed From a Moving Git ${m[1] ? ",
+   "severity": "MEDIUM",
+   "source": "lib/rules/cicd-cloud-gemini-rules.ts",
+   "preciseLocation": true,
+   "tested": true,
+   "inCatalog": false
+  },
+  {
+   "ruleId": 29951,
+   "code": "RULE-29951",
+   "title": "Admission Webhook Fails Open (failurePolicy: Ignore)",
+   "severity": "MEDIUM",
+   "source": "lib/rules/cicd-cloud-gemini-rules.ts",
+   "preciseLocation": true,
+   "tested": true,
+   "inCatalog": false
+  },
+  {
+   "ruleId": 29952,
+   "code": "RULE-29952",
+   "title": "uv index-strategy Set to an Unsafe Mode",
+   "severity": "HIGH",
+   "source": "lib/rules/cicd-cloud-gemini-rules.ts",
+   "preciseLocation": true,
+   "tested": true,
+   "inCatalog": false
+  },
+  {
+   "ruleId": 29953,
+   "code": "RULE-29953",
+   "title": "Dispatch Input Interpolated Into a run: Script",
+   "severity": "MEDIUM",
+   "source": "lib/rules/cicd-cloud-gemini-rules.ts",
+   "preciseLocation": true,
+   "tested": true,
+   "inCatalog": false
+  },
+  {
+   "ruleId": 29954,
+   "code": "RULE-29954",
+   "title": "Secret Value Hard-Coded in Terraform",
+   "severity": "HIGH",
+   "source": "lib/rules/cicd-cloud-gemini-rules.ts",
+   "preciseLocation": true,
+   "tested": true,
+   "inCatalog": false
+  },
+  {
+   "ruleId": 29955,
+   "code": "RULE-29955",
+   "title": "TLS Verification Disabled in the Image (${m[1].split(/[= ]/)[0]})",
+   "severity": "HIGH",
+   "source": "lib/rules/cicd-cloud-gemini-rules.ts",
+   "preciseLocation": true,
+   "tested": true,
+   "inCatalog": false
+  },
+  {
+   "ruleId": 29956,
+   "code": "RULE-29956",
+   "title": "ADD Downloads a Remote File Without --checksum",
+   "severity": "MEDIUM",
+   "source": "lib/rules/cicd-cloud-gemini-rules.ts",
+   "preciseLocation": true,
+   "tested": true,
+   "inCatalog": false
+  },
+  {
+   "ruleId": 29958,
+   "code": "RULE-29958",
+   "title": "Override Replaces ${m[1]} With ${m[2].slice(0, 40)}",
+   "severity": "HIGH",
+   "source": "lib/rules/cicd-cloud-gemini-rules.ts",
+   "preciseLocation": true,
+   "tested": true,
+   "inCatalog": false
+  },
+  {
+   "ruleId": 29959,
+   "code": "RULE-29959",
+   "title": "Workflow Expands toJSON(secrets)",
+   "severity": "CRITICAL",
+   "source": "lib/rules/cicd-cloud-gemini-rules.ts",
+   "preciseLocation": true,
+   "tested": true,
+   "inCatalog": false
+  },
+  {
+   "ruleId": 29960,
+   "code": "RULE-29960",
+   "title": "Snapshot / Image Shared With All AWS Accounts",
+   "severity": "CRITICAL",
+   "source": "lib/rules/cicd-cloud-gemini-rules.ts",
+   "preciseLocation": true,
+   "tested": true,
+   "inCatalog": false
+  },
+  {
+   "ruleId": 29961,
+   "code": "RULE-29961",
+   "title": "Rewrite Destination Host Taken From the Request (Open Proxy)",
+   "severity": "HIGH",
+   "source": "lib/rules/cicd-cloud-gemini-rules.ts",
+   "preciseLocation": true,
+   "tested": true,
+   "inCatalog": false
+  },
+  {
+   "ruleId": 29962,
+   "code": "RULE-29962",
+   "title": "Untrusted Artifact Extracted Into the Workspace Root",
+   "severity": "HIGH",
+   "source": "lib/rules/cicd-cloud-gemini-rules.ts",
+   "preciseLocation": true,
+   "tested": true,
+   "inCatalog": false
+  },
+  {
+   "ruleId": 29963,
+   "code": "RULE-29963",
+   "title": "CloudFront Connects to the Origin Over HTTP",
+   "severity": "MEDIUM",
+   "source": "lib/rules/cicd-cloud-gemini-rules.ts",
+   "preciseLocation": true,
+   "tested": true,
+   "inCatalog": false
+  },
+  {
+   "ruleId": 29964,
+   "code": "RULE-29964",
+   "title": "Build Credentials Copied Into the Final Image (${m[1]})",
+   "severity": "HIGH",
+   "source": "lib/rules/cicd-cloud-gemini-rules.ts",
+   "preciseLocation": true,
+   "tested": true,
+   "inCatalog": false
+  },
+  {
+   "ruleId": 29965,
+   "code": "RULE-29965",
+   "title": "${DB[m[1]]} Exposed by a LoadBalancer / NodePort Service",
+   "severity": "HIGH",
+   "source": "lib/rules/cicd-cloud-gemini-rules.ts",
+   "preciseLocation": true,
+   "tested": true,
+   "inCatalog": false
+  },
+  {
+   "ruleId": 29966,
+   "code": "RULE-29966",
+   "title": "Submodule Fetched Over ${m[1]}://",
+   "severity": "MEDIUM",
+   "source": "lib/rules/cicd-cloud-gemini-rules.ts",
+   "preciseLocation": true,
+   "tested": true,
+   "inCatalog": false
+  },
+  {
+   "ruleId": 29967,
+   "code": "RULE-29967",
+   "title": "GitHub OIDC Trust Accepts Any Repository",
+   "severity": "CRITICAL",
+   "source": "lib/rules/cicd-cloud-gemini-rules.ts",
+   "preciseLocation": true,
+   "tested": true,
+   "inCatalog": false
+  },
+  {
+   "ruleId": 29968,
+   "code": "RULE-29968",
+   "title": "Final Image Runs With NODE_ENV=development",
+   "severity": "MEDIUM",
+   "source": "lib/rules/cicd-cloud-gemini-rules.ts",
+   "preciseLocation": true,
+   "tested": true,
+   "inCatalog": false
+  },
+  {
+   "ruleId": 29969,
+   "code": "RULE-29969",
+   "title": "${m[1]} Enabled in the Workflow",
+   "severity": "MEDIUM",
+   "source": "lib/rules/cicd-cloud-gemini-rules.ts",
+   "preciseLocation": true,
+   "tested": true,
+   "inCatalog": false
+  },
+  {
+   "ruleId": 29970,
+   "code": "RULE-29970",
+   "title": "Container Shares the Host IPC Namespace",
+   "severity": "MEDIUM",
+   "source": "lib/rules/cicd-cloud-gemini-rules.ts",
+   "preciseLocation": true,
+   "tested": true,
+   "inCatalog": false
+  },
+  {
+   "ruleId": 29972,
+   "code": "RULE-29972",
+   "title": "Package Registry Uses Plain HTTP",
+   "severity": "HIGH",
+   "source": "lib/rules/cicd-cloud-gemini-rules.ts",
+   "preciseLocation": true,
+   "tested": true,
+   "inCatalog": false
+  },
+  {
+   "ruleId": 29973,
+   "code": "RULE-29973",
+   "title": "${name} Port ${m[2]} Published on All Interfaces",
+   "severity": "MEDIUM",
+   "source": "lib/rules/cicd-cloud-gemini-rules.ts",
+   "preciseLocation": true,
+   "tested": true,
+   "inCatalog": false
+  },
+  {
+   "ruleId": 29974,
+   "code": "RULE-29974",
+   "title": "Raw ${k[1]} Sent in an Analytics Event",
+   "severity": "MEDIUM",
+   "source": "lib/rules/privacy-db-gemini-rules.ts",
+   "preciseLocation": true,
+   "tested": true,
+   "inCatalog": false
+  },
+  {
+   "ruleId": 29975,
+   "code": "RULE-29975",
+   "title": "${m[1]} Sent in a URL Query String",
+   "severity": "HIGH",
+   "source": "lib/rules/privacy-db-gemini-rules.ts",
+   "preciseLocation": true,
+   "tested": true,
+   "inCatalog": false
+  },
+  {
+   "ruleId": 29976,
+   "code": "RULE-29976",
+   "title": "Every Recipient Put in the ${m[1] === ",
+   "severity": "HIGH",
+   "source": "lib/rules/privacy-db-gemini-rules.ts",
+   "preciseLocation": true,
+   "tested": true,
+   "inCatalog": false
+  },
+  {
+   "ruleId": 29977,
+   "code": "RULE-29977",
+   "title": "Refresh Token Stored in Web Storage (${m[1]})",
+   "severity": "HIGH",
+   "source": "lib/rules/privacy-db-gemini-rules.ts",
+   "preciseLocation": true,
+   "tested": true,
+   "inCatalog": false
+  },
+  {
+   "ruleId": 29978,
+   "code": "RULE-29978",
+   "title": "${m[1]} Saved in Plain Text",
+   "severity": "HIGH",
+   "source": "lib/rules/privacy-db-gemini-rules.ts",
+   "preciseLocation": true,
+   "tested": true,
+   "inCatalog": false
+  },
+  {
+   "ruleId": 29979,
+   "code": "RULE-29979",
+   "title": "Foreign Server Password Committed in a Migration",
+   "severity": "HIGH",
+   "source": "lib/rules/privacy-db-gemini-rules.ts",
+   "preciseLocation": true,
+   "tested": true,
+   "inCatalog": false
+  },
+  {
+   "ruleId": 29980,
+   "code": "RULE-29980",
+   "title": "ON DELETE SET NULL on NOT NULL Column ${m[1]}",
+   "severity": "HIGH",
+   "source": "lib/rules/privacy-db-gemini-rules.ts",
+   "preciseLocation": true,
+   "tested": true,
+   "inCatalog": false
+  },
+  {
+   "ruleId": 29981,
+   "code": "RULE-29981",
+   "title": "NOT IN (SELECT …) Returns No Rows When the Subquery Has a NULL",
+   "severity": "MEDIUM",
+   "source": "lib/rules/privacy-db-gemini-rules.ts",
+   "preciseLocation": true,
+   "tested": true,
+   "inCatalog": false
+  },
+  {
+   "ruleId": 29982,
+   "code": "RULE-29982",
+   "title": "Trigger on ${table} Updates ${table} Again (Infinite Recursion)",
+   "severity": "HIGH",
+   "source": "lib/rules/privacy-db-gemini-rules.ts",
+   "preciseLocation": true,
+   "tested": true,
+   "inCatalog": false
+  },
+  {
+   "ruleId": 29983,
+   "code": "RULE-29983",
+   "title": "REFRESH MATERIALIZED VIEW Without CONCURRENTLY",
+   "severity": "MEDIUM",
+   "source": "lib/rules/privacy-db-gemini-rules.ts",
+   "preciseLocation": true,
+   "tested": true,
+   "inCatalog": false
+  },
+  {
+   "ruleId": 29984,
+   "code": "RULE-29984",
+   "title": "pg_notify Sends the Whole Row as Payload",
+   "severity": "MEDIUM",
+   "source": "lib/rules/privacy-db-gemini-rules.ts",
+   "preciseLocation": true,
+   "tested": true,
+   "inCatalog": false
+  },
+  {
+   "ruleId": 29985,
+   "code": "RULE-29985",
+   "title": "${m[1]}.id Is a 32-bit ${m[2].toUpperCase()}",
+   "severity": "MEDIUM",
+   "source": "lib/rules/privacy-db-gemini-rules.ts",
+   "preciseLocation": true,
+   "tested": true,
+   "inCatalog": false
+  },
+  {
+   "ruleId": 29986,
+   "code": "RULE-29986",
+   "title": "Redis KEYS Pattern Scan in Application Code",
+   "severity": "HIGH",
+   "source": "lib/rules/privacy-db-gemini-rules.ts",
+   "preciseLocation": true,
+   "tested": true,
+   "inCatalog": false
+  },
+  {
+   "ruleId": 29987,
+   "code": "RULE-29987",
+   "title": "Row Count Computed by Loading Every Row (${m[1]}().length)",
+   "severity": "HIGH",
+   "source": "lib/rules/privacy-db-gemini-rules.ts",
+   "preciseLocation": true,
+   "tested": true,
+   "inCatalog": false
+  },
+  {
+   "ruleId": 29988,
+   "code": "RULE-29988",
+   "title": "Entire Table Loaded, Then Filtered in JavaScript",
+   "severity": "MEDIUM",
+   "source": "lib/rules/privacy-db-gemini-rules.ts",
+   "preciseLocation": true,
+   "tested": true,
+   "inCatalog": false
+  },
+  {
+   "ruleId": 30000,
+   "code": "RULE-30000",
+   "title": "aria-label ",
+   "severity": "MEDIUM",
+   "source": "lib/rules/ux-gemini-rules.ts",
+   "preciseLocation": true,
+   "tested": true,
+   "inCatalog": false
+  },
+  {
+   "ruleId": 30001,
+   "code": "RULE-30001",
+   "title": "<select> Navigates or Submits on Change",
+   "severity": "MEDIUM",
+   "source": "lib/rules/ux-gemini-rules.ts",
+   "preciseLocation": true,
+   "tested": true,
+   "inCatalog": false
+  },
+  {
+   "ruleId": 30002,
+   "code": "RULE-30002",
+   "title": "Analytics / Chat Script Loaded With strategy=",
+   "severity": "MEDIUM",
+   "source": "lib/rules/ux-gemini-rules.ts",
+   "preciseLocation": true,
+   "tested": true,
+   "inCatalog": false
+  },
+  {
+   "ruleId": 30003,
+   "code": "RULE-30003",
+   "title": "Every Icon in ${m[2]} Bundled (Dynamic ${m[1]}[name] Lookup)",
+   "severity": "HIGH",
+   "source": "lib/rules/ux-gemini-rules.ts",
+   "preciseLocation": true,
+   "tested": true,
+   "inCatalog": false
+  },
+  {
+   "ruleId": 30004,
+   "code": "RULE-30004",
+   "title": "Whole lodash Imported in Client Code",
+   "severity": "MEDIUM",
+   "source": "lib/rules/ux-gemini-rules.ts",
+   "preciseLocation": true,
+   "tested": true,
+   "inCatalog": false
+  },
+  {
+   "ruleId": 30005,
+   "code": "RULE-30005",
+   "title": "priority on Every Image Rendered by .map()",
+   "severity": "MEDIUM",
+   "source": "lib/rules/ux-gemini-rules.ts",
+   "preciseLocation": true,
+   "tested": true,
+   "inCatalog": false
+  },
+  {
+   "ruleId": 30006,
+   "code": "RULE-30006",
+   "title": "Auto-Advancing Carousel Without a Pause Control",
+   "severity": "MEDIUM",
+   "source": "lib/rules/ux-gemini-rules.ts",
+   "preciseLocation": true,
+   "tested": true,
+   "inCatalog": false
+  },
+  {
+   "ruleId": 30007,
+   "code": "RULE-30007",
+   "title": "<${n[1]}> Nested Inside <${tag}>",
+   "severity": "MEDIUM",
+   "source": "lib/rules/ux-gemini-rules.ts",
+   "preciseLocation": true,
+   "tested": true,
+   "inCatalog": false
+  },
+  {
+   "ruleId": 30009,
+   "code": "RULE-30009",
+   "title": "Content Revealed Only on Mouse Hover",
+   "severity": "MEDIUM",
+   "source": "lib/rules/ux-gemini-rules.ts",
+   "preciseLocation": true,
+   "tested": true,
+   "inCatalog": false
+  },
+  {
+   "ruleId": 30010,
+   "code": "RULE-30010",
+   "title": "new Intl.${f[1]}() Created for Every Item",
+   "severity": "MEDIUM",
+   "source": "lib/rules/ux-gemini-rules.ts",
+   "preciseLocation": true,
+   "tested": true,
+   "inCatalog": false
+  },
+  {
+   "ruleId": 30011,
+   "code": "RULE-30011",
+   "title": "Error Stack Trace Rendered in the UI",
+   "severity": "MEDIUM",
+   "source": "lib/rules/ux-gemini-rules.ts",
+   "preciseLocation": true,
+   "tested": true,
+   "inCatalog": false
+  },
+  {
+   "ruleId": 30101,
+   "code": "RULE-30101",
+   "title": "${v} = http.request() Is Never Ended, So the Request Is Never Sent",
+   "severity": "HIGH",
+   "source": "lib/rules/logic-gemini2-rules.ts",
+   "preciseLocation": true,
+   "tested": true,
+   "inCatalog": false
+  },
+  {
+   "ruleId": 30102,
+   "code": "RULE-30102",
+   "title": "uncaughtException Handler Keeps the Process Running",
+   "severity": "MEDIUM",
+   "source": "lib/rules/logic-gemini2-rules.ts",
+   "preciseLocation": true,
+   "tested": true,
+   "inCatalog": false
+  },
+  {
+   "ruleId": 30104,
+   "code": "RULE-30104",
+   "title": "Object.${it[1]}(${e[1]}) on a Numeric Enum Lists Every Member Twice",
+   "severity": "MEDIUM",
+   "source": "lib/rules/logic-gemini2-rules.ts",
+   "preciseLocation": true,
+   "tested": true,
+   "inCatalog": false
+  },
+  {
+   "ruleId": 30105,
+   "code": "RULE-30105",
+   "title": "zlib.${m[1]}${m[2] ?? ",
+   "severity": "HIGH",
+   "source": "lib/rules/logic-gemini2-rules.ts",
+   "preciseLocation": true,
+   "tested": true,
+   "inCatalog": false
+  },
+  {
+   "ruleId": 30106,
+   "code": "RULE-30106",
+   "title": "${v} Has the g Flag and Is Reused With .test()",
+   "severity": "MEDIUM",
+   "source": "lib/rules/logic-gemini2-rules.ts",
+   "preciseLocation": true,
+   "tested": true,
+   "inCatalog": false
+  },
+  {
+   "ruleId": 30107,
+   "code": "RULE-30107",
+   "title": "${m[1]}() in a Request Handler Blocks the Event Loop",
+   "severity": "MEDIUM",
+   "source": "lib/rules/logic-gemini2-rules.ts",
+   "preciseLocation": true,
+   "tested": true,
+   "inCatalog": false
+  },
+  {
+   "ruleId": 30108,
+   "code": "RULE-30108",
+   "title": "Middleware catch Swallows the Error and Never Calls next()",
+   "severity": "MEDIUM",
+   "source": "lib/rules/logic-gemini2-rules.ts",
+   "preciseLocation": true,
+   "tested": true,
+   "inCatalog": false
+  },
+  {
+   "ruleId": 30109,
+   "code": "RULE-30109",
+   "title": "cookies().${m[1]}() Called While Rendering a Server Component",
+   "severity": "HIGH",
+   "source": "lib/rules/logic-gemini2-rules.ts",
+   "preciseLocation": true,
+   "tested": true,
+   "inCatalog": false
+  },
+  {
+   "ruleId": 30110,
+   "code": "RULE-30110",
+   "title": "sync.${p[2]} ${p[1]} Passed by Value",
+   "severity": "HIGH",
+   "source": "lib/rules/logic-gemini2-rules.ts",
+   "preciseLocation": true,
+   "tested": true,
+   "inCatalog": false
+  },
+  {
+   "ruleId": 30151,
+   "code": "RULE-30151",
+   "title": "Export Downloads an Empty File",
+   "severity": "HIGH",
+   "source": "lib/rules/logic-gemini2-rules.ts",
+   "preciseLocation": true,
+   "tested": true,
+   "inCatalog": false
+  },
+  {
+   "ruleId": 30152,
+   "code": "RULE-30152",
+   "title": "${m[1]} Are Hard-Coded in the Source",
+   "severity": "HIGH",
+   "source": "lib/rules/logic-gemini2-rules.ts",
+   "preciseLocation": true,
+   "tested": true,
+   "inCatalog": false
+  },
+  {
+   "ruleId": 30201,
+   "code": "RULE-30201",
+   "title": "Agent Loop Calls the Model With No Step Limit",
+   "severity": "MEDIUM",
+   "source": "lib/rules/logic-gemini2-rules.ts",
+   "preciseLocation": true,
+   "tested": true,
+   "inCatalog": false
+  },
+  {
+   "ruleId": 30202,
+   "code": "RULE-30202",
+   "title": "Agent Tool Runs ${fsCall[1]}() on a Path the Model Chose",
+   "severity": "HIGH",
+   "source": "lib/rules/logic-gemini2-rules.ts",
+   "preciseLocation": true,
+   "tested": true,
+   "inCatalog": false
+  },
+  {
+   "ruleId": 30251,
+   "code": "RULE-30251",
+   "title": "Node Inspector Exposed on All Interfaces (${m[0]})",
+   "severity": "CRITICAL",
+   "source": "lib/rules/logic-gemini2-rules.ts",
+   "preciseLocation": true,
+   "tested": true,
+   "inCatalog": false
+  },
+  {
+   "ruleId": 30252,
+   "code": "RULE-30252",
+   "title": "${m[1]} Is Downloaded Over an Unencrypted URL",
+   "severity": "HIGH",
+   "source": "lib/rules/logic-gemini2-rules.ts",
+   "preciseLocation": true,
+   "tested": true,
+   "inCatalog": false
+  },
+  {
+   "ruleId": 30301,
+   "code": "RULE-30301",
+   "title": "${name} Is Read by the Code but Declared in No Env Template or Deploy Config",
+   "severity": "MEDIUM",
+   "source": "lib/rules/cross-layer-rules.ts",
+   "preciseLocation": true,
+   "tested": true,
+   "inCatalog": false
+  },
+  {
+   "ruleId": 30302,
+   "code": "RULE-30302",
+   "title": "Dockerfile Uses Node ${d.major}, but ${engines.path} Requires Node ${engines.major}+",
+   "severity": "MEDIUM",
+   "source": "lib/rules/cross-layer-rules.ts",
+   "preciseLocation": true,
+   "tested": true,
+   "inCatalog": false
+  },
+  {
+   "ruleId": 30303,
+   "code": "RULE-30303",
+   "title": "App Accepts ${mb(bytes)} Uploads, but ${proxy.path} Stops Requests at ${mb(proxy.bytes)}",
+   "severity": "MEDIUM",
+   "source": "lib/rules/cross-layer-rules.ts",
+   "preciseLocation": true,
+   "tested": true,
+   "inCatalog": false
+  },
+  {
+   "ruleId": 30304,
+   "code": "RULE-30304",
+   "title": "Query Filters ",
+   "severity": "LOW",
+   "source": "lib/rules/cross-layer-rules.ts",
+   "preciseLocation": true,
+   "tested": true,
+   "inCatalog": false
+  },
+  {
+   "ruleId": 30305,
+   "code": "RULE-30305",
+   "title": "Browser Code Queries ",
+   "severity": "HIGH",
+   "source": "lib/rules/cross-layer-rules.ts",
+   "preciseLocation": true,
+   "tested": true,
+   "inCatalog": false
+  },
+  {
+   "ruleId": 30306,
+   "code": "RULE-30306",
+   "title": "Outbound HTTP Call Without a Timeout (Go)",
+   "severity": "MEDIUM",
+   "source": "lib/rules/cross-layer-rules.ts",
+   "preciseLocation": true,
+   "tested": true,
+   "inCatalog": false
+  },
+  {
+   "ruleId": 30307,
+   "code": "RULE-30307",
+   "title": "Balance or Stock Is Read, Changed in Code, Then Saved Without a Lock",
+   "severity": "HIGH",
+   "source": "lib/rules/cross-layer-rules.ts",
+   "preciseLocation": true,
+   "tested": true,
+   "inCatalog": false
+  },
+  {
+   "ruleId": 30308,
+   "code": "RULE-30308",
+   "title": "Per-User Data ",
+   "severity": "HIGH",
+   "source": "lib/rules/cross-layer-rules.ts",
+   "preciseLocation": true,
+   "tested": true,
+   "inCatalog": false
+  },
+  {
+   "ruleId": 30309,
+   "code": "RULE-30309",
+   "title": "",
+   "severity": "MEDIUM",
+   "source": "lib/rules/cross-layer-rules.ts",
+   "preciseLocation": true,
+   "tested": true,
+   "inCatalog": false
+  },
+  {
+   "ruleId": 30310,
+   "code": "RULE-30310",
+   "title": "Request to ${m[1]} Leaves Out ${missing.join(",
+   "severity": "MEDIUM",
+   "source": "lib/rules/cross-layer-rules.ts",
+   "preciseLocation": true,
+   "tested": true,
+   "inCatalog": false
+  },
+  {
+   "ruleId": 30311,
+   "code": "RULE-30311",
+   "title": "Payment Webhook Adds Credit Without Recording Which Events It Already Handled",
+   "severity": "HIGH",
+   "source": "lib/rules/cross-layer-rules.ts",
+   "preciseLocation": true,
+   "tested": true,
+   "inCatalog": false
+  },
+  {
+   "ruleId": 30312,
+   "code": "RULE-30312",
+   "title": "Endpoint Sends SMS Without a Rate Limit",
+   "severity": "HIGH",
+   "source": "lib/rules/cross-layer-rules.ts",
+   "preciseLocation": true,
+   "tested": true,
+   "inCatalog": false
+  },
+  {
+   "ruleId": 30313,
+   "code": "RULE-30313",
+   "title": "This ${model} Query Skips the Tenant Filter the Other ${model} Queries in This File Use",
+   "severity": "HIGH",
+   "source": "lib/rules/cross-layer-rules.ts",
+   "preciseLocation": true,
+   "tested": true,
+   "inCatalog": false
+  },
+  {
+   "ruleId": 30315,
+   "code": "RULE-30315",
+   "title": "${fk.table}.${fk.col} Cascades on Delete but No Migration Indexes It",
+   "severity": "LOW",
+   "source": "lib/rules/cross-layer-rules.ts",
+   "preciseLocation": true,
+   "tested": true,
+   "inCatalog": false
+  },
+  {
+   "ruleId": 30341,
+   "code": "RULE-30341",
+   "title": "Outside Call Retried in a Tight Loop With No Backoff",
+   "severity": "UNKNOWN",
+   "source": "lib/rules/resilience-rules.ts",
+   "preciseLocation": true,
+   "tested": true,
+   "inCatalog": false
+  },
+  {
+   "ruleId": 30342,
+   "code": "RULE-30342",
+   "title": "axios-retry Retries With No Delay",
+   "severity": "UNKNOWN",
+   "source": "lib/rules/resilience-rules.ts",
+   "preciseLocation": true,
+   "tested": true,
+   "inCatalog": false
+  },
+  {
+   "ruleId": 30401,
+   "code": "RULE-30401",
+   "title": "Token Is Decoded by Hand and Trusted Without a Signature Check",
+   "severity": "CRITICAL",
+   "source": "lib/rules/missing-guard-rules.ts",
    "preciseLocation": true,
    "tested": true,
    "inCatalog": false

@@ -46,9 +46,12 @@ export function evaluateGraphDatabaseRules(file: CodeFile, lines: string[], clea
         logs.push(`[${ts}] [GRAPH AUDIT] Found GRPH-01: Unbounded Cypher Traversal Missing Maximum Hop Limit at ${file.path}:${lineNum}`);
     }
     // GRPH-02: Cypher Query String Concatenation Permitting Injection
-    const r12002Idx = !/neo4j|session\.run|executeQuery|\btx\.run/i.test(cleanContent) ? -1
-        : lines.findIndex(l => /`[^`]*\b(?:MATCH|MERGE|CREATE|WHERE|SET|DELETE)\b[^`]*\$\{/.test(l) ||
-            /['"][^'"]*\b(?:MATCH|MERGE|WHERE)\b[^'"]*['"]\s*\+\s*[\w$]/.test(l));
+    // Only Cypher: the file must use a graph driver, and the string must have node syntax like MATCH (n:Label).
+    // SQL with CREATE/SET/WHERE and parameterised sql`` tagged templates are not Cypher.
+    const cypherNode = /\b(?:MATCH|MERGE|CREATE)\s*\(\s*\w*\s*(?::|\{|\))/i;
+    const r12002Idx = !/neo4j|cypher|memgraph|py2neo|graphdatabase/i.test(cleanContent) ? -1
+        : lines.findIndex(l => !/\bsql\s*`/.test(l) && cypherNode.test(l) &&
+            (/`[^`]*\$\{/.test(l) || /['"][^'"]*['"]\s*\+\s*[\w$]/.test(l)));
     if (r12002Idx !== -1) {
         const matchLineIdx = r12002Idx;
         const lineNum = matchLineIdx !== -1 ? matchLineIdx + 1 : 1;

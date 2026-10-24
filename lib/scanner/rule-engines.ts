@@ -7,6 +7,7 @@ import { evaluateComplianceRules } from '../rules/compliance-rules';
 import { evaluateInfraRules } from '../rules/infra-rules';
 import { evaluateInteractionRules } from '../rules/interaction-rules';
 import { evaluateSecretRules } from '../rules/secrets-rules';
+import { evaluateProviderSecretRules } from '../rules/provider-secret-rules';
 import { evaluateDatabaseRules } from '../rules/database-rules';
 import { evaluateCloudNativeRules } from '../rules/cloud-native-rules';
 import { evaluateWebVitalsRules } from '../rules/web-vitals-rules';
@@ -17,6 +18,7 @@ import { evaluateZeroTrustRules } from '../rules/zero-trust-rules';
 import { evaluatePrivacyComplianceRules } from '../rules/privacy-compliance-rules';
 import { evaluateIacRules } from '../rules/iac-rules';
 import { evaluateChaosResilienceRules } from '../rules/chaos-resilience-rules';
+import { evaluateResilienceRules } from '../rules/resilience-rules';
 import { evaluateGraphqlSecurityRules } from '../rules/graphql-security-rules';
 import { evaluateModernFullstackRules } from '../rules/modern-fullstack-rules';
 import { evaluateWeb3SecurityRules } from '../rules/web3-security-rules';
@@ -28,6 +30,7 @@ import { evaluateGoMicroservicesRules } from '../rules/go-microservices-rules';
 import { evaluateTenantIsolationRules } from '../rules/tenant-isolation-rules';
 import { evaluateCloudSecurityRules } from '../rules/cloud-security-rules';
 import { evaluateMobileSecurityRules } from '../rules/mobile-security-rules';
+import { evaluateMobileNativeRules } from '../rules/mobile-native-rules';
 import { evaluateEventStreamingRules } from '../rules/event-streaming-rules';
 import { evaluateCicdSupplyChainRules } from '../rules/cicd-supplychain-rules';
 import { evaluateRustSystemsRules } from '../rules/rust-systems-rules';
@@ -131,6 +134,24 @@ import { evaluateBackendV4Rules } from '../rules/backend-v4-rules';
 import { evaluateConfigV4Rules } from '../rules/config-v4-rules';
 import { evaluateSaasV5Rules } from '../rules/saas-v5-rules';
 import { evaluatePyGoFlowRules } from '../rules/py-go-flow-rules';
+import { evaluateLogicBugRules } from '../rules/logic-bug-rules';
+import { evaluateLogicDataRules } from '../rules/logic-data-rules';
+import { evaluateLogicReactNextRules } from '../rules/logic-react-next-rules';
+import { evaluateLogicPythonRules } from '../rules/logic-python-rules';
+import { evaluateLogicFrontendRules } from '../rules/logic-frontend-rules';
+import { evaluateLogicCrossFileRules } from '../rules/logic-crossfile-rules';
+import { evaluateLogicCorpusRules } from '../rules/logic-corpus-rules';
+import { evaluateLogicGeminiRules } from '../rules/logic-gemini-rules';
+import { evaluateLogicGemini2Rules } from '../rules/logic-gemini2-rules';
+import { evaluateCrossLayerRules } from '../rules/cross-layer-rules';
+import { evaluateMissingGuardRules } from '../rules/missing-guard-rules';
+import { evaluateIagPythonRules } from '../rules/iag-python-rules';
+import { evaluateSecurityGeminiRules } from '../rules/security-gemini-rules';
+import { evaluateCicdCloudGeminiRules } from '../rules/cicd-cloud-gemini-rules';
+import { evaluatePrivacyDbGeminiRules } from '../rules/privacy-db-gemini-rules';
+import { evaluateUxGeminiRules } from '../rules/ux-gemini-rules';
+import { evaluateLogicFakeRules } from '../rules/logic-fake-rules';
+import { evaluateLiveBundleRules } from '../rules/live-bundle-rules';
 
 import { evaluateAstFlowRules } from '../rules/ast-flow-rules';
 
@@ -161,6 +182,8 @@ export const RULE_ENGINES: ReadonlyArray<{ evaluate: RuleEngine; scanRawContent?
   // 2. Enterprise Secret Signatures (SEC-SECRET-01 to 100, Rule IDs 5001-5100)
   // F-16 Remediation: Scan unstripped content including comments to eliminate blind spots
   { evaluate: evaluateSecretRules, scanRawContent: true },
+  // 2b. Newer SaaS provider keys (SEC-SECRET-188.., Rule IDs 5188-5299)
+  { evaluate: evaluateProviderSecretRules, scanRawContent: true },
   // 3. Database & ORM Performance Engine (DB-PERF-01 to 50, Rule IDs 6001-6050)
   { evaluate: evaluateDatabaseRules },
   // Wave 2 Enterprise Release Gate Engines:
@@ -183,6 +206,8 @@ export const RULE_ENGINES: ReadonlyArray<{ evaluate: RuleEngine; scanRawContent?
   { evaluate: evaluateIacRules },
   // 12. Enterprise Reliability & Chaos Engineering (CHAOS-01 to 48, Rule IDs 8401-8448)
   { evaluate: evaluateChaosResilienceRules },
+  // Retries that hammer a failing dependency: tight retry loops, axios-retry with no delay (RES-01..02, Rule IDs 30341-30342)
+  { evaluate: evaluateResilienceRules },
   // Wave 4 Enterprise Release Gate Engines (Milestone 1,100 Rules):
   // 13. GraphQL & Modern API Security (GQL-01 to 50, Rule IDs 8501-8550)
   { evaluate: evaluateGraphqlSecurityRules },
@@ -208,6 +233,8 @@ export const RULE_ENGINES: ReadonlyArray<{ evaluate: RuleEngine; scanRawContent?
   { evaluate: evaluateCloudSecurityRules },
   // 21. Mobile App Security & Integrity Gate (MOB-SEC-01 to 50, Rule IDs 9301-9350)
   { evaluate: evaluateMobileSecurityRules },
+  // Native iOS / Android and React Native: TLS, WebView, deep links, logs, storage (MOB-SEC-04..18, Rule IDs 9304-9318)
+  { evaluate: evaluateMobileNativeRules },
   // 22. Kafka & Event Streaming Hardening (EVENT-01 to 50, Rule IDs 9401-9450)
   { evaluate: evaluateEventStreamingRules },
   // 23. CI/CD Pipeline & Supply Chain Hardening (CICD-SEC-01 to 50, Rule IDs 9501-9550)
@@ -433,6 +460,42 @@ export const RULE_ENGINES: ReadonlyArray<{ evaluate: RuleEngine; scanRawContent?
   { evaluate: evaluateSaasV5Rules },
   // Python / Go handler data flow: request input through assignments into shell, URL fetch and file sinks (FLOW-01.., Rule IDs 29501-29599)
   { evaluate: evaluatePyGoFlowRules },
+  // Logic bugs in AI-written JS/TS: unawaited writes, swallowed redirects, effect loops (BUG-01.., Rule IDs 29601-29699)
+  { evaluate: evaluateLogicBugRules },
+  // Data, async, money, time and auth-flow logic bugs: lost updates, unrounded cents, Stripe seconds (BUG-60.., Rule IDs 29660-29699)
+  { evaluate: evaluateLogicDataRules },
+  // React / Next.js / UI logic bugs: hydration mismatches, render loops, App Router misuse (BUG-20.., Rule IDs 29620-29659)
+  { evaluate: evaluateLogicReactNextRules },
+  // Python / Django / FastAPI logic bugs: frozen defaults, truncated cents, 200-OK errors, leaked sessions (BUG-94.., Rule IDs 29704-29739)
+  { evaluate: evaluateLogicPythonRules },
+  // Frontend logic/UI bugs: Tailwind dynamic classes, Radix asChild/Title, useFormStatus, search races, Stripe relative URLs (BUG-107.., Rule IDs 29740-29779)
+  { evaluate: evaluateLogicFrontendRules },
+  // Cross-file frontend bugs: import case, dead links, image hosts, static export, Suspense, Zustand v5, Expo env, React 19 (BUG-125.., Rule IDs 29758-29779)
+  { evaluate: evaluateLogicCrossFileRules },
+  // Bugs from the real-world bug corpus no rule caught: selector mutation, setters in render, Radix value handlers, RHF custom inputs, Gin handlers (BUG-133.., Rule IDs 29780-29799)
+  { evaluate: evaluateLogicCorpusRules },
+  // Logic bugs from the Gemini rule report, re-verified: tx client misuse, readonly search params, fill() aliasing, Drizzle without where (BUG-149.., Rule IDs 29820-29899)
+  { evaluate: evaluateLogicGeminiRules },
+  // Logic bugs from part 2 of the Gemini report (BUG-223.., Rule IDs 30101-30199)
+  { evaluate: evaluateLogicGemini2Rules },
+  // Cross-layer bugs: code vs env templates / Dockerfile / proxy / migrations, races, cache keys, retries, webhooks, SMS, tenant filters (XL-01.., Rule IDs 30301-30399)
+  { evaluate: evaluateCrossLayerRules },
+  // Auth checks that prove nothing: hand-decoded tokens trusted without a signature check (MG-01.., Rule IDs 30401-30499)
+  { evaluate: evaluateMissingGuardRules },
+  // Python architecture graph: record loaded by URL id without an ownership check (FLOW-07, Rule ID 29507)
+  { evaluate: evaluateIagPythonRules },
+  // Security defects from the Gemini rule report, re-verified: upload names, dotfiles, SAML signatures, alg confusion, shared-cache leaks (SECG-01.., Rule IDs 29900-29999)
+  { evaluate: evaluateSecurityGeminiRules },
+  // CI/CD, container, Kubernetes, Terraform and package-manager defects from the Gemini rule report (CIG-01.., Rule IDs 29943-29999)
+  { evaluate: evaluateCicdCloudGeminiRules, scanRawContent: true },
+  // Privacy leaks and database correctness / performance defects from the Gemini rule report (PRV-01.., DBG-01.., Rule IDs 29974-29999)
+  { evaluate: evaluatePrivacyDbGeminiRules },
+  // Accessibility and front-end performance defects from the Gemini rule report (UXG-01.., Rule IDs 30000-30099)
+  { evaluate: evaluateUxGeminiRules },
+  // Unfinished / fake features found reviewing real Lovable and Bolt apps: fake submits, placeholder keys, dead buttons, mock logins (FAKE-01.., BUG-144.., Rule IDs 29791-29819)
+  { evaluate: evaluateLogicFakeRules },
+  // Live sites: secrets and Supabase keys found in the full JavaScript bundles, public source maps (LIVE-01.., Rule IDs 29805-29809)
+  { evaluate: evaluateLiveBundleRules },
   // AST analysis (Babel): route auth/ownership flow and taint for JS/TS (AST-01.., Rule IDs 29301-29399)
   { evaluate: evaluateAstFlowRules },
 ];
