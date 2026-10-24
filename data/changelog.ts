@@ -13,6 +13,15 @@ export interface ChangelogEntry {
 export const CHANGELOG: ChangelogEntry[] = [
   {
     date: '2026-10-24',
+    title: 'PDF reports now include findings digest and scope page',
+    changes: [
+      { kind: 'New', text: 'PDF reports include a SHA-256 data digest on the final page so anyone can re-run the scan at the same commit and compare results.' },
+      { kind: 'New', text: 'A dedicated Scope and Limits page details the repository, commit, file count, and pillars analyzed, clarifying what static analysis inspects and what requires runtime observation.' },
+      { kind: 'New', text: 'Optional OWASP Top 10 breakdown table summarizes findings for rules carrying documented OWASP classifications.' },
+    ],
+  },
+  {
+    date: '2026-10-24',
     title: 'Finer precision for webhooks, RLS checks, and common build patterns',
     changes: [
       { kind: 'Fixed', text: 'Payment webhook verification rules are scoped to payment provider webhooks, recognizing signature adapters and secret headers while skipping non-payment events like issue trackers and chat bots.' },
