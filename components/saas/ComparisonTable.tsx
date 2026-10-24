@@ -108,7 +108,7 @@ export const ComparisonTable: React.FC = () => {
 
   const categories: ComparisonCategory[] = [
     {
-      title: 'Scans & Projects',
+      title: 'Scans and projects',
       items: [
         {
           name: 'Scans',
@@ -127,7 +127,7 @@ export const ComparisonTable: React.FC = () => {
       ]
     },
     {
-      title: 'What Gets Checked',
+      title: 'What gets checked',
       items: [
         {
           name: 'Rules',
@@ -158,7 +158,7 @@ export const ComparisonTable: React.FC = () => {
           enterprise: 'Same engine on every plan'
         },
         {
-          name: 'Your Code',
+          name: 'Your code',
           description: 'How long scanned code is kept',
           free: `Source not stored; snippets erased after ${CODE_SNIPPET_RETENTION_DAYS} days`,
           pro: `Source not stored; snippets erased after ${CODE_SNIPPET_RETENTION_DAYS} days`,
@@ -167,7 +167,7 @@ export const ComparisonTable: React.FC = () => {
       ]
     },
     {
-      title: 'Fixing Findings',
+      title: 'Fixing findings',
       items: [
         {
           name: 'Before / After Diffs',
@@ -231,7 +231,7 @@ export const ComparisonTable: React.FC = () => {
       ]
     },
     {
-      title: 'Support & Team',
+      title: 'Support and team',
       items: [
         {
           name: 'Support',
@@ -363,8 +363,7 @@ export const ComparisonTable: React.FC = () => {
               <thead>
                 <tr className="border-b border-white/15 bg-[#0E0E12]">
                   <th className="p-5 sm:p-6 text-xs font-mono uppercase tracking-wider text-zinc-400 w-[34%] align-bottom">
-                    <span className="text-white font-bold block text-sm">Feature / Requirement</span>
-                    <span className="text-zinc-400 text-[11px] font-normal lowercase tracking-normal">feature breakdown &amp; boundaries</span>
+                    <span className="text-white font-bold block text-sm">Feature</span>
                   </th>
 
                   {/* Free Plan Header */}
@@ -379,7 +378,7 @@ export const ComparisonTable: React.FC = () => {
                         )}
                       </div>
                       <div className="text-2xl font-extrabold text-white font-mono">$0</div>
-                      <span className="text-[11px] text-zinc-400 font-sans">For hobbyists and testing public repositories</span>
+                      <span className="text-[11px] text-zinc-400 font-sans">For trying Zelsis on your own projects</span>
 
                       {isLoggedIn && currentTier === 'Free' ? (
                         <button
