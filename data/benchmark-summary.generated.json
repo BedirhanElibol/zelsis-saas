@@ -1,10 +1,10 @@
 {
- "generatedAt": "2026-10-20",
+ "generatedAt": "2026-10-24",
  "summary": {
   "cleanRepos": 17,
-  "cleanReposGateFailed": 5,
-  "cleanHighCriticalFindings": 36,
-  "cleanGatingHighCriticalFindings": 36,
+  "cleanReposGateFailed": 3,
+  "cleanHighCriticalFindings": 34,
+  "cleanGatingHighCriticalFindings": 34,
   "documentedFlaws": 43,
   "documentedFlawsDetected": 43,
   "recall": 1,
@@ -19,7 +19,7 @@
    "kind": "clean",
    "stack": "Next.js + Supabase + Stripe",
    "files": 68,
-   "scanMs": 964,
+   "scanMs": 1379,
    "gate": "WARNING",
    "critical": 0,
    "high": 3
@@ -30,7 +30,7 @@
    "kind": "clean",
    "stack": "Next.js + Prisma + Stripe + NextAuth",
    "files": 140,
-   "scanMs": 1015,
+   "scanMs": 1359,
    "gate": "WARNING",
    "critical": 0,
    "high": 1
@@ -41,7 +41,7 @@
    "kind": "clean",
    "stack": "FastAPI + React",
    "files": 206,
-   "scanMs": 1262,
+   "scanMs": 2094,
    "gate": "WARNING",
    "critical": 0,
    "high": 1
@@ -52,7 +52,7 @@
    "kind": "clean",
    "stack": "Express + Prisma",
    "files": 58,
-   "scanMs": 253,
+   "scanMs": 356,
    "gate": "FAILED",
    "critical": 2,
    "high": 1,
@@ -70,7 +70,7 @@
    "kind": "clean",
    "stack": "Go + Gin",
    "files": 27,
-   "scanMs": 237,
+   "scanMs": 338,
    "gate": "PASSED",
    "critical": 0,
    "high": 0
@@ -81,7 +81,7 @@
    "kind": "clean",
    "stack": "Laravel",
    "files": 40,
-   "scanMs": 122,
+   "scanMs": 184,
    "gate": "PASSED",
    "critical": 0,
    "high": 0
@@ -92,10 +92,10 @@
    "kind": "clean",
    "stack": "Remix/React Router + Prisma + tRPC (production SaaS)",
    "files": 2481,
-   "scanMs": 22919,
+   "scanMs": 40655,
    "gate": "WARNING",
    "critical": 0,
-   "high": 5
+   "high": 4
   },
   {
    "repo": "supabase/supabase-js",
@@ -103,7 +103,7 @@
    "kind": "clean",
    "stack": "TypeScript SDK",
    "files": 474,
-   "scanMs": 4514,
+   "scanMs": 8223,
    "gate": "FAILED",
    "critical": 1,
    "high": 1,
@@ -121,10 +121,10 @@
    "kind": "vulnerable",
    "stack": "Express + MongoDB",
    "files": 87,
-   "scanMs": 350,
+   "scanMs": 583,
    "gate": "FAILED",
-   "critical": 6,
-   "high": 4
+   "critical": 3,
+   "high": 5
   },
   {
    "repo": "appsecco/dvna",
@@ -132,21 +132,21 @@
    "kind": "vulnerable",
    "stack": "Express + Sequelize",
    "files": 21,
-   "scanMs": 126,
+   "scanMs": 215,
    "gate": "FAILED",
-   "critical": 6,
-   "high": 3
+   "critical": 4,
+   "high": 5
   },
   {
    "repo": "juice-shop/juice-shop",
    "sha": "1618a61",
    "kind": "vulnerable",
    "stack": "Express + Angular + Sequelize",
-   "files": 962,
-   "scanMs": 9628,
+   "files": 965,
+   "scanMs": 14320,
    "gate": "FAILED",
-   "critical": 54,
-   "high": 30
+   "critical": 14,
+   "high": 66
   },
   {
    "repo": "spring-projects/spring-petclinic",
@@ -154,7 +154,7 @@
    "kind": "clean",
    "stack": "Java + Spring Boot",
    "files": 84,
-   "scanMs": 275,
+   "scanMs": 363,
    "gate": "WARNING",
    "critical": 0,
    "high": 1
@@ -165,7 +165,7 @@
    "kind": "clean",
    "stack": "C# + ASP.NET Core",
    "files": 350,
-   "scanMs": 832,
+   "scanMs": 1066,
    "gate": "WARNING",
    "critical": 0,
    "high": 2
@@ -176,7 +176,7 @@
    "kind": "clean",
    "stack": "Ruby on Rails (production service)",
    "files": 1698,
-   "scanMs": 3874,
+   "scanMs": 6957,
    "gate": "WARNING",
    "critical": 0,
    "high": 4
@@ -187,7 +187,7 @@
    "kind": "clean",
    "stack": "Python + Django (production site)",
    "files": 434,
-   "scanMs": 2614,
+   "scanMs": 4203,
    "gate": "WARNING",
    "critical": 0,
    "high": 1
@@ -198,10 +198,10 @@
    "kind": "vulnerable",
    "stack": "Java + Spring",
    "files": 635,
-   "scanMs": 2515,
+   "scanMs": 3805,
    "gate": "FAILED",
-   "critical": 13,
-   "high": 10
+   "critical": 12,
+   "high": 9
   },
   {
    "repo": "OWASP/railsgoat",
@@ -209,10 +209,10 @@
    "kind": "vulnerable",
    "stack": "Ruby on Rails",
    "files": 187,
-   "scanMs": 942,
+   "scanMs": 1758,
    "gate": "FAILED",
-   "critical": 7,
-   "high": 11
+   "critical": 4,
+   "high": 12
   },
   {
    "repo": "digininja/DVWA",
@@ -220,10 +220,10 @@
    "kind": "vulnerable",
    "stack": "PHP",
    "files": 195,
-   "scanMs": 571,
+   "scanMs": 1057,
    "gate": "FAILED",
-   "critical": 57,
-   "high": 25
+   "critical": 50,
+   "high": 31
   },
   {
    "repo": "adeyosemanputra/pygoat",
@@ -231,9 +231,9 @@
    "kind": "vulnerable",
    "stack": "Python + Django",
    "files": 217,
-   "scanMs": 663,
+   "scanMs": 1205,
    "gate": "FAILED",
-   "critical": 13,
+   "critical": 10,
    "high": 28
   },
   {
@@ -242,7 +242,7 @@
    "kind": "vulnerable",
    "stack": "Python + aiohttp",
    "files": 30,
-   "scanMs": 851,
+   "scanMs": 1606,
    "gate": "FAILED",
    "critical": 2,
    "high": 3
@@ -253,7 +253,7 @@
    "kind": "clean",
    "stack": "Android (Java + Kotlin)",
    "files": 1161,
-   "scanMs": 5784,
+   "scanMs": 9152,
    "gate": "FAILED",
    "critical": 1,
    "high": 0,
@@ -271,17 +271,10 @@
    "kind": "clean",
    "stack": "Android (Java)",
    "files": 1143,
-   "scanMs": 4661,
-   "gate": "FAILED",
-   "critical": 2,
-   "high": 5,
-   "blockers": [
-    {
-     "ruleId": 24101,
-     "title": "CORE-01: SQL Injection: Query Built From Dynamic Values",
-     "reviewed": "AntennaPod DBUpgrader concatenates a media file path into UPDATE … WHERE file_url='…', so a quote in the path breaks the query"
-    }
-   ]
+   "scanMs": 7592,
+   "gate": "WARNING",
+   "critical": 0,
+   "high": 6
   },
   {
    "repo": "mastodon/mastodon-ios",
@@ -289,7 +282,7 @@
    "kind": "clean",
    "stack": "iOS (Swift)",
    "files": 932,
-   "scanMs": 2735,
+   "scanMs": 4437,
    "gate": "PASSED",
    "critical": 0,
    "high": 0
@@ -300,9 +293,9 @@
    "kind": "vulnerable",
    "stack": "Android (Java)",
    "files": 59,
-   "scanMs": 118,
+   "scanMs": 187,
    "gate": "FAILED",
-   "critical": 3,
+   "critical": 2,
    "high": 4
   },
   {
@@ -311,7 +304,7 @@
    "kind": "vulnerable",
    "stack": "Android (Java)",
    "files": 90,
-   "scanMs": 207,
+   "scanMs": 292,
    "gate": "WARNING",
    "critical": 0,
    "high": 3
@@ -322,7 +315,7 @@
    "kind": "vulnerable",
    "stack": "iOS (Swift)",
    "files": 129,
-   "scanMs": 431,
+   "scanMs": 682,
    "gate": "WARNING",
    "critical": 0,
    "high": 2
@@ -333,7 +326,7 @@
    "kind": "clean",
    "stack": "Flutter (Dart) + Rust",
    "files": 734,
-   "scanMs": 4517,
+   "scanMs": 7812,
    "gate": "WARNING",
    "critical": 0,
    "high": 3
@@ -344,17 +337,10 @@
    "kind": "clean",
    "stack": "Rust + Actix + Diesel + Postgres (production service)",
    "files": 1442,
-   "scanMs": 3765,
-   "gate": "FAILED",
-   "critical": 2,
-   "high": 0,
-   "blockers": [
-    {
-     "ruleId": 9605,
-     "title": "RUST-05: SQL Injection via format! String Interpolation in Query",
-     "reviewed": "Lemmy builds SQL with format! (sql_query in scheduled_tasks, batch_execute in schema_setup) from interpolated table names, clauses and intervals; internal callers today, but nothing stops user input reaching them (flagged for review by design)"
-    }
-   ]
+   "scanMs": 6259,
+   "gate": "WARNING",
+   "critical": 0,
+   "high": 2
   }
  ],
  "flaws": [
