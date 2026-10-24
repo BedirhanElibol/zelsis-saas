@@ -29,9 +29,9 @@ export const FaqSection: React.FC = () => {
         'Call the gate API from any CI runner (GitHub Actions, GitLab CI, Bitbucket, CircleCI). With failOnBlock=true it returns HTTP 422 when the gate fails, so the job fails. The dashboard generates ready-to-use workflows, and a .zelsisrc.json in your repository can require a minimum readiness score.'
     },
     {
-      question: 'How are the release gate and security rules maintained and updated?',
+      question: 'How are the release gate and its rules maintained and updated?',
       answer:
-        'Every rule change is measured against a pinned benchmark of intentionally vulnerable apps and maintained production projects in several languages. Rules that misfire on clean code become experimental and stop affecting the gate, and a CRITICAL finding can fail a release only when its rule has test fixtures, caught a documented flaw, or was reviewed as a true positive. Results are published in the benchmark section.'
+        'Every rule change is measured against a pinned benchmark of intentionally vulnerable apps and maintained production projects in several languages. Rules that misfire on clean code become experimental and stop affecting the gate, and a CRITICAL finding can fail a release only when its rule caught a documented flaw or was reviewed as a true positive, or when it is a published advisory for a dependency version. Findings from other rules are still reported, as warnings. Results are published in the benchmark section.'
     },
     {
       question: 'Do you check our dependencies for known vulnerabilities?',
@@ -73,7 +73,7 @@ export const FaqSection: React.FC = () => {
         {/* Section Header */}
         <div className="flex flex-col gap-4 text-center">
           <div className="inline-flex items-center justify-center text-xs font-mono uppercase tracking-widest text-emerald-400">
-            <span>SECURITY &amp; ARCHITECTURE FAQ</span>
+            <span>BEFORE YOU CONNECT A REPO</span>
           </div>
           <h2 className="text-3xl sm:text-5xl font-extrabold text-[#EDEDED] tracking-tight">
             Frequently Asked Questions
