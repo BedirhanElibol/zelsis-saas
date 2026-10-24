@@ -85,9 +85,12 @@ export function evaluatePolyglotCoreRules(file: CodeFile, lines: string[], clean
     .replace(/\{\s*['"][,\s]*['"]\s*\.join\(\s*(?:\[\s*)?['"](?:\?|%s|:\w+)['"]\s*\]?\s*\*[^}]*\)\s*\}/g, 'IDENT')
     // PHP: a table name concatenated after FROM / INTO / UPDATE / JOIN ('... FROM ' . $table, $this->table())
     .replace(/\b(FROM|INTO|UPDATE|JOIN|TABLE)\s*(['"])\s*\.\s*\$[\w>-]+(?:\([^)]*\))?/gi, '$1 IDENT$2')
+    // DuckDB read_parquet(...) reading from a config/constant filesystem path
+    .replace(/\bread_parquet\s*\(\s*(?:f?['"][^'"]*(?:\{[^}]+\}|#\{[^}]+\}|\$\{[^}]+\})[^'"]*['"]|\{[^}]+\}|#\{[^}]+\}|\$\{[^}]+\})\s*\)/gi, "read_parquet('IDENT')")
     // A table name interpolated after FROM / INTO / UPDATE / JOIN / TABLE cannot be a bind parameter and is
-    // almost always the app's own constant ("SELECT COUNT(*) FROM $TABLE"); values in WHERE / VALUES still count.
-    .replace(/\b(FROM|INTO|UPDATE|JOIN|TABLE)(\s+[`"']?)(?:\$\{\s*\w+\s*\}|\$\w+|\\\(\s*\w+\s*\)|#\{\s*\w+\s*\}|\{\w+\})/gi, '$1$2IDENT')
+    // almost always the app's own constant or model ("SELECT COUNT(*) FROM $TABLE", f"FROM {model.__tablename__}");
+    // values in WHERE / VALUES still count.
+    .replace(/\b(FROM|INTO|UPDATE|JOIN|TABLE)(\s+[`"']?)(?:\$\{\s*[\w.:()]+\s*\}|\$[\w.:]+|\\\(\s*[\w.:()]+\s*\)|#\{\s*[\w.:()]+\s*\}|\{[\w.:()]+\})/gi, '$1$2IDENT')
     // A dynamic SET clause built from column names is safe when the query uses bind placeholders
     // (%s, ?, $1, :name) and passes a parameters argument. Values in quotes or unparameterized queries still count.
     .replace(/\bSET(\s+)(?:\{[a-zA-Z_]\w*\}|\$\{[a-zA-Z_]\w*\})(?=[^\n]*(?:%s|\?|\$\d|:\w+)[^"'\n]*["']\s*,\s*[\w([{])/gi, 'SET$1IDENT');
