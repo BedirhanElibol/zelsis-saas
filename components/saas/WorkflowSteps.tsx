@@ -11,7 +11,7 @@ export const WorkflowSteps: React.FC = () => {
     {
       number: '01',
       badge: 'CONNECT & PRIVACY',
-      title: 'Connect a Repository, Scanned In Memory',
+      title: 'Connect a repository, scanned in memory',
       description:
         'Paste a public GitHub repository, or connect private ones through the Zelsis GitHub App (read-only, repositories you choose). Files are fetched into worker memory, scanned, and released.',
       codeSnippet: `# From the dashboard, or from any CI runner with one HTTP call
@@ -29,7 +29,7 @@ $ curl -X POST ${getConfiguredAppUrl()}/api/v1/gate-check \\
     {
       number: '02',
       badge: 'DEEP RELEASE AUDIT',
-      title: 'Find Security and Logic Bugs in Seconds',
+      title: 'Find logic, security and dependency issues in seconds',
       description:
         'Deterministic rules check every layer of the app at once, so the same code always gets the same result and regressions are caught before they ship.',
       codeSnippet: `[EVALUATING PRODUCTION RELEASE GATES]
@@ -47,7 +47,7 @@ $ curl -X POST ${getConfiguredAppUrl()}/api/v1/gate-check \\
     {
       number: '03',
       badge: 'RELEASE CLEARANCE',
-      title: 'Gate the Release & Fix in One Click',
+      title: 'Gate the release and fix in one click',
       description:
         'Fail the CI job when the gate fails, export the result for change-control records, and copy a ready-made fix prompt for any AI coding assistant.',
       codeSnippet: `# .github/workflows/zelsis.yml (generated in the dashboard)
@@ -149,9 +149,9 @@ $ curl -X POST ${getConfiguredAppUrl()}/api/v1/gate-check \\
                 <span className="w-2.5 h-2.5 rounded-full bg-red-500/80" />
                 <span className="w-2.5 h-2.5 rounded-full bg-amber-500/80" />
                 <span className="w-2.5 h-2.5 rounded-full bg-emerald-500/80" />
-                <span className="ml-2 text-zinc-300 font-semibold">terminal://runtime-eval</span>
+                <span className="ml-2 text-zinc-300 font-semibold">ci-gate.sh</span>
               </div>
-              <span className="text-[10px] text-zinc-400">BASH / JSON</span>
+              <span className="text-[10px] text-zinc-400">bash</span>
             </div>
             <pre className="p-4 sm:p-6 text-[11px] sm:text-xs font-mono text-zinc-300 overflow-x-auto leading-relaxed whitespace-pre font-normal selection:bg-white/20">
               {steps[activeStep].codeSnippet}
