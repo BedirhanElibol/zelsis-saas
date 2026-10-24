@@ -79,14 +79,16 @@ export function evaluatePythonEnterpriseRules(file: CodeFile, lines: string[], c
         logs.push(`[${ts}] [PYTHON AUDIT] Found PY-SEC-01: Unsafe Pickle Deserialization (Remote Code Execution) at ${file.path}:${lineNum}`);
     }
     // PY-SEC-02: Insecure PyYAML load() Without SafeLoader
-    const unsafeYamlIdx = pyLinesNoStrings.findIndex((strippedLine, idx) => {
+    // Do not flag when ruamel.yaml is instantiated with typ="safe" or when SafeLoader is used
+    const isRuamelSafeYaml = /\bYAML\s*\([^)]*typ\s*=\s*['"]safe['"]|\btyp\s*=\s*['"]safe['"]/i.test(cleanContent);
+    const unsafeYamlIdx = !isRuamelSafeYaml ? pyLinesNoStrings.findIndex((strippedLine, idx) => {
         if (!/\byaml\.load\s*\(/i.test(strippedLine)) return false;
         const call = callText(lines, idx, /\byaml\.load\s*\(/i);
         if (/Loader\s*=\s*(?:yaml\.)?(?:Safe|CSafe|Base|CBase)Loader\b/i.test(call)) {
             return false;
         }
         return true;
-    });
+    }) : -1;
     if (unsafeYamlIdx !== -1) {
         const lineNum = unsafeYamlIdx + 1;
         const rawSnippet = lines[unsafeYamlIdx]?.trim() || "Insecure PyYAML load() Without SafeLoader";

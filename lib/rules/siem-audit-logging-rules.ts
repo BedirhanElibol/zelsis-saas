@@ -22,7 +22,8 @@ export function evaluateSiemAuditLoggingRules(file: CodeFile, lines: string[], c
     // AUDIT-01: Plaintext Credentials or PII Leaked in Application Logs
     // Files using @/lib/logger automatically redact sensitive tokens, passwords, and PII.
     // Only values count: console.log('Getting Stripe Secret Key') logs a fixed string, not a secret.
-    const SENSITIVE_VALUE = /(?<!has|is|hide)(?:password|secret|apiKey|bearerToken)/i;
+    // SENSITIVE_VALUE: exclude boolean comparison variables like passwordMatch, isPasswordValid, etc.
+    const SENSITIVE_VALUE = /(?<!has|is|hide|validate|check|verify|_has|_is|_hide)(?:password|secret|apiKey|bearerToken)(?!(?:_?(?:match(?:es|ed)?|valid(?:ity)?|correct|check(?:ed)?|equals?))\b)/i;
     const extractLogCalls = (code: string): string[] => {
         const regex = /console\.(?:log|warn|info|debug)\s*\(/gi;
         const calls: string[] = [];
@@ -55,16 +56,25 @@ export function evaluateSiemAuditLoggingRules(file: CodeFile, lines: string[], c
     };
     const logsSensitiveValue = (code: string) => extractLogCalls(code).some((callContent) => {
         const cleaned = callContent
+            // Ignore truncated or masked expressions like key?.slice(0, 3) or token.substring(0, 4)
+            .replace(/[\w$.?]+(?:\?\.)?(?:slice|substring|substr)\s*\([^)]*\)/g, '""')
+            // Ignore masking/redaction helper calls (e.g. mask(key), redact(secret))
+            .replace(/\b(?:mask|redact|obfuscate|truncate)\w*\s*\([^)]*\)/gi, '""')
+            // Ignore boolean comparisons (===, !==, ==, !=)
+            .replace(/[\w$.?]+\s*(?:===|!==|==|!=)\s*[^,)]+/g, '""')
             // Ignore ternaries returning fixed status indicators or booleans where the variable is only checked for presence
             .replace(/[\w$.]+\s*\?\s*(?:['"][^'"]*['"]|true|false|null)\s*:\s*(?:['"][^'"]*['"]|true|false|null)/g, '""')
             .replace(/(?:Boolean\s*\([^)]*\)|!![\w$.]+)/g, '""');
         const args = cleaned
             .replace(/`([^`]*)`/g, (_t, inner: string) => (inner.match(/\$\{[^}]*\}/g) || []).join(' '))
-            .replace(/'[^'\n]*'|"[^"\n]*"/g, '""');
+            .replace(/'(?:\\.|[^'\\])*'|"(?:\\.|[^"\\])*"/g, '""');
         return SENSITIVE_VALUE.test(args);
     });
-    // Docs, API collections (Postman JSON) and dev scripts that print a seeded test password do not log user data
-    const notAppCode = /\.(?:json|mdx?|txt|html)$/i.test(file.path) || /(?:^|\/)(?:scripts?|docs?|bin)\//i.test(file.path.replace(/\\/g, '/')) || /(?:\.register|\.setup|\.seed)\.[cm]?[jt]s$/i.test(file.path);
+    // Docs, administrative CLI commands, key generation utilities, and dev scripts do not log production user data
+    const normPath = file.path.replace(/\\/g, '/');
+    const notAppCode = /\.(?:json|mdx?|txt|html|sh|bash|zsh)$/i.test(file.path)
+        || /(?:^|\/)(?:scripts?|docs?|bin|commands?|console|docker\/utils)\//i.test(normPath)
+        || /(?:\.command|\.register|\.setup|\.seed)\.[cm]?[jt]s$/i.test(file.path);
     if (!notAppCode && logsSensitiveValue(cleanContent) && !/logger\./i.test(cleanContent) && !/sanitizeLog/i.test(cleanContent)) {
         const matchLineIdx = lines.findIndex(l => !/^\s*(?:\/\/|--|#|\*)/.test(l) && logsSensitiveValue(l));
         if (matchLineIdx !== -1) {
