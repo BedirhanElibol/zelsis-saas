@@ -7,7 +7,7 @@
 import type { Finding } from '@/data/schema';
 import type { CodeFile } from '../scanner/types';
 import { emptyRepoContext, type RepoContext } from '../scanner/repo-context';
-import { parseSize } from '../scanner/infra-facts';
+import { DOWN_MIGRATION, parseSize } from '../scanner/infra-facts';
 import { SKIP, lineAt } from './logic-gemini-rules';
 
 interface Hit { ruleId: number; code: string; title: string; severity: Finding['severity']; lineIdx: number; why: string; fix: string; type: Finding['type']; category: string }
@@ -218,6 +218,82 @@ function checkReadModifyWrite(path: string, c: string, add: Add) {
   }
 }
 
+/**
+ * XL-07 for JPA/Hibernate, GORM, Eloquent and ActiveRecord: a balance-like field changed in code and saved a few
+ * lines later, in a file with no row lock and no atomic update. Raw SQL SELECT-then-UPDATE is not covered yet.
+ */
+const JVM = /\.(?:java|kt)$/i;
+const PHP_FILE = /\.php$/i;
+
+interface OrmRmw { lang: RegExp; safe: RegExp; pattern: RegExp; field: (m: RegExpMatchArray) => string; fix: (field: string) => string }
+
+const ORM_RMW: OrmRmw[] = [
+  {
+    // order.setBalance(order.getBalance() - amount); ... repository.save(order)
+    lang: JVM,
+    safe: /@Lock\s*\(|PESSIMISTIC_(?:WRITE|READ)|LockModeType|FOR\s+UPDATE|@Modifying|@Version\b/,
+    pattern: /\b(\w+)\.set(\w+)\(\s*\1\.get\2\(\)\s*[-+]\s*[^;]+;[^\n]*\n(?:[^\n]*\n){0,5}?[^\n]*\.save(?:AndFlush)?\(\s*\1\s*\)/g,
+    field: (m) => m[2],
+    fix: (f) => `Lock the row (@Lock(LockModeType.PESSIMISTIC_WRITE) on the repository finder) inside @Transactional, or use an atomic @Modifying query: UPDATE ... SET ${f.toLowerCase()} = ${f.toLowerCase()} - :amount WHERE id = :id AND ${f.toLowerCase()} >= :amount.`,
+  },
+  {
+    // wallet.Balance -= amount ... db.Save(&wallet)
+    lang: GO,
+    safe: /clause\.Locking|FOR\s+UPDATE|gorm\.Expr\(/i,
+    pattern: /\b(\w+)\.(\w+)\s*(?:-=|\+=|=\s*\1\.\2\s*[-+])[^\n]*\n(?:[^\n]*\n){0,5}?[^\n]*\.Save\(\s*&?\1\s*\)/g,
+    field: (m) => m[2],
+    fix: (f) => `Update atomically: db.Model(&x).Where("${f.toLowerCase()} >= ?", amount).Update("${f.toLowerCase()}", gorm.Expr("${f.toLowerCase()} - ?", amount)), or read the row with clause.Locking{Strength: "UPDATE"} inside a transaction.`,
+  },
+  {
+    // $wallet->balance -= $amount; ... $wallet->save();
+    lang: PHP_FILE,
+    safe: /lockForUpdate\s*\(|sharedLock\s*\(|->(?:de|in)crement\s*\(|FOR\s+UPDATE/i,
+    pattern: /(\$\w+)->(\w+)\s*(?:-=|\+=|=\s*\1->\2\s*[-+])[^\n]*\n(?:[^\n]*\n){0,5}?[^\n]*\1->save\(\s*\)/g,
+    field: (m) => m[2],
+    fix: (f) => `Update atomically with ->decrement('${f}', $amount) on a query that checks ->where('${f}', '>=', $amount), or load the row with ->lockForUpdate() inside DB::transaction().`,
+  },
+  {
+    // account.balance -= amount ... account.save!
+    lang: RB,
+    safe: /\.lock!|\bwith_lock\b|\.lock\.find|update_counters|update_all|FOR\s+UPDATE/i,
+    pattern: /\b(\w+)\.(\w+)\s*(?:-=|\+=|=\s*\1\.\2\s*[-+])[^\n]*\n(?:[^\n]*\n){0,5}?\s*\1\.save!?\b/g,
+    field: (m) => m[2],
+    fix: (f) => `Wrap the change in record.with_lock { ... }, or update atomically: Model.where(id: id).where("${f} >= ?", amount).update_all(["${f} = ${f} - ?", amount]).`,
+  },
+];
+
+/** Model methods: `self.credits -= amount` / `$this->balance -= $x` with a bare save elsewhere in the same model file. */
+const MODEL_RMW: { lang: RegExp; safe: RegExp; change: RegExp; save: RegExp; fix: (f: string) => string }[] = [
+  { lang: RB, safe: ORM_RMW[3].safe, change: /\bself\.(\w+)\s*(?:-=|\+=|=\s*self\.\1\s*[-+])/g, save: /^\s*(?:self\.)?save!?\b/m, fix: ORM_RMW[3].fix },
+  { lang: PHP_FILE, safe: ORM_RMW[2].safe, change: /\$this->(\w+)\s*(?:-=|\+=|=\s*\$this->\1\s*[-+])/g, save: /\$this->save\(\s*\)/, fix: ORM_RMW[2].fix },
+];
+
+function checkOrmReadModifyWrite(path: string, c: string, add: Add) {
+  for (const model of MODEL_RMW) {
+    if (!model.lang.test(path) || model.safe.test(c) || !model.save.test(c)) continue;
+    for (const m of c.matchAll(model.change)) {
+      if (!MONEYISH.test(m[1])) continue;
+      add({ ruleId: 30307, code: 'XL-07', severity: 'HIGH', lineIdx: lineAt(c, m.index!), type: 'SECURITY', category: 'Race Condition',
+        title: 'Balance or Stock Is Read, Changed in Code, Then Saved Without a Lock',
+        why: `This model changes ${m[1]} in memory and saves the whole row. Two requests at the same time both start from the same ${m[1]}, and the second save overwrites the first, so the same ${m[1]} can be spent twice.`,
+        fix: model.fix(m[1]) });
+      return;
+    }
+  }
+  for (const orm of ORM_RMW) {
+    if (!orm.lang.test(path) || orm.safe.test(c)) continue;
+    for (const m of c.matchAll(orm.pattern)) {
+      const field = orm.field(m);
+      if (!MONEYISH.test(field)) continue;
+      add({ ruleId: 30307, code: 'XL-07', severity: 'HIGH', lineIdx: lineAt(c, m.index!), type: 'SECURITY', category: 'Race Condition',
+        title: 'Balance or Stock Is Read, Changed in Code, Then Saved Without a Lock',
+        why: `Two requests at the same time both load the same ${field}, both change it in memory and both save: one change is lost, so the same ${field} can be spent twice.`,
+        fix: orm.fix(field) });
+      return;
+    }
+  }
+}
+
 // ---------------------------------------------------------------------------------------------------------------
 // XL-08: per-user data cached under a key that does not include the user
 function checkSharedCacheKey(path: string, c: string, add: Add) {
@@ -329,6 +405,96 @@ function checkTenantFilter(path: string, c: string, add: Add) {
 }
 
 // ---------------------------------------------------------------------------------------------------------------
+// XL-15: a cascading foreign key (ON DELETE CASCADE / SET NULL) on a column no migration indexes. Postgres does not
+// index foreign keys by itself, so deleting a parent row scans the whole child table. Indexes from every migration in
+// the repo count (repo-wide index facts), including primary keys, UNIQUE constraints and composite indexes that start
+// with the column. Same check as Supabase's "unindexed foreign keys" advisor, before the migration ships.
+const sqlTable = (name: string) => name.replace(/"/g, '').toLowerCase().split('.').pop() ?? '';
+
+function checkCascadeForeignKeyIndex(path: string, c: string, ctx: RepoContext, add: Add) {
+  if (!/\.sql$/i.test(path) || DOWN_MIGRATION.test(path)) return;
+  const indexed =(table: string, col: string) => (ctx.infra.indexedColumns.get(table) ?? []).some((cols) => cols[0] === col);
+  const fks: { table: string; col: string; idx: number }[] = [];
+  for (const t of c.matchAll(/CREATE\s+TABLE\s+(?:IF\s+NOT\s+EXISTS\s+)?([\w."]+)\s*\(([\s\S]*?)\);/gi)) {
+    const table = sqlTable(t[1]);
+    const bodyStart = t.index! + t[0].indexOf('(') + 1;
+    // Inline: user_id uuid not null references auth.users (id) on delete cascade
+    for (const m of t[2].matchAll(/^\s*"?(\w+)"?\s+[\w ()]+?\bREFERENCES\s+[\w."]+(?:\s*\([^)]*\))?[^,\n]*?\bON\s+DELETE\s+(?:CASCADE|SET\s+NULL)/gim)) {
+      fks.push({ table, col: m[1].toLowerCase(), idx: bodyStart + m.index! });
+    }
+    // Table level: foreign key (team_id) references teams (id) on delete cascade
+    for (const m of t[2].matchAll(/FOREIGN\s+KEY\s*\(\s*"?(\w+)"?\s*\)\s*REFERENCES\s+[\w."]+(?:\s*\([^)]*\))?[^,]*?\bON\s+DELETE\s+(?:CASCADE|SET\s+NULL)/gi)) {
+      fks.push({ table, col: m[1].toLowerCase(), idx: bodyStart + m.index! });
+    }
+  }
+  for (const m of c.matchAll(/ALTER\s+TABLE\s+(?:ONLY\s+)?([\w."]+)\s+ADD\s+(?:CONSTRAINT\s+[\w"]+\s+)?FOREIGN\s+KEY\s*\(\s*"?(\w+)"?\s*\)\s*REFERENCES\s+[\w."]+(?:\s*\([^)]*\))?[^;]*?\bON\s+DELETE\s+(?:CASCADE|SET\s+NULL)/gi)) {
+    fks.push({ table: sqlTable(m[1]), col: m[2].toLowerCase(), idx: m.index! });
+  }
+  for (const fk of fks) {
+    if (/^(?:id|constraint|primary|foreign|unique|check)$/i.test(fk.col) || indexed(fk.table, fk.col)) continue;
+    // A later migration renamed the column or the table: the old name no longer exists, so its index status is moot
+    if (ctx.infra.renamedAway.has(fk.table) || ctx.infra.renamedAway.has(`${fk.table}.${fk.col}`)) continue;
+    add({ ruleId: 30315, code: 'XL-15', severity: 'LOW', lineIdx: lineAt(c, fk.idx), type: 'INFRA_DATABASE', category: 'Schema Optimization',
+      title: `${fk.table}.${fk.col} Cascades on Delete but No Migration Indexes It`,
+      why: `Postgres does not index foreign key columns on its own. When a parent row is deleted, the database looks for matching ${fk.table} rows by ${fk.col}; without an index that is a full scan of ${fk.table}, which gets slow and holds locks as the table grows.`,
+      fix: `Add an index in a migration: CREATE INDEX ON ${fk.table} (${fk.col});` });
+  }
+}
+
+const snake = (s: string) => s.replace(/([a-z0-9])([A-Z])/g, '$1_$2').toLowerCase();
+
+/**
+ * XL-15 for ORM entities: a TypeORM @ManyToOne({ onDelete: 'CASCADE' | 'SET NULL' }) or a JPA @ManyToOne with
+ * Hibernate @OnDelete(action = CASCADE) on Postgres, with no @Index on the property, no class / @Table index naming
+ * the column, and no migration indexing it.
+ */
+function checkOrmCascadeForeignKeyIndex(path: string, c: string, ctx: RepoContext, add: Add) {
+  if (!ctx.infra.usesPostgres) return;
+  const isTs = /\.[cm]?ts$/i.test(path) && /@Entity\s*\(/.test(c) && /\bfrom\s+['"]typeorm['"]/.test(c);
+  const isJvm = /\.(?:java|kt)$/i.test(path) && /@Entity\b/.test(c) && /@OnDelete\s*\(/.test(c);
+  if (!isTs && !isJvm) return;
+  const entityTable = isTs
+    ? /@Entity\s*\(\s*(?:['"](\w+)['"]|\{[^}]*\bname\s*:\s*['"](\w+)['"])/.exec(c)
+    : /@Table\s*\([^)]*\bname\s*=\s*"(\w+)"/.exec(c);
+  const className = /\bclass\s+(\w+)/.exec(c)?.[1] ?? '';
+  const table = (entityTable?.[1] ?? entityTable?.[2] ?? snake(className)).toLowerCase();
+  // Class-level indexes: @Index(['userId']), @Index('idx', ['user']), @Table(indexes = @Index(columnList = "user_id"))
+  const classIndexed = [...c.matchAll(/@Index\s*\(\s*(?:['"][^'"]*['"]\s*,\s*)?\[([^\]]*)\]/g), ...c.matchAll(/columnList\s*=\s*"([^"]*)"/g)]
+    .map((m) => m[1].split(',')[0].replace(/['"\s]/g, '').toLowerCase());
+  const migrationIndexed = (col: string) => (ctx.infra.indexedColumns.get(table) ?? []).some((cols) => cols[0] === col);
+  const lines = c.split('\n');
+  lines.forEach((l, i) => {
+    if (!/@ManyToOne\b/.test(l)) return;
+    // The relation's decorator stack and the property it decorates
+    // Walk past this decorator and any that follow (balanced parentheses) to the property line
+    let end = i;
+    let depth = 0;
+    for (let j = i; j < lines.length - 1 && j - i < 20; j++) {
+      depth += (lines[j].match(/\(/g) ?? []).length - (lines[j].match(/\)/g) ?? []).length;
+      end = j;
+      if (depth <= 0 && !/^\s*@/.test(lines[j + 1])) break;
+    }
+    let start = i;
+    while (start > 0 && /^\s*@|^\s*[})\],]/.test(lines[start - 1])) start--;
+    const stack = lines.slice(start, end + 2).join('\n');
+    const cascades = isTs ? /onDelete\s*:\s*['"](?:CASCADE|SET NULL)['"]/i.test(stack) : /@OnDelete\s*\(\s*action\s*=\s*OnDeleteAction\.(?:CASCADE|SET_NULL)/.test(stack);
+    if (!cascades || /@Index\b/.test(stack)) return;
+    const prop = /(\w+)\s*[!?]?\s*:\s*[\w<>[\]| ]+;?\s*$/.exec(lines[end + 1] ?? '')?.[1] ?? /\s(\w+)\s*;\s*$/.exec(lines[end + 1] ?? '')?.[1] ?? '';
+    if (!prop) return;
+    const joinName = /@JoinColumn\s*\(\s*(?:\{[^}]*\bname\s*:\s*['"](\w+)['"]|[^)]*\bname\s*=\s*"(\w+)")/.exec(stack);
+    const colName = joinName?.[1] ?? joinName?.[2] ?? (isTs ? `${prop}Id` : `${snake(prop)}_id`);
+    const col = colName.toLowerCase();
+    if (classIndexed.some((x) => x === col || x === prop.toLowerCase() || x === `${prop.toLowerCase()}id`) || migrationIndexed(col) || migrationIndexed(snake(col))) return;
+    add({ ruleId: 30315, code: 'XL-15', severity: 'LOW', lineIdx: i, type: 'INFRA_DATABASE', category: 'Schema Optimization',
+      title: `${className || table}.${prop} Cascades on Delete but Nothing Indexes ${colName}`,
+      why: `The relation deletes or nulls ${className || table} rows when the parent goes away, and the app runs on Postgres, which does not index foreign key columns on its own. Each parent delete then scans the whole ${table} table for ${colName}, which gets slow and holds locks as it grows.`,
+      fix: isTs
+        ? `Add @Index() above the ${prop} relation (or @Index(['${prop}']) on the entity), then generate a migration.`
+        : `Add the column to the entity's indexes: @Table(indexes = @Index(columnList = "${colName}")), then add the migration.` });
+  });
+}
+
+// ---------------------------------------------------------------------------------------------------------------
 export function evaluateCrossLayerRules(file: CodeFile, lines: string[], cleanContent: string, findingCounter: {
   count: number;
 }, context: RepoContext = emptyRepoContext()): { findings: Finding[]; logs: string[] } {
@@ -346,12 +512,15 @@ export function evaluateCrossLayerRules(file: CodeFile, lines: string[], cleanCo
   checkSupabaseTables(path, c, context, add);
   checkGoTimeout(path, c, add);
   checkReadModifyWrite(path, c, add);
+  checkOrmReadModifyWrite(path, c, add);
   checkSharedCacheKey(path, c, add);
   checkInfiniteRetry(path, c, add);
   checkBodyContract(path, c, context, add);
   checkWebhookDedupe(path, c, add);
   checkSmsRateLimit(path, c, add);
   checkTenantFilter(path, c, add);
+  checkCascadeForeignKeyIndex(path, c, context, add);
+  checkOrmCascadeForeignKeyIndex(path, c, context, add);
 
   const raw = (file.content || '').split('\n');
   const ts = new Date().toLocaleTimeString();

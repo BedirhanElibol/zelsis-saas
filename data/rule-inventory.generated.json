@@ -1,10 +1,10 @@
 {
  "summary": {
-  "implementedRules": 1297,
-  "testedRules": 1288,
-  "preciseLocationRules": 1294,
+  "implementedRules": 1302,
+  "testedRules": 1296,
+  "preciseLocationRules": 1300,
   "catalogEntries": 1922,
-  "catalogOnlyNotImplemented": 1397,
+  "catalogOnlyNotImplemented": 1396,
   "catalogPlaceholderMetadata": 1810
  },
  "catalogOnly": [
@@ -1072,7 +1072,6 @@
   12450,
   12501,
   12505,
-  12506,
   12507,
   12508,
   12509,
@@ -1441,7 +1440,7 @@
    "ruleId": 14,
    "code": "RULE-14",
    "title": "Insecure Hardcoded Fallback for Cryptographic Session / JWT Secret",
-   "severity": "CRITICAL",
+   "severity": "UNKNOWN",
    "source": "lib/rules/security-rules.ts",
    "preciseLocation": true,
    "tested": true,
@@ -1591,7 +1590,7 @@
    "ruleId": 32,
    "code": "RULE-32",
    "title": "Dynamic Code Execution (eval / Function Remote Code Execution)",
-   "severity": "CRITICAL",
+   "severity": "UNKNOWN",
    "source": "lib/rules/security-rules.ts",
    "preciseLocation": true,
    "tested": true,
@@ -2391,7 +2390,7 @@
    "ruleId": 3017,
    "code": "RULE-3017",
    "title": "Dangerous Host Docker Socket Mount (/var/run/docker.sock Exposed)",
-   "severity": "CRITICAL",
+   "severity": "HIGH",
    "source": "lib/rules/infra-rules.ts",
    "preciseLocation": true,
    "tested": true,
@@ -2424,7 +2423,7 @@
    "severity": "CRITICAL",
    "source": "lib/rules/infra-rules.ts",
    "preciseLocation": true,
-   "tested": false,
+   "tested": true,
    "inCatalog": false
   },
   {
@@ -3593,7 +3592,7 @@
    "title": "Docker Container Running as Default Root User",
    "severity": "HIGH",
    "source": "lib/rules/cloud-native-rules.ts",
-   "preciseLocation": false,
+   "preciseLocation": true,
    "tested": true,
    "inCatalog": true
   },
@@ -3950,7 +3949,7 @@
   {
    "ruleId": 7135,
    "code": "WEB-PERF-35",
-   "title": "Unkeyed React List Elements Forcing Full DOM Rebuild",
+   "title": "List Keyed by Array Index",
    "severity": "LOW",
    "source": "lib/rules/web-vitals-rules.ts",
    "preciseLocation": true,
@@ -5304,7 +5303,7 @@
    "severity": "CRITICAL",
    "source": "lib/rules/python-enterprise-rules.ts",
    "preciseLocation": true,
-   "tested": false,
+   "tested": true,
    "inCatalog": true
   },
   {
@@ -5401,7 +5400,7 @@
    "ruleId": 8811,
    "code": "PY-SEC-11",
    "title": "Dynamic Code Execution via eval() or exec()",
-   "severity": "CRITICAL",
+   "severity": "UNKNOWN",
    "source": "lib/rules/python-enterprise-rules.ts",
    "preciseLocation": true,
    "tested": true,
@@ -5434,7 +5433,7 @@
    "severity": "HIGH",
    "source": "lib/rules/python-enterprise-rules.ts",
    "preciseLocation": true,
-   "tested": false,
+   "tested": true,
    "inCatalog": true
   },
   {
@@ -5761,7 +5760,7 @@
    "ruleId": 8901,
    "code": "K8S-01",
    "title": "Privileged Container Execution (privileged: true)",
-   "severity": "CRITICAL",
+   "severity": "HIGH",
    "source": "lib/rules/k8s-hardening-rules.ts",
    "preciseLocation": true,
    "tested": true,
@@ -7061,7 +7060,7 @@
    "ruleId": 12301,
    "code": "TLS-01",
    "title": "Deprecated TLS 1.0 / 1.1 Protocols Permitted on Public Endpoints",
-   "severity": "CRITICAL",
+   "severity": "HIGH",
    "source": "lib/rules/tls-cryptography-rules.ts",
    "preciseLocation": true,
    "tested": true,
@@ -7112,6 +7111,16 @@
    "code": "MQ-04",
    "title": "Missing Publisher Confirms / Acknowledgments Leading to Data Loss",
    "severity": "MEDIUM",
+   "source": "lib/rules/message-broker-rules.ts",
+   "preciseLocation": true,
+   "tested": true,
+   "inCatalog": true
+  },
+  {
+   "ruleId": 12506,
+   "code": "MQ-06",
+   "title": "Failed Message Is Requeued Forever From the Error Handler",
+   "severity": "HIGH",
    "source": "lib/rules/message-broker-rules.ts",
    "preciseLocation": true,
    "tested": true,
@@ -7181,7 +7190,7 @@
    "ruleId": 12902,
    "code": "PCI4-02",
    "title": "PCI-DSS Req 6.4.3 Insecure Third-Party Scripts on Payment Pages",
-   "severity": "CRITICAL",
+   "severity": "HIGH",
    "source": "lib/rules/pci-dss-v4-rules.ts",
    "preciseLocation": true,
    "tested": true,
@@ -7431,7 +7440,7 @@
    "ruleId": 15701,
    "code": "KERN-SEC-01",
    "title": "Unrestricted Linux Root Capabilities (CAP_SYS_ADMIN) Retained in Container Workloads",
-   "severity": "CRITICAL",
+   "severity": "HIGH",
    "source": "lib/rules/linux-kernel-security-rules.ts",
    "preciseLocation": true,
    "tested": true,
@@ -7660,7 +7669,7 @@
   {
    "ruleId": 18101,
    "code": "MYSQL-SEC-01",
-   "title": "MySQL Raw Query Injection via String Formatting",
+   "title": "MySQL Raw Query Injection via Python String Interpolation",
    "severity": "CRITICAL",
    "source": "lib/rules/multi-database-rules.ts",
    "preciseLocation": true,
@@ -10763,6 +10772,16 @@
    "title": "Request Input Builds a File Path (Go)",
    "severity": "HIGH",
    "source": "lib/rules/py-go-flow-rules.ts",
+   "preciseLocation": true,
+   "tested": true,
+   "inCatalog": false
+  },
+  {
+   "ruleId": 29507,
+   "code": "FLOW-07",
+   "title": "${sink.model} Loaded by the Id in the URL Without an Ownership Check (Python)",
+   "severity": "HIGH",
+   "source": "lib/rules/iag-python-rules.ts",
    "preciseLocation": true,
    "tested": true,
    "inCatalog": false
@@ -14363,6 +14382,36 @@
    "title": "This ${model} Query Skips the Tenant Filter the Other ${model} Queries in This File Use",
    "severity": "HIGH",
    "source": "lib/rules/cross-layer-rules.ts",
+   "preciseLocation": true,
+   "tested": true,
+   "inCatalog": false
+  },
+  {
+   "ruleId": 30315,
+   "code": "RULE-30315",
+   "title": "${fk.table}.${fk.col} Cascades on Delete but No Migration Indexes It",
+   "severity": "LOW",
+   "source": "lib/rules/cross-layer-rules.ts",
+   "preciseLocation": true,
+   "tested": true,
+   "inCatalog": false
+  },
+  {
+   "ruleId": 30341,
+   "code": "RULE-30341",
+   "title": "Outside Call Retried in a Tight Loop With No Backoff",
+   "severity": "UNKNOWN",
+   "source": "lib/rules/resilience-rules.ts",
+   "preciseLocation": true,
+   "tested": true,
+   "inCatalog": false
+  },
+  {
+   "ruleId": 30342,
+   "code": "RULE-30342",
+   "title": "axios-retry Retries With No Delay",
+   "severity": "UNKNOWN",
+   "source": "lib/rules/resilience-rules.ts",
    "preciseLocation": true,
    "tested": true,
    "inCatalog": false

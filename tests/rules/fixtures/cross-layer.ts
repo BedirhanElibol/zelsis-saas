@@ -166,6 +166,167 @@ def spend(account, amount):
 `)],
   },
   {
+    ruleIds: [30307], name: 'XL-07 JPA setBalance(getBalance() - x) then save vs pessimistic lock',
+    detects: [f('src/main/java/app/WalletService.java', `@Service
+public class WalletService {
+  @Transactional
+  public void pay(Long id, long amount) {
+    Wallet wallet = walletRepository.findById(id).orElseThrow();
+    wallet.setBalance(wallet.getBalance() - amount);
+    walletRepository.save(wallet);
+  }
+}
+`)],
+    ignores: [f('src/main/java/app/WalletService.java', `@Service
+public class WalletService {
+  @Transactional
+  public void pay(Long id, long amount) {
+    Wallet wallet = walletRepository.findByIdForUpdate(id).orElseThrow();
+    wallet.setBalance(wallet.getBalance() - amount);
+    walletRepository.save(wallet);
+  }
+}
+
+interface WalletRepository extends JpaRepository<Wallet, Long> {
+  @Lock(LockModeType.PESSIMISTIC_WRITE)
+  @Query("select w from Wallet w where w.id = :id")
+  Optional<Wallet> findByIdForUpdate(Long id);
+}
+`)],
+  },
+  {
+    ruleIds: [30307], name: 'XL-07 GORM Balance -= then Save vs gorm.Expr atomic update',
+    detects: [f('internal/billing/pay.go', `package billing
+
+func Pay(db *gorm.DB, id uint, amount int64) error {
+	var w Wallet
+	db.First(&w, id)
+	w.Balance -= amount
+	return db.Save(&w).Error
+}
+`)],
+    ignores: [f('internal/billing/pay.go', `package billing
+
+func Pay(db *gorm.DB, id uint, amount int64) error {
+	return db.Model(&Wallet{}).Where("id = ? AND balance >= ?", id, amount).
+		Update("balance", gorm.Expr("balance - ?", amount)).Error
+}
+`)],
+  },
+  {
+    ruleIds: [30307], name: 'XL-07 Eloquent ->stock -= then save vs lockForUpdate',
+    detects: [f('app/Services/OrderService.php', `<?php
+class OrderService {
+    public function reserve(int $productId, int $qty): void {
+        $product = Product::find($productId);
+        $product->stock -= $qty;
+        $product->save();
+    }
+}
+`)],
+    ignores: [f('app/Services/OrderService.php', `<?php
+class OrderService {
+    public function reserve(int $productId, int $qty): void {
+        DB::transaction(function () use ($productId, $qty) {
+            $product = Product::lockForUpdate()->find($productId);
+            $product->stock -= $qty;
+            $product->save();
+        });
+    }
+}
+`)],
+  },
+  {
+    ruleIds: [30307], name: 'XL-07 ActiveRecord credits -= then save! vs with_lock',
+    detects: [f('app/services/spend_credits.rb', `class SpendCredits
+  def call(account, amount)
+    account.credits -= amount
+    account.save!
+  end
+end
+`)],
+    ignores: [f('app/services/spend_credits.rb', `class SpendCredits
+  def call(account, amount)
+    account.with_lock do
+      account.credits -= amount
+      account.save!
+    end
+  end
+end
+`)],
+  },
+  {
+    ruleIds: [30307], name: 'XL-07 Rails model concern self.credits -= with save! vs with_lock',
+    detects: [f('app/models/concerns/has_credits.rb', `module HasCredits
+  extend ActiveSupport::Concern
+
+  def use_credit(amount)
+    self.credits -= amount
+    raise 'not enough credits' if self.credits < 0
+  end
+
+  def use_credit!(amount)
+    use_credit(amount)
+    save!
+  end
+end
+`)],
+    ignores: [f('app/models/concerns/has_credits.rb', `module HasCredits
+  extend ActiveSupport::Concern
+
+  def use_credit!(amount)
+    with_lock do
+      self.credits -= amount
+      raise 'not enough credits' if self.credits < 0
+      save!
+    end
+  end
+end
+`)],
+  },
+  {
+    ruleIds: [30315], name: 'XL-15 cascading foreign keys with no index vs indexes added in a later migration',
+    detects: [f('supabase/migrations/001_notes.sql', `create table public.notes (
+  id uuid primary key default gen_random_uuid(),
+  user_id uuid not null references auth.users on delete cascade,
+  body text
+);
+
+create table public.comments (
+  id bigint generated always as identity primary key,
+  note_id uuid not null,
+  body text,
+  foreign key (note_id) references public.notes (id) on delete cascade
+);
+`)],
+    ignores: [f('supabase/migrations/001_notes.sql', `create table public.notes (
+  id uuid primary key default gen_random_uuid(),
+  user_id uuid not null references auth.users on delete cascade,
+  body text
+);
+
+create table public.comments (
+  id bigint generated always as identity primary key,
+  note_id uuid not null,
+  body text,
+  foreign key (note_id) references public.notes (id) on delete cascade
+);
+
+create table public.tags (
+  id bigint primary key,
+  owner_id uuid references auth.users (id)
+);
+`), f('supabase/migrations/002_indexes.sql', `create index notes_user_id_idx on public.notes (user_id);
+create index on public.comments (note_id, created_at);
+`), f('migrations/2019_members/up.sql', `create table community_member (
+  id serial primary key,
+  user_id int references users on update cascade on delete cascade not null
+);
+`), f('migrations/2021_rename/up.sql', `alter table community_member rename column user_id to person_id;
+create index idx_community_member_person on community_member (person_id);
+`)],
+  },
+  {
     ruleIds: [30308], name: 'XL-08 user profile cached under a fixed key vs per-user key',
     detects: [f('lib/profile-cache.ts', `import { redis } from './redis';
 export async function cacheProfile(user: { id: string }) {

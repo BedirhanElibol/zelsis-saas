@@ -14,6 +14,7 @@ import { getActiveUserAuth } from '@/lib/supabase-client';
 import type { StoredFix } from '@/lib/fix-gate';
 import { ExperimentalBadge, UnprovenBadge } from '@/components/findings/ExperimentalBadge';
 import { priceLabel } from '@/data/pricing-plans';
+import { incidentFor } from '@/data/incidents';
 
 export interface FindingDetailModalProps {
   isOpen: boolean;
@@ -138,6 +139,7 @@ export const FindingDetailModal: React.FC<FindingDetailModalProps> = ({
     ? { ...finding, remediationPrompt: 'Included in Zelsis Pro.', diffPatch: undefined }
     : fixSource;
   const cleanTitle = sanitizeContent(finding.title);
+  const incident = incidentFor(finding.ruleId);
   const cleanSteps = (finding.reproductionSteps || []).map(sanitizeContent);
 
   const diffText =
@@ -277,6 +279,15 @@ export const FindingDetailModal: React.FC<FindingDetailModalProps> = ({
                 <p className="text-sm text-amber-200/90 flex flex-wrap items-center gap-2">
                   <RiskBadge risk={finding.risk} />
                   {finding.impact}
+                </p>
+              )}
+              {incident && (
+                <p className="text-xs text-zinc-300 leading-relaxed border-l-2 border-amber-500/50 pl-3">
+                  <span className="text-amber-300 font-semibold">This has happened before ({incident.year}):</span>{' '}
+                  {incident.title}. {incident.what}{' '}
+                  <a href={incident.source.url} target="_blank" rel="noopener noreferrer" className="underline hover:text-white">
+                    {incident.source.label}
+                  </a>
                 </p>
               )}
               <div className="text-xs font-mono text-emerald-400/90 flex items-center gap-2 flex-wrap">

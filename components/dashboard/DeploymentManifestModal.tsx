@@ -54,7 +54,7 @@ on:
 
 jobs:
   release-gate:
-    name: Zelsis Quality & Security Gate
+    name: Zelsis Release Check
     runs-on: ubuntu-latest
     steps:
       - name: Checkout Repository

@@ -30,7 +30,7 @@ export function evaluatePciDssV4Rules(file: CodeFile, lines: string[], cleanCont
             ruleId: 12902,
             type: 'LEGAL_COMPLIANCE',
             title: "PCI4-02: PCI-DSS Req 6.4.3 Insecure Third-Party Scripts on Payment Pages",
-            severity: "CRITICAL",
+            severity: "HIGH",
             category: "Script Integrity",
             filePath: file.path,
             lineRange: `L${lineNum}`,
@@ -50,7 +50,7 @@ export function evaluatePciDssV4Rules(file: CodeFile, lines: string[], cleanCont
 // ---- precise matchers (rule-proof pass) ----
 const lineAt = (text: string, idx: number): number => text.slice(0, idx).split('\n').length - 1;
 /** Payment SDKs that must be loaded live from the provider (they forbid SRI pinning). */
-const PAYMENT_SDK_HOST = /^https?:\/\/(?:js\.stripe\.com|checkout\.stripe\.com|(?:www\.)?paypal\.com|(?:www\.)?paypalobjects\.com|js\.braintreegateway\.com|checkoutshopper-(?:live|test)\.adyen\.com|(?:sandbox\.)?web\.squarecdn\.com|js\.squareup\.com|cdn\.paddle\.com|assets\.lemonsqueezy\.com|checkout\.razorpay\.com|js\.mollie\.com)\//i;
+const PAYMENT_SDK_HOST = /^https?:\/\/(?:js\.stripe\.com|checkout\.stripe\.com|(?:[\w-]+\.)?checkout\.com|(?:www\.)?paypal\.com|(?:www\.)?paypalobjects\.com|js\.braintreegateway\.com|checkoutshopper-(?:live|test)\.adyen\.com|(?:sandbox\.)?web\.squarecdn\.com|js\.squareup\.com|cdn\.paddle\.com|assets\.lemonsqueezy\.com|checkout\.razorpay\.com|js\.mollie\.com)\//i;
 /** A third-party <script src> on a payment page without an integrity (SRI) pin. */
 function findUnpinnedThirdPartyScript(src: string): number {
     const tag = /<script\b[^>]*\bsrc=["'](https?:\/\/[^"']+)["'][^>]*>/g;

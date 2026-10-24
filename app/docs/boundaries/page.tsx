@@ -40,7 +40,9 @@ export default function BoundariesPage() {
       <section className="space-y-4">
         <h2 className="text-xl font-semibold text-white">2. Complex Business Logic Flaws</h2>
         <p>
-          Our engine operates line-by-line and file-by-file. It cannot reason about complex, multi-step business logic flaws that span across multiple decoupled systems.
+          Most rules read one file at a time. A set of cross-file checks links code to migrations, env templates, Dockerfiles,
+          proxy configs and (for JavaScript and TypeScript) auth helpers and middleware. None of this reasons about multi-step
+          business logic that spans several decoupled systems.
         </p>
         <p className="text-zinc-300">Examples of limitations:</p>
         <ul className="list-disc pl-5 space-y-2">

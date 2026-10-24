@@ -2,7 +2,7 @@ import { parseLineRange } from '@/lib/ci-annotations';
 import { NextResponse } from 'next/server';
 import crypto from 'crypto';
 import { createClient } from '@supabase/supabase-js';
-import { createGitHubAppClient, createCheckRun, updateCheckRun, postOrUpdatePRComment } from '@/lib/github/app';
+import { CHECK_NAME, RELEASE_CHECK_TITLE, createGitHubAppClient, createCheckRun, updateCheckRun, postOrUpdatePRComment } from '@/lib/github/app';
 import { fetchGithubRepositoryData } from '@/lib/github-api';
 import { getConfiguredAppUrl } from '@/lib/app-url';
 import { runStaticCodeScan } from '@/lib/scanner-engine';
@@ -139,7 +139,7 @@ async function handlePullRequest(payload: any, supabase: any) {
     const octokit = await createGitHubAppClient(installation.id);
 
     // Create Check Run indicating 'in_progress'
-    const checkRun = await createCheckRun(octokit, owner, repo, headSha, 'Zelsis Security Gate');
+    const checkRun = await createCheckRun(octokit, owner, repo, headSha, CHECK_NAME);
 
     try {
       // Find user via installation to apply their policy
@@ -235,12 +235,12 @@ async function handlePullRequest(payload: any, supabase: any) {
       // Complete Check Run
       await updateCheckRun(octokit, owner, repo, checkRun.id, 'completed', conclusion, {
         title: `${readinessScore}/100 Readiness Score`,
-        summary: `### Zelsis Security Gate: **${gateStatus}**\n\n- **New Findings in PR:** ${newFindings.length}\n- **Existing Findings:** ${existingFindings.length}\n\n*Review annotations for details on new issues.*`,
+        summary: `### ${RELEASE_CHECK_TITLE}: **${gateStatus}**\n\n- **New Findings in PR:** ${newFindings.length}\n- **Existing Findings:** ${existingFindings.length}\n\n*Review annotations for details on new issues.*`,
         annotations
       });
 
       // Post/Update PR Comment
-      const commentBody = `### Zelsis PR Gate Results\n\n` +
+      const commentBody = `### ${RELEASE_CHECK_TITLE} Results\n\n` +
         `**Status:** ${gateStatus === 'PASSED' ? '✅ PASSED' : gateStatus === 'WARNING' ? '⚠️ WARNING' : '❌ FAILED'}\n` +
         `**Readiness Score:** ${readinessScore}/100\n\n` +
         `#### PR Findings Summary\n` +
@@ -346,16 +346,24 @@ export function scanFooter(ms: number, files: number, findings: any[]): string {
   return `<sub>⚡ Scanned ${files} files in ${seconds}s by [Zelsis](https://zelsis.com): ${verdict}.</sub>`;
 }
 
-/** Up to five blocking-level PR findings with what someone can do with each, for the PR comment. */
+function issueRow(f: any): string {
+  const line = parseLineRange(f.lineRange)?.[0];
+  const where = `\`${f.filePath}${line ? `:${line}` : ''}\``;
+  const risk = f.risk ? `**${RISK_LABEL[f.risk as RiskKind].toUpperCase()}:** ` : '';
+  return `- **${f.title}** (${where})${f.impact ? `\n  ${risk}${f.impact}` : ''}`;
+}
+
+/** Up to five blocking-level PR findings, then up to ten medium ones, with what someone can do with each. */
 export function topIssuesSection(findings: any[]): string {
   const top = findings.filter(f => f.severity === 'CRITICAL' || f.severity === 'HIGH').slice(0, 5);
-  if (top.length === 0) return '';
-  const rows = top.map(f => {
-    const line = parseLineRange(f.lineRange)?.[0];
-    const where = `\`${f.filePath}${line ? `:${line}` : ''}\``;
-    const risk = f.risk ? `**${RISK_LABEL[f.risk as RiskKind].toUpperCase()}:** ` : '';
-    return `- **${f.title}** (${where})${f.impact ? `\n  ${risk}${f.impact}` : ''}`;
-  });
+  const medium = findings.filter(f => f.severity === 'MEDIUM');
+  if (top.length === 0 && medium.length === 0) return '';
+  const rows = top.map(issueRow);
+  if (medium.length > 0) {
+    if (top.length > 0) rows.push('', '**Medium**');
+    rows.push(...medium.slice(0, 10).map(issueRow));
+    if (medium.length > 10) rows.push(`- _and ${medium.length - 10} more medium findings_`);
+  }
   return `#### What needs a look\n${rows.join('\n')}\n\n`;
 }
 

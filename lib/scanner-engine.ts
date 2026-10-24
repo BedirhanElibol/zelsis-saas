@@ -1,7 +1,7 @@
 import { evaluateAiCommentRules } from './rules/ai-comment-rules';
 import { Finding } from '@/data/schema';
 import type { CodeFile, ScanResult } from './scanner/types';
-import { isMinifiedContent, isSecretPatternFixture, isSecretRuleId, isTestFixturePath, isVendoredPath, stripComments, yieldToMain } from './scanner/text';
+import { hasUntrustedInput, isCriticalInjectionRule, isMinifiedContent, isNonAppPath, isSecretPatternFixture, isSecretRuleId, isTestFixturePath, isVendoredPath, stripComments, yieldToMain } from './scanner/text';
 import { parseZelsisIgnore } from './scanner/ignore-parser';
 import { parseZelsisRc } from './scanner/rc-config';
 import { calculateGateStatus, calculateReadinessScore, gateSeverity, gatingFindings } from './scanner/scoring';
@@ -35,6 +35,7 @@ const SAME_ISSUE_RULES: ReadonlyArray<readonly [number, number]> = [
   [29301, 9106], [29302, 15], [29302, 28920], [29303, 3021], [29303, 6043], [29303, 18104], [29307, 41], [29308, 16],
   [23004, 10102], // client-supplied price: SAAS-04 over the e-commerce duplicate
   [9704, 8143], // webhook handler without signature verification
+  [9704, 28002], // unsigned payment webhook: the missing signature check is the issue, not a missing user session
   [9502, 12605], // unpinned third-party GitHub Action
   [29623, 1208], [29632, 7135], [29636, 1211], // React logic rules prove the line: typeof window render, index key, double submit
 ];
@@ -48,7 +49,7 @@ import { buildDependencyFindings, OSV_RULE_ID, queryOsv, type DependencyAuditSum
 
 export type { CodeFile, ScanResult } from './scanner/types';
 export type { ZelsisRcConfig } from './scanner/rc-config';
-export { isSecretRuleId, isTestFixturePath, stripComments, yieldToMain } from './scanner/text';
+export { isSecretRuleId, isTestFixturePath, stripComments, yieldToMain, UNTRUSTED_INPUT, hasUntrustedInput, isCriticalInjectionRule, CRITICAL_INJECTION_RULES } from './scanner/text';
 export { parseZelsisIgnore, parseShipguardIgnore } from './scanner/ignore-parser';
 export { parseZelsisRc } from './scanner/rc-config';
 export { calculateGateStatus, calculateReadinessScore, gatingFindings } from './scanner/scoring';
@@ -258,6 +259,38 @@ export async function runStaticCodeScan(inputFiles: CodeFile[], repoName: string
       if (isSecretRuleId(f.ruleId) && isSecretPatternFixture(f.filePath)) {
         testFixtureSkips++;
         return;
+      }
+      // Firebase / Google client config ships its AIza API key to every app on purpose: it is not a secret
+      if (isSecretRuleId(f.ruleId) && /(?:^|\/)(?:GoogleService-Info\.plist|google-services\.json|firebase(?:-config)?\.(?:json|[jt]s))$/i.test(f.filePath) && /AIza/.test(String(f.snippet ?? ''))) {
+        testFixtureSkips++;
+        return;
+      }
+      // A key in tests, fixtures, docs or examples is usually a dummy: keep it visible (a real one still leaks)
+      // but do not block a release on it
+      if (isSecretRuleId(f.ruleId) && (isTestFixture || /(?:^|\/)(?:docs?|docs_src|examples?|samples?)\//i.test(f.filePath))
+          && (f.severity === 'CRITICAL' || f.severity === 'HIGH')) {
+        f.severity = 'MEDIUM';
+        f.reproductionSteps = [...(f.reproductionSteps ?? []), 'Found in a test, fixture or docs file, so it is most likely a dummy value. If it is a real key, revoke it: git history keeps it.'];
+      }
+      // Non-app paths (docs, knowledge, seeders, dev scripts, local compose):
+      // do not block a release on code that is outside the shipped app. Secrets keep existing behaviour.
+      if (!isSecretRuleId(f.ruleId) && isNonAppPath(f.filePath) && (f.severity === 'CRITICAL' || f.severity === 'HIGH')) {
+        f.severity = 'MEDIUM';
+        f.reproductionSteps = [
+          ...(f.reproductionSteps ?? []),
+          'Found outside the shipped application code (documentation, knowledge base, seeder, dev script or local dev environment).'
+        ];
+      }
+      // Critical injection rules require external input to be release-blocking: without request/untrusted
+      // input in the file, dynamic queries or commands are hardening concerns, not immediate CRITICAL blockers.
+      // eval of a stored model field (Ruby eval(@record.attribute)) runs data a user saved earlier: keep it CRITICAL
+      const evalsStoredField = f.ruleId === 32 && /\beval\s*\(\s*@\w+\.\w+/.test(String(f.snippet ?? ''));
+      if (f.severity === 'CRITICAL' && isCriticalInjectionRule(f.ruleId) && !evalsStoredField && !hasUntrustedInput(rawContent)) {
+        f.severity = 'HIGH';
+        f.reproductionSteps = [
+          ...(f.reproductionSteps ?? []),
+          'Downgraded from CRITICAL to HIGH: No untrusted user input (HTTP request, parameters, body, or external stream) was detected in this file.'
+        ];
       }
       // Feature: Dismiss Findings
       if (options.dismissals && options.dismissals.some(d => d.ruleId === f.ruleId && d.filePath === f.filePath)) {

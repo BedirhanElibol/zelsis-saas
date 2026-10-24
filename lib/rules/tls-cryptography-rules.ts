@@ -32,7 +32,7 @@ export function evaluateTlsCryptographyRules(file: CodeFile, lines: string[], cl
             ruleId: 12301,
             type: 'SECURITY',
             title: "TLS-01: Deprecated TLS 1.0 / 1.1 Protocols Permitted on Public Endpoints",
-            severity: "CRITICAL",
+            severity: "HIGH",
             category: "Transport Security",
             filePath: file.path,
             lineRange: `L${lineNum}`,

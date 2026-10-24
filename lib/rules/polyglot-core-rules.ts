@@ -6,6 +6,7 @@
 import { Finding } from '@/data/schema';
 import { CodeFile } from '../scanner-engine';
 import { javaDeserializationIsSafe } from './shared/java-deserialization';
+import { UNTRUSTED_INPUT } from '../scanner/text';
 
 export interface PolyglotCoreRuleResult {
   findings: Finding[];
@@ -33,7 +34,22 @@ function languageOf(path: string): Lang {
   return null;
 }
 
-const SQL = String.raw`(?:(?<!<)\bSELECT\s+(?!value\s*=)[\w*]|INSERT\s+INTO|UPDATE\s+\w+\s+SET|DELETE\s+FROM)`;
+// SELECT needs a FROM in the same literal: UI text such as "Select at most {n} tickets" is not a query
+// ... and SELECT right after a word of prose ("options for Select FormField from") is a sentence, not a query
+const SQL = String.raw`(?:(?<!<)(?<!\b(?:for|to|the|a|and|or|please|then|we|you|can|could|cannot|not|must|should|will)\s)\bSELECT\s+(?!value\s*=)[\w*][^"'\n]*?\bFROM\b|INSERT\s+INTO|UPDATE\s+\w+\s+SET|DELETE\s+FROM)`;
+/**
+ * A value spliced into the SQL rather than structure: inside SQL quotes ('{x}', '#{x}', '$x', '%s',
+ * '" + x + "'), or right after a comparison / LIKE / IN ( (= {x}, = " + x). DB-API %s without quotes is a bind
+ * parameter, so it does not count.
+ */
+const SQL_VALUE_POSITION = new RegExp([
+  // '{x}', '%{x}%' (LIKE), '$x', '%s', '%(name)s'
+  String.raw`'%?\s*(?:\{[^}]+\}|#\{[^}]+\}|\$\{[^}]+\}|\$[a-z_]\w*|%s|%\(\w+\)s)`,
+  String.raw`'%?["\x60]\s*[+.]\s*\$?[a-z_]`,
+  String.raw`(?:=|<>|!=|<=?|>=?|\bLIKE|\bIN\s*\()\s*(?:\{[^}]+\}|#\{[^}]+\}|\$\{[^}]+\}|\$[a-z_]\w*|["\x60]\s*[+.]\s*\$?[a-z_])`,
+].join('|'), 'i');
+
+
 /** A non-constant identifier (lowercase start or member access), i.e. not FOO_BAR / Foo.class. */
 const DYN = String.raw`(?:[a-z_][\w]*(?:\.[\w]+|\[[^\]]*\]|\([^)]*\))*)`;
 
@@ -54,19 +70,39 @@ export function evaluatePolyglotCoreRules(file: CodeFile, lines: string[], clean
   const withoutHashComments = lang === 'ruby' || lang === 'python' || lang === 'erb'
     ? cleanContent.replace(/^\s*#.*$/gm, '').replace(/<%#[\s\S]*?%>/g, '')
     : cleanContent;
-  // Framework-quoted identifiers are not user input
-  const content = joinStatements(withoutHashComments)
+  // Framework-quoted identifiers and Python {MAX_IDS} / {_TABLE} module constants are not user input
+  const pyConstants = (t: string) => (lang === 'python' ? t.replace(/\{_?[A-Z][A-Z0-9_]*\}/g, 'IDENT') : t);
+  const normalize = (t: string) => t
     .replace(/#\{\s*(?:self\.class\.)?(?:quoted_table_name|table_name|connection\.quote\w*\([^}]*\)|sanitize_sql\w*\([^}]*\)|quote_column_name\([^}]*\))\s*\}/g, 'IDENT')
+    // Ruby: SQL the ORM generated (#{scope.to_sql}), quote(), Model.table_name and CONSTANTS are not input
+    .replace(/#\{\s*(?:[\w.:()]+\.to_sql|(?:\w+\.)*quote\w*\([^}]*\)|[\w:]+\.table_name|(?:[A-Z]\w*::)*[A-Z][A-Z0-9_]*)\s*\}/g, 'IDENT')
+    // Numbers cannot change a query: #{limit.to_i}, #{user.id}, #{title.size}, #{Integer(x)}, {int(x)}
+    .replace(/(?:#\{|\{)\s*(?:(?:::)?@?[\w.:]+\.(?:to_i|to_f|id|pid|size|count|length)|Integer\([^)]*\)|Float\([^)]*\)|int\([^)]*\)|float\([^)]*\)|len\([^)]*\))\s*\}/g, 'IDENT')
+    // A fragment the code assembled on its own ({where}, {sql}, {marks}, #{conditions}, {', '.join(updates)},
+    // {family_clause()}): where any user value enters is where that fragment is built, not this line
+    .replace(/(?:#\{|\{)\s*(?:['"][^'"]*['"]\s*\.join\(\s*)?(?:\w+_)?(?:where|clause|clauses|sql|subquery|filters?|conditions?|marks|placeholders|cols|columns|fields|updates|set_clause|order_by|base_query|inner)(?:_\w+)?(?:\(\))?\s*\)?\s*\}/gi, 'IDENT')
+    // Python placeholder lists: {','.join('?' * len(ids))}, {", ".join(["%s"] * n)}
+    .replace(/\{\s*['"][,\s]*['"]\s*\.join\(\s*(?:\[\s*)?['"](?:\?|%s|:\w+)['"]\s*\]?\s*\*[^}]*\)\s*\}/g, 'IDENT')
+    // PHP: a table name concatenated after FROM / INTO / UPDATE / JOIN ('... FROM ' . $table, $this->table())
+    .replace(/\b(FROM|INTO|UPDATE|JOIN|TABLE)\s*(['"])\s*\.\s*\$[\w>-]+(?:\([^)]*\))?/gi, '$1 IDENT$2')
+    // DuckDB read_parquet(...) reading from a config/constant filesystem path
+    .replace(/\bread_parquet\s*\(\s*(?:f?['"][^'"]*(?:\{[^}]+\}|#\{[^}]+\}|\$\{[^}]+\})[^'"]*['"]|\{[^}]+\}|#\{[^}]+\}|\$\{[^}]+\})\s*\)/gi, "read_parquet('IDENT')")
     // A table name interpolated after FROM / INTO / UPDATE / JOIN / TABLE cannot be a bind parameter and is
-    // almost always the app's own constant ("SELECT COUNT(*) FROM $TABLE"); values in WHERE / VALUES still count.
-    .replace(/\b(FROM|INTO|UPDATE|JOIN|TABLE)(\s+[`"']?)(?:\$\{\s*\w+\s*\}|\$\w+|\\\(\s*\w+\s*\)|#\{\s*\w+\s*\}|\{\w+\})/gi, '$1$2IDENT')
+    // almost always the app's own constant or model ("SELECT COUNT(*) FROM $TABLE", f"FROM {model.__tablename__}");
+    // values in WHERE / VALUES still count.
+    .replace(/\b(FROM|INTO|UPDATE|JOIN|TABLE)(\s+[`"']?)(?:\$\{\s*[\w.:()]+\s*\}|\$[\w.:]+|\\\(\s*[\w.:()]+\s*\)|#\{\s*[\w.:()]+\s*\}|\{[\w.:()]+\})/gi, '$1$2IDENT')
     // A dynamic SET clause built from column names is safe when the query uses bind placeholders
     // (%s, ?, $1, :name) and passes a parameters argument. Values in quotes or unparameterized queries still count.
     .replace(/\bSET(\s+)(?:\{[a-zA-Z_]\w*\}|\$\{[a-zA-Z_]\w*\})(?=[^\n]*(?:%s|\?|\$\d|:\w+)[^"'\n]*["']\s*,\s*[\w([{])/gi, 'SET$1IDENT');
-  const isDevTooling = /(?:^|\/)(?:scripts?|bin|tools|tasks|lib\/tasks|management\/commands)\/|(?:^|\/)(?:Rakefile|manage\.py|setup\.py|fabfile\.py|noxfile\.py)$/i.test(file.path);
+  const content = normalize(joinStatements(pyConstants(withoutHashComments)));
+  // Lines get the same treatment, so a finding points at the statement that is still dynamic, not at the first
+  // query of the file that merely looks like one
+  const normLines = lines.map((l) => normalize(pyConstants(l)));
+  const isDevTooling = /(?:^|\/)(?:scripts?|bin|tools|tasks|lib\/tasks|management\/commands|console\/commands|dev)\/|(?:^|\/)(?:Rakefile|manage\.py|setup\.py|fabfile\.py|noxfile\.py|install\.php|build\.php)$/i.test(file.path);
   const hits: Hit[] = [];
   const add = (h: Omit<Hit, 'lineIdx'>, lineRe: RegExp) => {
-    const idx = firstLine(lines, lineRe);
+    const norm = firstLine(normLines, lineRe);
+    const idx = norm !== -1 ? norm : firstLine(lines, lineRe);
     hits.push({ ...h, lineIdx: idx === -1 ? 0 : idx });
   };
 
@@ -89,23 +125,48 @@ export function evaluatePolyglotCoreRules(file: CodeFile, lines: string[], clean
     dart: [new RegExp(String.raw`(?:"\s*` + SQL + String.raw`[^"\n]*|'\s*` + SQL + String.raw`[^'\n]*)\$\{?` + DYN, 'i'), new RegExp(String.raw`(?:"\s*` + SQL + String.raw`[^"\n]*"|'\s*` + SQL + String.raw`[^'\n]*')\s*\+\s*` + DYN, 'i')]
   };
   const sqlPatterns = sqlByLang[lang as keyof typeof sqlByLang] ?? [];
-  const sqlHit = sqlPatterns.find((re) => re.test(content));
+  // Migrations and maintenance scripts run SQL on the app's own data, not on request input
+  const notRequestPath = isDevTooling || /(?:^|\/)(?:db\/(?:post_)?migrate|migrations?|alembic\/versions|\.semgrep)\//i.test(file.path);
+  const sqlHit = notRequestPath ? undefined : sqlPatterns.find((re) => re.test(content));
   if (sqlHit) {
     add({
       ruleId: 24101, code: 'CORE-01', severity: 'CRITICAL',
       title: 'SQL Injection: Query Built From Dynamic Values',
       why: 'The SQL text is assembled with string concatenation / interpolation, so a crafted value can change the query (read, modify or delete data).',
       fix: 'Use parameterized queries / bind variables (PreparedStatement, ActiveRecord placeholders, PDO prepare, cursor.execute(sql, params), SqlParameter).'
-    }, sqlPatterns.find((re) => lines.some((l) => re.test(l))) ?? new RegExp(SQL, 'i'));
+    }, sqlPatterns.find((re) => normLines.some((l) => re.test(l))) ?? sqlPatterns.find((re) => lines.some((l) => re.test(l))) ?? new RegExp(SQL, 'i'));
+    // Only a value placed into the SQL can carry an injection; structure the code assembles itself (column lists,
+    // table names, guards, unions) is advice: blocking a release on it would mostly block safe code.
+    // Judge every matching statement (a file can hold a safe one first), and point at a value-carrying one.
+    const h = hits[hits.length - 1];
+    const statements = [...content.matchAll(new RegExp(sqlHit.source, sqlHit.flags.includes('g') ? sqlHit.flags : sqlHit.flags + 'g'))]
+      .map((m) => content.slice(m.index!, m.index! + m[0].length + 120));
+    const valueStmt = statements.find((s) => SQL_VALUE_POSITION.test(s));
+    if (valueStmt) {
+      // Map the statement back to its first raw line (statements may span several lines)
+      const head = (/(?:SELECT|INSERT|UPDATE|DELETE)\b[^"'\n]{0,30}/i.exec(valueStmt)?.[0] ?? '').trim();
+      const at = head ? lines.findIndex((l) => l.includes(head)) : -1;
+      if (at !== -1) h.lineIdx = at;
+    } else {
+      h.severity = 'MEDIUM';
+      h.why = 'The SQL text is assembled from pieces (column lists, table names, conditions). No value is placed directly into it here, but if any piece can come from a request, the query can be changed.';
+      h.fix = 'Build the pieces only from fixed allow-lists (column and table names) and pass every value as a bind parameter.';
+    }
   }
 
   // CORE-02: OS command built from dynamic values
   const cmdByLang: Partial<Record<Exclude<Lang, null>, RegExp>> = {
-    ruby: /(?:\bsystem|\bexec|\bspawn|IO\.popen|Open3\.\w+|%x)\s*[\(\{]?\s*["`][^"`\n]*#\{|`[^`\n]*#\{/,
+    // A bare `...` only runs a command where an expression starts; inside "...", as in error messages
+    // ("`#{k}` is not a valid attribute"), backticks are plain text
+    // Kernel#system / exec / spawn, not a method of the same name (DB.exec "SET ...", connection.exec("SHOW ...")).
+    // A bare `...#{x}...` closes on the line and is followed by code, not prose ("`#{col}` and the foreign key")
+    ruby: /(?:(?<![.\w])(?:system|exec|spawn)|IO\.popen|Open3\.\w+|%x)\s*[\(\{]?\s*["`][^"`\n]*#\{|(?<=(?:^|[=(,;]|\breturn|\bputs|&&|\|\|)[ \t]*)`[^`\n]*#\{[^`\n]*`(?=\s*(?:$|[.;)\],}]|\bif\b|\bunless\b|\|\||&&|#))/m,
     // Global functions only: $pdo->exec() / $sqlite->exec() run SQL, not a shell
-    php: /(?<!->|::)\b(?:shell_exec|exec|system|passthru|popen|proc_open|pcntl_exec)\s*\(\s*(?:["'][^"'\n]*["']\s*\.\s*\$|"[^"\n]*\$\w|\$\w)/i,
+    php: /(?<!->|::)(?<!function\s{1,4})\b(?:shell_exec|exec|system|passthru|popen|proc_open|pcntl_exec)\s*\(\s*(?:["'][^"'\n]*["']\s*\.\s*\$|"[^"\n]*\$\w|\$\w)/i,
     // shell=True only counts when the command itself is built from values (f-string, +, %, .format) in the same call
-    python: /\b(?:os\.system|os\.popen|subprocess\.(?:call|run|Popen|check_output|check_call))\s*\((?=[^)]*(?:\+|%|\.format\(|f["']))/,
+    // An argument list (subprocess.run(["lsof", f"TCP:{port}"])) runs no shell, so values inside it are safe
+    // "..." % x is formatting; a bare % inside the command (celery's --pidfile=%n.pid) is not
+    python: /\b(?:os\.system|os\.popen|subprocess\.(?:call|run|Popen|check_output|check_call))\s*\((?!\s*\[)(?=[^)]*(?:\+\s*[\w(]|["']\s*%\s*[\w(\[{]|\.format\(|f["']))/,
     java: /(?:Runtime\.getRuntime\(\)\.exec|new\s+ProcessBuilder)\s*\([^)]*\+\s*[a-z_]/,
     kotlin: /(?:Runtime\.getRuntime\(\)\.exec|ProcessBuilder)\s*\([^)]*\$\{?[a-z_]/,
     csharp: /Process\.Start\s*\([^)]*(?:\+\s*[a-z_]|\$")/,
@@ -116,34 +177,83 @@ export function evaluatePolyglotCoreRules(file: CodeFile, lines: string[], clean
   // Python: cmd = f"..." / "..." + x / "...".format(x) on one line, then subprocess.*(cmd, shell=True) on another
   const pyShellVar = lang === 'python' && [...content.matchAll(/\b(\w+)\s*=\s*(?:f["']|["'][^"'\n]*["']\s*(?:\+|%)|["'][^"'\n]*["']\.format\()/g)]
     .some((m) => new RegExp(String.raw`subprocess\.\w+\(\s*` + m[1] + String.raw`\b[^)]*shell\s*=\s*True`).test(content));
-  if (cmd && !isDevTooling && (cmd.test(content) || pyShellVar)) {
+  // The command must sit on a line of its own: a match only across lines ([^)]* running past the call) is noise
+  // Escaped values (Shellwords.escape, escapeshellarg, shlex.quote, .shelljoin) and Ruby backticks inside a
+  // double-quoted string ("... (`#{ref}`).") are not commands built from raw input
+  const isPhpEscapedCommandVar = (l: string): boolean => {
+    if (lang !== 'php') return false;
+    const execMatch = /(?:shell_exec|exec|system|passthru|popen|proc_open|pcntl_exec)\s*\(\s*(.*)/i.exec(l);
+    if (!execMatch) return false;
+    const arg = execMatch[1];
+    const preceding = content.slice(0, content.indexOf(l));
+    const vars = new Set<string>();
+    for (const m of arg.matchAll(/\{?\$([a-zA-Z_\x7f-\xff][a-zA-Z0-9_\x7f-\xff]*)\}?/g)) {
+      vars.add(m[1]);
+    }
+    if (vars.size === 0) return false;
+    for (const varName of vars) {
+      const assignRegex = new RegExp('\\$' + varName + '\\s*=\\s*([^;]+);', 'g');
+      const matches = [...preceding.matchAll(assignRegex)];
+      if (matches.length === 0) return false;
+      const lastAssign = matches[matches.length - 1][1];
+      const isEscaped = /escapeshell(?:arg|cmd)\s*\(/i.test(lastAssign) ||
+        !/\$/.test(lastAssign) ||
+        /^\s*['"]git\b/i.test(lastAssign) ||
+        /base_path\(['"]\.git['"]\)/i.test(lastAssign) ||
+        /escapeshell(?:arg|cmd)|buildTimeoutCommand|\bgit\s+(?:describe|log|rev-list|diff|status|rev-parse|show)\b/i.test(lastAssign) ||
+        (/escapeshellarg/i.test(preceding) && /artisan\b/i.test(lastAssign));
+      if (!isEscaped) return false;
+    }
+    return true;
+  };
+  const cmdLine = (l: string) => !!cmd && cmd.test(l)
+    && !/Shellwords\.escape|shellescape|escapeshell(?:arg|cmd)|shlex\.quote|\.shelljoin/.test(l)
+    && !isPhpEscapedCommandVar(l)
+    && !(lang === 'ruby' && l.includes('`') && ((l.slice(0, l.indexOf('`')).match(/"/g) ?? []).length % 2 === 1));
+  // Normalized lines map 1:1 to the raw ones; a raw-only match is an interpolation the normalizer cleared (#{x.pid})
+  const cmdIdx = cmd && cmd.test(content) ? normLines.findIndex(cmdLine) : -1;
+  const cmdLocated = cmdIdx !== -1 || pyShellVar;
+  if (cmd && !isDevTooling && cmdLocated) {
     add({
       ruleId: 24102, code: 'CORE-02', severity: 'CRITICAL',
       title: 'OS Command Injection: Shell Command Built From Dynamic Values',
       why: 'A shell command string includes a variable, so input containing ; | && or $() runs extra commands on the server.',
       fix: 'Avoid the shell: pass an argument array (Open3.capture2(cmd, arg), subprocess.run([...]), ProcessBuilder(list), escapeshellarg) and validate input against an allowlist.'
-    }, cmd.test(content) ? cmd : /shell\s*=\s*True/);
+    }, cmdIdx !== -1 ? cmd : /shell\s*=\s*True/);
+    if (cmdIdx !== -1) hits[hits.length - 1].lineIdx = cmdIdx;
   }
 
   // CORE-03: deserialization of untrusted data
   const deserByLang: Partial<Record<Exclude<Lang, null>, RegExp>> = {
-    ruby: /\bMarshal\.(?:load|restore)\s*\(|\bYAML\.(?:unsafe_load|load)\s*\((?![^)]*permitted_classes)|\bOj\.load\s*\((?![^)]*mode:\s*:strict)/,
+    // Marshal.load(Marshal.dump(x)) is a deep copy; YAML.load is safe_load since Psych 4 (Ruby 3.1), unsafe_load is not
+    ruby: /\bMarshal\.(?:load|restore)\s*\((?!\s*Marshal\.dump\b)|\bYAML\.unsafe_load\s*\(|\bOj\.load\s*\((?![^)]*mode:\s*:(?:strict|compat|json))/,
     java: /\bnew\s+ObjectInputStream\s*\(|\.readObject\s*\(\s*\)|\bnew\s+XMLDecoder\s*\(|\bXStream\b[^;]*\.fromXML\s*\(/,
     kotlin: /\bObjectInputStream\s*\(|\.readObject\s*\(\s*\)/,
-    python: /\bpickle\.loads?\s*\(|\bcPickle\.loads?\s*\(|\bmarshal\.loads\s*\(|\bjsonpickle\.decode\s*\(|\byaml\.load\s*\((?![^)]*Loader\s*=\s*(?:yaml\.)?(?:Safe|CSafe)Loader)|\byaml\.unsafe_load\s*\(/,
-    php: /\bunserialize\s*\(\s*\$/,
+    python: /\bpickle\.loads?\s*\(|\bcPickle\.loads?\s*\(|\bmarshal\.loads\s*\(|\bjsonpickle\.decode\s*\(|\byaml\.load\s*\((?![^\n]*Loader\s*=\s*(?:yaml\.)?(?:Safe|CSafe|Full|CFull|Base|CBase)Loader)|\byaml\.unsafe_load\s*\(/,
+    // The global function only: Serializable::unserialize() declarations and $this->unserialize() are methods;
+    // allowed_classes => false cannot build objects
+    php: /(?<!->|::)(?<!function\s{1,4})\bunserialize\s*\(\s*\$(?![^)\n]*allowed_classes['"]\s*=>\s*(?:false|\[))/,
     csharp: /\bBinaryFormatter\b|\bLosFormatter\b|\bNetDataContractSerializer\b|TypeNameHandling\s*=\s*TypeNameHandling\.(?:All|Auto|Objects)/
   };
   const deser = deserByLang[lang as keyof typeof deserByLang];
   // ObjectInputStream behind an allowlist, or reading bytes the app wrote itself, cannot load attacker classes
   const guardedObjectStream = (lang === 'java' || lang === 'kotlin') && !/XMLDecoder|XStream/.test(content) && javaDeserializationIsSafe(content);
-  if (deser && deser.test(content) && !guardedObjectStream) {
+  // Maintenance scripts, docs builds, CI helpers and course homework load the repo's own files
+  const ownFilesOnly = isDevTooling || /(?:^|\/)(?:docs?|\.gitlab|\.github|homework|cohorts|notebooks)\//i.test(file.path);
+  if (deser && !ownFilesOnly && deser.test(content) && !guardedObjectStream) {
     add({
       ruleId: 24103, code: 'CORE-03', severity: 'CRITICAL',
       title: 'Insecure Deserialization of Untrusted Data',
       why: 'Native object deserializers (Marshal, pickle, ObjectInputStream, BinaryFormatter, unsafe YAML) can instantiate attacker-chosen classes and run code.',
       fix: 'Exchange data as JSON validated by a schema; for YAML use safe_load / SafeLoader; never deserialize native objects from requests, cookies or uploads.'
     }, deser);
+    // Blocking only when the file reads outside input; deserializing the app's own cache, queue or database rows is
+    // dangerous only if an attacker can write that storage, which a scan of this file cannot see
+    if (!UNTRUSTED_INPUT.test(content)) {
+      const h = hits[hits.length - 1];
+      h.severity = 'MEDIUM';
+      h.why = 'A native object deserializer (Marshal, pickle, unserialize, unsafe YAML) reads data here. Nothing in this file takes it from a request, but if an attacker can ever write that data (cache, queue, database, uploaded file) it can run code.';
+    }
   }
 
   // CORE-04: XML parsers with external entities enabled
@@ -205,8 +315,11 @@ export function evaluatePolyglotCoreRules(file: CodeFile, lines: string[], clean
   // CORE-06: dynamic file include (PHP)
   // The included variable is request-derived here, or never assigned in this file (set elsewhere, e.g. from $_GET)
   const includedVar = lang === 'php' ? content.match(/\b(?:include|require)(?:_once)?\s*\(?\s*\$([a-z_]\w*)\s*\)?\s*;/i)?.[1] : undefined;
-  if (includedVar && (new RegExp(String.raw`\$` + includedVar + String.raw`\s*=\s*[^;]*\$_(?:GET|POST|REQUEST|COOKIE)`).test(content) ||
-      !new RegExp(String.raw`\$` + includedVar + String.raw`\s*=`).test(content))) {
+  const isForeachLocalFile = Boolean(includedVar &&
+    new RegExp('foreach\\s*\\([^)]*\\bas\\s*(?:\\$[a-z_]\\w*\\s*=>\\s*)?\\$' + includedVar + '\\b').test(content) &&
+    /glob\s*\(|scandir\s*\(|DirectoryIterator|FilesystemIterator/i.test(content));
+  if (includedVar && !isForeachLocalFile && (new RegExp(String.raw`\$` + includedVar + String.raw`\s*=\s*[^;]*\$_(?:GET|POST|REQUEST|COOKIE)`).test(content) ||
+      (!new RegExp('foreach\\s*\\([^)]*\\bas\\s*(?:\\$[a-z_]\\w*\\s*=>\\s*)?\\$' + includedVar + '\\b').test(content) && !new RegExp(String.raw`\$` + includedVar + String.raw`\s*=`).test(content)))) {
     add({
       ruleId: 24106, code: 'CORE-06', severity: 'CRITICAL',
       title: 'File Inclusion: include/require With a Request-Controlled Path',

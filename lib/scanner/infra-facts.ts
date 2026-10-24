@@ -19,13 +19,27 @@ export interface InfraFacts {
   createdTables: Set<string>;
   /** Indexed column lists per table: `orders` -> [['user_id'], ['status','created_at']]; includes primary keys and unique constraints. */
   indexedColumns: Map<string, string[][]>;
+  /** Tables and table.column names that some migration renames away (old names), so checks on the old name are moot. */
+  renamedAway: Set<string>;
   /** Static Next.js API routes -> body fields the handler destructures from req.json() without a default. */
   routeBodyFields: Map<string, { path: string; fields: string[] }>;
+  /**
+   * The app talks to Postgres (pg / postgres / Neon driver, jdbc:postgresql, TypeORM type 'postgres', Prisma
+   * provider postgresql). Postgres does not index foreign keys on its own; MySQL InnoDB does, so ORM index checks
+   * only make sense here.
+   */
+  usesPostgres: boolean;
 }
 
 export const emptyInfraFacts = (): InfraFacts => ({
-  declaredEnv: null, dockerNodeMajors: [], enginesNodeMin: [], proxyBodyLimit: null, createdTables: new Set(), indexedColumns: new Map(), routeBodyFields: new Map(),
+  declaredEnv: null, dockerNodeMajors: [], enginesNodeMin: [], proxyBodyLimit: null, createdTables: new Set(), indexedColumns: new Map(), renamedAway: new Set(), routeBodyFields: new Map(),
+  usesPostgres: false,
 });
+
+const POSTGRES_SIGNAL = /"(?:pg|postgres|@neondatabase\/serverless|@vercel\/postgres|pg-promise)"\s*:|jdbc:postgresql:|\btype\s*:\s*['"]postgres['"]|\bprovider\s*=\s*"postgresql"|org\.postgresql:postgresql|<artifactId>postgresql<\/artifactId>|\bpsycopg2?\b|\basyncpg\b/;
+
+/** Down / rollback migrations: they undo their own up migration, so they say nothing about the final schema. */
+export const DOWN_MIGRATION = /(?:^|\/)down\.sql$|[._-]down\.sql$|(?:^|\/)rollbacks?\//i;
 
 const ENV_TEMPLATE = /(?:^|\/)\.env\.(?:example|sample|template|dist|defaults?|local\.example|development\.example|production\.example)$|(?:^|\/)(?:example|sample)\.env$|(?:^|\/)env\.example$/i;
 const sqlName = (name: string) => name.replace(/"/g, '').toLowerCase().split('.').pop() ?? '';
@@ -59,6 +73,8 @@ export function collectInfraFacts(files: CodeFile[]): InfraFacts {
       hasTemplate = true;
       for (const m of content.matchAll(/^\s*(?:export\s+)?([A-Za-z_][A-Za-z0-9_]*)\s*=/gm)) declared.add(m[1]);
     }
+    if (!facts.usesPostgres && /(?:^|\/)(?:package\.json|application[\w-]*\.(?:properties|ya?ml)|pom\.xml|build\.gradle(?:\.kts)?|schema\.prisma|requirements[\w-]*\.txt|pyproject\.toml|[\w-]*data-?source[\w.-]*\.[jt]s|ormconfig\.[jt]s(?:on)?)$/i.test(path)
+      && POSTGRES_SIGNAL.test(content)) facts.usesPostgres = true;
     if (/(?:^|\/)(?:docker-)?compose[\w.-]*\.ya?ml$/i.test(path)) {
       for (const m of content.matchAll(/^\s*-\s*['"]?([A-Za-z_][A-Za-z0-9_]*)(?:=|['"]?\s*$)/gm)) declared.add(m[1]);
       for (const m of content.matchAll(/^\s+([A-Z][A-Z0-9_]*)\s*:/gm)) declared.add(m[1]);
@@ -110,6 +126,20 @@ export function collectInfraFacts(files: CodeFile[]): InfraFacts {
         const cols = facts.indexedColumns.get(table) ?? [];
         cols.push(m[2].split(',').map((c) => c.replace(/"/g, '').replace(/\s+(?:ASC|DESC|NULLS\s+\w+)\b/gi, '').trim().toLowerCase()));
         facts.indexedColumns.set(table, cols);
+      }
+      // Names that stop existing in forward migrations: RENAME COLUMN a TO b, RENAME TO u, DROP COLUMN a, DROP TABLE t.
+      // Down migrations (down.sql) undo their own up.sql and would erase every table, so they are not read for this.
+      if (!DOWN_MIGRATION.test(path)) {
+        for (const m of content.matchAll(/ALTER\s+TABLE\s+(?:IF\s+EXISTS\s+)?(?:ONLY\s+)?([\w."]+)\s+RENAME\s+(?:(?:COLUMN\s+)?([\w"]+)\s+)?TO\b/gi)) {
+          const table = sqlName(m[1]);
+          facts.renamedAway.add(m[2] && !/^column$/i.test(m[2]) ? `${table}.${m[2].replace(/"/g, '').toLowerCase()}` : table);
+        }
+        for (const m of content.matchAll(/ALTER\s+TABLE\s+(?:IF\s+EXISTS\s+)?(?:ONLY\s+)?([\w."]+)\s+DROP\s+(?:COLUMN\s+)?(?:IF\s+EXISTS\s+)?([\w"]+)/gi)) {
+          if (!/^(?:constraint|default|not)$/i.test(m[2])) facts.renamedAway.add(`${sqlName(m[1])}.${m[2].replace(/"/g, '').toLowerCase()}`);
+        }
+        for (const m of content.matchAll(/DROP\s+TABLE\s+(?:IF\s+EXISTS\s+)?([\w.", ]+?)\s*(?:CASCADE|RESTRICT)?\s*;/gi)) {
+          for (const t of m[1].split(',')) facts.renamedAway.add(sqlName(t.trim()));
+        }
       }
       for (const m of content.matchAll(/ALTER\s+TABLE\s+(?:ONLY\s+)?([\w."]+)\s+ADD\s+(?:CONSTRAINT\s+\w+\s+)?(?:PRIMARY\s+KEY|UNIQUE)\s*\(([^)]+)\)/gi)) {
         const table = sqlName(m[1]);

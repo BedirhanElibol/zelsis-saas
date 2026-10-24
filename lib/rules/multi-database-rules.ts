@@ -163,49 +163,24 @@ export function evaluateMultiDatabaseRules(file: CodeFile, lines: string[], clea
     }
     const ts = new Date().toLocaleTimeString();
     // =========================================================================
-    // 1. MYSQL-SEC-01: MySQL Raw Query Injection
+    // 1. MYSQL-SEC-01: MySQL Raw Query Injection (Python)
     // =========================================================================
-    // JS/TS: mysql.query(`SELECT ... ${userInput}`), connection.query("SELECT ... " + id)
     // Python: cursor.execute("SELECT ... %s" % id) or cursor.execute(f"SELECT ... {id}")
     const isJsTs = lowerPath.endsWith('.js') || lowerPath.endsWith('.ts') || lowerPath.endsWith('.mjs') || lowerPath.endsWith('.cjs');
     const isPy = lowerPath.endsWith('.py');
-    if (isJsTs) {
-        // Template literal or concatenation in mysql / pool / connection query
-        const mysqlInterpolationRegex = /(?:mysql|connection|pool|dbClient)\.query\s*\(\s*`[^`]*\b(?:SELECT|INSERT|UPDATE|DELETE|DROP|ALTER)\b[^`]*\$\{[^}]+\}[^`]*`/i;
-        const mysqlConcatRegex = /(?:mysql|connection|pool|dbClient)\.query\s*\(\s*["'][^"']*\b(?:SELECT|INSERT|UPDATE|DELETE|DROP|ALTER)\b[^"']*["']\s*\+/i;
-        if (mysqlInterpolationRegex.test(cleanContent) || mysqlConcatRegex.test(cleanContent)) {
-            const matchLineIdx = lines.findIndex(l => !l.trim().startsWith('//') &&
-                !l.trim().startsWith('*') &&
-                (mysqlInterpolationRegex.test(l) || mysqlConcatRegex.test(l) || /(?:connection|pool|mysql)\.query/.test(l)));
-            const lineNum = matchLineIdx !== -1 ? matchLineIdx + 1 : 1;
-            const snippet = extractSnippet(lines, lineNum);
-            findings.push({
-                id: `mysql-${Date.now()}-${findingCounter.count++}`,
-                ruleId: 18101,
-                type: 'SECURITY',
-                title: 'MYSQL-SEC-01: MySQL Raw Query Injection via String Formatting',
-                severity: 'CRITICAL',
-                category: 'SQL Injection',
-                filePath: file.path,
-                lineRange: `L${lineNum}`,
-                snippet: snippet || lines[matchLineIdx] || 'connection.query(`SELECT * FROM users WHERE id = ${id}`)',
-                reproductionSteps: [
-                    `Scanned database query call in ${file.path}:${lineNum}.`,
-                    'Detected MySQL query constructed using template literal interpolation (${...}) or string concatenation (+) without parameterized prepared statements.'
-                ],
-                remediationPrompt: 'Use parameterized queries: connection.query("SELECT * FROM users WHERE id = ?", [id]) to ensure values are escaped and separated from query logic.',
-                status: 'OPEN',
-                owner: 'Backend Security Lead',
-                falsePositive: false
-            });
-            logs.push(`[${ts}] 🔒 [MYSQL AUDIT] CRITICAL: MySQL SQL Injection in ${file.path}:${lineNum}`);
-        }
-    }
-    if (isPy) {
-        const pyMysqlSqli = /cursor\.execute\s*\(\s*(?:f["'][^"']*\b(?:SELECT|INSERT|UPDATE|DELETE)\b[^"']*\{[^}]+\}|["'][^"']*\b(?:SELECT|INSERT|UPDATE|DELETE)\b[^"']*["']\s*%\s*[a-zA-Z0-9_]+)/i;
-        if (pyMysqlSqli.test(cleanContent)) {
-            const matchLineIdx = lines.findIndex(l => !l.trim().startsWith('#') && pyMysqlSqli.test(l));
-            const lineNum = matchLineIdx !== -1 ? matchLineIdx + 1 : 1;
+    const isMigrationFile = /(?:^|\/)(?:migrations?|predefinedmigrations)\//i.test(lowerPath);
+    const isIntrospection = /(?:^|\/)(?:introspection|schema_editor)\.py$/i.test(lowerPath);
+    if (isPy && !isMigrationFile && !isIntrospection) {
+        const sqlIdentCleanPy = cleanContent
+            .replace(/\b(FROM|INTO|UPDATE|JOIN|TABLE)(\s+[`"']?)(?:\{\s*[\w.]+\s*\})[`"']?/gi, '$1$2IDENT')
+            .replace(/%\s*(?:self\.)?(?:connection\.)?(?:ops\.)?quote_name\s*\([^)]*\)/gi, '% IDENT')
+            .replace(/%\s*\(\s*(?:(?:self\.)?(?:connection\.)?(?:ops\.)?quote_name\s*\([^)]*\)\s*,?\s*)+\)/gi, '% IDENT')
+            .replace(/\{\s*(?:self\.)?(?:connection\.)?(?:ops\.)?quote_name\s*\([^)]*\)\s*\}/gi, 'IDENT');
+        const pyMysqlSqli = /cursor\.execute\s*\(\s*(?:f"[^"]*\b(?:SELECT|INSERT|UPDATE|DELETE)\b[^"]*\{[^}]+\}|f'[^']*\b(?:SELECT|INSERT|UPDATE|DELETE)\b[^']*\{[^}]+\}|["'][^"']*\b(?:SELECT|INSERT|UPDATE|DELETE)\b[^"']*["']\s*%\s*[a-zA-Z0-9_]+)/i;
+        if (pyMysqlSqli.test(sqlIdentCleanPy)) {
+            const matchLineIdx = lines.findIndex(l => !l.trim().startsWith('#') && pyMysqlSqli.test(l.replace(/\b(FROM|INTO|UPDATE|JOIN|TABLE)(\s+[`"']?)(?:\{\s*[\w.]+\s*\})[`"']?/gi, '$1$2IDENT')));
+            const m = pyMysqlSqli.exec(sqlIdentCleanPy);
+            const lineNum = matchLineIdx !== -1 ? matchLineIdx + 1 : (m ? cleanContent.slice(0, m.index).split('\n').length : 1);
             const snippet = extractSnippet(lines, lineNum);
             findings.push({
                 id: `mysql-py-${Date.now()}-${findingCounter.count++}`,
@@ -331,7 +306,24 @@ export function evaluateMultiDatabaseRules(file: CodeFile, lines: string[], clea
     // =========================================================================
     // 4. ORM-RAW-01: Prisma, TypeORM, Drizzle Unsafe Raw SQL Injection
     // =========================================================================
-    if (isJsTs) {
+    if (isJsTs && !isMigrationFile) {
+        const hasValidatedIdList = /\b(?:Number|parseInt|BigInt)\s*\(|\b(?:isUUID|validateUUID|uuid\.validate|z\.string\(\)\.uuid)\b|\/(?:\^)?\[0-9a-f\]\{8\}-/i.test(cleanContent);
+        const normalizeOrmSql = (s: string) => {
+            let res = s
+                // only the quoted item inside .map((v) => `'${v}'`), not every variable called v
+                .replace(/\.map\(\s*\(?\s*(\w+)\s*\)?\s*=>\s*`'?\$\{\s*\1\s*\}'?`\s*\)/g, '.map(QUOTE)')
+                .replace(/\b(FROM|INTO|UPDATE|JOIN|TABLE(?:\s+IF\s+(?:NOT\s+)?EXISTS)?)(\s+[`"']?)(?:\$\{\s*[\w.]+\s*\})[`"']?/gi, '$1$2IDENT')
+                .replace(/\$\{\s*(?:[a-zA-Z0-9_.]+\.)?(?:escapeIdentifier|quoteIdentifier|quoteTable|quoteColumn|quote|escapeLiteral)\s*\([^}]*\)\s*\}/g, 'IDENT')
+                .replace(/\$\{\s*[A-Z][A-Z0-9_]*\s*\}/g, 'CONST_NUM')
+                .replace(/\$\{\s*(?:enumValues|enumDef|enumVals|Object\.values\([^)]+\))(?:\.map\([^}]+\))?\.join\([^}]*\)\s*\}/g, 'ENUM_VAL')
+                .replace(/\$\{\s*(?:[a-zA-Z0-9_.]+\.)?(?:columnName|column|fieldName|tableName|table|alias)\s*\}/g, 'COL_IDENT')
+                .replace(/\$\{\s*(?:Number|parseInt|BigInt)\s*\([^}]+\)\s*\}/g, '1');
+            if (hasValidatedIdList) {
+                res = res.replace(/\$\{\s*[\w.]+\.join\s*\(\s*['"],\s*['"]\s*\)\s*\}/g, 'IDENT_LIST');
+            }
+            return res;
+        };
+        const ormCleanContent = normalizeOrmSql(cleanContent);
         // Prisma $queryRawUnsafe or $executeRawUnsafe with interpolation
         const prismaRawUnsafe = /prisma\.\$(?:queryRawUnsafe|executeRawUnsafe)\s*\(\s*`[^`]*\$\{[^}]+\}/i;
         const prismaRawUnsafeConcat = /prisma\.\$(?:queryRawUnsafe|executeRawUnsafe)\s*\(\s*["'][^"']*["']\s*\+/i;
@@ -339,10 +331,12 @@ export function evaluateMultiDatabaseRules(file: CodeFile, lines: string[], clea
         const typeormRawConcat = /\.where\s*\(\s*["'][^"']*\b[a-zA-Z0-9_]+\s*=\s*["']\s*\+/i;
         // Drizzle sql.raw with interpolation
         const drizzleSqlRaw = /sql\.raw\s*\(\s*`[^`]*\$\{[^}]+\}/i;
-        if (prismaRawUnsafe.test(cleanContent) || prismaRawUnsafeConcat.test(cleanContent) || typeormRawConcat.test(cleanContent) || drizzleSqlRaw.test(cleanContent)) {
-            const matchLineIdx = lines.findIndex(l => !l.trim().startsWith('//') &&
-                !l.trim().startsWith('*') &&
-                (prismaRawUnsafe.test(l) || prismaRawUnsafeConcat.test(l) || typeormRawConcat.test(l) || drizzleSqlRaw.test(l)));
+        if (prismaRawUnsafe.test(ormCleanContent) || prismaRawUnsafeConcat.test(ormCleanContent) || typeormRawConcat.test(ormCleanContent) || drizzleSqlRaw.test(ormCleanContent)) {
+            const matchLineIdx = lines.findIndex(l => {
+                if (l.trim().startsWith('//') || l.trim().startsWith('*')) return false;
+                const nl = normalizeOrmSql(l);
+                return prismaRawUnsafe.test(nl) || prismaRawUnsafeConcat.test(nl) || typeormRawConcat.test(nl) || drizzleSqlRaw.test(nl);
+            });
             const lineNum = matchLineIdx !== -1 ? matchLineIdx + 1 : 1;
             const snippet = extractSnippet(lines, lineNum);
             findings.push({

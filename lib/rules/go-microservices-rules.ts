@@ -66,10 +66,30 @@ export function evaluateGoMicroservicesRules(file: CodeFile, lines: string[], cl
         logs.push(`[${ts}] [GO AUDIT] Found GO-01: Command Injection via Unsanitized exec.Command Input at ${file.path}:${lineNum}`);
     }
     // GO-02: SQL Injection via String Concatenation or fmt.Sprintf
-    const reg_9002 = /(?:(?:db|tx)\.(?:Query|QueryRow|Exec|QueryContext|ExecContext)\s*\(\s*(?:fmt\.Sprintf\s*\(|query|[a-zA-Z0-9_]+\s*\+)|fmt\.Sprintf\s*\(\s*['"][^'"]*\b(?:SELECT|INSERT|UPDATE|DELETE)\b)/i;
-    if (reg_9002.test(cleanContent)) {
-        const linePattern = /(?:(?:db|tx)\.(?:Query|QueryRow|Exec)|fmt\.Sprintf\s*\(.*(?:SELECT|INSERT|UPDATE|DELETE))/i;
-        const matchLineIdx = lines.findIndex(l => !l.trim().startsWith('//') && linePattern.test(l));
+    const isSafeGoSprintfSql = (l: string): boolean => {
+        if (/\b(?:log(?:ger)?\.(?:Info|Infof|Debug|Debugf|Warn|Warnf|Error|Errorf|Print|Printf|Trace|Tracef)|fmt\.(?:Print|Printf|Println|Fprint|Fprintf|Fprintln))\s*\(.*fmt\.Sprintf\s*\(/i.test(l)) {
+            return true;
+        }
+        const m = /fmt\.Sprintf\s*\(\s*['"]\s*([^'"]+)\s*['"]\s*,\s*([^)]+)\)/i.exec(l);
+        if (!m) return false;
+        const sqlFormat = m[1].trim();
+        if (!/^(?:SELECT|INSERT\s+INTO|UPDATE\s+\w+\s+SET|DELETE\s+FROM)\b/i.test(sqlFormat)) {
+            return true;
+        }
+        const args = m[2].split(',').map(a => a.trim());
+        const isRequestVal = /\b(?:req|r\.URL|r\.Form|c\.Query|c\.Param|params|request|payload|input)\b/i;
+        const isSafeClauseOrIdent = /^(?:[a-zA-Z0-9_.]+\.)?(?:[a-zA-Z0-9_]*(?:[cC]lause[s]?|[wW]here|[sS]ubquery|[sS]ubQuery|[tT]able(?:Name)?|[cC]ols?|[cC]olumns?|[fF]ields?|[oO]rderBy|[gG]roupBy)|aggClause|best_match_group)$/;
+        return args.length > 0 && args.every(a => !isRequestVal.test(a) && isSafeClauseOrIdent.test(a));
+    };
+    const reg_9002 = /(?:(?:db|tx)\.(?:Query|QueryRow|Exec|QueryContext|ExecContext)\s*\(\s*(?:fmt\.Sprintf\s*\(|query|[a-zA-Z0-9_]+\s*\+)|fmt\.Sprintf\s*\(\s*['"]\s*(?:SELECT|INSERT\s+INTO|UPDATE\s+\w+\s+SET|DELETE\s+FROM)\b)/i;
+    const hasUnsafeGoSql = lines.some(l => {
+        if (l.trim().startsWith('//')) return false;
+        if (!reg_9002.test(l)) return false;
+        return !isSafeGoSprintfSql(l);
+    });
+    if (hasUnsafeGoSql) {
+        const linePattern = /(?:(?:db|tx)\.(?:Query|QueryRow|Exec)|fmt\.Sprintf\s*\(\s*['"]\s*(?:SELECT|INSERT\s+INTO|UPDATE\s+\w+\s+SET|DELETE\s+FROM)\b)/i;
+        const matchLineIdx = lines.findIndex(l => !l.trim().startsWith('//') && linePattern.test(l) && !isSafeGoSprintfSql(l));
         const lineNum = matchLineIdx !== -1 ? matchLineIdx + 1 : 1;
         const rawSnippet = matchLineIdx !== -1 ? lines[matchLineIdx].trim() : lines.find(l => !l.trim().startsWith('//'))?.trim() || "SQL Injection via String Concatenation or fmt.Sprintf";
         findings.push({

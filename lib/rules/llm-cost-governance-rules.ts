@@ -7,7 +7,7 @@
  */
 import { Finding } from '@/data/schema';
 import { CodeFile } from '../scanner-engine';
-import { LLM_CALL } from './shared/stack-signals';
+import { callsLlm } from './shared/stack-signals';
 export interface LlmCostGovernanceRuleResult {
     findings: Finding[];
     logs: string[];
@@ -75,7 +75,7 @@ export function evaluateLlmCostGovernanceRules(file: CodeFile, lines: string[], 
     const retryLoop = /\b(?:while\s*\(\s*\w*(?:attempt|retr|tries)\w*\s*<|for\s*\(\s*let\s+(\w*(?:attempt|retr|tries)\w*)\s*=\s*\d+\s*;\s*\1\s*<)/gi;
     for (let m = retryLoop.exec(cleanContent); m && tightRetryIdx === -1; m = retryLoop.exec(cleanContent)) {
         const body = blockAfter(cleanContent, m.index + m[0].length);
-        if (LLM_CALL.test(body) && !/setTimeout|\bsleep\s*\(|\bdelay\b|backoff|\bwait\w*\s*\(|pRetry|retry\s*\(/i.test(body)) {
+        if (callsLlm(body) && !/setTimeout|\bsleep\s*\(|\bdelay\b|backoff|\bwait\w*\s*\(|pRetry|retry\s*\(/i.test(body)) {
             tightRetryIdx = lineAt(cleanContent, m.index);
         }
     }

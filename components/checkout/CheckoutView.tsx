@@ -435,7 +435,7 @@ export const CheckoutView: React.FC<CheckoutViewProps> = ({
             }}
             className="btn btn-primary px-8 py-3 uppercase text-xs font-bold tracking-wider mt-4 flex items-center gap-2 rounded-xl bg-emerald-500 text-black hover:bg-emerald-400 transition-all shadow-sm"
           >
-            <span>Proceed to Security Gate Dashboard</span>
+            <span>Proceed to Release Check Dashboard</span>
           </button>
         </div>
       ) : (

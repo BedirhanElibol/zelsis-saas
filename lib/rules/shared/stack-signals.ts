@@ -10,6 +10,7 @@ export const AUTH_GUARD = new RegExp([
   String.raw`getServerSession\s*\(|\bgetSession\s*\(|getToken\s*\(`, // NextAuth / Auth0 / generic
   String.raw`verifyIdToken\s*\(|validateRequest\s*\(|validateSession\s*\(|getKindeServerSession|auth\.api\.getSession`, // Firebase, Lucia, Kinde, Better Auth
   String.raw`requireAuth|withAuth|ensureAuthenticated|isAuthenticated|passport\.authenticate|\breq(?:uest)?\.user\b`, // Express / Passport
+  String.raw`\b(?:require|assert|ensure)\w*(?:Admin|Auth|User|Session|Staff)\w*\s*\(`,
   String.raw`jwtVerify\s*\(|jwt\.verify\s*\(|verifyToken\s*\(|session\.user\b`,
   String.raw`login_required|Depends\(\s*get_current_user|IsAuthenticated|@UseGuards\(|authorize\s*\(` // Django, FastAPI, DRF, NestJS
 ].join('|'), 'i');
@@ -19,11 +20,18 @@ export const RATE_LIMIT_GUARD = /rate[-_ ]?limit|ratelimit|limiter|throttl|slowD
 
 /** Webhook signature verification across payment / event providers. */
 export const WEBHOOK_VERIFY = new RegExp([
-  String.raw`constructEvent(?:Async)?\s*\(|construct_event\s*\(`, // Stripe
+  String.raw`constructEvent(?:Async)?\s*\(|construct_event\s*\(|\.constructEvent\s*\(`, // Stripe / adapter
   String.raw`validateEvent\s*\(|webhooks?\.(?:verify|unmarshal|unwrap|constructEvent)\s*\(`, // Polar, Paddle, Standard Webhooks
-  String.raw`verify\w*(?:Signature|Webhook|Hmac)\w*\s*\(|new\s+Webhook\s*\([^)]*\)\s*(?:;|\.verify)`, // PayPal, Svix, Clerk, LemonSqueezy, custom
+  String.raw`(?:\.|\b)(?:verify|verificar|validar)\w*(?:Signature|Webhook|Hmac)\w*\s*\(|new\s+Webhook\s*\([^)]*\)\s*(?:;|\.verify)`, // PayPal, Svix, Clerk, LemonSqueezy, adapter (verificarWebhook)
+  String.raw`x-telegram-bot-api-secret-token`, // Telegram bot webhook secret token
   String.raw`createHmac\s*\(|timingSafeEqual\s*\(|crypto\.subtle\.verify\s*\(|hmac\.compare_digest|hmac\.new\s*\(`
 ].join('|'), 'i');
+
+/**
+ * The handler signs in its caller (session, API key, team access). Payment providers and other webhook senders
+ * carry no user session, so such a route manages webhook settings rather than receiving events.
+ */
+export const CALLER_AUTH = /\brequire(?:ApiKey|User|Auth|Session|Permissions?|TeamMember|Admin)\s*\(|\bgetServerSession\s*\(|\bauth\s*\(\s*\)|\bthrowIfNo\w*Access\s*\(|\bcurrentUser\s*\(|@login_required|before_action\s+:authenticate_user!|\bIsAuthenticated\b/;
 
 /** Calls that run an LLM inference across SDKs. */
 export const LLM_CALL = new RegExp([
@@ -33,6 +41,19 @@ export const LLM_CALL = new RegExp([
   String.raw`new\s+Chat(?:OpenAI|Anthropic|GoogleGenerativeAI|VertexAI|Mistral(?:AI)?|Groq|Bedrock(?:Converse)?|Ollama|Cohere)\s*\(`, // LangChain
   String.raw`ConverseCommand|InvokeModelCommand|mistral\.chat|cohere\.chat|ollama\.(?:chat|generate)`
 ].join('|'), 'i');
+
+/** LLM_CALL without the bare `messages.create`, which Twilio's SMS client shares with Anthropic's SDK. */
+const LLM_CALL_NOT_MESSAGES = new RegExp(LLM_CALL.source.replace(String.raw`|messages\.create`, ''), 'i');
+
+/**
+ * True when the code runs an LLM inference. `client.messages.create(...)` is also how Twilio sends an SMS, so it
+ * only counts as an LLM call when the file is not a Twilio file or also mentions Anthropic / Claude.
+ */
+export function callsLlm(code: string): boolean {
+  if (LLM_CALL_NOT_MESSAGES.test(code)) return true;
+  if (!/messages\.create/i.test(code)) return false;
+  return !/\btwilio\b/i.test(code) || /anthropic|claude/i.test(code);
+}
 
 /** Output-token caps across SDKs. */
 export const LLM_OUTPUT_LIMIT = /\b(?:max_tokens|max_completion_tokens|max_output_tokens|maxTokens|maxOutputTokens|max_tokens_to_sample|maxCompletionTokens|num_predict)\s*[:=]/i;
