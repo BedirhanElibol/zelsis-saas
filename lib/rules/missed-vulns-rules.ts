@@ -1,5 +1,5 @@
 /**
- * Vulnerabilities small teams ship that the other packs missed (GAP-01.., Rule IDs 28801-28899).
+ * Vulnerabilities apps ship that the other packs missed (GAP-01.., Rule IDs 28801-28899).
  * Found by a false-negative hunt over realistic snippets from public incidents and advisories
  * (Supabase / Firebase open data, mass assignment, client-controlled roles, leaked secrets in responses,
  * upload file names, template injection, postMessage token leaks). Each rule keys on a pattern that is
@@ -7,7 +7,7 @@
  */
 import { Finding } from '@/data/schema';
 import { CodeFile } from '../scanner-engine';
-import type { RepoContext } from '../scanner/repo-context';
+import { databaseExposedAt, type RepoContext } from '../scanner/repo-context';
 import { PUBLIC_ARTIFACT } from '../scanner/scan-paths';
 
 export interface MissedVulnsRuleResult {
@@ -53,7 +53,7 @@ export function evaluateMissedVulnsRules(file: CodeFile, lines: string[], cleanC
   const add = (h: Hit) => { if (h.lineIdx >= 0 && !hits.some((x) => x.ruleId === h.ruleId && x.lineIdx === h.lineIdx)) hits.push(h); };
 
   // GAP-01: RLS policy that lets anyone UPDATE / DELETE every row (USING (true) / WITH CHECK (true))
-  if (/\.sql$/i.test(path) && (context?.exposesDatabaseToClients || /(?:^|\/)supabase\//i.test(path))) {
+  if (/\.sql$/i.test(path) && ((context && databaseExposedAt(context, path)) || /(?:^|\/)supabase\//i.test(path))) {
     const sql = cleanContent.split('\n').map((l) => l.replace(/--.*$/, '')).join('\n');
     let n = 0;
     for (const m of sql.matchAll(/CREATE\s+POLICY\b[^;]*;/gi)) {
@@ -416,8 +416,15 @@ export function evaluateMissedVulnsRules(file: CodeFile, lines: string[], cleanC
   // GAP-23: every key of a request dict copied onto a model (for k, v in payload.items(): setattr(obj, k, v))
   if (isPy) {
     lines.forEach((l, i) => {
-      const loop = l.match(/^\s*for\s+(\w+)\s*,\s*(\w+)\s+in\s+(\w+(?:\.\w+)*(?:\(\))?)\.items\(\)\s*:/);
+      const loop = l.match(/^\s*for\s+(\w+)\s*,\s*(\w+)\s+in\s+([^\n:]+?)\.items\(\)\s*:/);
       if (!loop || isComment(l) || !/payload|body|data|update|changes|patch|request|json|form|params/i.test(loop[3])) return;
+      const iterExpr = loop[3].trim();
+      if (/^(?:\w+\.)?(?:validated_data|cleaned_data)$|\.(?:model_dump|dict)\s*\([^)]*\bexclude_unset\s*=\s*True\b/.test(iterExpr)) return;
+      if (/^\w+$/.test(iterExpr)) {
+        const prevBlock = lines.slice(Math.max(0, i - 10), i).join('\n');
+        const safeAssignRe = new RegExp(String.raw`\b` + iterExpr + String.raw`\s*(?::\s*[^=\n]+)?=\s*(?:(?:\w+\.)?(?:validated_data|cleaned_data)\b|[^\n]*\.(?:model_dump|dict)\s*\([^)]*\bexclude_unset\s*=\s*True\b)`);
+        if (safeAssignRe.test(prevBlock)) return;
+      }
       const win = lines.slice(i, i + 3).join('\n');
       if (new RegExp(String.raw`\bif\s+(?:not\s+)?` + loop[1] + String.raw`\s+(?:not\s+)?in\b`).test(win)) return;
       if (new RegExp(String.raw`\bsetattr\(\s*\w+\s*,\s*` + loop[1] + String.raw`\s*,\s*` + loop[2] + String.raw`\s*\)`).test(win)) {
@@ -558,7 +565,8 @@ export function evaluateMissedVulnsRules(file: CodeFile, lines: string[], cleanC
 
   if (isJs) {
     // GAP-34: service role key read in a 'use client' module (bundled for the browser)
-    if (/^\s*(?:\/\/[^\n]*\n\s*|\/\*[\s\S]*?\*\/\s*)*['"]use client['"]/.test(file.content)) {
+    // Each block comment ends at its first */ (no lazy [\s\S]*?), so files full of /** */ cannot backtrack exponentially
+    if (/^\s*(?:\/\/[^\n]*\n\s*|\/\*(?:[^*]|\*(?!\/))*\*\/\s*)*['"]use client['"]/.test(file.content)) {
       const i = lines.findIndex((l) => !isComment(l) && /process\.env\.[A-Z_]*SERVICE_ROLE[A-Z_]*/.test(l));
       add({ ruleId: 28834, code: 'GAP-34', severity: 'CRITICAL', category: 'Secrets Management', lineIdx: i,
         title: "Supabase Service Role Key Used in a 'use client' Module",
@@ -598,7 +606,10 @@ export function evaluateMissedVulnsRules(file: CodeFile, lines: string[], cleanC
 
   // GAP-38: FastAPI route that changes or deletes data without an auth dependency
   // A local app bound to 127.0.0.1 with no deploy config has no remote callers to authenticate
-  if (isPy && !context?.loopbackOnlyServer && /\bfrom\s+fastapi\b/.test(cleanContent) && !/APIRouter\([^)]*dependencies\s*=/.test(cleanContent)) {
+  // Router- or app-wide auth in the same file (APIRouter / include_router / FastAPI with dependencies=[...]) covers every
+  // route; FastAPI's own docs_src tutorials are examples, not an app
+  if (isPy && !context?.loopbackOnlyServer && /\bfrom\s+fastapi\b/.test(cleanContent) && !/(?:^|\/)docs_src\//.test(path)
+    && !/(?:APIRouter|include_router|FastAPI)\([^)]*dependencies\s*=/.test(cleanContent)) {
     lines.forEach((l, i) => {
       const m = l.match(/^\s*@\w+\.(delete|put|patch)\(\s*['"]([^'"]*)['"]([^)]*)\)/);
       if (!m || /dependencies\s*=/.test(m[3]) || /webhook|callback|health/i.test(m[2])) return;

@@ -1,6 +1,6 @@
 /**
  * Zelsis Master evaluateMessageBrokerRules Engine
- * MQ-02 (12502), MQ-03 (12503), MQ-04 (12504).
+ * MQ-02 (12502), MQ-03 (12503), MQ-04 (12504), MQ-06 (12506).
  * Removed as unsound (ids never reused): 12501 queue declared without a dead-letter exchange (many queues
  * legitimately need none: RPC replies, exclusive / transient queues), 12505 non-durable queue (the check never
  * matched, and whether an event is "critical" is not visible in code).
@@ -102,6 +102,41 @@ export function evaluateMessageBrokerRules(file: CodeFile, lines: string[], clea
             falsePositive: false
         });
         logs.push(`[${ts}] [MQ AUDIT] Found MQ-04: Missing Publisher Confirms / Acknowledgments Leading to Data Loss at ${file.path}:${lineNum}`);
+    }
+    // MQ-06: a failed message is put straight back on the queue from an error handler. requeue defaults to true
+    // for amqplib nack()/reject() and pika basic_nack()/basic_reject(), and a dead-letter exchange only applies when
+    // requeue is false, so a message that always fails is redelivered forever. Code that looks at redelivery or a
+    // retry counter decides when to stop, so it stays quiet.
+    const countsRetries = /\bredelivered\b|x-death|x-retry|retry[_-]?count|retryCount|delivery_count|deliveryCount/i.test(cleanContent);
+    if (isConsumer && !countsRetries) {
+        const requeueForever = /\b(?!Promise\b)\w+\s*\.\s*(?:nack\s*\(\s*\w+(?:\.\w+)*\s*(?:,\s*(?:true|false)\s*,\s*true\s*)?\)|reject\s*\(\s*\w+(?:\.\w+)*\s*(?:,\s*true\s*)?\))|\bbasic_(?:nack|reject)\s*\((?![^)]*\brequeue\s*=\s*False)[^)]*\)/g;
+        for (const m of cleanContent.matchAll(requeueForever)) {
+            // Only inside an error handler: catch (...) { ... } in JS, except ...: in Python
+            const before = cleanContent.slice(Math.max(0, m.index! - 400), m.index!);
+            if (!/\bcatch\s*(?:\([^)]*\))?\s*\{[^}]*$|\bexcept\b[^\n]*:\s*\n(?:[^\n]*\n)*?[^\n]*$/.test(before)) continue;
+            const matchLineIdx = lineAt(cleanContent, m.index!);
+            const lineNum = matchLineIdx + 1;
+            findings.push({
+                id: `mq12506-${Date.now()}-${findingCounter.count++}`,
+                ruleId: 12506,
+                type: 'INFRA_DATABASE',
+                title: "MQ-06: Failed Message Is Requeued Forever From the Error Handler",
+                severity: "HIGH",
+                category: "Consumer Stability",
+                filePath: file.path,
+                lineRange: `L${lineNum}`,
+                snippet: lines[matchLineIdx] || m[0],
+                reproductionSteps: [
+                    `Followed the consumer error path in ${file.path}:${lineNum}.`,
+                    'nack / reject requeue the message by default. A message that always fails (bad payload, missing record) comes straight back, fails again and blocks the consumer in a loop; a dead-letter exchange is skipped because the message is requeued, not rejected.'
+                ],
+                remediationPrompt: "Pass requeue=false (channel.nack(msg, false, false) / basic_nack(delivery_tag, requeue=False)) and bind the queue to a dead-letter exchange, or requeue only when !msg.fields.redelivered.",
+                status: 'OPEN',
+                falsePositive: false
+            });
+            logs.push(`[${ts}] [MQ AUDIT] Found MQ-06: Failed Message Is Requeued Forever From the Error Handler at ${file.path}:${lineNum}`);
+            break;
+        }
     }
     return { findings, logs };
 }

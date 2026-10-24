@@ -9,7 +9,7 @@
 import type { Finding } from '@/data/schema';
 import type { CodeFile } from '../scanner-engine';
 import { AUTH_GUARD, WEBHOOK_VERIFY } from './shared/stack-signals';
-import { emptyRepoContext, normalizeSqlName, type RepoContext } from '../scanner/repo-context';
+import { databaseExposedAt, emptyRepoContext, normalizeSqlName, type RepoContext } from '../scanner/repo-context';
 
 interface Hit {
   ruleId: number;
@@ -97,6 +97,13 @@ function functionBlocks(src: string, opts: { exportedOnly: boolean }): FnBlock[]
 // ─── Shared signals ───────────────────────────────────────────────────────────────────────
 
 /** Caller verification inside a handler body: provider calls, local auth helpers, signed webhooks, cron secrets. */
+/** Routes that run before the caller has a session: sign-up, sign-in, one-time codes, password reset, OAuth callback. */
+export const PUBLIC_AUTH_ROUTE = /\/(?:api\/)?(?:auth|login|log-in|signin|sign-in|signup|sign-up|register|otp|magic-link|send-code|verify-code|verify-email|forgot-password|reset-password|callback)(?:\/|$)/;
+/** Row or user creation through the service role. */
+const CREATE_ONLY = /\.(?:insert|upsert)\s*\(|\.auth\.admin\.(?:createUser|generateLink|inviteUserByEmail)\s*\(/;
+/** Anything that changes or removes existing data or users. */
+const DESTRUCTIVE_WRITE = /\.(?:update|delete|remove|move)\s*\(|\.auth\.admin\.(?:deleteUser|updateUserById|signOut|mfa\.deleteFactor)\s*\(|\.rpc\s*\(/;
+
 const CALLER_CHECK = new RegExp([
   AUTH_GUARD.source,
   WEBHOOK_VERIFY.source,
@@ -201,11 +208,17 @@ export function evaluateNextjsSupabaseRules(file: CodeFile, lines: string[], cle
 
     // NEXT-SB-01: Server Action writes with the service-role client without verifying the caller
     if (useServerFile || /['"]use server['"]/.test(cleanContent)) {
+      // Same-file helpers that verify the caller (e.g. `async function authenticate(token) { ...auth.getUser(token)... }`)
+      const guardHelpers = functionBlocks(cleanContent, { exportedOnly: false })
+        .filter((h) => h.name && (CALLER_CHECK.test(h.body) || /\.auth\.getUser\s*\(/.test(h.body)))
+        .map((h) => h.name);
+      const callsGuardHelper = (body: string) =>
+        guardHelpers.some((name) => new RegExp(String.raw`\b${name}\s*\(`).test(body));
       for (const fn of functionBlocks(cleanContent, { exportedOnly: true })) {
         const isAction = useServerFile ? true : /^\s*['"]use server['"]/.test(fn.body);
         if (!isAction) continue;
         const writeAt = privilegedWrite(fn.body, admins);
-        if (writeAt === -1 || CALLER_CHECK.test(fn.body)) continue;
+        if (writeAt === -1 || CALLER_CHECK.test(fn.body) || callsGuardHelper(fn.body)) continue;
         hits.push({
           ruleId: 28001, code: 'NEXT-SB-01', severity: 'CRITICAL', type: 'SECURITY', category: 'Access Control',
           title: 'Server Action Uses the Service-Role Client Without Verifying the Caller',
@@ -223,6 +236,9 @@ export function evaluateNextjsSupabaseRules(file: CodeFile, lines: string[], cle
         if (!/^(?:GET|POST|PUT|PATCH|DELETE|default|handler)$/.test(fn.name)) continue;
         const writeAt = privilegedWrite(fn.body, admins);
         if (writeAt === -1 || CALLER_CHECK.test(fn.body)) continue;
+        // Sign-up / sign-in / one-time-code routes are called before there is a session by design, and creating the
+        // row is their job. Updates and deletes there are still reported.
+        if (PUBLIC_AUTH_ROUTE.test(lowerPath) && CREATE_ONLY.test(fn.body) && !DESTRUCTIVE_WRITE.test(fn.body)) continue;
         hits.push({
           ruleId: 28002, code: 'NEXT-SB-02', severity: 'CRITICAL', type: 'SECURITY', category: 'Access Control',
           title: 'Route Handler Uses the Service-Role Client Without Verifying the Caller',
@@ -425,7 +441,7 @@ export function evaluateNextjsSupabaseRules(file: CodeFile, lines: string[], cle
   }
 
   // ─── Supabase SQL migrations ────────────────────────────────────────────────────────────
-  if (/\.sql$/i.test(path) && context.exposesDatabaseToClients) {
+  if (/\.sql$/i.test(path) && databaseExposedAt(context, path)) {
     const sql = stripSqlComments(cleanContent);
     const sqlLines = sql.split('\n');
     const firstLine = (re: RegExp, from = 0) => {

@@ -6,6 +6,7 @@ import type { Project } from '@/data/schema';
 import { createReportShare, revokeReportShare } from '@/app/actions/report-share';
 import { initialReportShareState } from '@/lib/report-share-state';
 import { getActiveUserAuth } from '@/lib/supabase-client';
+import { TrustPageSection } from '@/components/dashboard/TrustPageSection';
 
 interface ShareReportModalProps {
   isOpen: boolean;
@@ -64,7 +65,7 @@ export const ShareReportModal: React.FC<ShareReportModalProps> = ({ isOpen, onCl
       className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80"
     >
       <div ref={dialogRef} role="dialog" aria-modal="true" aria-labelledby="share-report-title"
-        className="relative w-full max-w-lg bg-[#141414] border border-white/10 rounded-2xl p-6 shadow-xl flex flex-col gap-5 text-[#EDEDED]">
+        className="relative w-full max-w-lg max-h-[90vh] overflow-y-auto bg-[#141414] border border-white/10 rounded-2xl p-6 shadow-xl flex flex-col gap-5 text-[#EDEDED]">
         <div className="flex items-start justify-between gap-4">
           <div className="flex items-center gap-3">
             <Link2 size={20} className="text-white" aria-hidden="true" />
@@ -121,6 +122,8 @@ export const ShareReportModal: React.FC<ShareReportModalProps> = ({ isOpen, onCl
         {created.status === 'error' && <p role="alert" className="text-xs text-red-400">{created.message}</p>}
         {revoked.status === 'error' && <p role="alert" className="text-xs text-red-400">{revoked.message}</p>}
         {isRevoked && <p role="status" className="text-xs text-zinc-300">{revoked.message}</p>}
+
+        <TrustPageSection project={project} accessToken={accessToken} />
       </div>
     </div>
   );

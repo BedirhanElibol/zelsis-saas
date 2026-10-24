@@ -8,6 +8,7 @@ import { UserTier } from '@/data/schema';
 import { exportProjectPdfReport, generateExecutiveMarkdown } from '@/lib/report-exporter';
 import { ClipboardToastBadge, useClipboardToast } from '../ui/Toast';
 import { isPdfExportAllowed } from '@/lib/quota-manager';
+import { fetchOrgBranding } from '@/lib/supabase';
 
 interface ExecutiveBriefingModalProps {
   isOpen: boolean;
@@ -60,8 +61,10 @@ export const ExecutiveBriefingModal: React.FC<ExecutiveBriefingModalProps> = ({
     }
   };
 
-  const handleExportPdf = () => {
-    exportProjectPdfReport(project);
+  const handleExportPdf = async () => {
+    // Workspace report branding (white-label for agencies); the report falls back to Zelsis branding
+    const branding = await fetchOrgBranding().catch(() => null);
+    exportProjectPdfReport(project, branding ?? {});
     showToast('Opening PDF Print & Export Dialog...', '[PRINT]');
   };
 

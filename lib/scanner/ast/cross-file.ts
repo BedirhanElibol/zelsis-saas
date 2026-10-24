@@ -7,6 +7,7 @@
  */
 import type { CodeFile } from '../types';
 import { isParsablePath, parseSource } from './parse';
+import { WEBHOOK_VERIFY } from '../../rules/shared/stack-signals';
 import { calleeName, isCall, isFunction, isMember, memberPath, unwrap, walk, type AstNode } from './walk';
 import { AUTH_FN } from './flow';
 import { isPinnedSpec, isVulnerableNext } from '../next-version';
@@ -16,6 +17,10 @@ export interface CrossFileAuth {
   authHelpers: Map<string, Set<string>>;
   /** Route path predicate from middleware.ts, or null when no middleware authenticates. */
   middleware: MiddlewareAuth | null;
+  /** Module keys that verify a webhook signature (lib/services/billing.js calls stripe.webhooks.constructEvent). */
+  webhookVerifiers: Set<string>;
+  /** Module keys whose exported functions validate their payload with a strict Joi/Zod schema (without .unknown(true), .passthrough(), or role/roles/isAdmin keys). */
+  schemaValidators: Set<string>;
 }
 
 export interface MiddlewareAuth {
@@ -28,7 +33,7 @@ export interface MiddlewareAuth {
   skipPrefixes: string[];
 }
 
-export const emptyCrossFileAuth = (): CrossFileAuth => ({ authHelpers: new Map(), middleware: null });
+export const emptyCrossFileAuth = (): CrossFileAuth => ({ authHelpers: new Map(), middleware: null, webhookVerifiers: new Set(), schemaValidators: new Set() });
 
 const AUTHISH = /auth|session|user|token|jwt|clerk|supabase|lucia|kinde|iron/i;
 const SKIP_PATH = /(?:^|\/)(?:__tests__|tests?|spec|e2e|cypress|playwright|stories|examples?|fixtures?)\/|\.(?:test|spec|stories)\.[cm]?[jt]sx?$/;
@@ -264,6 +269,18 @@ function middlewareBypassable(files: CodeFile[]): boolean {
   });
 }
 
+function hasStrictSchemaValidation(content: string): boolean {
+  if (!/\bJoi\.object\s*\(|\bz\.object\s*\(/.test(content)) return false;
+  if (!/\.\s*(?:validate(?:Async)?|parse(?:Async)?|safeParse(?:Async)?)\s*\(/.test(content)) return false;
+  if (/\.unknown\s*\(\s*true\s*\)|\.passthrough\s*\(\s*\)|\.catchall\s*\(|allowUnknown\s*:\s*true/.test(content)) return false;
+  const schemaMatches = [...content.matchAll(/\b(?:Joi|z)\.object\s*\(\s*\{([\s\S]*?)\}\s*\)/g)];
+  if (schemaMatches.length === 0) return false;
+  if (schemaMatches.some((m) => /\b(?:roles?|isAdmin|is_admin)\s*:/.test(m[1]))) return false;
+  return true;
+}
+
 export function buildCrossFileAuth(files: CodeFile[]): CrossFileAuth {
-  return { authHelpers: buildAuthHelperIndex(files), middleware: middlewareBypassable(files) ? null : readMiddlewareAuth(files) };
+  const webhookVerifiers = new Set(files.filter((f) => isParsablePath(f.path) && WEBHOOK_VERIFY.test(f.content)).map((f) => moduleKey(f.path)));
+  const schemaValidators = new Set(files.filter((f) => isParsablePath(f.path) && !SKIP_PATH.test(f.path.replace(/\\/g, '/')) && hasStrictSchemaValidation(f.content || '')).map((f) => moduleKey(f.path)));
+  return { authHelpers: buildAuthHelperIndex(files), middleware: middlewareBypassable(files) ? null : readMiddlewareAuth(files), webhookVerifiers, schemaValidators };
 }

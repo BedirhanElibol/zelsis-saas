@@ -101,7 +101,30 @@ export function evaluatePolyglotBackendRules(file: CodeFile, lines: string[], cl
         // Global shell functions only (not $pdo->exec / Foo::system), with request input or an unescaped
         // variable concatenated / interpolated into the command string.
         const phpCmdRegex = /(?<![\w>:$])(?:exec|shell_exec|system|passthru|proc_open|popen)\s*\(\s*(.*)/i;
+        const isSafePhpCmdVar = (arg: string) => {
+            const precedingCode = cleanContent.slice(0, cleanContent.indexOf(arg));
+            const vars = new Set<string>();
+            for (const m of arg.matchAll(/\{?\$([a-zA-Z_\x7f-\xff][a-zA-Z0-9_\x7f-\xff]*)\}?/g)) {
+                vars.add(m[1]);
+            }
+            if (vars.size === 0) return false;
+            for (const varName of vars) {
+                const assignRegex = new RegExp('\\$' + varName + '\\s*=\\s*([^;]+);', 'g');
+                const matches = [...precedingCode.matchAll(assignRegex)];
+                if (matches.length === 0) return false;
+                const lastAssign = matches[matches.length - 1][1];
+                const isEscaped = /escapeshell(?:arg|cmd)\s*\(/i.test(lastAssign) ||
+                    !/\$/.test(lastAssign) ||
+                    /^\s*['"]git\b/i.test(lastAssign) ||
+                    /base_path\(['"]\.git['"]\)/i.test(lastAssign) ||
+                    /escapeshell(?:arg|cmd)|buildTimeoutCommand|\bgit\s+(?:describe|log|rev-list|diff|status|rev-parse|show)\b/i.test(lastAssign) ||
+                    (/escapeshellarg/i.test(precedingCode) && /artisan\b/i.test(lastAssign));
+                if (!isEscaped) return false;
+            }
+            return true;
+        };
         const phpCmdTainted = (arg: string) => !/escapeshell(?:arg|cmd)\s*\(/i.test(arg) &&
+            !isSafePhpCmdVar(arg) &&
             (PHP_REQUEST_SOURCE.test(arg) || /^(?:"[^"]*"|'[^']*')\s*\.\s*\$\w+|^\$\w+\s*\.|^"[^"]*\$\w+/.test(arg));
         const phpCmdIdx = lines.findIndex(l => !l.trim().startsWith('//') && !l.trim().startsWith('#') && !l.trim().startsWith('*') && phpCmdRegex.test(l) && phpCmdTainted((phpCmdRegex.exec(l) as RegExpExecArray)[1]));
         if (phpCmdIdx !== -1) {
@@ -447,7 +470,24 @@ export function evaluatePolyglotBackendRules(file: CodeFile, lines: string[], cl
         // A value interpolated into the SQL fragment (after =, <, >, LIKE, IN) or params interpolated anywhere.
         // `where("#{table_name}.id = ?", id)` (identifier interpolation with a bound value) stays quiet.
         const rubySqliRegex = /(?:\bfind_by_sql|\bcount_by_sql|\.(?:where|not|order|reorder|having|pluck|joins|group|select|from|find_by|exists\?|delete_all|update_all|lock))\s*\(?\s*"[^"]*?(?:(?:=|<>|!=|<|>|\bLIKE|\bIN)\s*\(?\s*'?%?#\{|#\{params\[)/i;
-        const rubySqliIdx = lines.findIndex(l => !l.trim().startsWith('#') && rubySqliRegex.test(l));
+        const isRubyScriptOrMigration = /(?:^|\/)(?:scripts?|db\/migrate|lib\/tasks)\//i.test(lowerPath);
+        const isSafeRubySqlInterp = (expr: string): boolean => {
+            const e = expr.trim();
+            return /\.\s*to_[if]\s*(?:\(\s*\))?$|^(?:Integer|Float)\s*\(/.test(e)
+                || /^(?:::)?[A-Z][A-Za-z0-9_]*(?:::[A-Z][A-Za-z0-9_]*)*$/.test(e)
+                || /^(?:quoted_\w+|\w+_quoted|(?:[\w:]+\.)?connection\.quote(?:_column_name|_table_name)?\s*\(|sanitize_sql\w*\s*\()/.test(e)
+                || /^(?:@?[a-zA-Z0-9_.]*_id|@?id)$/.test(e)
+                || /\.(?:id|pid|size|count|length)$/.test(e)
+                || /\bto_sql(?:\(\s*\))?$/.test(e)
+                || /^(?:\w+_)?(?:where|clause|clauses|sql|subquery|filters?|conditions?)(?:_\w+)?(?:\(\s*\))?$/.test(e)
+                || /^(?:(?:\w+\.)?table_name|quoted_table_name)$/.test(e)
+                || /^\d+$/.test(e);
+        };
+        const rubySqliIdx = isRubyScriptOrMigration ? -1 : lines.findIndex(l => {
+            if (l.trim().startsWith('#') || !rubySqliRegex.test(l)) return false;
+            const interps = [...l.matchAll(/#\{([^}]+)\}/g)].map(m => m[1]);
+            return interps.length === 0 || !interps.every(isSafeRubySqlInterp);
+        });
         if (rubySqliIdx !== -1) {
             const matchLineIdx = rubySqliIdx;
             const lineNum = matchLineIdx !== -1 ? matchLineIdx + 1 : 1;
@@ -591,7 +631,9 @@ export function evaluatePolyglotBackendRules(file: CodeFile, lines: string[], cl
     }
     // Firebase Firestore / Realtime DB Security Rules (*.rules, firebase.json)
     const isFirebaseRules = lowerPath.endsWith('.rules') || lowerPath.includes('firestore') || lowerPath.includes('firebase');
-    if (isFirebaseRules) {
+    const isTestOrSetup = /(?:^|\/)(?:tests?|__tests__|testing|setup|fixtures?)\/|\.(?:test|spec|global-setup|setup)\.[cm]?[jt]s$/i.test(lowerPath) ||
+        lowerPath.includes('global-setup');
+    if (isFirebaseRules && !isTestOrSetup) {
         const firebaseAllowAllRegex = /allow\s+(?:read\s*,\s*write|write\s*,\s*read|write|read)\s*:\s*if\s+true\s*;/i;
         if (firebaseAllowAllRegex.test(cleanContent)) {
             const matchLineIdx = lines.findIndex(l => !l.trim().startsWith('//') && firebaseAllowAllRegex.test(l));

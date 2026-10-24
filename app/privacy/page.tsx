@@ -111,7 +111,7 @@ export default function PrivacyPolicyPage() {
                   <tr>
                     <td className="p-2.5 text-white font-bold">Supabase Inc.</td>
                     <td className="p-2.5">Managed PostgreSQL database, Auth &amp; Telemetry persistence</td>
-                    <td className="p-2.5">USA (AWS us-east-1)</td>
+                    <td className="p-2.5">EU (AWS eu-west-1, Ireland)</td>
                     <td className="p-2.5 text-emerald-400">SOC 2 Type II, AES-256</td>
                   </tr>
                   <tr>
@@ -125,6 +125,12 @@ export default function PrivacyPolicyPage() {
                     <td className="p-2.5">Email delivery: security alerts, team invites, onboarding and waitlist emails</td>
                     <td className="p-2.5">USA</td>
                     <td className="p-2.5 text-emerald-400">SOC 2 Type II</td>
+                  </tr>
+                  <tr>
+                    <td className="p-2.5 text-white font-bold">Anthropic PBC</td>
+                    <td className="p-2.5">Opt-in only (Pro / Team, off by default): AI double-check of up to three blocking pull request findings, using the flagged file and up to two files it imports</td>
+                    <td className="p-2.5">USA</td>
+                    <td className="p-2.5 text-emerald-400">Commercial API terms (no training on API data)</td>
                   </tr>
                   <tr>
                     <td className="p-2.5 text-white font-bold">Polar Software Inc.</td>

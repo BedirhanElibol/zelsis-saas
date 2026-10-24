@@ -16,7 +16,7 @@ export const FaqSection: React.FC = () => {
     {
       question: 'Do you store or train AI models on our proprietary source code?',
       answer:
-        'No. Repository files are fetched into worker memory, scanned with pattern-based rules, and released when the scan ends. We do not save repositories; we save the findings, which include a short snippet of each flagged line so you can review it. Customer code is never used to train AI models.'
+        'No. Repository files are fetched into worker memory, scanned with pattern-based rules, and released when the scan ends. We do not save repositories; we save the findings, which include a short snippet of each flagged line so you can review it. Customer code is never used to train AI models. Scans send no code to an AI model; the only exception is the opt-in AI double-check on Pro and Team, which is off by default and sends the files behind a blocking pull request finding to Anthropic\'s API.'
     },
     {
       question: 'Does Zelsis work with private GitHub repositories?',
@@ -29,9 +29,9 @@ export const FaqSection: React.FC = () => {
         'Call the gate API from any CI runner (GitHub Actions, GitLab CI, Bitbucket, CircleCI). With failOnBlock=true it returns HTTP 422 when the gate fails, so the job fails. The dashboard generates ready-to-use workflows, and a .zelsisrc.json in your repository can require a minimum readiness score.'
     },
     {
-      question: 'How are the release gate and security rules maintained and updated?',
+      question: 'How are the release gate and its rules maintained and updated?',
       answer:
-        'Every rule change is measured against a pinned benchmark of intentionally vulnerable apps and maintained production projects in several languages. Rules that misfire on clean code become experimental and stop affecting the gate, and a CRITICAL finding can fail a release only when its rule has test fixtures, caught a documented flaw, or was reviewed as a true positive. Results are published in the benchmark section.'
+        'Every rule change is measured against a pinned benchmark of intentionally vulnerable apps and maintained production projects in several languages. Rules that misfire on clean code become experimental and stop affecting the gate, and a CRITICAL finding can fail a release only when its rule caught a documented flaw or was reviewed as a true positive, or when it is a published advisory for a dependency version. Findings from other rules are still reported, as warnings. Results are published in the benchmark section.'
     },
     {
       question: 'Do you check our dependencies for known vulnerabilities?',
@@ -52,13 +52,28 @@ export const FaqSection: React.FC = () => {
 
   if (faqs.length === 0) return null;
 
+  // Closed answers are not in the DOM, so search engines read the questions and answers from FAQPage markup
+  const faqJsonLd = {
+    '@context': 'https://schema.org',
+    '@type': 'FAQPage',
+    mainEntity: faqs.map((faq) => ({
+      '@type': 'Question',
+      name: faq.question,
+      acceptedAnswer: { '@type': 'Answer', text: faq.answer }
+    }))
+  };
+
   return (
     <section id="faq" className="py-24 sm:py-32 px-4 sm:px-6 lg:px-12 bg-[#0A0A0A] border-b border-white/10">
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(faqJsonLd).replace(/</g, '\\u003c') }}
+      />
       <div className="max-w-4xl mx-auto flex flex-col gap-12">
         {/* Section Header */}
         <div className="flex flex-col gap-4 text-center">
           <div className="inline-flex items-center justify-center text-xs font-mono uppercase tracking-widest text-emerald-400">
-            <span>SECURITY &amp; ARCHITECTURE FAQ</span>
+            <span>BEFORE YOU CONNECT A REPO</span>
           </div>
           <h2 className="text-3xl sm:text-5xl font-extrabold text-[#EDEDED] tracking-tight">
             Frequently Asked Questions
