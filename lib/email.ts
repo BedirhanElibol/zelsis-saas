@@ -346,6 +346,55 @@ export async function sendFirstScanNudgeEmail(params: { toEmail: string; unsubsc
 }
 
 /**
+ * Sent once to a confirmed account that scanned a repository but never added the pull request gate.
+ * Carries a one-click unsubscribe (RFC 8058) like the first-scan nudge.
+ */
+export async function sendGateNudgeEmail(params: { toEmail: string; unsubscribeUrl: string }): Promise<SendEmailResult> {
+  const { toEmail, unsubscribeUrl } = params;
+  const appUrl = getConfiguredAppUrl();
+  const setupUrl = `${appUrl}/dashboard?nav=cicd`;
+  const unsub = escapeHtml(unsubscribeUrl);
+
+  const html = wrapHtmlTemplate({
+    title: 'Run the same check on every pull request',
+    contentHtml: `
+      <h1 style="margin:0 0 16px 0;font-size:20px;font-weight:700;color:#FFFFFF;letter-spacing:-0.3px;">
+        Your scan covered today's code. Next week's pull request is the one to watch.
+      </h1>
+      <p style="margin:0 0 12px 0;">
+        Add the Zelsis check to GitHub Actions and every pull request gets the same scan. Findings show up on the changed
+        lines, and the check fails when a proven critical issue gets in, so a required check can stop the merge.
+      </p>
+      <p style="margin:0 0 12px 0;">
+        It takes about two minutes: create an API key in Settings, add it to your repository as the ZELSIS_API_KEY secret,
+        and commit the workflow file shown on the setup page. Public repositories are free.
+      </p>
+      <div style="margin:28px 0;text-align:center;">
+        <a href="${setupUrl}" style="display:inline-block;background-color:#10B981;color:#000000;font-weight:700;font-size:13px;padding:12px 28px;border-radius:8px;text-decoration:none;">
+          Set up the check
+        </a>
+      </div>
+      <p style="margin:20px 0 0 0;font-size:11px;color:#52525B;">
+        You get this once because you ran a scan. <a href="${unsub}" style="color:#71717A;text-decoration:underline;">Unsubscribe from product emails</a>.
+      </p>
+    `,
+  });
+
+  const text = `Your scan covered today's code. Next week's pull request is the one to watch.\n\nAdd the Zelsis check to GitHub Actions and every pull request gets the same scan. Findings show up on the changed lines, and the check fails when a proven critical issue gets in, so a required check can stop the merge.\n\nIt takes about two minutes: create an API key in Settings, add it to your repository as the ZELSIS_API_KEY secret, and commit the workflow file shown on the setup page. Public repositories are free.\n\nSet up the check: ${setupUrl}\n\nYou get this once because you ran a scan. Unsubscribe: ${unsubscribeUrl}`;
+
+  return sendEmail({
+    to: toEmail,
+    subject: 'Run the same check on every pull request',
+    html,
+    text,
+    headers: {
+      'List-Unsubscribe': `<${unsubscribeUrl}>`,
+      'List-Unsubscribe-Post': 'List-Unsubscribe=One-Click',
+    },
+  });
+}
+
+/**
  * Friday summary of what the PR / CI gate did this week. Sent only to accounts with recorded gate runs,
  * with a one-click unsubscribe like other product email.
  */

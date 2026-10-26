@@ -3,9 +3,10 @@ import { getSupabaseAdmin } from '@/lib/supabase-admin';
 import { logger } from '@/lib/logger';
 import { isAuthorizedCron } from '@/lib/cron-auth';
 import { getConfiguredAppUrl } from '@/lib/app-url';
-import { sendFirstScanNudgeEmail } from '@/lib/email';
-import { pickFirstScanNudges, unsubscribeToken, type LifecycleUser } from '@/lib/lifecycle-emails';
+import { sendFirstScanNudgeEmail, sendGateNudgeEmail } from '@/lib/email';
+import { pickFirstScanNudges, pickGateNudges, unsubscribeToken, type LifecycleUser } from '@/lib/lifecycle-emails';
 import { sendWeeklySummaries } from '@/lib/weekly-summary-job';
+import { GATE_TRIGGERS } from '@/lib/weekly-summary';
 
 export const maxDuration = 30;
 export const dynamic = 'force-dynamic';
@@ -14,7 +15,10 @@ const PAGE_SIZE = 200;
 const MAX_PAGES = 10;
 const MAX_SENDS_PER_RUN = 50;
 
-/** Daily: one "run your first scan" email to confirmed accounts that have not scanned a day after signing up. */
+/**
+ * Daily: one "run your first scan" email to confirmed accounts that have not scanned a day after signing up, and one
+ * "add the pull request gate" email to accounts that scanned but whose pull requests never reached the gate.
+ */
 export async function GET(req: Request) {
   if (!isAuthorizedCron(req.headers.get('authorization'))) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
@@ -42,32 +46,55 @@ export async function GET(req: Request) {
     if (data.users.length < PAGE_SIZE) break;
   }
 
-  // Only the recent signups need the scan check
-  const recent = pickFirstScanNudges(users, new Set());
-  if (recent.length === 0) return NextResponse.json({ success: true, sent: 0, weekly });
-  const { data: jobs } = await admin
-    .from('scan_jobs')
-    .select('user_id')
-    .in('user_id', recent.map((u) => u.id));
-  const scanned = new Set((jobs ?? []).map((j: { user_id: string }) => j.user_id));
-  const targets = pickFirstScanNudges(recent, scanned).slice(0, MAX_SENDS_PER_RUN);
-
   const appUrl = getConfiguredAppUrl();
   let sent = 0;
-  for (const u of targets) {
+  const send = async (
+    u: LifecycleUser,
+    mail: typeof sendFirstScanNudgeEmail,
+    markKey: 'first_scan_nudge_at' | 'gate_nudge_at',
+  ) => {
     const token = unsubscribeToken(u.id)!;
     const unsubscribeUrl = `${appUrl}/api/v1/email/unsubscribe?u=${encodeURIComponent(u.id)}&t=${encodeURIComponent(token)}`;
-    const res = await sendFirstScanNudgeEmail({ toEmail: u.email!, unsubscribeUrl });
+    const res = await mail({ toEmail: u.email!, unsubscribeUrl });
     if (!res.success) {
-      logger.warn(`[Lifecycle] Nudge not sent to ${u.id}: ${res.error}`);
-      continue;
+      logger.warn(`[Lifecycle] ${markKey} email not sent to ${u.id}: ${res.error}`);
+      return;
     }
     sent++;
-    // If this write fails, a later run inside the 3-day window would send again, so log it as an error
+    // If this write fails, a later run inside the window would send again, so log it as an error
     const { error } = await admin.auth.admin.updateUserById(u.id, {
-      app_metadata: { ...(u.app_metadata ?? {}), first_scan_nudge_at: new Date().toISOString() },
+      app_metadata: { ...(u.app_metadata ?? {}), [markKey]: new Date().toISOString() },
     });
-    if (error) logger.error(`[Lifecycle] Could not record nudge for ${u.id}:`, error.message);
+    if (error) logger.error(`[Lifecycle] Could not record ${markKey} for ${u.id}:`, error.message);
+  };
+
+  // Only the recent signups need the scan check
+  const recent = pickFirstScanNudges(users, new Set());
+  let firstScanTargets: LifecycleUser[] = [];
+  if (recent.length > 0) {
+    const { data: jobs } = await admin
+      .from('scan_jobs')
+      .select('user_id')
+      .in('user_id', recent.map((u) => u.id));
+    const scanned = new Set((jobs ?? []).map((j: { user_id: string }) => j.user_id));
+    firstScanTargets = pickFirstScanNudges(recent, scanned).slice(0, MAX_SENDS_PER_RUN);
+    for (const u of firstScanTargets) await send(u, sendFirstScanNudgeEmail, 'first_scan_nudge_at');
   }
-  return NextResponse.json({ success: true, candidates: targets.length, sent, weekly });
+
+  // Accounts that scanned a few days ago but whose pull requests never reached the gate
+  const gateCandidates = pickGateNudges(users, new Set(users.map((u) => u.id)), new Set());
+  let gateTargets: LifecycleUser[] = [];
+  if (gateCandidates.length > 0 && sent < MAX_SENDS_PER_RUN) {
+    const ids = gateCandidates.map((u) => u.id);
+    const [{ data: jobs }, { data: gateScans }] = await Promise.all([
+      admin.from('scan_jobs').select('user_id').in('user_id', ids),
+      admin.from('scans').select('user_id').in('user_id', ids).in('trigger_type', [...GATE_TRIGGERS]),
+    ]);
+    const scanned = new Set((jobs ?? []).map((j: { user_id: string }) => j.user_id));
+    const gated = new Set((gateScans ?? []).map((s: { user_id: string }) => s.user_id));
+    gateTargets = pickGateNudges(gateCandidates, scanned, gated).slice(0, MAX_SENDS_PER_RUN - sent);
+    for (const u of gateTargets) await send(u, sendGateNudgeEmail, 'gate_nudge_at');
+  }
+
+  return NextResponse.json({ success: true, candidates: firstScanTargets.length + gateTargets.length, sent, weekly });
 }
