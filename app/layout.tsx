@@ -6,6 +6,7 @@ import { OfflineBanner } from '@/components/ui/OfflineBanner';
 import { ToastProvider } from '@/lib/toast';
 import { CookieBanner } from '@/components/CookieBanner';
 import { AnalyticsScripts } from '@/components/analytics/AnalyticsScripts';
+import { SiteEvents } from '@/components/analytics/SiteEvents';
 import { ChunkErrorListener } from '@/components/common/ChunkErrorListener';
 import { getConfiguredAppUrl } from '@/lib/app-url';
 import { ReducedMotion } from '@/components/ui/ReducedMotion';
@@ -101,6 +102,7 @@ export default function RootLayout({
       <body className="bg-[#0A0A0A] text-[#EDEDED] antialiased selection:bg-white selection:text-black notranslate" translate="no" suppressHydrationWarning>
         <ChunkErrorListener />
         <AnalyticsScripts />
+        <SiteEvents />
         <a href="#main-content" className="sr-only focus:not-sr-only focus:fixed focus:top-4 focus:left-4 focus:z-50 focus:px-4 focus:py-2 focus:bg-white focus:text-black focus:rounded-md focus:font-mono focus:text-xs">Skip to main content</a>
         <OfflineBanner />
         <ToastProvider>

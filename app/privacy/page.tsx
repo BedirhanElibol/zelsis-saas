@@ -77,6 +77,7 @@ export default function PrivacyPolicyPage() {
             <ul className="list-disc list-inside space-y-1.5 text-[#AAAAAA]">
               <li><strong>Account Credentials:</strong> Name, email address, GitHub username, avatar URL (when authenticated via GitHub OAuth).</li>
               <li><strong>Telemetry &amp; Audit Logs:</strong> Timestamps of security scans, pass/warning/failed clearance scores, rule violation counts.</li>
+              <li><strong>Anonymous Site Counts:</strong> We count page views and clicks on our own pages, together with the page, the referring site or <code>utm_source</code>, and the day. No cookie is set, and no IP address, user agent or other identifier is stored for this. Visitors who send Do Not Track or Global Privacy Control are not counted.</li>
               <li><strong>Technical Metadata:</strong> IP address, browser user-agent, secure encrypted session tokens.</li>
               <li><strong>Billing Records:</strong> Subscription plan tier, license keys, and transaction identifiers tokenized by PCI-DSS Level 1 certified payment gateways (Polar / Stripe). We never process or store raw payment card credentials.</li>
             </ul>
