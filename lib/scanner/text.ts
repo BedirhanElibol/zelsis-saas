@@ -109,6 +109,8 @@ export function isNonAppPath(path: string): boolean {
   if (/(?:^|\/)(?:experiments?)\//i.test(p)) return true;
   // benchmark programs measure the library; they are not shipped with the app
   if (/(?:^|\/)(?:benchmarks?|bench)\//i.test(p)) return true;
+  // example apps and sample code shown to learners are not what the project ships
+  if (/(?:^|\/)(?:examples?|samples?)\//i.test(p)) return true;
   if (/(?:^|\/)[^/]*fixture[s]?\.sql$/i.test(p)) return true;
   if (/(?:^|\/)[^/]*global-setup\.[cm]?[jt]sx?$/i.test(p)) return true;
 

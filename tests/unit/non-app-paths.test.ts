@@ -56,6 +56,9 @@ test('isNonAppPath identifies test environment files, fixtures, and setups', () 
   assert.equal(isNonAppPath('experiments/workbench/fixture.sql'), true);
   assert.equal(isNonAppPath('benchmarks/jsx/src/page.tsx'), true);
   assert.equal(isNonAppPath('src/benchmark-results/page.tsx'), false);
+  assert.equal(isNonAppPath('examples/celery/requirements.txt'), true);
+  assert.equal(isNonAppPath('packages/api/samples/client.ts'), true);
+  assert.equal(isNonAppPath('src/examples-api/route.ts'), false);
   assert.equal(isNonAppPath('db/fixture.sql'), true);
   assert.equal(isNonAppPath('vitest.global-setup.ts'), true);
 });
