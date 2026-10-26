@@ -7,6 +7,7 @@ export interface ScanPreviewResult {
   repoUrl: string;
   repoName: string;
   filesScanned: number;
+  totalFiles?: number;
   score: number;
   gateStatus: 'PASSED' | 'WARNING' | 'FAILED';
   counts: { critical: number; high: number; medium: number; low: number };
@@ -47,7 +48,11 @@ export const ScanPreviewCard: React.FC<ScanPreviewCardProps> = ({ result, onUnlo
             <ShieldCheck size={16} className="text-emerald-400 shrink-0" />
           )}
           <span className="text-xs font-mono text-[#EDEDED] truncate">{result.repoName}</span>
-          <span className="text-[11px] font-mono text-zinc-400 shrink-0">{result.filesScanned} files</span>
+          <span className="text-[11px] font-mono text-zinc-400 shrink-0">
+            {result.totalFiles && result.totalFiles > result.filesScanned
+              ? `${result.filesScanned} of ${result.totalFiles} files`
+              : `${result.filesScanned} files`}
+          </span>
         </div>
         <span className={`text-xs font-mono font-bold ${GATE_STYLES[result.gateStatus]}`}>
           {result.gateStatus} · {result.score}/100
