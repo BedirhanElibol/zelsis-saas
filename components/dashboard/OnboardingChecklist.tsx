@@ -1,6 +1,7 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { Project } from '@/data/schema';
-import { CheckCircle2, Circle, Copy, Check } from 'lucide-react';
+import { CheckCircle2, Circle, Copy, Check, GitPullRequest } from 'lucide-react';
+import { fetchLastGateRunAt } from '@/lib/supabase';
 import { buildGateWorkflow } from '@/lib/ci-gate-snippet';
 import { getConfiguredAppUrl } from '@/lib/app-url';
 import { badgeUrlFor } from '@/lib/badge-url';
@@ -11,6 +12,15 @@ interface OnboardingChecklistProps {
 
 export const OnboardingChecklist: React.FC<OnboardingChecklistProps> = ({ project }) => {
   const [copiedIndex, setCopiedIndex] = useState<number | null>(null);
+  const [gateRunAt, setGateRunAt] = useState<string | null>(null);
+
+  useEffect(() => {
+    let cancelled = false;
+    if (project?.id) void fetchLastGateRunAt(project.id).then((at) => !cancelled && setGateRunAt(at)).catch(() => {});
+    return () => {
+      cancelled = true;
+    };
+  }, [project?.id]);
 
   const steps = [
     {
@@ -30,7 +40,8 @@ export const OnboardingChecklist: React.FC<OnboardingChecklistProps> = ({ projec
       title: 'Add CI Gate',
       description: '3 steps: create an API key in Settings & API Keys, add it to your GitHub repo as the ZELSIS_API_KEY secret, then commit the workflow below to .github/workflows/zelsis.yml.',
       link: { href: '/dashboard?nav=cicd', label: 'Open the CI setup page' },
-      isComplete: false, // In a real app, this would check if the webhook/app is installed
+      // Complete once a pull request or CI scan has reached the gate for this project
+      isComplete: !!gateRunAt,
       snippet: buildGateWorkflow({ appUrl: getConfiguredAppUrl(), projectName: project.name }),
     },
     {
@@ -45,6 +56,8 @@ export const OnboardingChecklist: React.FC<OnboardingChecklistProps> = ({ projec
   ];
 
   const progress = (steps.filter(s => s.isComplete).length / steps.length) * 100;
+  // Right after the first scan, the next step that matters is running the same check on every pull request
+  const nudgeGate = !!project?.lastScanAt && !gateRunAt;
 
   const handleCopy = (text: string, index: number) => {
     navigator.clipboard.writeText(text);
@@ -68,6 +81,26 @@ export const OnboardingChecklist: React.FC<OnboardingChecklistProps> = ({ projec
           </div>
         </div>
       </div>
+
+      {nudgeGate && (
+        <div className="p-4 border-b border-emerald-500/20 bg-emerald-500/5 flex flex-col sm:flex-row sm:items-center gap-3">
+          <GitPullRequest size={18} className="text-emerald-400 shrink-0" aria-hidden="true" />
+          <div className="flex-1 font-sans">
+            <p className="text-sm font-semibold text-white">Next: run this check on every pull request</p>
+            <p className="text-xs text-[#A1A1AA] mt-0.5">
+              This scan covered today&apos;s code. Add the gate and each pull request gets the same check, with findings on the changed
+              lines and a failed check when something critical gets in. It takes about two minutes.
+            </p>
+          </div>
+          <a
+            href="/dashboard?nav=cicd"
+            data-track="onboarding-add-gate"
+            className="shrink-0 px-3 py-2 rounded-lg bg-emerald-500 text-black text-xs font-bold hover:bg-emerald-400 font-sans"
+          >
+            Add it to my pull requests
+          </a>
+        </div>
+      )}
 
       <div className="flex flex-col divide-y divide-white/5">
         {steps.map((step, index) => (
