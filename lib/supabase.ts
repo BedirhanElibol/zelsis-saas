@@ -402,6 +402,23 @@ export async function fetchTeamProjects(): Promise<TeamProjectSummary[]> {
   }));
 }
 
+const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+
+/** ISO time of the project's latest pull request or CI gate scan, or null when the gate has never run for it. */
+export async function fetchLastGateRunAt(projectId: string): Promise<string | null> {
+  const supabase = getSupabase();
+  if (!supabase || !isSupabaseConfigured() || !UUID.test(projectId)) return null;
+  const { data, error } = await supabase
+    .from('scans')
+    .select('created_at')
+    .eq('project_id', projectId)
+    .in('trigger_type', ['CI_CD', 'WEBHOOK'])
+    .order('created_at', { ascending: false })
+    .limit(1);
+  if (error || !data?.length) return null;
+  return (data[0] as { created_at: string }).created_at;
+}
+
 /**
  * Loads the signed-in user's saved projects (repositories and live sites) from the cloud database.
  * RLS restricts the result to rows owned by the current user.
