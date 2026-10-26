@@ -360,6 +360,10 @@ function shipReadiness(path: string, lines: string[], c: string, add: (h: Hit) =
     if (/^\s*\w+\s*(?::\s*[\w<>|\s]+)?=\s*['"`]https?:\/\/(?:localhost|127\.0\.0\.1)[^'"`]*['"`]\s*,?\s*$/.test(l) && !/^\s*(?:const|let|var)\b/.test(l)) return;
     const prev = (lines.slice(0, i).reverse().find((x) => x.trim() && !isComment(x)) || '').replace(/\r$/, '').replace(/\s*\/\/.*$/, '');
     if (/^\s*[:?]/.test(l) || /(?:\?\?|\|\||[?:])\s*$/.test(prev) || /^\s*:\s*$/.test(prev)) return;
+    // A bare `const baseURL = 'http://localhost'` is the base for in-process requests (app.request(), new Request())
+    // when the file never calls the global fetch, axios, ky or got: nothing is sent to that address.
+    if (/^\s*(?:export\s+)?const\s+\w+\s*(?::\s*\w+)?\s*=\s*['"`]https?:\/\/(?:localhost|127\.0\.0\.1)\/?['"`]\s*;?\s*$/.test(l)
+      && !/(?<![.\w])fetch\s*\(|\baxios\b|\bky\b|\bgot\s*\(|XMLHttpRequest/.test(c)) return;
     // A SCREAMING_CASE constant is a configurable default (SDK constants); flag it only when this file sends requests to it
     const constant = /^\s*(?:export\s+)?const\s+([A-Z][A-Z0-9_]*)\s*(?::\s*\w+)?\s*=\s*['"`]/.exec(l);
     if (constant && !new RegExp(String.raw`(?:fetch|axios\.\w+|redirect|baseURL\s*:)\s*\(?\s*(?:\x60\$\{)?\s*` + constant[1] + String.raw`\b`).test(c)) return;

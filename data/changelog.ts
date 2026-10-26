@@ -12,6 +12,14 @@ export interface ChangelogEntry {
 
 export const CHANGELOG: ChangelogEntry[] = [
   {
+    date: '2026-10-26',
+    title: 'Benchmark folders and in-process base URLs are not reported',
+    changes: [
+      { kind: 'Fixed', text: 'Code in benchmarks/ and bench/ folders is treated as outside the shipped app, so its findings are medium and do not fail the check.' },
+      { kind: 'Fixed', text: 'A bare localhost base URL used only for in-process requests (app.request, new Request) is no longer reported as a hardcoded localhost API call; a file that calls fetch, axios, ky or got with it still is.' },
+    ],
+  },
+  {
     date: '2026-10-24',
     title: 'PDF reports now include findings digest and scope page',
     changes: [
