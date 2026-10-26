@@ -14,6 +14,8 @@ const PreviewRequestSchema = z.object({
 
 const SEVERITY_ORDER = ['CRITICAL', 'HIGH', 'MEDIUM', 'LOW'] as const;
 const PREVIEW_FINDING_LIMIT = 3;
+/** Most relevant source files fetched for a preview; a full scan has no such cap. */
+const PREVIEW_MAX_FILES = 300;
 
 /**
  * POST /api/v1/scans/preview
@@ -70,7 +72,9 @@ export async function POST(req: NextRequest) {
   }
 
   try {
-    const repoData = await fetchGithubRepositoryData(repoUrl);
+    // A preview must answer within the function limit, so very large repositories are capped to their most relevant
+    // source files; the result says how many were scanned.
+    const repoData = await fetchGithubRepositoryData(repoUrl, undefined, undefined, undefined, undefined, undefined, PREVIEW_MAX_FILES);
 
     if (repoData?.error === 'RATE_LIMIT_EXCEEDED') {
       return NextResponse.json(
@@ -116,6 +120,7 @@ export async function POST(req: NextRequest) {
       repoUrl,
       repoName: repoData.name || repoUrl,
       filesScanned: repoData.files.length,
+      totalFiles: Math.max(repoData.totalFiles ?? 0, repoData.files.length),
       score: result.score,
       gateStatus: result.gateStatus,
       counts: {

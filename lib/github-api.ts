@@ -30,6 +30,8 @@ export interface GithubRepoInfo {
   stars: number;
   language: string;
   files: CodeFile[];
+  /** Source files found in the repository; more than files.length when a scan was capped with maxFiles. */
+  totalFiles?: number;
   isPrivate?: boolean;
   requiresAuth?: boolean;
   isEmpty?: boolean;
@@ -236,7 +238,8 @@ export async function fetchGithubRepositoryData(
   signal?: AbortSignal,
   onProgress?: (progress: FetchProgress) => void,
   ref?: string,
-  base?: string
+  base?: string,
+  maxFiles?: number
 ): Promise<GithubRepoInfo | null> {
   const parsed = parseGithubUrl(repoUrl);
   if (!parsed) return null;
@@ -640,7 +643,7 @@ export async function fetchGithubRepositoryData(
       };
     }
 
-    const filesToFetch = prioritizeFilesForScan(treeFiles);
+    const filesToFetch = prioritizeFilesForScan(treeFiles, maxFiles);
 
     onProgress?.({
       phase: 'tree',
@@ -723,6 +726,7 @@ export async function fetchGithubRepositoryData(
         stars: (repoData?.stargazers_count as number) || 0,
         language: (repoData?.language as string) || 'TypeScript',
         files: codeFiles,
+        totalFiles: treeFiles.length,
         isPrivate: repoData?.private === true,
         changedFiles
       };
