@@ -97,10 +97,10 @@ export const SaasHero: React.FC<SaasHeroProps> = ({ onOpenDashboard }) => {
       <div className="relative z-10 max-w-6xl mx-auto w-full flex flex-col items-center text-center">
         {/* Plain elements: the headline is the LCP, so it must not wait for hydration to fade in */}
         <h1 className="text-4xl sm:text-6xl lg:text-7xl font-extrabold text-[#EDEDED] tracking-tight leading-[1.06] max-w-4xl mb-6 [text-wrap:balance]">
-          Find the flaws in your app <span className="text-emerald-400">before your users do.</span>
+          Your next pull request could <span className="text-emerald-400">charge a customer twice.</span>
         </h1>
         <p className="text-base sm:text-lg lg:text-xl text-[#A1A1AA] max-w-3xl mx-auto leading-relaxed mt-6 mb-10 font-sans font-normal">
-          Zelsis checks every pull request for logic bugs, security holes, slow queries, risky migrations, vulnerable dependencies, accessibility and privacy gaps, and fails the build when something critical gets in. One flat price per account.
+          Zelsis reads every pull request for the bugs that cost money and customers: double charges, prices taken from the browser, pages that crawl, migrations that lock the database mid-deploy. If something critical gets in, the build fails before it ships.
         </p>
 
         {/* Direct Repository Scan Command Bar */}
@@ -130,7 +130,7 @@ export const SaasHero: React.FC<SaasHeroProps> = ({ onOpenDashboard }) => {
               className="px-5 min-h-11 rounded-lg text-xs font-bold font-mono uppercase tracking-wider bg-emerald-500 text-black hover:bg-emerald-400 transition-all flex items-center justify-center gap-2 shrink-0 shadow-sm active:scale-[0.98] disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer"
             >
               {isScanning ? <Loader2 size={13} className="animate-spin" /> : null}
-              <span>{isScanning ? 'Scanning…' : 'Scan Repository'}</span>
+              <span>{isScanning ? 'Scanning…' : 'See what’s in your repo'}</span>
               {!isScanning && <ArrowRight size={13} />}
             </button>
           </form>
@@ -180,7 +180,7 @@ export const SaasHero: React.FC<SaasHeroProps> = ({ onOpenDashboard }) => {
           </div>
           <div className="flex items-center gap-2">
             <span className="w-1.5 h-1.5 rounded-full bg-white/40" />
-            <span>Preview without an account, free for public repos</span>
+            <span>No account needed · one flat price, not per developer</span>
           </div>
         </m.div>
 
