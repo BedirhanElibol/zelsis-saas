@@ -17,8 +17,8 @@ export default function OpengraphImage() {
           <div style={{ display: 'flex', fontSize: 36, fontWeight: 800 }}>Zelsis</div>
         </div>
         <div style={{ display: 'flex', flexDirection: 'column', gap: 20 }}>
-          <div style={{ display: 'flex', fontSize: 60, fontWeight: 800, lineHeight: 1.1, letterSpacing: -1 }}>Find the flaws in your app before your users do.</div>
-          <div style={{ display: 'flex', fontSize: 28, color: '#A1A1AA' }}>Release checks for web, mobile, SaaS, API and desktop apps.</div>
+          <div style={{ display: 'flex', fontSize: 60, fontWeight: 800, lineHeight: 1.1, letterSpacing: -1 }}>Your next pull request could charge a customer twice.</div>
+          <div style={{ display: 'flex', fontSize: 28, color: '#A1A1AA' }}>Zelsis catches it before it merges. Try it on your repo free.</div>
         </div>
         <div style={{ display: 'flex', flexDirection: 'column', gap: 18 }}>
           <div style={{ display: 'flex', flexWrap: 'wrap', gap: 12 }}>
