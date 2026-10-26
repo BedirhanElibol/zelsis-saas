@@ -176,11 +176,11 @@ export const SaasHero: React.FC<SaasHeroProps> = ({ onOpenDashboard }) => {
           </div>
           <div className="flex items-center gap-2">
             <span className="w-1.5 h-1.5 rounded-full bg-white/40" />
-            <a href="#benchmark" className="inline-flex items-center min-h-[24px] hover:text-white transition-colors">Measured on real open-source projects</a>
+            <a href="#benchmark" className="inline-flex items-center min-h-[24px] hover:text-white transition-colors">Benchmark published, misses included</a>
           </div>
           <div className="flex items-center gap-2">
             <span className="w-1.5 h-1.5 rounded-full bg-white/40" />
-            <span>Free plan, no credit card</span>
+            <span>Preview without an account, free for public repos</span>
           </div>
         </m.div>
 
