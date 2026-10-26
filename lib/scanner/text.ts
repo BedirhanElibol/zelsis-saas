@@ -107,6 +107,8 @@ export function isNonAppPath(path: string): boolean {
 
   // workbench fixtures and test setups: experiments/, fixture.sql, global-setup
   if (/(?:^|\/)(?:experiments?)\//i.test(p)) return true;
+  // benchmark programs measure the library; they are not shipped with the app
+  if (/(?:^|\/)(?:benchmarks?|bench)\//i.test(p)) return true;
   if (/(?:^|\/)[^/]*fixture[s]?\.sql$/i.test(p)) return true;
   if (/(?:^|\/)[^/]*global-setup\.[cm]?[jt]sx?$/i.test(p)) return true;
 
