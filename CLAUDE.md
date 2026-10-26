@@ -38,6 +38,17 @@
 
 <!-- BEGIN:nextjs-agent-rules -->
 
+# 7. Token Budget
+- Output: report in 5 lines or fewer (done, result, next). Bot comments on a PR (Vercel, Zelsis) and "nothing to fix" events get one line.
+- Reading: never dump a whole file, diff, log or result list. Use `Grep` with a path and `head_limit`, `Read` with `offset`/`limit`, `git diff --stat`, or `| tail -5`. A tool result saved to a file is sliced by character range, not re-read.
+- Verifying: run `npm test`, `npm run lint` and `npm run benchmark -- --check` once before a PR, filtered (`| grep -E "^ℹ (pass|fail)"`, `| tail -2`). Do not re-run them after a copy or text change; `npx tsc --noEmit` is enough.
+- Waiting: one `gh pr checks <n> --watch` call, never a loop of status checks. Merge when green.
+- Searching: skip `.cache/`, `.claude/worktrees/` and `marketing-assets/` unless the task is about them (see `.ignore`). Never `du` or `find` across the whole repo root.
+- Media: no videos, stills or screenshots unless asked. One contact sheet beats ten images; use scale 0.5.
+- Questions: do not ask about anything that does not change what gets built or sold. Pick the default, say which in one line.
+- Handoffs: no agents or other sessions for work that fits in this one. Keep the state in the project memory file, not in a recap.
+- Long output from CI logs: `gh run view <id> --log-failed | grep -E "Error|✖|not ok" | head`.
+
 # This is NOT the Next.js you know
 
 This version has breaking changes — APIs, conventions, and file structure may all differ from your training data. Read the relevant guide in `node_modules/next/dist/docs/` (resolved from this file's directory; in monorepos the `next` package may not be visible from the repo root) before writing any code. Heed deprecation notices.
