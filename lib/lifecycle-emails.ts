@@ -34,6 +34,26 @@ export function isValidUnsubscribeToken(userId: string, token: string | null | u
 }
 
 /**
+ * Confirmed accounts created 3-8 days ago that ran a scan but whose pull requests never reached the gate, were not
+ * sent this nudge before and did not opt out. The window keeps a missed daily run from mailing old accounts.
+ */
+export function pickGateNudges(
+  users: LifecycleUser[],
+  scannedUserIds: Set<string>,
+  gateUserIds: Set<string>,
+  now = Date.now(),
+): LifecycleUser[] {
+  return users.filter((u) => {
+    const meta = u.app_metadata ?? {};
+    const age = now - Date.parse(u.created_at);
+    return !!u.email && !!u.email_confirmed_at
+      && age >= 3 * DAY && age <= 8 * DAY
+      && !meta.email_opt_out && !meta.gate_nudge_at
+      && scannedUserIds.has(u.id) && !gateUserIds.has(u.id);
+  });
+}
+
+/**
  * Confirmed accounts created 1-3 days ago that never ran a scan, were not nudged before and did not opt out.
  * The window keeps a missed daily run from mailing old accounts.
  */

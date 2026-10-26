@@ -1,6 +1,6 @@
 import { test, mock } from 'node:test';
 import assert from 'node:assert/strict';
-import { isValidUnsubscribeToken, pickFirstScanNudges, unsubscribeToken, type LifecycleUser } from '../../lib/lifecycle-emails';
+import { isValidUnsubscribeToken, pickFirstScanNudges, pickGateNudges, unsubscribeToken, type LifecycleUser } from '../../lib/lifecycle-emails';
 import { sendFirstScanNudgeEmail } from '../../lib/email';
 import { isAuthorizedCron } from '../../lib/cron-auth';
 
@@ -21,6 +21,21 @@ test('nudges confirmed 1-3 day old accounts that never scanned, once, unless the
     user({ id: 'opted-out', app_metadata: { email_opt_out: true } }),
     user({ id: 'no-email', email: null }),
   ], new Set(['scanned']), NOW);
+  assert.deepEqual(picked.map((u) => u.id), ['ok']);
+});
+
+test('gate nudge goes to confirmed accounts that scanned 3-8 days ago but never reached the gate, once', () => {
+  const old = (days: number) => new Date(NOW - days * DAY).toISOString();
+  const picked = pickGateNudges([
+    user({ id: 'ok', created_at: old(4) }),
+    user({ id: 'gated', created_at: old(4) }),
+    user({ id: 'never-scanned', created_at: old(4) }),
+    user({ id: 'too-new', created_at: old(1) }),
+    user({ id: 'too-old', created_at: old(20) }),
+    user({ id: 'unconfirmed', created_at: old(4), email_confirmed_at: null }),
+    user({ id: 'already', created_at: old(4), app_metadata: { gate_nudge_at: '2026-10-06T15:00:00Z' } }),
+    user({ id: 'opted-out', created_at: old(4), app_metadata: { email_opt_out: true } }),
+  ], new Set(['ok', 'gated', 'too-new', 'too-old', 'unconfirmed', 'already', 'opted-out']), new Set(['gated']), NOW);
   assert.deepEqual(picked.map((u) => u.id), ['ok']);
 });
 
