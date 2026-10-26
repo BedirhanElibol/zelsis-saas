@@ -1,0 +1,7 @@
+# Search tools (ripgrep, Grep, Glob) skip these: they are large, generated or belong to other checkouts.
+.cache/
+.claude/worktrees/
+.next/
+dist/
+marketing-assets/
+public/benchmark/
