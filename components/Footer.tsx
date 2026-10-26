@@ -54,6 +54,9 @@ export const Footer: React.FC = () => {
           <a href="/open-source" className="text-sm hover:text-white transition-colors py-1.5 inline-block">
             For open source
           </a>
+          <a href="/about" className="text-sm hover:text-white transition-colors py-1.5 inline-block">
+            About
+          </a>
         </div>
 
         {/* Col 3: SaaS Platform (4 cols) */}
