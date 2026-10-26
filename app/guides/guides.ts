@@ -6,6 +6,24 @@ export interface GuideEntry {
 
 export const GUIDES: GuideEntry[] = [
   {
+    slug: 'snyk-alternative',
+    title: 'Snyk alternative for teams that ship every week',
+    summary:
+      'A release check on every pull request, at one flat price per account. Price and focus side by side with Snyk, and when to stay with it.',
+  },
+  {
+    slug: 'semgrep-alternative',
+    title: 'Semgrep alternative for teams that ship every week',
+    summary:
+      'A release check on every pull request, at one flat price per account. Price and focus side by side with Semgrep, and when to stay with it.',
+  },
+  {
+    slug: 'aikido-alternative',
+    title: 'Aikido alternative for teams that ship every week',
+    summary:
+      'A release check on every pull request, at one flat price per account. Price and focus side by side with Aikido, and when to stay with it.',
+  },
+  {
     slug: 'zelsis-vs-coderabbit',
     title: 'Zelsis vs CodeRabbit: five pull requests with planted flaws',
     summary:

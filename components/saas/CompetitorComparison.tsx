@@ -2,9 +2,9 @@ import React from 'react';
 import { ENTERPRISE_SEAT_LIMIT, priceLabel } from '@/data/pricing-plans';
 
 /** Competitor prices: verify on each vendor's pricing page and update COMPARED_ON whenever they change. */
-const COMPARED_ON = 'October 2026';
+export const COMPARED_ON = 'October 2026';
 
-const ROWS: { label: string; zelsis: string; aikido: string; snyk: string; semgrep: string }[] = [
+export const COMPETITOR_ROWS: { label: string; zelsis: string; aikido: string; snyk: string; semgrep: string }[] = [
   {
     label: 'Paid plan',
     zelsis: `${priceLabel('Pro')} flat per account; team of ${ENTERPRISE_SEAT_LIMIT} for ${priceLabel('Enterprise')}`,
@@ -56,7 +56,7 @@ export function CompetitorComparison() {
               </tr>
             </thead>
             <tbody className="divide-y divide-white/5">
-              {ROWS.map((row) => (
+              {COMPETITOR_ROWS.map((row) => (
                 <tr key={row.label}>
                   <th scope="row" className="py-4 px-5 text-zinc-300 font-medium">{row.label}</th>
                   <td className="py-4 px-5 text-white bg-emerald-500/[0.03] border-x border-emerald-500/10">{row.zelsis}</td>
