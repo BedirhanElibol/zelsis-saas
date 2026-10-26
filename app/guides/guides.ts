@@ -6,6 +6,24 @@ export interface GuideEntry {
 
 export const GUIDES: GuideEntry[] = [
   {
+    slug: 'stripe-double-charge',
+    title: 'How to stop charging customers twice with Stripe',
+    summary:
+      'Double clicks, retries after a timeout and repeated webhooks. Idempotency keys, a disabled pay button and webhook de-duplication, with a test.',
+  },
+  {
+    slug: 'n-plus-one-queries',
+    title: 'How to find and fix N+1 queries',
+    summary:
+      'One query per row is fast with ten rows and times out with ten thousand. The fix in Prisma, Django, Rails, Laravel and SQL, and how to count queries in a test.',
+  },
+  {
+    slug: 'postgres-migration-locks',
+    title: 'Postgres migrations that lock your tables',
+    summary:
+      'CREATE INDEX without CONCURRENTLY, SET NOT NULL on a big table and the lock queue: why a deploy can freeze checkout, and the safe versions.',
+  },
+  {
     slug: 'snyk-alternative',
     title: 'Snyk alternative for teams that ship every week',
     summary:
