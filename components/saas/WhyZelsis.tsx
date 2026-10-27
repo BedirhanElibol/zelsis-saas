@@ -63,7 +63,7 @@ const CATEGORIES = [
   { icon: Users, title: 'One user reading another’s data', body: 'Routes and tables that skip the owner check.' },
   { icon: KeyRound, title: 'Leaked keys', body: 'Secret keys in client code, logs or committed config.' },
   { icon: Bot, title: 'AI features open to abuse', body: 'User text that reaches a model prompt unchecked, and model output used as trusted input.' },
-  { icon: Wallet, title: 'Runaway AI bills', body: 'Model calls with no limit on tokens, retries or requests per user.' },
+  { icon: Wallet, title: 'Runaway AI bills', body: 'Model calls with no token limit, and agent loops or retries that never stop.' },
   { icon: Cloud, title: 'Cloud and infrastructure left open', body: 'Public buckets, wide-open access rules and containers running with too many rights.' },
 ];
 
