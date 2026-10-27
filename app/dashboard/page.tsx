@@ -12,6 +12,7 @@ import { RemediationDrawer } from '@/components/findings/RemediationDrawer';
 import { AuthModal, UserProfile } from '@/components/auth/AuthModal';
 import { useDashboardState } from '@/hooks/useDashboardState';
 import { useRouter, useSearchParams } from 'next/navigation';
+import { takePendingPlan } from '@/lib/pending-plan';
 import { verifyLicenseKey } from '@/lib/stripe-checkout';
 import { checkScanQuota } from '@/lib/quota-manager';
 import { QuotaLimitModal } from '@/components/dashboard/QuotaLimitModal';
@@ -153,6 +154,13 @@ function DashboardContent() {
     });
     handleSelectProject(newP);
   };
+
+  // A visitor who pressed "Get Pro" while signed out comes back from sign-up here: carry on to checkout
+  useEffect(() => {
+    if (authStatus !== 'authenticated') return;
+    const plan = takePendingPlan();
+    if (plan) router.push(`/checkout?plan=${plan}`);
+  }, [authStatus, router]);
 
   // Direct repo URL scan trigger (e.g. from Landing Hero or URL query params)
   useEffect(() => {
