@@ -13,6 +13,16 @@ Zelsis works with JavaScript and TypeScript, Python, Go, Ruby, PHP, Java, C#, Ru
 - [Changelog](https://zelsis.com/changelog): what changed in what Zelsis finds
 - [About](https://zelsis.com/about): who builds Zelsis and how results are measured
 
+## What Zelsis checks
+
+- [Payments](https://zelsis.com/checks/payments)
+- [Security](https://zelsis.com/checks/security)
+- [Performance](https://zelsis.com/checks/performance)
+- [Screens and accessibility](https://zelsis.com/checks/screens)
+- [AI features](https://zelsis.com/checks/ai-features)
+- [App Store and Google Play review](https://zelsis.com/checks/app-store)
+- [Pages that look unfinished](https://zelsis.com/checks/looks-unfinished)
+
 ## Comparisons
 
 - [Snyk alternative](https://zelsis.com/guides/snyk-alternative)

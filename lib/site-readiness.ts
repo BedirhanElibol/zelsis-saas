@@ -33,7 +33,8 @@ export function checkSiteReadiness(html: string, finalUrl: string, opts: { favic
   const viewport = metaContent(head, /^viewport$/i);
   const hasIconLink = [...head.matchAll(/<link\b[^>]*>/gi)].some((m) => /\bicon\b/i.test(attr(m[0], 'rel') ?? ''));
   const lang = !!attr(/<html\b[^>]*>/i.exec(head)?.[0] ?? '', 'lang');
-  const body = html.replace(/<script[\s\S]*?<\/script>|<style[\s\S]*?<\/style>/gi, ' ');
+  // Code samples are shown on purpose (docs, tutorials); only page copy counts as placeholder text
+  const body = html.replace(/<script[\s\S]*?<\/script>|<style[\s\S]*?<\/style>|<pre[\s\S]*?<\/pre>|<code[\s\S]*?<\/code>/gi, ' ');
   const lorem = /lorem ipsum dolor/i.test(body);
   const placeholder = /\b(?:Your (?:Company|Brand|Product|App) (?:Name|Logo)|Insert (?:Text|Title|Description) Here)\b/.exec(body)?.[0];
 

@@ -25,6 +25,11 @@ describe('site readiness check', () => {
     assert.deepEqual(failing(html), ['description', 'og-image']);
   });
 
+  it('ignores lorem ipsum inside a code sample', () => {
+    const html = '<html lang="en"><head><title>Docs</title></head><body><p>Example:</p><pre><code>description: \'Lorem ipsum dolor sit amet\'</code></pre></body></html>';
+    assert.equal(checkSiteReadiness(html, 'https://docs.test/').find((i) => i.id === 'placeholder')?.ok, true);
+  });
+
   it('flags plain http and accepts the /favicon.ico fallback', () => {
     const items = checkSiteReadiness('<html><head><title>Acme</title></head></html>', 'http://acme.test/', { faviconFallbackOk: true });
     assert.equal(items.find((i) => i.id === 'https')?.ok, false);
