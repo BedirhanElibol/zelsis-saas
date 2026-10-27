@@ -1,0 +1,29 @@
+# Zelsis
+
+> Zelsis checks every pull request before it merges, and fails the build when a critical bug gets in. It looks for security issues and for what users of the app would hit: payments that charge twice or the wrong amount, slow pages, migrations that lock the database during a deploy, screens that break on a phone or for keyboard users, App Store and Google Play review rejections, and pages that look unfinished (template titles, lorem ipsum, invented numbers or testimonials). Every scan gives two answers: Security, and Ready for users.
+
+Zelsis works with JavaScript and TypeScript, Python, Go, Ruby, PHP, Java, C#, Rust, Swift, Kotlin, Flutter and React Native apps, SQL databases, Docker, Kubernetes, Terraform and GitHub Actions. It runs as a GitHub App on pull requests or as a CI step. Code is scanned in memory and never stored; findings keep a short snippet, erased after 90 days. Pricing is one flat price per account, not per developer; there is a free plan.
+
+## Product
+
+- [Home](https://zelsis.com/): what Zelsis checks, an example failing pull request, pricing
+- [Free site check](https://zelsis.com/site-check): enter a URL, no account; checks a live page for what a first visitor notices
+- [Benchmark](https://zelsis.com/benchmark): every pinned open-source project scanned, what Zelsis finds and what it misses
+- [Docs](https://zelsis.com/docs): setup for the GitHub App, CI and the API
+- [Changelog](https://zelsis.com/changelog): what changed in what Zelsis finds
+- [About](https://zelsis.com/about): who builds Zelsis and how results are measured
+
+## Comparisons
+
+- [Snyk alternative](https://zelsis.com/guides/snyk-alternative)
+- [Semgrep alternative](https://zelsis.com/guides/semgrep-alternative)
+- [Aikido alternative](https://zelsis.com/guides/aikido-alternative)
+- [Zelsis vs CodeRabbit](https://zelsis.com/guides/zelsis-vs-coderabbit): five pull requests with planted flaws, both tools' comments public
+
+## Guides
+
+- [Stripe double charges](https://zelsis.com/guides/stripe-double-charge)
+- [Stripe amounts in cents](https://zelsis.com/guides/stripe-amount-cents)
+- [N+1 queries](https://zelsis.com/guides/n-plus-one-queries)
+- [Postgres migration locks](https://zelsis.com/guides/postgres-migration-locks)
+- [Code due diligence](https://zelsis.com/guides/code-due-diligence)
