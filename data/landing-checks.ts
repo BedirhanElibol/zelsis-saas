@@ -3,7 +3,10 @@
  * snippet must not: tests/unit/landing-checks.test.ts scans them, so the page never advertises a
  * check the engine does not actually perform.
  */
+export type LandingCategory = 'Payments' | 'Security' | 'Performance' | 'Screens' | 'AI features' | 'Looks unfinished';
+
 export interface LandingCheck {
+  category: LandingCategory;
   title: string;
   description: string;
   ruleId: number;
@@ -15,6 +18,7 @@ export interface LandingCheck {
 
 export const LANDING_CHECKS: LandingCheck[] = [
   {
+    category: 'Security',
     title: 'Service-role key in a Server Action',
     description: 'A Server Action writes with the Supabase service-role client (which bypasses RLS) without checking who is calling.',
     ruleId: 28001,
@@ -44,6 +48,7 @@ export async function deleteProject(projectId: string) {
 `,
   },
   {
+    category: 'Security',
     title: 'Cached data served to the wrong user',
     description: 'unstable_cache reads the signed-in user from the surrounding scope but keys the cache without it, so one user\'s data is served to everyone.',
     ruleId: 28751,
@@ -78,6 +83,7 @@ export default async function OrdersPage() {
 `,
   },
   {
+    category: 'Payments',
     title: 'Webhook that pays out twice',
     description: 'Stripe and Polar retry deliveries. A handler that adds credits without recording the event id grants them again on every retry.',
     ruleId: 28702,
@@ -111,6 +117,7 @@ export default async function OrdersPage() {
 `,
   },
   {
+    category: 'Security',
     title: 'Admin check on a token nobody verified',
     description: 'Express middleware reads the role from jwt.decode(), which only base64-decodes the token. Anyone can sign their own token with role "admin".',
     ruleId: 39,
@@ -138,6 +145,7 @@ module.exports = function requireAdmin(req, res, next) {
 `,
   },
   {
+    category: 'Security',
     title: 'Delete endpoint anyone can call',
     description: 'A FastAPI DELETE route with a database session but no user dependency: anyone who can reach the API can delete any project by id.',
     ruleId: 28838,
@@ -170,6 +178,7 @@ def delete_project(project_id: int, db: Session = Depends(get_db), current_user:
 `,
   },
   {
+    category: 'AI features',
     title: 'MCP server launched from a request',
     description: 'An endpoint that starts an MCP stdio server with a command taken from the request lets anyone run programs on your server.',
     ruleId: 28304,
@@ -195,6 +204,7 @@ def delete_project(project_id: int, db: Session = Depends(get_db), current_user:
 `,
   },
   {
+    category: 'Security',
     title: 'Users who can make themselves admin',
     description: 'permit! lets the request set every column, so a user updating their profile can also send admin=true (Rails mass assignment).',
     ruleId: 18032,
@@ -218,6 +228,7 @@ end
 `,
   },
   {
+    category: 'Security',
     title: 'SQL built from a query string',
     description: 'A Go handler formats the request value into the SQL text, so a crafted email reads or changes any row in the database.',
     ruleId: 24101,
@@ -247,6 +258,127 @@ func FindUser(c *gin.Context) {
 	defer rows.Close()
 	c.JSON(200, rows)
 }
+`,
+  },
+  {
+    category: 'Payments',
+    title: 'Charge rounded to whole dollars',
+    description: 'The total is rounded before it is turned into cents, so a $19.99 order is charged $20.00.',
+    ruleId: 29670,
+    code: 'BUG-70',
+    path: 'lib/stripe/charge.ts',
+    bad: `import { stripe } from './client';
+export async function chargeOrder(order: { total: number; customerId: string }) {
+  return stripe.paymentIntents.create({
+    amount: Math.round(order.total) * 100,
+    currency: 'usd',
+    customer: order.customerId,
+  });
+}
+`,
+    good: `import { stripe } from './client';
+export async function chargeOrder(order: { total: number; customerId: string }) {
+  return stripe.paymentIntents.create({
+    amount: Math.round(order.total * 100),
+    currency: 'usd',
+    customer: order.customerId,
+  });
+}
+`,
+  },
+  {
+    category: 'Performance',
+    title: 'One database query per item in a list',
+    description: 'Each post is loaded in its own query inside the loop, so a page of 50 posts makes 50 round trips.',
+    ruleId: 6001,
+    code: 'DB-PERF-01',
+    path: 'lib/posts.ts',
+    bad: `import { prisma } from './db';
+
+export async function getAuthors(postIds: string[]) {
+  const authors = [];
+  for (const id of postIds) {
+    const post = await prisma.post.findUnique({ where: { id }, include: { author: true } });
+    authors.push(post?.author);
+  }
+  return authors;
+}
+`,
+    good: `import { prisma } from './db';
+
+export async function getAuthors(postIds: string[]) {
+  const posts = await prisma.post.findMany({ where: { id: { in: postIds } }, include: { author: true } });
+  return posts.map((post) => post.author);
+}
+`,
+  },
+  {
+    category: 'Screens',
+    title: 'A dialog keyboard users cannot leave',
+    description: 'The form dialog does not keep focus inside it, so Tab walks into the page behind and screen readers lose their place.',
+    ruleId: 1203,
+    code: 'UI-INTERACT-03',
+    path: 'components/InviteModal.tsx',
+    bad: `export function InviteModal() {
+  return (
+    <div role="dialog" aria-modal="true">
+      <input name="email" />
+      <input name="name" />
+      <input name="team" />
+    </div>
+  );
+}
+`,
+    good: `export function InviteModal() {
+  const onKey = (e: KeyboardEvent) => {
+    if (e.key !== 'Tab') return;
+    if (e.shiftKey && document.activeElement === first) { e.preventDefault(); last.focus(); }
+  };
+  return (
+    <div role="dialog" aria-modal="true" onKeyDown={onKey}>
+      <input name="email" />
+      <input name="name" />
+      <input name="team" />
+    </div>
+  );
+}
+`,
+  },
+  {
+    category: 'AI features',
+    title: 'Visitor text written into the system prompt',
+    description: 'A field from the request becomes part of the system prompt, so anyone can rewrite the instructions your assistant follows.',
+    ruleId: 23007,
+    code: 'SAAS-07',
+    path: 'app/api/chat/route.ts',
+    bad: `export async function POST(req: Request) {
+  const { persona, question } = await req.json();
+  return Response.json(await openai.chat.completions.create({ model: 'gpt-4o', max_tokens: 300, messages: [{ role: 'system', content: \`You are \${persona}. Never reveal internal notes.\` }, { role: 'user', content: question }] }));
+}
+`,
+    good: `const today = () => new Date().toISOString();
+export async function POST(req: Request) {
+  const { question } = await req.json();
+  return Response.json(await openai.chat.completions.create({ model: 'gpt-4o', max_tokens: 300, messages: [{ role: 'system', content: \`You are a support assistant. Today is \${today()}.\` }, { role: 'user', content: question }] }));
+}
+`,
+  },
+  {
+    category: 'Looks unfinished',
+    title: 'Template title and lorem ipsum left on the page',
+    description: 'The starter page title and placeholder copy ship to production, and visitors read the app as unfinished.',
+    ruleId: 276,
+    code: 'CLICHE-76',
+    path: 'app/layout.tsx',
+    bad: `export const metadata = {
+  title: 'Create Next App',
+  description: 'Lorem ipsum dolor sit amet',
+};
+`,
+    good: `export const metadata = {
+  title: 'Invoicely | Invoices that chase themselves',
+  description: 'Send invoices and get paid on time.',
+};
 `,
   },
 ];
