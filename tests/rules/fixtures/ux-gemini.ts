@@ -175,6 +175,19 @@ export function Hint() {
 `),
   },
   {
+    ruleIds: [30009], name: 'UXG-10 hover pause with onFocus after an arrow onMouseLeave',
+    detects: f(C, `export function Panel() {
+  const [paused, setPaused] = useState(false);
+  return <div onMouseEnter={() => setPaused(true)} onMouseLeave={() => setPaused(false)}>{paused ? 'Paused' : 'Playing'}</div>;
+}
+`),
+    ignores: f(C, `export function Panel() {
+  const [paused, setPaused] = useState(false);
+  return <div onMouseEnter={() => setPaused(true)} onMouseLeave={() => setPaused(false)} onFocus={() => setPaused(true)} onBlur={() => setPaused(false)}>{paused ? 'Paused' : 'Playing'}</div>;
+}
+`),
+  },
+  {
     ruleIds: [30010], name: 'UXG-11 Intl formatter per row',
     detects: f(C, `export const Prices = ({ rows }: { rows: { id: string; v: number }[] }) => (
   <ul>{rows.map((r) => <li key={r.id}>{new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD' }).format(r.v)}</li>)}</ul>

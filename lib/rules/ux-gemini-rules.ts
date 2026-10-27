@@ -93,7 +93,8 @@ function evaluate(path: string, c: string, add: Add) {
     }
 
     // UXG-10: tooltip / popover that opens only on mouse hover (non-focusable elements; buttons can still be clicked)
-    for (const m of c.matchAll(/<(?:div|span|aside|li|p|img|section|td|tr|svg|label)\b[^>]*\bonMouseEnter=\{[^}]*\bset\w+\(\s*true\s*\)[^}]*\}[^>]*>/g)) {
+    // The tag is read past arrow handlers (onMouseLeave={() => ...}) so an onFocus after them still counts
+    for (const m of c.matchAll(/<(?:div|span|aside|li|p|img|section|td|tr|svg|label)\b(?:=>|[^>])*?\bonMouseEnter=\{[^}]*\bset\w+\(\s*true\s*\)[^}]*\}(?:=>|[^>])*>/g)) {
       if (/\bonFocus=|\bonClick=|\bonKeyDown=|\bonPointerDown=/.test(m[0])) continue;
       add({ ruleId: 30009, code: 'UXG-10', severity: 'MEDIUM', type: 'VIBEPOLISH', category: 'Accessibility', lineIdx: at(m.index!),
         title: 'Content Revealed Only on Mouse Hover',
