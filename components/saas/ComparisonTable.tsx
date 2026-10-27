@@ -10,6 +10,7 @@ import type { UserProfile } from '@/components/auth/AuthModal';
 const AuthModal = dynamic(() => import('@/components/auth/AuthModal').then((m) => m.AuthModal), { ssr: false });
 import { ENTERPRISE_SEAT_LIMIT, PLAN_PRICES, priceLabel, SUPPORT_TERMS, ZELSIS_PRICING_PLANS } from '@/data/pricing-plans';
 import { contactMailto } from '@/lib/contact';
+import { rememberPendingPlan } from '@/lib/pending-plan';
 import { CODE_RETENTION_STATEMENT, CODE_SNIPPET_RETENTION_DAYS } from '@/lib/data-retention';
 
 interface ComparisonItem {
@@ -73,6 +74,8 @@ export const ComparisonTable: React.FC = () => {
 
   const handleSelectPlan = (plan: 'Pro' | 'Enterprise') => {
     if (!currentUser || !currentUser.isLoggedIn) {
+      // GitHub and Google sign-up leave the page, so keep the choice outside React state as well
+      rememberPendingPlan(plan === 'Pro' ? 'zelsis-core' : 'vibecare');
       setPendingPlan(plan);
       setAuthInitialMode('signup');
       setIsAuthModalOpen(true);

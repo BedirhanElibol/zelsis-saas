@@ -316,7 +316,7 @@ export const AuthModal: React.FC<AuthModalProps> = ({
               {mode === 'signin'
                 ? 'Sign in to access your saved security scans and custom rule gates.'
                 : mode === 'signup'
-                ? 'Start securing your Next.js and LLM applications with automated pre-flight gates.'
+                ? 'Scan private repositories and run the same check on every pull request.'
                 : 'Enter your email address and we will dispatch a secure password reset link.'}
             </p>
           </div>
