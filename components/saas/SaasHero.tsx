@@ -98,7 +98,7 @@ export const SaasHero: React.FC<SaasHeroProps> = ({ onOpenDashboard }) => {
         <div className="grid grid-cols-1 lg:grid-cols-[1.05fr_1fr] gap-10 lg:gap-14 items-center">
           {/* Left: the promise and the way in */}
           <div className="flex flex-col items-start text-left min-w-0">
-            <p className="text-xs font-mono uppercase tracking-widest text-emerald-400 mb-5">Release check for every pull request</p>
+            <p className="text-xs font-mono uppercase tracking-widest text-emerald-400 mb-5">Is your app ready for the people who use it?</p>
             {/* Plain elements: the headline is the LCP, so it must not wait for hydration to fade in */}
             <h1 className="text-4xl sm:text-5xl lg:text-6xl font-extrabold text-[#EDEDED] tracking-tight leading-[1.05] [text-wrap:balance]">
               Catch the bug that <span className="text-emerald-400">costs you customers,</span> before you merge.
