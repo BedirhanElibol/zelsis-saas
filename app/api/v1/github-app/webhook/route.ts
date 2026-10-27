@@ -1,3 +1,4 @@
+import { readinessSection } from '@/lib/readiness';
 import { parseLineRange } from '@/lib/ci-annotations';
 import { NextResponse } from 'next/server';
 import crypto from 'crypto';
@@ -248,6 +249,7 @@ async function handlePullRequest(payload: any, supabase: any) {
         `- 🚨 **High:** ${gFindings.filter(f => f.severity === 'HIGH').length}\n` +
         `- ⚠️ **Medium:** ${gFindings.filter(f => f.severity === 'MEDIUM').length}\n` +
         `- ℹ️ **Low:** ${gFindings.filter(f => f.severity === 'LOW').length}\n\n` +
+        readinessSection(gFindings) +
         topIssuesSection(gFindings) +
         verifiedSection(scanResult.crossFileVerified ?? [], changedFiles) +
         aiSection +
