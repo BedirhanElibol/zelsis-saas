@@ -18,6 +18,7 @@ Zelsis works with JavaScript and TypeScript, Python, Go, Ruby, PHP, Java, C#, Ru
 - [Snyk alternative](https://zelsis.com/guides/snyk-alternative)
 - [Semgrep alternative](https://zelsis.com/guides/semgrep-alternative)
 - [Aikido alternative](https://zelsis.com/guides/aikido-alternative)
+- [GitHub Advanced Security alternative](https://zelsis.com/guides/github-advanced-security-alternative)
 - [Zelsis vs CodeRabbit](https://zelsis.com/guides/zelsis-vs-coderabbit): five pull requests with planted flaws, both tools' comments public
 
 ## Guides

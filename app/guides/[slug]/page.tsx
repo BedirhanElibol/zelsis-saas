@@ -8,7 +8,7 @@ import { COMPARED_ON, COMPETITOR_ROWS } from '@/components/saas/CompetitorCompar
 // "<Tool> alternative" pages. Every claim about the other tool comes from the homepage comparison table, which is
 // taken from their public pricing pages; nothing here is new or guessed.
 
-type Key = 'snyk' | 'semgrep' | 'aikido';
+type Key = 'snyk' | 'semgrep' | 'aikido' | 'github';
 
 const TOOLS: Record<string, { key: Key; name: string; pricing: string; stayIf: string; pitch?: string }> = {
   'snyk-alternative': {
@@ -31,6 +31,13 @@ const TOOLS: Record<string, { key: Key; name: string; pricing: string; stayIf: s
     pricing: 'https://www.aikido.dev/pricing',
     stayIf: 'you want one platform that also covers your cloud accounts and runtime, and the starting price fits',
     pitch: 'Aikido brings code, cloud and runtime security into one place. Zelsis checks your code for security too, and also for what your users will hit: payments that charge twice, slow pages, screens that break on a phone, store review rejections, and pages that look unfinished.',
+  },
+  'github-advanced-security-alternative': {
+    key: 'github',
+    name: 'GitHub Advanced Security',
+    pricing: 'https://github.com/security/plans',
+    stayIf: 'your code already lives on GitHub, you are fine paying per active committer, and vulnerability scanning with CodeQL is the coverage you need',
+    pitch: 'GitHub security looks for vulnerabilities, vulnerable dependencies and leaked secrets. Zelsis checks for those too, and also for what your users will hit: payments that charge twice, slow pages, screens that break on a phone, store review rejections, and pages that look unfinished. One flat price instead of a charge per committer.',
   },
 };
 

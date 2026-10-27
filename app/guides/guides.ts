@@ -42,6 +42,12 @@ export const GUIDES: GuideEntry[] = [
       'A release check on every pull request, at one flat price per account. Price and focus side by side with Aikido, and when to stay with it.',
   },
   {
+    slug: 'github-advanced-security-alternative',
+    title: 'GitHub Advanced Security alternative for teams that ship every week',
+    summary:
+      'A release check on every pull request, at one flat price per account instead of per committer. Price and focus side by side with GitHub Code Security and Secret Protection, and when to stay with them.',
+  },
+  {
     slug: 'zelsis-vs-coderabbit',
     title: 'Zelsis vs CodeRabbit: five pull requests with planted flaws',
     summary:
