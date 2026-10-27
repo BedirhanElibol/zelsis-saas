@@ -53,7 +53,7 @@ export const BenchmarkSection: React.FC = () => {
   ];
 
   return (
-    <section id="benchmark" className="py-24 sm:py-32 px-4 sm:px-6 lg:px-12 bg-[#0A0A0A] border-b border-white/10 font-sans relative">
+    <section id="benchmark" className="py-12 sm:py-14 px-4 sm:px-6 lg:px-12 bg-[#0A0A0A] border-b border-white/10 font-sans relative">
       <div className="max-w-6xl mx-auto flex flex-col gap-12">
         <div className="flex flex-col gap-3 text-center max-w-3xl mx-auto">
           <div className="inline-flex items-center gap-2 justify-center text-xs font-mono uppercase tracking-wider text-emerald-400 bg-emerald-500/10 border border-emerald-500/30 px-3 py-1 rounded-full self-center">

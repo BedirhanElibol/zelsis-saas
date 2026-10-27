@@ -31,7 +31,7 @@ export const COMPETITOR_ROWS: { label: string; zelsis: string; aikido: string; s
 /** Honest price comparison against the tools buyers already know. */
 export function CompetitorComparison() {
   return (
-    <section className="py-24 bg-[#0A0A0A] border-t border-white/5" id="compare">
+    <section className="py-12 sm:py-14 bg-[#0A0A0A] border-t border-white/5" id="compare">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="max-w-3xl mb-12">
           <h2 className="text-3xl font-bold tracking-tight text-white sm:text-4xl">
