@@ -4,6 +4,7 @@ import React, { useEffect, useRef, useState } from 'react';
 import { m, useReducedMotion } from 'framer-motion';
 import { AlertCircle, ShieldCheck } from 'lucide-react';
 import { LANDING_CHECKS, type LandingCategory } from '@/data/landing-checks';
+import { slugForLanding } from '@/data/category-pages';
 
 /** Tab order on the page; a category with no checks is left out. */
 const CATEGORIES: LandingCategory[] = ['Payments', 'Security', 'Performance', 'Screens', 'AI features', 'Looks unfinished'];
@@ -119,6 +120,11 @@ export function CatchTabs() {
                 </button>
               );
             })}
+            {slugForLanding(tab.category) && (
+              <a href={`/checks/${slugForLanding(tab.category)}`} className="self-start inline-flex items-center min-h-11 text-sm text-emerald-400 hover:text-emerald-300 underline underline-offset-4">
+                Everything Zelsis checks in {tab.category.toLowerCase()}
+              </a>
+            )}
           </div>
 
           <m.div
