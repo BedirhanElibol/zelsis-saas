@@ -100,7 +100,7 @@ export const SaasHero: React.FC<SaasHeroProps> = ({ onOpenDashboard }) => {
           Catch the bug that <span className="text-emerald-400">costs you customers,</span> before you merge.
         </h1>
         <p className="text-base sm:text-lg lg:text-xl text-[#A1A1AA] max-w-3xl mx-auto leading-relaxed mt-6 mb-10 font-sans font-normal">
-          Zelsis reads every pull request for the bugs that cost money and customers: double charges, leaked secrets and open endpoints, slow queries and pages that crawl, migrations that lock the database mid-deploy. If something critical gets in, the build fails before it ships.
+          Zelsis reads every pull request for the bugs that cost money and customers: double charges, leaked secrets and open endpoints, slow queries, migrations that lock the database, AI features open to prompt injection or runaway LLM bills, and screens that break or lock out users. If something critical gets in, the build fails before it ships.
         </p>
 
         {/* Direct Repository Scan Command Bar */}
