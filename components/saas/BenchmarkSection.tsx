@@ -112,7 +112,7 @@ export const BenchmarkSection: React.FC = () => {
               <h3 className="text-base font-bold text-white">Known vulnerabilities in intentionally vulnerable apps</h3>
               <p className="text-xs text-zinc-400 mt-1">Each flaw is located in the app&apos;s source; it counts as found only if Zelsis reports that class of issue in that file.</p>
             </div>
-            <div className="overflow-x-auto">
+            <div className="overflow-auto max-h-[26rem]" tabIndex={0} role="region" aria-label="Known vulnerabilities results table">
               <table className="w-full text-left text-xs font-mono">
                 <thead className="bg-[#141418] border-b border-white/10 text-zinc-400">
                   <tr>
@@ -153,7 +153,7 @@ export const BenchmarkSection: React.FC = () => {
                 HIGH and CRITICAL findings here are reviewed by hand. Rules that fired on clean code without a real issue were moved to experimental.
               </p>
             </div>
-            <div className="overflow-x-auto">
+            <div className="overflow-auto max-h-[26rem]" tabIndex={0} role="region" aria-label="Maintained projects results table">
               <table className="w-full text-left text-xs font-mono">
                 <thead className="bg-[#141418] border-b border-white/10 text-zinc-400">
                   <tr>
