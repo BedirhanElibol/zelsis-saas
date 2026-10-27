@@ -1430,5 +1430,24 @@ export const UI_CLICHE_CATALOG: UiRule[] = [
     clichePattern: "\"Everything you need to know about our product and billing\" repeating on every site",
     whyAiDoesIt: "Copies boilerplate FAQ section subtitles from standard template kits",
     zelsisSolution: "Write authentic section descriptions explaining how customer questions are handled."
+  },
+  {
+    id: 276,
+    owasp2025Category: "A04:2025-Insecure Design",
+    cweId: "CWE-1234",
+    sourceUrl: "https://cwe.mitre.org/data/definitions/1234.html",
+    sourceType: "official-standard",
+    positiveExample: "Safe implementation",
+    negativeExample: "Vulnerable implementation",
+    applicableLanguages: ["Polyglot"],
+    detectionMethod: "regex",
+    falsePositiveRisk: "low",
+    status: "published",
+    code: 'CLICHE-76',
+    title: "Placeholder Copy or Default Template Metadata Left in the UI",
+    category: "AI Clich\u00e9 & Trust",
+    clichePattern: "Lorem ipsum, \"Your Company Name\" or the starter template title (\"Create Next App\") on a live page",
+    whyAiDoesIt: "Generates a working page quickly and leaves the template copy in place",
+    zelsisSolution: "Write real copy and set a real page title and description before launch."
   }
 ];

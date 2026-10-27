@@ -156,5 +156,53 @@ export function evaluateAiClicheRules(file: CodeFile, lines: string[], cleanCont
         });
         logs.push(`[${ts}] 🎨 CLICHE-74: Unannounced External Link Navigation detected (${file.path}:${lineNum})`);
     }
+    // Shared by the three "looks unfinished or invented" checks below: skip tests, stories and fixtures.
+    const isDemoPath = /(?:__tests__|__mocks__|\.test\.|\.spec\.|\.stories\.|(?:^|\/)(?:fixtures?|e2e|tests?)\/)/i.test(file.path);
+    const firstLine = (re: RegExp): number => lines.findIndex((l) => !/^\s*(?:\/\/|\*|\/\*|\{\/\*)/.test(l) && re.test(l));
+    const pushTell = (ruleId: number, title: string, category: string, lineIdx: number, step: string, fix: string) => {
+        const lineNum = lineIdx + 1;
+        findings.push({
+            id: `cliche-${Date.now()}-${findingCounter.count++}`,
+            ruleId,
+            type: 'VIBEPOLISH',
+            title,
+            severity: 'MEDIUM',
+            category,
+            filePath: file.path,
+            lineRange: `L${lineNum}`,
+            snippet: lines[lineIdx] || '<detected cliche pattern>',
+            reproductionSteps: [`Scanned UI copy in ${file.path}:${lineNum}.`, step],
+            remediationPrompt: fix,
+            status: 'OPEN',
+            owner: 'UI Architect',
+            falsePositive: false
+        });
+        logs.push(`[${ts}] 🎨 ${title.split(':')[0]}: ${title.split(': ')[1] ?? title} (${file.path}:${lineNum})`);
+    };
+    if (!isDemoPath) {
+        // CLICHE-76: placeholder copy or framework default metadata shipped to users.
+        const placeholderIdx = firstLine(/lorem ipsum|<title>\s*(?:Create Next App|React App|Vite \+ React(?: \+ TS)?)\s*<\/title>|\btitle:\s*['"]Create Next App['"]|\b(?:Your (?:Company|Brand|Product|App) (?:Name|Logo)|Insert (?:text|title|description) here|Your (?:Text|Title|Description) Here)\b/i);
+        if (placeholderIdx !== -1) {
+            pushTell(276, 'CLICHE-76: Placeholder Copy or Default Template Metadata Left in the UI', "AI Cliché & Trust", placeholderIdx,
+                'Detected lorem ipsum, a "Your Company Name" style placeholder or the starter template page title, text visitors read as an unfinished or generated app.',
+                `Replace the placeholder text in ${file.path} with real copy, and set a real page title and description in the metadata.`);
+        }
+        // CLICHE-32: a countdown that restarts for every visitor sells urgency that does not exist.
+        const rollingDeadline = /Date\.now\(\)\s*\+\s*[\d_*\s]+|new Date\(\s*Date\.now\(\)\s*\+/.test(cleanContent);
+        const urgencyCopy = /(?:offer|sale|deal|discount|price)s?\s+(?:ends|expires)|ends\s+in\b|hurry|limited[- ]time|spots?\s+left/i.test(cleanContent);
+        const countdownIdx = rollingDeadline && urgencyCopy ? firstLine(/Date\.now\(\)\s*\+/) : -1;
+        if (countdownIdx !== -1) {
+            pushTell(232, 'CLICHE-32: Artificial Scarcity Countdown Banner', "AI Cliché & Trust", countdownIdx,
+                'Detected an urgency countdown whose deadline is computed from the current time, so it restarts for every visitor.',
+                `Remove the rolling countdown in ${file.path}, or drive it from a real fixed end date stored with the offer.`);
+        }
+        // CLICHE-41: a launch badge typed into the page instead of linking to the real listing.
+        const badgeIdx = firstLine(/#\s*1\s+Product of the (?:Day|Week|Month)/i);
+        if (badgeIdx !== -1 && !/producthunt\.com/i.test(cleanContent)) {
+            pushTell(241, 'CLICHE-41: Static Fake Product Hunt "#1 Product of the Day" Badge', "AI Cliché & Trust", badgeIdx,
+                'Detected a "#1 Product of the Day" claim with no link to a Product Hunt listing.',
+                `Only show the badge after a real ranking, and use the official embed linking to your Product Hunt page in ${file.path}.`);
+        }
+    }
     return { findings, logs };
 }
