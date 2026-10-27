@@ -8,7 +8,6 @@ import { ProductCapabilities } from '@/components/saas/ProductCapabilities';
 import { CatchTabs } from '@/components/saas/CatchTabs';
 import { FixPromptsDemo } from '@/components/saas/FixPromptsDemo';
 import { BenchmarkSection } from '@/components/saas/BenchmarkSection';
-import { SecurityAdvisor } from '@/components/saas/SecurityAdvisor';
 import { CompetitorComparison } from '@/components/saas/CompetitorComparison';
 import { ComparisonTable } from '@/components/saas/ComparisonTable';
 import { FaqSection } from '@/components/saas/FaqSection';
@@ -38,7 +37,7 @@ export default function Home() {
         <CatchTabs />
 
         {/* Published benchmark: what we catch and what we miss */}
-        <BenchmarkSection />
+        <BenchmarkSection compact />
 
         <ProductCapabilities />
 
@@ -47,9 +46,6 @@ export default function Home() {
         <CompetitorComparison />
 
         <ComparisonTable />
-
-        {/* Stack-specific companion note, below the main pitch */}
-        <SecurityAdvisor />
 
         <FaqSection />
 

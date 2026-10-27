@@ -44,7 +44,8 @@ const Stat: React.FC<{ value: string; label: string; detail: string }> = ({ valu
   </div>
 );
 
-export const BenchmarkSection: React.FC = () => {
+/** `compact` = the home page version: headline numbers and a link to /benchmark, without the tables. */
+export const BenchmarkSection: React.FC<{ compact?: boolean }> = ({ compact = false }) => {
   const [activeTab, setActiveTab] = useState<Tab>('flaws');
   const tabs: { id: Tab; label: string }[] = [
     { id: 'flaws', label: `Documented flaws (${summary.documentedFlawsDetected}/${summary.documentedFlaws})` },
@@ -91,6 +92,13 @@ export const BenchmarkSection: React.FC = () => {
           />
         </div>
 
+        {compact ? (
+          <a href="/benchmark" className="self-center inline-flex items-center gap-2 min-h-11 px-5 rounded-lg border border-white/15 text-sm font-mono text-zinc-200 hover:text-white hover:border-white/30 transition-colors">
+            See every project, every finding and every miss
+            <ExternalLink size={13} aria-hidden="true" />
+          </a>
+        ) : (
+        <>
         <div className="flex flex-wrap items-center justify-center gap-2 p-1 rounded-xl bg-[#141414] border border-white/10 max-w-2xl mx-auto w-full">
           {tabs.map((tab) => (
             <button
@@ -221,6 +229,8 @@ export const BenchmarkSection: React.FC = () => {
               </ul>
             </div>
           </m.div>
+        )}
+        </>
         )}
       </div>
     </section>
