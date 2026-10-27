@@ -151,6 +151,25 @@ function evaluate(path: string, c: string, add: Add) {
         fix: `Create the formatter once at module level (const fmt = new Intl.${f[1]}(…)) and call fmt.format(value) in the loop.` });
     }
   }
+
+  // UXG-13: a component that loads a list in the browser and renders it with no loading, error or empty state.
+  // Two of the three missing: users see a blank area while it loads, nothing when it fails, or a bare page when there are no rows.
+  if (isJsx) {
+    const load = /\buseEffect\s*\([\s\S]{0,400}?\bfetch\s*\(|\buse(?:SWR|Query|InfiniteQuery)\s*\(/.exec(c);
+    const list = load && /\.map\s*\(\s*\(?\s*\w+/.exec(c.slice(load.index));
+    if (load && list) {
+      const missing: string[] = [];
+      if (!/\b(?:isLoading|loading|isPending|pending|isFetching|Skeleton|Spinner|Loader2?)\b|<Suspense\b|\bif\s*\(\s*!\s*\w+\s*\)\s*return\b|\?\?\s*</.test(c)) missing.push('loading');
+      if (!/\b(?:error|isError|onError|ErrorBoundary)\b|\.catch\s*\(|\bcatch\s*\(/.test(c)) missing.push('error');
+      if (!/\.length\s*(?:===?\s*0|<\s*1|>\s*0|\?)|!\s*\w+(?:\?)?\.length\b|\bisEmpty\b|No \w+ yet|Nothing (?:here|to show)|empty/i.test(c)) missing.push('empty');
+      if (missing.length >= 2) {
+        add({ ruleId: 30012, code: 'UXG-13', severity: 'MEDIUM', type: 'VIBEPOLISH', category: 'UX States', lineIdx: at(load.index),
+          title: `Data List With No ${missing.map((m) => m[0].toUpperCase() + m.slice(1)).join(' or ')} State`,
+          why: `This component loads data in the browser and renders a list, but has no ${missing.join(' or ')} state: ${missing.includes('loading') ? 'the area stays blank while the request runs, ' : ''}${missing.includes('error') ? 'a failed request shows nothing and no way to retry, ' : ''}${missing.includes('empty') ? 'a new account sees a bare page instead of a first step, ' : ''}which is how an app reads as unfinished.`,
+          fix: `Render ${missing.map((m) => (m === 'loading' ? 'a skeleton while loading' : m === 'error' ? 'an error message with a retry button' : 'an empty state that says what to do first')).join(', ')}.` });
+      }
+    }
+  }
 }
 
 export function evaluateUxGeminiRules(file: CodeFile, _lines: string[], cleanContent: string, findingCounter: {
