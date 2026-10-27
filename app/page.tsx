@@ -4,7 +4,7 @@ import { SaasHero } from '@/components/saas/SaasHero';
 import { WorkflowSteps } from '@/components/saas/WorkflowSteps';
 import { WhyZelsis } from '@/components/saas/WhyZelsis';
 import { ProductCapabilities } from '@/components/saas/ProductCapabilities';
-import { FrameworkSpecifics } from '@/components/saas/FrameworkSpecifics';
+import { CatchTabs } from '@/components/saas/CatchTabs';
 import { FixPromptsDemo } from '@/components/saas/FixPromptsDemo';
 import { BenchmarkSection } from '@/components/saas/BenchmarkSection';
 import { SecurityAdvisor } from '@/components/saas/SecurityAdvisor';
@@ -31,7 +31,7 @@ export default function Home() {
         <WhyZelsis />
 
         {/* Real-bug examples across stacks; every example is scanned by tests/unit/landing-checks.test.ts */}
-        <FrameworkSpecifics />
+        <CatchTabs />
 
         {/* Published benchmark: what we catch and what we miss */}
         <BenchmarkSection />
