@@ -1,5 +1,6 @@
 'use client';
 
+import { ReadinessSplit } from './ReadinessSplit';
 import React, { useState } from 'react';
 import { RiskBadge } from '@/components/findings/RiskBadge';
 import { LockedLocation } from '@/components/findings/LockedLocation';
@@ -208,6 +209,7 @@ export const FindingsTable: React.FC<FindingsTableProps> = ({
 
   return (
     <div ref={tableRef} data-tour="findings" className="scroll-mt-20 bg-[#141414] border border-white/10 rounded-xl p-4 sm:p-6 flex flex-col gap-5">
+      <ReadinessSplit findings={findings} />
       <RiskDiagnosis findings={findings} />
       <CostEstimatePanel findings={findings} projectId={projectId} />
 
