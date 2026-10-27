@@ -1,6 +1,7 @@
 import { SmoothScroll } from '@/components/SmoothScroll';
 import { Navbar } from '@/components/Navbar';
 import { SaasHero } from '@/components/saas/SaasHero';
+import { ProblemBand } from '@/components/saas/ProblemBand';
 import { WorkflowSteps } from '@/components/saas/WorkflowSteps';
 import { WhyZelsis } from '@/components/saas/WhyZelsis';
 import { ProductCapabilities } from '@/components/saas/ProductCapabilities';
@@ -23,6 +24,9 @@ export default function Home() {
 
         {/* Hero with the repo scan box and an example failing gate */}
         <SaasHero />
+
+        {/* What users notice when a rushed release goes out */}
+        <ProblemBand />
 
         {/* The release gate first: repo → findings → failed build */}
         <WorkflowSteps />
