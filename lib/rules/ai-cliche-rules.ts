@@ -207,6 +207,38 @@ export function evaluateAiClicheRules(file: CodeFile, lines: string[], cleanCont
                 'Detected a "#1 Product of the Day" claim with no link to a Product Hunt listing.',
                 `Only show the badge after a real ranking, and use the official embed linking to your Product Hunt page in ${file.path}.`);
         }
+        // Proof the page cannot back up. Numbers or names that come from data ({stats.users}) are not flagged.
+        const liveData = /\bfetch\(|useSWR|useQuery|\.channel\(|presence|WebSocket|EventSource|supabase\.from\(/.test(cleanContent);
+        // CLICHE-10: a round social-proof number or uptime promise typed into the copy.
+        const metricIdx = firstLine(/(?:^|[>"'\s])(?:[1-9]\d{0,2}(?:,\d{3})+|[1-9]\d*(?:\.\d)?[kKmM])\+\s*(?:happy\s+|active\s+|satisfied\s+)?(?:users|customers|developers|teams|companies|businesses|downloads|installs)\b|\b99\.9+\s*%\s*uptime\b/i);
+        if (metricIdx !== -1 && !liveData && !/\b(?:source|according to|as of)\b/i.test(lines[metricIdx] || '')) {
+            pushTell(210, 'CLICHE-10: Unsourced Vanity Metric ("10,000+ users", "99.9% uptime")', "AI Cliché & Trust", metricIdx,
+                'Detected a round user count or uptime figure typed into the page with no source; generated landing pages invent these, and visitors who check find nothing behind them.',
+                `Show only numbers you can back up in ${file.path}: read them from your data, link the status page for uptime, or remove the claim.`);
+        }
+        // CLICHE-53: a star rating with no review count and no review site behind it.
+        const ratingIdx = firstLine(/★{5}|\b[45]\.\d\s*(?:\/\s*5|out of 5)\b|\b5\.0\s+(?:stars?|rating)\b/i);
+        if (ratingIdx !== -1 && !liveData && !/\b\d[\d,]*\s+(?:reviews|ratings)\b|reviewCount|ratingCount|g2\.com|capterra|trustpilot|apps\.apple\.com|play\.google\.com/i.test(cleanContent)) {
+            pushTell(253, 'CLICHE-53: Star Rating Without Review Count or Source', "AI Cliché & Trust", ratingIdx,
+                'Detected a five-star or "4.9/5" rating with no number of reviews and no link to where they were left.',
+                `Remove the rating in ${file.path}, or show the review count and link the review site it comes from.`);
+        }
+        // CLICHE-28: an "active now" / "12 people viewing" indicator that is not wired to real presence data.
+        const activeIdx = firstLine(/\b(?:online now|active now|live now)\b|\b\d+\s+(?:people|users|visitors|others)\s+(?:are\s+)?(?:online|viewing|active|watching|looking at this)\b/i);
+        if (activeIdx !== -1 && !liveData) {
+            pushTell(228, 'CLICHE-28: Fabricated "Active Now" Indicator', "AI Cliché & Trust", activeIdx,
+                'Detected an "active now" or "N people viewing" message typed into the page instead of read from live presence data.',
+                `Remove the indicator in ${file.path}, or drive it from a real presence source.`);
+        }
+        // CLICHE-29: testimonials credited to placeholder people or companies.
+        const fakePersonIdx = /testimonial|review|quote/i.test(cleanContent)
+            ? firstLine(/\b(?:John Doe|Jane Doe|John Smith|Jane Smith)\b|\b(?:CEO|CTO|Founder|Head of [A-Z]\w+|Product Manager)\b[^\n]{0,20}\b(?:at|@)\s*(?:Acme(?:\s*(?:Corp|Inc))?|TechCorp|Globex|Initech|StartupXYZ|Company Inc)\b/)
+            : -1;
+        if (fakePersonIdx !== -1) {
+            pushTell(229, 'CLICHE-29: Testimonial From a Placeholder Person or Company', "AI Cliché & Trust", fakePersonIdx,
+                'Detected a testimonial credited to a template name (John Doe, Jane Smith) or a placeholder company (Acme, TechCorp).',
+                `Use real quotes with the customer's permission in ${file.path}, or remove the testimonials until you have them.`);
+        }
     }
     return { findings, logs };
 }

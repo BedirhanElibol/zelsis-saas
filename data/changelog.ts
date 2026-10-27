@@ -15,6 +15,7 @@ export const CHANGELOG: ChangelogEntry[] = [
     date: '2026-10-27',
     title: 'Mobile apps: what App Store and Google Play reviews reject',
     changes: [
+      { kind: 'New', text: 'Proof a page cannot back up is reported: a typed-in "10,000+ users" or "99.9% uptime", a star rating with no review count or source, an "active now" indicator not tied to live data, and testimonials credited to John Doe or Acme Corp.' },
       { kind: 'New', text: 'A starter template application id (com.example, com.yourcompany, org.reactjs.native.example) in Gradle, Expo or Xcode settings is reported before the first upload.' },
       { kind: 'New', text: 'Permissions Google Play only allows with a declaration (SMS, call log, all files, all packages, background location, install packages) are reported.' },
       { kind: 'New', text: 'An Android targetSdk below the level Google Play requires, and an empty or placeholder iOS permission prompt, are reported.' },
