@@ -153,18 +153,15 @@ export const ProductCapabilities: React.FC = () => {
         </div>
 
         {/* Sequential Alternating Showcase of All 4 Pillars */}
-        <div className="flex flex-col gap-8">
-          {capabilities.map((capability, idx) => {
-            const isReversed = idx % 2 === 1;
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+          {capabilities.map((capability) => {
             return (
               <div
                 key={capability.id}
-                className={`rounded-2xl border border-white/15 bg-[#121216] p-5 sm:p-8 shadow-2xl flex flex-col ${
-                  isReversed ? 'lg:flex-row-reverse' : 'lg:flex-row'
-                } gap-8 items-center`}
+                className={`rounded-2xl border border-white/15 bg-[#121216] p-5 sm:p-8 shadow-2xl flex flex-col-reverse gap-6`}
               >
                 {/* Text & Architecture Pills Column (5 cols) */}
-                <div className="w-full lg:w-5/12 flex flex-col gap-6">
+                <div className="w-full flex flex-col gap-4">
                   <h3 className="text-2xl sm:text-3xl font-extrabold text-white leading-tight">
                     {capability.title}
                   </h3>
@@ -189,7 +186,7 @@ export const ProductCapabilities: React.FC = () => {
                 </div>
 
                 {/* Screenshot Showcase Column (7 cols) */}
-                <div className="w-full lg:w-7/12 flex flex-col gap-3">
+                <div className="w-full flex flex-col gap-3">
                   <div className="relative aspect-[16/10] w-full rounded-xl border border-white/15 bg-[#0A0A0A] overflow-hidden shadow-2xl group">
                     <Image
                       src={capability.image}
