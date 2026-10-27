@@ -23,12 +23,14 @@ const TOOLS: Record<string, { key: Key; name: string; pricing: string; stayIf: s
     name: 'Semgrep',
     pricing: 'https://semgrep.dev/pricing',
     stayIf: 'you want to write and maintain your own custom rules, and someone on the team has time to tune them',
+    pitch: 'Semgrep finds the patterns you write rules for. Zelsis comes with the rules, and also checks that your app is ready for the people who use it: payments that charge once, pages that load fast, screens that work on a phone, store reviews that pass, and nothing that looks unfinished.',
   },
   'aikido-alternative': {
     key: 'aikido',
     name: 'Aikido',
     pricing: 'https://www.aikido.dev/pricing',
     stayIf: 'you want one platform that also covers your cloud accounts and runtime, and the starting price fits',
+    pitch: 'Aikido brings code, cloud and runtime security into one place. Zelsis checks your code for security too, and also for what your users will hit: payments that charge twice, slow pages, screens that break on a phone, store review rejections, and pages that look unfinished.',
   },
 };
 
