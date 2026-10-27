@@ -10,12 +10,13 @@ import { COMPARED_ON, COMPETITOR_ROWS } from '@/components/saas/CompetitorCompar
 
 type Key = 'snyk' | 'semgrep' | 'aikido';
 
-const TOOLS: Record<string, { key: Key; name: string; pricing: string; stayIf: string }> = {
+const TOOLS: Record<string, { key: Key; name: string; pricing: string; stayIf: string; pitch?: string }> = {
   'snyk-alternative': {
     key: 'snyk',
     name: 'Snyk',
     pricing: 'https://snyk.io/plans/',
     stayIf: 'you want one developer security platform from a large vendor and the per-developer price fits your budget',
+    pitch: 'Snyk protects your code. Zelsis protects it too, and checks that your app is ready for the people who use it: payments that charge once, pages that load fast, screens that work on a phone, store reviews that pass, and nothing that looks unfinished.',
   },
   'semgrep-alternative': {
     key: 'semgrep',
@@ -63,6 +64,7 @@ export default async function AlternativePage({ params }: { params: Promise<{ sl
         else: a check that runs on every pull request, catches the logic mistakes behind real incidents, and costs the same
         whether you have three developers or ten.
       </p>
+      {t.pitch && <p className="mt-3 text-zinc-200 font-medium">{t.pitch}</p>}
 
       <section className="space-y-3">
         <h2 className={H2}>Price and focus side by side</h2>
