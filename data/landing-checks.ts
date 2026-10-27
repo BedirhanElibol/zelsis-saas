@@ -19,36 +19,6 @@ export interface LandingCheck {
 export const LANDING_CHECKS: LandingCheck[] = [
   {
     category: 'Security',
-    title: 'Service-role key in a Server Action',
-    description: 'A Server Action writes with the Supabase service-role client (which bypasses RLS) without checking who is calling.',
-    ruleId: 28001,
-    code: 'NEXT-SB-01',
-    path: 'app/dashboard/projects/actions.ts',
-    bad: `'use server';
-import { createClient } from '@supabase/supabase-js';
-
-const admin = createClient(process.env.NEXT_PUBLIC_SUPABASE_URL!, process.env.SUPABASE_SERVICE_ROLE_KEY!);
-
-export async function deleteProject(projectId: string) {
-  await admin.from('projects').delete().eq('id', projectId);
-}
-`,
-    good: `'use server';
-import { createClient } from '@supabase/supabase-js';
-import { createClient as createServerClient } from '@/utils/supabase/server';
-
-const admin = createClient(process.env.NEXT_PUBLIC_SUPABASE_URL!, process.env.SUPABASE_SERVICE_ROLE_KEY!);
-
-export async function deleteProject(projectId: string) {
-  const supabase = await createServerClient();
-  const { data: { user } } = await supabase.auth.getUser();
-  if (!user) return;
-  await admin.from('projects').delete().eq('id', projectId).eq('owner_id', user.id);
-}
-`,
-  },
-  {
-    category: 'Security',
     title: 'Cached data served to the wrong user',
     description: 'unstable_cache reads the signed-in user from the surrounding scope but keys the cache without it, so one user\'s data is served to everyone.',
     ruleId: 28751,
@@ -379,6 +349,36 @@ export async function POST(req: Request) {
   title: 'Invoicely | Invoices that chase themselves',
   description: 'Send invoices and get paid on time.',
 };
+`,
+  },
+  {
+    category: 'Security',
+    title: 'Service-role key in a Server Action',
+    description: 'A Server Action writes with the Supabase service-role client (which bypasses RLS) without checking who is calling.',
+    ruleId: 28001,
+    code: 'NEXT-SB-01',
+    path: 'app/dashboard/projects/actions.ts',
+    bad: `'use server';
+import { createClient } from '@supabase/supabase-js';
+
+const admin = createClient(process.env.NEXT_PUBLIC_SUPABASE_URL!, process.env.SUPABASE_SERVICE_ROLE_KEY!);
+
+export async function deleteProject(projectId: string) {
+  await admin.from('projects').delete().eq('id', projectId);
+}
+`,
+    good: `'use server';
+import { createClient } from '@supabase/supabase-js';
+import { createClient as createServerClient } from '@/utils/supabase/server';
+
+const admin = createClient(process.env.NEXT_PUBLIC_SUPABASE_URL!, process.env.SUPABASE_SERVICE_ROLE_KEY!);
+
+export async function deleteProject(projectId: string) {
+  const supabase = await createServerClient();
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) return;
+  await admin.from('projects').delete().eq('id', projectId).eq('owner_id', user.id);
+}
 `,
   },
 ];

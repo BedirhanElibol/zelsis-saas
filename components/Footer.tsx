@@ -57,9 +57,6 @@ export const Footer: React.FC = () => {
           <a href="/benchmark" className="text-sm hover:text-white transition-colors py-1.5 inline-block">
             Benchmark
           </a>
-          <a href="/supabase" className="text-sm hover:text-white transition-colors py-1.5 inline-block">
-            With Supabase
-          </a>
           <a href="/about" className="text-sm hover:text-white transition-colors py-1.5 inline-block">
             About
           </a>

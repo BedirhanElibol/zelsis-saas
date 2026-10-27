@@ -8,9 +8,9 @@ interface ExampleFinding {
   location: string;
 }
 
-// Illustrative result for a typical Next.js + Supabase + Stripe starter; every finding is a class Zelsis detects.
+// Illustrative result for a typical Next.js + Stripe SaaS starter; every finding is a class Zelsis detects.
 const EXAMPLE_FINDINGS: ExampleFinding[] = [
-  { severity: 'CRITICAL', title: 'Row Level Security disabled on table "invoices"', location: 'supabase/migrations/0003_invoices.sql:12' },
+  { severity: 'CRITICAL', title: 'Order total taken from the request body', location: 'app/api/checkout/route.ts:14' },
   { severity: 'CRITICAL', title: 'Stripe secret key committed to the repository', location: 'lib/stripe.ts:4' },
   { severity: 'HIGH', title: 'Webhook handler accepts events without verifying the signature', location: 'app/api/webhooks/stripe/route.ts:18' },
   { severity: 'HIGH', title: 'Open redirect through the ?next= parameter', location: 'app/auth/callback/route.ts:27' },
