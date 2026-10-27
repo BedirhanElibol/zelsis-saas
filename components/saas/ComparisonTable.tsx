@@ -298,10 +298,10 @@ export const ComparisonTable: React.FC = () => {
   const isLoggedIn = Boolean(currentUser?.isLoggedIn);
 
   return (
-    <section id="pricing" className="py-24 sm:py-32 px-4 sm:px-6 lg:px-12 bg-[#0A0A0A] border-b border-white/10 font-sans relative">
+    <section id="pricing" className="py-12 sm:py-14 px-4 sm:px-6 lg:px-12 bg-[#0A0A0A] border-b border-white/10 font-sans relative">
       <div id="comparison" className="absolute -top-24 left-0 pointer-events-none" />
 
-      <div className="max-w-7xl mx-auto flex flex-col gap-16">
+      <div className="max-w-7xl mx-auto flex flex-col gap-10">
         {/* Section Header */}
         <div className="flex flex-col gap-4 text-center max-w-3xl mx-auto">
           <div className="inline-flex items-center justify-center text-xs font-mono uppercase tracking-widest text-emerald-400 bg-white/5 px-3 py-1 rounded-full border border-white/10 self-center">

@@ -68,7 +68,7 @@ const CATEGORIES = [
 ];
 
 export const WhyZelsis: React.FC = () => (
-  <section className="py-20 sm:py-28 px-4 sm:px-6 lg:px-12 bg-[#0A0A0A] border-b border-white/10">
+  <section className="py-12 sm:py-14 px-4 sm:px-6 lg:px-12 bg-[#0A0A0A] border-b border-white/10">
     <div className="max-w-6xl mx-auto">
       <h2 className="text-3xl sm:text-5xl font-extrabold text-[#EDEDED] tracking-tight [text-wrap:balance]">
         Made for whoever ships the code

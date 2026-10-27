@@ -41,7 +41,7 @@ export function CatchTabs() {
   const check = tab.checks.at(pick) ?? tab.checks[0];
 
   return (
-    <section id="specifics" className="py-16 sm:py-20 px-4 sm:px-6 lg:px-10 bg-[#0A0A0A] border-t border-white/5">
+    <section id="specifics" className="py-12 sm:py-14 px-4 sm:px-6 lg:px-10 bg-[#0A0A0A] border-t border-white/5">
       <div className="max-w-7xl mx-auto">
         <div className="flex flex-col lg:flex-row lg:items-end lg:justify-between gap-4 mb-8">
           <div className="max-w-2xl">

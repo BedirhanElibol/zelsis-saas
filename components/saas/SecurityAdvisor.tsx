@@ -4,7 +4,7 @@ import { Database, FileCode2, Plus } from 'lucide-react';
 /** Positions Zelsis next to Supabase Security Advisor: the Advisor inspects the live database, Zelsis the code. */
 export function SecurityAdvisor() {
   return (
-    <section className="py-24 bg-[#0A0A0A] border-t border-white/5">
+    <section className="py-12 sm:py-14 bg-[#0A0A0A] border-t border-white/5">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
         <h2 className="text-3xl font-bold tracking-tight text-white sm:text-4xl">
           Use it with Supabase Security Advisor

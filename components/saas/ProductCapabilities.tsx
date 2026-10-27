@@ -137,7 +137,7 @@ export const ProductCapabilities: React.FC = () => {
   }
 
   return (
-    <section id="features" className="py-16 sm:py-20 px-4 sm:px-6 lg:px-12 bg-[#0A0A0A] border-b border-white/10">
+    <section id="features" className="py-12 sm:py-14 px-4 sm:px-6 lg:px-12 bg-[#0A0A0A] border-b border-white/10">
       <div className="max-w-7xl mx-auto flex flex-col gap-12">
         {/* Section Title */}
         <div className="flex flex-col gap-4 text-center max-w-3xl mx-auto">

@@ -9,7 +9,7 @@ export const FinalCta: React.FC = () => {
   const router = useRouter();
 
   return (
-    <section className="py-24 sm:py-32 px-4 sm:px-6 lg:px-12 bg-[#0A0A0A] relative overflow-hidden">
+    <section className="py-12 sm:py-14 px-4 sm:px-6 lg:px-12 bg-[#0A0A0A] relative overflow-hidden">
       {/* Ambient background glow */}
       <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-full max-w-[600px] min-h-[20rem] aspect-[2/1] bg-white/[0.03] blur-[140px] rounded-full pointer-events-none" />
 

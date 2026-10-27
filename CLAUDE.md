@@ -35,6 +35,7 @@
 - Plan: For changes spanning >= 2 files, state a 3-bullet plan before editing.
 - Verify: Run `npx tsc --noEmit` (whole project) before reporting task completion.
 - Tone: Be terse. Output git diff summaries and verification status; omit pleasantries.
+- Scope of work: Do only the tasks the user gave. When there is an agreed plan or report, follow it item by item, in its order. Do not start side work (new rules, extra fixes, extra PRs, "while I'm here" changes) the user did not ask for; if something looks worth doing, name it in one line at the end and wait for a yes.
 
 <!-- BEGIN:nextjs-agent-rules -->
 
