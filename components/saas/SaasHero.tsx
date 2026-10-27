@@ -20,7 +20,7 @@ const WORKS_WITH = [
   'C# & ASP.NET Core',
   'Rust',
   'iOS & Android (Swift, Kotlin, Flutter, React Native)',
-  'Supabase, Firebase & Postgres',
+  'Postgres, Firebase & other SQL databases',
   'Docker, Kubernetes & Terraform',
   'GitHub Actions & GitLab CI',
 ];
@@ -35,7 +35,7 @@ export const SaasHero: React.FC<SaasHeroProps> = ({ onOpenDashboard }) => {
   const [isScanning, setIsScanning] = useState(false);
 
   const sampleRepos = [
-    { label: 'Next.js + Supabase', value: 'vercel/nextjs-subscription-payments' },
+    { label: 'Next.js SaaS', value: 'vercel/nextjs-subscription-payments' },
     { label: 'Express (Node)', value: 'gothinkster/node-express-realworld-example-app' },
     { label: 'FastAPI (Python)', value: 'fastapi/full-stack-fastapi-template' },
     { label: 'Go (Gin)', value: 'gothinkster/golang-gin-realworld-example-app' },

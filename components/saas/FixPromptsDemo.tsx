@@ -3,13 +3,13 @@
 import React, { useState } from 'react';
 import { Check, Copy, Terminal } from 'lucide-react';
 
-const PROMPT = `Zelsis flagged NEXT-SB-01 in app/dashboard/projects/actions.ts.
-The Server Action deleteProject() deletes with the Supabase service-role client, which bypasses RLS, and never checks who is calling.
+const PROMPT = `Zelsis flagged SAAS3-02 in app/api/stripe/webhook/route.ts.
+The webhook adds credits on every checkout.session.completed event without remembering the event id, so a retried delivery pays the customer twice.
 
 Fix it so that:
-1. The action gets the signed-in user with createServerClient() and auth.getUser(), and returns early when there is none.
-2. The delete is scoped to rows the user owns (.eq('owner_id', user.id)), or uses the user's own client so RLS applies.
-Keep the function signature and return shape unchanged.`;
+1. The handler stores event.id in a processed_events table with a unique constraint, and returns 200 without doing anything when the id is already there.
+2. Recording the event and adding the credits happen in one transaction, so a crash in between cannot apply them twice.
+Keep the route's signature verification and response codes unchanged.`;
 
 /** Example of the fix prompt attached to every finding, ready to paste into an AI coding assistant. */
 export function FixPromptsDemo() {
