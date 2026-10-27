@@ -43,6 +43,8 @@ export const ComparisonTable: React.FC = () => {
   const [isAuthModalOpen, setIsAuthModalOpen] = useState(false);
   const [authInitialMode, setAuthInitialMode] = useState<'signin' | 'signup'>('signup');
   const [pendingPlan, setPendingPlan] = useState<'Pro' | 'Enterprise' | null>(null);
+  // The full matrix is long; the first category is enough to compare the plans at a glance
+  const [showAllRows, setShowAllRows] = useState(false);
 
   useEffect(() => {
     const loadUser = () => {
@@ -529,7 +531,7 @@ export const ComparisonTable: React.FC = () => {
                     </td>
                   </tr>
                 ) : (
-                  categories.map((category, catIdx) => (
+                  (showAllRows ? categories : categories.slice(0, 1)).map((category, catIdx) => (
                     <React.Fragment key={catIdx}>
                       {/* Category Divider Header */}
                       <tr className="bg-[#0A0A0E] border-y border-white/10">
@@ -576,6 +578,19 @@ export const ComparisonTable: React.FC = () => {
               </tbody>
             </table>
           </div>
+
+          {categories.length > 1 && (
+            <div className="border-t border-white/10 bg-[#0E0E12] px-5 py-3 flex justify-center">
+              <button
+                type="button"
+                onClick={() => setShowAllRows((v) => !v)}
+                aria-expanded={showAllRows}
+                className="min-h-11 px-4 text-sm font-mono text-zinc-300 hover:text-white cursor-pointer"
+              >
+                {showAllRows ? 'Show less' : `Show the full comparison (${categories.length - 1} more groups)`}
+              </button>
+            </div>
+          )}
 
           {/* Bottom Bar CTA */}
           <div className="p-6 bg-[#0E0E12] border-t border-white/10 flex flex-col sm:flex-row items-center justify-between gap-4">
