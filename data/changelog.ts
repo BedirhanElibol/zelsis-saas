@@ -12,6 +12,15 @@ export interface ChangelogEntry {
 
 export const CHANGELOG: ChangelogEntry[] = [
   {
+    date: '2026-10-27',
+    title: 'Three more signs of an unfinished or invented page',
+    changes: [
+      { kind: 'New', text: 'Placeholder copy is reported: lorem ipsum, "Your Company Name" style text, and the starter template page title (for example "Create Next App").' },
+      { kind: 'New', text: 'An urgency countdown whose deadline is computed from the current time, so it restarts for every visitor, is reported.' },
+      { kind: 'New', text: 'A "#1 Product of the Day" claim typed into the page without a link to a Product Hunt listing is reported.' },
+    ],
+  },
+  {
     date: '2026-10-26',
     title: 'Benchmark folders and in-process base URLs are not reported',
     changes: [

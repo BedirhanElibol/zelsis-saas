@@ -3,9 +3,9 @@
   "implementedRules": 1302,
   "testedRules": 1296,
   "preciseLocationRules": 1300,
-  "catalogEntries": 1922,
-  "catalogOnlyNotImplemented": 1396,
-  "catalogPlaceholderMetadata": 1810
+  "catalogEntries": 1923,
+  "catalogOnlyNotImplemented": 1397,
+  "catalogPlaceholderMetadata": 1811
  },
  "catalogOnly": [
   201,
@@ -79,6 +79,7 @@
   272,
   273,
   275,
+  276,
   1209,
   1213,
   1215,
