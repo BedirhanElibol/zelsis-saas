@@ -181,9 +181,13 @@ export function evaluateAiClicheRules(file: CodeFile, lines: string[], cleanCont
     };
     if (!isDemoPath) {
         // CLICHE-76: placeholder copy or framework default metadata shipped to users.
-        const placeholderIdx = firstLine(/lorem ipsum|<title>\s*(?:Create Next App|React App|Vite \+ React(?: \+ TS)?)\s*<\/title>|\btitle:\s*['"]Create Next App['"]|\b(?:Your (?:Company|Brand|Product|App) (?:Name|Logo)|Insert (?:text|title|description) here|Your (?:Text|Title|Description) Here)\b/i);
-        if (placeholderIdx !== -1) {
-            pushTell(276, 'CLICHE-76: Placeholder Copy or Default Template Metadata Left in the UI', "AI Cliché & Trust", placeholderIdx,
+        // The placeholder itself, not prose about it: "lorem ipsum dolor", and Title Case "Your Company Name"
+        // (a sentence such as "a report with your company name" is real copy).
+        const placeholderIdx = firstLine(/lorem ipsum dolor|<title>\s*(?:Create Next App|React App|Vite \+ React(?: \+ TS)?)\s*<\/title>|\btitle:\s*['"]Create Next App['"]/i);
+        const titlePlaceholderIdx = placeholderIdx !== -1 ? -1 : firstLine(/\b(?:Your (?:Company|Brand|Product|App) (?:Name|Logo)|Insert (?:Text|Title|Description) Here|Your (?:Text|Title|Description) Here)\b/);
+        const anyPlaceholderIdx = placeholderIdx !== -1 ? placeholderIdx : titlePlaceholderIdx;
+        if (anyPlaceholderIdx !== -1) {
+            pushTell(276, 'CLICHE-76: Placeholder Copy or Default Template Metadata Left in the UI', "AI Cliché & Trust", anyPlaceholderIdx,
                 'Detected lorem ipsum, a "Your Company Name" style placeholder or the starter template page title, text visitors read as an unfinished or generated app.',
                 `Replace the placeholder text in ${file.path} with real copy, and set a real page title and description in the metadata.`);
         }
