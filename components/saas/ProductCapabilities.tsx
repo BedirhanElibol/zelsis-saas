@@ -137,8 +137,8 @@ export const ProductCapabilities: React.FC = () => {
   }
 
   return (
-    <section id="features" className="py-24 sm:py-32 px-4 sm:px-6 lg:px-12 bg-[#0A0A0A] border-b border-white/10">
-      <div className="max-w-6xl mx-auto flex flex-col gap-20">
+    <section id="features" className="py-16 sm:py-20 px-4 sm:px-6 lg:px-12 bg-[#0A0A0A] border-b border-white/10">
+      <div className="max-w-7xl mx-auto flex flex-col gap-12">
         {/* Section Title */}
         <div className="flex flex-col gap-4 text-center max-w-3xl mx-auto">
           <div className="inline-flex items-center justify-center text-xs font-mono uppercase tracking-widest text-emerald-400">
@@ -153,15 +153,15 @@ export const ProductCapabilities: React.FC = () => {
         </div>
 
         {/* Sequential Alternating Showcase of All 4 Pillars */}
-        <div className="flex flex-col gap-16">
+        <div className="flex flex-col gap-8">
           {capabilities.map((capability, idx) => {
             const isReversed = idx % 2 === 1;
             return (
               <div
                 key={capability.id}
-                className={`rounded-2xl border border-white/15 bg-[#121216] p-6 sm:p-10 shadow-2xl flex flex-col ${
+                className={`rounded-2xl border border-white/15 bg-[#121216] p-5 sm:p-8 shadow-2xl flex flex-col ${
                   isReversed ? 'lg:flex-row-reverse' : 'lg:flex-row'
-                } gap-10 items-center`}
+                } gap-8 items-center`}
               >
                 {/* Text & Architecture Pills Column (5 cols) */}
                 <div className="w-full lg:w-5/12 flex flex-col gap-6">
@@ -177,18 +177,9 @@ export const ProductCapabilities: React.FC = () => {
                     {capability.description}
                   </p>
 
-                  {/* Architecture Capability Tags (No Fake Numbers) */}
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 py-4 border-y border-white/10">
-                    {capability.architecturePills.map((pill, pIdx) => (
-                      <div key={pIdx} className="p-2.5 rounded-lg bg-[#0E0E10] border border-white/5 flex items-center">
-                        <span className="text-xs font-mono text-zinc-300">{pill}</span>
-                      </div>
-                    ))}
-                  </div>
-
                   {/* Bullet List */}
                   <ul className="flex flex-col gap-2.5">
-                    {capability.bulletPoints.map((bp, bpIdx) => (
+                    {capability.bulletPoints.slice(0, 3).map((bp, bpIdx) => (
                       <li key={bpIdx} className="flex items-start gap-2.5 text-xs text-zinc-300">
                         <span className="text-zinc-400 font-mono text-xs select-none shrink-0">—</span>
                         <span>{bp}</span>
