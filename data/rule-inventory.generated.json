@@ -1,8 +1,8 @@
 {
  "summary": {
-  "implementedRules": 1306,
-  "testedRules": 1300,
-  "preciseLocationRules": 1304,
+  "implementedRules": 1307,
+  "testedRules": 1301,
+  "preciseLocationRules": 1305,
   "catalogEntries": 1927,
   "catalogOnlyNotImplemented": 1397,
   "catalogPlaceholderMetadata": 1811
@@ -14141,6 +14141,16 @@
    "ruleId": 30011,
    "code": "RULE-30011",
    "title": "Error Stack Trace Rendered in the UI",
+   "severity": "MEDIUM",
+   "source": "lib/rules/ux-gemini-rules.ts",
+   "preciseLocation": true,
+   "tested": true,
+   "inCatalog": false
+  },
+  {
+   "ruleId": 30012,
+   "code": "RULE-30012",
+   "title": "Data List With No ${missing.map((m) => m[0].toUpperCase() + m.slice(1)).join(",
    "severity": "MEDIUM",
    "source": "lib/rules/ux-gemini-rules.ts",
    "preciseLocation": true,

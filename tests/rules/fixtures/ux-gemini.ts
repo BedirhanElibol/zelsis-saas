@@ -188,6 +188,33 @@ export function Hint() {
 `),
   },
   {
+    ruleIds: [30012], name: 'UXG-13 list fetched in useEffect with no loading, error or empty state',
+    detects: f('components/Invoices.tsx', `'use client';
+import { useEffect, useState } from 'react';
+export function Invoices() {
+  const [invoices, setInvoices] = useState<{ id: string; total: number }[]>([]);
+  useEffect(() => {
+    fetch('/api/invoices').then((r) => r.json()).then(setInvoices);
+  }, []);
+  return <ul>{invoices.map((inv) => <li key={inv.id}>{inv.total}</li>)}</ul>;
+}
+`),
+    ignores: f('components/Invoices.tsx', `'use client';
+import { useEffect, useState } from 'react';
+export function Invoices() {
+  const [invoices, setInvoices] = useState<{ id: string; total: number }[] | null>(null);
+  const [failed, setFailed] = useState(false);
+  useEffect(() => {
+    fetch('/api/invoices').then((r) => r.json()).then(setInvoices).catch(() => setFailed(true));
+  }, []);
+  if (failed) return <p>Could not load invoices. <button onClick={() => location.reload()}>Retry</button></p>;
+  if (!invoices) return <InvoiceSkeleton />;
+  if (invoices.length === 0) return <p>No invoices yet. Create your first one.</p>;
+  return <ul>{invoices.map((inv) => <li key={inv.id}>{inv.total}</li>)}</ul>;
+}
+`),
+  },
+  {
     ruleIds: [30010], name: 'UXG-11 Intl formatter per row',
     detects: f(C, `export const Prices = ({ rows }: { rows: { id: string; v: number }[] }) => (
   <ul>{rows.map((r) => <li key={r.id}>{new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD' }).format(r.v)}</li>)}</ul>
