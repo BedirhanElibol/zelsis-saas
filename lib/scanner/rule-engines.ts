@@ -31,6 +31,7 @@ import { evaluateTenantIsolationRules } from '../rules/tenant-isolation-rules';
 import { evaluateCloudSecurityRules } from '../rules/cloud-security-rules';
 import { evaluateMobileSecurityRules } from '../rules/mobile-security-rules';
 import { evaluateMobileNativeRules } from '../rules/mobile-native-rules';
+import { evaluateStoreReadinessRules } from '../rules/store-readiness-rules';
 import { evaluateEventStreamingRules } from '../rules/event-streaming-rules';
 import { evaluateCicdSupplyChainRules } from '../rules/cicd-supplychain-rules';
 import { evaluateRustSystemsRules } from '../rules/rust-systems-rules';
@@ -235,6 +236,8 @@ export const RULE_ENGINES: ReadonlyArray<{ evaluate: RuleEngine; scanRawContent?
   { evaluate: evaluateMobileSecurityRules },
   // Native iOS / Android and React Native: TLS, WebView, deep links, logs, storage (MOB-SEC-04..18, Rule IDs 9304-9318)
   { evaluate: evaluateMobileNativeRules },
+  // App Store and Google Play rejections: template ids, restricted permissions, old target SDK, empty prompts (STORE-01..04, Rule IDs 9351-9354)
+  { evaluate: evaluateStoreReadinessRules },
   // 22. Kafka & Event Streaming Hardening (EVENT-01 to 50, Rule IDs 9401-9450)
   { evaluate: evaluateEventStreamingRules },
   // 23. CI/CD Pipeline & Supply Chain Hardening (CICD-SEC-01 to 50, Rule IDs 9501-9550)

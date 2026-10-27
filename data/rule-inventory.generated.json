@@ -1,9 +1,9 @@
 {
  "summary": {
-  "implementedRules": 1302,
-  "testedRules": 1296,
-  "preciseLocationRules": 1300,
-  "catalogEntries": 1923,
+  "implementedRules": 1306,
+  "testedRules": 1300,
+  "preciseLocationRules": 1304,
+  "catalogEntries": 1927,
   "catalogOnlyNotImplemented": 1397,
   "catalogPlaceholderMetadata": 1811
  },
@@ -6426,6 +6426,46 @@
    "preciseLocation": true,
    "tested": true,
    "inCatalog": false
+  },
+  {
+   "ruleId": 9351,
+   "code": "RULE-9351",
+   "title": "App Still Uses a Template Application ID",
+   "severity": "HIGH",
+   "source": "lib/rules/store-readiness-rules.ts",
+   "preciseLocation": true,
+   "tested": true,
+   "inCatalog": true
+  },
+  {
+   "ruleId": 9352,
+   "code": "RULE-9352",
+   "title": "Play Restricted Permission ${perm} Requested",
+   "severity": "MEDIUM",
+   "source": "lib/rules/store-readiness-rules.ts",
+   "preciseLocation": true,
+   "tested": true,
+   "inCatalog": true
+  },
+  {
+   "ruleId": 9353,
+   "code": "RULE-9353",
+   "title": "Android Target SDK Too Old for Google Play",
+   "severity": "MEDIUM",
+   "source": "lib/rules/store-readiness-rules.ts",
+   "preciseLocation": true,
+   "tested": true,
+   "inCatalog": true
+  },
+  {
+   "ruleId": 9354,
+   "code": "RULE-9354",
+   "title": "iOS Permission Prompt Is Empty or a Placeholder",
+   "severity": "HIGH",
+   "source": "lib/rules/store-readiness-rules.ts",
+   "preciseLocation": true,
+   "tested": true,
+   "inCatalog": true
   },
   {
    "ruleId": 9403,
