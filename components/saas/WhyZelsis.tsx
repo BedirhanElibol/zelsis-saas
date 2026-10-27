@@ -15,6 +15,9 @@ import {
   Cookie,
   Accessibility,
   Package,
+  Bot,
+  Wallet,
+  Cloud,
 } from 'lucide-react';
 import { CODE_RETENTION_STATEMENT } from '@/lib/data-retention';
 
@@ -59,6 +62,9 @@ const CATEGORIES = [
   { icon: Package, title: 'Packages with known holes', body: 'Dependency versions with a published advisory, and the version that fixes it.' },
   { icon: Users, title: 'One user reading another’s data', body: 'Routes and tables that skip the owner check.' },
   { icon: KeyRound, title: 'Leaked keys', body: 'Secret keys in client code, logs or committed config.' },
+  { icon: Bot, title: 'AI features open to abuse', body: 'User text that reaches a model prompt unchecked, and model output used as trusted input.' },
+  { icon: Wallet, title: 'Runaway AI bills', body: 'Model calls with no limit on tokens, retries or requests per user.' },
+  { icon: Cloud, title: 'Cloud and infrastructure left open', body: 'Public buckets, wide-open access rules and containers running with too many rights.' },
 ];
 
 export const WhyZelsis: React.FC = () => (
