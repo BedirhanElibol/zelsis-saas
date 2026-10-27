@@ -2,7 +2,7 @@
 
 import React, { useState } from 'react';
 import { m } from 'framer-motion';
-import { ArrowRight, Terminal, ExternalLink, Lock, Loader2 } from 'lucide-react';
+import { ArrowRight, Terminal, Loader2, GitPullRequest } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import { normalizeRepoUrl } from '@/lib/github-api';
 import { ScanPreviewCard, ScanPreviewResult } from '@/components/saas/ScanPreviewCard';
@@ -93,151 +93,143 @@ export const SaasHero: React.FC<SaasHeroProps> = ({ onOpenDashboard }) => {
   };
 
   return (
-    <section className="relative min-h-[90vh] flex flex-col justify-start pt-28 sm:pt-36 pb-20 px-4 sm:px-6 lg:px-12 bg-[#0A0A0A] border-b border-white/10">
-      <div className="relative z-10 max-w-6xl mx-auto w-full flex flex-col items-center text-center">
-        {/* Plain elements: the headline is the LCP, so it must not wait for hydration to fade in */}
-        <h1 className="text-4xl sm:text-6xl lg:text-7xl font-extrabold text-[#EDEDED] tracking-tight leading-[1.06] max-w-4xl mb-6 [text-wrap:balance]">
-          Catch the bug that <span className="text-emerald-400">costs you customers,</span> before you merge.
-        </h1>
-        <p className="text-base sm:text-lg lg:text-xl text-[#A1A1AA] max-w-3xl mx-auto leading-relaxed mt-6 mb-10 font-sans font-normal">
-          Zelsis reads every pull request for the bugs that cost money and customers: double charges, leaked secrets and open endpoints, slow queries, migrations that lock the database, AI features open to prompt injection or runaway LLM bills, and screens that break or lock out users. If something critical gets in, the build fails before it ships.
-        </p>
+    <section className="relative pt-24 sm:pt-28 pb-14 px-4 sm:px-6 lg:px-10 bg-[#0A0A0A] border-b border-white/10">
+      <div className="relative z-10 max-w-7xl mx-auto w-full">
+        <div className="grid grid-cols-1 lg:grid-cols-[1.05fr_1fr] gap-10 lg:gap-14 items-center">
+          {/* Left: the promise and the way in */}
+          <div className="flex flex-col items-start text-left min-w-0">
+            <p className="text-xs font-mono uppercase tracking-widest text-emerald-400 mb-5">Release check for every pull request</p>
+            {/* Plain elements: the headline is the LCP, so it must not wait for hydration to fade in */}
+            <h1 className="text-4xl sm:text-5xl lg:text-6xl font-extrabold text-[#EDEDED] tracking-tight leading-[1.05] [text-wrap:balance]">
+              Catch the bug that <span className="text-emerald-400">costs you customers,</span> before you merge.
+            </h1>
+            <p className="text-base sm:text-lg text-[#A1A1AA] leading-relaxed mt-6 max-w-xl">
+              Zelsis reads every pull request for what users notice first: double charges, leaked keys, slow pages, screens that break, and template leftovers that make an app look unfinished. If something critical gets in, the build fails before it ships.
+            </p>
 
-        {/* Direct Repository Scan Command Bar */}
-        <div className="w-full max-w-2xl mb-6">
-          <form 
-            onSubmit={handleStartScan}
-            className="flex flex-col sm:flex-row items-stretch gap-2 p-1.5 rounded-xl bg-[#141414] border border-white/10 shadow-2xl focus-within:border-white/30 transition-all"
-          >
-            <div className="flex items-center gap-2.5 px-3 py-2 flex-1 min-w-0">
-              <Terminal size={16} className="text-zinc-400 shrink-0" />
-              <span className="text-xs font-mono text-zinc-400 hidden sm:inline">github.com/</span>
-              <input
-                id="hero-repo-input"
-                name="repository"
-                type="text"
-                value={repoInput}
-                onChange={(e) => setRepoInput(e.target.value)}
-                placeholder="owner/repository or public git URL"
-                className="w-full bg-transparent text-sm font-mono text-[#EDEDED] placeholder-zinc-400 focus:outline-none focus-visible:ring-2 focus-visible:ring-white/70 rounded px-1"
-                aria-label="GitHub Repository to Scan"
-              />
-            </div>
-            <button
-              type="submit"
-              data-track="hero-scan"
-              disabled={isScanning}
-              className="px-5 min-h-11 rounded-lg text-xs font-bold font-mono uppercase tracking-wider bg-emerald-500 text-black hover:bg-emerald-400 transition-all flex items-center justify-center gap-2 shrink-0 shadow-sm active:scale-[0.98] disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer"
-            >
-              {isScanning ? <Loader2 size={13} className="animate-spin" /> : null}
-              <span>{isScanning ? 'Scanning…' : 'See what’s in your repo'}</span>
-              {!isScanning && <ArrowRight size={13} />}
-            </button>
-          </form>
-
-          {/* Minimal 1-Click Preset Chips */}
-          <div className="flex flex-wrap items-center justify-center gap-2 mt-3.5 text-xs">
-            <span className="text-zinc-400 text-xs font-mono uppercase tracking-wider">Try:</span>
-            {sampleRepos.map((r) => (
-              <button
-                key={r.value}
-                type="button"
-                onClick={() => handleSelectAndScan(r.value)}
-                title={`Run instant audit on ${r.value}`}
-                aria-pressed={repoInput === r.value}
-                className={`text-xs font-mono px-3 min-h-11 sm:min-h-9 rounded-md border transition-all cursor-pointer flex items-center gap-1.5 ${
-                  repoInput === r.value
-                    ? 'border-white/40 bg-white/10 text-white'
-                    : 'border-white/10 bg-[#121212] text-zinc-400 hover:text-white hover:border-white/25'
-                }`}
+            {/* Direct Repository Scan Command Bar */}
+            <div className="w-full max-w-xl mt-8">
+              <form
+                onSubmit={handleStartScan}
+                className="flex flex-col sm:flex-row items-stretch gap-2 p-1.5 rounded-xl bg-[#141414] border border-white/10 shadow-2xl focus-within:border-white/30 transition-all"
               >
-                <span>{r.label}</span>
-              </button>
-            ))}
-          </div>
+                <div className="flex items-center gap-2.5 px-3 py-2 flex-1 min-w-0">
+                  <Terminal size={16} className="text-zinc-400 shrink-0" />
+                  <span className="text-xs font-mono text-zinc-400 hidden sm:inline">github.com/</span>
+                  <input
+                    id="hero-repo-input"
+                    name="repository"
+                    type="text"
+                    value={repoInput}
+                    onChange={(e) => setRepoInput(e.target.value)}
+                    placeholder="owner/repository or public git URL"
+                    className="w-full bg-transparent text-sm font-mono text-[#EDEDED] placeholder-zinc-400 focus:outline-none focus-visible:ring-2 focus-visible:ring-white/70 rounded px-1"
+                    aria-label="GitHub Repository to Scan"
+                  />
+                </div>
+                <button
+                  type="submit"
+                  data-track="hero-scan"
+                  disabled={isScanning}
+                  className="px-5 min-h-11 rounded-lg text-xs font-bold font-mono uppercase tracking-wider bg-emerald-500 text-black hover:bg-emerald-400 transition-all flex items-center justify-center gap-2 shrink-0 shadow-sm active:scale-[0.98] disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer"
+                >
+                  {isScanning ? <Loader2 size={13} className="animate-spin" /> : null}
+                  <span>{isScanning ? 'Scanning…' : 'See what’s in your repo'}</span>
+                  {!isScanning && <ArrowRight size={13} />}
+                </button>
+              </form>
 
-          {previewError && (
-            <p role="alert" className="mt-3 text-xs font-mono text-red-400">{previewError}</p>
-          )}
-        </div>
-
-        {preview && <ScanPreviewCard result={preview} onUnlock={handleUnlockFullReport} />}
-
-        {/* Minimal Engineering Telemetry Ribbon */}
-        <m.div
-          initial={{ opacity: 0, y: 15 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.5, delay: 0.25 }}
-          className="flex flex-wrap items-center justify-center gap-6 sm:gap-8 mb-12 text-xs text-zinc-400 font-mono"
-        >
-          <div className="flex items-center gap-2">
-            <span className="w-1.5 h-1.5 rounded-full bg-white/40" />
-            <a href="/privacy" className="hover:text-white transition-colors">{CODE_RETENTION_SHORT}</a>
-          </div>
-          <div className="flex items-center gap-2">
-            <span className="w-1.5 h-1.5 rounded-full bg-white/40" />
-            <a href="#benchmark" className="inline-flex items-center min-h-[24px] hover:text-white transition-colors">Benchmark published, misses included</a>
-          </div>
-          <div className="flex items-center gap-2">
-            <span className="w-1.5 h-1.5 rounded-full bg-white/40" />
-            <span>No account needed · one flat price, not per developer</span>
-          </div>
-        </m.div>
-
-        {/* Hero Showcase: Clean Industrial Application Preview Frame */}
-        <m.div
-          initial={{ opacity: 0, y: 25 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.7, delay: 0.3 }}
-          className="w-full max-w-5xl relative rounded-xl border border-white/10 bg-[#121212] shadow-2xl overflow-hidden text-left"
-        >
-          {/* Browser Window Chrome Header */}
-          <div className="flex items-center justify-between px-4 py-2.5 bg-[#0E0E10] border-b border-white/10">
-            <div className="flex items-center gap-2 min-w-0 flex-1">
-              <span className="w-2.5 h-2.5 rounded-full bg-white/20" />
-              <span className="w-2.5 h-2.5 rounded-full bg-white/20" />
-              <span className="w-2.5 h-2.5 rounded-full bg-white/20" />
-              <div className="ml-3 px-3 py-1 rounded bg-white/[0.04] border border-white/5 text-xs font-mono text-zinc-400 flex items-center gap-1.5 min-w-0">
-                <Lock size={10} className="text-zinc-400 shrink-0" />
-                <span className="truncate">zelsis.com/dashboard</span>
+              {/* Minimal 1-Click Preset Chips */}
+              <div className="flex flex-wrap items-center gap-2 mt-3.5 text-xs">
+                <span className="text-zinc-400 text-xs font-mono uppercase tracking-wider">Try:</span>
+                {sampleRepos.map((r) => (
+                  <button
+                    key={r.value}
+                    type="button"
+                    onClick={() => handleSelectAndScan(r.value)}
+                    title={`Run instant audit on ${r.value}`}
+                    aria-pressed={repoInput === r.value}
+                    className={`text-xs font-mono px-3 min-h-11 sm:min-h-9 rounded-md border transition-all cursor-pointer flex items-center gap-1.5 ${
+                      repoInput === r.value
+                        ? 'border-white/40 bg-white/10 text-white'
+                        : 'border-white/10 bg-[#121212] text-zinc-400 hover:text-white hover:border-white/25'
+                    }`}
+                  >
+                    <span>{r.label}</span>
+                  </button>
+                ))}
               </div>
+
+              {previewError && (
+                <p role="alert" className="mt-3 text-xs font-mono text-red-400">{previewError}</p>
+              )}
             </div>
 
-            <div className="hidden sm:flex items-center gap-3 shrink-0">
-              <span className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded text-xs font-mono font-medium uppercase bg-white/[0.04] text-zinc-300 border border-white/10">
-                <span className="w-1.5 h-1.5 rounded-full bg-red-500" />
+            {/* Trust line */}
+            <ul className="flex flex-wrap items-center gap-x-6 gap-y-2 mt-7 text-xs text-zinc-400 font-mono">
+              <li className="flex items-center gap-2">
+                <span className="w-1.5 h-1.5 rounded-full bg-emerald-400/70" />
+                <a href="/privacy" className="hover:text-white transition-colors">{CODE_RETENTION_SHORT}</a>
+              </li>
+              <li className="flex items-center gap-2">
+                <span className="w-1.5 h-1.5 rounded-full bg-emerald-400/70" />
+                <a href="#benchmark" className="inline-flex items-center min-h-[24px] hover:text-white transition-colors">Benchmark published, misses included</a>
+              </li>
+              <li className="flex items-center gap-2">
+                <span className="w-1.5 h-1.5 rounded-full bg-emerald-400/70" />
+                <span>No account needed · one flat price, not per developer</span>
+              </li>
+            </ul>
+          </div>
+
+          {/* Right: what a failing pull request looks like */}
+          <m.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.6, delay: 0.2 }}
+            className="w-full min-w-0 relative rounded-xl border border-white/10 bg-[#121212] shadow-2xl overflow-hidden text-left"
+          >
+            <div className="flex items-center justify-between gap-3 px-4 py-3 bg-[#0E0E10] border-b border-white/10">
+              <div className="flex items-center gap-2 min-w-0 text-xs font-mono text-zinc-300">
+                <GitPullRequest size={14} className="text-zinc-400 shrink-0" />
+                <span className="truncate">Pull request · Zelsis release check</span>
+              </div>
+              <span className="shrink-0 inline-flex items-center gap-1.5 px-2 py-0.5 rounded text-xs font-mono uppercase bg-white/[0.04] text-zinc-300 border border-white/10">
                 Example scan
               </span>
+            </div>
+
+            {/* Example result: a failing gate with findings */}
+            <HeroGateMock />
+
+            <div className="flex items-center justify-between gap-3 px-4 py-2.5 bg-[#0E0E10] border-t border-white/10 text-xs font-mono text-zinc-400">
+              <span className="truncate">Only proven critical findings block a merge</span>
               <button
                 onClick={() => {
                   if (onOpenDashboard) onOpenDashboard();
                   else router.push('/dashboard');
                 }}
-                className="text-xs font-mono text-zinc-300 hover:text-white flex items-center gap-1 transition-colors cursor-pointer"
+                className="shrink-0 text-zinc-300 hover:text-white flex items-center gap-1 transition-colors cursor-pointer min-h-[24px]"
               >
-                <span>Launch Console</span>
-                <ExternalLink size={11} />
+                <span>Open the console</span>
+                <ArrowRight size={11} />
               </button>
             </div>
-          </div>
+          </m.div>
+        </div>
 
-          {/* Example result: a failing gate with findings */}
-          <HeroGateMock />
-
-          {/* Footer Ribbon inside Frame */}
-          <div className="hidden sm:flex px-5 py-2.5 bg-[#0E0E10] border-t border-white/10 flex-wrap items-center gap-x-6 gap-y-1 text-xs font-mono text-zinc-400">
-            <span>Engine: <strong className="text-zinc-200 font-mono">deterministic cross-layer rules + request-path tracing</strong></span>
-            <span>Gate: <strong className="text-zinc-200 font-mono">only proven critical findings block a merge</strong></span>
-            <span>Coverage: <strong className="text-zinc-200 font-mono">OWASP Top 10, secrets, logic bugs, dependencies, CI/CD</strong></span>
+        {preview && (
+          <div className="mt-10 flex justify-center">
+            <ScanPreviewCard result={preview} onUnlock={handleUnlockFullReport} />
           </div>
-        </m.div>
+        )}
 
         {/* Supported Stacks Band */}
-        <div className="w-full mt-16 pt-8 border-t border-white/10 flex flex-col items-center gap-4">
-          <span className="text-xs font-mono uppercase tracking-widest text-zinc-400">
+        <div className="w-full mt-14 pt-6 border-t border-white/10 flex flex-col sm:flex-row sm:items-start gap-3 sm:gap-6">
+          <span className="text-xs font-mono uppercase tracking-widest text-zinc-400 shrink-0 sm:pt-0.5">
             Works with
           </span>
-          <div className="flex flex-wrap items-center justify-center gap-6 sm:gap-8 text-xs font-mono text-zinc-400">
+          <div className="flex flex-wrap items-center gap-x-6 gap-y-2 text-xs font-mono text-zinc-400">
             {WORKS_WITH.map((s) => (
               <span key={s} className="hover:text-white transition-colors">{s}</span>
             ))}
