@@ -80,9 +80,16 @@ jobs:
 
       - name: Install Playwright Chromium
         timeout-minutes: 12
-        # The apt/CDN download occasionally hangs; cap each attempt and retry instead of blocking the job.
-        # timeout only stops npx: the apt-get it started keeps the dpkg lock, so clear it before the next try.
+        # The runner image already ships Chrome: use it so the job needs no apt or CDN download at all (that download
+        # hung twice on 2026-10-27 and cost 12 minutes each time). Only install Chromium when Chrome is missing.
+        # The retry loop below caps each attempt; timeout only stops npx, so clear the dpkg lock the apt-get kept.
         run: |
+          CHROME="$(command -v google-chrome || command -v google-chrome-stable || true)"
+          if [ -n "$CHROME" ]; then
+            echo "Using $CHROME for the E2E smoke tests"
+            echo "PLAYWRIGHT_CHROMIUM_PATH=$CHROME" >> "$GITHUB_ENV"
+            exit 0
+          fi
           for attempt in 1 2 3; do
             timeout 240 npx playwright install --with-deps chromium && exit 0
             echo "Playwright install attempt $attempt failed or timed out, retrying"
