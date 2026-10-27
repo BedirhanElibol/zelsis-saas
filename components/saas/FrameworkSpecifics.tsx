@@ -2,6 +2,34 @@ import React from 'react';
 import { AlertCircle, ShieldCheck } from 'lucide-react';
 import { LANDING_CHECKS } from '@/data/landing-checks';
 
+const VISIBLE = 4;
+
+function CheckCard({ check }: { check: (typeof LANDING_CHECKS)[number] }) {
+  return (
+    <article className="bg-[#141414] border border-white/10 rounded-xl overflow-hidden flex flex-col min-w-0">
+      <div className="p-5 border-b border-white/5">
+        <div className="flex items-start justify-between gap-3 mb-3">
+          <h3 className="font-semibold text-white">{check.title}</h3>
+          <span className="shrink-0 px-2 py-0.5 rounded bg-white/5 text-[0.68rem] font-mono text-zinc-300">{check.code}</span>
+        </div>
+        <p className="text-sm text-zinc-400">{check.description}</p>
+      </div>
+
+      <div className="bg-[#0A0A0A] p-4 text-xs font-mono leading-relaxed flex-grow">
+        <div className="text-zinc-500 mb-2 truncate">{check.path}</div>
+        <div className="text-red-400 mb-1.5 flex items-center gap-2">
+          <AlertCircle className="w-3 h-3" aria-hidden="true" /> Flagged
+        </div>
+        <pre className="text-zinc-500 mb-4 overflow-x-auto [scrollbar-width:thin] [scrollbar-color:#3f3f46_transparent]"><code>{check.bad}</code></pre>
+        <div className="text-emerald-400 mb-1.5 flex items-center gap-2">
+          <ShieldCheck className="w-3 h-3" aria-hidden="true" /> Passes
+        </div>
+        <pre className="text-zinc-300 overflow-x-auto [scrollbar-width:thin] [scrollbar-color:#3f3f46_transparent]"><code>{check.good}</code></pre>
+      </div>
+    </article>
+  );
+}
+
 /** Framework-specific checks, each backed by a scanned example (tests/unit/landing-checks.test.ts). */
 export function FrameworkSpecifics() {
   return (
@@ -20,30 +48,23 @@ export function FrameworkSpecifics() {
         </div>
 
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-          {LANDING_CHECKS.map((check) => (
-            <article key={check.ruleId} className="bg-[#141414] border border-white/10 rounded-xl overflow-hidden flex flex-col min-w-0">
-              <div className="p-5 border-b border-white/5">
-                <div className="flex items-start justify-between gap-3 mb-3">
-                  <h3 className="font-semibold text-white">{check.title}</h3>
-                  <span className="shrink-0 px-2 py-0.5 rounded bg-white/5 text-[0.68rem] font-mono text-zinc-300">{check.code}</span>
-                </div>
-                <p className="text-sm text-zinc-400">{check.description}</p>
-              </div>
-
-              <div className="bg-[#0A0A0A] p-4 text-xs font-mono leading-relaxed flex-grow">
-                <div className="text-zinc-500 mb-2 truncate">{check.path}</div>
-                <div className="text-red-400 mb-1.5 flex items-center gap-2">
-                  <AlertCircle className="w-3 h-3" aria-hidden="true" /> Flagged
-                </div>
-                <pre className="text-zinc-500 mb-4 overflow-x-auto [scrollbar-width:thin] [scrollbar-color:#3f3f46_transparent]"><code>{check.bad}</code></pre>
-                <div className="text-emerald-400 mb-1.5 flex items-center gap-2">
-                  <ShieldCheck className="w-3 h-3" aria-hidden="true" /> Passes
-                </div>
-                <pre className="text-zinc-300 overflow-x-auto [scrollbar-width:thin] [scrollbar-color:#3f3f46_transparent]"><code>{check.good}</code></pre>
-              </div>
-            </article>
+          {LANDING_CHECKS.slice(0, VISIBLE).map((check) => (
+            <CheckCard key={check.ruleId} check={check} />
           ))}
         </div>
+
+        {LANDING_CHECKS.length > VISIBLE && (
+          <details className="group mt-6">
+            <summary className="mx-auto flex w-fit cursor-pointer list-none items-center gap-2 rounded-lg border border-white/15 px-5 min-h-11 text-sm font-mono text-zinc-300 hover:text-white hover:border-white/30 group-open:hidden">
+              Show {LANDING_CHECKS.length - VISIBLE} more checks
+            </summary>
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+              {LANDING_CHECKS.slice(VISIBLE).map((check) => (
+                <CheckCard key={check.ruleId} check={check} />
+              ))}
+            </div>
+          </details>
+        )}
       </div>
     </section>
   );
