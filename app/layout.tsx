@@ -43,7 +43,7 @@ function getMetadataBase(): URL {
 
 export const metadata: Metadata = {
   metadataBase: getMetadataBase(),
-  verification: { google: 'XTROlcI5cn748KkW-QKTl1DvXxUqeLfUQLWEPwJo2BU' },
+  verification: { google: 'XTROlcI5cn748KkW-QKTl1DvXxUqeLfUQLWEPwJo2BU', other: { 'msvalidate.01': 'D89D5CFAF8E5B4AAF814234E81825B45' } },
   title: {
     default: 'Zelsis',
     template: '%s | Zelsis',
