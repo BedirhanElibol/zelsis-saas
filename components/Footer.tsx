@@ -54,6 +54,9 @@ export const Footer: React.FC = () => {
           <a href="/open-source" className="text-sm hover:text-white transition-colors py-1.5 inline-block">
             For open source
           </a>
+          <a href="/site-check" className="text-sm hover:text-white transition-colors py-1.5 inline-block">
+            Free site check
+          </a>
           <a href="/benchmark" className="text-sm hover:text-white transition-colors py-1.5 inline-block">
             Benchmark
           </a>
