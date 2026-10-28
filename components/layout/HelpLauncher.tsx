@@ -97,7 +97,7 @@ export function HelpLauncher({ onNavigate, onOpenConnect, onFocusScan, onOpenTou
       {open && (
         <div className="fixed inset-0 z-[60] bg-black/70 flex items-start justify-center p-4 pt-[12vh]" onClick={(e) => { if (e.target === e.currentTarget) setOpen(false); }}>
           <div role="dialog" aria-modal="true" aria-labelledby="help-launcher-title" className="w-full max-w-lg rounded-2xl border border-white/10 bg-[#141414] shadow-2xl overflow-hidden">
-            <div className="flex items-center gap-2 px-4 py-3 border-b border-white/10">
+            <div className="flex items-center gap-2 px-4 py-3 border-b border-white/10 focus-within:bg-white/[0.04] focus-within:shadow-[inset_0_-2px_0_0_#10b981]">
               <Search size={15} className="text-zinc-400 shrink-0" />
               <h2 id="help-launcher-title" className="sr-only">What do you want to do?</h2>
               <input
