@@ -7,6 +7,7 @@ Zelsis works with JavaScript and TypeScript, Python, Go, Ruby, PHP, Java, C#, Ru
 ## Product
 
 - [Home](https://zelsis.com/): what Zelsis checks, an example failing pull request, pricing
+- [Tutorial](https://zelsis.com/tutorial): a three-minute recording of the dashboard and one full check
 - [Free site check](https://zelsis.com/site-check): enter a URL, no account; checks a live page for what a first visitor notices
 - [Benchmark](https://zelsis.com/benchmark): every pinned open-source project scanned, what Zelsis finds and what it misses
 - [Docs](https://zelsis.com/docs): setup for the GitHub App, CI and the API
