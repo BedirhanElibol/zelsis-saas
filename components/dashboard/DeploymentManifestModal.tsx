@@ -267,7 +267,7 @@ spec:
                 <h2 className="text-lg font-extrabold text-[#EDEDED] flex items-center gap-2">
                   <span>CI/CD &amp; Pipeline Integration Hub</span>
                   <span className="text-[10px] font-mono px-2 py-0.5 rounded-full bg-white/10 text-white border border-white/20">
-                    Snyk-Grade CI/CD
+                    Runs on every PR
                   </span>
                 </h2>
                 <p className="text-xs text-[#A1A1AA]">
