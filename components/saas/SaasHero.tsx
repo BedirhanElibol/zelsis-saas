@@ -191,29 +191,29 @@ export const SaasHero: React.FC<SaasHeroProps> = ({ onOpenDashboard }) => {
             <div className="flex items-center justify-between gap-3 px-4 py-3 bg-[#0E0E10] border-b border-white/10">
               <div className="flex items-center gap-2 min-w-0 text-xs font-mono text-zinc-300">
                 <GitPullRequest size={14} className="text-zinc-400 shrink-0" />
-                <span className="truncate">The Zelsis dashboard, start to finish</span>
+                <span className="truncate">One full check, recorded in the app</span>
               </div>
               <span className="shrink-0 inline-flex items-center gap-1.5 px-2 py-0.5 rounded text-xs font-mono uppercase bg-white/[0.04] text-zinc-300 border border-white/10">
-                Real session · 45 s
+                Real recording
               </span>
             </div>
 
             {/* Recorded in the signed-in dashboard on a public demo repo; owner details blurred */}
             <video
-              src="/videos/zelsis-dashboard-tour.mp4"
-              poster="/videos/zelsis-dashboard-tour.jpg"
+              src="/videos/zelsis-one-check.mp4"
+              poster="/videos/zelsis-one-check.jpg"
               autoPlay
               muted
               loop
               playsInline
               controls
               preload="metadata"
-              aria-label="Walkthrough of the Zelsis dashboard: connect a repository, scan, read findings, copy a fix prompt, add the pull request check and export a report"
+              aria-label="One full Zelsis check: connect a repository, run the scan, read the verdict, open a finding, copy the fix prompt and add the check to pull requests"
               className="block w-full aspect-video bg-black"
             />
 
             <div className="flex items-center justify-between gap-3 px-4 py-2.5 bg-[#0E0E10] border-t border-white/10 text-xs font-mono text-zinc-400">
-              <span className="truncate">Only proven critical findings block a merge</span>
+              <a href="/tutorial" className="truncate text-zinc-300 hover:text-white underline underline-offset-4">Watch the full 3-minute tutorial</a>
               <button
                 onClick={() => {
                   if (onOpenDashboard) onOpenDashboard();
