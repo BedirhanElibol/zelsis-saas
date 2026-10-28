@@ -1,8 +1,8 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useRef, useState } from 'react';
 import { m } from 'framer-motion';
-import { ArrowRight, Terminal, Loader2, GitPullRequest } from 'lucide-react';
+import { ArrowRight, Terminal, Loader2, GitPullRequest, PlayCircle, X } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import { normalizeRepoUrl } from '@/lib/github-api';
 import { ScanPreviewCard, ScanPreviewResult } from '@/components/saas/ScanPreviewCard';
@@ -43,6 +43,11 @@ export const SaasHero: React.FC<SaasHeroProps> = ({ onOpenDashboard }) => {
   ];
 
   const [preview, setPreview] = useState<ScanPreviewResult | null>(null);
+  // Native <dialog>: focus stays inside and Esc closes it; the video only loads when opened
+  const demoRef = useRef<HTMLDialogElement>(null);
+  const [demoOpen, setDemoOpen] = useState(false);
+  const openDemo = () => { setDemoOpen(true); demoRef.current?.showModal(); };
+  const closeDemo = () => { setDemoOpen(false); demoRef.current?.close(); };
   const [previewError, setPreviewError] = useState<string | null>(null);
 
   // Signup-free teaser: summary only; full report needs an account
@@ -179,6 +184,17 @@ export const SaasHero: React.FC<SaasHeroProps> = ({ onOpenDashboard }) => {
                 <span className="w-1.5 h-1.5 rounded-full bg-emerald-400/70" />
                 <span>No account needed · one flat price, not per developer</span>
               </li>
+              <li className="flex items-center gap-2">
+                <PlayCircle size={14} className="text-emerald-400" aria-hidden="true" />
+                <button
+                  type="button"
+                  data-track="hero-demo-video"
+                  onClick={openDemo}
+                  className="min-h-[24px] text-zinc-300 hover:text-white underline underline-offset-4 cursor-pointer"
+                >
+                  Watch a 40-second scan
+                </button>
+              </li>
             </ul>
           </div>
 
@@ -236,6 +252,24 @@ export const SaasHero: React.FC<SaasHeroProps> = ({ onOpenDashboard }) => {
           </div>
         </div>
       </div>
+      <dialog
+        ref={demoRef}
+        aria-label="40-second Zelsis demo"
+        onClose={() => setDemoOpen(false)}
+        onCancel={() => setDemoOpen(false)}
+        onClick={(e) => { if (e.target === e.currentTarget) closeDemo(); }}
+        className="w-[min(960px,92vw)] p-0 rounded-xl border border-white/15 bg-[#0E0E10] text-white backdrop:bg-black/80"
+      >
+        <div className="flex items-center justify-between px-4 py-2 border-b border-white/10 text-xs font-mono text-zinc-300">
+          <span>Recorded on the live site, nothing staged</span>
+          <button type="button" onClick={closeDemo} aria-label="Close video" className="p-2 text-zinc-400 hover:text-white cursor-pointer">
+            <X size={16} aria-hidden="true" />
+          </button>
+        </div>
+        {demoOpen && (
+          <video src="/videos/zelsis-site-demo.mp4" controls autoPlay muted playsInline className="w-full h-auto block" />
+        )}
+      </dialog>
     </section>
   );
 };
