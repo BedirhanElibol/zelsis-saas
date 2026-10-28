@@ -43,13 +43,19 @@ export function evaluateFrontendRules(file: CodeFile, lines: string[], cleanCont
     const focusableTags = Array.from(cleanContent.matchAll(/<(input|textarea|select|button|a)\b[\s\S]*?(?:\/>|(?<!=)>)/g))
         .filter((m) => !/\{\s*\.\.\./.test(m[0]));
     const replacementFocus = /\b(?:focus|focus-visible|focus-within):(?:ring|border|shadow|outline-(?!none)|bg-|underline)|(?:^|[\s"'`])ring-\d/;
-    // Input groups draw the focus ring on the wrapper (focus-within:) and strip the inner outline: the parent tag counts.
-    const parentTag = (offset: number) => {
-        const opens = Array.from(cleanContent.slice(Math.max(0, offset - 600), offset).matchAll(/<[a-zA-Z][^<>]*?(?<!\/)>/g));
-        return opens.length ? opens[opens.length - 1][0] : '';
+    // Input groups draw the focus ring on a wrapper (focus-within:) and strip the inner outline: the three nearest
+    // still-open ancestor tags count (an input inside a <label> inside a styled <form>).
+    const ancestorTags = (offset: number) => {
+        const stack: { name: string; tag: string }[] = [];
+        for (const m of cleanContent.slice(Math.max(0, offset - 1500), offset).matchAll(/<(\/?)([a-zA-Z][\w.]*)\b[^<>]*?(\/?)>/g)) {
+            if (m[3]) continue;
+            if (m[1]) { const i = stack.map((s) => s.name).lastIndexOf(m[2]); if (i >= 0) stack.length = i; }
+            else stack.push({ name: m[2], tag: m[0] });
+        }
+        return stack.slice(-3).map((s) => s.tag).join(' ');
     };
     const outlineTag = focusableTags.find((m) => /(?:^|[\s"'`])(?:focus:|focus-visible:)?outline-none\b/.test(m[0]) &&
-        !replacementFocus.test(m[0]) && !/\bfocus-within:(?:ring|border|shadow|outline-(?!none))/.test(parentTag(m.index ?? 0)));
+        !replacementFocus.test(m[0]) && !/\bfocus-within:(?:ring|border|shadow|outline-(?!none))/.test(ancestorTags(m.index ?? 0)));
     const outlineNoneViolation = !!outlineTag;
     const labelRanges = Array.from(cleanContent.matchAll(/<label\b[^>]*>[\s\S]*?<\/label>/g)).map((m) => [m.index ?? 0, (m.index ?? 0) + m[0].length]);
     const unlabelledTag = focusableTags.find((m) => /^<(?:input|textarea|select)\b/.test(m[0]) &&
