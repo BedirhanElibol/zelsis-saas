@@ -331,6 +331,34 @@ export const CASES: RuleCase[] = [
     ))
   },
   {
+    ruleIds: [1026],
+    name: 'search input strips its outline and no ancestor draws a focus ring',
+    detects: f('components/UrlSearch.tsx', src(
+      'export function UrlSearch() {',
+      '  return (',
+      '    <form className="flex rounded-xl border border-white/10">',
+      '      <label className="flex items-center gap-2">',
+      '        <span className="sr-only">Website address</span>',
+      '        <input name="url" className="bg-transparent focus:outline-none" />',
+      '      </label>',
+      '    </form>',
+      '  );',
+      '}'
+    )),
+    ignores: f('components/UrlSearch.tsx', src(
+      'export function UrlSearch() {',
+      '  return (',
+      '    <form className="flex rounded-xl border border-white/10 focus-within:border-white/30">',
+      '      <label className="flex items-center gap-2">',
+      '        <span className="sr-only">Website address</span>',
+      '        <input name="url" className="bg-transparent focus:outline-none" />',
+      '      </label>',
+      '    </form>',
+      '  );',
+      '}'
+    ))
+  },
+  {
     ruleIds: [1029],
     name: 'clickable card div with no role or keyboard handler',
     detects: f('components/ProjectCard.tsx', src(
