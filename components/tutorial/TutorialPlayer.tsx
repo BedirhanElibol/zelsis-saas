@@ -22,7 +22,7 @@ const CHAPTERS: { t: number; part: 1 | 2; title: string }[] = [
   { t: 136.5, part: 2, title: 'Filter the findings' },
   { t: 144.6, part: 2, title: 'Open a finding' },
   { t: 151.1, part: 2, title: 'Copy the fix prompt' },
-  { t: 163.7, part: 2, title: 'Add the check to pull requests' },
+  { t: 163.1, part: 2, title: 'Add the check to pull requests' },
 ];
 
 const fmt = (t: number) => `${Math.floor(t / 60)}:${String(Math.floor(t % 60)).padStart(2, '0')}`;
