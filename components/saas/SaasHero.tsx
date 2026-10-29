@@ -202,9 +202,7 @@ export const SaasHero: React.FC<SaasHeroProps> = ({ onOpenDashboard }) => {
             <video
               src="/videos/zelsis-one-check.mp4"
               poster="/videos/zelsis-one-check.jpg"
-              autoPlay
               muted
-              loop
               playsInline
               controls
               preload="metadata"
