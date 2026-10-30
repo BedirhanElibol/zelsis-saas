@@ -81,8 +81,9 @@ export function evaluateCloudNativeRules(file: CodeFile, lines: string[], cleanC
     }
     // CLOUD-06: Docker Secret Leak via Build ARG or ENV
     // A literal secret value baked into an ARG default or ENV (kept in image history). Public client keys
-    // (NEXT_PUBLIC_/VITE_/PUBLIC_), empty values, ${...} references and build placeholders are skipped.
-    const dockerSecretRe = /^\s*(?:ARG|ENV)\s+(?!(?:NEXT_PUBLIC|VITE|PUBLIC|EXPO_PUBLIC|REACT_APP)_)[A-Za-z0-9_]*(?:SECRET|PASSWORD|PASSWD|TOKEN|API_KEY|PRIVATE_KEY|ACCESS_KEY)[A-Za-z0-9_]*\s*=\s*["']?(?![$"'\s]|(?:dummy|placeholder|changeme|example|build|ci|test|x+|none)\b)[^\s"']{6,}/i;
+    // (NEXT_PUBLIC_/VITE_/PUBLIC_), empty values, ${...} references and build placeholders are skipped,
+    // and so are ML tokenizer settings (TIKTOKEN_CACHE_DIR) and values that are file paths.
+    const dockerSecretRe = /^\s*(?:ARG|ENV)\s+(?!(?:NEXT_PUBLIC|VITE|PUBLIC|EXPO_PUBLIC|REACT_APP)_)(?![A-Za-z0-9_]*(?:TIKTOKEN|TOKENIZER))[A-Za-z0-9_]*(?:SECRET|PASSWORD|PASSWD|TOKEN|API_KEY|PRIVATE_KEY|ACCESS_KEY)[A-Za-z0-9_]*\s*=\s*["']?(?![$"'\s/]|(?:dummy|placeholder|changeme|example|build|ci|test|x+|none)\b)[^\s"']{6,}/i;
     const docker06Idx = file.path.toLowerCase().endsWith("dockerfile") ? lines.findIndex(l => dockerSecretRe.test(l)) : -1;
     if (docker06Idx !== -1) {
         const matchLineIdx = docker06Idx;

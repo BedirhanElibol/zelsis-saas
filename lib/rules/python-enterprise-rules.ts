@@ -908,7 +908,19 @@ export function evaluatePythonEnterpriseRules(file: CodeFile, lines: string[], c
         logs.push(`[${ts}] [PYTHON AUDIT] Found PY-SEC-29: Unvalidated Open Redirect via Dynamic Request URL at ${file.path}:${lineNum}`);
     }
     // PY-SEC-30: Raw SQL Query with % or .format() String Formatting
-    const idx_8830 = pyFindLine(lines, /\.execute(?:many)?\s*\(\s*['"][^'"]*\b(?:SELECT|INSERT|UPDATE|DELETE)\b[^'"]*['"]\s*(?:%\s*[\w(]|\.format\s*\()/i);
+    // Identifiers can't be bound as parameters, so a statement where every placeholder is filled by an identifier quoter is safe
+    const quotedIdentifiersOnly = (startIdx: number): boolean => {
+        let stmt = '';
+        let depth = 0;
+        for (let j = startIdx; j < Math.min(lines.length, startIdx + 6); j++) {
+            stmt += lines[j] + '\n';
+            depth += (lines[j].match(/\(/g) || []).length - (lines[j].match(/\)/g) || []).length;
+            if (depth <= 0) break;
+        }
+        const slots = (stmt.match(/%s|\{[^{}]*\}/g) || []).length;
+        return slots > 0 && (stmt.match(/\b(?:quote_ident\w*|quote_identifier|Identifier)\(/g) || []).length >= slots;
+    };
+    const idx_8830 = pyFindLine(lines.map((l, i) => /\.execute(?:many)?\s*\(/.test(l) && quotedIdentifiersOnly(i) ? '' : l), /\.execute(?:many)?\s*\(\s*['"][^'"]*\b(?:SELECT|INSERT|UPDATE|DELETE)\b[^'"]*['"]\s*(?:%\s*[\w(]|\.format\s*\()/i);
     if (idx_8830 !== -1) {
         const matchLineIdx = idx_8830;
         const lineNum = matchLineIdx !== -1 ? matchLineIdx + 1 : 1;
