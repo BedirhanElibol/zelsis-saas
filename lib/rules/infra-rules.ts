@@ -706,7 +706,24 @@ export function evaluateInfraRules(file: CodeFile, lines: string[], cleanContent
         const normalizeSqlInterpolations = (s: string) => s
             .replace(/\$\{\s*(?:[a-zA-Z0-9_.]+\.)?(?:quoteIdentifier|quoteTable|quoteColumn|escapeIdentifier|quote|escapeLiteral)\s*\([^)]*\)\s*\}/g, 'IDENT')
             .replace(/\$\{\s*[A-Z][A-Z0-9_]*\s*\}/g, 'CONST');
-        const cleanContentForSql = normalizeSqlInterpolations(cleanContent);
+        // Values the code fixes itself: an ORM table name, a lookup in a constant map, a list of literal
+        // conditions, a choice between two literals, a parameter typed keyof
+        const literal = String.raw`(?:'[^'\n]*'|"[^"\n]*"|\x60[^\x60$\n]*\x60)`;
+        const fixedSqlVars = new Set<string>();
+        for (const m of cleanContent.matchAll(/\b(?:const|let)\s+(\w+)(?:\s*:[^=\n]+)?\s*=\s*([^;\n]+)/g)) {
+            const rhs = m[2].trim();
+            const fixed = /\.metadata\.tableName$/.test(rhs)
+                || /^(?:\w+\.)*[A-Z][A-Z0-9_]+\[[^\]]+\]$/.test(rhs)
+                || new RegExp(String.raw`^[\w.!]+\s*\?\s*${literal}\s*:\s*${literal}$`).test(rhs)
+                || (new RegExp(String.raw`^\[\s*${literal}(?:\s*,\s*${literal})*\s*,?\s*\]$`).test(rhs)
+                    && [...cleanContent.matchAll(new RegExp(String.raw`\b${m[1]}\.push\(([^)\n]*)\)`, 'g'))].every((p) => new RegExp(String.raw`^\s*${literal}\s*$`).test(p[1])));
+            if (fixed) fixedSqlVars.add(m[1]);
+        }
+        const keyofGeneric = /<\s*(\w+)\s+extends\s+keyof\b/.exec(cleanContent);
+        if (keyofGeneric) for (const m of cleanContent.matchAll(new RegExp(String.raw`\b(\w+)\s*:\s*${keyofGeneric[1]}\b`, 'g'))) fixedSqlVars.add(m[1]);
+        const cleanContentForSql = normalizeSqlInterpolations(cleanContent)
+            .replace(new RegExp(String.raw`\$\{\s*[\w.!]+\s*\?\s*${literal}\s*:\s*${literal}\s*\}`, 'g'), 'CONST')
+            .replace(/\$\{\s*(\w+)(?:\.join\([^)]*\))?\s*\}/g, (whole, name: string) => fixedSqlVars.has(name) ? 'IDENT' : whole);
         const sqlVars = [...cleanContentForSql.matchAll(new RegExp(String.raw`(?:const|let|var)\s+(\w+)\s*=\s*` + dynamicSql, 'gi'))].map((m) => m[1]);
         const rawSqlConcatRegex = new RegExp(queryCall + '(?:' + dynamicSql + (sqlVars.length ? String.raw`|\b(?:` + sqlVars.join('|') + String.raw`)\b` : '') + ')', 'i');
         const sqlConcatMatch = rawSqlConcatRegex.exec(cleanContentForSql);

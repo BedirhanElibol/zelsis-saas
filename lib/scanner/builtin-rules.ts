@@ -99,7 +99,7 @@ export function evaluateBuiltinRules(ctx: BuiltinRuleContext): void {
     logs.push(`[${new Date().toLocaleTimeString()}] [CRITICAL] SEC-03 Permissive RLS Policy in ${file.path}:${lineNum}`);
   }
 
-  if (file.content.includes("origin: '*'") || file.content.includes('Access-Control-Allow-Origin: *')) {
+  if (!/credentials\s*:\s*false/.test(file.content) && (file.content.includes("origin: '*'") || file.content.includes('Access-Control-Allow-Origin: *'))) {
     const matchLineIdx = lines.findIndex(l => l.includes("origin: '*'") || l.includes('Access-Control-Allow-Origin: *'));
     const lineNum = matchLineIdx !== -1 ? matchLineIdx + 1 : 1;
 

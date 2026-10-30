@@ -375,7 +375,8 @@ export function evaluateNodeWebVulnRules(file: CodeFile, lines: string[], cleanC
   // NODE-WEB-21: password hashed with a fast unsalted SHA-2 digest (md5/sha1 are covered elsewhere)
   scan(/createHash\s*\(/, () => /./, (i) => {
     const text = windowText(i, 3);
-    if (/createHash\s*\(\s*['"](?:sha224|sha256|sha384|sha512|sha3-256|sha3-512|sha512-256)['"]\s*\)\s*\.update\(\s*[^)]*\b(?:password|passwd|pwd|plainPassword|plainTextPassword|newPassword)\b(?!\s*(?:Reset|Token|Hash))/.test(text)) {
+    // Hashing both sides to equal length for timingSafeEqual is a comparison; nothing is stored
+    if (!/timingSafeEqual/.test(text) && /createHash\s*\(\s*['"](?:sha224|sha256|sha384|sha512|sha3-256|sha3-512|sha512-256)['"]\s*\)\s*\.update\(\s*[^)]*\b(?:password|passwd|pwd|plainPassword|plainTextPassword|newPassword)\b(?!\s*(?:Reset|Token|Hash))/.test(text)) {
       add({ ruleId: 28121, code: 'NODE-WEB-21', severity: 'HIGH', category: 'Cryptography', lineIdx: i,
         title: 'Password Hashed With a Fast SHA-2 Digest (CWE-916)',
         why: 'SHA-256/512 run billions of times per second on a GPU, so a leaked table of these hashes is cracked quickly; password storage needs a slow, salted KDF.',

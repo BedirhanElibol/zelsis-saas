@@ -963,7 +963,7 @@ export function analyzeProgram(program: AstNode, path: string, source: string, c
       if (name === 'startsWith' || (name === 'includes' && stringValue(call.arguments[0]) === '..') || /^isPathInside|^isSubPath|^isWithin/.test(name)) ctx.pathGuard = true;
       // /^[\w-]+$/.test(input): input validated against a pattern
       if (name === 'test' && isMember(callee) && unwrap(callee.object).type === 'RegExpLiteral' && taintOf(call.arguments[0], scope) > 0) { ctx.pathGuard = true; ctx.redirectGuard = true; }
-      if (/allow|whitelist|valid|safe|isPrivate|isInternal|ssrf|checkUrl|verifyUrl|assertUrl|isPublicUrl|isExternal/i.test(name)) ctx.urlGuard = true;
+      if (/allow|whitelist|valid|safe|isPrivate|isInternal|ssrf|checkUrl|verifyUrl|assertUrl|isPublicUrl|isExternal|^is\w+Url$/i.test(name)) ctx.urlGuard = true;
       if (name === 'startsWith' || /safe|valid|allow|sanitiz|isRelative|isLocal|isInternal|isSameOrigin/i.test(name)) ctx.redirectGuard = true;
     }
     if (ctx.spec) recordExternalWrite(call, scope, ctx);
