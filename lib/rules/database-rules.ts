@@ -344,7 +344,7 @@ export function evaluateDatabaseRules(file: CodeFile, lines: string[], cleanCont
     }
     // DB-PERF-43: Unprepared Dynamic SQL Query Injections
     // Setup scripts create / drop databases by name (CREATE DATABASE "${dbName}"): DDL from config, not request input
-    const isDbSetupScript = /(?:^|\/)(?:scripts?|migrations?|seeds?)\/|(?:^|\/)seed[^/]*\.[cm]?[jt]s$/i.test(file.path.replace(/\\/g, '/'));
+    const isDbSetupScript = /(?:^|\/)(?:scripts?|bin|migrations?|seeds?)\/|(?:^|\/)seed[^/]*\.[cm]?[jt]s$/i.test(file.path.replace(/\\/g, '/'));
     const normalizeDynamicQuery = (s: string) => s
         .replace(/\$\{\s*(?:[a-zA-Z0-9_.]+\.)?(?:escapeIdentifier|quoteIdentifier|quoteTable|quoteColumn|escapeLiteral|quote)\s*\([^)]*\)\s*\}/g, 'IDENT')
         .replace(/\$\{\s*[A-Z][A-Z0-9_]*\s*\}/g, 'CONST')

@@ -108,7 +108,8 @@ export function evaluateSecurityRules(file: CodeFile, lines: string[], cleanCont
         logs.push(`[${ts}] 🛑 CRITICAL: SEC-03 Permissive RLS Policy in ${file.path}:${lineNum}`);
     }
     // Rule 8: Restrict CORS to Production Domains (SEC-08)
-    if (cleanContent.includes("origin: '*'") || cleanContent.includes('Access-Control-Allow-Origin: *') || cleanContent.includes('"Access-Control-Allow-Origin", "*"')) {
+    // credentials: false set on purpose: cookies never travel, so any origin only reaches what a bearer key opens
+    if (!/credentials\s*:\s*false/.test(cleanContent) && (cleanContent.includes("origin: '*'") || cleanContent.includes('Access-Control-Allow-Origin: *') || cleanContent.includes('"Access-Control-Allow-Origin", "*"'))) {
         const matchLineIdx = lines.findIndex(l => l.includes("origin: '*'") || l.includes('Access-Control-Allow-Origin') && l.includes('*'));
         const lineNum = matchLineIdx !== -1 ? matchLineIdx + 1 : 1;
         findings.push({

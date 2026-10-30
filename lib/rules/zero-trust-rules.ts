@@ -311,7 +311,8 @@ export function evaluateZeroTrustRules(file: CodeFile, lines: string[], cleanCon
         logs.push(`[${ts}] 🛡️ HIGH: ZERO-AUTH-18 finding in ${file.path}:${lineNum}`);
     }
     // ZERO-AUTH-20: Missing OAuth State Parameter (CSRF in OAuth Flow)
-    if (/const\s+\w+\s*=\s*`https:\/\/[^`]*\/oauth2?\/(?:v\d+\/)?authorize\?[^`]*client_id=[^`]*`/i.test(cleanContent) && !/state=/i.test(cleanContent)) {
+    // A link with no redirect_uri or response_type (a Discord bot install link) never returns to the app, so there is nothing to forge
+    if (/const\s+\w+\s*=\s*`https:\/\/[^`]*\/oauth2?\/(?:v\d+\/)?authorize\?(?=[^`]*(?:redirect_uri|response_type))[^`]*client_id=[^`]*`/i.test(cleanContent) && !/state=/i.test(cleanContent)) {
         const matchLineIdx = locateMatchLine(lines, [/const\s+\w+\s*=\s*`https:\/\/[^`]*\/oauth2?\/(?:v\d+\/)?authorize\?[^`]*client_id=[^`]*`/i], l => !l.trim().startsWith('//') && !l.trim().startsWith('--') && !l.trim().startsWith('*'));
         const lineNum = matchLineIdx !== -1 ? matchLineIdx + 1 : 1;
         findings.push({
