@@ -610,6 +610,7 @@ export function evaluateMissedVulnsRules(file: CodeFile, lines: string[], cleanC
   // route; FastAPI's own docs_src tutorials are examples, not an app
   if (isPy && !context?.loopbackOnlyServer && /\bfrom\s+fastapi\b/.test(cleanContent) && !/(?:^|\/)docs_src\//.test(path)
     && !/(?:APIRouter|include_router|FastAPI)\([^)]*dependencies\s*=/.test(cleanContent)) {
+    const authAliases = [...cleanContent.matchAll(/^\s*(\w+)\s*(?::\s*\w+\s*)?=\s*Annotated\[[^\n]*?(?:Depends|Security)\(\s*[\w.]*(?:user|auth|token|admin|current|verify|require|permission|principal|api_?key|owner|login|caller|session|account|member|identity)/gim)].map(a => a[1]);
     lines.forEach((l, i) => {
       const m = l.match(/^\s*@\w+\.(delete|put|patch)\(\s*['"]([^'"]*)['"]([^)]*)\)/);
       if (!m || /dependencies\s*=/.test(m[3]) || /webhook|callback|health/i.test(m[2])) return;
@@ -628,6 +629,8 @@ export function evaluateMissedVulnsRules(file: CodeFile, lines: string[], cleanC
       // Parameters only (not the function name). The caller is identified by an auth dependency (Depends(get_current_user_id)),
       // an auth-named parameter (current_user: …) or an auth type (CurrentUser); a record id such as user_id: str is not one.
       const params = sig.slice(sig.indexOf('(') + 1);
+      // A type alias declared in this file can carry the dependency: Auth = Annotated[None, Depends(require_auth)]
+      if (authAliases.some(a => new RegExp(`:\\s*${a}\\b`).test(params))) return;
       if (/(?:Depends|Security)\(\s*[\w.]*(?:user|auth|token|admin|current|verify|require|permission|principal|api_?key|owner|login|caller|session|account|member|identity)/i.test(params)
         || /(?:^|[(,\s])(?!\w*_ids?\s*:)\w*(?:user|auth|admin|principal|token|api_?key|caller|account)\w*\s*:/i.test(params)
         || /:\s*(?:Annotated\[\s*)?(?:Current\w+|\w*(?:Principal|AuthUser|AuthContext))\b/.test(params)) return;
