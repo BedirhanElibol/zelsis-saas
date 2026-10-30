@@ -19,4 +19,9 @@ export const CASES: RuleCase[] = [
     detects: f('app/store.py', 'def read(conn, table, value):\n    return conn.execute("SELECT * FROM %s WHERE name = %s" % (\n        quote_ident(table),\n        value))\n'),
     ignores: f('app/store.py', 'def read(conn, table, cols):\n    return conn.execute("SELECT %s FROM %s" % (\n        ", ".join(quote_ident(c) for c in cols),\n        quote_ident(table)))\n'),
   },
+  {
+    ruleIds: [8841], name: 'PY-SEC-41 extractall without a filter vs a filter passed through keyword unpacking',
+    detects: f('scripts/unpack.py', 'import tarfile\nwith tarfile.open(path) as tar:\n    tar.extractall(tmp)\n'),
+    ignores: f('scripts/unpack.py', 'import tarfile\nwith tarfile.open(path) as tar:\n    tar.extractall(tmp, **({"filter": "data"} if hasattr(tarfile, "data_filter") else {}))\n'),
+  },
 ];

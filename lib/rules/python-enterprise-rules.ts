@@ -1207,7 +1207,7 @@ export function evaluatePythonEnterpriseRules(file: CodeFile, lines: string[], c
         return pyFindLine(lines, call, (l, i) => {
             const m = call.exec(l) as RegExpExecArray;
             if (m[1] && !tars.has(m[1])) return false;
-            return !/\bfilter\s*=/.test(callText(lines, i, /\.extractall\s*\(/));
+            return !/\bfilter\s*=|\*\*.*["']filter["']\s*:/.test(callText(lines, i, /\.extractall\s*\(/));
         });
     })();
     if (idx_8841 !== -1) {
