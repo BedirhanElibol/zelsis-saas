@@ -171,7 +171,15 @@ export function evaluateMultiDatabaseRules(file: CodeFile, lines: string[], clea
     const isMigrationFile = /(?:^|\/)(?:migrations?|predefinedmigrations)\//i.test(lowerPath);
     const isIntrospection = /(?:^|\/)(?:introspection|schema_editor)\.py$/i.test(lowerPath);
     if (isPy && !isMigrationFile && !isIntrospection) {
+        // Names built by an identifier quoter (quoted = [_quoted(c) for c in cols]) stay safe through later joins
+        const quoterCall = /\b_?quote(?:d|_ident|_identifier|_name)?\s*\(/;
+        const quotedVars = new Set<string>();
+        for (const l of lines) {
+            const assigned = /^\s*(\w+)\s*=\s*(.+)$/.exec(l);
+            if (assigned && (quoterCall.test(assigned[2]) || [...quotedVars].some(v => new RegExp(`\\bfor\\s+\\w+\\s+in\\s+${v}\\b`).test(assigned[2])))) quotedVars.add(assigned[1]);
+        }
         const sqlIdentCleanPy = cleanContent
+            .replace(/\{([^{}\n]*)\}/g, (whole, expr: string) => quoterCall.test(expr) || expr.split(/\W+/).some(w => quotedVars.has(w)) ? 'IDENT' : whole)
             .replace(/\b(FROM|INTO|UPDATE|JOIN|TABLE)(\s+[`"']?)(?:\{\s*[\w.]+\s*\})[`"']?/gi, '$1$2IDENT')
             .replace(/%\s*(?:self\.)?(?:connection\.)?(?:ops\.)?quote_name\s*\([^)]*\)/gi, '% IDENT')
             .replace(/%\s*\(\s*(?:(?:self\.)?(?:connection\.)?(?:ops\.)?quote_name\s*\([^)]*\)\s*,?\s*)+\)/gi, '% IDENT')
