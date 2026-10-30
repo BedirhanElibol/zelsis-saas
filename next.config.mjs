@@ -27,6 +27,10 @@ const nextConfig = {
     }
     return config;
   },
+  async redirects() {
+    // The plans live on the home page; /pricing is the first address people type
+    return [{ source: '/pricing', destination: '/#pricing', permanent: false }];
+  },
   async headers() {
     return [
       {
