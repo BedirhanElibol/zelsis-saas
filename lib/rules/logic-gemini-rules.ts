@@ -577,7 +577,7 @@ function evaluateJs2(path: string, c: string, add: Add, nextMajor: number) {
     fix: `Use useContext(${m[1]}).` });
 
   // BUG-204: SSE stream parser that JSON.parses the [DONE] sentinel
-  if (/['"`]data: ?['"`]|startsWith\(\s*['"`]data:/.test(c) && /JSON\.parse\(/.test(c) && !/\[DONE\]/.test(c) && /openai|chat\/completions|choices\s*\[\s*0\s*\]\??\.delta|\.delta\??\.content/i.test(c)) {
+  if (/['"`]data: ?['"`]|startsWith\(\s*['"`]data:/.test(c) && /JSON\.parse\(/.test(c) && !/\[DONE\]/.test(c) && /openai|chat\/completions|choices\s*\[\s*0\s*\]\??\.delta|\.delta\??\.content/i.test(c) && /stream|getReader\(|EventSource|\.delta\b/i.test(c)) {
     const m = /JSON\.parse\(/.exec(c)!;
     add({ ruleId: 29881, code: 'BUG-204', severity: 'HIGH', lineIdx: at(m.index),
       title: 'Stream Parser Does Not Handle the [DONE] Message',

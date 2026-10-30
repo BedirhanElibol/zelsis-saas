@@ -132,7 +132,7 @@ function sql(src: string, add: Add) {
   // DBG-03: UPDATE trigger whose function updates the same table (infinite recursion)
   for (const t of src.matchAll(/\bCREATE\s+(?:OR\s+REPLACE\s+)?TRIGGER\s+\w+\s+(?:BEFORE|AFTER)\s+[\w\s]*\bUPDATE\b[\w\s,]*\bON\s+(?:public\.)?"?(\w+)"?[\s\S]*?\bEXECUTE\s+(?:FUNCTION|PROCEDURE)\s+(?:public\.)?"?(\w+)"?\s*\(/gi)) {
     const table = t[1]; const fn = t[2];
-    const def = new RegExp(`\\bFUNCTION\\s+(?:public\\.)?"?${fn}"?\\s*\\(`, 'i').exec(src);
+    const def = new RegExp(`\\bCREATE\\s+(?:OR\\s+REPLACE\\s+)?FUNCTION\\s+(?:public\\.)?"?${fn}"?\\s*\\(`, 'i').exec(src);
     if (!def) continue;
     const body = bodies.find((b) => b.s > def.index);
     if (!body) continue;

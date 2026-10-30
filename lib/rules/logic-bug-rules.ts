@@ -188,7 +188,11 @@ export function evaluateLogicBugRules(file: CodeFile, lines: string[], cleanCont
       }
 
       // BUG-04: effect without a dependency array that sets state, so every render schedules another render
-      if (args.length === 1 && /\bset[A-Z]\w*\s*\(|\.then\(\s*set[A-Z]\w*\s*\)/.test(cb) && /^(?:\([^)]*\)|\w+)\s*=>|^function\b/.test(cb)) {
+      // `if (next !== current) setCurrent(next)` settles after one render, so it cannot loop
+      const unguardedCb = cb.replace(/\bif\s*\(\s*(\w+)\s*!==?\s*\w+\s*\)\s*\{?\s*set[A-Z]\w*\s*\(\s*\1\s*\)/g, '');
+      // State set from a listener the effect removes on cleanup runs on that event, not on every render
+      const setsFromListener = /\baddEventListener\b/.test(cb) && /\bremoveEventListener\b/.test(cb);
+      if (args.length === 1 && !setsFromListener && /\bset[A-Z]\w*\s*\(|\.then\(\s*set[A-Z]\w*\s*\)/.test(unguardedCb) && /^(?:\([^)]*\)|\w+)\s*=>|^function\b/.test(cb)) {
         add({ ruleId: 29604, code: 'BUG-04', severity: 'HIGH', category: 'Logic Bug', lineIdx: idx,
           title: 'useEffect Without a Dependency Array Sets State (Infinite Render Loop)',
           why: 'With no dependency array the effect runs after every render; it sets state, which renders again, which runs the effect again. With a fetch inside, this floods the API with requests.',

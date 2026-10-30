@@ -7,6 +7,25 @@ import { isVendoredPath } from '../scanner/text';
 
 /** A real innerHTML write or React prop; the bare word in prose (a changelog line, a comment string) is not a sink. */
 export const INNER_HTML_SINK = /dangerouslySetInnerHTML\s*=|\.innerHTML\s*\+?=(?!=)/;
+/** Markup the app owns: an UPPER_CASE constant, or a template (one or many lines) that interpolates only UPPER_CASE constants. */
+export function innerHtmlIsAppOwned(lines: string[], idx: number): boolean {
+    const line = lines[idx];
+    if (/__html\s*:\s*[A-Z][A-Z0-9_]{2,}\s*\}/.test(line)) return true;
+    if (/\.innerHTML\s*=\s*$/.test(line)) {
+        // Fixed strings joined across lines: 'a' + 'b';
+        for (const next of lines.slice(idx + 1, idx + 40)) {
+            if (!/^\s*(['"])(?:\\.|(?!\1).)*\1\s*(?:\+\s*)?;?\s*$/.test(next)) return false;
+            if (/;\s*$/.test(next)) return true;
+        }
+        return false;
+    }
+    const start = /\.innerHTML\s*=\s*`/.exec(line);
+    if (!start) return false;
+    const rest = [line.slice(start.index + start[0].length), ...lines.slice(idx + 1, idx + 200)].join('\n');
+    const end = rest.indexOf('`');
+    if (end === -1) return false;
+    return [...rest.slice(0, end).matchAll(/\$\{([^}]*)\}/g)].every((m) => /^\s*[A-Z][A-Z0-9_]+\s*$/.test(m[1]));
+}
 export function evaluateSecurityRules(file: CodeFile, lines: string[], cleanContentOrCounter: string | {
     count: number;
 }, counterMaybe?: {
@@ -122,7 +141,8 @@ export function evaluateSecurityRules(file: CodeFile, lines: string[], cleanCont
     const escapesInterpolations = /\$\{\s*(?:esc|escape\w*|sanitize\w*|DOMPurify\.sanitize|encode\w*|h)\s*\(/i.test(cleanContent);
     const innerHtmlLineIdx = escapesInterpolations ? -1 : lines.findIndex(l => !l.trim().startsWith('//') && !l.trim().startsWith('/*') && INNER_HTML_SINK.test(l)
         && !/innerHTML\s*=\s*(?:(['"])(?:\\.|(?!\1).)*\1|`[^`$]*`)\s*;?\s*$/.test(l)
-        && !/innerHTML\s*=\s*[\w.]*(?:icon|svg|spinner|logo|glyph)\w*(?:\s*\([^)]*\))?\s*;?\s*$/i.test(l));
+        && !/innerHTML\s*=\s*[\w.]*(?:icon|svg|spinner|logo|glyph)\w*(?:\s*\([^)]*\))?\s*;?\s*$/i.test(l)
+        && !innerHtmlIsAppOwned(lines, lines.indexOf(l)));
     if (!isSafeMdxOrJsonLd && (cleanContent.includes('dangerouslySetInnerHTML') || cleanContent.includes('innerHTML =')) && innerHtmlLineIdx !== -1) {
         const matchLineIdx = innerHtmlLineIdx;
         const lineNum = matchLineIdx !== -1 ? matchLineIdx + 1 : 1;
@@ -1336,7 +1356,9 @@ export function evaluateSecurityRules(file: CodeFile, lines: string[], cleanCont
     if (cleanContent.includes('CREATE POLICY') && (cleanContent.includes('USING (true)') || cleanContent.includes('WITH CHECK (true)'))) {
         const rlsBypassRegex = /CREATE\s+POLICY\s+[^;]+(?:USING\s*\(\s*true\s*\)|WITH\s+CHECK\s*\(\s*true\s*\))/i;
         const openPolicies = [...cleanContent.matchAll(/CREATE\s+POLICY\s+[^;]+?(?:USING\s*\(\s*true\s*\)|WITH\s+CHECK\s*\(\s*true\s*\))[^;]*/gi)]
-            .filter((s) => !/\bTO\s+service_role\b/i.test(s[0]));
+            .filter((s) => !/\bTO\s+service_role\b/i.test(s[0]))
+            // Everyone reading a public catalog (the plans on a pricing page) is the point of the table
+            .filter((s) => !(/\bON\s+(?:public\.)?"?(?:plans?|pricing|prices|countries|currencies|languages|locales)"?\s/i.test(s[0]) && /\bFOR\s+SELECT\b/i.test(s[0])));
 
         if (openPolicies.length > 0) {
             // A policy is exclusively for SELECT when it specifies FOR SELECT and contains no write clauses (WITH CHECK, FOR ALL / INSERT / UPDATE / DELETE).
