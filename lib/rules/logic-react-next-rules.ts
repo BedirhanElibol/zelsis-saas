@@ -1016,7 +1016,8 @@ export function evaluateLogicReactNextRules(file: CodeFile, lines: string[], cle
   }
 
   // BUG-46: hooks or inline event handlers in a Server Component page / layout
-  if (appEntry && !isClient && !isServerFile && !/(?:^|\/)loading\.[jt]sx?$/.test(path)) {
+  // Without Next.js in the repo (a Vite app, say) a page.tsx is a plain client file
+  if (appEntry && !isClient && !isServerFile && !/(?:^|\/)loading\.[jt]sx?$/.test(path) && !(context && context.packageMajors.size > 0 && !context.packageMajors.has('next'))) {
     const h = /(?<![\w$.])(useState|useEffect|useLayoutEffect|useReducer|useRef|useContext|useRouter|usePathname|useSearchParams)\s*\(/.exec(m);
     if (h) {
       add({ ruleId: 29646, code: 'BUG-46', severity: 'HIGH', lineIdx: at(h.index),

@@ -183,7 +183,9 @@ function evaluate(path: string, raw: string, c: string, add: (h: Hit) => void, c
   }
 
   // BUG-145: process.env in a Vite browser app (process is not defined in the browser)
-  if (context && context.packageMajors.has('vite') && !context.packageMajors.has('next') && /^(?:src|app|client|frontend\/src)\//.test(path) && !/(?:^|\/)(?:server|functions|scripts)\/|^api\/|\.config\.[cm]?[jt]s$/.test(path)) {
+  // Electron's main and preload code runs in Node, where process.env is real
+  if (context && context.packageMajors.has('vite') && !context.packageMajors.has('next') && /^(?:src|app|client|frontend\/src)\//.test(path) && !/(?:^|\/)(?:server|functions|scripts|electron)\/|^api\/|\.config\.[cm]?[jt]s$/.test(path)
+    && !(context.packageMajors.has('electron') && /(?:^|\/)src\/(?:main|preload)\//.test(path))) {
     for (const x of c.matchAll(/\bprocess\.env\.([A-Z][A-Z0-9_]*)\b/g)) {
       if (x[1] === 'NODE_ENV') continue;
       add({ ruleId: 29799, code: 'BUG-145', severity: 'HIGH', category: 'Deployment Bug', lineIdx: at(x.index!),
