@@ -11,6 +11,16 @@ export const INNER_HTML_SINK = /dangerouslySetInnerHTML\s*=|\.innerHTML\s*\+?=(?
 export function innerHtmlIsAppOwned(lines: string[], idx: number): boolean {
     const line = lines[idx];
     if (/__html\s*:\s*[A-Z][A-Z0-9_]{2,}\s*\}/.test(line)) return true;
+    // __html: faceSvg(...) / renderIconSvg(...): a function that makes the app's own SVG
+    if (/__html\s*:\s*\w*(?:svg|icon)\w*\s*\(/i.test(line)) return true;
+    // 'a' + / 'b' +: fixed strings joined from the first line on
+    if (/\.innerHTML\s*=\s*(['"])(?:\\.|(?!\1).)*\1\s*\+\s*$/.test(line)) {
+        for (const next of lines.slice(idx + 1, idx + 40)) {
+            if (!/^\s*(['"])(?:\\.|(?!\1).)*\1\s*(?:\+\s*)?;?\s*$/.test(next)) return false;
+            if (/;\s*$/.test(next)) return true;
+        }
+        return false;
+    }
     if (/\.innerHTML\s*=\s*$/.test(line)) {
         // Fixed strings joined across lines: 'a' + 'b';
         for (const next of lines.slice(idx + 1, idx + 40)) {
@@ -246,7 +256,7 @@ export function evaluateSecurityRules(file: CodeFile, lines: string[], cleanCont
     // developer's own token
     const isGeneratedParserOrScript = /(?:^|\/)(?:scripts?|tools)\/|(?:^|\/)(?:parser|lexer)\.c$|\.tab\.[ch]$/i.test(lowerPath) || /\byy(?:token|lval|parse)\b|YY_SYMBOL_PRINT/.test(cleanContent);
     if (isCodeFile && !isGeneratedParserOrScript && !lowerPath.endsWith('package.json')) {
-        const logCallRegex = /(?:console\.(?:log|error|warn|info|debug)|logger\.(?:info|error|warn|debug)|print|System\.out\.println)\s*\(/i;
+        const logCallRegex = /(?:console\.(?:log|error|warn|info|debug)|logger\.(?:info|error|warn|debug)|\bprint|System\.out\.println)\s*\(/i;
         const sensitiveVarRegex = /(?:\$\{[^}]*(?:[a-zA-Z0-9_]*(?:token|secret|password|passwd|apiKey|api_key|jwt)|authHeader)\b|(?:\+\s*|,\s*|:\s*)(?:[a-zA-Z0-9_.]+\.)?(?:[a-zA-Z0-9_]*(?:token|secret|password|passwd|apiKey|api_key|jwt)|authHeader)\b|\{\s*(?:[a-zA-Z0-9_]+(?::\s*[^,}]+)?,\s*)*(?:[a-zA-Z0-9_]*(?:token|secret|password|passwd|apiKey|api_key|jwt)|authHeader)\b|\(\s*(?:[a-zA-Z0-9_.]+\.)?(?:[a-zA-Z0-9_]*(?:token|secret|password|passwd|apiKey|api_key|jwt)|authHeader)\s*[\),]|(?:req\.headers(?:\.authorization)?|headers\[['"]authorization['"]\]))/i;
         // A fingerprint / digest / hint of a token is not the token
         const safeMaskRegex = /(?:mask|redact|hash|fingerprint|digest|hint|prefix|last4|\[REDACTED\]|\*\*\*)/i;
@@ -856,7 +866,11 @@ export function evaluateSecurityRules(file: CodeFile, lines: string[], cleanCont
                 .replace(/\/(?:[^\n\\/]|\\.)+\/[gimsuy]*/g, '');
             return !/\beval\s*\(/.test(codeOnly) && !/\bnew\s+Function\s*\(/.test(codeOnly);
         };
+        // new Function('specifier', 'return import(specifier)'): every argument is a fixed literal, so no input reaches the body
+        const fixedFunctionLiteral = String.raw`(?:\\?'[^'"\\$]*\\?'|\\?"[^'"\\$]*\\?")`;
+        const allLiteralFunction = new RegExp(String.raw`\bnew\s+Function\s*\(\s*(?:` + fixedFunctionLiteral + String.raw`\s*,\s*)*` + fixedFunctionLiteral + String.raw`\s*\)`);
         const notDynamic = (l: string) => /\beval\s*\(\s*\w+\s*\??\s*:\s*[\w[{]/.test(l)
+            || allLiteralFunction.test(l)
             || /(?:\beval|\bnew\s+Function)\s*\(\s*(['"`])(?:(?!\1|\$\{)[^\\]|\\.)*\1\s*\)/.test(l) && !/(?:\beval|\bnew\s+Function)\s*\(\s*(['"`])(?:(?!\1)[^\\]|\\.)*\1\s*[+,]/.test(l)
             || isLiteralOrValidatorCheck(l);
         const matchLineIdx = evalRegex.test(cleanContent)
@@ -1100,7 +1114,7 @@ export function evaluateSecurityRules(file: CodeFile, lines: string[], cleanCont
         const protectsSomething = (i: number) => {
             const around = lines.slice(Math.max(0, i - 5), i + 6).join('\n');
             return /passw|pwd|token|secret|signature|\bsign|hmac|auth|session|otp|api_?key|credential|salt/i.test(around)
-                && !/etag|cache_?key|cacheKey|checksum|info_?hash|fingerprint|dedup|content_?hash/i.test(lines[i]);
+                && !/etag|cache_?key|cacheKey|checksum|info_?hash|fingerprint|dedup|content_?hash|258EAFA5-E914-47DA-95CA-C5AB0DC85B11|sec-websocket/i.test(lines[i]);
         };
         const matchLineIdx = weakHashRegex.test(cleanContent)
             ? lines.findIndex((l, i) => !l.trim().startsWith('//') && !l.trim().startsWith('*') && weakHashRegex.test(l) && protectsSomething(i))

@@ -166,7 +166,9 @@ function evaluate(path: string, raw: string, c: string, add: (h: Hit) => void, c
         why: `The password "${val}" is in the source (and in the browser bundle for client code), so anyone can read it and sign in, and every real user is checked against a constant instead of their own credentials.`,
         fix: 'Authenticate against your auth provider (Supabase Auth, NextAuth, your API) and delete the hard-coded check and demo accounts.' });
     }
-    for (const x of c.matchAll(/\b(?:token|accessToken|access_token|jwt)\s*:\s*(['"`])((?:mock|fake|dummy|test|demo|sample)[-_][^'"`]*)\1/gi)) {
+    // A dev mock server (web/fake-api.ts, mock-server.ts) hands out demo tokens on purpose
+    const isMockServerFile = /(?:^|[\/._-])(?:fake|mock|stub)[-_.\w]*\.[cm]?[jt]sx?$|(?:^|\/)(?:mocks?|__mocks__|msw)\//i.test(path);
+    for (const x of isMockServerFile ? [] : c.matchAll(/\b(?:token|accessToken|access_token|jwt)\s*:\s*(['"`])((?:mock|fake|dummy|test|demo|sample)[-_][^'"`]*)\1/gi)) {
       add({ ruleId: 29804, code: 'FAKE-09', severity: 'HIGH', category: CAT, lineIdx: at(x.index!),
         title: `Auth Returns a Fake Token ("${x[2].slice(0, 24)}")`,
         why: 'Sign-up / login returns a hard-coded token instead of the server response, so accounts are never really created or verified and every protected API call fails.',
