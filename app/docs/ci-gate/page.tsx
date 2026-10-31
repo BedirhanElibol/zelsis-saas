@@ -1,5 +1,5 @@
 import React from 'react';
-import { buildGateWorkflow } from '@/lib/ci-gate-snippet';
+import { buildGateActionWorkflow, buildGateWorkflow } from '@/lib/ci-gate-snippet';
 import { getConfiguredAppUrl } from '@/lib/app-url';
 
 export const metadata = { title: 'CI Release Gate - Zelsis Docs' };
@@ -22,9 +22,18 @@ export default function CIGatePage() {
       <section className="space-y-4">
         <h2 className="text-xl font-semibold text-white">2. Add the workflow</h2>
         <p>
-          Save this as <code>.github/workflows/zelsis.yml</code>. On pull requests it sends the head and base commits, so the gate
-          only fails on findings the pull request introduces.
+          The short way: save this as <code>.github/workflows/zelsis.yml</code>. The action sends the head and base commits on a
+          pull request, so the gate only fails on findings the pull request introduces. For production, pin the action to a
+          commit SHA instead of <code>@main</code>.
         </p>
+        <pre className="bg-zinc-900 p-4 rounded-lg overflow-x-auto text-xs font-mono border border-white/10">
+          <code className="text-emerald-400">{buildGateActionWorkflow()}</code>
+        </pre>
+        <p>
+          Inputs: <code>api-key</code>, <code>app-url</code>, <code>fail-open</code> (pass the gate if Zelsis is unreachable),
+          <code> fail-on-failed</code> and <code>upload-report</code>. Outputs: <code>status</code> and <code>score</code>.
+        </p>
+        <p>The same workflow without the action, as plain shell, if you would rather not depend on another repository:</p>
         <pre className="bg-zinc-900 p-4 rounded-lg overflow-x-auto text-xs font-mono border border-white/10">
           <code className="text-emerald-400">{buildGateWorkflow({ appUrl: getConfiguredAppUrl() })}</code>
         </pre>

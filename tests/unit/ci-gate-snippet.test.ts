@@ -1,6 +1,6 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { readFileSync } from 'node:fs';
+import { existsSync, readFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { buildGateWorkflow } from '../../lib/ci-gate-snippet';
 
@@ -32,4 +32,28 @@ test('the gate accepts a GitHub Actions token longer than a classic PAT', async 
 test('a rejected gate request prints which field failed', () => {
   const yaml = buildGateWorkflow({ appUrl: 'https://example.test' });
   assert.match(yaml, /\.details\[\]\? \| \.field \+ ": " \+ \.message/);
+});
+
+test('the composite action calls the same endpoint with the same fields as the long workflow', () => {
+  const action = readFileSync(join(root, 'actions/gate/action.yml'), 'utf8');
+  assert.match(action, /using: composite/);
+  assert.match(action, /\/api\/v1\/gate-check/);
+  assert.match(action, /x-api-key: \$ZELSIS_API_KEY/);
+  const route = readFileSync(join(root, 'app/api/v1/gate-check/route.ts'), 'utf8');
+  for (const field of ['repoUrl', 'githubToken', 'ref', 'base']) {
+    assert.ok(action.includes(`${field}: $`) || action.includes(`${field}:`), `payload carries ${field}`);
+    assert.ok(route.includes(`body.${field}`), `route reads ${field}`);
+  }
+  // the pull request SHAs reach the script through env, never pasted into the command line
+  assert.doesNotMatch(action.split('run: |')[1] ?? '', /\$\{\{/);
+  // every third-party action is pinned to a full commit SHA
+  for (const m of action.matchAll(/uses:\s*([^\s#]+)/g)) assert.match(m[1], /@[0-9a-f]{40}$/, m[1]);
+});
+
+test('the short workflow shown to customers points at the action in this repository', async () => {
+  const { buildGateActionWorkflow, GATE_ACTION_REF } = await import('../../lib/ci-gate-snippet');
+  const yaml = buildGateActionWorkflow();
+  assert.ok(yaml.includes(`uses: ${GATE_ACTION_REF}`));
+  assert.match(yaml, /api-key: \$\{\{ secrets\.ZELSIS_API_KEY \}\}/);
+  assert.ok(existsSync(join(root, GATE_ACTION_REF.replace('BedirhanElibol/zelsis-saas/', '').replace(/@.*$/, ''), 'action.yml')));
 });
