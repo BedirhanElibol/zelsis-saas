@@ -5,19 +5,9 @@ const f = (path: string, content: string): CodeFile[] => [{ path, content }];
 
 export const CASES: RuleCase[] = [
   {
-    ruleIds: [30501], name: 'CAT-01 NOT NULL column added with no default vs with a default or on a table created in the same file',
-    detects: f('supabase/migrations/20260101_add_plan.sql', 'ALTER TABLE public.accounts ADD COLUMN plan text NOT NULL;\n'),
-    ignores: f('supabase/migrations/20260101_add_plan.sql', 'ALTER TABLE public.accounts ADD COLUMN plan text NOT NULL DEFAULT \'free\';\n\nCREATE TABLE public.invites (id uuid primary key);\nALTER TABLE public.invites ADD COLUMN email text NOT NULL;\n\nDELETE FROM public.sessions;\nALTER TABLE public.sessions ADD COLUMN actor_id uuid NOT NULL;\n\nALTER TABLE public.orgs ADD CONSTRAINT orgs_url_check CHECK (url IS NOT NULL);\n'),
-  },
-  {
     ruleIds: [30502], name: 'CAT-02 column renamed on an existing table vs a rename on a table created in the same file',
     detects: f('supabase/migrations/20260102_rename.sql', 'ALTER TABLE public.orders RENAME COLUMN total TO amount_cents;\n'),
     ignores: f('supabase/migrations/20260102_rename.sql', 'CREATE TABLE public.drafts (id uuid primary key, total int);\nALTER TABLE public.drafts RENAME COLUMN total TO amount_cents;\n'),
-  },
-  {
-    ruleIds: [30503], name: 'CAT-03 server route that trusts getSession vs one that verifies with getUser',
-    detects: f('app/api/me/route.ts', 'import { createServerClient } from "@supabase/ssr";\nexport async function GET() {\n  const supabase = createServerClient(URL, KEY, { cookies });\n  const { data: { session } } = await supabase.auth.getSession();\n  return Response.json({ id: session?.user.id });\n}\n'),
-    ignores: f('app/api/me/route.ts', 'import { createServerClient } from "@supabase/ssr";\nexport async function GET() {\n  const supabase = createServerClient(URL, KEY, { cookies });\n  const { data: { user } } = await supabase.auth.getUser();\n  return Response.json({ id: user?.id });\n}\n'),
   },
   {
     ruleIds: [30504], name: 'CAT-04 fetch polled every 250 ms vs every 10 seconds',
@@ -70,11 +60,6 @@ export const CASES: RuleCase[] = [
     ignores: f('app/api/pay/route.ts', 'export async function POST() {\n  await stripe.paymentIntents.create({ amount: 1000, currency: "usd" });\n  return new Response("ok");\n}\n'),
   },
   {
-    ruleIds: [30515], name: 'CAT-15 fetch inside a transaction vs fetch after it',
-    detects: f('src/orders.ts', 'export async function place(db: Db) {\n  await db.$transaction(async (tx) => {\n    await tx.order.create({ data: {} });\n    await fetch("https://api.example.com/notify", { method: "POST" });\n  });\n}\n'),
-    ignores: f('src/orders.ts', 'export async function place(db: Db) {\n  await db.$transaction(async (tx) => {\n    await tx.order.create({ data: {} });\n  });\n  await fetch("https://api.example.com/notify", { method: "POST" });\n}\n'),
-  },
-  {
     ruleIds: [30516], name: 'CAT-16 CORS methods wildcard vs a method list',
     detects: f('src/cors.ts', "import cors from 'cors';\nexport const handler = cors({ origin: 'https://app.example.com', methods: '*' });\n"),
     ignores: f('src/cors.ts', "import cors from 'cors';\nexport const handler = cors({ origin: 'https://app.example.com', methods: ['GET', 'POST'] });\n"),
@@ -95,8 +80,18 @@ export const CASES: RuleCase[] = [
     ignores: f('internal/files/read.go', 'package files\n\nimport "os"\n\nfunc ReadAll(paths []string) {\n\tfor _, p := range paths {\n\t\tfunc() {\n\t\t\tf, err := os.Open(p)\n\t\t\tif err != nil {\n\t\t\t\treturn\n\t\t\t}\n\t\t\tdefer f.Close()\n\t\t}()\n\t}\n}\n'),
   },
   {
-    ruleIds: [30507], name: 'CAT-07 aria-hidden on a reachable button vs on one taken out of the tab order',
-    detects: f('src/Close.tsx', 'export const Close = () => <button aria-hidden="true" onClick={close}>x</button>;\n'),
-    ignores: f('src/Close.tsx', 'export const Close = () => <button aria-hidden="true" tabIndex={-1} onClick={close}>x</button>;\n'),
+    ruleIds: [30521], name: 'CAT-21 java.util.Random for a token vs SecureRandom',
+    detects: f('src/main/java/app/Tokens.java', 'import java.util.Random;\npublic class Tokens {\n  String resetToken() {\n    return Long.toHexString(new Random().nextLong());\n  }\n}\n'),
+    ignores: f('src/main/java/app/Tokens.java', 'import java.security.SecureRandom;\npublic class Tokens {\n  String resetToken() {\n    byte[] b = new byte[32];\n    new SecureRandom().nextBytes(b);\n    return java.util.HexFormat.of().formatHex(b);\n  }\n}\n'),
+  },
+  {
+    ruleIds: [30522], name: 'CAT-22 allowBackup true vs false',
+    detects: f('app/src/main/AndroidManifest.xml', '<manifest xmlns:android="http://schemas.android.com/apk/res/android">\n  <application android:allowBackup="true" android:label="App" />\n</manifest>\n'),
+    ignores: f('app/src/main/AndroidManifest.xml', '<manifest xmlns:android="http://schemas.android.com/apk/res/android">\n  <application android:allowBackup="false" android:label="App" />\n</manifest>\n'),
+  },
+  {
+    ruleIds: [30523], name: 'CAT-23 empty catch vs a catch that logs',
+    detects: f('src/main/java/app/Sync.java', 'public class Sync {\n  void run() {\n    try {\n      push();\n    } catch (Exception e) {\n    }\n  }\n}\n'),
+    ignores: f('src/main/java/app/Sync.java', 'public class Sync {\n  void run() {\n    try {\n      push();\n    } catch (Exception e) {\n      log.warn("sync failed", e);\n    }\n  }\n}\n'),
   },
 ];

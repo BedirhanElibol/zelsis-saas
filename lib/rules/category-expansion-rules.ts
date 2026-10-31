@@ -1,12 +1,12 @@
 /**
- * One group of provable mistakes per content category (CAT-01..14, Rule IDs 30501-30514; CAT-08..14 are listed after CAT-07). Each pattern fails or leaks
+ * One group of provable mistakes per content category (CAT-02, 04..06, 08..14, 16..19, 21..23; Rule IDs 30502-30523). Each pattern fails or leaks
  * on its own, from a single file, so none of them needs repo context:
- *   database      CAT-01 ADD COLUMN ... NOT NULL with no default, CAT-02 RENAME COLUMN / TABLE on a live app
- *   security      CAT-03 Supabase auth.getSession() trusted on the server
+ *   database      CAT-02 RENAME COLUMN / TABLE on a live app, CAT-08..10 type change, volatile default, UPDATE without WHERE in a migration
+ *   security      CAT-12 sameSite none without secure, CAT-16 CORS methods wildcard, CAT-21 predictable random for a token, CAT-22 Android allowBackup
  *   performance   CAT-04 a timer under one second that calls the network
  *   payments      CAT-05 a subscription webhook that grants access but never revokes it
  *   privacy       CAT-06 an analytics identify() keyed on an email address
- *   accessibility CAT-07 aria-hidden on something a keyboard can still reach
+ *   reliability   CAT-18..19 Go server timeouts and defer in a loop, CAT-23 empty catch; CAT-11 YouTube embed, CAT-13 sequential awaits, CAT-14 legacy Charges API, CAT-17 429 without Retry-After
  */
 import type { Finding } from '@/data/schema';
 import type { CodeFile } from '../scanner/types';
@@ -34,20 +34,8 @@ export function evaluateCategoryExpansionRules(file: CodeFile, lines: string[], 
 
   if (isSql) {
     const sql = stripSqlComments(file.content || c);
-    // CAT-01: a NOT NULL column with no default cannot be added to a table that already has rows
     // A table this file creates is empty, so anything added to it is safe: those names are skipped
     const created = new Set([...sql.matchAll(/\bCREATE\s+(?:UNLOGGED\s+|TEMP(?:ORARY)?\s+)?TABLE\s+(?:IF\s+NOT\s+EXISTS\s+)?([\w."]+)/gi)].map((t) => bare(t[1])));
-    // ... and so is one this file empties first (DELETE with no WHERE, TRUNCATE)
-    const emptied = new Set([...sql.matchAll(/\bDELETE\s+FROM\s+([\w."]+)\s*;|\bTRUNCATE\s+(?:TABLE\s+)?(?:ONLY\s+)?([\w."]+)/gi)].map((t) => bare(t[1] ?? t[2])));
-    for (const m of sql.matchAll(/\bALTER\s+TABLE\s+(?:ONLY\s+)?(?:IF\s+EXISTS\s+)?([\w."]+)\s+ADD\s+(?:COLUMN\s+)?(?:IF\s+NOT\s+EXISTS\s+)?(?!(?:CONSTRAINT|CHECK|PRIMARY|UNIQUE|FOREIGN|EXCLUDE)\b)"?\w+"?\s+[^;,]*?\bNOT\s+NULL\b[^;,]*/gi)) {
-      if (/\bDEFAULT\b|\bGENERATED\b|\bSERIAL\b|\bIDENTITY\b|\bPRIMARY\s+KEY\b/i.test(m[0]) || created.has(bare(m[1])) || emptied.has(bare(m[1]))) continue;
-      hits.push({
-        ruleId: 30501, code: 'CAT-01', title: 'NOT NULL Column Added With No Default', severity: 'MEDIUM', type: 'INFRA_DATABASE', category: 'Database Migrations',
-        lineIdx: lineAt(sql, m.index!),
-        why: 'Postgres rejects ADD COLUMN ... NOT NULL without a default when the table has any rows ("column contains null values"), so the migration fails on production data and the deploy stops halfway.',
-        fix: 'Add the column as nullable (or with a DEFAULT), backfill it in batches, then SET NOT NULL in a later migration (use a CHECK (col IS NOT NULL) NOT VALID plus VALIDATE to avoid a long lock).',
-      });
-    }
     // CAT-02: renaming a column or table breaks the old version of the app that is still running during the deploy
     for (const m of sql.matchAll(/\bALTER\s+TABLE\s+(?:ONLY\s+)?(?:IF\s+EXISTS\s+)?([\w."]+)\s+RENAME\s+(?:COLUMN\s+"?\w+"?\s+TO\b|TO\b)/gi)) {
       // RENAME CONSTRAINT and index renames are not matched; a table this file creates has no running reader yet
@@ -100,23 +88,6 @@ export function evaluateCategoryExpansionRules(file: CodeFile, lines: string[], 
   }
 
   if (isJs) {
-    // CAT-03: getSession() reads the session from the cookie without asking Supabase Auth to verify it
-    const serverFile = /(?:^|\/)(?:route|middleware|actions?)\.[cm]?[jt]sx?$/i.test(path) || /^\s*['"]use server['"]/m.test(c) || /\bcreateServerClient\s*\(/.test(c);
-    if (serverFile && !/^\s*['"]use client['"]/m.test(c) && /\.auth\s*\.\s*getSession\s*\(\s*\)/.test(c) && !/\.auth\s*\.\s*(?:getUser|getClaims)\s*\(/.test(c)) {
-      for (const m of c.matchAll(/\.auth\s*\.\s*getSession\s*\(\s*\)/g)) {
-        // only when the session's user (or its id) is then used as the caller's identity
-        const after = c.slice(m.index!, m.index! + 600);
-        if (!/\bsession\b[\s\S]{0,200}\buser\b|\bsession\s*\??\.\s*user\b|\buser\s*[:=][^;]{0,40}\bsession\b/.test(after)) continue;
-        hits.push({
-          ruleId: 30503, code: 'CAT-03', title: 'Supabase getSession() Trusted on the Server', severity: 'MEDIUM', type: 'SECURITY', category: 'Authentication',
-          lineIdx: lineAt(c, m.index!),
-          why: 'On the server getSession() returns whatever the cookie holds without checking it with Supabase Auth, so a forged or expired cookie can pass as a signed-in user. Supabase documents getUser() (or getClaims()) for anything that authorises a request.',
-          fix: 'Call supabase.auth.getUser() on the server and use the user it returns; keep getSession() for client code that only needs the token.',
-        });
-        break;
-      }
-    }
-
     // CAT-04: a timer under one second that calls the network hammers the API from every open tab
     for (const m of c.matchAll(/\bsetInterval\s*\(/g)) {
       const end = closeOf(c, m.index! + m[0].length - 1);
@@ -207,21 +178,6 @@ export function evaluateCategoryExpansionRules(file: CodeFile, lines: string[], 
         break;
       }
     }
-    // CAT-15: a network call inside a database transaction holds the locks and the connection while it waits
-    for (const m of c.matchAll(/(?:\$transaction|\.transaction)\s*\(\s*async\s*(?:\([^)]*\)|\w+)\s*=>\s*\{/g)) {
-      const open = m.index! + m[0].length - 1;
-      const end = closeOf(c, open);
-      if (end < 0) continue;
-      const body = c.slice(open, end);
-      const call = /\bawait\s+(?:fetch|axios(?:\.\w+)?|got|stripe\.\w+\.\w+|resend\.\w+\.\w+|sgMail\.\w+|transporter\.sendMail|openai\.\w+\.\w+\.\w+)\s*\(/.exec(body);
-      if (!call) continue;
-      hits.push({
-        ruleId: 30515, code: 'CAT-15', title: 'Network Call Inside a Database Transaction', severity: 'MEDIUM', type: 'VIBECARE', category: 'Reliability',
-        lineIdx: lineAt(c, open + call.index),
-        why: 'The transaction keeps its row locks and a pooled connection open while the request to the outside service runs. When that service is slow or hangs, the locks and connections pile up until the pool is empty and the whole app stops answering.',
-        fix: 'Do the database work in the transaction, commit, then make the network call (or record an outbox row in the transaction and let a worker send it). If the call must come first, run it before the transaction starts.',
-      });
-    }
     // CAT-16: a wildcard in the allowed methods lets any permitted origin use PUT, PATCH and DELETE
     for (const m of c.matchAll(/(?:\bmethods\s*:\s*|Access-Control-Allow-Methods['"]?\s*[:,]\s*)['"]\*['"]/gi)) {
       hits.push({
@@ -296,18 +252,40 @@ export function evaluateCategoryExpansionRules(file: CodeFile, lines: string[], 
     }
   }
 
-  // CAT-07: aria-hidden removes an element from the accessibility tree but leaves it in the tab order
-  if (/\.[jt]sx$|\.(?:html?|vue|svelte|astro)$/i.test(path) && /aria-hidden\s*=\s*(?:\{?\s*)?["']?true/i.test(c)) {
-    for (const m of c.matchAll(/<(button|a|input|select|textarea)\b([^<>]*?)aria-hidden\s*=\s*(?:\{\s*)?["']?true["']?(?:\s*\})?([^<>]*)>/gi)) {
-      const attrs = `${m[2]} ${m[3]}`;
-      // a tabIndex of -1 or a disabled control is out of the tab order, so nothing is hidden-but-reachable
-      if (/tabindex\s*=\s*(?:\{\s*)?["']?-1|\bdisabled\b|\bhidden\b|type\s*=\s*["']hidden["']/i.test(attrs)) continue;
-      if (m[1].toLowerCase() === 'a' && !/\bhref\b/i.test(attrs)) continue;
+  if (/\.(?:java|kt)$/i.test(path) && !/(?:^|\/)(?:src\/)?(?:test|androidTest)\//i.test(path)) {
+    // CAT-21: java.util.Random and Math.random() are predictable, so a token or code made from them can be guessed
+    for (const m of c.matchAll(/\bnew\s+(?:java\.util\.)?Random\s*\(|\bMath\.random\s*\(|\bkotlin\.random\.Random\b|(?<![\w.])Random\.next\w*\s*\(/g)) {
+      const li = lineAt(c, m.index!);
+      const around = lines.slice(Math.max(0, li - 2), li + 3).join('\n');
+      // camelCase names count (resetToken, sessionId), so these are substrings, not whole words
+      if (!/token|password|passwd|secret|nonce|csrf|api_?key|verification|session_?id|\botp\b|[a-z]OTP\b|Otp\b/i.test(around) || /SecureRandom/.test(around)) continue;
       hits.push({
-        ruleId: 30507, code: 'CAT-07', title: `aria-hidden on a Focusable <${m[1].toLowerCase()}>`, severity: 'MEDIUM', type: 'VIBEPOLISH', category: 'Accessibility',
+        ruleId: 30521, code: 'CAT-21', title: 'Predictable Random Used for a Token or Code', severity: 'MEDIUM', type: 'SECURITY', category: 'Cryptography',
+        lineIdx: li,
+        why: 'java.util.Random, kotlin.random.Random and Math.random() are not cryptographically secure: a few observed outputs are enough to work out the generator state and predict the rest, so a reset token, OTP or session id built from them can be guessed.',
+        fix: 'Use java.security.SecureRandom (new SecureRandom().nextBytes(...)) and encode the bytes for tokens and codes.',
+      });
+    }
+    // CAT-23: an empty catch hides the failure from everyone, the logs included
+    for (const m of c.matchAll(/\bcatch\s*\(\s*(?:[\w.|]+\s+(\w+)|(\w+)\s*:\s*[\w.]+)\s*\)\s*\{\s*(?:\/\/[^\n]*\n\s*)*\}/g)) {
+      if (/^(?:ignored?|expected|_)$/i.test(m[1] ?? m[2] ?? '')) continue;
+      hits.push({
+        ruleId: 30523, code: 'CAT-23', title: 'Empty catch Block', severity: 'LOW', type: 'VIBECARE', category: 'Reliability',
         lineIdx: lineAt(c, m.index!),
-        why: 'A keyboard user can still Tab onto the element, but a screen reader announces nothing, so focus lands on silence. WCAG 4.1.2 and the ARIA spec forbid aria-hidden on focusable elements.',
-        fix: 'Remove aria-hidden, or take the element out of the tab order as well (tabIndex={-1}, disabled, or hidden / inert) when it is meant to be invisible.',
+        why: 'The exception is caught and thrown away, so the operation fails with no log line, no error to the caller and no way to learn it happened. The next failure shows up far from the cause.',
+        fix: 'Log it with context (logger.warn("...", e)), rethrow it, or handle the one case you expect and let the rest propagate. If ignoring is intended, name the variable ignored and say why in a comment.',
+      });
+    }
+  }
+
+  // CAT-22: with allowBackup on, anyone with a USB cable and debugging enabled can copy the app's private data
+  if (/(?:^|\/)AndroidManifest\.xml$/i.test(path)) {
+    for (const m of c.matchAll(/android:allowBackup\s*=\s*"true"/g)) {
+      hits.push({
+        ruleId: 30522, code: 'CAT-22', title: 'Android allowBackup Is On', severity: 'LOW', type: 'SECURITY', category: 'Mobile',
+        lineIdx: lineAt(c, m.index!),
+        why: 'android:allowBackup="true" lets adb backup and cloud backup copy the app\'s private files, databases and preferences off the device, tokens and cached user data included.',
+        fix: 'Set android:allowBackup="false", or keep backups and exclude sensitive files with android:fullBackupContent / dataExtractionRules.',
       });
     }
   }
