@@ -1,8 +1,8 @@
 {
  "summary": {
-  "implementedRules": 1307,
-  "testedRules": 1301,
-  "preciseLocationRules": 1305,
+  "implementedRules": 1314,
+  "testedRules": 1308,
+  "preciseLocationRules": 1312,
   "catalogEntries": 1927,
   "catalogOnlyNotImplemented": 1397,
   "catalogPlaceholderMetadata": 1811
@@ -14473,6 +14473,76 @@
    "title": "Token Is Decoded by Hand and Trusted Without a Signature Check",
    "severity": "CRITICAL",
    "source": "lib/rules/missing-guard-rules.ts",
+   "preciseLocation": true,
+   "tested": true,
+   "inCatalog": false
+  },
+  {
+   "ruleId": 30501,
+   "code": "RULE-30501",
+   "title": "NOT NULL Column Added With No Default",
+   "severity": "MEDIUM",
+   "source": "lib/rules/category-expansion-rules.ts",
+   "preciseLocation": true,
+   "tested": true,
+   "inCatalog": false
+  },
+  {
+   "ruleId": 30502,
+   "code": "RULE-30502",
+   "title": "Column or Table Renamed in Place",
+   "severity": "MEDIUM",
+   "source": "lib/rules/category-expansion-rules.ts",
+   "preciseLocation": true,
+   "tested": true,
+   "inCatalog": false
+  },
+  {
+   "ruleId": 30503,
+   "code": "RULE-30503",
+   "title": "Supabase getSession() Trusted on the Server",
+   "severity": "MEDIUM",
+   "source": "lib/rules/category-expansion-rules.ts",
+   "preciseLocation": true,
+   "tested": true,
+   "inCatalog": false
+  },
+  {
+   "ruleId": 30504,
+   "code": "RULE-30504",
+   "title": "Network Call Polled Every ${ms[1]} ms",
+   "severity": "MEDIUM",
+   "source": "lib/rules/category-expansion-rules.ts",
+   "preciseLocation": true,
+   "tested": true,
+   "inCatalog": false
+  },
+  {
+   "ruleId": 30505,
+   "code": "RULE-30505",
+   "title": "Subscription Webhook Never Handles Cancellation or Failed Payment",
+   "severity": "MEDIUM",
+   "source": "lib/rules/category-expansion-rules.ts",
+   "preciseLocation": true,
+   "tested": true,
+   "inCatalog": false
+  },
+  {
+   "ruleId": 30506,
+   "code": "RULE-30506",
+   "title": "Email Address Used as the Analytics User ID",
+   "severity": "MEDIUM",
+   "source": "lib/rules/category-expansion-rules.ts",
+   "preciseLocation": true,
+   "tested": true,
+   "inCatalog": false
+  },
+  {
+   "ruleId": 30507,
+   "code": "RULE-30507",
+   "title": "aria-hidden on a Focusable <${m[1].toLowerCase()}>",
+   "severity": "MEDIUM",
+   "source": "lib/rules/category-expansion-rules.ts",
    "preciseLocation": true,
    "tested": true,
    "inCatalog": false
