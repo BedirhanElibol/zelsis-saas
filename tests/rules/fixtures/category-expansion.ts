@@ -85,6 +85,16 @@ export const CASES: RuleCase[] = [
     ignores: f('src/limit.ts', 'export function limited(res: Res) {\n  res.set("Retry-After", "30");\n  return res.status(429).json({ error: "slow down" });\n}\nexport const page = (r: Res) => r.status(429).send("<p>Try again in an hour</p>");\n'),
   },
   {
+    ruleIds: [30518], name: 'CAT-18 Go ListenAndServe with no timeouts vs a Server with read and idle timeouts',
+    detects: f('cmd/api/main.go', 'package main\n\nimport "net/http"\n\nfunc main() {\n\thttp.ListenAndServe(":8080", nil)\n}\n'),
+    ignores: f('cmd/api/main.go', 'package main\n\nimport (\n\t"net/http"\n\t"time"\n)\n\nfunc main() {\n\tsrv := &http.Server{Addr: ":8080", ReadHeaderTimeout: 5 * time.Second, IdleTimeout: 2 * time.Minute}\n\tsrv.ListenAndServe()\n}\n'),
+  },
+  {
+    ruleIds: [30519], name: 'CAT-19 defer in a loop vs a per-round closure',
+    detects: f('internal/files/read.go', 'package files\n\nimport "os"\n\nfunc ReadAll(paths []string) {\n\tfor _, p := range paths {\n\t\tf, err := os.Open(p)\n\t\tif err != nil {\n\t\t\tcontinue\n\t\t}\n\t\tdefer f.Close()\n\t}\n}\n'),
+    ignores: f('internal/files/read.go', 'package files\n\nimport "os"\n\nfunc ReadAll(paths []string) {\n\tfor _, p := range paths {\n\t\tfunc() {\n\t\t\tf, err := os.Open(p)\n\t\t\tif err != nil {\n\t\t\t\treturn\n\t\t\t}\n\t\t\tdefer f.Close()\n\t\t}()\n\t}\n}\n'),
+  },
+  {
     ruleIds: [30507], name: 'CAT-07 aria-hidden on a reachable button vs on one taken out of the tab order',
     detects: f('src/Close.tsx', 'export const Close = () => <button aria-hidden="true" onClick={close}>x</button>;\n'),
     ignores: f('src/Close.tsx', 'export const Close = () => <button aria-hidden="true" tabIndex={-1} onClick={close}>x</button>;\n'),
