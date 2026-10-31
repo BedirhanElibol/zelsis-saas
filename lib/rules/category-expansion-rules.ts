@@ -207,6 +207,43 @@ export function evaluateCategoryExpansionRules(file: CodeFile, lines: string[], 
         break;
       }
     }
+    // CAT-15: a network call inside a database transaction holds the locks and the connection while it waits
+    for (const m of c.matchAll(/(?:\$transaction|\.transaction)\s*\(\s*async\s*(?:\([^)]*\)|\w+)\s*=>\s*\{/g)) {
+      const open = m.index! + m[0].length - 1;
+      const end = closeOf(c, open);
+      if (end < 0) continue;
+      const body = c.slice(open, end);
+      const call = /\bawait\s+(?:fetch|axios(?:\.\w+)?|got|stripe\.\w+\.\w+|resend\.\w+\.\w+|sgMail\.\w+|transporter\.sendMail|openai\.\w+\.\w+\.\w+)\s*\(/.exec(body);
+      if (!call) continue;
+      hits.push({
+        ruleId: 30515, code: 'CAT-15', title: 'Network Call Inside a Database Transaction', severity: 'MEDIUM', type: 'VIBECARE', category: 'Reliability',
+        lineIdx: lineAt(c, open + call.index),
+        why: 'The transaction keeps its row locks and a pooled connection open while the request to the outside service runs. When that service is slow or hangs, the locks and connections pile up until the pool is empty and the whole app stops answering.',
+        fix: 'Do the database work in the transaction, commit, then make the network call (or record an outbox row in the transaction and let a worker send it). If the call must come first, run it before the transaction starts.',
+      });
+    }
+    // CAT-16: a wildcard in the allowed methods lets any permitted origin use PUT, PATCH and DELETE
+    for (const m of c.matchAll(/(?:\bmethods\s*:\s*|Access-Control-Allow-Methods['"]?\s*[:,]\s*)['"]\*['"]/gi)) {
+      hits.push({
+        ruleId: 30516, code: 'CAT-16', title: 'CORS Allows Every HTTP Method', severity: 'LOW', type: 'SECURITY', category: 'Access Control',
+        lineIdx: lineAt(c, m.index!),
+        why: 'A wildcard in Access-Control-Allow-Methods allows PUT, PATCH and DELETE from every origin the policy admits, not just the GET and POST the browser clients use.',
+        fix: "List the methods the API serves to browsers: methods: ['GET', 'POST', 'OPTIONS'].",
+      });
+    }
+    // CAT-17: a 429 with no Retry-After leaves well-behaved clients guessing, so they retry at once
+    if (!/retry-after/i.test(c) && !/(?:ratelimit|rate-limit|rate_limit|ratelimiter|throttl)/i.test(c.replace(/status\s*[:(]\s*429/g, ''))) {
+      const m = /\.status\s*\(\s*429\s*\)|\bstatus\s*:\s*429\b|\bStatusTooManyRequests\b/.exec(c);
+      // Retry-After is for API clients: an HTML page that tells a person to try again later is not one
+      if (m && /json/i.test(c.slice(Math.max(0, m.index - 200), m.index + 300))) {
+        hits.push({
+          ruleId: 30517, code: 'CAT-17', title: '429 Response Without Retry-After', severity: 'LOW', type: 'VIBECARE', category: 'API Design',
+          lineIdx: lineAt(c, m.index),
+          why: 'Without Retry-After a client has no way to know when to come back, so SDKs and browsers retry immediately or on a short fixed timer, which keeps the limit tripped and adds load.',
+          fix: "Send the header with the response: res.set('Retry-After', String(secondsUntilReset)) (and RateLimit-Reset if you use the IETF headers).",
+        });
+      }
+    }
     // CAT-14: the legacy Charges API cannot run 3D Secure (SCA)
     for (const m of c.matchAll(/\bstripe\w*\s*\.\s*charges\s*\.\s*create\s*\(/gi)) {
       hits.push({
