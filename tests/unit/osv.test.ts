@@ -77,6 +77,17 @@ test('dev-only packages are capped at MEDIUM', () => {
   assert.equal(finding.severity, 'MEDIUM');
 });
 
+test('build tools listed under dependencies are capped at MEDIUM, runtime packages are not', () => {
+  const adv = [[{ id: 'X', aliases: [], summary: 's', severity: 'CRITICAL' as const, fixed: '9.9.9' }]];
+  const mk = (name: string): Dependency => ({ ecosystem: 'npm', name, version: '1.0.0', file: 'pnpm-lock.yaml', line: 1, dev: false });
+  for (const tool of ['@babel/traverse', 'webpack', 'postcss', 'esbuild', '@types/node']) {
+    assert.equal(buildDependencyFindings([mk(tool)], adv, new Map())[0].severity, 'MEDIUM', tool);
+  }
+  for (const runtime of ['@babel/runtime', 'lodash', 'next', 'express', 'core-js']) {
+    assert.equal(buildDependencyFindings([mk(runtime)], adv, new Map())[0].severity, 'CRITICAL', runtime);
+  }
+});
+
 test(`${OSV_CASE.name}: detects vulnerable lockfile and blocks the release`, async () => {
   const result = await runStaticCodeScan(
     [
