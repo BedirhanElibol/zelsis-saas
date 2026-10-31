@@ -11,9 +11,6 @@ import { calculateGateStatus, gatingFindings, calculateReadinessScore } from '@/
 import { getOrgPolicy } from '@/lib/organization';
 import { addedLines, buildSuggestionComments } from '@/lib/github/suggestions';
 import { RISK_LABEL, type RiskKind } from '@/lib/scanner/risk-kind';
-import { aiVerifyClient, blockingFindings } from '@/lib/ai-verify';
-import { aiFixEnabled, buildAiFixComments, fixCandidates, type ScanFn } from '@/lib/ai-fix';
-import { aiDoubleCheck, aiReviewSection, aiVerifyAllowed } from '@/lib/github/ai-double-check';
 
 export const maxDuration = 300; // Allow 5 minutes for scan processing
 
@@ -200,38 +197,7 @@ async function handlePullRequest(payload: any, supabase: any) {
 
       const split = splitFindings(scanResult.findings, changedFiles);
       const { existingFindings } = split;
-      let newFindings = split.newFindings;
-
-      // Opt-in AI double-check (Pro): may soften a block the code shown already guards; never adds or removes findings
-      let aiSection = '';
-      // The same opt-in (Pro / Team) also lets the AI write a suggested fix, re-checked by the scanner before it is shown
-      let aiAllowed = false;
-      if (userId) {
-        try {
-          aiAllowed = await aiVerifyAllowed(supabase, userId);
-        } catch {
-          aiAllowed = false;
-        }
-      }
-      if (userId && aiAllowed && blockingFindings(newFindings).length > 0) {
-        try {
-          if (aiAllowed) {
-            const readFile = async (path: string): Promise<string | null> => {
-              try {
-                const { data } = await octokit.repos.getContent({ owner, repo, path, ref: headSha });
-                return !Array.isArray(data) && data.type === 'file' && 'content' in data ? Buffer.from(data.content, 'base64').toString('utf8') : null;
-              } catch {
-                return null;
-              }
-            };
-            const checked = await aiDoubleCheck(newFindings, new Set(filesToScan.map((f: any) => f.path)), readFile);
-            newFindings = checked.findings;
-            aiSection = aiReviewSection(checked.reviewed);
-          }
-        } catch (aiError) {
-          console.error('AI double-check skipped:', aiError);
-        }
-      }
+      const newFindings = split.newFindings;
 
       const annotations = generateAnnotations(newFindings);
 
@@ -262,7 +228,6 @@ async function handlePullRequest(payload: any, supabase: any) {
         readinessSection(gFindings) +
         topIssuesSection(gFindings) +
         verifiedSection(scanResult.crossFileVerified ?? [], changedFiles) +
-        aiSection +
         `_Scan includes ${newFindings.length} new issues and detected ${existingFindings.length} pre-existing issues._\n\n` +
         `[View full report on Zelsis](${getConfiguredAppUrl()}/dashboard)\n\n` +
         scanFooter(scanMs, filesToScan.length, gFindings);
@@ -300,9 +265,7 @@ async function handlePullRequest(payload: any, supabase: any) {
       // One-click fixes: suggested changes on lines this PR added, for rules with a safe one-line fix.
       // Best effort: a missing permission or API error must not change the gate result.
       try {
-        const aiClient = aiAllowed && aiFixEnabled() ? aiVerifyClient() : null;
-        const aiFix = aiClient ? { client: aiClient, scan: (async (files) => (await runStaticCodeScan(files)).findings) as ScanFn } : undefined;
-        await postSuggestedFixes(octokit, owner, repo, pull_request.number, headSha, newFindings, changedContent, aiFix);
+        await postSuggestedFixes(octokit, owner, repo, pull_request.number, headSha, newFindings, changedContent);
       } catch (suggestionError) {
         console.error('PR suggestion comments failed:', suggestionError);
       }
@@ -320,17 +283,10 @@ async function handlePullRequest(payload: any, supabase: any) {
 async function postSuggestedFixes(
   octokit: any, owner: string, repo: string, pullNumber: number, headSha: string,
   findings: any[], contentByPath: Map<string, string>,
-  aiFix?: { client: ReturnType<typeof aiVerifyClient> & object; scan: ScanFn },
 ) {
   const prFiles = await octokit.paginate(octokit.rest.pulls.listFiles, { owner, repo, pull_number: pullNumber, per_page: 100 });
   const addedByFile = new Map<string, Set<number>>(prFiles.map((f: any) => [f.filename, addedLines(f.patch)]));
-  let comments: { path: string; line: number; side: 'RIGHT'; body: string }[] = buildSuggestionComments(findings, contentByPath, addedByFile);
-  if (aiFix) {
-    // AI-written fixes only for lines the rule-based one-line fixes did not cover
-    const taken = new Set(comments.map((c) => `${c.path}:${c.line}`));
-    const candidates = fixCandidates(findings, contentByPath, addedByFile, taken);
-    if (candidates.length > 0) comments = [...comments, ...(await buildAiFixComments(aiFix.client, aiFix.scan, candidates, contentByPath))];
-  }
+  const comments = buildSuggestionComments(findings, contentByPath, addedByFile);
   if (comments.length === 0) return;
 
   // A push re-runs the scan over the whole PR diff: skip suggestions already posted on the same line
@@ -341,7 +297,7 @@ async function postSuggestedFixes(
 
   await octokit.rest.pulls.createReview({
     owner, repo, pull_number: pullNumber, commit_id: headSha, event: 'COMMENT',
-    body: 'Zelsis has suggested fixes for these. Review each one, then use "Commit suggestion".',
+    body: 'Zelsis has a one-line fix for these. Review each one, then use "Commit suggestion".',
     comments: fresh,
   });
 }

@@ -16,7 +16,7 @@ export const FaqSection: React.FC = () => {
     {
       question: 'Do you store or train AI models on our proprietary source code?',
       answer:
-        'No. Repository files are fetched into worker memory, scanned with pattern-based rules, and released when the scan ends. We do not save repositories; we save the findings, which include a short snippet of each flagged line so you can review it. Customer code is never used to train AI models. Scans send no code to an AI model; the only exception is the opt-in AI double-check on Pro and Team, which is off by default and sends the files behind a blocking pull request finding to Anthropic\'s API.'
+        'No. Repository files are fetched into worker memory, scanned with pattern-based rules, and released when the scan ends. We do not save repositories; we save the findings, which include a short snippet of each flagged line so you can review it. Customer code is never used to train AI models. Scans are rule-based and send no code to an AI model.'
     },
     {
       question: 'Does Zelsis work with private GitHub repositories?',
