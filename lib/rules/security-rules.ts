@@ -1,7 +1,7 @@
 import type { Finding } from '@/data/schema';
 import type { CodeFile } from '../scanner-engine';
 import { AUTH_GUARD, isOutboundWebhookSender } from './shared/stack-signals';
-import { isPublicCatalogRead } from './missed-vulns-rules';
+import { isPublicCatalogRead, isTestFixtureSql } from './missed-vulns-rules';
 import { PUBLIC_AUTH_ROUTE } from './nextjs-supabase-rules';
 import { isVendoredPath } from '../scanner/text';
 
@@ -93,7 +93,7 @@ export function evaluateSecurityRules(file: CodeFile, lines: string[], cleanCont
     }
     // Rule 3: Supabase Permissive Row Level Security (RLS) (SEC-03)
     // Policies live in SQL; one scoped TO service_role only restates the service role's RLS bypass
-    if (/\.sql$/i.test(file.path) && cleanContent.split(';').some((stmt) => stmt.includes('USING (true)') && !/\bTO\s+service_role\b/i.test(stmt) && !isPublicCatalogRead(stmt))) {
+    if (/\.sql$/i.test(file.path) && !isTestFixtureSql(file.path, file.content || cleanContent) && cleanContent.split(';').some((stmt) => stmt.includes('USING (true)') && !/\bTO\s+service_role\b/i.test(stmt) && !isPublicCatalogRead(stmt))) {
         const matchLineIdx = lines.findIndex(l => !l.trim().startsWith('--') && l.includes('USING (true)'));
         const lineNum = matchLineIdx !== -1 ? matchLineIdx + 1 : 1;
         findings.push({
@@ -1368,7 +1368,7 @@ export function evaluateSecurityRules(file: CodeFile, lines: string[], cleanCont
         }
     }
     // Rule 45 / SEC-45: Permissive Database Row Level Security (RLS) Bypass Policy
-    if (cleanContent.includes('CREATE POLICY') && (cleanContent.includes('USING (true)') || cleanContent.includes('WITH CHECK (true)'))) {
+    if (!isTestFixtureSql(file.path, file.content || cleanContent) && cleanContent.includes('CREATE POLICY') && (cleanContent.includes('USING (true)') || cleanContent.includes('WITH CHECK (true)'))) {
         const rlsBypassRegex = /CREATE\s+POLICY\s+[^;]+(?:USING\s*\(\s*true\s*\)|WITH\s+CHECK\s*\(\s*true\s*\))/i;
         const openPolicies = [...cleanContent.matchAll(/CREATE\s+POLICY\s+[^;]+?(?:USING\s*\(\s*true\s*\)|WITH\s+CHECK\s*\(\s*true\s*\))[^;]*/gi)]
             .filter((s) => !/\bTO\s+service_role\b/i.test(s[0]))

@@ -1,7 +1,7 @@
 import type { Finding } from '@/data/schema';
 import type { CodeFile } from './types';
 import { evaluateSecurityRules, INNER_HTML_SINK, innerHtmlIsAppOwned } from '../rules/security-rules';
-import { isPublicCatalogRead } from '../rules/missed-vulns-rules';
+import { isPublicCatalogRead, isTestFixtureSql } from '../rules/missed-vulns-rules';
 import { buildLiveFindings } from './live-checks';
 import { isVendoredPath } from './text';
 
@@ -72,7 +72,7 @@ export function evaluateBuiltinRules(ctx: BuiltinRuleContext): void {
 
   // Rule 3: Supabase Permissive Row Level Security (RLS)
   // Policies live in SQL; one scoped TO service_role only restates the service role's RLS bypass
-  if (/\.sql$/i.test(file.path) && cleanContent.split(';').some((stmt) => stmt.includes('USING (true)') && !/\bTO\s+service_role\b/i.test(stmt) && !isPublicCatalogRead(stmt))) {
+  if (/\.sql$/i.test(file.path) && !isTestFixtureSql(file.path, file.content) && cleanContent.split(';').some((stmt) => stmt.includes('USING (true)') && !/\bTO\s+service_role\b/i.test(stmt) && !isPublicCatalogRead(stmt))) {
     const matchLineIdx = lines.findIndex(l => !l.trim().startsWith('--') && l.includes('USING (true)'));
     const lineNum = matchLineIdx !== -1 ? matchLineIdx + 1 : 1;
 
