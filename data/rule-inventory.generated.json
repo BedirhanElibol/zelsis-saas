@@ -1,8 +1,8 @@
 {
  "summary": {
-  "implementedRules": 1321,
-  "testedRules": 1315,
-  "preciseLocationRules": 1319,
+  "implementedRules": 1324,
+  "testedRules": 1318,
+  "preciseLocationRules": 1322,
   "catalogEntries": 1927,
   "catalogOnlyNotImplemented": 1397,
   "catalogPlaceholderMetadata": 1811
@@ -14612,6 +14612,36 @@
    "code": "RULE-30514",
    "title": "Legacy Stripe Charges API in Use",
    "severity": "MEDIUM",
+   "source": "lib/rules/category-expansion-rules.ts",
+   "preciseLocation": true,
+   "tested": true,
+   "inCatalog": false
+  },
+  {
+   "ruleId": 30515,
+   "code": "RULE-30515",
+   "title": "Network Call Inside a Database Transaction",
+   "severity": "MEDIUM",
+   "source": "lib/rules/category-expansion-rules.ts",
+   "preciseLocation": true,
+   "tested": true,
+   "inCatalog": false
+  },
+  {
+   "ruleId": 30516,
+   "code": "RULE-30516",
+   "title": "CORS Allows Every HTTP Method",
+   "severity": "LOW",
+   "source": "lib/rules/category-expansion-rules.ts",
+   "preciseLocation": true,
+   "tested": true,
+   "inCatalog": false
+  },
+  {
+   "ruleId": 30517,
+   "code": "RULE-30517",
+   "title": "429 Response Without Retry-After",
+   "severity": "LOW",
    "source": "lib/rules/category-expansion-rules.ts",
    "preciseLocation": true,
    "tested": true,

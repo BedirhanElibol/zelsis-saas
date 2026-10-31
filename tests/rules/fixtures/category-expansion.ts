@@ -70,6 +70,21 @@ export const CASES: RuleCase[] = [
     ignores: f('app/api/pay/route.ts', 'export async function POST() {\n  await stripe.paymentIntents.create({ amount: 1000, currency: "usd" });\n  return new Response("ok");\n}\n'),
   },
   {
+    ruleIds: [30515], name: 'CAT-15 fetch inside a transaction vs fetch after it',
+    detects: f('src/orders.ts', 'export async function place(db: Db) {\n  await db.$transaction(async (tx) => {\n    await tx.order.create({ data: {} });\n    await fetch("https://api.example.com/notify", { method: "POST" });\n  });\n}\n'),
+    ignores: f('src/orders.ts', 'export async function place(db: Db) {\n  await db.$transaction(async (tx) => {\n    await tx.order.create({ data: {} });\n  });\n  await fetch("https://api.example.com/notify", { method: "POST" });\n}\n'),
+  },
+  {
+    ruleIds: [30516], name: 'CAT-16 CORS methods wildcard vs a method list',
+    detects: f('src/cors.ts', "import cors from 'cors';\nexport const handler = cors({ origin: 'https://app.example.com', methods: '*' });\n"),
+    ignores: f('src/cors.ts', "import cors from 'cors';\nexport const handler = cors({ origin: 'https://app.example.com', methods: ['GET', 'POST'] });\n"),
+  },
+  {
+    ruleIds: [30517], name: 'CAT-17 429 without Retry-After vs with it',
+    detects: f('src/limit.ts', 'export function limited(res: Res) {\n  return res.status(429).json({ error: "slow down" });\n}\n'),
+    ignores: f('src/limit.ts', 'export function limited(res: Res) {\n  res.set("Retry-After", "30");\n  return res.status(429).json({ error: "slow down" });\n}\nexport const page = (r: Res) => r.status(429).send("<p>Try again in an hour</p>");\n'),
+  },
+  {
     ruleIds: [30507], name: 'CAT-07 aria-hidden on a reachable button vs on one taken out of the tab order',
     detects: f('src/Close.tsx', 'export const Close = () => <button aria-hidden="true" onClick={close}>x</button>;\n'),
     ignores: f('src/Close.tsx', 'export const Close = () => <button aria-hidden="true" tabIndex={-1} onClick={close}>x</button>;\n'),
