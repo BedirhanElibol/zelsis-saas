@@ -152,6 +152,7 @@ import { evaluateCicdCloudGeminiRules } from '../rules/cicd-cloud-gemini-rules';
 import { evaluatePrivacyDbGeminiRules } from '../rules/privacy-db-gemini-rules';
 import { evaluateUxGeminiRules } from '../rules/ux-gemini-rules';
 import { evaluateLogicFakeRules } from '../rules/logic-fake-rules';
+import { evaluateCategoryExpansionRules } from '../rules/category-expansion-rules';
 import { evaluateLiveBundleRules } from '../rules/live-bundle-rules';
 
 import { evaluateAstFlowRules } from '../rules/ast-flow-rules';
@@ -497,6 +498,8 @@ export const RULE_ENGINES: ReadonlyArray<{ evaluate: RuleEngine; scanRawContent?
   { evaluate: evaluateUxGeminiRules },
   // Unfinished / fake features found reviewing real Lovable and Bolt apps: fake submits, placeholder keys, dead buttons, mock logins (FAKE-01.., BUG-144.., Rule IDs 29791-29819)
   { evaluate: evaluateLogicFakeRules },
+  // One group of provable mistakes per content category: migrations, Supabase getSession, polling, subscription webhooks, analytics identity, aria-hidden (CAT-01..07, Rule IDs 30501-30507)
+  { evaluate: evaluateCategoryExpansionRules },
   // Live sites: secrets and Supabase keys found in the full JavaScript bundles, public source maps (LIVE-01.., Rule IDs 29805-29809)
   { evaluate: evaluateLiveBundleRules },
   // AST analysis (Babel): route auth/ownership flow and taint for JS/TS (AST-01.., Rule IDs 29301-29399)
