@@ -83,3 +83,27 @@ jobs:
           path: zelsis-report.json
 `;
 }
+
+/** The composite action in this repository (actions/gate): the same call as buildGateWorkflow in one step. */
+export const GATE_ACTION_REF = 'BedirhanElibol/zelsis-saas/actions/gate@main';
+
+export function buildGateActionWorkflow(): string {
+  return `name: Zelsis Release Gate
+
+on:
+  pull_request:
+    branches: [main, master, develop]
+
+permissions:
+  contents: read
+
+jobs:
+  zelsis:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: ${GATE_ACTION_REF}
+        with:
+          # Settings -> API keys in Zelsis. Required for private repositories.
+          api-key: \${{ secrets.ZELSIS_API_KEY }}
+`;
+}

@@ -1,0 +1,113 @@
+name: Zelsis Release Gate
+description: Check a pull request for bugs users would notice (double charges, leaked keys, slow queries, broken screens) and fail the check on a proven critical issue.
+author: Zelsis
+branding:
+  icon: shield
+  color: green
+
+inputs:
+  api-key:
+    description: Zelsis API key (Settings -> API keys). Required for private repositories, optional for public ones.
+    required: false
+    default: ''
+  app-url:
+    description: Base URL of the Zelsis API.
+    required: false
+    default: https://zelsis.com
+  fail-open:
+    description: When "true", a Zelsis outage passes the gate instead of failing it.
+    required: false
+    default: 'false'
+  fail-on-failed:
+    description: When "true" (default), the step fails if the gate status is FAILED.
+    required: false
+    default: 'true'
+  github-token:
+    description: Token Zelsis uses to read the repository for this run only.
+    required: false
+    default: ${{ github.token }}
+  upload-report:
+    description: When "true" (default), the JSON report is uploaded as a workflow artifact.
+    required: false
+    default: 'true'
+
+outputs:
+  status:
+    description: Gate status (PASSED, WARNING or FAILED).
+    value: ${{ steps.gate.outputs.status }}
+  score:
+    description: Release readiness score, 0 to 100.
+    value: ${{ steps.gate.outputs.score }}
+
+runs:
+  using: composite
+  steps:
+    - name: Run Zelsis gate check
+      id: gate
+      shell: bash
+      env:
+        ZELSIS_API_KEY: ${{ inputs.api-key }}
+        ZELSIS_APP_URL: ${{ inputs.app-url }}
+        ZELSIS_FAIL_OPEN: ${{ inputs.fail-open }}
+        ZELSIS_FAIL_ON_FAILED: ${{ inputs.fail-on-failed }}
+        GH_READ_TOKEN: ${{ inputs.github-token }}
+        EVENT_NAME: ${{ github.event_name }}
+        PR_HEAD_SHA: ${{ github.event.pull_request.head.sha }}
+        PR_BASE_SHA: ${{ github.event.pull_request.base.sha }}
+        REPO_URL: ${{ github.server_url }}/${{ github.repository }}
+      run: |
+        REF=""
+        BASE=""
+        if [ "$EVENT_NAME" = "pull_request" ]; then
+          REF="$PR_HEAD_SHA"
+          BASE="$PR_BASE_SHA"
+        fi
+
+        PAYLOAD=$(jq -n --arg repo "$REPO_URL" --arg token "$GH_READ_TOKEN" --arg ref "$REF" --arg base "$BASE" \
+          '{repoUrl: $repo, githubToken: $token, ref: $ref, base: $base}')
+
+        HEADERS=(-H "Content-Type: application/json")
+        if [ -n "$ZELSIS_API_KEY" ]; then HEADERS+=(-H "x-api-key: $ZELSIS_API_KEY"); fi
+
+        RESPONSE=$(curl -sS -w "\n%{http_code}" -X POST "$ZELSIS_APP_URL/api/v1/gate-check" "${HEADERS[@]}" -d "$PAYLOAD" || printf '\n000')
+        HTTP_CODE=$(echo "$RESPONSE" | tail -n1)
+        BODY=$(echo "$RESPONSE" | sed '$d')
+
+        if [ "$HTTP_CODE" -ge 400 ] && [ "$HTTP_CODE" -lt 500 ]; then
+          echo "::error::Zelsis rejected the request (HTTP $HTTP_CODE): $(echo "$BODY" | jq -r '[.error // "see log"] + [.details[]? | .field + ": " + .message] | join(" | ")' 2>/dev/null || echo "$BODY")"
+          exit 1
+        fi
+
+        if [ "$HTTP_CODE" -ge 500 ] || [ "$HTTP_CODE" = "000" ] || [ -z "$BODY" ] || ! echo "$BODY" | jq -e . >/dev/null 2>&1; then
+          echo "Zelsis API unreachable or returned an invalid response."
+          if [ "$ZELSIS_FAIL_OPEN" = "true" ]; then
+            echo "Fail-open is enabled: passing the gate."
+            echo '{"gateStatus": "PASSED", "readinessScore": 100}' > zelsis-report.json
+            echo "status=PASSED" >> "$GITHUB_OUTPUT"
+            echo "score=100" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+          exit 1
+        fi
+
+        echo "$BODY" > zelsis-report.json
+        STATUS=$(jq -r '.gateStatus // "ERROR"' zelsis-report.json)
+        SCORE=$(jq -r '.readinessScore // 0' zelsis-report.json)
+        echo "status=$STATUS" >> "$GITHUB_OUTPUT"
+        echo "score=$SCORE" >> "$GITHUB_OUTPUT"
+        echo "Gate: $STATUS, score: $SCORE/100" >> "$GITHUB_STEP_SUMMARY"
+        # Shows each finding on its line in the pull request diff
+        jq -r '.annotations[]? // empty' zelsis-report.json
+
+        if [ "$ZELSIS_FAIL_ON_FAILED" = "true" ] && [ "$STATUS" = "FAILED" ]; then
+          echo "::error::Zelsis gate FAILED (score $SCORE/100)"
+          exit 1
+        fi
+
+    - name: Upload gate report
+      if: always() && inputs.upload-report == 'true'
+      uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+      with:
+        name: zelsis-release-report
+        path: zelsis-report.json
+        if-no-files-found: ignore
