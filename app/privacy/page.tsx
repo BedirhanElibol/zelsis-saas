@@ -128,12 +128,6 @@ export default function PrivacyPolicyPage() {
                     <td className="p-2.5 text-emerald-400">SOC 2 Type II</td>
                   </tr>
                   <tr>
-                    <td className="p-2.5 text-white font-bold">Anthropic PBC</td>
-                    <td className="p-2.5">Opt-in only (Pro / Team, off by default): AI double-check of up to three blocking pull request findings, using the flagged file and up to two files it imports</td>
-                    <td className="p-2.5">USA</td>
-                    <td className="p-2.5 text-emerald-400">Commercial API terms (no training on API data)</td>
-                  </tr>
-                  <tr>
                     <td className="p-2.5 text-white font-bold">Polar Software Inc.</td>
                     <td className="p-2.5">Merchant of Record, Global tax remittance &amp; billing checkout</td>
                     <td className="p-2.5">USA / EU</td>

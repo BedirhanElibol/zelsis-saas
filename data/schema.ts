@@ -31,8 +31,6 @@ export const FindingSchema = z.object({
   lockedFix: z.object({ jobId: z.string(), ref: z.string() }).optional(),
   // Set when file, line and snippet were withheld (Free tier, private repository); only the folder is kept
   lockedLocation: z.boolean().optional(),
-  // Opt-in AI double-check before a PR gate block (lib/ai-verify.ts): 'guarded' softened CRITICAL to HIGH
-  aiReview: z.object({ verdict: z.enum(['real', 'guarded', 'unsure']), reason: z.string(), model: z.string() }).optional(),
 });
 
 export interface ScanHistoryItem {

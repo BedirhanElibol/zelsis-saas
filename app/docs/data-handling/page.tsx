@@ -19,13 +19,10 @@ export default function DataHandlingPage() {
       </section>
 
       <section className="space-y-4">
-        <h2 className="text-xl font-semibold text-white">AI double-check (opt-in)</h2>
+        <h2 className="text-xl font-semibold text-white">No AI model reads your code</h2>
         <p>
-          Scans are rule-based and send no code to an AI model. On Pro and Team you can turn on an AI double-check in settings. When it is
-          on and a pull request has a critical finding, Zelsis sends the flagged file and up to two files it imports to Anthropic&apos;s
-          Claude API and asks whether the code already guards against the issue. At most three findings per pull request are checked.
-          The model can only lower a blocking finding to high; it cannot add, hide or raise findings. Nothing is sent while the setting
-          is off, and Zelsis does not store what was sent.
+          Scans are rule-based. Zelsis does not send your code to an AI model, and every finding comes from a written rule you can read
+          and test.
         </p>
       </section>
 

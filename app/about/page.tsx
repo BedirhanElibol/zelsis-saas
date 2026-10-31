@@ -73,8 +73,7 @@ export default function AboutPage() {
           <h2 className="text-xl font-semibold text-white">What happens to your code</h2>
           <p className="text-zinc-400 leading-relaxed">
             Files are fetched into memory, scanned and released. We keep the findings and a short snippet around each one, and the
-            snippets are erased after 90 days. Scans send no code to an AI model. The only exception is the optional AI double-check
-            on paid plans, which is off by default. Details are in the{' '}
+            snippets are erased after 90 days. Scans are rule-based and send no code to an AI model. Details are in the{' '}
             <Link href="/privacy" className={LINK}>
               privacy policy
             </Link>
