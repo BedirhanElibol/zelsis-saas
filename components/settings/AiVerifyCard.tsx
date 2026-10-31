@@ -34,10 +34,8 @@ export function AiVerifyCard() {
       <p className="text-xs text-zinc-400 leading-relaxed">
         Scans stay rule-based. When this is on and a pull request has a critical finding, Zelsis sends the flagged file and up to two
         files it imports to Anthropic&apos;s Claude model and asks whether the code already guards against it. If it does, the finding
-        stays in the report as high instead of blocking the merge. At most three findings per pull request are checked. For up to two
-        blocking findings on lines the pull request added, in JavaScript and TypeScript files, the model also writes a suggested fix
-        for the flagged line; Zelsis re-checks it with its own scanner and only then posts it as a GitHub suggested change that you
-        review and commit yourself. Nothing is sent while this is off. Anthropic does not train on this data under its commercial terms.
+        stays in the report as high instead of blocking the merge. At most three findings per pull request are checked, and nothing is
+        sent while this is off. Anthropic does not train on this data under its commercial terms.
       </p>
       {!settings.available && <p className="text-xs text-amber-300">Not available yet on this server.</p>}
       {settings.available && !settings.eligible && !settings.enabled && (

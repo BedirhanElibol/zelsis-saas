@@ -94,3 +94,18 @@ test('buildAiFixComments posts a labelled, verified suggestion and skips a bad o
   assert.deepEqual(await buildAiFixComments(clientReturning(null), scan, cands, content), []);
   assert.deepEqual(await buildAiFixComments(clientReturning(fix({ confident: false })), scan, cands, content), []);
 });
+
+test('the AI fix stays off unless the server opts in with AI_FIX_ENABLED=true', async () => {
+  const { aiFixEnabled } = await import('@/lib/ai-fix');
+  const before = process.env.AI_FIX_ENABLED;
+  try {
+    delete process.env.AI_FIX_ENABLED;
+    assert.equal(aiFixEnabled(), false);
+    process.env.AI_FIX_ENABLED = '1';
+    assert.equal(aiFixEnabled(), false);
+    process.env.AI_FIX_ENABLED = 'true';
+    assert.equal(aiFixEnabled(), true);
+  } finally {
+    if (before === undefined) delete process.env.AI_FIX_ENABLED; else process.env.AI_FIX_ENABLED = before;
+  }
+});

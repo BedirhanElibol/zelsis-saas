@@ -27,13 +27,6 @@ export default function DataHandlingPage() {
           The model can only lower a blocking finding to high; it cannot add, hide or raise findings. Nothing is sent while the setting
           is off, and Zelsis does not store what was sent.
         </p>
-        <p>
-          The same setting also lets the model suggest a fix. For up to two blocking findings on lines a pull request added, in
-          JavaScript and TypeScript files, Zelsis sends the file to the model and asks for a rewrite of the flagged line. The rewrite is
-          re-checked with Zelsis&apos;s own scanner (the finding must be gone, the file must still parse, and no new high or critical
-          finding may appear) and only then posted as a GitHub suggested change, labelled as AI-written. Zelsis never commits it: a
-          person reads it and clicks &quot;Commit suggestion&quot;.
-        </p>
       </section>
 
       <section className="space-y-4">
