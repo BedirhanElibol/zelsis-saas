@@ -35,6 +35,41 @@ export const CASES: RuleCase[] = [
     ignores: f('src/analytics.ts', 'import posthog from "posthog-js";\nexport const track = (user: { id: string }) => posthog.identify(user.id);\n'),
   },
   {
+    ruleIds: [30508], name: 'CAT-08 column type changed in place vs a widening to text',
+    detects: f('supabase/migrations/20260103_type.sql', 'ALTER TABLE public.orders ALTER COLUMN total TYPE bigint USING total::bigint;\n'),
+    ignores: f('supabase/migrations/20260103_type.sql', 'ALTER TABLE public.orders ALTER COLUMN note TYPE text;\n'),
+  },
+  {
+    ruleIds: [30509], name: 'CAT-09 volatile default on a live table vs a constant default',
+    detects: f('supabase/migrations/20260104_uuid.sql', 'ALTER TABLE public.orders ADD COLUMN public_id uuid DEFAULT gen_random_uuid();\n'),
+    ignores: f('supabase/migrations/20260104_uuid.sql', 'ALTER TABLE public.orders ADD COLUMN status text DEFAULT \'new\';\nALTER TABLE public.orders ADD COLUMN created_at timestamptz DEFAULT now();\n'),
+  },
+  {
+    ruleIds: [30510], name: 'CAT-10 UPDATE of every row vs UPDATE with a WHERE',
+    detects: f('supabase/migrations/20260105_backfill.sql', 'UPDATE public.orders SET status = \'legacy\';\n'),
+    ignores: f('supabase/migrations/20260105_backfill.sql', 'UPDATE public.orders SET status = \'legacy\' WHERE created_at < \'2025-01-01\';\n'),
+  },
+  {
+    ruleIds: [30511], name: 'CAT-11 youtube.com embed vs youtube-nocookie.com',
+    detects: f('src/Video.tsx', 'export const Video = () => <iframe title="demo" src="https://www.youtube.com/embed/abc123" />;\n'),
+    ignores: f('src/Video.tsx', 'export const Video = () => <iframe title="demo" src="https://www.youtube-nocookie.com/embed/abc123" />;\n'),
+  },
+  {
+    ruleIds: [30512], name: "CAT-12 sameSite none without secure vs with secure",
+    detects: f('src/session.ts', "export const opts = { httpOnly: true, sameSite: 'none', path: '/' };\n"),
+    ignores: f('src/session.ts', "export const opts = { httpOnly: true, secure: true, sameSite: 'none', path: '/' };\n"),
+  },
+  {
+    ruleIds: [30513], name: 'CAT-13 two independent awaits vs a second call that needs the first',
+    detects: f('app/dashboard/page.tsx', 'export default async function Page() {\n  const user = await getUser();\n  const posts = await listPosts();\n  return <div>{user.name}{posts.length}</div>;\n}\n'),
+    ignores: f('app/dashboard/page.tsx', 'export default async function Page() {\n  const user = await getUser();\n  const posts = await listPosts(user.id);\n  const rows = await db.find({\n    where: posts.map((p) => p.id),\n  });\n  return <div>{user.name}{posts.length}{rows.length}</div>;\n}\n'),
+  },
+  {
+    ruleIds: [30514], name: 'CAT-14 charges.create vs paymentIntents.create',
+    detects: f('app/api/pay/route.ts', 'export async function POST() {\n  await stripe.charges.create({ amount: 1000, currency: "usd", source: tok });\n  return new Response("ok");\n}\n'),
+    ignores: f('app/api/pay/route.ts', 'export async function POST() {\n  await stripe.paymentIntents.create({ amount: 1000, currency: "usd" });\n  return new Response("ok");\n}\n'),
+  },
+  {
     ruleIds: [30507], name: 'CAT-07 aria-hidden on a reachable button vs on one taken out of the tab order',
     detects: f('src/Close.tsx', 'export const Close = () => <button aria-hidden="true" onClick={close}>x</button>;\n'),
     ignores: f('src/Close.tsx', 'export const Close = () => <button aria-hidden="true" tabIndex={-1} onClick={close}>x</button>;\n'),

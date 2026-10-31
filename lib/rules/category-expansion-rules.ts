@@ -1,5 +1,5 @@
 /**
- * One group of provable mistakes per content category (CAT-01..07, Rule IDs 30501-30507). Each pattern fails or leaks
+ * One group of provable mistakes per content category (CAT-01..14, Rule IDs 30501-30514; CAT-08..14 are listed after CAT-07). Each pattern fails or leaks
  * on its own, from a single file, so none of them needs repo context:
  *   database      CAT-01 ADD COLUMN ... NOT NULL with no default, CAT-02 RENAME COLUMN / TABLE on a live app
  *   security      CAT-03 Supabase auth.getSession() trusted on the server
@@ -57,6 +57,44 @@ export function evaluateCategoryExpansionRules(file: CodeFile, lines: string[], 
         lineIdx: lineAt(sql, m.index!),
         why: 'During a rolling deploy the previous version of the app is still running and still queries the old name, so every request that touches it fails until the new version is everywhere (and a rollback fails the other way round).',
         fix: 'Expand and contract: add the new column, write to both, backfill, switch reads, and drop the old one in a later release. If the table is idle, say so in the migration and ship it in a maintenance window.',
+      });
+    }
+  }
+
+  if (isSql) {
+    const sql = stripSqlComments(file.content || c);
+    const created = new Set([...sql.matchAll(/\bCREATE\s+(?:UNLOGGED\s+|TEMP(?:ORARY)?\s+)?TABLE\s+(?:IF\s+NOT\s+EXISTS\s+)?([\w."]+)/gi)].map((t) => bare(t[1])));
+    const emptied = new Set([...sql.matchAll(/\bDELETE\s+FROM\s+([\w."]+)\s*;|\bTRUNCATE\s+(?:TABLE\s+)?(?:ONLY\s+)?([\w."]+)/gi)].map((t) => bare(t[1] ?? t[2])));
+    const fresh = (t: string) => created.has(bare(t)) || emptied.has(bare(t));
+    // CAT-08: most column type changes rewrite the whole table while holding an ACCESS EXCLUSIVE lock
+    for (const m of sql.matchAll(/\bALTER\s+TABLE\s+(?:ONLY\s+)?(?:IF\s+EXISTS\s+)?([\w."]+)\s+ALTER\s+(?:COLUMN\s+)?"?\w+"?\s+(?:SET\s+DATA\s+)?TYPE\s+([^;,\n]+)/gi)) {
+      // text and an unlimited varchar are the usual cheap widenings
+      if (fresh(m[1]) || /^\s*(?:text|varchar|character\s+varying)\s*(?:USING|$)/i.test(m[2])) continue;
+      hits.push({
+        ruleId: 30508, code: 'CAT-08', title: 'Column Type Changed in Place', severity: 'MEDIUM', type: 'INFRA_DATABASE', category: 'Database Migrations',
+        lineIdx: lineAt(sql, m.index!),
+        why: 'Unless the new type is binary-coercible, Postgres rewrites every row while holding an ACCESS EXCLUSIVE lock, so reads and writes on the table wait for as long as the rewrite takes. On a large table that is a visible outage.',
+        fix: 'Add a new column of the target type, backfill it in batches, switch the code over and drop the old one. Run a plain in-place change only on a table that is small or idle, and say so in the migration.',
+      });
+    }
+    // CAT-09: a volatile default makes ADD COLUMN rewrite the table (a constant default does not)
+    for (const m of sql.matchAll(/\bALTER\s+TABLE\s+(?:ONLY\s+)?(?:IF\s+EXISTS\s+)?([\w."]+)\s+ADD\s+(?:COLUMN\s+)?(?:IF\s+NOT\s+EXISTS\s+)?(?!(?:CONSTRAINT|CHECK|PRIMARY|UNIQUE|FOREIGN|EXCLUDE)\b)"?\w+"?\s+[^;,]*?\bDEFAULT\s+(?:gen_random_uuid\s*\(|uuid_generate_v[14]\s*\(|random\s*\(|clock_timestamp\s*\(|nextval\s*\()/gi)) {
+      if (fresh(m[1])) continue;
+      hits.push({
+        ruleId: 30509, code: 'CAT-09', title: 'Column Added With a Volatile Default', severity: 'MEDIUM', type: 'INFRA_DATABASE', category: 'Database Migrations',
+        lineIdx: lineAt(sql, m.index!),
+        why: 'A default that changes per row (gen_random_uuid(), random(), nextval()) cannot be stored once, so Postgres rewrites the whole table under an ACCESS EXCLUSIVE lock. A constant default or now() is applied without a rewrite.',
+        fix: 'Add the column nullable with no default, set the default for new rows (ALTER COLUMN ... SET DEFAULT gen_random_uuid()), backfill existing rows in batches, then add NOT NULL.',
+      });
+    }
+    // CAT-10: an UPDATE with no WHERE in a migration touches every row in one transaction
+    for (const m of sql.matchAll(/(?:^|;)\s*(UPDATE\s+(?:ONLY\s+)?([\w."]+)\s+SET\b[^;]*)/gi)) {
+      if (/\bWHERE\b/i.test(m[1]) || fresh(m[2]) || /\bFROM\b/i.test(m[1])) continue;
+      hits.push({
+        ruleId: 30510, code: 'CAT-10', title: 'UPDATE Without WHERE in a Migration', severity: 'LOW', type: 'INFRA_DATABASE', category: 'Database Migrations',
+        lineIdx: lineAt(sql, m.index! + m[0].indexOf(m[1])),
+        why: 'The statement rewrites every row in one transaction: row locks held for the whole run, a table-sized burst of dead rows and WAL, and a long wait for anything that writes to the table at the same time.',
+        fix: 'Backfill in batches (WHERE id BETWEEN ... or a loop of LIMIT 5000), commit between batches, and run it outside the deploy when the table is large.',
       });
     }
   }
@@ -119,6 +157,63 @@ export function evaluateCategoryExpansionRules(file: CodeFile, lines: string[], 
         lineIdx: lineAt(c, m.index!),
         why: 'The email becomes the person\'s identity in a third-party analytics tool: it is stored there, shown in dashboards and exports, and has to be found and deleted from that tool for every erasure request.',
         fix: 'Identify with your own internal user ID (the database primary key). Send an email only if the privacy policy says so and the user agreed.',
+      });
+    }
+  }
+
+  if (isJs || /\.(?:html?|vue|svelte|astro)$/i.test(path)) {
+    // CAT-11: the standard YouTube embed sets Google cookies as soon as the page loads
+    for (const m of c.matchAll(/<iframe\b[^>]*\bsrc\s*=\s*(?:\{\s*)?["'`]https?:\/\/(?:www\.)?youtube\.com\/embed\//gi)) {
+      hits.push({
+        ruleId: 30511, code: 'CAT-11', title: 'YouTube Embed Sets Cookies Before Consent', severity: 'LOW', type: 'LEGAL_COMPLIANCE', category: 'Privacy',
+        lineIdx: lineAt(c, m.index!),
+        why: 'The player at youtube.com/embed loads Google scripts and sets cookies for every visitor on page load, before anyone has played the video or agreed to anything, which cookie rules in the EU treat as needing consent.',
+        fix: 'Use https://www.youtube-nocookie.com/embed/... (no cookies until the video is played), or load the embed only after the visitor clicks a placeholder.',
+      });
+    }
+  }
+
+  if (isJs) {
+    // CAT-12: SameSite=None is only accepted together with Secure; without it the browser drops the cookie
+    for (const m of c.matchAll(/\bsameSite\s*:\s*['"]none['"]/gi)) {
+      const around = c.slice(Math.max(0, m.index! - 300), m.index! + 300);
+      if (/\bsecure\s*:/i.test(around)) continue;
+      hits.push({
+        ruleId: 30512, code: 'CAT-12', title: "Cookie With sameSite: 'none' and No secure", severity: 'MEDIUM', type: 'VIBECARE', category: 'Authentication',
+        lineIdx: lineAt(c, m.index!),
+        why: 'Chrome, Firefox and Safari reject a SameSite=None cookie that is not marked Secure, so the cookie is silently dropped and the login or session it carries never sticks (it works on localhost over http and breaks in production).',
+        fix: "Set secure: true next to sameSite: 'none' (HTTPS only), or use sameSite: 'lax' if the cookie does not need to be sent from another site.",
+      });
+    }
+    // CAT-13: two independent awaits in a row run one after the other
+    {
+      const awaitLine = /^\s*(?:const|let)\s+(\{[^}]*\}|\[[^\]]*\]|\w+)\s*=\s*await\s+([^;]+?);?\s*$/;
+      const NET = /\b(?:fetch|axios\.\w+|get\w*|find\w*|select|load\w*|list\w*|count\w*|query|rpc)\s*\(|\.(?:findMany|findFirst|findUnique|from)\s*\(/;
+      const names = (v: string) => v.replace(/[{}\[\]]/g, ' ').split(/[,\s:=]+/).filter((n) => /^[A-Za-z_$][\w$]*$/.test(n));
+      for (let i = 0; i < lines.length - 1; i++) {
+        const a = awaitLine.exec(lines[i]);
+        const b = awaitLine.exec(lines[i + 1]);
+        if (!a || !b || !NET.test(a[2]) || !NET.test(b[2]) || /\bawait\b|=>/.test(a[2] + b[2])) continue;
+        // a statement that runs on to the next line (an open bracket) may use the first result there, so only one-line pairs count
+        const open = (s: string) => (s.match(/[([{]/g) ?? []).length - (s.match(/[)\]}]/g) ?? []).length;
+        if (open(a[2]) !== 0 || open(b[2]) !== 0) continue;
+        if (names(a[1]).some((n) => new RegExp(`\\b${n.replace(/\$/g, '\\$')}\\b`).test(b[2]))) continue;
+        hits.push({
+          ruleId: 30513, code: 'CAT-13', title: 'Independent Awaits Run One After the Other', severity: 'LOW', type: 'VIBECARE', category: 'Performance',
+          lineIdx: i,
+          why: 'The second call does not use the first result, yet it waits for it, so the request takes the sum of the two latencies instead of the longer of the two. On a page that makes several such calls it is the slowest part.',
+          fix: 'Start both and wait together: const [a, b] = await Promise.all([first(), second()]). Keep them sequential only when the order matters.',
+        });
+        break;
+      }
+    }
+    // CAT-14: the legacy Charges API cannot run 3D Secure (SCA)
+    for (const m of c.matchAll(/\bstripe\w*\s*\.\s*charges\s*\.\s*create\s*\(/gi)) {
+      hits.push({
+        ruleId: 30514, code: 'CAT-14', title: 'Legacy Stripe Charges API in Use', severity: 'MEDIUM', type: 'VIBECARE', category: 'Payments',
+        lineIdx: lineAt(c, m.index!),
+        why: 'charges.create takes a card in one step and has no way to ask the customer for 3D Secure, so European cards that need strong customer authentication are declined and the sale is lost without an error you can act on.',
+        fix: 'Create a PaymentIntent (or a Checkout Session) and confirm it on the client with Stripe.js, which handles 3D Secure and other authentication.',
       });
     }
   }

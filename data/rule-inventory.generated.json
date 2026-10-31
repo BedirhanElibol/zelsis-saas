@@ -1,8 +1,8 @@
 {
  "summary": {
-  "implementedRules": 1314,
-  "testedRules": 1308,
-  "preciseLocationRules": 1312,
+  "implementedRules": 1321,
+  "testedRules": 1315,
+  "preciseLocationRules": 1319,
   "catalogEntries": 1927,
   "catalogOnlyNotImplemented": 1397,
   "catalogPlaceholderMetadata": 1811
@@ -14541,6 +14541,76 @@
    "ruleId": 30507,
    "code": "RULE-30507",
    "title": "aria-hidden on a Focusable <${m[1].toLowerCase()}>",
+   "severity": "MEDIUM",
+   "source": "lib/rules/category-expansion-rules.ts",
+   "preciseLocation": true,
+   "tested": true,
+   "inCatalog": false
+  },
+  {
+   "ruleId": 30508,
+   "code": "RULE-30508",
+   "title": "Column Type Changed in Place",
+   "severity": "MEDIUM",
+   "source": "lib/rules/category-expansion-rules.ts",
+   "preciseLocation": true,
+   "tested": true,
+   "inCatalog": false
+  },
+  {
+   "ruleId": 30509,
+   "code": "RULE-30509",
+   "title": "Column Added With a Volatile Default",
+   "severity": "MEDIUM",
+   "source": "lib/rules/category-expansion-rules.ts",
+   "preciseLocation": true,
+   "tested": true,
+   "inCatalog": false
+  },
+  {
+   "ruleId": 30510,
+   "code": "RULE-30510",
+   "title": "UPDATE Without WHERE in a Migration",
+   "severity": "LOW",
+   "source": "lib/rules/category-expansion-rules.ts",
+   "preciseLocation": true,
+   "tested": true,
+   "inCatalog": false
+  },
+  {
+   "ruleId": 30511,
+   "code": "RULE-30511",
+   "title": "YouTube Embed Sets Cookies Before Consent",
+   "severity": "LOW",
+   "source": "lib/rules/category-expansion-rules.ts",
+   "preciseLocation": true,
+   "tested": true,
+   "inCatalog": false
+  },
+  {
+   "ruleId": 30512,
+   "code": "RULE-30512",
+   "title": "Cookie With sameSite: ",
+   "severity": "MEDIUM",
+   "source": "lib/rules/category-expansion-rules.ts",
+   "preciseLocation": true,
+   "tested": true,
+   "inCatalog": false
+  },
+  {
+   "ruleId": 30513,
+   "code": "RULE-30513",
+   "title": "Independent Awaits Run One After the Other",
+   "severity": "LOW",
+   "source": "lib/rules/category-expansion-rules.ts",
+   "preciseLocation": true,
+   "tested": true,
+   "inCatalog": false
+  },
+  {
+   "ruleId": 30514,
+   "code": "RULE-30514",
+   "title": "Legacy Stripe Charges API in Use",
    "severity": "MEDIUM",
    "source": "lib/rules/category-expansion-rules.ts",
    "preciseLocation": true,
