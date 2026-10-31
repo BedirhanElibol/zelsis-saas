@@ -14481,7 +14481,7 @@
    "ruleId": 30501,
    "code": "RULE-30501",
    "title": "NOT NULL Column Added With No Default",
-   "severity": "HIGH",
+   "severity": "MEDIUM",
    "source": "lib/rules/category-expansion-rules.ts",
    "preciseLocation": true,
    "tested": true,

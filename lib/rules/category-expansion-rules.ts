@@ -42,7 +42,7 @@ export function evaluateCategoryExpansionRules(file: CodeFile, lines: string[], 
     for (const m of sql.matchAll(/\bALTER\s+TABLE\s+(?:ONLY\s+)?(?:IF\s+EXISTS\s+)?([\w."]+)\s+ADD\s+(?:COLUMN\s+)?(?:IF\s+NOT\s+EXISTS\s+)?(?!(?:CONSTRAINT|CHECK|PRIMARY|UNIQUE|FOREIGN|EXCLUDE)\b)"?\w+"?\s+[^;,]*?\bNOT\s+NULL\b[^;,]*/gi)) {
       if (/\bDEFAULT\b|\bGENERATED\b|\bSERIAL\b|\bIDENTITY\b|\bPRIMARY\s+KEY\b/i.test(m[0]) || created.has(bare(m[1])) || emptied.has(bare(m[1]))) continue;
       hits.push({
-        ruleId: 30501, code: 'CAT-01', title: 'NOT NULL Column Added With No Default', severity: 'HIGH', type: 'INFRA_DATABASE', category: 'Database Migrations',
+        ruleId: 30501, code: 'CAT-01', title: 'NOT NULL Column Added With No Default', severity: 'MEDIUM', type: 'INFRA_DATABASE', category: 'Database Migrations',
         lineIdx: lineAt(sql, m.index!),
         why: 'Postgres rejects ADD COLUMN ... NOT NULL without a default when the table has any rows ("column contains null values"), so the migration fails on production data and the deploy stops halfway.',
         fix: 'Add the column as nullable (or with a DEFAULT), backfill it in batches, then SET NOT NULL in a later migration (use a CHECK (col IS NOT NULL) NOT VALID plus VALIDATE to avoid a long lock).',
