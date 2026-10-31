@@ -1,8 +1,8 @@
 {
  "summary": {
-  "implementedRules": 1324,
-  "testedRules": 1318,
-  "preciseLocationRules": 1322,
+  "implementedRules": 1326,
+  "testedRules": 1320,
+  "preciseLocationRules": 1324,
   "catalogEntries": 1927,
   "catalogOnlyNotImplemented": 1397,
   "catalogPlaceholderMetadata": 1811
@@ -14642,6 +14642,26 @@
    "code": "RULE-30517",
    "title": "429 Response Without Retry-After",
    "severity": "LOW",
+   "source": "lib/rules/category-expansion-rules.ts",
+   "preciseLocation": true,
+   "tested": true,
+   "inCatalog": false
+  },
+  {
+   "ruleId": 30518,
+   "code": "RULE-30518",
+   "title": "Go HTTP Server Without Read Timeouts",
+   "severity": "MEDIUM",
+   "source": "lib/rules/category-expansion-rules.ts",
+   "preciseLocation": true,
+   "tested": true,
+   "inCatalog": false
+  },
+  {
+   "ruleId": 30519,
+   "code": "RULE-30519",
+   "title": "defer Inside a Loop",
+   "severity": "MEDIUM",
    "source": "lib/rules/category-expansion-rules.ts",
    "preciseLocation": true,
    "tested": true,

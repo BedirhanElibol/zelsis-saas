@@ -255,6 +255,47 @@ export function evaluateCategoryExpansionRules(file: CodeFile, lines: string[], 
     }
   }
 
+  if (/\.go$/i.test(path) && !/_test\.go$/i.test(path) && !/(?:^|\/)(?:_?examples?|samples?|demos?)\//i.test(path)) {
+    // CAT-18: a Go HTTP server with no timeouts keeps every slow or stalled connection open for good
+    for (const m of c.matchAll(/\bhttp\s*\.\s*ListenAndServe(?:TLS)?\s*\(/g)) {
+      hits.push({
+        ruleId: 30518, code: 'CAT-18', title: 'Go HTTP Server Without Read Timeouts', severity: 'MEDIUM', type: 'VIBECARE', category: 'Reliability',
+        lineIdx: lineAt(c, m.index!),
+        why: 'http.ListenAndServe builds a Server with every timeout at zero. A client that connects and then sends bytes slowly (or never) holds a goroutine and a file descriptor indefinitely, so a few hundred idle connections can exhaust the process.',
+        fix: 'Build the server yourself: srv := &http.Server{Addr: addr, Handler: h, ReadHeaderTimeout: 5 * time.Second, ReadTimeout: 30 * time.Second, WriteTimeout: 30 * time.Second, IdleTimeout: 120 * time.Second}; srv.ListenAndServe().',
+      });
+    }
+    for (const m of c.matchAll(/&?\bhttp\s*\.\s*Server\s*\{/g)) {
+      const end = closeOf(c, m.index! + m[0].length - 1);
+      if (end < 0) continue;
+      if (/\b(?:ReadHeaderTimeout|ReadTimeout)\s*:/.test(c.slice(m.index!, end))) continue;
+      hits.push({
+        ruleId: 30518, code: 'CAT-18', title: 'Go HTTP Server Without Read Timeouts', severity: 'MEDIUM', type: 'VIBECARE', category: 'Reliability',
+        lineIdx: lineAt(c, m.index!),
+        why: 'Without ReadHeaderTimeout or ReadTimeout a client that connects and sends its request slowly (or never) holds a goroutine and a file descriptor indefinitely, so a few hundred idle connections can exhaust the process.',
+        fix: 'Set ReadHeaderTimeout (a few seconds) and ReadTimeout / WriteTimeout / IdleTimeout on the Server.',
+      });
+    }
+    // CAT-19: defer inside a loop runs when the function returns, not at the end of each round
+    for (const m of c.matchAll(/(?:^|\n)[ \t]*for\b[^{\n]*\{/g)) {
+      const open = m.index! + m[0].length - 1;
+      const end = closeOf(c, open);
+      if (end < 0) continue;
+      const body = c.slice(open, end);
+      // a closure inside the loop (func() { defer ... }()) is the correct fix, so any func literal skips it
+      // a loop that breaks out after the first success (try each variant until one opens) holds one handle, not many
+      if (/\bfunc\s*\(/.test(body) || /\bbreak\b/.test(body)) continue;
+      const d = /\n[ \t]*defer\s+[\w.]+\.(?:Close|Unlock|Done|Release|Stop|Cancel)\s*\(\s*\)/.exec(body);
+      if (!d) continue;
+      hits.push({
+        ruleId: 30519, code: 'CAT-19', title: 'defer Inside a Loop', severity: 'MEDIUM', type: 'VIBECARE', category: 'Reliability',
+        lineIdx: lineAt(c, open + d.index + 1),
+        why: 'Every defer waits until the whole function returns. In a loop over files, rows or requests, all the handles or locks stay open until the loop is done, which runs out of file descriptors or connections on a long list (and a deferred Unlock can deadlock the next round).',
+        fix: 'Move the loop body into its own function so the defer runs each round, or call Close() / Unlock() directly at the end of the round.',
+      });
+    }
+  }
+
   // CAT-07: aria-hidden removes an element from the accessibility tree but leaves it in the tab order
   if (/\.[jt]sx$|\.(?:html?|vue|svelte|astro)$/i.test(path) && /aria-hidden\s*=\s*(?:\{?\s*)?["']?true/i.test(c)) {
     for (const m of c.matchAll(/<(button|a|input|select|textarea)\b([^<>]*?)aria-hidden\s*=\s*(?:\{\s*)?["']?true["']?(?:\s*\})?([^<>]*)>/gi)) {
