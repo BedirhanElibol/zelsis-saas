@@ -12,7 +12,7 @@ import { getOrgPolicy } from '@/lib/organization';
 import { addedLines, buildSuggestionComments } from '@/lib/github/suggestions';
 import { RISK_LABEL, type RiskKind } from '@/lib/scanner/risk-kind';
 import { aiVerifyClient, blockingFindings } from '@/lib/ai-verify';
-import { buildAiFixComments, fixCandidates, type ScanFn } from '@/lib/ai-fix';
+import { aiFixEnabled, buildAiFixComments, fixCandidates, type ScanFn } from '@/lib/ai-fix';
 import { aiDoubleCheck, aiReviewSection, aiVerifyAllowed } from '@/lib/github/ai-double-check';
 
 export const maxDuration = 300; // Allow 5 minutes for scan processing
@@ -300,7 +300,7 @@ async function handlePullRequest(payload: any, supabase: any) {
       // One-click fixes: suggested changes on lines this PR added, for rules with a safe one-line fix.
       // Best effort: a missing permission or API error must not change the gate result.
       try {
-        const aiClient = aiAllowed ? aiVerifyClient() : null;
+        const aiClient = aiAllowed && aiFixEnabled() ? aiVerifyClient() : null;
         const aiFix = aiClient ? { client: aiClient, scan: (async (files) => (await runStaticCodeScan(files)).findings) as ScanFn } : undefined;
         await postSuggestedFixes(octokit, owner, repo, pull_request.number, headSha, newFindings, changedContent, aiFix);
       } catch (suggestionError) {

@@ -21,6 +21,12 @@ import { parseLineRange } from '@/lib/ci-annotations';
  */
 
 export const AI_FIX_MODEL = process.env.AI_FIX_MODEL || 'claude-sonnet-5-5';
+/**
+ * Off unless the server sets AI_FIX_ENABLED=true. Each suggestion is a paid model call, so it stays dark until someone turns it on
+ * on purpose; the existing AI double-check (a cheaper model, opt-in) is not affected by this switch.
+ */
+export const aiFixEnabled = (): boolean => process.env.AI_FIX_ENABLED === 'true';
+
 /** Suggestions requested per pull request (each is one model call). */
 export const AI_FIX_MAX_PER_PR = 2;
 export const AI_FIX_MAX_LINES = 6;
