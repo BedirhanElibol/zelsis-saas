@@ -189,14 +189,24 @@ export async function queryOsv(
 
 const advisoryLabel = (a: OsvAdvisory) => a.aliases.find((x) => x.startsWith('CVE-')) ?? a.id;
 
-/** One finding per vulnerable package version, at its lockfile line. Dev-only packages are capped at MEDIUM. */
+/**
+ * Build-time tools run where the app is built (a laptop, CI), not when a visitor makes a request. Next, Vite and similar
+ * projects often list them under dependencies anyway, so the lockfile cannot call them dev-only. A flaw in one of them
+ * matters when the build processes untrusted input, so it is capped at MEDIUM rather than dropped. Runtime helpers that
+ * ship to the browser (@babel/runtime, core-js, tslib) are not on the list.
+ */
+const BUILD_TOOL_RE = /^(?:@babel\/(?!runtime|polyfill)|babel-(?!runtime)|webpack(?:-|$)|@webpack|rollup|@rollup\/|esbuild|vite$|@vitejs\/|postcss|autoprefixer|cssnano|terser|uglify-js|typescript$|ts-node$|tsx$|@swc\/|eslint|@eslint\/|@typescript-eslint\/|prettier$|jest|@jest\/|mocha$|vitest|nodemon|concurrently|rimraf|sass$|less$|stylus$|tailwindcss$|@tailwindcss\/|parcel|@parcel\/|browserslist|caniuse-lite|@types\/)/;
+export const isBuildTool = (dep: Dependency): boolean => dep.ecosystem === 'npm' && BUILD_TOOL_RE.test(dep.name);
+
+/** One finding per vulnerable package version, at its lockfile line. Dev-only packages and build tools are capped at MEDIUM. */
 export function buildDependencyFindings(deps: Dependency[], advisories: OsvAdvisory[][], fileLines: Map<string, string[]>): Finding[] {
   const findings: Finding[] = [];
   deps.forEach((dep, i) => {
     const list = advisories[i] ?? [];
     if (list.length === 0) return;
     const worst = list.reduce<Severity>((s, a) => (SEVERITY_RANK[a.severity] > SEVERITY_RANK[s] ? a.severity : s), 'LOW');
-    const severity: Severity = dep.dev && SEVERITY_RANK[worst] > SEVERITY_RANK.MEDIUM ? 'MEDIUM' : worst;
+    const buildTool = !dep.dev && isBuildTool(dep);
+    const severity: Severity = (dep.dev || buildTool) && SEVERITY_RANK[worst] > SEVERITY_RANK.MEDIUM ? 'MEDIUM' : worst;
     const fixes = list.map((a) => a.fixed).filter((f): f is string => Boolean(f)).sort(compareVersions);
     const target = fixes[fixes.length - 1];
     const labels = [...new Set(list.map(advisoryLabel))];
@@ -212,7 +222,7 @@ export function buildDependencyFindings(deps: Dependency[], advisories: OsvAdvis
       lineRange: `L${dep.line}`,
       snippet: (fileLines.get(dep.file)?.[dep.line - 1] ?? `${dep.name}@${dep.version}`).trim().slice(0, 300),
       reproductionSteps: [
-        `${dep.ecosystem} package ${dep.name} resolves to ${dep.version} in ${dep.file}:${dep.line}${dep.dev ? ' (development dependency: not shipped, capped at MEDIUM)' : ''}.`,
+        `${dep.ecosystem} package ${dep.name} resolves to ${dep.version} in ${dep.file}:${dep.line}${dep.dev ? ' (development dependency: not shipped, capped at MEDIUM)' : buildTool ? ' (build tool: it runs where you build, not on your users\' requests, so it matters if the build processes untrusted input; capped at MEDIUM)' : ''}.`,
         ...list.slice(0, 10).map((a) => `${a.id}${a.aliases.length ? ` (${a.aliases.join(', ')})` : ''} [${a.severity}]: ${a.summary}${a.fixed ? ` Fixed in ${a.fixed}.` : ' No fixed version listed.'} https://osv.dev/vulnerability/${a.id}`),
         ...(list.length > 10 ? [`${list.length - 10} more advisories on https://osv.dev/list?q=${encodeURIComponent(dep.name)}`] : [])
       ],
