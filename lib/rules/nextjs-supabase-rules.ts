@@ -9,6 +9,7 @@
 import type { Finding } from '@/data/schema';
 import type { CodeFile } from '../scanner-engine';
 import { AUTH_GUARD, WEBHOOK_VERIFY } from './shared/stack-signals';
+import { isTestFixtureSql } from './missed-vulns-rules';
 import { databaseExposedAt, emptyRepoContext, normalizeSqlName, type RepoContext } from '../scanner/repo-context';
 
 interface Hit {
@@ -475,7 +476,7 @@ export function evaluateNextjsSupabaseRules(file: CodeFile, lines: string[], cle
     }
 
     // NEXT-SB-05: storage.objects UPDATE/DELETE policy scoped only by bucket
-    for (const m of sql.matchAll(/CREATE\s+POLICY\s+[\s\S]*?\bON\s+(?:"?storage"?\s*\.\s*"?objects"?)\b([\s\S]*?);/gi)) {
+    for (const m of isTestFixtureSql(path, cleanContent) ? [] : sql.matchAll(/CREATE\s+POLICY\s+[\s\S]*?\bON\s+(?:"?storage"?\s*\.\s*"?objects"?)\b([\s\S]*?);/gi)) {
       const rest = m[1];
       if (!/\bFOR\s+(?:UPDATE|DELETE|ALL)\b/i.test(rest) && /\bFOR\s+\w+/i.test(rest)) continue;
       if (!/bucket_id/i.test(rest) || /\bTO\s+service_role\b/i.test(rest)) continue;
