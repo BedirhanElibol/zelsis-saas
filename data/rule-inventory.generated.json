@@ -1,8 +1,8 @@
 {
  "summary": {
-  "implementedRules": 1325,
-  "testedRules": 1319,
-  "preciseLocationRules": 1323,
+  "implementedRules": 1335,
+  "testedRules": 1329,
+  "preciseLocationRules": 1333,
   "catalogEntries": 1927,
   "catalogOnlyNotImplemented": 1397,
   "catalogPlaceholderMetadata": 1811
@@ -14653,6 +14653,106 @@
    "title": "Empty catch Block",
    "severity": "LOW",
    "source": "lib/rules/category-expansion-rules.ts",
+   "preciseLocation": true,
+   "tested": true,
+   "inCatalog": false
+  },
+  {
+   "ruleId": 31001,
+   "code": "RULE-31001",
+   "title": "Archive Entry Name Used as a Write Path (Zip Slip)",
+   "severity": "HIGH",
+   "source": "lib/rules/injection-gap-rules.ts",
+   "preciseLocation": true,
+   "tested": true,
+   "inCatalog": false
+  },
+  {
+   "ruleId": 31002,
+   "code": "RULE-31002",
+   "title": "Encryption Uses a Fixed Initialization Vector",
+   "severity": "HIGH",
+   "source": "lib/rules/injection-gap-rules.ts",
+   "preciseLocation": true,
+   "tested": true,
+   "inCatalog": false
+  },
+  {
+   "ruleId": 31003,
+   "code": "RULE-31003",
+   "title": "JNDI Lookup of a Request Value",
+   "severity": "CRITICAL",
+   "source": "lib/rules/injection-gap-rules.ts",
+   "preciseLocation": true,
+   "tested": true,
+   "inCatalog": false
+  },
+  {
+   "ruleId": 31004,
+   "code": "RULE-31004",
+   "title": "XPath Query Built from a Request Value",
+   "severity": "HIGH",
+   "source": "lib/rules/injection-gap-rules.ts",
+   "preciseLocation": true,
+   "tested": true,
+   "inCatalog": false
+  },
+  {
+   "ruleId": 31005,
+   "code": "RULE-31005",
+   "title": "Variable Used as a printf Format String",
+   "severity": "HIGH",
+   "source": "lib/rules/injection-gap-rules.ts",
+   "preciseLocation": true,
+   "tested": true,
+   "inCatalog": false
+  },
+  {
+   "ruleId": 31006,
+   "code": "RULE-31006",
+   "title": "JavaScript WebView Loads a URL from the Intent",
+   "severity": "HIGH",
+   "source": "lib/rules/injection-gap-rules.ts",
+   "preciseLocation": true,
+   "tested": true,
+   "inCatalog": false
+  },
+  {
+   "ruleId": 31007,
+   "code": "RULE-31007",
+   "title": "Intent from Extras Started Without Validation",
+   "severity": "HIGH",
+   "source": "lib/rules/injection-gap-rules.ts",
+   "preciseLocation": true,
+   "tested": true,
+   "inCatalog": false
+  },
+  {
+   "ruleId": 31008,
+   "code": "RULE-31008",
+   "title": "Struts Development Mode Enabled",
+   "severity": "HIGH",
+   "source": "lib/rules/injection-gap-rules.ts",
+   "preciseLocation": true,
+   "tested": true,
+   "inCatalog": false
+  },
+  {
+   "ruleId": 31009,
+   "code": "RULE-31009",
+   "title": "Sinatra Request Protections Disabled",
+   "severity": "MEDIUM",
+   "source": "lib/rules/injection-gap-rules.ts",
+   "preciseLocation": true,
+   "tested": true,
+   "inCatalog": false
+  },
+  {
+   "ruleId": 31010,
+   "code": "RULE-31010",
+   "title": "Django Password Validators Are Empty",
+   "severity": "MEDIUM",
+   "source": "lib/rules/injection-gap-rules.ts",
    "preciseLocation": true,
    "tested": true,
    "inCatalog": false
