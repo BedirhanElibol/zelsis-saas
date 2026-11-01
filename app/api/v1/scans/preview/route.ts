@@ -114,7 +114,7 @@ export async function POST(req: NextRequest) {
         Number(b.maturity === 'verified') - Number(a.maturity === 'verified'))
       .filter((f) => !seenRules.has(f.ruleId) && seenRules.add(f.ruleId))
       .slice(0, PREVIEW_FINDING_LIMIT)
-      .map((f) => ({ title: f.title, severity: gateSeverity(f), category: f.category }));
+      .map((f) => ({ title: f.title, severity: gateSeverity(f), category: f.category, ...(f.cweId ? { cweId: f.cweId } : {}) }));
 
     return NextResponse.json({
       repoUrl,

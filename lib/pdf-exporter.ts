@@ -1,4 +1,5 @@
 import { Project, Finding } from '@/data/schema';
+import { cweForFinding } from './finding-cwe';
 import { buildSoc2Mapping } from '@/lib/soc2-mapping';
 import { FIX_SIZE_NOTE, fixSize } from '@/lib/fix-size';
 import { computeSha256 } from '@/lib/crypto-digest';
@@ -60,6 +61,7 @@ export function computeReportFindingsDigest(
 
   const sortedFindings = (project.findings || []).map((f) => ({
     category: f.category || '',
+    ...(cweForFinding(f) ? { cwe: cweForFinding(f) } : {}),
     filePath: f.filePath || '',
     id: f.id || '',
     lineRange: f.lineRange || '',

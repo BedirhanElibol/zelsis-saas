@@ -507,7 +507,7 @@ export function generateExecutiveReportHtml(project: Project, branding: ReportBr
             </td>
             <td class="mono" style="font-weight: 700; font-size: 7.5pt;">#${escapeHtml(f.ruleId)}</td>
             <td>
-              <strong style="color: #09090b;">${escapeHtml(f.title)}</strong>
+              <strong style="color: #09090b;">${escapeHtml(f.title)}</strong>${cweForFinding(f) ? ` <span class="mono" style="font-size: 7.5pt; color: #64748b;">${escapeHtml(cweForFinding(f) as string)}</span>` : ''}
               <div class="mono" style="font-size: 7.5pt; color: #64748b; margin-top: 2px;">${escapeHtml(f.filePath)}:${escapeHtml(f.lineRange)}</div>
             </td>
             <td style="color: #334155; font-size: 8pt;">

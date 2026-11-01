@@ -597,6 +597,7 @@ export async function POST(req: NextRequest) {
             title: f.title,
             severity: f.severity,
             category: f.category,
+            ...(f.cweId ? { cweId: f.cweId } : {}),
             filePath: f.filePath,
             lineRange: f.lineRange,
             remediationPrompt: canSeeFixes ? f.remediationPrompt : LOCKED_FIX_TEXT
@@ -606,6 +607,7 @@ export async function POST(req: NextRequest) {
             title: f.title,
             severity: f.severity,
             category: f.category,
+            ...(f.cweId ? { cweId: f.cweId } : {}),
             filePath: f.filePath,
             lineRange: f.lineRange,
             remediationPrompt: canSeeFixes ? f.remediationPrompt : LOCKED_FIX_TEXT
@@ -615,6 +617,7 @@ export async function POST(req: NextRequest) {
           title: f.title,
           severity: f.severity,
           category: f.category,
+          ...(f.cweId ? { cweId: f.cweId } : {}),
           filePath: f.filePath,
           lineRange: f.lineRange,
           remediationPrompt: canSeeFixes ? f.remediationPrompt : LOCKED_FIX_TEXT
