@@ -89,7 +89,8 @@ export async function runStaticCodeScan(inputFiles: CodeFile[], repoName: string
 
   // Parse .zelsisignore or .shipguardignore if present in file tree
   const ignoreFile = files.find(f => (f?.path || '').endsWith('.zelsisignore') || (f?.path || '').endsWith('.shipguardignore'));
-  const { ignoredRuleIds, ignoredPaths } = parseZelsisIgnore(ignoreFile?.content || '');
+  const { ignoredRuleIds, ignoredPaths, lapsed } = parseZelsisIgnore(ignoreFile?.content || '');
+  for (const l of lapsed) logs.push(`[${new Date().toLocaleTimeString()}] [IGNORE] ${l.entry} is active again: expires "${l.expires}" has passed or is not a YYYY-MM-DD date.`);
 
   // F-43 Remediation: Parse Policy-as-Code .zelsisrc.json if present
   const rcFile = files.find(f => (f?.path || '').endsWith('.zelsisrc.json') || (f?.path || '').endsWith('.zelsisrc'));

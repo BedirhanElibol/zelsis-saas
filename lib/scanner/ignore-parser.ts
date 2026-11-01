@@ -213,18 +213,45 @@ function addRawRuleId(ids: Set<number>, num: number, includeUiMirror: boolean): 
   else if (includeUiMirror && num < 1000) ids.add(num + 1000);
 }
 
+/** A line kept out of the suppression list because its `expires` date passed or could not be read. */
+export interface LapsedIgnore {
+  entry: string;
+  expires: string;
+  reason?: string;
+}
+
+/** Last moment a YYYY-MM-DD date is valid (end of that UTC day), or null when it is not a real date. */
+function endOfDay(date: string): number | null {
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(date)) return null;
+  const end = new Date(`${date}T23:59:59.999Z`);
+  return !Number.isNaN(end.getTime()) && end.toISOString().startsWith(date) ? end.getTime() : null;
+}
+
 /**
  * Parses .zelsisignore (or legacy .shipguardignore) file lines to filter out suppressed rule IDs or file paths.
+ * A line may carry metadata after " # ": `SEC-12 # reason: test key only; expires: 2027-01-31`.
+ * Past its date (or with an unreadable one) the line stops suppressing, so the finding comes back.
  */
-export function parseZelsisIgnore(ignoreContent: string): { ignoredRuleIds: Set<number>; ignoredPaths: string[] } {
+export function parseZelsisIgnore(ignoreContent: string, now: number = Date.now()): { ignoredRuleIds: Set<number>; ignoredPaths: string[]; lapsed: LapsedIgnore[] } {
   const ignoredRuleIds = new Set<number>();
   const ignoredPaths: string[] = [];
+  const lapsed: LapsedIgnore[] = [];
 
-  if (!ignoreContent) return { ignoredRuleIds, ignoredPaths };
+  if (!ignoreContent) return { ignoredRuleIds, ignoredPaths, lapsed };
 
   for (const line of ignoreContent.split('\n')) {
-    const trimmed = line.trim();
-    if (!trimmed || trimmed.startsWith('#')) continue;
+    const whole = line.trim();
+    if (!whole || whole.startsWith('#')) continue;
+
+    const [trimmed, meta] = whole.split(/\s+#\s*(.*)/, 2);
+    const expires = meta?.match(/\bexpires:\s*([^;\s]+)/i)?.[1];
+    if (expires !== undefined) {
+      const end = endOfDay(expires);
+      if (end === null || now > end) {
+        lapsed.push({ entry: trimmed, expires, reason: meta.match(/\breason:\s*([^;]+)/i)?.[1].trim() });
+        continue;
+      }
+    }
 
     const alias = ALIAS_RULE_IDS[trimmed.toUpperCase()];
     if (alias) {
@@ -250,7 +277,7 @@ export function parseZelsisIgnore(ignoreContent: string): { ignoredRuleIds: Set<
     else ignoredPaths.push(trimmed.toLowerCase());
   }
 
-  return { ignoredRuleIds, ignoredPaths };
+  return { ignoredRuleIds, ignoredPaths, lapsed };
 }
 
 export const parseShipguardIgnore = parseZelsisIgnore;
