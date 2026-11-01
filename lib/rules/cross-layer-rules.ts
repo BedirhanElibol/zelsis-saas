@@ -41,13 +41,35 @@ function readOptionally(name: string, c: string): boolean {
   return false;
 }
 
+/** True when offset sits in the text of a template literal (an example shown to users), not inside a `${...}` expression. */
+function inTemplateText(c: string, offset: number): boolean {
+  const stack: ('text' | number)[] = [];
+  for (let i = 0; i < offset; i++) {
+    const ch = c[i];
+    if (stack[stack.length - 1] === 'text') {
+      if (ch === '\\') i++;
+      else if (ch === '`') stack.pop();
+      else if (ch === '$' && c[i + 1] === '{') { stack.push(0); i++; }
+      continue;
+    }
+    if (ch === '/' && c[i + 1] === '/') { const end = c.indexOf('\n', i); if (end < 0) return false; i = end; }
+    else if (ch === '/' && c[i + 1] === '*') { const end = c.indexOf('*/', i + 2); if (end < 0) return false; i = end + 1; }
+    else if (ch === '"' || ch === "'") {
+      for (i++; i < offset && c[i] !== ch && c[i] !== '\n'; i++) if (c[i] === '\\') i++;
+    } else if (ch === '`') stack.push('text');
+    else if (stack.length > 0 && ch === '{') stack[stack.length - 1] = (stack[stack.length - 1] as number) + 1;
+    else if (stack.length > 0 && ch === '}') { if (stack[stack.length - 1] === 0) stack.pop(); else stack[stack.length - 1] = (stack[stack.length - 1] as number) - 1; }
+  }
+  return stack[stack.length - 1] === 'text';
+}
+
 function envReads(path: string, c: string): { name: string; idx: number }[] {
   const out: { name: string; idx: number }[] = [];
   const push = (name: string, idx: number) => { if (!PLATFORM_ENV.test(name) && !PUBLIC_PLATFORM_ENV.test(name)) out.push({ name, idx }); };
   if (NOT_DEPLOYED.test(path)) return out;
   if (JS.test(path)) {
     for (const m of c.matchAll(/\b(?:process\??\.env\??|import\.meta\.env)(?:\.([A-Z][A-Z0-9_]*)|\[\s*['"]([A-Z][A-Z0-9_]*)['"]\s*\])/g)) {
-      if (readOptionally(m[1] ?? m[2], c)) continue;
+      if (readOptionally(m[1] ?? m[2], c) || inTemplateText(c, m.index!)) continue;
       const after = c.slice(m.index! + m[0].length, m.index! + m[0].length + 6);
       if (/^\s*(?:\|\||\?\?|\?)/.test(after)) continue; // has a default
       const before = c.slice(Math.max(0, m.index! - 30), m.index!);

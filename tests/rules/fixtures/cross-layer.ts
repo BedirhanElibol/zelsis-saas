@@ -33,6 +33,11 @@ export const region = process.env.MAIL_REGION || 'eu';
 `)],
   },
   {
+    ruleIds: [30301], name: 'XL-01 read inside a template expression is flagged; the same text in an example snippet is not',
+    detects: [ENV_EXAMPLE, f('lib/url.ts', 'export const url = `https://${process.env.API_HOST}/v1`;\n')],
+    ignores: [ENV_EXAMPLE, f('components/Snippet.tsx', 'export const yaml = `\n  script: |\n    const host = process.env.API_HOST;\n`;\n')],
+  },
+  {
     ruleIds: [30301], name: 'XL-01 required var guarded by a throw is still flagged; optional, host-injected, script and .env.local.example vars are not',
     detects: [ENV_EXAMPLE, f('lib/stripe.ts', `if (!process.env.PAYMENT_API_KEY) throw new Error('PAYMENT_API_KEY is missing');
 export const key = process.env.PAYMENT_API_KEY;
