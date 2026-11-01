@@ -40,6 +40,15 @@ export default function ConfigurationPage() {
           Similar to <code>.gitignore</code>, you can use <code>.zelsisignore</code> to suppress specific rules or ignore entire files/directories. 
           Each line can be a file path or a rule code/ID.
         </p>
+        <p>
+          Add a reason and an end date after <code>#</code> so a suppression does not outlive its purpose. After the date, or if the date is not valid, the line stops applying and the finding comes back.
+        </p>
+        <pre className="bg-zinc-900 p-4 rounded-lg overflow-x-auto text-sm font-mono border border-white/10">
+          <code className="text-emerald-400">
+{`SEC-12 # reason: test key only; expires: 2027-01-31
+vendor/legacy/ # reason: removed next quarter; expires: 2027-03-31`}
+          </code>
+        </pre>
         <h3 className="text-lg font-medium text-white mt-4">Supported Rule Prefixes</h3>
         <p>You can ignore entire categories of rules by using the defined prefixes. The following prefixes are supported:</p>
         <div className="bg-zinc-900 border border-white/10 rounded-lg overflow-hidden">
