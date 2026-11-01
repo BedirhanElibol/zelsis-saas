@@ -113,6 +113,7 @@ import { evaluateNoAiSlopRules } from '../rules/no-ai-slop-rules';
 import { evaluateLlmCostGovernanceRules } from '../rules/llm-cost-governance-rules';
 import { evaluateRubyRailsRules } from '../rules/ruby-rails-rules';
 import { evaluateMissedVulnsRules } from '../rules/missed-vulns-rules';
+import { evaluateInjectionGapRules } from '../rules/injection-gap-rules';
 import { evaluatePhpLaravelRules } from '../rules/php-laravel-rules';
 import { evaluateJavaSpringRules } from '../rules/java-spring-rules';
 import { evaluateDotnetCsharpRules } from '../rules/dotnet-csharp-rules';
@@ -452,6 +453,8 @@ export const RULE_ENGINES: ReadonlyArray<{ evaluate: RuleEngine; scanRawContent?
   { evaluate: evaluateNextAiV3Rules },
   // False-negative hunt: open RLS/Firebase rules, mass assignment, client-set roles, leaked secrets, uploads (GAP-01.., Rule IDs 28801-28899)
   { evaluate: evaluateMissedVulnsRules },
+  // Injection, archive, crypto, Android and framework-setting gaps (IGAP-01.., Rule IDs 31001-31099)
+  { evaluate: evaluateInjectionGapRules },
   // JS/TS framework security (JSF-01.., Rule IDs 28901-28999)
   { evaluate: evaluateJsFrameworksV4Rules },
   // Python framework security (PYF-01.., Rule IDs 29001-29099)
