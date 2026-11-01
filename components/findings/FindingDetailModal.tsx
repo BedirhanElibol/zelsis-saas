@@ -15,6 +15,7 @@ import type { StoredFix } from '@/lib/fix-gate';
 import { ExperimentalBadge, UnprovenBadge } from '@/components/findings/ExperimentalBadge';
 import { priceLabel } from '@/data/pricing-plans';
 import { incidentFor } from '@/data/incidents';
+import { cweForFinding, cweUrl } from '@/lib/finding-cwe';
 
 export interface FindingDetailModalProps {
   isOpen: boolean;
@@ -183,6 +184,8 @@ export const FindingDetailModal: React.FC<FindingDetailModalProps> = ({
     setTimeout(() => setCopiedJira(false), 2000);
   };
 
+  const cwe = cweForFinding(finding);
+
   const severityBadgeClass =
     finding.severity === 'CRITICAL'
       ? 'bg-red-500/15 text-red-400 border border-red-500/30'
@@ -224,6 +227,11 @@ export const FindingDetailModal: React.FC<FindingDetailModalProps> = ({
               <span className="text-xs font-mono text-zinc-400 font-medium">
                 {finding.category}
               </span>
+              {cwe && (
+                <a href={cweUrl(cwe)} target="_blank" rel="noopener noreferrer" className="text-xs font-mono text-zinc-400 hover:text-white underline underline-offset-2">
+                  {cwe}
+                </a>
+              )}
             </div>
 
             <div className="flex items-center gap-2">
