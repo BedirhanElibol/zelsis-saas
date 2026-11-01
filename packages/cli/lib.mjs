@@ -3,7 +3,7 @@ import { execFileSync } from 'node:child_process';
 import { readFileSync, statSync } from 'node:fs';
 import { join } from 'node:path';
 
-export const VERSION = '0.1.1';
+export const VERSION = '0.2.0';
 export const DEFAULT_URL = 'https://zelsis.com';
 const MAX_FILE_BYTES = 512 * 1024;
 const MAX_TOTAL_BYTES = 3.5 * 1024 * 1024; // stays under the API's 4 MB limit with JSON overhead
