@@ -22,6 +22,10 @@ Options:
 - `--all` scans and gates on every file
 - `--base origin/main` also counts commits since that ref as changed
 - `--json` prints the raw result
+- `--sarif` prints SARIF 2.1.0, and `--sarif-file-output=<path>` also writes it to a file
+- `--severity-threshold=<low|medium|high|critical>` exits 1 when a finding is at or above that severity, in place of the gate result and `--strict`
+
+Exit code 2 means the check could not run (for example a missing API key or an invalid option).
 
 Files are scanned in memory on the Zelsis server and are not stored. Build folders, binaries, lockfiles and files over 512 KB are not sent.
 
