@@ -17,7 +17,7 @@
     "benchmark": "tsx scripts/benchmark/run.ts"
   },
   "dependencies": {
-    "@babel/parser": "^7.29.9",
+    "@babel/parser": "^8.0.8",
     "@number-flow/react": "^0.6.2",
     "@octokit/auth-app": "^8.3.1",
     "@octokit/rest": "^22.0.1",
