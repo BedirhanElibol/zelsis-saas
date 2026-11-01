@@ -34,6 +34,7 @@ export async function scanUploadedFiles(files: { path: string; content: string }
     .map((f) => ({
       ruleId: f.ruleId,
       title: f.title,
+      ...(f.cweId ? { cweId: f.cweId } : {}),
       severity: gateSeverity(f),
       category: f.category,
       filePath: f.filePath,

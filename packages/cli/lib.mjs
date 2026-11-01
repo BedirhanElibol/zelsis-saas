@@ -94,6 +94,48 @@ export async function runCheck({ cwd, all = false, base, url, apiKey }) {
 
 const color = (on) => (code, s) => (on ? `\u001b[${code}m${s}\u001b[0m` : s);
 
+const SEVERITIES = ['LOW', 'MEDIUM', 'HIGH', 'CRITICAL'];
+
+/** The threshold in upper case, or undefined when the value is not a severity. */
+export const parseSeverity = (value) => {
+  const upper = String(value ?? '').toUpperCase();
+  return SEVERITIES.includes(upper) ? upper : undefined;
+};
+
+/** True when a finding is at or above the threshold. */
+export const meetsThreshold = (result, threshold) =>
+  result.findings.some((f) => SEVERITIES.indexOf(f.severity) >= SEVERITIES.indexOf(threshold));
+
+const sarifLevel = (severity) => (severity === 'CRITICAL' || severity === 'HIGH' ? 'error' : severity === 'MEDIUM' ? 'warning' : 'note');
+
+/** SARIF 2.1.0 log for the findings in a result. */
+export function toSarif(result) {
+  const rules = new Map();
+  const results = result.findings.map((f) => {
+    const ruleId = `ZLS-${f.ruleId}`;
+    if (!rules.has(ruleId)) {
+      rules.set(ruleId, {
+        id: ruleId,
+        shortDescription: { text: f.title },
+        defaultConfiguration: { level: sarifLevel(f.severity) },
+        ...(f.cweId ? { properties: { tags: [`external/cwe/${f.cweId.toLowerCase()}`] } } : {}),
+      });
+    }
+    const line = Number((f.lineRange || '').match(/\d+/)?.[0]) || 1;
+    return {
+      ruleId,
+      level: sarifLevel(f.severity),
+      message: { text: f.fix ? `${f.title}\n\n${f.fix}` : f.title },
+      locations: [{ physicalLocation: { artifactLocation: { uri: f.filePath, uriBaseId: '%SRCROOT%' }, region: { startLine: line } } }],
+    };
+  });
+  return {
+    $schema: 'https://json.schemastore.org/sarif-2.1.0.json',
+    version: '2.1.0',
+    runs: [{ tool: { driver: { name: 'Zelsis', version: VERSION, informationUri: DEFAULT_URL, rules: [...rules.values()] } }, results }],
+  };
+}
+
 /** Human-readable report. `limit` caps how many findings are listed. */
 export function formatReport(result, { colors = false, limit = 50 } = {}) {
   const c = color(colors);
