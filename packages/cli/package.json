@@ -1,6 +1,6 @@
 {
   "name": "zelsis",
-  "version": "0.1.1",
+  "version": "0.2.0",
   "description": "Check your code with Zelsis before you push: security and logic findings, release gate, MCP server for AI coding agents.",
   "type": "module",
   "bin": { "zelsis": "bin/zelsis.mjs" },
