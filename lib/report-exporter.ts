@@ -1,4 +1,5 @@
 import { Project } from '@/data/schema';
+import { cweForFinding, cweSarifTag } from './finding-cwe';
 import { getConfiguredAppUrl } from '@/lib/app-url';
 import { RISK_LABEL, riskKind, type RiskKind } from '@/lib/scanner/risk-kind';
 import { escapeHtml } from '@/lib/sanitize';
@@ -587,6 +588,7 @@ export function generateSarifReport(project: Project): string {
   const rulesMap = new Map<string, any>();
   const results = (project.findings || []).map((f) => {
     const ruleKey = `ZLS-${f.ruleId}`;
+    const cwe = cweForFinding(f);
     if (!rulesMap.has(ruleKey)) {
       rulesMap.set(ruleKey, {
         id: ruleKey,
@@ -601,7 +603,7 @@ export function generateSarifReport(project: Project): string {
           level: f.severity === 'CRITICAL' || f.severity === 'HIGH' ? 'error' : f.severity === 'MEDIUM' ? 'warning' : 'note'
         },
         properties: {
-          tags: [f.type, f.category],
+          tags: [f.type, f.category, ...(cwe ? [cweSarifTag(cwe)] : [])],
           precision: 'high'
         }
       });
