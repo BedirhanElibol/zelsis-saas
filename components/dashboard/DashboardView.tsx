@@ -8,7 +8,6 @@ import { SeverityChart } from './SeverityChart';
 import { FindingsTable } from '../findings/FindingsTable';
 import { InteractiveAnalyzer } from '../InteractiveAnalyzer';
 import { VulnerabilityPlayground } from './VulnerabilityPlayground';
-import { ScaLicenseRiskCard } from './ScaLicenseRiskCard';
 import { QuickChartWidget } from './QuickChartWidget';
 import { DashboardModals, ActiveModalType } from './DashboardModals';
 import { GateStatusBanner } from './GateStatusBanner';
@@ -281,11 +280,6 @@ Enforce strict OWASP Top 10 compliance, fix the listed UI quality and accessibil
       {/* Tab 3: Deep Diagnostics, Performance & Telemetry */}
       {activeTab === 'diagnostics' && (
         <div className="flex flex-col gap-6">
-          <div className="grid grid-cols-1 gap-6">
-            <ComponentErrorBoundary componentName="ScaLicenseRiskCard" resetKeys={[safeProject?.id]}>
-              <ScaLicenseRiskCard />
-            </ComponentErrorBoundary>
-          </div>
           <QuickChartWidget project={safeProject} />
         </div>
       )}

@@ -221,7 +221,7 @@ jobs:
                   <div>
                     <div className="text-xs font-bold text-white">Block Vulnerabilities Before They Ship</div>
                     <div className="text-[11px] text-[#A1A1AA]">
-                      Automatically fails PRs containing Critical OWASP risks or license copyleft violations.
+                      Automatically fails PRs containing critical issues.
                     </div>
                   </div>
                 </div>
