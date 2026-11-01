@@ -16,12 +16,12 @@ const SAMPLE_PATH = /(?:^|\/)(?:tests?|__tests__|spec|e2e|fixtures?|examples?|sa
 const isComment = (l: string) => /^\s*(?:\/\/|\*|\/\*|#)/.test(l);
 
 /** Request values as they appear inline in Java, Kotlin, Python and JS/TS handlers. */
-const REQUEST_INPUT = /\brequest\.(?:getParameter|getHeader|args|form|values|GET|POST|query|body|params)\b|\breq\.(?:query|body|params|headers)\b/;
+const REQUEST_INPUT = /\.getParameter\(|\brequest\.(?:getHeader|args|form|values|GET|POST|query|body|params)\b|\breq\.(?:query|body|params|headers)\b/;
 
 /** Names assigned from request input, plus Spring handler parameters. */
 function requestVars(content: string): Set<string> {
   const vars = new Set<string>();
-  for (const m of content.matchAll(/\b(\w+)\s*(?::\s*[\w<>?]+\s*)?=\s*[^;\n]*(?:\brequest\.(?:getParameter|getHeader|args|form|values|GET|POST|query|body|params)\b|\breq\.(?:query|body|params|headers)\b)/g)) vars.add(m[1]);
+  for (const m of content.matchAll(/\b(\w+)\s*(?::\s*[\w<>?]+\s*)?=\s*[^;\n]*(?:\.getParameter\(|\brequest\.(?:getHeader|args|form|values|GET|POST|query|body|params)\b|\breq\.(?:query|body|params|headers)\b)/g)) vars.add(m[1]);
   for (const m of content.matchAll(/@(?:RequestParam|PathVariable|RequestHeader)\b(?:\([^)]*\))?\s+(?:final\s+)?\w+\s+(\w+)/g)) vars.add(m[1]);
   return vars;
 }

@@ -34,7 +34,7 @@ export const CASES: RuleCase[] = [
   },
   {
     ruleIds: [31003], name: 'IGAP-03 JNDI lookup of a request value vs a fixed name',
-    detects: f('src/main/java/H.java', JAVA + 'public class H extends HttpServlet {\n  protected void doGet(HttpServletRequest r, HttpServletResponse s) throws Exception {\n    String n = request.getParameter("n");\n    new InitialContext().lookup(n);\n  }\n}\n'),
+    detects: f('src/main/java/H.java', JAVA + 'public class H extends HttpServlet {\n  protected void doGet(HttpServletRequest r, HttpServletResponse s) throws Exception {\n    new InitialContext().lookup(r.getParameter("n"));\n  }\n}\n'),
     ignores: f('src/main/java/H.java', JAVA + 'public class H extends HttpServlet {\n  protected void doGet(HttpServletRequest r, HttpServletResponse s) throws Exception {\n    new InitialContext().lookup("java:comp/env/jdbc/app");\n  }\n}\n'),
   },
   {
