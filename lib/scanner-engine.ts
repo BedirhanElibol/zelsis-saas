@@ -1,4 +1,5 @@
 import { evaluateAiCommentRules } from './rules/ai-comment-rules';
+import { cweForFinding } from './finding-cwe';
 import { Finding } from '@/data/schema';
 import type { CodeFile, ScanResult } from './scanner/types';
 import { hasUntrustedInput, isCriticalInjectionRule, isMinifiedContent, isNonAppPath, isSecretPatternFixture, isSecretRuleId, isTestFixturePath, isVendoredPath, stripComments, yieldToMain } from './scanner/text';
@@ -420,6 +421,8 @@ export async function runStaticCodeScan(inputFiles: CodeFile[], repoName: string
   }
 
   logs.push(`[${new Date().toLocaleTimeString()}] --------------------------------------------------`);
+  for (const f of findings) { const cwe = cweForFinding(f); if (cwe) f.cweId = cwe; }
+
   logs.push(`[${new Date().toLocaleTimeString()}] [SUMMARY] Scan complete: ${targetFiles.length} files, ${findings.length} findings (${findings.filter((f) => f.maturity === 'experimental').length} from experimental rules, not counted toward the gate).`);
   if (testFixtureSkips > 0) {
     logs.push(`[${new Date().toLocaleTimeString()}] [INFO] ${testFixtureSkips} non-secret finding(s) in test/fixture files were not counted (test code does not ship).`);

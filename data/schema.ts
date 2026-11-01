@@ -25,6 +25,7 @@ export const FindingSchema = z.object({
   status: StatusEnum,
   owner: z.string().optional(),
   falsePositive: z.boolean().default(false),
+  cweId: z.string().optional(),
   /** experimental = rule not yet proven precise on the benchmark corpus: shown, but excluded from gate and score. */
   maturity: z.enum(['verified', 'unproven', 'experimental']).optional(),
   // Set by the server when fix text was withheld (Free tier); fetch it via /api/v1/scans/fix
