@@ -1,4 +1,5 @@
 import type { Finding } from '@/data/schema';
+import { describeUsage, type ImportIndex } from './dep-usage';
 import type { Dependency } from './dependencies';
 
 /**
@@ -199,11 +200,12 @@ const BUILD_TOOL_RE = /^(?:@babel\/(?!runtime|polyfill)|babel-(?!runtime)|webpac
 export const isBuildTool = (dep: Dependency): boolean => dep.ecosystem === 'npm' && BUILD_TOOL_RE.test(dep.name);
 
 /** One finding per vulnerable package version, at its lockfile line. Dev-only packages and build tools are capped at MEDIUM. */
-export function buildDependencyFindings(deps: Dependency[], advisories: OsvAdvisory[][], fileLines: Map<string, string[]>): Finding[] {
+export function buildDependencyFindings(deps: Dependency[], advisories: OsvAdvisory[][], fileLines: Map<string, string[]>, imports?: ImportIndex): Finding[] {
   const findings: Finding[] = [];
   deps.forEach((dep, i) => {
     const list = advisories[i] ?? [];
     if (list.length === 0) return;
+    const usage = imports ? describeUsage(dep, imports) : undefined;
     const worst = list.reduce<Severity>((s, a) => (SEVERITY_RANK[a.severity] > SEVERITY_RANK[s] ? a.severity : s), 'LOW');
     const buildTool = !dep.dev && isBuildTool(dep);
     const severity: Severity = (dep.dev || buildTool) && SEVERITY_RANK[worst] > SEVERITY_RANK.MEDIUM ? 'MEDIUM' : worst;
@@ -223,6 +225,7 @@ export function buildDependencyFindings(deps: Dependency[], advisories: OsvAdvis
       snippet: (fileLines.get(dep.file)?.[dep.line - 1] ?? `${dep.name}@${dep.version}`).trim().slice(0, 300),
       reproductionSteps: [
         `${dep.ecosystem} package ${dep.name} resolves to ${dep.version} in ${dep.file}:${dep.line}${dep.dev ? ' (development dependency: not shipped, capped at MEDIUM)' : buildTool ? ' (build tool: it runs where you build, not on your users\' requests, so it matters if the build processes untrusted input; capped at MEDIUM)' : ''}.`,
+        ...(usage ? [usage] : []),
         ...list.slice(0, 10).map((a) => `${a.id}${a.aliases.length ? ` (${a.aliases.join(', ')})` : ''} [${a.severity}]: ${a.summary}${a.fixed ? ` Fixed in ${a.fixed}.` : ' No fixed version listed.'} https://osv.dev/vulnerability/${a.id}`),
         ...(list.length > 10 ? [`${list.length - 10} more advisories on https://osv.dev/list?q=${encodeURIComponent(dep.name)}`] : [])
       ],
