@@ -10,6 +10,12 @@ export interface JiraConnection {
   issueType: string;
 }
 
+/** An issue type of a project, with the name in the Jira account's language. */
+export interface JiraIssueType {
+  id: string;
+  name: string;
+}
+
 export interface JiraFinding {
   title: string;
   severity: string;
@@ -44,7 +50,8 @@ export function buildIssue(finding: JiraFinding, conn: Pick<JiraConnection, 'pro
   return {
     fields: {
       project: { key: conn.projectKey },
-      issuetype: { name: conn.issueType },
+      // Stored as the type id; connections saved before ids were used hold a name.
+      issuetype: /^\d+$/.test(conn.issueType) ? { id: conn.issueType } : { name: conn.issueType },
       summary: `[${finding.severity}] ${finding.title}`.slice(0, 254),
       description: { type: 'doc', version: 1, content },
       labels: ['zelsis'],
@@ -63,15 +70,35 @@ async function jiraFetch(conn: Pick<JiraConnection, 'site' | 'email'>, token: st
   });
 }
 
-/** Checks the credentials and the project before a connection is saved. Returns an error sentence or null. */
-export async function verifyJiraConnection(conn: JiraConnection, token: string): Promise<string | null> {
+interface ProjectIssueType { id: string; name: string; subtask?: boolean; hierarchyLevel?: number }
+
+/** Types an issue can be created as: no sub-tasks (they need a parent) and no epics. */
+export function creatableTypes(types: ProjectIssueType[]): JiraIssueType[] {
+  return types
+    .filter((t) => !t.subtask && (t.hierarchyLevel ?? 0) === 0)
+    .map((t) => ({ id: String(t.id), name: t.name }));
+}
+
+/**
+ * Checks the credentials and the project, and returns the project's issue types.
+ * Error sentences are for the user; the types come back in Jira's order.
+ */
+export async function verifyJiraConnection(conn: Omit<JiraConnection, 'issueType'>, token: string): Promise<{ error: string } | { issueTypes: JiraIssueType[] }> {
   const me = await jiraFetch(conn, token, '/rest/api/3/myself');
-  if (me.status === 401 || me.status === 403) return 'Jira rejected the e-mail and API token.';
-  if (!me.ok) return `Jira answered HTTP ${me.status}. Check the site address.`;
+  if (me.status === 401 || me.status === 403) return { error: 'Jira rejected the e-mail and API token. Use a token made with Create API token, not one with scopes.' };
+  if (!me.ok) return { error: `Jira answered HTTP ${me.status}. Check the site address.` };
+  return fetchIssueTypes(conn, token);
+}
+
+/** The project's creatable issue types, or an error sentence. */
+export async function fetchIssueTypes(conn: Pick<JiraConnection, 'site' | 'email' | 'projectKey'>, token: string): Promise<{ error: string } | { issueTypes: JiraIssueType[] }> {
   const project = await jiraFetch(conn, token, `/rest/api/3/project/${encodeURIComponent(conn.projectKey)}`);
-  if (project.status === 404) return `Project ${conn.projectKey} was not found or this account cannot see it.`;
-  if (!project.ok) return `Jira answered HTTP ${project.status} for the project.`;
-  return null;
+  if (project.status === 404) return { error: `Project ${conn.projectKey} was not found or this account cannot see it.` };
+  if (!project.ok) return { error: `Jira answered HTTP ${project.status} for the project.` };
+  const body = await project.json().catch(() => null) as { issueTypes?: ProjectIssueType[] } | null;
+  const issueTypes = creatableTypes(body?.issueTypes ?? []);
+  if (issueTypes.length === 0) return { error: `Project ${conn.projectKey} has no issue type Zelsis can create.` };
+  return { issueTypes };
 }
 
 /** Creates the issue and returns its browse URL, or throws with Jira's own message. */

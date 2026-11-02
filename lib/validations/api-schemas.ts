@@ -255,7 +255,11 @@ export const JiraConnectSchema = z.object({
   email: z.string().trim().email('Enter the e-mail of the Jira account').max(320),
   apiToken: z.string().trim().min(10, 'Paste the Jira API token').max(1024),
   projectKey: z.string().trim().regex(/^[A-Za-z][A-Za-z0-9_]{0,9}$/, 'Enter the project key, for example SEC'),
-  issueType: z.string().trim().min(1).max(60),
+});
+
+export const JiraIssueTypeSchema = z.object({
+  accessToken: AccessTokenSchema,
+  issueTypeId: z.string().regex(/^\d{1,12}$/, 'Choose an issue type'),
 });
 
 export const JiraDisconnectSchema = z.object({ accessToken: AccessTokenSchema });

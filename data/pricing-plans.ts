@@ -62,6 +62,7 @@ export const ZELSIS_PRICING_PLANS: PricingPlanItem[] = [
       'Unlimited AI fix prompts',
       'Printable PDF audit report',
       'GitHub Actions & CI/CD release gate',
+      'Jira issues from findings in one click',
       SUPPORT_TERMS.Pro,
     ],
     buttonText: 'Upgrade to Pro',

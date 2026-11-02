@@ -19,5 +19,12 @@ export interface JiraConnectionSummary {
   site: string;
   email: string;
   projectKey: string;
+  /** Issue type id, or a name for connections saved before ids were used. */
   issueType: string;
+}
+
+/** The project's issue types for the picker, read live from Jira. */
+export interface JiraIssueTypeList {
+  types: { id: string; name: string }[];
+  error?: string;
 }

@@ -1,13 +1,13 @@
 'use server';
 
 import { createClient, type SupabaseClient, type User } from '@supabase/supabase-js';
-import { JiraConnectSchema, JiraDisconnectSchema, JiraIssueSchema } from '@/lib/validations/api-schemas';
-import { createJiraIssue as postJiraIssue, normalizeJiraSite, verifyJiraConnection, type JiraConnection } from '@/lib/jira';
+import { JiraConnectSchema, JiraDisconnectSchema, JiraIssueSchema, JiraIssueTypeSchema } from '@/lib/validations/api-schemas';
+import { createJiraIssue as postJiraIssue, fetchIssueTypes, normalizeJiraSite, verifyJiraConnection, type JiraConnection } from '@/lib/jira';
 import { integrationKey, open, seal } from '@/lib/secret-box';
 import { logger } from '@/lib/logger';
 import { getEffectivePlanTier } from '@/lib/organization';
 import { hasIntegrationAccess } from '@/lib/subscription-utils';
-import type { JiraAccess, JiraActionState } from '@/lib/jira-state';
+import type { JiraAccess, JiraActionState, JiraIssueTypeList } from '@/lib/jira-state';
 
 const fail = (message: string): JiraActionState => ({ status: 'error', message });
 const NOT_CONFIGURED = 'Jira is not set up on this server yet.';
@@ -60,11 +60,14 @@ export async function saveJiraConnection(_prev: JiraActionState, formData: FormD
 
   const site = normalizeJiraSite(parsed.data.site);
   if (!site) return fail('Enter your Jira Cloud address, for example acme.atlassian.net.');
-  const conn: JiraConnection = { site, email: parsed.data.email, projectKey: parsed.data.projectKey.toUpperCase(), issueType: parsed.data.issueType };
+  const target = { site, email: parsed.data.email, projectKey: parsed.data.projectKey.toUpperCase() };
 
+  let conn: JiraConnection;
   try {
-    const problem = await verifyJiraConnection(conn, parsed.data.apiToken);
-    if (problem) return fail(problem);
+    const checked = await verifyJiraConnection(target, parsed.data.apiToken);
+    if ('error' in checked) return fail(checked.error);
+    // The first standard type (Task, Görev, Aufgabe...); it can be changed after connecting.
+    conn = { ...target, issueType: checked.issueTypes[0].id };
   } catch (err) {
     logger.warn('[Jira] Verify failed:', err);
     return fail('Could not reach Jira. Check the site address and try again.');
@@ -84,6 +87,40 @@ export async function saveJiraConnection(_prev: JiraActionState, formData: FormD
     return fail('Could not save the connection. Try again.');
   }
   return { status: 'success', message: `Connected to ${conn.site}, project ${conn.projectKey}.` };
+}
+
+/** The project's issue types, read from Jira with the stored token, for the picker. */
+export async function getJiraIssueTypes(accessToken: string): Promise<JiraIssueTypeList> {
+  const key = integrationKey();
+  const ctx = key && typeof accessToken === 'string' ? await authenticate(accessToken) : null;
+  if (!key || !ctx || !(await planAllows(ctx.admin, ctx.user))) return { types: [] };
+  const row = await loadConnection(ctx.admin, ctx.user.id);
+  const token = row ? open(row.token_ciphertext, key) : null;
+  if (!row || !token) return { types: [] };
+  try {
+    const result = await fetchIssueTypes(toConnection(row), token);
+    return 'error' in result ? { types: [], error: result.error } : { types: result.issueTypes };
+  } catch (err) {
+    logger.warn('[Jira] Issue types failed:', err);
+    return { types: [], error: 'Could not reach Jira.' };
+  }
+}
+
+/** Saves the issue type new issues are created as, after checking it belongs to the project. */
+export async function setJiraIssueType(_prev: JiraActionState, formData: FormData): Promise<JiraActionState> {
+  const parsed = JiraIssueTypeSchema.safeParse(formObject(formData));
+  if (!parsed.success) return fail(parsed.error.issues[0]?.message ?? 'Invalid input');
+  const { types, error } = await getJiraIssueTypes(parsed.data.accessToken);
+  if (error) return fail(error);
+  const chosen = types.find((t) => t.id === parsed.data.issueTypeId);
+  if (!chosen) return fail('That issue type is not in the project.');
+  const ctx = await authenticate(parsed.data.accessToken);
+  if (!ctx) return fail('Your session expired. Sign in again.');
+  const { error: dbError } = await ctx.admin.from('jira_connections')
+    .update({ issue_type: chosen.id, updated_at: new Date().toISOString() })
+    .eq('user_id', ctx.user.id);
+  if (dbError) return fail('Could not save the issue type. Try again.');
+  return { status: 'success', message: `New issues are created as ${chosen.name}.` };
 }
 
 export async function deleteJiraConnection(_prev: JiraActionState, formData: FormData): Promise<JiraActionState> {
