@@ -15,6 +15,7 @@ import { gateSeverity, gatingFindings } from '@/lib/scanner/scoring';
 import { withLiveStatus } from '@/lib/project-status';
 import { isScanOutdated, RULES_UPDATED_AT } from '@/lib/rules-version';
 import { OnboardingChecklist } from './OnboardingChecklist';
+import { TestimonialPrompt } from './TestimonialPrompt';
 import { DemoShowcaseBanner } from '../OverviewView';
 import { generateAuditPdfReport } from '@/lib/pdf-exporter';
 import { ShieldCheck, Code, Server, RefreshCw } from 'lucide-react';
@@ -194,6 +195,8 @@ Enforce strict OWASP Top 10 compliance, fix the listed UI quality and accessibil
 
       {/* Onboarding Checklist */}
       <OnboardingChecklist project={safeProject} />
+
+      <TestimonialPrompt hasScan={!!safeProject?.lastScanAt} />
 
       {/* Swiss Navigation Tabs Bar */}
       <div className="flex flex-col xl:flex-row xl:items-center justify-between gap-4 border-b border-white/10 pb-3">
