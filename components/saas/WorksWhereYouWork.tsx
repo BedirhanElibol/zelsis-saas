@@ -15,6 +15,13 @@ interface Place {
 /** Only places that were run end to end against zelsis.com belong here. */
 const PLACES: Place[] = [
   {
+    icon: Code,
+    title: 'VS Code',
+    body: 'Run the check from the command palette. Each finding appears under its line with the fix and a CWE link.',
+    href: '/docs/vscode',
+    linkLabel: 'Install the extension',
+  },
+  {
     icon: GitPullRequest,
     title: 'Every pull request',
     body: 'The GitHub Action runs the check on each PR and fails the build when a change ships a critical bug.',
@@ -28,13 +35,6 @@ const PLACES: Place[] = [
     code: 'npx zelsis check',
     href: '/docs/cli',
     linkLabel: 'CLI and MCP guide',
-  },
-  {
-    icon: Code,
-    title: 'VS Code',
-    body: 'Run the check from the command palette. Each finding appears under its line with the fix and a CWE link.',
-    href: '/docs/vscode',
-    linkLabel: 'Install the extension',
   },
   {
     icon: Ticket,

@@ -25,33 +25,35 @@ export default function Home() {
         {/* Hero with the repo scan box and an example failing gate */}
         <SaasHero />
 
+        {/* Order follows what draws a buyer in: the problem, proof on real bugs, how it works and where it runs,
+            then depth, trust and price. data-section feeds the "section reached" counts used to tune this order. */}
         {/* What users notice when a rushed release goes out */}
-        <ProblemBand />
-
-        {/* The release gate first: repo → findings → failed build */}
-        <WorkflowSteps />
-
-        {/* Positioning: quiet gate, audience, and the failure categories it stops */}
-        <WhyZelsis />
+        <div data-section="problem"><ProblemBand /></div>
 
         {/* Real-bug examples across stacks; every example is scanned by tests/unit/landing-checks.test.ts */}
-        <CatchTabs />
-
-        {/* Published benchmark: what we catch and what we miss */}
-        <BenchmarkSection compact />
-
-        <ProductCapabilities />
+        <div data-section="examples"><CatchTabs /></div>
 
         {/* Where the check runs: PR, CLI and agents, VS Code, Jira (each tested end to end) */}
-        <WorksWhereYouWork />
+        <div data-section="integrations"><WorksWhereYouWork /></div>
 
-        <FixPromptsDemo />
+        {/* The release gate: repo → findings → failed build */}
+        <div data-section="workflow"><WorkflowSteps /></div>
 
-        <CompetitorComparison />
+        <div data-section="fix-demo"><FixPromptsDemo /></div>
 
-        <ComparisonTable />
+        <div data-section="capabilities"><ProductCapabilities /></div>
 
-        <FaqSection />
+        {/* Published benchmark: what we catch and what we miss */}
+        <div data-section="benchmark"><BenchmarkSection compact /></div>
+
+        <div data-section="competitors"><CompetitorComparison /></div>
+
+        {/* Positioning: quiet gate, audience, and the failure categories it stops */}
+        <div data-section="why"><WhyZelsis /></div>
+
+        <div data-section="pricing"><ComparisonTable /></div>
+
+        <div data-section="faq"><FaqSection /></div>
 
         <FinalCta />
 

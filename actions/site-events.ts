@@ -4,13 +4,13 @@ import { headers } from 'next/headers';
 import { z } from 'zod';
 import { getSupabaseAdmin } from '@/lib/supabase-admin';
 
-// Anonymous, cookieless counts of page views and CTA clicks. Nothing that identifies a visitor is read or stored:
+// Anonymous, cookieless counts of page views, CTA clicks and landing sections reached. Nothing that identifies a visitor is read or stored:
 // no IP address, no user agent, no cookie. Visitors who send Do Not Track or Global Privacy Control are not counted.
 
 const BOT = /bot|crawl|spider|slurp|headless|preview|lighthouse|monitor|uptime|curl|wget|python-requests|node-fetch|axios|go-http/i;
 
 const EventSchema = z.object({
-  kind: z.enum(['view', 'cta']),
+  kind: z.enum(['view', 'cta', 'section']),
   path: z.string().max(120).regex(/^\/[a-zA-Z0-9\-_/]*$/),
   source: z.string().max(60).regex(/^[a-z0-9.\-_]*$/),
   label: z.string().max(40).regex(/^[a-zA-Z0-9\-_/:#. ]*$/),
