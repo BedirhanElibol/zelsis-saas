@@ -7,6 +7,7 @@ import { WhyZelsis } from '@/components/saas/WhyZelsis';
 import { ProductCapabilities } from '@/components/saas/ProductCapabilities';
 import { WorksWhereYouWork } from '@/components/saas/WorksWhereYouWork';
 import { CaughtInOurCode } from '@/components/saas/CaughtInOurCode';
+import { Testimonials } from '@/components/saas/Testimonials';
 import { CatchTabs } from '@/components/saas/CatchTabs';
 import { FixPromptsDemo } from '@/components/saas/FixPromptsDemo';
 import { BenchmarkSection } from '@/components/saas/BenchmarkSection';
@@ -15,6 +16,9 @@ import { ComparisonTable } from '@/components/saas/ComparisonTable';
 import { FaqSection } from '@/components/saas/FaqSection';
 import { FinalCta } from '@/components/saas/FinalCta';
 import { Footer } from '@/components/Footer';
+
+// Approved testimonials are read at most once an hour; the page itself stays static.
+export const revalidate = 3600;
 
 // Server Component: the sections are client islands, so the page shell and copy ship as HTML.
 export default function Home() {
@@ -36,6 +40,9 @@ export default function Home() {
 
         {/* Real findings from scanning this codebase; only things that happened and were fixed */}
         <div data-section="own-code"><CaughtInOurCode /></div>
+
+        {/* Approved user quotes; renders nothing until one is approved */}
+        <div data-section="testimonials"><Testimonials /></div>
 
         {/* Where the check runs: PR, CLI and agents, VS Code, Jira (each tested end to end) */}
         <div data-section="integrations"><WorksWhereYouWork /></div>

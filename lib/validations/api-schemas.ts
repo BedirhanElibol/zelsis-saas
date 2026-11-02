@@ -264,6 +264,14 @@ export const JiraIssueTypeSchema = z.object({
 
 export const JiraDisconnectSchema = z.object({ accessToken: AccessTokenSchema });
 
+export const TestimonialSchema = z.object({
+  accessToken: AccessTokenSchema,
+  quote: z.string().trim().min(10, 'Write at least one short sentence').max(280, 'Keep it under 280 characters'),
+  displayName: z.string().trim().min(1, 'Add the name to show').max(80),
+  role: z.string().trim().max(80).optional(),
+  consent: z.literal('on', { message: 'Tick the box so we may show it' }),
+});
+
 export const JiraIssueSchema = z.object({
   accessToken: AccessTokenSchema,
   title: z.string().trim().min(1).max(500),
