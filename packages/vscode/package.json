@@ -2,26 +2,60 @@
   "name": "zelsis",
   "displayName": "Zelsis",
   "description": "Release check in the editor: security and logic findings from Zelsis on your changed files, shown as problems.",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "publisher": "zelsis",
   "license": "MIT",
   "homepage": "https://zelsis.com",
-  "engines": { "vscode": "^1.85.0" },
-  "categories": ["Linters"],
-  "keywords": ["security", "static analysis", "sast", "code review", "release gate"],
+  "icon": "images/icon.png",
+  "galleryBanner": {
+    "color": "#0A0A0A",
+    "theme": "dark"
+  },
+  "bugs": {
+    "email": "contact@zelsis.com"
+  },
+  "engines": {
+    "vscode": "^1.85.0"
+  },
+  "categories": [
+    "Linters"
+  ],
+  "keywords": [
+    "security",
+    "static analysis",
+    "sast",
+    "code review",
+    "release gate"
+  ],
   "main": "./extension.js",
   "activationEvents": [],
   "contributes": {
     "commands": [
-      { "command": "zelsis.checkChanges", "title": "Zelsis: Check Changed Files" },
-      { "command": "zelsis.checkAll", "title": "Zelsis: Check Whole Workspace" },
-      { "command": "zelsis.setApiKey", "title": "Zelsis: Set API Key" },
-      { "command": "zelsis.clear", "title": "Zelsis: Clear Findings" }
+      {
+        "command": "zelsis.checkChanges",
+        "title": "Zelsis: Check Changed Files"
+      },
+      {
+        "command": "zelsis.checkAll",
+        "title": "Zelsis: Check Whole Workspace"
+      },
+      {
+        "command": "zelsis.setApiKey",
+        "title": "Zelsis: Set API Key"
+      },
+      {
+        "command": "zelsis.clear",
+        "title": "Zelsis: Clear Findings"
+      }
     ],
     "configuration": {
       "title": "Zelsis",
       "properties": {
-        "zelsis.url": { "type": "string", "default": "https://zelsis.com", "description": "Zelsis server URL." }
+        "zelsis.url": {
+          "type": "string",
+          "default": "https://zelsis.com",
+          "description": "Zelsis server URL."
+        }
       }
     }
   },
