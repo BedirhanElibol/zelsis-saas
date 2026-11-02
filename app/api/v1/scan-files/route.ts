@@ -6,6 +6,8 @@ import { ScanFilesRequestSchema, validateRequestBody, type ScanFilesRequest } fr
 import { hasFixPromptAccess } from '@/lib/subscription-utils';
 import { getEffectivePlanTier, getOrgPolicy } from '@/lib/organization';
 import { scanUploadedFiles } from '@/lib/scan-files';
+import { extractDependencies, MAX_DEPENDENCIES } from '@/lib/scanner/dependencies';
+import { buildSbom } from '@/lib/scanner/sbom';
 import { logger } from '@/lib/logger';
 
 export const maxDuration = 60;
@@ -41,6 +43,15 @@ export async function POST(req: NextRequest) {
     const rawBody = await req.json().catch(() => null);
     const validation = validateRequestBody<ScanFilesRequest>(ScanFilesRequestSchema, rawBody);
     if (!validation.success) return validation.response;
+
+    if (validation.data.sbom) {
+      const dependencies = extractDependencies(validation.data.files);
+      // Extraction stops at the cap, and a bill of materials that silently omits packages is worse than none.
+      if (dependencies.length >= MAX_DEPENDENCIES) {
+        return NextResponse.json({ error: `This repository has more than ${MAX_DEPENDENCIES} dependencies, so the SBOM would be incomplete.` }, { status: 413 });
+      }
+      return NextResponse.json(buildSbom(dependencies, { format: validation.data.sbom, projectName: validation.data.projectName }));
+    }
 
     const userId: string = keyRow.user_id;
     const tier = await getEffectivePlanTier(admin, userId);

@@ -25,6 +25,8 @@ Options:
 - `--sarif` prints SARIF 2.1.0, and `--sarif-file-output=<path>` also writes it to a file
 - `--severity-threshold=<low|medium|high|critical>` exits 1 when a finding is at or above that severity, in place of the gate result and `--strict`
 
+`zelsis sbom` prints a bill of materials built from your lockfiles and pinned manifests, in CycloneDX (default) or SPDX: `--format=spdx`, `--output=sbom.json`. Only those files are sent. License fields are left empty because lockfiles do not record them.
+
 Exit code 2 means the check could not run (for example a missing API key or an invalid option).
 
 Files are scanned in memory on the Zelsis server and are not stored. Build folders, binaries, lockfiles and files over 512 KB are not sent.
