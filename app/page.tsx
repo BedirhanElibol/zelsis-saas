@@ -5,6 +5,7 @@ import { ProblemBand } from '@/components/saas/ProblemBand';
 import { WorkflowSteps } from '@/components/saas/WorkflowSteps';
 import { WhyZelsis } from '@/components/saas/WhyZelsis';
 import { ProductCapabilities } from '@/components/saas/ProductCapabilities';
+import { WorksWhereYouWork } from '@/components/saas/WorksWhereYouWork';
 import { CatchTabs } from '@/components/saas/CatchTabs';
 import { FixPromptsDemo } from '@/components/saas/FixPromptsDemo';
 import { BenchmarkSection } from '@/components/saas/BenchmarkSection';
@@ -40,6 +41,9 @@ export default function Home() {
         <BenchmarkSection compact />
 
         <ProductCapabilities />
+
+        {/* Where the check runs: PR, CLI and agents, VS Code, Jira (each tested end to end) */}
+        <WorksWhereYouWork />
 
         <FixPromptsDemo />
 
