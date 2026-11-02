@@ -1,4 +1,5 @@
 import { evaluateAiCommentRules } from './rules/ai-comment-rules';
+import { collectImports } from './scanner/dep-usage';
 import { cweForFinding } from './finding-cwe';
 import { Finding } from '@/data/schema';
 import type { CodeFile, ScanResult } from './scanner/types';
@@ -117,6 +118,8 @@ export async function runStaticCodeScan(inputFiles: CodeFile[], repoName: string
     if (!dependencyFileLines.has(d.file)) dependencyFileLines.set(d.file, (files.find((f) => f.path === d.file)?.content || '').split('\n'));
   }
   const auditEnabled = Boolean(options.dependencyAudit) && !ignoredRuleIds.has(OSV_RULE_ID) && !disabledPillars.has('SECURITY');
+  // Read now: the scanner empties file contents as it goes.
+  const dependencyImports = auditEnabled && dependencies.length > 0 ? collectImports(files) : undefined;
   const osvPromise = auditEnabled && dependencies.length > 0
     ? queryOsv(dependencies, typeof options.dependencyAudit === 'object' ? options.dependencyAudit : {})
     : null;
@@ -383,7 +386,7 @@ export async function runStaticCodeScan(inputFiles: CodeFile[], repoName: string
   if (osvPromise) {
     const osv = await osvPromise;
     if (osv.ok) {
-      const depFindings = buildDependencyFindings(dependencies, osv.advisories, dependencyFileLines);
+      const depFindings = buildDependencyFindings(dependencies, osv.advisories, dependencyFileLines, dependencyImports);
       // Exact lockfile versions supersede the offline advisory list matched against manifest ranges
       const auditedDirs = new Set(dependencies.map((d) => d.file.slice(0, d.file.lastIndexOf('/') + 1)));
       for (let k = findings.length - 1; k >= 0; k--) {
