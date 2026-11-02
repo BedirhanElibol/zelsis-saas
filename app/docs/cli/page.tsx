@@ -60,7 +60,10 @@ export default function CliPage() {
           <li><code>--all</code> scans and gates on every file, not only your changes.</li>
           <li><code>--base origin/main</code> also counts commits since that ref as changed. Useful in a pre-push hook.</li>
           <li><code>--json</code> prints the raw result for scripts.</li>
+          <li><code>--sarif</code> prints SARIF 2.1.0, and <code>--sarif-file-output=result.sarif</code> also writes it to a file for code scanning tools. Findings carry their CWE where one applies.</li>
+          <li><code>--severity-threshold=high</code> exits 1 when a finding is at or above that level (<code>low</code>, <code>medium</code>, <code>high</code> or <code>critical</code>), in place of the gate result.</li>
         </ul>
+        <p>Exit code 2 means the check could not run, for example a missing API key or an invalid option.</p>
         <p>Fix guidance is shown on Pro and Team plans; on Free each finding names the issue, its line and what it allows.</p>
       </section>
 
@@ -81,6 +84,16 @@ export default function CliPage() {
           calling a task done and fix critical and high findings first. If none exist it creates <code>AGENTS.md</code> and{' '}
           <code>CLAUDE.md</code>. Running it again changes nothing, <code>--dry-run</code> only prints the plan, and it never
           writes your API key.
+        </p>
+      </section>
+
+      <section className="space-y-4">
+        <h2 className="text-xl font-semibold text-white">Export an SBOM</h2>
+        <pre className={pre}><code className="text-emerald-400">npx zelsis sbom --output=sbom.json</code></pre>
+        <p>
+          Builds a software bill of materials from your lockfiles and pinned manifests: CycloneDX 1.6 by default, or SPDX 2.3
+          with <code>--format=spdx</code>. Only those files are sent. License fields are left empty because lockfiles do not
+          record licenses.
         </p>
       </section>
 

@@ -24,7 +24,7 @@ const PLACES: Place[] = [
   {
     icon: Terminal,
     title: 'Your terminal and AI agents',
-    body: 'Check uncommitted changes before you push. Claude Code, Cursor and other agents can run it on their own work through MCP.',
+    body: 'Check uncommitted changes before you push. Claude Code, Cursor and other agents can run it on their own work through MCP. Export SARIF for code scanning and an SBOM in CycloneDX or SPDX.',
     code: 'npx zelsis check',
     href: '/docs/cli',
     linkLabel: 'CLI and MCP guide',
