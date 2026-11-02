@@ -328,6 +328,8 @@ export const ScanFilesRequestSchema = z.object({
     .refine((files) => files.reduce((n, f) => n + f.content.length, 0) <= SCAN_FILES_MAX_TOTAL_BYTES, 'files exceed the 4 MB total limit'),
   /** Paths the caller changed; when set, only findings in these files decide the gate. */
   changed: z.array(z.string().max(512)).max(SCAN_FILES_MAX_FILES).optional(),
+  /** Return a bill of materials built from the dependency files instead of scanning. */
+  sbom: z.enum(['cyclonedx', 'spdx']).optional(),
 });
 export type ScanFilesRequest = z.infer<typeof ScanFilesRequestSchema>;
 

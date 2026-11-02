@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 import { writeFileSync } from 'node:fs';
-import { VERSION, runCheck, formatReport, toSarif, parseSeverity, meetsThreshold } from '../lib.mjs';
+import { VERSION, runCheck, formatReport, toSarif, parseSeverity, meetsThreshold, runSbom } from '../lib.mjs';
 import { serveMcp } from '../mcp.mjs';
 import { planInit, applyInit, describePlan, MCP_HELP } from '../init.mjs';
 
@@ -11,6 +11,7 @@ Usage:
   zelsis verify           Same as check (for agent instructions: "run zelsis verify before finishing")
   zelsis check --all      Scan and gate on every file
   zelsis check --base origin/main   Also count commits since origin/main as changed
+  zelsis sbom             Print an SBOM from your lockfiles. --format=cyclonedx|spdx, --output=<path>. Only lockfiles are sent
   zelsis mcp              Start the MCP server (tool: zelsis_check) for AI coding agents
   zelsis init             Tell the AI agents in this repo (CLAUDE.md, AGENTS.md, .cursorrules...) to run zelsis verify
                           before finishing, and show how to add the MCP server. --dry-run only prints the plan
@@ -50,6 +51,16 @@ async function main() {
     const plan = planInit(process.cwd());
     if (!dryRun) applyInit(process.cwd(), plan);
     console.log(`${describePlan(plan, dryRun)}\n\n${MCP_HELP}`);
+    return 0;
+  }
+  if (command === 'sbom') {
+    const format = valueOf('--format') ?? 'cyclonedx';
+    if (format !== 'cyclonedx' && format !== 'spdx') { console.error('zelsis: --format must be cyclonedx or spdx'); return 2; }
+    const output = valueOf('--output');
+    if (has('--output') && !output) { console.error('zelsis: --output needs a file path'); return 2; }
+    const sbom = JSON.stringify(await runSbom({ cwd: process.cwd(), format, url: process.env.ZELSIS_URL, apiKey: process.env.ZELSIS_API_KEY }), null, 2);
+    if (output) writeFileSync(output, sbom);
+    else console.log(sbom);
     return 0;
   }
   if (command !== 'check' && command !== 'verify') { console.error(`Unknown command: ${command}\n\n${HELP}`); return 2; }

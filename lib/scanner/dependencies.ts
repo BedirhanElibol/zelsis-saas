@@ -25,7 +25,7 @@ const PINNED_MANIFEST_RE = /(?:^|\/)(?:requirements[\w.-]*\.txt|go\.mod|pom\.xml
 export const isDependencyLockfile = (path: string): boolean => LOCKFILE_RE.test(path);
 export const isDependencyFile = (path: string): boolean => LOCKFILE_RE.test(path) || PINNED_MANIFEST_RE.test(path);
 
-const MAX_DEPENDENCIES = 5000;
+export const MAX_DEPENDENCIES = 5000;
 
 function lineOf(lines: string[], ...needles: string[]): number {
   const idx = lines.findIndex((l) => needles.every((n) => l.includes(n)));

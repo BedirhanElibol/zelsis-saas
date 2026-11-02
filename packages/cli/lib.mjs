@@ -1,9 +1,9 @@
 // Shared logic for the zelsis CLI and MCP server. No dependencies: Node 18+ only.
 import { execFileSync } from 'node:child_process';
-import { readFileSync, statSync } from 'node:fs';
+import { existsSync, readFileSync, statSync } from 'node:fs';
 import { join } from 'node:path';
 
-export const VERSION = '0.2.0';
+export const VERSION = '0.3.0';
 export const DEFAULT_URL = 'https://zelsis.com';
 const MAX_FILE_BYTES = 512 * 1024;
 const MAX_TOTAL_BYTES = 3.5 * 1024 * 1024; // stays under the API's 4 MB limit with JSON overhead
@@ -62,11 +62,26 @@ export function collectFiles(cwd, { changed = [] } = {}) {
   return { files, skipped };
 }
 
-export async function scanFiles({ url = DEFAULT_URL, apiKey, files, changed, projectName }) {
+const DEPENDENCY_FILE = /(?:^|\/)(?:package-lock\.json|npm-shrinkwrap\.json|yarn\.lock|pnpm-lock\.yaml|poetry\.lock|pipfile\.lock|uv\.lock|gemfile\.lock|composer\.lock|cargo\.lock|go\.sum|requirements[\w.-]*\.txt|go\.mod|pom\.xml)$/i;
+
+/** True for the lockfiles and pinned manifests an SBOM is built from. */
+export const isDependencyPath = (path) => DEPENDENCY_FILE.test(path);
+
+/** Sends only the dependency files in `cwd` and returns the SBOM. */
+export async function runSbom({ cwd, format = 'cyclonedx', url = DEFAULT_URL, apiKey }) {
+  if (!apiKey) throw new Error(MISSING_KEY_HELP);
+  const paths = lines(git(cwd, ['ls-files', '--cached', '--others', '--exclude-standard'])).filter((p) => isDependencyPath(p) && existsSync(join(cwd, p)));
+  const files = paths.map((path) => ({ path, content: readFileSync(join(cwd, path), 'utf8') }));
+  if (files.length === 0) throw new Error('No lockfile or pinned manifest found in this repository.');
+  const projectName = cwd.replace(/\\/g, '/').split('/').filter(Boolean).pop();
+  return scanFiles({ url, apiKey, files, projectName, sbom: format });
+}
+
+export async function scanFiles({ url = DEFAULT_URL, apiKey, files, changed, projectName, sbom }) {
   const res = await fetch(`${url.replace(/\/$/, '')}/api/v1/scan-files`, {
     method: 'POST',
     headers: { 'content-type': 'application/json', 'x-api-key': apiKey, 'user-agent': `zelsis-cli/${VERSION}` },
-    body: JSON.stringify({ files, changed, projectName }),
+    body: JSON.stringify({ files, changed, projectName, sbom }),
   });
   const body = await res.json().catch(() => null);
   if (!res.ok || !body) throw new Error(body?.error || `Zelsis returned HTTP ${res.status}`);
