@@ -1,7 +1,6 @@
 'use client';
 
 import React, { Component, ErrorInfo, ReactNode } from 'react';
-import { AlertTriangle, RefreshCw } from 'lucide-react';
 import { logger } from '@/lib/logger';
 import { safeString } from '@/lib/safe-utils';
 import { isChunkLoadError, handleChunkLoadRecovery, clearChunkReloadCooldown } from '@/lib/chunk-reload';
@@ -78,14 +77,12 @@ export class ComponentErrorBoundary extends Component<Props, State> {
           <div className="w-full bg-[#141414] border border-emerald-500/30 rounded-xl p-5 sm:p-6 text-[#EDEDED] flex flex-col gap-4 font-mono shadow-xl">
             <div className="flex items-center justify-between gap-3 border-b border-white/10 pb-3">
               <div className="flex items-center gap-2.5 text-emerald-400 text-xs font-bold uppercase tracking-wider">
-                <RefreshCw size={15} className="shrink-0 animate-spin-slow" />
                 <span>{this.props.componentName} Update Available</span>
               </div>
               <button
                 onClick={this.resetError}
                 className="px-3 py-1.5 rounded-lg bg-emerald-500/20 hover:bg-emerald-500/30 border border-emerald-500/40 text-xs text-emerald-300 flex items-center gap-1.5 transition-colors cursor-pointer"
               >
-                <RefreshCw size={13} />
                 <span>Reload to Update</span>
               </button>
             </div>
@@ -100,14 +97,12 @@ export class ComponentErrorBoundary extends Component<Props, State> {
         <div className="w-full bg-[#141414] border border-red-500/20 rounded-xl p-5 sm:p-6 text-[#EDEDED] flex flex-col gap-4 font-mono shadow-xl">
           <div className="flex items-center justify-between gap-3 border-b border-white/10 pb-3">
             <div className="flex items-center gap-2.5 text-red-400 text-xs font-bold uppercase tracking-wider">
-              <AlertTriangle size={16} className="shrink-0" />
               <span>{this.props.componentName} Temporarily Unavailable</span>
             </div>
             <button
               onClick={this.resetError}
               className="px-3 py-1.5 rounded-lg bg-white/5 hover:bg-white/10 border border-white/10 text-xs text-white flex items-center gap-1.5 transition-colors cursor-pointer"
             >
-              <RefreshCw size={13} />
               <span>Retry Component</span>
             </button>
           </div>

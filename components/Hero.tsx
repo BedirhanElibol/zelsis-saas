@@ -1,6 +1,5 @@
 import React, { useState } from 'react';
 import { motion } from 'framer-motion';
-import { ArrowRight, ShieldCheck, Terminal, CheckCircle2, Play, Copy, AlertTriangle, Code } from 'lucide-react';
 
 interface HeroProps {
   onOpenDashboard?: () => void;
@@ -203,7 +202,6 @@ export const Hero: React.FC<HeroProps> = ({ onOpenDashboard }) => {
               onClick={onOpenDashboard}
               className="btn btn-primary px-8 py-3.5 rounded-lg text-xs font-bold tracking-wider uppercase flex items-center gap-2 bg-emerald-500 text-black hover:bg-emerald-400 transition-all shadow-sm"
             >
-              <Play size={14} fill="#0A0A0A" />
               <span>Launch Full Audit Suite</span>
             </button>
           )}
@@ -294,7 +292,6 @@ export const Hero: React.FC<HeroProps> = ({ onOpenDashboard }) => {
 
                 {isPassed ? (
                   <div className="p-4 rounded-xl bg-white/5 border border-white/10 text-center flex flex-col items-center gap-1.5 my-auto">
-                    <CheckCircle2 size={18} className="text-emerald-400" />
                     <span className="text-xs font-bold text-white">All Checks Passed</span>
                     <span className="text-[11px] text-[#A1A1AA]">Clean code verified. Ready for immediate deployment.</span>
                   </div>
@@ -310,7 +307,6 @@ export const Hero: React.FC<HeroProps> = ({ onOpenDashboard }) => {
                             onClick={() => copyPrompt(f)}
                             className="text-[10px] font-mono text-[#A1A1AA] hover:text-white flex items-center gap-1 bg-white/5 px-2 py-0.5 rounded border border-white/10 transition-colors"
                           >
-                            {copiedId === f.id ? <CheckCircle2 size={10} className="text-emerald-400" /> : <Copy size={10} />}
                             <span>{copiedId === f.id ? 'Copied' : 'Prompt'}</span>
                           </button>
                         </div>
@@ -331,7 +327,6 @@ export const Hero: React.FC<HeroProps> = ({ onOpenDashboard }) => {
                     className="text-white hover:underline flex items-center gap-1 font-bold"
                   >
                     <span>Full Audit</span>
-                    <ArrowRight size={11} />
                   </button>
                 )}
               </div>

@@ -10,7 +10,7 @@ import { Finding, UserTier } from '@/data/schema';
 import { DEMO_AUDIT_FINDINGS } from '@/data/demo-data';
 import { BulkFixModal } from './BulkFixModal';
 import { DismissFindingModal } from './DismissFindingModal';
-import { Search, Filter, ArrowRight, Layers, Check, RotateCcw, Play, Copy, Lock, ShieldCheck, Database, Server, Sliders, AlertOctagon, GitCommit, ChevronDown, SearchX, ExternalLink, ShieldX, Bug } from 'lucide-react';
+import { ShieldX } from 'lucide-react';
 import { ClipboardToastBadge, useClipboardToast } from '../ui/Toast';
 import { safeLower, safeString, safeTrim, safeReplace } from '@/lib/safe-utils';
 import { hasFixPromptAccess } from '@/lib/subscription-utils';
@@ -227,7 +227,6 @@ export const FindingsTable: React.FC<FindingsTableProps> = ({
         >
           <div className="flex items-center justify-between">
             <span className="text-[11px] font-mono font-bold uppercase tracking-wider text-white flex items-center gap-1.5">
-              <ShieldCheck size={14} className="text-zinc-400" />
               <span>Security &amp; OWASP</span>
             </span>
             <span className="text-[10px] font-mono text-zinc-400 uppercase">Pillar</span>
@@ -257,7 +256,6 @@ export const FindingsTable: React.FC<FindingsTableProps> = ({
         >
           <div className="flex items-center justify-between">
             <span className="text-[11px] font-mono font-bold uppercase tracking-wider text-white flex items-center gap-1.5">
-              <Database size={14} className="text-zinc-400" />
               <span>Database &amp; Storage</span>
             </span>
             <span className="text-[10px] font-mono text-zinc-400 uppercase">Pillar</span>
@@ -287,7 +285,6 @@ export const FindingsTable: React.FC<FindingsTableProps> = ({
         >
           <div className="flex items-center justify-between">
             <span className="text-[11px] font-mono font-bold uppercase tracking-wider text-white flex items-center gap-1.5">
-              <Server size={14} className="text-zinc-400" />
               <span>Legal &amp; Privacy</span>
             </span>
             <span className="text-[10px] font-mono text-zinc-400 uppercase">Pillar</span>
@@ -317,7 +314,6 @@ export const FindingsTable: React.FC<FindingsTableProps> = ({
         >
           <div className="flex items-center justify-between">
             <span className="text-[11px] font-mono font-bold uppercase tracking-wider text-white flex items-center gap-1.5">
-              <Sliders size={14} className="text-zinc-400" />
               <span>UX &amp; VibePolish</span>
             </span>
             <span className="text-[10px] font-mono text-zinc-400 uppercase">Pillar</span>
@@ -346,7 +342,6 @@ export const FindingsTable: React.FC<FindingsTableProps> = ({
         >
           <div className="flex items-center justify-between">
             <span className="text-[11px] font-mono font-bold uppercase tracking-wider text-white flex items-center gap-1.5">
-              <Bug size={14} className="text-zinc-400" />
               <span>Logic Bugs</span>
             </span>
             <span className="text-[10px] font-mono text-zinc-400 uppercase">Pillar</span>
@@ -388,7 +383,6 @@ export const FindingsTable: React.FC<FindingsTableProps> = ({
               : 'bg-[#0E0E10] border-red-500/30 text-red-400 hover:bg-red-500/10'
           }`}
         >
-          <AlertOctagon size={12} />
           <span>Critical Only ({findings.filter(f => f.severity === 'CRITICAL').length})</span>
         </button>
         {patchCount > 0 && (
@@ -402,7 +396,6 @@ export const FindingsTable: React.FC<FindingsTableProps> = ({
               : 'bg-[#0E0E10] border-white/10 text-zinc-400 hover:text-white hover:bg-white/5'
           }`}
         >
-          <GitCommit size={12} />
           <span>Has Code Patch ({patchCount})</span>
         </button>
         )}
@@ -451,13 +444,6 @@ export const FindingsTable: React.FC<FindingsTableProps> = ({
                     className="btn btn-secondary text-xs px-3 py-1 flex items-center gap-1.5 border-white/10 text-white hover:bg-white/5 transition-colors cursor-pointer"
                     title={canUseFixPrompts ? 'Copy AI master fix prompt' : 'Fix prompts are a Pro feature'}
                   >
-                    {!canUseFixPrompts ? (
-                      <Lock size={13} className="shrink-0 text-amber-400" />
-                    ) : copiedPrompt ? (
-                      <Check size={13} className="text-emerald-400" />
-                    ) : (
-                      <Copy size={13} className="shrink-0" />
-                    )}
                     <span>{canUseFixPrompts ? 'Copy Fix Prompt' : 'Copy Fix Prompt (Pro)'}</span>
                   </button>
                 )}
@@ -467,7 +453,6 @@ export const FindingsTable: React.FC<FindingsTableProps> = ({
                   onClick={() => setIsBulkOpen(true)}
                   className="btn btn-secondary text-xs px-3 py-1 flex items-center gap-1.5 border-white/10 text-white hover:bg-white/5 transition-colors cursor-pointer"
                 >
-                  <Layers size={13} />
                   <span>Bulk Remediate .patch</span>
                 </button>
               </div>
@@ -491,7 +476,6 @@ export const FindingsTable: React.FC<FindingsTableProps> = ({
         <div className="flex flex-wrap items-center gap-2 sm:gap-3 w-full sm:w-auto">
           {/* Search */}
           <div className="flex items-center gap-2 bg-[#0A0A0A] px-3 py-1.5 rounded-lg border border-white/10 flex-1 sm:w-64">
-            <Search size={14} className="text-[#A1A1AA]" />
             <input
               id="findings-search-input"
               name="findingsSearch"
@@ -506,7 +490,6 @@ export const FindingsTable: React.FC<FindingsTableProps> = ({
 
           {/* Severity Filter */}
           <div className="flex items-center gap-2 bg-[#0A0A0A] px-3 py-1.5 rounded-lg border border-white/10">
-            <Filter size={14} className="text-[#A1A1AA]" />
             <select
               aria-label="Filter findings by severity"
               value={severityFilter}
@@ -580,7 +563,6 @@ export const FindingsTable: React.FC<FindingsTableProps> = ({
                     onClick={() => onLoadDemoFindings(DEMO_AUDIT_FINDINGS)}
                     className="btn btn-primary py-2.5 px-3 text-xs font-bold w-full flex items-center justify-center gap-2 rounded-xl bg-emerald-500 text-black hover:bg-emerald-400 transition-all shadow-sm"
                   >
-                    <Layers size={14} />
                     <span>Load 1-Click Demo Template</span>
                   </button>
                 )}
@@ -590,7 +572,6 @@ export const FindingsTable: React.FC<FindingsTableProps> = ({
                     onClick={() => onTriggerScan?.()}
                     className="btn btn-secondary py-2 px-3 text-xs font-mono font-bold w-full flex items-center justify-center gap-2"
                   >
-                    <Play size={13} />
                     <span>Run New Audit Scan</span>
                   </button>
                 )}
@@ -598,7 +579,6 @@ export const FindingsTable: React.FC<FindingsTableProps> = ({
             </div>
           ) : (
             <div className="p-6 rounded-xl bg-[#0A0A0A] border border-white/10 text-center flex flex-col items-center gap-3">
-              <SearchX size={22} className="text-zinc-400" />
               <p className="text-xs text-[#A1A1AA]">
                 No findings match the active search or filter rules.{' '}
                 <button type="button" onClick={resetFilters} className="text-blue-400 hover:underline font-semibold">Try clearing your filters.</button>
@@ -608,7 +588,6 @@ export const FindingsTable: React.FC<FindingsTableProps> = ({
                 onClick={resetFilters}
                 className="btn btn-secondary btn-sm text-xs font-mono font-bold flex items-center gap-1.5"
               >
-                <RotateCcw size={12} />
                 <span>Reset Filters</span>
               </button>
             </div>
@@ -706,10 +685,6 @@ export const FindingsTable: React.FC<FindingsTableProps> = ({
                     <span className="font-semibold">
                       {isExpanded ? 'Hide Remediations & Details' : 'View Remediations & Details'}
                     </span>
-                    <ChevronDown
-                      size={14}
-                      className={`text-zinc-400 transition-transform duration-200 ${isExpanded ? 'rotate-180' : ''}`}
-                    />
                   </button>
 
                   {isExpanded && (
@@ -732,7 +707,6 @@ export const FindingsTable: React.FC<FindingsTableProps> = ({
                               }}
                               className="text-[11px] text-left text-zinc-400 leading-relaxed bg-white/[0.02] p-2 rounded-lg border border-white/5 flex items-center gap-1.5 hover:text-white transition-colors cursor-pointer"
                             >
-                              <Lock size={11} className="shrink-0 text-amber-400" />
                               <span>Fix guidance and copy-paste prompts are included in Zelsis Pro.</span>
                             </button>
                           )}
@@ -775,7 +749,7 @@ export const FindingsTable: React.FC<FindingsTableProps> = ({
                                 className="cve-link"
                                 onClick={(e) => e.stopPropagation()}
                               >
-                                {cve} <ExternalLink size={9} />
+                                {cve}
                               </a>
                             ))
                           ) : (
@@ -810,7 +784,6 @@ export const FindingsTable: React.FC<FindingsTableProps> = ({
                     className="btn btn-secondary text-xs px-3 py-2 flex-1 flex items-center justify-center gap-1.5 border-white/10 text-white hover:bg-white/10 transition-colors cursor-pointer font-mono"
                     title={canUseFixPrompts ? 'Copy remediation prompt for this finding' : 'Fix prompts are a Pro feature'}
                   >
-                    {canUseFixPrompts ? <Copy size={12} className="shrink-0" /> : <Lock size={12} className="shrink-0 text-amber-400" />}
                     <span>{canUseFixPrompts ? 'Copy Prompt' : 'Copy Prompt (Pro)'}</span>
                   </button>
 
@@ -823,7 +796,6 @@ export const FindingsTable: React.FC<FindingsTableProps> = ({
                     className="btn btn-primary text-xs px-3 py-2 flex-1 flex items-center justify-center gap-1.5 bg-emerald-500 text-black hover:bg-emerald-400 transition-colors cursor-pointer font-mono font-bold shadow-sm"
                   >
                     <span>Inspect Fix</span>
-                    <ArrowRight size={12} className="shrink-0" />
                   </button>
                 </div>
               </div>
@@ -873,7 +845,6 @@ export const FindingsTable: React.FC<FindingsTableProps> = ({
                             onClick={() => onLoadDemoFindings(DEMO_AUDIT_FINDINGS)}
                             className="btn btn-primary btn-sm px-4 py-2 text-xs font-bold flex items-center gap-2"
                           >
-                            <Layers size={13} />
                             <span>Load 1-Click Demo Template</span>
                           </button>
                         )}
@@ -883,7 +854,6 @@ export const FindingsTable: React.FC<FindingsTableProps> = ({
                             onClick={() => onTriggerScan?.()}
                             className="btn btn-secondary btn-sm px-4 py-2 text-xs font-bold flex items-center gap-2"
                           >
-                            <Play size={13} />
                             <span>Run New Audit Scan</span>
                           </button>
                         )}
@@ -891,7 +861,6 @@ export const FindingsTable: React.FC<FindingsTableProps> = ({
                     </div>
                   ) : (
                     <div className="flex flex-col items-center justify-center gap-2 py-4">
-                      <SearchX size={22} className="text-zinc-400" />
                       <p className="text-xs text-[#A1A1AA]">
                         No findings match the selected search or filter rules.{' '}
                         <button type="button" onClick={resetFilters} className="text-blue-400 hover:underline font-semibold">Try clearing your filters.</button>
@@ -901,7 +870,6 @@ export const FindingsTable: React.FC<FindingsTableProps> = ({
                         onClick={resetFilters}
                         className="btn btn-secondary btn-sm text-xs font-bold flex items-center gap-1.5"
                       >
-                        <RotateCcw size={12} />
                         <span>Clear Filters</span>
                       </button>
                     </div>
@@ -1003,7 +971,6 @@ export const FindingsTable: React.FC<FindingsTableProps> = ({
                         className="btn btn-secondary btn-sm text-[0.7rem] px-3 py-1"
                       >
                         <span>Inspect</span>
-                        <ArrowRight size={12} />
                       </button>
                     </div>
                   </td>

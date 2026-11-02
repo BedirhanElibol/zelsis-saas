@@ -1,7 +1,6 @@
 import React from 'react';
 import type { Metadata } from 'next';
 import Link from 'next/link';
-import { ArrowLeft, GitPullRequest, Infinity as InfinityIcon, KeyRound, ListChecks } from 'lucide-react';
 import { buildGateWorkflow } from '@/lib/ci-gate-snippet';
 import { getConfiguredAppUrl } from '@/lib/app-url';
 
@@ -13,22 +12,18 @@ export const metadata: Metadata = {
 
 const ITEMS = [
   {
-    icon: InfinityIcon,
     title: 'Public repositories scan free, with no limit',
     body: 'The Free plan caps private projects, not public ones. Scan the default branch whenever you like and keep the history.',
   },
   {
-    icon: GitPullRequest,
     title: 'A check on every pull request',
     body: 'The workflow below sends the base and head commits, so a contributor’s pull request is only judged on what it changes. Findings appear on their lines in “Files changed”, critical and high as errors, medium as warnings.',
   },
   {
-    icon: KeyRound,
     title: 'Your own key, your own limits',
     body: 'The gate runs for public repositories without a key, but then it shares GitHub’s limit for unauthenticated requests with everyone else. A free account and an API key give your project its own.',
   },
   {
-    icon: ListChecks,
     title: 'You decide what blocks a merge',
     body: 'Only findings from proven rules can fail the gate, and failStrategy in .zelsisrc.json sets which severities block. Dismiss a finding once and it stops counting.',
   },
@@ -39,7 +34,7 @@ export default function OpenSourcePage() {
     <div className="min-h-screen bg-[#0A0A0A] text-[#EDEDED] px-4 py-12 sm:py-16 font-sans">
       <div className="max-w-3xl mx-auto">
         <Link href="/" className="inline-flex items-center gap-2 text-xs font-mono text-zinc-400 hover:text-white transition-colors">
-          <ArrowLeft size={14} aria-hidden="true" /> Back to Home
+          Back to Home
         </Link>
         <h1 className="text-3xl sm:text-4xl font-bold text-white mt-8">Zelsis for open-source projects</h1>
         <p className="text-zinc-400 mt-3 leading-relaxed">
@@ -48,9 +43,8 @@ export default function OpenSourcePage() {
         </p>
 
         <ul className="mt-12 flex flex-col gap-8">
-          {ITEMS.map(({ icon: Icon, title, body }) => (
+          {ITEMS.map(({ title, body }) => (
             <li key={title} className="flex gap-4">
-              <Icon size={20} className="text-emerald-400 shrink-0 mt-0.5" aria-hidden="true" />
               <div>
                 <h2 className="text-lg font-semibold text-white">{title}</h2>
                 <p className="text-zinc-400 mt-1 leading-relaxed">{body}</p>

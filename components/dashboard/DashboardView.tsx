@@ -18,7 +18,6 @@ import { OnboardingChecklist } from './OnboardingChecklist';
 import { TestimonialPrompt } from './TestimonialPrompt';
 import { DemoShowcaseBanner } from '../OverviewView';
 import { generateAuditPdfReport } from '@/lib/pdf-exporter';
-import { ShieldCheck, Code, Server, RefreshCw } from 'lucide-react';
 import { ConnectTargetModal } from '../layout/ConnectTargetModal';
 import { ClipboardToastBadge, useClipboardToast } from '../ui/Toast';
 import { ComponentErrorBoundary } from '../common/ComponentErrorBoundary';
@@ -172,7 +171,6 @@ Enforce strict OWASP Top 10 compliance, fix the listed UI quality and accessibil
             onClick={() => onTriggerScan(safeProject)}
             className="inline-flex items-center justify-center gap-1.5 shrink-0 rounded-lg bg-amber-400 px-3 py-1.5 text-xs font-bold text-black hover:bg-amber-300 transition-colors"
           >
-            <RefreshCw size={13} />
             Re-scan now
           </button>
         </div>
@@ -205,7 +203,6 @@ Enforce strict OWASP Top 10 compliance, fix the listed UI quality and accessibil
             onClick={() => setActiveTab('findings')}
             className={`swiss-tab ${activeTab === 'findings' ? 'swiss-tab-active' : ''}`}
           >
-            <ShieldCheck size={14} className={activeTab === 'findings' ? 'text-white' : 'text-[#A1A1AA]'} />
             <span>Audit &amp; Findings</span>
             <span className="ml-1 px-1.5 py-0.5 rounded text-[10px] font-mono font-bold bg-white/10 text-white">
               {openFindings.length}
@@ -216,7 +213,6 @@ Enforce strict OWASP Top 10 compliance, fix the listed UI quality and accessibil
             onClick={() => setActiveTab('sandbox')}
             className={`swiss-tab ${activeTab === 'sandbox' ? 'swiss-tab-active' : ''}`}
           >
-            <Code size={14} className={activeTab === 'sandbox' ? 'text-white' : 'text-[#A1A1AA]'} />
             <span>Code Inspector &amp; Sandbox</span>
           </button>
 
@@ -224,7 +220,6 @@ Enforce strict OWASP Top 10 compliance, fix the listed UI quality and accessibil
             onClick={() => setActiveTab('diagnostics')}
             className={`swiss-tab ${activeTab === 'diagnostics' ? 'swiss-tab-active' : ''}`}
           >
-            <Server size={14} className={activeTab === 'diagnostics' ? 'text-white' : 'text-[#A1A1AA]'} />
             <span>Diagnostics &amp; Telemetry</span>
             <span className="ml-1 px-1.5 py-0.5 rounded text-[10px] font-mono font-bold bg-white/10 text-[#A1A1AA]">
               4 Tools

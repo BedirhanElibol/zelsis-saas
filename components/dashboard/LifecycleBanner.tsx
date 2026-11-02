@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState } from 'react';
-import { AlertTriangle, Calendar, ExternalLink, X } from 'lucide-react';
+import { AlertTriangle, Calendar, X } from 'lucide-react';
 import { UserProfile } from '@/components/auth/AuthModal';
 import { getSubscriptionValidity } from '@/lib/subscription-utils';
 
@@ -61,7 +61,6 @@ export const LifecycleBanner: React.FC<LifecycleBannerProps> = ({ user }) => {
             className="min-h-[36px] px-3.5 py-1.5 rounded-lg bg-amber-400 hover:bg-amber-300 text-black text-xs font-extrabold flex items-center gap-1.5 transition-all shadow cursor-pointer font-mono"
           >
             <span>Update Card at Polar</span>
-            <ExternalLink size={13} />
           </a>
         </div>
       </div>
@@ -96,7 +95,6 @@ export const LifecycleBanner: React.FC<LifecycleBannerProps> = ({ user }) => {
               className="text-[11px] font-mono font-bold text-[#A1A1AA] hover:text-white flex items-center gap-1 transition-colors px-2 py-1 rounded hover:bg-white/5"
             >
               <span>Manage at Polar</span>
-              <ExternalLink size={11} />
             </a>
             <button
               type="button"

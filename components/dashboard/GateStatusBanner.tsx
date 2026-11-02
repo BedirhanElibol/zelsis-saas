@@ -3,18 +3,7 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { Project, Finding } from '@/data/schema';
 import { generateAuditPdfReport } from '@/lib/pdf-exporter';
-import {
-  Play,
-  AlertTriangle,
-  CheckCircle2,
-  Sliders,
-  Download,
-  Award,
-  GitCompare,
-  Bell,
-  GitBranch,
-  GitPullRequest
-} from 'lucide-react';
+import { AlertTriangle, CheckCircle2 } from 'lucide-react';
 import {
   Server,
   ShieldAlert,
@@ -181,7 +170,6 @@ export const GateStatusBanner: React.FC<GateStatusBannerProps> = ({
                 title="Open target repository"
               >
                 <span className="truncate">{safeReplace(safeTrim(repoUrl), /^https?:\/\//, '')}</span>
-                <ExternalLink size={11} className="shrink-0" />
               </a>
             ) : (
               <span className="text-[11px] font-mono font-bold text-zinc-400">Local Workspace</span>
@@ -242,7 +230,6 @@ export const GateStatusBanner: React.FC<GateStatusBannerProps> = ({
           onClick={() => onTriggerScan()}
           className="btn btn-primary px-4 sm:px-5 py-2.5 text-xs font-bold uppercase tracking-wider rounded-lg flex items-center justify-center gap-2 bg-emerald-500 text-black hover:bg-emerald-400 flex-1 sm:flex-initial shadow-md transition-all active:scale-95 cursor-pointer"
         >
-          <Play size={13} fill="#0A0A0A" />
           <span>Re-Run Audit</span>
         </button>
 
@@ -252,7 +239,6 @@ export const GateStatusBanner: React.FC<GateStatusBannerProps> = ({
           className="btn btn-secondary px-3.5 py-2.5 text-xs font-mono rounded-lg flex items-center gap-2 border-white/10 bg-white/5 text-white hover:bg-white/10 hover:border-white/20 transition-all cursor-pointer shadow-sm"
           title="Configure automated GitHub Actions & CI/CD release gate"
         >
-          <GitBranch size={13} className="text-zinc-300" />
           <span className="font-bold">Setup CI/CD Gate</span>
           <span className="text-[11px] uppercase font-extrabold tracking-wider px-1.5 py-0.5 rounded bg-white/10 text-zinc-300 border border-white/15 ml-0.5">
             PR Bot
@@ -269,9 +255,7 @@ export const GateStatusBanner: React.FC<GateStatusBannerProps> = ({
             className="btn btn-secondary px-3.5 py-2.5 text-xs font-mono rounded-lg flex items-center gap-2 border-white/10 text-[#EDEDED] hover:bg-white/10 transition-colors cursor-pointer"
             aria-label="Export Release Reports"
           >
-            <Download size={13} className="text-white" />
             <span>Export Report</span>
-            <ChevronDown size={12} className={`text-[#A1A1AA] transition-transform duration-200 ${isExportMenuOpen ? 'rotate-180' : ''}`} />
           </button>
 
           {isExportMenuOpen && (
@@ -288,7 +272,6 @@ export const GateStatusBanner: React.FC<GateStatusBannerProps> = ({
                 }}
                 className="w-full text-left px-3 py-2 rounded-lg text-white hover:bg-white/10 flex items-center gap-2.5 transition-colors cursor-pointer"
               >
-                <FileText size={14} className="text-zinc-400" />
                 <div className="flex flex-col">
                   <div className="flex items-center gap-1.5">
                     <span className="font-bold">Executive PDF Report</span>
@@ -324,7 +307,6 @@ export const GateStatusBanner: React.FC<GateStatusBannerProps> = ({
                   }}
                   className="w-full text-left px-3 py-2 rounded-lg text-white hover:bg-white/10 flex items-center gap-2.5 transition-colors cursor-pointer"
                 >
-                  <Link2 size={14} className="text-zinc-400" />
                   <div className="flex flex-col">
                     <span className="font-bold">PDF with check link</span>
                     <span className="text-[10px] text-[#A1A1AA]">Adds a read-only link (score and findings, no code) so readers can confirm the PDF was not edited</span>
@@ -349,7 +331,6 @@ export const GateStatusBanner: React.FC<GateStatusBannerProps> = ({
                 }}
                 className="w-full text-left px-3 py-2 rounded-lg text-white hover:bg-white/10 flex items-center gap-2.5 transition-colors cursor-pointer"
               >
-                <ShieldCheck size={14} className="text-zinc-400" />
                 <div className="flex flex-col">
                   <div className="flex items-center gap-1.5">
                     <span className="font-bold">White-label SOC 2 Report</span>
@@ -370,7 +351,6 @@ export const GateStatusBanner: React.FC<GateStatusBannerProps> = ({
                 }}
                 className="w-full text-left px-3 py-2 rounded-lg text-white hover:bg-white/10 flex items-center gap-2.5 transition-colors cursor-pointer"
               >
-                <Table size={14} className="text-zinc-400" />
                 <div className="flex flex-col">
                   <span className="font-bold">RFC 4180 CSV Export</span>
                   <span className="text-[10px] text-[#A1A1AA]">Import to Jira, Linear &amp; GitHub</span>
@@ -384,7 +364,6 @@ export const GateStatusBanner: React.FC<GateStatusBannerProps> = ({
                 }}
                 className="w-full text-left px-3 py-2 rounded-lg text-white hover:bg-white/10 flex items-center gap-2.5 transition-colors cursor-pointer border-t border-white/5 pt-1.5"
               >
-                <Code size={14} className="text-zinc-400" />
                 <div className="flex flex-col">
                   <span className="font-bold">JSON Scorecard Payload</span>
                   <span className="text-[10px] text-[#A1A1AA]">CI/CD automation artifact</span>
@@ -404,9 +383,7 @@ export const GateStatusBanner: React.FC<GateStatusBannerProps> = ({
             className="btn btn-secondary px-3.5 py-2.5 text-xs font-mono rounded-lg flex items-center gap-2 border-white/10 text-[#EDEDED] hover:bg-white/10 transition-colors cursor-pointer"
             aria-label="Audit Tools and Governance Settings"
           >
-            <Sliders size={13} className="text-zinc-400" />
             <span>Audit Tools</span>
-            <ChevronDown size={12} className={`text-[#A1A1AA] transition-transform duration-200 ${isToolsMenuOpen ? 'rotate-180' : ''}`} />
           </button>
 
           {isToolsMenuOpen && (
@@ -418,7 +395,6 @@ export const GateStatusBanner: React.FC<GateStatusBannerProps> = ({
                 }}
                 className="w-full text-left px-3 py-2 rounded-lg text-white hover:bg-white/10 flex items-center gap-2.5 transition-colors cursor-pointer"
               >
-                <Sliders size={14} className="text-zinc-400" />
                 <div className="flex flex-col">
                   <span className="font-bold">Rule Matrix Configurator</span>
                   <span className="text-[10px] text-[#A1A1AA]">Toggle security &amp; UI rule weights</span>
@@ -432,7 +408,6 @@ export const GateStatusBanner: React.FC<GateStatusBannerProps> = ({
                 }}
                 className="w-full text-left px-3 py-2 rounded-lg text-white hover:bg-white/10 flex items-center gap-2.5 transition-colors cursor-pointer"
               >
-                <GitCompare size={14} className="text-zinc-400" />
                 <div className="flex flex-col">
                   <span className="font-bold">Compare Snapshots</span>
                   <span className="text-[10px] text-[#A1A1AA]">Differential regression analysis</span>
@@ -446,7 +421,6 @@ export const GateStatusBanner: React.FC<GateStatusBannerProps> = ({
                 }}
                 className="w-full text-left px-3 py-2 rounded-lg text-white hover:bg-white/10 flex items-center gap-2.5 transition-colors cursor-pointer"
               >
-                <Bell size={14} className="text-zinc-400" />
                 <div className="flex flex-col">
                   <span className="font-bold">Webhook Alerts</span>
                   <span className="text-[10px] text-[#A1A1AA]">Slack &amp; Discord dispatch setup</span>
@@ -460,7 +434,6 @@ export const GateStatusBanner: React.FC<GateStatusBannerProps> = ({
                 }}
                 className="w-full text-left px-3 py-2 rounded-lg text-white hover:bg-white/10 flex items-center gap-2.5 transition-colors cursor-pointer"
               >
-                <GitPullRequest size={14} className="text-zinc-400" />
                 <div className="flex flex-col">
                   <span className="font-bold">CI/CD &amp; GitHub PR Gate</span>
                   <span className="text-[10px] text-[#A1A1AA]">Automate PR block &amp; Actions workflow</span>
@@ -474,7 +447,6 @@ export const GateStatusBanner: React.FC<GateStatusBannerProps> = ({
                 }}
                 className="w-full text-left px-3 py-2 rounded-lg text-white hover:bg-white/10 flex items-center gap-2.5 transition-colors cursor-pointer"
               >
-                <Server size={14} className="text-zinc-400" />
                 <div className="flex flex-col">
                   <span className="font-bold">Deployment Manifest</span>
                   <span className="text-[10px] text-[#A1A1AA]">Cryptographic release attestation</span>
@@ -488,7 +460,6 @@ export const GateStatusBanner: React.FC<GateStatusBannerProps> = ({
                 }}
                 className="w-full text-left px-3 py-2 rounded-lg text-white hover:bg-white/10 flex items-center gap-2.5 transition-colors cursor-pointer"
               >
-                <ShieldCheck size={14} className="text-zinc-400" />
                 <div className="flex flex-col">
                   <span className="font-bold">Release Gate Badge</span>
                   <span className="text-[10px] text-[#A1A1AA]">Live SVG embed for README</span>
@@ -502,7 +473,6 @@ export const GateStatusBanner: React.FC<GateStatusBannerProps> = ({
                 }}
                 className="w-full text-left px-3 py-2 rounded-lg text-white hover:bg-white/10 flex items-center gap-2.5 transition-colors cursor-pointer"
               >
-                <Link2 size={14} className="text-zinc-400" />
                 <div className="flex flex-col">
                   <span className="font-bold">Share Report Link</span>
                   <span className="text-[10px] text-[#A1A1AA]">Read-only page, no code included</span>
@@ -516,7 +486,6 @@ export const GateStatusBanner: React.FC<GateStatusBannerProps> = ({
                 }}
                 className="w-full text-left px-3 py-2 rounded-lg text-white hover:bg-white/10 flex items-center gap-2.5 transition-colors cursor-pointer border-t border-white/10 pt-2"
               >
-                <BookOpen size={14} className="text-zinc-400" />
                 <div className="flex flex-col">
                   <span className="font-bold">Rule Knowledge Base</span>
                   <span className="text-[10px] text-[#A1A1AA]">Press Cmd+K anytime</span>

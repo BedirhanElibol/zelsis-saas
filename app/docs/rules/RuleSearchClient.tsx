@@ -1,7 +1,6 @@
 'use client';
 
 import React, { useState, useMemo } from 'react';
-import { Search, ShieldAlert, CheckCircle2, AlertTriangle, Info, SlidersHorizontal } from 'lucide-react';
 
 export interface CatalogRule {
   ruleId: number;
@@ -50,25 +49,25 @@ export function RuleSearchClient({ rules }: RuleSearchClientProps) {
       case 'CRITICAL':
         return (
           <span className="inline-flex items-center gap-1 text-[11px] font-mono font-bold uppercase px-2 py-0.5 rounded bg-red-500/10 text-red-400 border border-red-500/20">
-            <ShieldAlert size={12} /> CRITICAL
+            CRITICAL
           </span>
         );
       case 'HIGH':
         return (
           <span className="inline-flex items-center gap-1 text-[11px] font-mono font-bold uppercase px-2 py-0.5 rounded bg-orange-500/10 text-orange-400 border border-orange-500/20">
-            <ShieldAlert size={12} /> HIGH
+            HIGH
           </span>
         );
       case 'MEDIUM':
         return (
           <span className="inline-flex items-center gap-1 text-[11px] font-mono font-bold uppercase px-2 py-0.5 rounded bg-amber-500/10 text-amber-400 border border-amber-500/20">
-            <AlertTriangle size={12} /> MEDIUM
+            MEDIUM
           </span>
         );
       case 'LOW':
         return (
           <span className="inline-flex items-center gap-1 text-[11px] font-mono font-bold uppercase px-2 py-0.5 rounded bg-blue-500/10 text-blue-400 border border-blue-500/20">
-            <Info size={12} /> LOW
+            LOW
           </span>
         );
       default:
@@ -88,7 +87,7 @@ export function RuleSearchClient({ rules }: RuleSearchClientProps) {
             className="inline-flex items-center gap-1 text-[10px] font-mono px-2 py-0.5 rounded-full bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 whitespace-nowrap"
             title="Tested and benchmarked: eligible to gate releases"
           >
-            <CheckCircle2 size={10} /> Verified Gate
+            Verified Gate
           </span>
         );
       case 'experimental':
@@ -97,7 +96,7 @@ export function RuleSearchClient({ rules }: RuleSearchClientProps) {
             className="inline-flex items-center gap-1 text-[10px] font-mono px-2 py-0.5 rounded-full bg-amber-500/10 text-amber-400 border border-amber-500/20 whitespace-nowrap"
             title="Experimental: reported as advisory finding, does not fail release gate"
           >
-            <AlertTriangle size={10} /> Experimental
+            Experimental
           </span>
         );
       case 'unproven':
@@ -107,7 +106,7 @@ export function RuleSearchClient({ rules }: RuleSearchClientProps) {
             className="inline-flex items-center gap-1 text-[10px] font-mono px-2 py-0.5 rounded-full bg-white/5 text-zinc-400 border border-white/10 whitespace-nowrap"
             title="Standard rule: standard coverage"
           >
-            <Info size={10} /> Standard
+            Standard
           </span>
         );
     }
@@ -118,7 +117,6 @@ export function RuleSearchClient({ rules }: RuleSearchClientProps) {
       {/* Search & Filter Bar */}
       <div className="flex flex-col sm:flex-row gap-3 items-stretch sm:items-center justify-between">
         <div className="relative flex-1">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-zinc-400" size={16} />
           <input
             type="text"
             aria-label="Search rules"

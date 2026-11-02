@@ -2,7 +2,7 @@
 
 import React, { useActionState, useCallback, useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { Building2, CheckCircle2, Loader2, LogIn, Users } from 'lucide-react';
+import { Building2, Loader2, Users } from 'lucide-react';
 import { AuthModal } from '@/components/auth/AuthModal';
 import { acceptInvite } from '@/app/actions/organization';
 import { initialOrgActionState } from '@/lib/org-action-state';
@@ -39,15 +39,15 @@ export function InviteAcceptView({ token }: { token: string }) {
         </div>
 
         <ul className="text-xs text-zinc-300 flex flex-col gap-1.5">
-          <li className="flex items-center gap-2"><Users size={13} className="text-zinc-500" /> Pro features while you are a member</li>
-          <li className="flex items-center gap-2"><Users size={13} className="text-zinc-500" /> Your team&apos;s gate policy applies to your scans</li>
-          <li className="flex items-center gap-2"><Users size={13} className="text-zinc-500" /> Teammates see your saved projects&apos; score and gate status</li>
+          <li className="flex items-center gap-2">Pro features while you are a member</li>
+          <li className="flex items-center gap-2">Your team&apos;s gate policy applies to your scans</li>
+          <li className="flex items-center gap-2">Teammates see your saved projects&apos; score and gate status</li>
         </ul>
 
         {state.status === 'success' ? (
           <div className="flex flex-col gap-3">
             <div role="status" className="flex items-center gap-2 text-xs p-3 rounded-xl border bg-emerald-500/10 border-emerald-500/30 text-emerald-300">
-              <CheckCircle2 size={14} /> {state.message}
+              {state.message}
             </div>
             <button type="button" onClick={() => router.push('/dashboard')} className="btn btn-primary min-h-[44px] rounded-xl text-xs font-bold">
               Go to dashboard
@@ -59,7 +59,7 @@ export function InviteAcceptView({ token }: { token: string }) {
           </div>
         ) : !accessToken ? (
           <button type="button" onClick={() => setAuthOpen(true)} className="btn btn-primary min-h-[44px] rounded-xl text-xs font-bold flex items-center justify-center gap-2">
-            <LogIn size={14} /> Sign in or create an account to join
+            Sign in or create an account to join
           </button>
         ) : (
           <form action={formAction} className="flex flex-col gap-3">

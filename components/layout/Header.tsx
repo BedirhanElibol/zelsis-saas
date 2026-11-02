@@ -3,7 +3,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import Image from 'next/image';
 import { Project, PlanUsageQuota, UserTier } from '@/data/schema';
-import { Play, ArrowLeft, ArrowRight, FolderGit2, LogOut, User, ChevronDown, Settings, Menu, Calendar, ExternalLink, Terminal, Shield, Building2 } from 'lucide-react';
+import { FolderGit2, Menu } from 'lucide-react';
 import { UserProfile } from '@/components/auth/AuthModal';
 import { normalizeRepoUrl, extractRepoDisplayName } from '@/lib/github-api';
 import { ConnectTargetModal } from './ConnectTargetModal';
@@ -177,7 +177,6 @@ export const Header: React.FC<HeaderProps> = ({
               className="hidden sm:flex items-center gap-1.5 text-xs text-[#A1A1AA] hover:text-white transition-colors shrink-0 min-h-11"
               title="Return to Landing Page"
             >
-              <ArrowLeft size={15} />
               <span className="hidden sm:inline font-mono">Home</span>
             </button>
           )}
@@ -197,7 +196,6 @@ export const Header: React.FC<HeaderProps> = ({
               className="hidden xl:flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg bg-[#141414] border border-white/10 text-[11px] font-mono text-zinc-300 shrink-0"
               title={user?.tier === 'Enterprise' ? 'Enterprise Organization Workspace' : 'Personal Workspace'}
             >
-              <Building2 size={13} className="text-zinc-400 shrink-0" />
               <span className="font-bold text-white">
                 {user?.tier === 'Enterprise' ? `${user.name?.split(' ')[0] || 'Enterprise'} Workspace` : 'Personal Workspace'}
               </span>
@@ -245,7 +243,6 @@ export const Header: React.FC<HeaderProps> = ({
         {/* On phones the folder button opens the same connect-and-scan modal, so the bar is hidden */}
         <form onSubmit={handleAuditAction} className="hidden md:flex items-center flex-1 max-w-sm sm:max-w-md lg:max-w-lg mx-2 sm:mx-4 min-w-0">
           <div className="relative w-full flex items-center">
-            <Terminal size={14} className="absolute left-2.5 sm:left-3 text-[#A1A1AA] pointer-events-none shrink-0" />
             <input
               id="header-target-repo-input"
               name="targetRepo"
@@ -262,7 +259,6 @@ export const Header: React.FC<HeaderProps> = ({
               className="absolute right-1 min-h-[32px] px-2.5 sm:px-3 py-1 bg-white text-black hover:bg-neutral-200 disabled:opacity-50 disabled:cursor-not-allowed rounded-md text-[10px] sm:text-xs font-mono font-bold uppercase tracking-wider flex items-center gap-1 transition-all cursor-pointer shadow-sm active:scale-95 shrink-0 outline-none focus-visible:ring-2 focus-visible:ring-white/20"
               title="Audit Target Repository"
             >
-              <Play size={10} fill="#0A0A0A" />
               <span>Scan</span>
             </button>
           </div>
@@ -294,7 +290,6 @@ export const Header: React.FC<HeaderProps> = ({
               className="hidden sm:flex items-center gap-1.5 px-2.5 py-1 rounded-lg border text-[10px] font-mono font-bold transition-all cursor-pointer bg-white/5 hover:bg-white/10 text-white border-white/10 shadow-sm"
               title="View Plan Details & Quotas"
             >
-              <Shield size={11} className="text-zinc-400" />
               {user?.tier === 'Pro' ? (
                 <span className="text-zinc-200">PRO · UNLIMITED</span>
               ) : user?.tier === 'Enterprise' ? (
@@ -333,7 +328,6 @@ export const Header: React.FC<HeaderProps> = ({
                 }`}>
                   {user.tier === 'Free' ? 'Free Plan' : `${user.tier} Plan`}
                 </span>
-                <ChevronDown size={12} className="text-[#A1A1AA]" />
               </button>
 
               {isUserMenuOpen && (
@@ -372,7 +366,6 @@ export const Header: React.FC<HeaderProps> = ({
                               }}
                               className="text-amber-400 hover:text-amber-300 font-bold flex items-center gap-1 transition-colors cursor-pointer"
                             >
-                              <ArrowRight size={11} className="text-amber-400" />
                               <span>Upgrade</span>
                             </button>
                           )}
@@ -391,7 +384,6 @@ export const Header: React.FC<HeaderProps> = ({
 
                         <div className="flex items-center justify-between text-[10px] text-[#A1A1AA]">
                           <div className="flex items-center gap-1 min-w-0">
-                            <Calendar size={11} className="text-[#A1A1AA] shrink-0" />
                             <span className="truncate">
                               {validity.isExpired
                                 ? `Expired ${validity.formattedRenewalDate}`
@@ -404,7 +396,6 @@ export const Header: React.FC<HeaderProps> = ({
                             className="text-[10px] text-zinc-300 hover:text-white font-medium underline underline-offset-2 flex items-center gap-0.5 shrink-0 ml-1.5"
                           >
                             <span>Manage</span>
-                            <ExternalLink size={9} />
                           </button>
                         </div>
 
@@ -430,7 +421,6 @@ export const Header: React.FC<HeaderProps> = ({
                       }}
                       className="w-full text-left px-3 py-2 rounded-lg text-white hover:bg-white/10 flex items-center gap-2 transition-colors font-medium"
                     >
-                      <ArrowRight size={13} className="text-amber-400" />
                       <span>Upgrade Plan</span>
                     </button>
                   )}
@@ -443,7 +433,6 @@ export const Header: React.FC<HeaderProps> = ({
                       }}
                       className="w-full text-left px-3 py-2 rounded-lg text-white hover:bg-white/10 flex items-center gap-2 transition-colors font-medium"
                     >
-                      <Settings size={13} className="text-[#A1A1AA]" />
                       <span>Profile & Settings</span>
                     </button>
                   )}
@@ -456,7 +445,6 @@ export const Header: React.FC<HeaderProps> = ({
                       }}
                       className="w-full text-left px-3 py-2 rounded-lg text-red-400 hover:bg-red-500/10 flex items-center gap-2 border-t border-white/10 pt-2 transition-colors font-medium"
                     >
-                      <LogOut size={13} />
                       <span>Sign Out</span>
                     </button>
                   )}

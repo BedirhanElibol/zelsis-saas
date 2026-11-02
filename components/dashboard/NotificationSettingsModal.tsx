@@ -2,7 +2,7 @@
 
 import React, { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { X, Bell, Send, CheckCircle2, AlertCircle, MessageSquare, Mail, CalendarClock } from 'lucide-react';
+import { X, Bell } from 'lucide-react';
 import { getActiveUserAuth } from '@/lib/supabase-client';
 import { getProjectAlertSettings, updateProjectAlertSettings, type ProjectAlertSettings } from '@/app/actions/project-notifications';
 
@@ -177,7 +177,6 @@ export const NotificationSettingsModal: React.FC<NotificationSettingsModalProps>
           <div className="space-y-4">
             <div>
               <label htmlFor="slack-webhook-url-input" className="block text-xs font-mono font-bold text-[#94A3B8] mb-1.5 flex items-center gap-2">
-                <MessageSquare size={14} className="text-[#E01E5A]" />
                 <span>Slack Webhook URL:</span>
               </label>
               <input
@@ -194,7 +193,6 @@ export const NotificationSettingsModal: React.FC<NotificationSettingsModalProps>
 
             <div>
               <label htmlFor="discord-webhook-url-input" className="block text-xs font-mono font-bold text-[#94A3B8] mb-1.5 flex items-center gap-2">
-                <Send size={14} className="text-[#5865F2]" />
                 <span>Discord Webhook URL:</span>
               </label>
               <input
@@ -214,7 +212,6 @@ export const NotificationSettingsModal: React.FC<NotificationSettingsModalProps>
           {canScheduleRescans && (
             <fieldset className="space-y-3 rounded-xl border border-white/10 bg-white/[0.02] p-4" disabled={!alertSettings || isSavingAlerts}>
               <legend className="px-1 text-xs font-mono font-bold text-[#94A3B8] flex items-center gap-2">
-                <CalendarClock size={14} className="text-emerald-400" aria-hidden="true" />
                 <span>Weekly rescan</span>
               </legend>
               <label className="flex items-start gap-3 text-xs text-[#EDEDED] cursor-pointer">
@@ -254,7 +251,6 @@ export const NotificationSettingsModal: React.FC<NotificationSettingsModalProps>
                   : 'bg-red-500/10 border-red-500/30 text-red-400'
               }`}
             >
-              {testStatus.startsWith('SUCCESS') ? <CheckCircle2 size={16} /> : <AlertCircle size={16} />}
               <span>{testStatus}</span>
             </div>
           )}
@@ -266,7 +262,6 @@ export const NotificationSettingsModal: React.FC<NotificationSettingsModalProps>
               disabled={isSending || (!slackUrl && !discordUrl)}
               className="btn btn-secondary text-xs px-4 py-2 flex items-center gap-2 disabled:opacity-50 font-mono"
             >
-              <Send size={14} />
               <span>{isSending ? 'Sending Test...' : 'Send Test Alert'}</span>
             </button>
 

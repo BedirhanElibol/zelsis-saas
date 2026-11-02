@@ -1,15 +1,13 @@
 import React from 'react';
 import Link from 'next/link';
-import { ScanSearch, CheckCircle2, XCircle, FlaskConical } from 'lucide-react';
 
 export function CodeBlock({ code, label, tone }: { code: string; label?: string; tone?: 'bad' | 'good' }) {
-  const Icon = tone === 'bad' ? XCircle : tone === 'good' ? CheckCircle2 : null;
+  const marked = tone === 'bad' || tone === 'good';
   const color = tone === 'bad' ? 'text-red-400' : 'text-emerald-400';
   return (
     <div className="min-w-0">
       {label && (
-        <div className={`flex items-center gap-1.5 text-xs font-mono mb-1 ${Icon ? color : 'text-zinc-400'}`}>
-          {Icon && <Icon size={13} aria-hidden="true" />}
+        <div className={`flex items-center gap-1.5 text-xs font-mono mb-1 ${marked ? color : 'text-zinc-400'}`}>
           <span>{label}</span>
         </div>
       )}
@@ -23,7 +21,6 @@ export function CodeBlock({ code, label, tone }: { code: string; label?: string;
 export function TestStep({ children }: { children: React.ReactNode }) {
   return (
     <div className="flex gap-2 bg-sky-500/10 border border-sky-500/20 p-3 rounded-lg text-sm text-zinc-300">
-      <FlaskConical size={16} className="text-sky-400 shrink-0 mt-0.5" aria-hidden="true" />
       <div className="min-w-0">
         <strong className="text-sky-300">Test it: </strong>
         {children}
@@ -41,7 +38,6 @@ export function ZelsisCatches({ rules, children }: { rules: CitedRule[]; childre
   return (
     <section className="bg-violet-500/10 border border-violet-500/20 p-4 sm:p-5 rounded-lg space-y-3">
       <h2 className="flex items-center gap-2 text-lg font-semibold text-white m-0">
-        <ScanSearch size={18} className="text-violet-300" aria-hidden="true" />
         How Zelsis catches this
       </h2>
       {children && <p className="text-sm text-zinc-300 m-0">{children}</p>}

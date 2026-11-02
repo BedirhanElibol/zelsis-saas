@@ -2,17 +2,7 @@
 
 import React, { useState } from 'react';
 import { useRouter } from 'next/navigation';
-import {
-  CreditCard,
-  CheckCircle2,
-  ShieldCheck,
-  AlertTriangle,
-  Calendar,
-  ExternalLink,
-  Loader2,
-  ArrowRight,
-  Check
-} from 'lucide-react';
+import { CreditCard, Loader2 } from 'lucide-react';
 import { UserProfile } from '@/components/auth/AuthModal';
 import { getSupabase } from '@/lib/supabase';
 import { verifyLicenseKey } from '@/lib/stripe-checkout';
@@ -194,7 +184,6 @@ export const SubscriptionCard: React.FC<SubscriptionCardProps> = ({
                     className="text-xs text-zinc-300 hover:text-white font-medium inline-flex items-center gap-1.5 transition-colors focus-visible:ring-2 focus-visible:ring-emerald-500 focus-visible:outline-none rounded"
                   >
                     <span>Manage at Polar</span>
-                    <ExternalLink size={12} />
                   </a>
                 </div>
                 <div className="flex flex-col gap-1.5">
@@ -210,7 +199,6 @@ export const SubscriptionCard: React.FC<SubscriptionCardProps> = ({
                   </div>
                   <div className="flex items-center justify-between text-[11px] text-[#A1A1AA]">
                     <div className="flex items-center gap-1.5">
-                      <Calendar size={13} className="text-[#A1A1AA] shrink-0" />
                       <span>{validity.isExpired ? `Expired on ${validity.formattedRenewalDate}` : `Renews on ${validity.formattedRenewalDate}`}</span>
                     </div>
                     <span className="font-mono text-[10px] tabular-nums">{validity.cycleProgressPercent}% Cycle Completed</span>
@@ -219,7 +207,6 @@ export const SubscriptionCard: React.FC<SubscriptionCardProps> = ({
               </div>
             ) : (
               <div className="flex items-center gap-1.5 text-xs text-[#A1A1AA]">
-                <Calendar size={13} className="text-emerald-400 shrink-0" />
                 <span>Free Tier &bull; Standard Access</span>
               </div>
             )}
@@ -229,19 +216,15 @@ export const SubscriptionCard: React.FC<SubscriptionCardProps> = ({
               <span className="text-[11px] font-mono font-bold text-[#A1A1AA] uppercase tracking-wider">Included Features:</span>
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 text-xs text-[#EDEDED]">
                 <div className="flex items-center gap-2 p-2 rounded-lg bg-white/[0.02] border border-white/5">
-                  <CheckCircle2 size={14} className="text-emerald-400 shrink-0" />
                   <span className="font-medium">OWASP Security Pre-flight Checks</span>
                 </div>
                 <div className="flex items-center gap-2 p-2 rounded-lg bg-white/[0.02] border border-white/5">
-                  <CheckCircle2 size={14} className="text-emerald-400 shrink-0" />
                   <span className="font-medium">VibePolish UI &amp; Design System Rules</span>
                 </div>
                 <div className="flex items-center gap-2 p-2 rounded-lg bg-white/[0.02] border border-white/5">
-                  <CheckCircle2 size={14} className="text-emerald-400 shrink-0" />
                   <span className="font-medium">Unlimited Static Analysis</span>
                 </div>
                 <div className="flex items-center gap-2 p-2 rounded-lg bg-white/[0.02] border border-white/5">
-                  <CheckCircle2 size={14} className="text-emerald-400 shrink-0" />
                   <span className="font-medium">Source code never stored</span>
                 </div>
               </div>
@@ -266,7 +249,6 @@ export const SubscriptionCard: React.FC<SubscriptionCardProps> = ({
                     </>
                   ) : (
                     <>
-                      <ShieldCheck size={14} className="text-emerald-400" />
                       <span>Sync Subscription</span>
                     </>
                   )}
@@ -280,7 +262,6 @@ export const SubscriptionCard: React.FC<SubscriptionCardProps> = ({
                     rel="noopener noreferrer"
                     className="min-h-[44px] px-3.5 py-2 rounded-xl bg-white/10 hover:bg-white/15 border border-white/20 text-white font-bold text-xs flex items-center justify-center gap-1.5 transition-all cursor-pointer focus-visible:ring-2 focus-visible:ring-emerald-500 focus-visible:outline-none"
                   >
-                    <ExternalLink size={13} />
                     <span>Manage at Polar</span>
                   </a>
                   <button
@@ -291,7 +272,6 @@ export const SubscriptionCard: React.FC<SubscriptionCardProps> = ({
                     }}
                     className="min-h-[44px] px-4 py-2 rounded-xl bg-gradient-to-r from-amber-400 to-amber-500 hover:from-amber-300 hover:to-amber-400 text-black font-extrabold text-xs flex items-center justify-center gap-2 shadow-lg transition-all cursor-pointer focus-visible:ring-2 focus-visible:ring-emerald-500 focus-visible:outline-none"
                   >
-                    <ArrowRight size={14} />
                     <span>Upgrade to Team ({priceLabel('Enterprise')})</span>
                   </button>
                 </>
@@ -302,7 +282,6 @@ export const SubscriptionCard: React.FC<SubscriptionCardProps> = ({
                   rel="noopener noreferrer"
                   className="min-h-[44px] px-3.5 py-2 rounded-xl bg-white/10 hover:bg-white/15 border border-white/20 text-white font-bold text-xs flex items-center justify-center gap-1.5 transition-all cursor-pointer focus-visible:ring-2 focus-visible:ring-emerald-500 focus-visible:outline-none"
                 >
-                  <ExternalLink size={13} />
                   <span>Manage Subscription at Polar</span>
                 </a>
               ) : (
@@ -314,7 +293,6 @@ export const SubscriptionCard: React.FC<SubscriptionCardProps> = ({
                   }}
                   className="min-h-[44px] px-4 py-2 rounded-xl bg-gradient-to-r from-amber-400 to-amber-500 hover:from-amber-300 hover:to-amber-400 text-black font-extrabold text-xs flex items-center justify-center gap-2 shadow-lg transition-all cursor-pointer focus-visible:ring-2 focus-visible:ring-emerald-500 focus-visible:outline-none"
                 >
-                  <ArrowRight size={14} />
                   <span>Upgrade to Pro ({priceLabel('Pro')})</span>
                 </button>
               )}

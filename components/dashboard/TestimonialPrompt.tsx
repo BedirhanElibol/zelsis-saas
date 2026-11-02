@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useActionState, useEffect, useState } from 'react';
-import { Loader2, MessageSquareQuote, X } from 'lucide-react';
+import { Loader2, X } from 'lucide-react';
 import { hasSentTestimonial, submitTestimonial } from '@/app/actions/testimonials';
 import { initialTestimonialState } from '@/lib/testimonial-state';
 import { getActiveUserAuth } from '@/lib/supabase-client';
@@ -49,7 +49,6 @@ export function TestimonialPrompt({ hasScan }: { hasScan: boolean }) {
         <X size={16} aria-hidden="true" />
       </button>
       <div className="flex items-center gap-2">
-        <MessageSquareQuote size={16} className="text-emerald-400" aria-hidden="true" />
         <h2 id="testimonial-title" className="text-sm font-bold text-white m-0">Did Zelsis catch something real?</h2>
       </div>
       {state.status === 'success' ? (

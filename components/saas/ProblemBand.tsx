@@ -1,12 +1,11 @@
 import React from 'react';
-import { Repeat, KeyRound, FileWarning, Lock } from 'lucide-react';
 
 // Each item is a bug class Zelsis has a rule for (see CatchTabs); no counts or invented incidents.
 const PROBLEMS = [
-  { icon: Repeat, title: 'A customer is charged twice', body: 'The first support email asks for a refund, and the review mentions it.' },
-  { icon: KeyRound, title: 'A secret key ships to the browser', body: 'Anyone who opens the developer tools can copy it.' },
-  { icon: Lock, title: 'A deploy locks the orders table', body: 'Checkout hangs for every visitor until the migration finishes.' },
-  { icon: FileWarning, title: 'The page still says lorem ipsum', body: 'Visitors decide the app is unfinished, and some post a screenshot.' },
+  { title: 'A customer is charged twice', body: 'The first support email asks for a refund, and the review mentions it.' },
+  { title: 'A secret key ships to the browser', body: 'Anyone who opens the developer tools can copy it.' },
+  { title: 'A deploy locks the orders table', body: 'Checkout hangs for every visitor until the migration finishes.' },
+  { title: 'The page still says lorem ipsum', body: 'Visitors decide the app is unfinished, and some post a screenshot.' },
 ];
 
 /** Sits under the hero: what users notice when a rushed release goes out. */
@@ -18,10 +17,9 @@ export function ProblemBand() {
           Apps ship in weeks now. Users find the rough edges in minutes.
         </h2>
         <ul className="mt-8 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-          {PROBLEMS.map(({ icon: Icon, title, body }) => (
+          {PROBLEMS.map(({ title, body }) => (
             <li key={title} className="rounded-xl border border-white/10 bg-[#121214] p-5">
-              <Icon className="w-5 h-5 text-red-400" aria-hidden="true" />
-              <h3 className="mt-3 font-semibold text-white">{title}</h3>
+              <h3 className="font-semibold text-white">{title}</h3>
               <p className="mt-1.5 text-sm text-zinc-400">{body}</p>
             </li>
           ))}

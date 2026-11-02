@@ -1,5 +1,4 @@
 import React from 'react';
-import { Quote } from 'lucide-react';
 import { getSupabaseAdmin } from '@/lib/supabase-admin';
 import { logger } from '@/lib/logger';
 import type { PublicTestimonial } from '@/lib/testimonial-state';
@@ -36,7 +35,6 @@ export async function Testimonials() {
         <ul className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 list-none p-0 m-0">
           {quotes.map((q) => (
             <li key={`${q.displayName}-${q.quote.slice(0, 20)}`} className="flex flex-col gap-4 rounded-2xl border border-white/10 bg-[#121214] p-5">
-              <Quote size={18} className="text-emerald-400" aria-hidden="true" />
               <blockquote className="text-base text-zinc-200 leading-relaxed m-0">{q.quote}</blockquote>
               <p className="mt-auto text-sm text-zinc-400 m-0">
                 <span className="font-semibold text-white">{q.displayName}</span>

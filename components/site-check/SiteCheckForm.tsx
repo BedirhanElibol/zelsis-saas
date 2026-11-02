@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState } from 'react';
-import { ArrowRight, CheckCircle2, CircleX, Globe, Loader2 } from 'lucide-react';
+import { Loader2 } from 'lucide-react';
 import type { SiteReadinessItem } from '@/lib/site-readiness';
 
 interface Result { url: string; items: SiteReadinessItem[]; passed: number; total: number }
@@ -37,7 +37,6 @@ export function SiteCheckForm() {
     <div className="w-full">
       <form onSubmit={run} className="flex flex-col sm:flex-row items-stretch gap-2 p-1.5 rounded-xl bg-[#141414] border border-white/10 focus-within:border-white/30">
         <label className="flex items-center gap-2.5 px-3 py-2 flex-1 min-w-0">
-          <Globe size={16} className="text-zinc-400 shrink-0" aria-hidden="true" />
           <span className="sr-only">Website address</span>
           <input
             name="url"
@@ -57,7 +56,6 @@ export function SiteCheckForm() {
         >
           {busy ? <Loader2 size={13} className="animate-spin" aria-hidden="true" /> : null}
           <span>{busy ? 'Checking…' : 'Check my site'}</span>
-          {!busy && <ArrowRight size={13} aria-hidden="true" />}
         </button>
       </form>
 
@@ -71,9 +69,6 @@ export function SiteCheckForm() {
           <ul className="mt-4 flex flex-col gap-2">
             {[...failed, ...passed].map((item) => (
               <li key={item.id} className={`rounded-xl border p-4 flex gap-3 ${item.ok ? 'border-white/10 bg-[#111113]' : 'border-red-500/30 bg-red-500/[0.06]'}`}>
-                {item.ok
-                  ? <CheckCircle2 size={18} className="text-emerald-400 shrink-0 mt-0.5" aria-label="Passes" />
-                  : <CircleX size={18} className="text-red-400 shrink-0 mt-0.5" aria-label="Fails" />}
                 <div className="min-w-0">
                   <p className="font-semibold text-white">{item.title}</p>
                   <p className="text-sm text-zinc-400 break-words">{item.detail}</p>

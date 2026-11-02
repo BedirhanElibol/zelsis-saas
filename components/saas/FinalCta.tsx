@@ -1,7 +1,6 @@
 'use client';
 
 import React from 'react';
-import { ArrowRight, Terminal, ShieldCheck, Play } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import { CODE_RETENTION_SHORT } from '@/lib/data-retention';
 
@@ -16,7 +15,6 @@ export const FinalCta: React.FC = () => {
       <div className="max-w-5xl mx-auto rounded-3xl border border-white/20 bg-gradient-to-b from-[#141414] to-[#0E0E10] p-8 sm:p-16 shadow-2xl relative z-10 flex flex-col items-center text-center">
         {/* Release Status Badge */}
         <div className="inline-flex items-center gap-2 px-3 py-1 rounded-md border border-white/10 bg-white/5 text-zinc-300 text-xs font-mono mb-6">
-          <ShieldCheck size={14} className="text-zinc-400" />
           <span className="uppercase tracking-wider font-semibold text-xs">Free plan, no credit card</span>
         </div>
 
@@ -36,7 +34,6 @@ export const FinalCta: React.FC = () => {
             onClick={() => router.push('/dashboard')}
             className="w-full sm:w-auto px-8 py-4 rounded-xl text-xs font-mono font-bold uppercase tracking-wider bg-emerald-500 text-black hover:bg-emerald-400 transition-all flex items-center justify-center gap-2.5 shadow-sm active:scale-[0.98] cursor-pointer"
           >
-            <Play size={14} fill="currentColor" />
             <span>Scan a repository</span>
           </button>
 
@@ -45,7 +42,6 @@ export const FinalCta: React.FC = () => {
             className="w-full sm:w-auto px-8 py-4 rounded-xl text-xs font-mono font-bold uppercase tracking-wider text-white hover:text-white bg-white/5 hover:bg-white/10 border border-white/10 hover:border-white/20 transition-all flex items-center justify-center gap-2 cursor-pointer"
           >
             <span>See pricing</span>
-            <ArrowRight size={14} />
           </a>
         </div>
 

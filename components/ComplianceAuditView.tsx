@@ -3,7 +3,7 @@
 import React, { useState } from 'react';
 import { Finding, ComplianceRule } from '@/data/schema';
 import { COMPLIANCE_RULES_CATALOG } from '@/data/mockData';
-import { Scale, Search, Filter, Copy, CheckCircle2, AlertTriangle, ShieldCheck, AlertOctagon } from 'lucide-react';
+import { Scale } from 'lucide-react';
 
 interface ComplianceAuditViewProps {
   findings: Finding[];
@@ -70,7 +70,6 @@ export const ComplianceAuditView: React.FC<ComplianceAuditViewProps> = ({
 
         <div className="flex flex-col sm:flex-row items-start sm:items-center gap-3">
           <div className="px-4 py-2.5 rounded-xl bg-amber-500/10 border border-amber-500/30 text-amber-400 text-xs font-mono font-bold flex items-center gap-2">
-            <AlertOctagon size={16} />
             <span>Active Release Gate: ENFORCED</span>
           </div>
         </div>
@@ -79,7 +78,6 @@ export const ComplianceAuditView: React.FC<ComplianceAuditViewProps> = ({
       {/* Filter Bar */}
       <div className="flex gap-4 flex-wrap items-center">
         <div className="flex items-center gap-2.5 bg-[#141414] px-4 py-2.5 rounded-xl border border-white/10 flex-1 min-w-[280px]">
-          <Search size={16} className="text-[#A1A1AA]" />
           <input
             id="compliance-search-input"
             name="complianceSearch"
@@ -93,7 +91,6 @@ export const ComplianceAuditView: React.FC<ComplianceAuditViewProps> = ({
         </div>
 
         <div className="flex items-center gap-2">
-          <Filter size={16} className="text-[#A1A1AA]" />
           <select
             id="compliance-category-select"
             name="complianceCategory"
@@ -151,7 +148,6 @@ export const ComplianceAuditView: React.FC<ComplianceAuditViewProps> = ({
                       {rule.category}
                     </span>
                     <span className="text-[0.75rem] text-amber-400 font-mono font-bold bg-amber-500/10 border border-amber-500/30 px-2.5 py-0.5 rounded flex items-center gap-1.5">
-                      <ShieldCheck size={12} />
                       <span>{rule.legalFramework}</span>
                     </span>
                   </div>
@@ -162,7 +158,6 @@ export const ComplianceAuditView: React.FC<ComplianceAuditViewProps> = ({
                         className="btn btn-primary btn-sm flex items-center gap-1.5 bg-red-600 hover:bg-red-500 text-white font-bold text-xs"
                         onClick={() => onInspectFinding(matchingFinding)}
                       >
-                        <AlertTriangle size={14} />
                         <span>Fix Violation</span>
                       </button>
                     ) : (
@@ -176,11 +171,6 @@ export const ComplianceAuditView: React.FC<ComplianceAuditViewProps> = ({
                       className="btn btn-secondary btn-sm flex items-center gap-1.5 text-xs font-mono font-bold"
                       onClick={() => copyPrompt(rule)}
                     >
-                      {copiedId === rule.id ? (
-                        <CheckCircle2 size={14} className="text-emerald-400" />
-                      ) : (
-                        <Copy size={14} />
-                      )}
                       <span>{copiedId === rule.id ? 'Copied Prompt!' : 'Copy Fix Prompt'}</span>
                     </button>
                   </div>
@@ -195,7 +185,6 @@ export const ComplianceAuditView: React.FC<ComplianceAuditViewProps> = ({
 
                 {/* Statutory Penalty Banner */}
                 <div className="bg-rose-500/10 border border-rose-500/20 px-3.5 py-2 rounded-lg text-xs text-rose-400 font-mono mb-3 flex items-center gap-2">
-                  <AlertOctagon size={14} className="shrink-0" />
                   <span>
                     <strong className="text-rose-300">Statutory Penalty Exposure:</strong>{' '}
                     {rule.penaltyExposure}

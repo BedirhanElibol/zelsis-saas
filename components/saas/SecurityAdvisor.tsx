@@ -1,5 +1,5 @@
 import React from 'react';
-import { Database, FileCode2, Plus } from 'lucide-react';
+import { Database, FileCode2 } from 'lucide-react';
 
 /** Positions Zelsis next to Supabase Security Advisor: the Advisor inspects the live database, Zelsis the code. */
 export function SecurityAdvisor() {
@@ -29,7 +29,6 @@ export function SecurityAdvisor() {
             </ul>
           </div>
 
-          <Plus className="w-7 h-7 text-zinc-600 self-center hidden md:block" aria-hidden="true" />
 
           <div className="bg-[#141414] border border-emerald-500/30 rounded-xl p-8 w-full max-w-sm flex flex-col items-center">
             <div className="w-14 h-14 rounded-full bg-emerald-500/15 flex items-center justify-center mb-5 text-emerald-400">

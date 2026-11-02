@@ -1,7 +1,7 @@
 'use client';
 
 import React from 'react';
-import { X, Check, Lock, Shield, ArrowRight, Zap, ExternalLink } from 'lucide-react';
+import { X } from 'lucide-react';
 import { UserTier } from '@/data/schema';
 import { ENTERPRISE_SEAT_LIMIT, PLAN_PRICES, SUPPORT_TERMS } from '@/data/pricing-plans';
 
@@ -82,7 +82,6 @@ export const TierDetailsModal: React.FC<TierDetailsModalProps> = ({
         <div className="flex items-start justify-between gap-4 border-b border-white/10 pb-4">
           <div>
             <div className="flex items-center gap-2 mb-1">
-              <Shield size={18} className="text-white" />
               <h2 className="text-lg sm:text-xl font-extrabold text-white">
                 Tier Comparison &amp; Feature Matrix
               </h2>
@@ -143,7 +142,6 @@ export const TierDetailsModal: React.FC<TierDetailsModalProps> = ({
                   className="w-full py-2 px-3 rounded-lg bg-white/10 hover:bg-white/15 border border-white/20 text-white font-bold text-xs flex items-center justify-center gap-1.5 transition-all cursor-pointer text-center"
                 >
                   <span>Manage at Polar</span>
-                  <ExternalLink size={13} />
                 </a>
               ) : currentTier === 'Enterprise' ? (
                 <div className="w-full py-2 px-3 rounded-lg bg-white/5 border border-white/10 text-zinc-400 font-medium text-xs text-center">
@@ -155,7 +153,6 @@ export const TierDetailsModal: React.FC<TierDetailsModalProps> = ({
                   className="w-full py-2 px-3 rounded-lg bg-white text-black hover:bg-neutral-200 font-bold text-xs flex items-center justify-center gap-1.5 transition-all cursor-pointer"
                 >
                   <span>Upgrade to Pro (${PLAN_PRICES.Pro})</span>
-                  <ArrowRight size={13} />
                 </button>
               )}
             </div>
@@ -183,7 +180,6 @@ export const TierDetailsModal: React.FC<TierDetailsModalProps> = ({
                   className="w-full py-2 px-3 rounded-lg bg-white/10 hover:bg-white/15 border border-white/20 text-white font-bold text-xs flex items-center justify-center gap-1.5 transition-all cursor-pointer text-center"
                 >
                   <span>Manage at Polar</span>
-                  <ExternalLink size={13} />
                 </a>
               ) : (
                 <button
@@ -191,7 +187,6 @@ export const TierDetailsModal: React.FC<TierDetailsModalProps> = ({
                   className="w-full py-2 px-3 rounded-lg bg-white text-black hover:bg-neutral-200 font-bold text-xs flex items-center justify-center gap-1.5 transition-all cursor-pointer"
                 >
                   <span>Upgrade to Team (${PLAN_PRICES.Enterprise})</span>
-                  <ArrowRight size={13} />
                 </button>
               )}
             </div>

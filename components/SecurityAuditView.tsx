@@ -3,7 +3,6 @@
 import React, { useState } from 'react';
 import { Finding, SecurityRule } from '@/data/schema';
 import { SECURITY_RULES_CATALOG } from '@/data/mockData';
-import { ShieldCheck, Search, Filter, Copy, CheckCircle2, AlertTriangle } from 'lucide-react';
 
 interface SecurityAuditViewProps {
   findings: Finding[];
@@ -40,7 +39,6 @@ export const SecurityAuditView: React.FC<SecurityAuditViewProps> = ({
       {/* Header Info */}
       <div>
         <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-          <ShieldCheck size={26} color="#10B981" />
           <h1 style={{ fontSize: '1.5rem', fontWeight: 800, color: '#EDEDED', margin: 0 }}>
             Zelsis Security Pre-flight Taxonomy
           </h1>
@@ -53,7 +51,6 @@ export const SecurityAuditView: React.FC<SecurityAuditViewProps> = ({
       {/* Filter Bar */}
       <div style={{ display: 'flex', gap: '16px', flexWrap: 'wrap', alignItems: 'center' }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: '10px', background: 'var(--bg-surface)', padding: '10px 16px', borderRadius: '10px', border: '1px solid rgba(255, 255, 255, 0.08)', flex: 1, minWidth: '280px' }}>
-          <Search size={16} color="#A1A1AA" />
           <input
             id="security-rules-search-input"
             name="securityRulesSearch"
@@ -68,7 +65,6 @@ export const SecurityAuditView: React.FC<SecurityAuditViewProps> = ({
         </div>
 
         <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-          <Filter size={16} color="#A1A1AA" />
           <select
             id="security-category-select"
             name="securityCategory"
@@ -120,7 +116,6 @@ export const SecurityAuditView: React.FC<SecurityAuditViewProps> = ({
                   <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
                     {matchingFinding ? (
                       <button className="btn btn-primary btn-sm" style={{ background: '#EF4444' }} onClick={() => onInspectFinding(matchingFinding)}>
-                        <AlertTriangle size={14} />
                         <span>Fix Open Violation</span>
                       </button>
                     ) : (
@@ -131,7 +126,6 @@ export const SecurityAuditView: React.FC<SecurityAuditViewProps> = ({
                     )}
 
                     <button className="btn btn-secondary btn-sm" onClick={() => copyPrompt(rule)}>
-                      {copiedId === rule.id ? <CheckCircle2 size={14} color="#10B981" /> : <Copy size={14} />}
                       <span>{copiedId === rule.id ? 'Copied Prompt!' : 'Copy Fix Prompt'}</span>
                     </button>
                   </div>

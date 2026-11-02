@@ -3,7 +3,6 @@
 import React from 'react';
 import Link from 'next/link';
 import { useSearchParams } from 'next/navigation';
-import { ArrowRight } from 'lucide-react';
 import { GUIDE_CATEGORIES, GUIDES, type GuideCategory } from './guides';
 
 const isCategory = (value: string): value is GuideCategory => GUIDE_CATEGORIES.some((c) => c.value === value);
@@ -48,7 +47,6 @@ function FilterView({ active, onToggle, onReset }: {
             >
               <h2 className="flex items-center justify-between gap-2 text-lg font-semibold text-white m-0">
                 <span>{g.title}</span>
-                <ArrowRight size={16} className="text-zinc-500 group-hover:text-emerald-400 shrink-0" aria-hidden="true" />
               </h2>
               <p className="text-zinc-400 mt-1 mb-0">{g.summary}</p>
             </Link>

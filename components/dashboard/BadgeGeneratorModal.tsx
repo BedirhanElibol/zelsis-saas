@@ -4,7 +4,7 @@ import React, { useState } from 'react';
 import { getConfiguredAppUrl } from '@/lib/app-url';
 import { badgeUrlFor } from '@/lib/badge-url';
 import { Project } from '@/data/schema';
-import { ShieldCheck, Copy, CheckCircle2, X } from 'lucide-react';
+import { X } from 'lucide-react';
 
 interface BadgeGeneratorModalProps {
   isOpen: boolean;
@@ -55,7 +55,6 @@ export const BadgeGeneratorModal: React.FC<BadgeGeneratorModalProps> = ({
       <div className="relative w-full max-w-xl max-h-[85vh] overflow-y-auto bg-[#141414] border border-white/10 rounded-2xl p-6 sm:p-8 shadow-xl flex flex-col gap-6 text-[#EDEDED]">
         <div className="flex items-center justify-between border-b border-white/10 pb-4">
           <div className="flex items-center gap-3">
-            <ShieldCheck size={22} className="text-white" />
             <div>
               <h3 className="text-lg font-extrabold text-[#EDEDED]">GitHub Release Gate Shield Badge</h3>
               <p className="text-xs text-[#94A3B8]">Embed live gate status shields directly into your GitHub README.md</p>
@@ -89,7 +88,6 @@ export const BadgeGeneratorModal: React.FC<BadgeGeneratorModalProps> = ({
           <div className="flex items-center justify-between">
             <span className="text-xs font-mono font-bold text-[#94A3B8]">Markdown Snippet (for GitHub README.md):</span>
             <button onClick={() => handleCopy(markdownSnippet, 'md')} className="btn btn-secondary btn-sm text-[0.7rem] px-2.5 py-1">
-              {copiedType === 'md' ? <CheckCircle2 size={12} className="text-white" /> : <Copy size={12} />}
               <span>{copiedType === 'md' ? 'Copied!' : 'Copy Markdown'}</span>
             </button>
           </div>
@@ -103,7 +101,6 @@ export const BadgeGeneratorModal: React.FC<BadgeGeneratorModalProps> = ({
           <div className="flex items-center justify-between">
             <span className="text-xs font-mono font-bold text-[#94A3B8]">HTML Snippet:</span>
             <button onClick={() => handleCopy(htmlSnippet, 'html')} className="btn btn-secondary btn-sm text-[0.7rem] px-2.5 py-1">
-              {copiedType === 'html' ? <CheckCircle2 size={12} className="text-white" /> : <Copy size={12} />}
               <span>{copiedType === 'html' ? 'Copied!' : 'Copy HTML'}</span>
             </button>
           </div>

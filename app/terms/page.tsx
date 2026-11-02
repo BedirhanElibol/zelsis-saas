@@ -1,7 +1,6 @@
 import React from 'react';
 import type { Metadata } from 'next';
 import Link from 'next/link';
-import { ShieldCheck, ArrowLeft } from 'lucide-react';
 import { CONTACT_EMAIL } from '@/lib/contact';
 
 export const metadata: Metadata = {
@@ -18,7 +17,6 @@ export default function TermsPage() {
             href="/"
             className="inline-flex items-center gap-2 text-xs font-mono text-[#888888] hover:text-[#FFFFFF] transition-colors"
           >
-            <ArrowLeft size={14} />
             <span>Back to Home</span>
           </Link>
           <div className="flex items-center gap-3">
@@ -40,7 +38,6 @@ export default function TermsPage() {
 
         <div>
           <div className="flex items-center gap-2.5 mb-2">
-            <ShieldCheck size={24} className="text-[#10B981]" />
             <h1 className="text-2xl sm:text-3xl font-extrabold text-[#FFFFFF] tracking-tight">
               Terms of Service &amp; User Agreement
             </h1>

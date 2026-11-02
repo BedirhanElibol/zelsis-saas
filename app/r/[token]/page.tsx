@@ -1,6 +1,6 @@
 import type { Metadata } from 'next';
 import Link from 'next/link';
-import { ArrowRight, CircleAlert, CircleCheck, CircleX, ShieldCheck } from 'lucide-react';
+import { CircleAlert, CircleCheck, CircleX } from 'lucide-react';
 import { getSupabaseAdmin } from '@/lib/supabase-admin';
 import { isShareToken, toPublicReport, type PublicReport } from '@/lib/report-share';
 
@@ -51,7 +51,7 @@ function ScanYourOwn() {
         <p className="text-sm text-zinc-400">Zelsis finds leaked keys, broken auth and logic bugs before they ship. Free plan, no credit card.</p>
       </div>
       <Link href="/?ref=shared-report" className="inline-flex items-center justify-center gap-2 px-4 min-h-11 rounded-lg bg-emerald-500 text-black text-sm font-bold hover:bg-emerald-400 focus-visible:ring-2 focus-visible:ring-white focus-visible:outline-none">
-        Scan a repository <ArrowRight size={14} aria-hidden="true" />
+        Scan a repository
       </Link>
     </div>
   );
@@ -85,7 +85,7 @@ export default async function SharedReportPage({ params }: { params: Promise<{ t
     <main className="min-h-screen bg-[#0A0A0A] text-[#EDEDED] px-4 py-16 sm:py-24">
       <div className="max-w-3xl mx-auto">
         <p className="text-xs font-mono uppercase tracking-widest text-zinc-400 mb-3 flex items-center gap-2">
-          <ShieldCheck size={14} aria-hidden="true" /> Shared Zelsis report
+          Shared Zelsis report
         </p>
         <h1 className="text-2xl sm:text-3xl font-bold text-white break-words">{report.target}</h1>
         <p className="text-sm text-zinc-400 mt-1">Scanned {new Date(report.scannedAt).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' })}</p>

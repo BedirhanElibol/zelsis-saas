@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useActionState, useCallback, useEffect, useState } from 'react';
-import { Lock, Loader2, Ticket, Unplug } from 'lucide-react';
+import { Loader2, Unplug } from 'lucide-react';
 import { deleteJiraConnection, getJiraAccess, getJiraIssueTypes, saveJiraConnection, setJiraIssueType } from '@/app/actions/jira';
 import { initialJiraState, type JiraConnectionSummary, type JiraIssueTypeList } from '@/lib/jira-state';
 import { getActiveUserAuth } from '@/lib/supabase-client';
@@ -39,7 +39,6 @@ export function JiraCard() {
   return (
     <section className="bg-[#141414] border border-white/10 rounded-2xl p-5 sm:p-6 flex flex-col gap-4">
       <div className="flex items-center gap-2">
-        <Ticket size={16} className="text-emerald-400" aria-hidden="true" />
         <h2 className="text-sm font-bold text-white">Jira</h2>
       </div>
 
@@ -77,7 +76,6 @@ export function JiraCard() {
         </div>
       ) : !allowed ? (
         <p className="text-xs text-zinc-400 leading-relaxed flex items-start gap-2">
-          <Lock size={13} className="text-zinc-500 shrink-0 mt-0.5" aria-hidden="true" />
           <span>
             Open a Jira issue from any finding with one click. Included in Zelsis Pro and Team.{' '}
             <a href="/#pricing" className="text-emerald-400 hover:text-emerald-300 underline underline-offset-2">See plans</a>

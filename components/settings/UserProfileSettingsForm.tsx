@@ -2,7 +2,6 @@
 
 import React, { useState, useEffect } from 'react';
 import { UserAvatar } from '@/components/ui/UserAvatar';
-import { Check, Save, AlertCircle } from 'lucide-react';
 import { UserProfile } from '@/components/auth/AuthModal';
 
 export interface UserProfileSettingsFormProps {
@@ -72,7 +71,7 @@ export const UserProfileSettingsForm: React.FC<UserProfileSettingsFormProps> = (
         <span className="text-[11px] font-mono font-bold text-[#A1A1AA] uppercase tracking-wider">Profile Details &amp; Avatar</span>
         {profileSaved && (
           <span className="text-xs font-mono font-bold text-white flex items-center gap-1">
-            <Check size={13} /> Saved
+            Saved
           </span>
         )}
       </div>
@@ -80,7 +79,6 @@ export const UserProfileSettingsForm: React.FC<UserProfileSettingsFormProps> = (
       {!isAuthenticated && (
         <div className="p-3.5 rounded-xl bg-amber-500/10 border border-amber-500/30 flex flex-col sm:flex-row sm:items-center justify-between gap-3 text-amber-300 text-xs">
           <div className="flex items-center gap-2.5">
-            <AlertCircle size={16} className="shrink-0" />
             <span>Sign in to customize and link your profile. Profile settings are read-only in guest mode.</span>
           </div>
           {onOpenAuth && (
@@ -211,7 +209,6 @@ export const UserProfileSettingsForm: React.FC<UserProfileSettingsFormProps> = (
             !isAuthenticated ? 'bg-white/5 border border-white/10 text-[#71717A] cursor-not-allowed' : 'bg-white text-black hover:bg-neutral-200 cursor-pointer'
           }`}
         >
-          {profileSaved ? <Check size={14} /> : <Save size={14} />}
           <span>{!isAuthenticated ? 'Sign In to Save Profile' : profileSaved ? 'Profile Saved' : 'Save Profile'}</span>
         </button>
       </div>

@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { X, Layers, Download, CheckCircle2, Lock } from 'lucide-react';
+import { X, Layers } from 'lucide-react';
 import { Finding, UserTier } from '@/data/schema';
 import { isBulkPatchAllowed } from '@/lib/quota-manager';
 
@@ -183,7 +183,6 @@ ${addedComment}
                   disabled={selectedIds.length === 0}
                   onClick={handleDownloadCombinedPatch}
                 >
-                  <Download size={14} />
                   <span>Download Multi-File .patch</span>
                 </button>
               ) : (
@@ -191,7 +190,6 @@ ${addedComment}
                   className="btn btn-primary text-xs px-5 py-2 font-bold uppercase tracking-wider rounded-lg flex items-center gap-2 bg-amber-500 text-black hover:bg-amber-400 transition-all shadow-sm"
                   onClick={() => onOpenCheckout?.('Pro')}
                 >
-                  <Lock size={14} />
                   <span>Pro — Unlock Bulk Patch</span>
                 </button>
               )}

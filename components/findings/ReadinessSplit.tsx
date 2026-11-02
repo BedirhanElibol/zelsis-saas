@@ -1,5 +1,4 @@
 import React from 'react';
-import { ShieldCheck, Users } from 'lucide-react';
 import type { Finding } from '@/data/schema';
 import { severityRank, splitReadiness, verdictFor, type ReadinessVerdict } from '@/lib/readiness';
 
@@ -16,19 +15,19 @@ export function ReadinessSplit({ findings }: { findings: Finding[] }) {
   const firstNoticed = [...users].sort((a, b) => severityRank(b) - severityRank(a)).slice(0, 3);
 
   const cards = [
-    { key: 'security', title: 'Security', hint: 'Can someone break in or read data they should not?', icon: ShieldCheck, list: security },
-    { key: 'users', title: 'Ready for users', hint: 'Will people hit a bug, a slow page or something that looks unfinished?', icon: Users, list: users },
+    { key: 'security', title: 'Security', hint: 'Can someone break in or read data they should not?', list: security },
+    { key: 'users', title: 'Ready for users', hint: 'Will people hit a bug, a slow page or something that looks unfinished?', list: users },
   ];
 
   return (
     <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-      {cards.map(({ key, title, hint, icon: Icon, list }) => {
+      {cards.map(({ key, title, hint, list }) => {
         const v = verdictFor(list);
         return (
           <div key={key} className="rounded-xl border border-white/10 bg-[#0E0E10] p-4 flex flex-col gap-2">
             <div className="flex items-center justify-between gap-3">
               <span className="flex items-center gap-2 text-sm font-semibold text-white">
-                <Icon size={16} className="text-zinc-400" aria-hidden="true" /> {title}
+                {title}
               </span>
               <span className={`px-2 py-0.5 rounded border text-xs font-mono ${TONE[v]}`}>{v}</span>
             </div>

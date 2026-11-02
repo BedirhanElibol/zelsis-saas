@@ -3,7 +3,6 @@
 import React, { useState } from 'react';
 import { Project, Finding } from '@/data/schema';
 import { UserTier } from '@/data/schema';
-import { CheckSquare, Copy, CheckCircle2, AlertTriangle, ArrowRight, ShieldCheck, Lock } from 'lucide-react';
 import { hasFixPromptAccess } from '@/lib/subscription-utils';
 
 interface RemediationQueueViewProps {
@@ -48,7 +47,6 @@ Remediation: ${f.remediationPrompt}`).join('\n\n')}`;
       <div className="bg-[#141414] border border-white/10 rounded-xl" style={{ padding: '24px 32px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: '20px' }}>
         <div>
           <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-            <CheckSquare size={26} color="#10B981" />
             <h1 style={{ fontSize: '1.5rem', fontWeight: 800, color: '#EDEDED', margin: 0 }}>
               Remediation Action Queue
             </h1>
@@ -62,7 +60,6 @@ Remediation: ${f.remediationPrompt}`).join('\n\n')}`;
           userTier === 'Free' ? (
             <div className="flex items-center gap-2">
               <div className="flex items-center gap-1.5 px-3 py-2 rounded-xl bg-white/5 border border-white/10 text-xs text-zinc-400">
-                <Lock size={13} />
                 <span className="font-mono">Batch Export — Pro Only</span>
               </div>
               {onOpenCheckout && (
@@ -76,7 +73,6 @@ Remediation: ${f.remediationPrompt}`).join('\n\n')}`;
             </div>
           ) : (
             <button className="btn btn-primary" onClick={copyBatchPrompt}>
-              {copiedBatch ? <CheckCircle2 size={16} color="#FFF" /> : <Copy size={16} />}
               <span>{copiedBatch ? 'Batch Prompts Copied!' : 'Export All Batch Fix Prompts'}</span>
             </button>
           )
@@ -114,11 +110,9 @@ Remediation: ${f.remediationPrompt}`).join('\n\n')}`;
                 <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
                   <button className="btn btn-secondary btn-sm" onClick={() => onInspectFinding(item)}>
                     <span>Inspect Code</span>
-                    <ArrowRight size={14} />
                   </button>
 
                   <button className="btn btn-secondary btn-sm" style={{ borderColor: 'rgba(16, 185, 129, 0.4)', color: '#10B981' }} onClick={() => onToggleResolveFinding(item.id)}>
-                    <CheckCircle2 size={14} />
                     <span>Mark Resolved</span>
                   </button>
                 </div>
@@ -138,7 +132,6 @@ Remediation: ${f.remediationPrompt}`).join('\n\n')}`;
             {resolvedFindings.map(item => (
               <div key={item.id} style={{ padding: '14px 20px', borderRadius: '10px', background: 'rgba(16, 185, 129, 0.05)', border: '1px solid rgba(16, 185, 129, 0.15)', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
                 <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-                  <CheckCircle2 size={16} color="#10B981" />
                   <span style={{ fontSize: '0.875rem', color: '#A1A1AA', textDecoration: 'line-through' }}>
                     {item.title} ({item.projectName})
                   </span>

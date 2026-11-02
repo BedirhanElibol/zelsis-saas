@@ -6,7 +6,7 @@ import { LockedLocation } from '@/components/findings/LockedLocation';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Finding, PlanUsageQuota } from '@/data/schema';
 import { UserProfile } from '@/components/auth/AuthModal';
-import { X, Copy, CheckCircle2, AlertTriangle, Code, ShieldCheck, User, GitCommit, FileText, Split, AlignJustify, Lock } from 'lucide-react';
+import { X, Lock } from 'lucide-react';
 import { formatFindingForJira } from '@/lib/export-utils';
 import { checkAiPromptQuota } from '@/lib/quota-manager';
 import { hasFixPromptAccess } from '@/lib/subscription-utils';
@@ -247,7 +247,6 @@ export const FindingDetailModal: React.FC<FindingDetailModalProps> = ({
                   }`}
                   title="Triage finding as False Positive (Accepted Risk)"
                 >
-                  <ShieldCheck size={13} className={finding.falsePositive ? 'text-amber-400' : 'text-zinc-400'} />
                   <span>{finding.falsePositive ? 'False Positive (Muted)' : 'False Positive'}</span>
                 </button>
               )}
@@ -320,7 +319,6 @@ export const FindingDetailModal: React.FC<FindingDetailModalProps> = ({
             <div className="bg-[#141416] border border-white/10 rounded-xl p-4 sm:p-5 flex flex-col gap-4">
               <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-white/10 pb-3">
                 <div className="flex items-center gap-2 text-xs font-mono font-extrabold text-zinc-200">
-                  <ShieldCheck size={16} className="text-emerald-400" />
                   <span>Surgical Fix Workstation</span>
                 </div>
 
@@ -335,7 +333,6 @@ export const FindingDetailModal: React.FC<FindingDetailModalProps> = ({
                         : 'text-zinc-400 hover:text-white'
                     }`}
                   >
-                    <GitCommit size={12} />
                     <span>Diff Patch</span>
                   </button>
 
@@ -348,7 +345,6 @@ export const FindingDetailModal: React.FC<FindingDetailModalProps> = ({
                         : 'text-zinc-400 hover:text-white'
                     }`}
                   >
-                    <Code size={12} />
                     <span>AI Fix Prompt</span>
                   </button>
 
@@ -361,7 +357,6 @@ export const FindingDetailModal: React.FC<FindingDetailModalProps> = ({
                         : 'text-zinc-400 hover:text-white'
                     }`}
                   >
-                    <FileText size={12} />
                     <span>Jira / Linear</span>
                   </button>
                 </div>
@@ -379,7 +374,6 @@ export const FindingDetailModal: React.FC<FindingDetailModalProps> = ({
                         diffViewMode === 'split' ? 'bg-white/15 text-white font-bold' : 'text-zinc-400 hover:text-zinc-300'
                       }`}
                     >
-                      <Split size={11} />
                       <span>Side-by-Side</span>
                     </button>
                     <button
@@ -389,7 +383,6 @@ export const FindingDetailModal: React.FC<FindingDetailModalProps> = ({
                         diffViewMode === 'unified' ? 'bg-white/15 text-white font-bold' : 'text-zinc-400 hover:text-zinc-300'
                       }`}
                     >
-                      <AlignJustify size={11} />
                       <span>Unified</span>
                     </button>
                   </div>
@@ -401,22 +394,18 @@ export const FindingDetailModal: React.FC<FindingDetailModalProps> = ({
                   >
                     {fixLocked ? (
                       <>
-                        <Lock size={12} className="text-amber-400" />
                         <span>Copy Diff (Pro)</span>
                       </>
                     ) : needsReveal ? (
                       <>
-                        <Code size={13} />
                         <span>{revealStatus === 'loading' ? 'Loading Fix...' : canUseFixPrompts ? 'Load Fix' : aiPromptCheck.allowed ? 'Reveal Fix (Free Trial)' : 'Reveal Fix'}</span>
                       </>
                     ) : copiedDiff ? (
                       <>
-                        <CheckCircle2 size={13} className="text-emerald-400" />
                         <span>Diff Copied!</span>
                       </>
                     ) : (
                       <>
-                        <Code size={13} />
                         <span>Copy Diff Patch</span>
                       </>
                     )}
@@ -516,7 +505,6 @@ export const FindingDetailModal: React.FC<FindingDetailModalProps> = ({
                         disabled={revealStatus === 'loading'}
                         className="px-3 py-1 rounded bg-emerald-500/10 hover:bg-emerald-500/20 border border-emerald-500/30 text-emerald-400 text-xs font-bold font-mono flex items-center gap-1.5 transition-all cursor-pointer"
                       >
-                        {copiedPrompt ? <CheckCircle2 size={13} /> : <Copy size={13} />}
                         <span>
                           {needsReveal
                             ? (revealStatus === 'loading' ? 'Loading Fix...' : canUseFixPrompts ? 'Load Fix' : aiPromptCheck.allowed ? 'Reveal Fix (Free Trial)' : 'Reveal Fix')
@@ -529,7 +517,6 @@ export const FindingDetailModal: React.FC<FindingDetailModalProps> = ({
                         onClick={() => onOpenCheckout?.('Pro')}
                         className="px-3 py-1 rounded bg-emerald-500 hover:bg-emerald-400 text-black text-xs font-bold font-mono flex items-center gap-1.5 transition-all cursor-pointer"
                       >
-                        <Lock size={12} />
                         <span>Upgrade to Pro</span>
                       </button>
                     )}
@@ -553,7 +540,6 @@ export const FindingDetailModal: React.FC<FindingDetailModalProps> = ({
                         onClick={() => onOpenCheckout?.('Pro')}
                         className="btn btn-primary px-5 py-2.5 text-xs font-bold font-mono uppercase tracking-wider rounded-xl bg-emerald-500 hover:bg-emerald-400 text-black transition-all cursor-pointer flex items-center gap-2"
                       >
-                        <Lock size={13} />
                         <span>Unlock Unlimited AI Fixes ({priceLabel('Pro')})</span>
                       </button>
                     </div>
@@ -581,7 +567,6 @@ export const FindingDetailModal: React.FC<FindingDetailModalProps> = ({
                       onClick={copyJira}
                       className="px-3 py-1 rounded bg-cyan-500/10 hover:bg-cyan-500/20 border border-cyan-500/30 text-cyan-400 text-xs font-bold font-mono flex items-center gap-1.5 transition-all cursor-pointer"
                     >
-                      {copiedJira ? <CheckCircle2 size={13} className="text-emerald-400" /> : <Copy size={13} />}
                       <span>{copiedJira ? 'Ticket Copied!' : 'Copy Markdown'}</span>
                     </button>
                   </div>
@@ -595,7 +580,6 @@ export const FindingDetailModal: React.FC<FindingDetailModalProps> = ({
             {/* Reproduction & Audit Steps */}
             <div>
               <div className="flex items-center gap-2 text-xs font-bold text-zinc-300 mb-2 font-mono">
-                <AlertTriangle size={14} className="text-amber-400" />
                 <span>Verification &amp; Reproduction Evidence:</span>
               </div>
               {cleanSteps.length === 0 ? (
@@ -644,7 +628,6 @@ export const FindingDetailModal: React.FC<FindingDetailModalProps> = ({
           {/* Sticky Drawer Footer */}
           <div className="px-6 py-4 border-t border-white/10 bg-[#121214] flex items-center justify-between shrink-0">
             <div className="flex items-center gap-2 text-xs text-zinc-400 font-mono">
-              <User size={13} />
               <span>Owner: {finding.owner || 'Unassigned'}</span>
             </div>
 

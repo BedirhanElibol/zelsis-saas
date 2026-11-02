@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useActionState, useEffect, useRef, useState } from 'react';
-import { Check, Copy, Link2, Loader2, X } from 'lucide-react';
+import { Check, Copy, Loader2, X } from 'lucide-react';
 import type { Project } from '@/data/schema';
 import { createReportShare, revokeReportShare } from '@/app/actions/report-share';
 import { initialReportShareState } from '@/lib/report-share-state';
@@ -68,7 +68,6 @@ export const ShareReportModal: React.FC<ShareReportModalProps> = ({ isOpen, onCl
         className="relative w-full max-w-lg max-h-[90vh] overflow-y-auto bg-[#141414] border border-white/10 rounded-2xl p-6 shadow-xl flex flex-col gap-5 text-[#EDEDED]">
         <div className="flex items-start justify-between gap-4">
           <div className="flex items-center gap-3">
-            <Link2 size={20} className="text-white" aria-hidden="true" />
             <div>
               <h3 id="share-report-title" className="text-lg font-extrabold">Share report link</h3>
               <p className="text-xs text-zinc-400">A read-only page with the score and findings of the latest scan of {project.name}.</p>

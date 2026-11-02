@@ -2,7 +2,7 @@
 
 import React, { useState } from 'react';
 import { m } from 'framer-motion';
-import { ArrowRight, Terminal, Loader2, GitPullRequest } from 'lucide-react';
+import { Loader2 } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import { normalizeRepoUrl } from '@/lib/github-api';
 import { ScanPreviewCard, ScanPreviewResult } from '@/components/saas/ScanPreviewCard';
@@ -113,7 +113,6 @@ export const SaasHero: React.FC<SaasHeroProps> = ({ onOpenDashboard }) => {
                 className="flex flex-col sm:flex-row items-stretch gap-2 p-1.5 rounded-xl bg-[#141414] border border-white/10 shadow-2xl focus-within:border-white/30 transition-all"
               >
                 <div className="flex items-center gap-2.5 px-3 py-2 flex-1 min-w-0">
-                  <Terminal size={16} className="text-zinc-400 shrink-0" />
                   <span className="text-xs font-mono text-zinc-400 hidden sm:inline">github.com/</span>
                   <input
                     id="hero-repo-input"
@@ -134,7 +133,6 @@ export const SaasHero: React.FC<SaasHeroProps> = ({ onOpenDashboard }) => {
                 >
                   {isScanning ? <Loader2 size={13} className="animate-spin" /> : null}
                   <span>{isScanning ? 'Scanning…' : 'See what’s in your repo'}</span>
-                  {!isScanning && <ArrowRight size={13} />}
                 </button>
               </form>
 
@@ -190,7 +188,6 @@ export const SaasHero: React.FC<SaasHeroProps> = ({ onOpenDashboard }) => {
           >
             <div className="flex items-center justify-between gap-3 px-4 py-3 bg-[#0E0E10] border-b border-white/10">
               <div className="flex items-center gap-2 min-w-0 text-xs font-mono text-zinc-300">
-                <GitPullRequest size={14} className="text-zinc-400 shrink-0" />
                 <span className="truncate">One full check, recorded in the app</span>
               </div>
               <span className="shrink-0 inline-flex items-center gap-1.5 px-2 py-0.5 rounded text-xs font-mono uppercase bg-white/[0.04] text-zinc-300 border border-white/10">
@@ -220,7 +217,6 @@ export const SaasHero: React.FC<SaasHeroProps> = ({ onOpenDashboard }) => {
                 className="shrink-0 text-zinc-300 hover:text-white flex items-center gap-1 transition-colors cursor-pointer min-h-[24px]"
               >
                 <span>Open the console</span>
-                <ArrowRight size={11} />
               </button>
             </div>
           </m.div>

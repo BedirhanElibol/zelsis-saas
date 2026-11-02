@@ -2,7 +2,7 @@
 
 import React from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { X, ArrowRight, CheckCircle2, AlertTriangle, ShieldCheck, Layers } from 'lucide-react';
+import { X, Layers } from 'lucide-react';
 import { Project, ScanHistoryItem } from '@/data/schema';
 
 interface AuditCompareModalProps {
@@ -169,7 +169,7 @@ export const AuditCompareModal: React.FC<AuditCompareModalProps> = ({
                 <span className="text-xs text-[#94A3B8]">/ 100</span>
                 
                 <span className={`ml-auto text-xs font-bold px-2 py-0.5 rounded ${
-                  scoreDelta > 0 
+                  scoreDelta > 0
                     ? 'bg-white/5 text-white border border-white/10'
                     : scoreDelta < 0
                       ? 'bg-red-500/10 text-red-400 border border-red-500/25'
@@ -201,7 +201,6 @@ export const AuditCompareModal: React.FC<AuditCompareModalProps> = ({
           </div>
 
           <div className="p-4 rounded-xl bg-white/5 border border-white/10 text-xs text-white flex items-center justify-center gap-2">
-            <ShieldCheck size={14} className="text-white" />
             <span>Audit delta tracked automatically. Delta logs retained for 90 days.</span>
           </div>
         </motion.div>

@@ -2,7 +2,7 @@
 
 import React, { useState } from 'react';
 import { m, AnimatePresence } from 'framer-motion';
-import { X, Mail, Lock, User, Code, ArrowRight, CheckCircle2, KeyRound, AlertCircle, MailCheck, Eye, EyeOff } from 'lucide-react';
+import { X, MailCheck, Eye, EyeOff } from 'lucide-react';
 import { supabaseSignIn, supabaseSignUp, supabaseResendSignupEmail, supabaseResetPassword, supabaseSignInWithOAuth, isSupabaseConfigured } from '@/lib/supabase';
 import { isPwnedPassword } from '@/lib/pwned-password';
 import { ZelsisLogo } from '@/components/ui/ZelsisLogo';
@@ -271,13 +271,11 @@ export const AuthModal: React.FC<AuthModalProps> = ({
               </ul>
               {error && (
                 <div role="alert" className="w-full text-xs text-red-400 bg-red-500/10 border border-red-500/20 p-2.5 rounded-lg flex items-center justify-center gap-2">
-                  <AlertCircle size={14} className="shrink-0" />
                   <span>{error}</span>
                 </div>
               )}
               {successMsg && (
                 <div role="status" className="w-full text-xs text-white bg-white/5 border border-white/10 p-2.5 rounded-lg flex items-center justify-center gap-2">
-                  <CheckCircle2 size={14} className="shrink-0" />
                   <span>{successMsg}</span>
                 </div>
               )}
@@ -359,7 +357,6 @@ export const AuthModal: React.FC<AuthModalProps> = ({
                   disabled={loadingTarget !== null}
                   className="flex items-center justify-center gap-3 w-full py-3 px-4 rounded-xl bg-[#24292F] hover:bg-[#1f2328] border border-white/15 text-xs font-bold text-white transition-all shadow-md disabled:opacity-50 cursor-pointer min-h-[48px]"
                 >
-                  <Code size={18} className="shrink-0" />
                   <span>{loadingTarget === 'github' ? 'Connecting to GitHub...' : 'Continue with GitHub'}</span>
                 </button>
 
@@ -405,14 +402,12 @@ export const AuthModal: React.FC<AuthModalProps> = ({
           <form onSubmit={handleSubmit} className="flex flex-col gap-3">
             {error && (
               <div role="alert" className="text-xs text-red-400 bg-red-500/10 border border-red-500/20 p-2.5 rounded-lg text-center font-medium flex items-center justify-center gap-2">
-                <AlertCircle size={14} className="shrink-0" />
                 <span>{error}</span>
               </div>
             )}
 
             {successMsg && (
               <div role="status" className="text-xs text-white bg-white/5 border border-white/10 p-2.5 rounded-lg text-center font-medium flex items-center justify-center gap-2">
-                <CheckCircle2 size={14} className="shrink-0" />
                 <span>{successMsg}</span>
               </div>
             )}
@@ -421,7 +416,6 @@ export const AuthModal: React.FC<AuthModalProps> = ({
               <div className="flex flex-col gap-1">
                 <label htmlFor="auth-fullname-input" className="text-[0.7rem] text-[#A1A1AA] font-mono font-bold uppercase">Full Name</label>
                 <div className="flex items-center gap-2 px-3 py-2 rounded-xl bg-[#0A0A0A] border border-white/10 focus-within:border-white/20">
-                  <User size={15} className="text-[#A1A1AA]" />
                   <input
                     id="auth-fullname-input"
                     autoComplete="name"
@@ -440,7 +434,6 @@ export const AuthModal: React.FC<AuthModalProps> = ({
             <div className="flex flex-col gap-1">
               <label htmlFor="auth-email-input" className="text-[0.7rem] text-[#A1A1AA] font-mono font-bold uppercase">Email Address</label>
               <div className="flex items-center gap-2 px-3 py-2 rounded-xl bg-[#0A0A0A] border border-white/10 focus-within:border-white/20">
-                <Mail size={15} className="text-[#A1A1AA]" />
                 <input
                   id="auth-email-input"
                   autoComplete="email"
@@ -470,7 +463,6 @@ export const AuthModal: React.FC<AuthModalProps> = ({
                   )}
                 </div>
                 <div className="flex items-center gap-2 px-3 py-2 rounded-xl bg-[#0A0A0A] border border-white/10 focus-within:border-white/20">
-                  <Lock size={15} className="text-[#A1A1AA]" />
                   <input
                     id="auth-password-input"
                     autoComplete={mode === 'signup' ? 'new-password' : 'current-password'}
@@ -508,7 +500,6 @@ export const AuthModal: React.FC<AuthModalProps> = ({
                   ? 'Create Account'
                   : 'Send Reset Link'}
               </span>
-              <ArrowRight size={14} />
             </button>
           </form>
 

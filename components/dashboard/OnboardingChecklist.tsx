@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { Project } from '@/data/schema';
-import { CheckCircle2, Circle, Copy, Check, GitPullRequest } from 'lucide-react';
+import { CheckCircle2, Circle, Copy, Check } from 'lucide-react';
 import { fetchLastGateRunAt } from '@/lib/supabase';
 import { buildGateWorkflow } from '@/lib/ci-gate-snippet';
 import { getConfiguredAppUrl } from '@/lib/app-url';
@@ -74,7 +74,7 @@ export const OnboardingChecklist: React.FC<OnboardingChecklistProps> = ({ projec
         <div className="flex items-center gap-2 text-xs">
           <span className="text-[#A1A1AA]">{Math.round(progress)}% Complete</span>
           <div className="w-24 h-2 bg-black rounded-full overflow-hidden">
-            <div 
+            <div
               className="h-full bg-emerald-500 transition-all duration-500"
               style={{ width: `${progress}%` }}
             />
@@ -84,7 +84,6 @@ export const OnboardingChecklist: React.FC<OnboardingChecklistProps> = ({ projec
 
       {nudgeGate && (
         <div className="p-4 border-b border-emerald-500/20 bg-emerald-500/5 flex flex-col sm:flex-row sm:items-center gap-3">
-          <GitPullRequest size={18} className="text-emerald-400 shrink-0" aria-hidden="true" />
           <div className="flex-1 font-sans">
             <p className="text-sm font-semibold text-white">Next: run this check on every pull request</p>
             <p className="text-xs text-[#A1A1AA] mt-0.5">

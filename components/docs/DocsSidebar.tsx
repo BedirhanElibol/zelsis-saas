@@ -3,7 +3,7 @@
 import React from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { Code, BookOpen, Rocket, GitBranch, Settings, List, ShieldAlert, XCircle, Bug, Lock, ArrowLeft, Terminal, History, type LucideIcon } from 'lucide-react';
+import { Code, Rocket, GitBranch, Settings, List, ShieldAlert, XCircle, Bug, Lock, Terminal, History, type LucideIcon } from 'lucide-react';
 import { ZelsisLogo } from '@/components/ui/ZelsisLogo';
 
 interface NavItem {
@@ -40,13 +40,11 @@ export function DocsSidebar() {
           href="/dashboard"
           className="flex items-center gap-1.5 text-xs font-mono text-zinc-400 hover:text-white transition-colors px-2 py-1 rounded bg-white/5 hover:bg-white/10"
         >
-          <ArrowLeft size={12} />
           <span>Dashboard</span>
         </Link>
       </div>
 
       <div className="flex items-center gap-2 px-3 py-1 text-white font-semibold text-xs tracking-wider uppercase font-mono text-zinc-400">
-        <BookOpen size={14} className="text-emerald-400" />
         <span>Documentation</span>
       </div>
 

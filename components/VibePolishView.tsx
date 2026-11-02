@@ -3,7 +3,6 @@
 import React, { useState } from 'react';
 import { UiRule } from '@/data/schema';
 import { UI_RULES_CATALOG, VIBEPOLISH_30_CATALOG, AI_CLICHE_25_CATALOG } from '@/data/mockData';
-import { Palette, Copy, CheckCircle2, Search, Filter } from 'lucide-react';
 
 /** Named catalogs, resolved here so callers do not import (and bundle) the catalog data themselves. */
 const CATALOGS = {
@@ -55,7 +54,6 @@ ABSOLUTELY DO NOT USE THE FOLLOWING CLICHÉS: Forced Apple-style bento box grids
       <div className="bg-[#141414] border border-white/10 rounded-xl" style={{ padding: '24px 32px', background: "#141414", borderColor: 'rgba(16, 185, 129, 0.25)', display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: '20px' }}>
         <div>
           <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-            <Palette size={24} color="#10B981" />
             <h1 style={{ fontSize: '1.5rem', fontWeight: 800, color: '#EDEDED', margin: 0 }}>
               {title}
             </h1>
@@ -66,7 +64,6 @@ ABSOLUTELY DO NOT USE THE FOLLOWING CLICHÉS: Forced Apple-style bento box grids
         </div>
 
         <button className="btn btn-primary px-5 py-2.5 rounded-lg text-xs font-bold uppercase tracking-wider flex items-center gap-2 bg-emerald-500 text-black hover:bg-emerald-400 transition-all shadow-sm" onClick={copyNegativePrompt}>
-          {copiedNegativePrompt ? <CheckCircle2 size={16} /> : <Copy size={16} />}
           <span>{copiedNegativePrompt ? 'Negative Prompt Copied!' : 'Copy Negative UI Prompt'}</span>
         </button>
       </div>
@@ -74,7 +71,6 @@ ABSOLUTELY DO NOT USE THE FOLLOWING CLICHÉS: Forced Apple-style bento box grids
       {/* Filter Bar */}
       <div style={{ display: 'flex', gap: '16px', flexWrap: 'wrap', alignItems: 'center' }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: '10px', background: 'var(--bg-surface)', padding: '10px 16px', borderRadius: '10px', border: '1px solid rgba(255, 255, 255, 0.08)', flex: 1, minWidth: '280px' }}>
-          <Search size={16} color="#A1A1AA" />
           <input
             id="vibepolish-search-input"
             name="vibePolishSearch"
@@ -89,7 +85,6 @@ ABSOLUTELY DO NOT USE THE FOLLOWING CLICHÉS: Forced Apple-style bento box grids
         </div>
 
         <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-          <Filter size={16} color="#A1A1AA" />
           <select
             id="vibepolish-category-select"
             name="vibePolishCategory"

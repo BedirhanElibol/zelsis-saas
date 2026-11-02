@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { X, ShieldX, Loader2, Copy, Check } from 'lucide-react';
+import { X, ShieldX, Loader2 } from 'lucide-react';
 import { Finding } from '@/data/schema';
 import { dismissFinding } from '@/actions/dismiss-finding';
 import { getActiveUserAuth } from '@/lib/supabase-client';
@@ -182,7 +182,6 @@ export const DismissFindingModal: React.FC<DismissFindingModalProps> = ({
                 className="text-xs text-[#A1A1AA] hover:text-white flex items-center gap-1.5 transition-colors font-mono"
                 title="Copy line for .zelsisignore file"
               >
-                {copied ? <Check size={12} className="text-emerald-400" /> : <Copy size={12} />}
                 <span aria-live="polite">{copied ? 'Copied' : 'Copy .zelsisignore line'}</span>
               </button>
 

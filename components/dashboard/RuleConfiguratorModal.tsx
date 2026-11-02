@@ -2,7 +2,7 @@
 
 import React, { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { X, Sliders, CheckCircle2, Copy } from 'lucide-react';
+import { X, Sliders } from 'lucide-react';
 import { UserTier } from '@/data/schema';
 
 interface RuleConfiguratorModalProps {
@@ -146,7 +146,6 @@ export const RuleConfiguratorModal: React.FC<RuleConfiguratorModalProps> = ({
               <pre className="p-3 rounded-xl bg-[#0A0A0A] border border-white/10 text-[11px] font-mono text-zinc-300 overflow-x-auto">{rcJson}</pre>
               {savedStatus && (
                 <div className="p-3 rounded-xl bg-white/5 border border-white/10 text-white text-xs font-mono flex items-center gap-2">
-                  <CheckCircle2 size={16} />
                   <span>Copied. Save it as .zelsisrc.json in the repository root of {projectName}.</span>
                 </div>
               )}
@@ -167,7 +166,6 @@ export const RuleConfiguratorModal: React.FC<RuleConfiguratorModalProps> = ({
                       navigator.clipboard.writeText(rcJson).then(() => setSavedStatus(true)).catch(() => setSavedStatus(false));
                     }}
                   >
-                    <Copy size={12} className="inline mr-1.5" aria-hidden="true" />
                     Copy .zelsisrc.json
                   </button>
                 </div>

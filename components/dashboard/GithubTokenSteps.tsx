@@ -1,5 +1,4 @@
 import React from 'react';
-import { ExternalLink } from 'lucide-react';
 
 /**
  * GitHub's fine-grained token form, pre-filled: name, description, 90-day expiry and read-only Contents.
@@ -29,7 +28,6 @@ export function GithubTokenSteps({ compact = false }: { compact?: boolean }) {
         className="inline-flex items-center justify-center gap-1.5 w-fit px-3 py-1.5 rounded-lg bg-white text-black font-semibold text-xs hover:bg-zinc-200 transition-colors"
       >
         Create a read-only token on GitHub
-        <ExternalLink size={12} />
       </a>
       <p className="m-0 text-[10px] text-zinc-500">
         Zelsis keeps the token only in this browser tab and uses it to download the files for the scan; it is never saved on our servers. You can revoke it on GitHub at any time.

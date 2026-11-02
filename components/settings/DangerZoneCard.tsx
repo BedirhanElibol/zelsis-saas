@@ -3,7 +3,7 @@
 import React, { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { motion, AnimatePresence } from 'framer-motion';
-import { AlertTriangle, Trash2, Save, X, CheckCircle2, ShieldAlert, Loader2 } from 'lucide-react';
+import { AlertTriangle, X, CheckCircle2, ShieldAlert, Loader2 } from 'lucide-react';
 import { Project } from '@/data/schema';
 import { UserProfile } from '@/components/auth/AuthModal';
 import { supabaseSignOut } from '@/lib/supabase';
@@ -149,7 +149,6 @@ export const DangerZoneCard: React.FC<DangerZoneCardProps> = ({
                 disabled={isExporting}
                 className="min-h-[44px] px-4 py-2.5 rounded-xl bg-white/5 hover:bg-white/10 border border-white/10 text-white text-xs font-bold flex items-center justify-center gap-2 transition-colors shrink-0 cursor-pointer focus-visible:ring-2 focus-visible:ring-emerald-500 focus-visible:outline-none"
               >
-                <Save size={14} />
                 <span>{isExporting ? 'Exporting...' : 'Export Data (GDPR Art. 20)'}</span>
               </button>
             )}
@@ -163,7 +162,6 @@ export const DangerZoneCard: React.FC<DangerZoneCardProps> = ({
               }}
               className="min-h-[44px] min-w-[44px] px-4 py-2.5 rounded-xl bg-red-500/20 hover:bg-red-500/30 border border-red-500/40 text-red-300 hover:text-red-100 text-xs font-bold flex items-center justify-center gap-2 transition-colors shrink-0 cursor-pointer focus-visible:ring-2 focus-visible:ring-red-500 focus-visible:outline-none"
             >
-              <Trash2 size={15} />
               <span>{isAuthenticated ? 'Delete Account & Wipe Data' : 'Clear Local Cache & Wipe Scans'}</span>
             </button>
           </div>
@@ -229,7 +227,6 @@ export const DangerZoneCard: React.FC<DangerZoneCardProps> = ({
 
                   <div className="p-4 rounded-xl bg-red-950/20 border border-red-500/20 text-xs text-red-200/90 flex flex-col gap-2">
                     <span className="font-extrabold text-red-300 uppercase text-[0.7rem] flex items-center gap-1.5">
-                      <AlertTriangle size={13} />
                       The following data will be permanently wiped:
                     </span>
                     <ul className="space-y-1 list-disc list-inside text-[0.72rem] text-red-200/80">
@@ -310,7 +307,6 @@ export const DangerZoneCard: React.FC<DangerZoneCardProps> = ({
                         </>
                       ) : (
                         <>
-                          <Trash2 size={14} />
                           <span>{!isAuthenticated ? 'Permanently Wipe Local Data' : 'Permanently Delete & Wipe'}</span>
                         </>
                       )}

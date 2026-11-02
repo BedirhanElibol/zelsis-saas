@@ -1,7 +1,6 @@
 import React from 'react';
 import Link from 'next/link';
 import type { Metadata } from 'next';
-import { ArrowRight } from 'lucide-react';
 import { POSTS, formatPostDate } from './posts';
 
 export const metadata: Metadata = {
@@ -27,7 +26,6 @@ export default function BlogIndexPage() {
               <time dateTime={p.date} className="text-xs font-mono text-zinc-500">{formatPostDate(p.date)}</time>
               <h2 className="flex items-center justify-between gap-2 text-lg font-semibold text-white m-0 mt-1">
                 <span>{p.title}</span>
-                <ArrowRight size={16} className="text-zinc-500 group-hover:text-emerald-400 shrink-0" aria-hidden="true" />
               </h2>
               <p className="text-zinc-400 mt-1 mb-0">{p.summary}</p>
             </Link>

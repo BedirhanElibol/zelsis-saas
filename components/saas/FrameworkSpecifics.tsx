@@ -1,5 +1,4 @@
 import React from 'react';
-import { AlertCircle, ShieldCheck } from 'lucide-react';
 import { LANDING_CHECKS } from '@/data/landing-checks';
 
 const VISIBLE = 4;
@@ -18,11 +17,11 @@ function CheckCard({ check }: { check: (typeof LANDING_CHECKS)[number] }) {
       <div className="bg-[#0A0A0A] p-4 text-xs font-mono leading-relaxed flex-grow">
         <div className="text-zinc-500 mb-2 truncate">{check.path}</div>
         <div className="text-red-400 mb-1.5 flex items-center gap-2">
-          <AlertCircle className="w-3 h-3" aria-hidden="true" /> Flagged
+          Flagged
         </div>
         <pre className="text-zinc-500 mb-4 overflow-x-auto [scrollbar-width:thin] [scrollbar-color:#3f3f46_transparent]"><code>{check.bad}</code></pre>
         <div className="text-emerald-400 mb-1.5 flex items-center gap-2">
-          <ShieldCheck className="w-3 h-3" aria-hidden="true" /> Passes
+          Passes
         </div>
         <pre className="text-zinc-300 overflow-x-auto [scrollbar-width:thin] [scrollbar-color:#3f3f46_transparent]"><code>{check.good}</code></pre>
       </div>

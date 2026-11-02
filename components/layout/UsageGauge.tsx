@@ -1,7 +1,6 @@
 'use client';
 
 import React, { useState } from 'react';
-import { Shield, ArrowUpRight, Lock, CheckCircle2, ExternalLink } from 'lucide-react';
 import { UserTier, PlanUsageQuota } from '@/data/schema';
 import { TierDetailsModal } from '@/components/pricing/TierDetailsModal';
 import { priceLabel } from '@/data/pricing-plans';
@@ -39,7 +38,6 @@ export const UsageGauge: React.FC<UsageGaugeProps> = ({
         {/* Tier Header Bar */}
         <div className="flex items-center justify-between gap-2 border-b border-white/10 pb-2.5">
           <div className="flex items-center gap-2">
-            <Shield size={14} className="text-zinc-300" />
             <span className="text-xs font-extrabold uppercase tracking-wider text-white">
               {tier} Plan
             </span>
@@ -103,7 +101,6 @@ export const UsageGauge: React.FC<UsageGaugeProps> = ({
 
               <div className="flex items-center justify-between py-1 border-b border-white/5">
                 <span className="flex items-center gap-1.5">
-                  <Lock size={11} className="text-zinc-400" />
                   <span>Private Repos</span>
                 </span>
                 <span className="text-[11px] text-amber-400/90 font-bold bg-amber-500/10 px-1.5 py-0.5 rounded border border-amber-500/20">
@@ -113,7 +110,6 @@ export const UsageGauge: React.FC<UsageGaugeProps> = ({
 
               <div className="flex items-center justify-between py-1">
                 <span className="flex items-center gap-1.5">
-                  <Lock size={11} className="text-zinc-400" />
                   <span>PDF Certificates</span>
                 </span>
                 <span className="text-[11px] text-amber-400/90 font-bold bg-amber-500/10 px-1.5 py-0.5 rounded border border-amber-500/20">
@@ -129,7 +125,6 @@ export const UsageGauge: React.FC<UsageGaugeProps> = ({
               className="w-full py-2.5 px-3 rounded-lg bg-white text-black hover:bg-neutral-200 transition-all font-extrabold text-xs flex items-center justify-center gap-1.5 cursor-pointer shadow-md mt-1"
             >
               <span>Upgrade to Pro ({priceLabel('Pro')})</span>
-              <ArrowUpRight size={13} />
             </button>
 
             {/* Compare All Tiers link */}
@@ -139,13 +134,11 @@ export const UsageGauge: React.FC<UsageGaugeProps> = ({
               className="text-[10px] text-zinc-400 hover:text-white transition-colors text-center flex items-center justify-center gap-1 py-0.5 cursor-pointer"
             >
               <span>Compare All Plan Limits &amp; Features</span>
-              <ExternalLink size={10} />
             </button>
           </div>
         ) : (
           <div className="flex flex-col gap-3">
             <div className="flex items-center gap-2 text-xs text-white font-bold bg-white/5 p-2.5 rounded-lg border border-white/10">
-              <CheckCircle2 size={14} className="shrink-0 text-zinc-400" />
               <span>Unlimited Production Clearance</span>
             </div>
 
@@ -175,7 +168,6 @@ export const UsageGauge: React.FC<UsageGaugeProps> = ({
                 className="w-full mt-1 py-2 px-2.5 rounded-lg bg-white/5 hover:bg-white/10 border border-white/10 text-[10px] font-bold text-zinc-300 hover:text-white flex items-center justify-center gap-1 transition-colors cursor-pointer"
               >
                 <span>Need priority support? View Enterprise ({priceLabel('Enterprise')})</span>
-                <ArrowUpRight size={11} />
               </button>
             )}
 
@@ -185,7 +177,6 @@ export const UsageGauge: React.FC<UsageGaugeProps> = ({
               className="text-[10px] text-zinc-400 hover:text-white transition-colors text-center flex items-center justify-center gap-1 py-0.5 cursor-pointer"
             >
               <span>View Full Feature Matrix</span>
-              <ExternalLink size={10} />
             </button>
           </div>
         )}

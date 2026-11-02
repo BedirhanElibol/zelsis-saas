@@ -1,5 +1,4 @@
 import React from 'react';
-import { Clock, Database } from 'lucide-react';
 import { extractRepoDisplayName } from '@/lib/github-api';
 import { Project } from '@/data/schema';
 import { ScanResult } from '@/lib/scanner-engine';
@@ -78,7 +77,6 @@ export const ScanRunnerHeader: React.FC<ScanRunnerHeaderProps> = ({
 
         <div className="flex items-center gap-3 text-xs font-mono text-[#A1A1AA] shrink-0 w-full sm:w-auto justify-between sm:justify-end">
           <div className="flex items-center gap-1.5 bg-white/5 px-2.5 py-1 rounded border border-white/10 shrink-0">
-            <Clock size={12} className="text-white" />
             <span>Elapsed: {Math.floor(elapsedSeconds / 60)}m {elapsedSeconds % 60}s</span>
           </div>
           {queuedFilesCount > 0 && (
@@ -92,7 +90,6 @@ export const ScanRunnerHeader: React.FC<ScanRunnerHeaderProps> = ({
       {/* Target Architecture & Multi-Database Stack Banner */}
       <div className="flex flex-wrap items-center justify-between gap-2.5 px-3.5 py-2.5 bg-[#0D0D14] border border-white/10 rounded-xl">
         <div className="flex items-center gap-2">
-          <Database size={14} className="text-cyan-400 shrink-0" />
           <span className="text-[11px] font-mono font-bold text-zinc-300 uppercase tracking-wider">
             Target Architecture:
           </span>

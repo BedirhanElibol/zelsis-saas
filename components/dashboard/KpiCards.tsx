@@ -2,7 +2,6 @@
 
 import React from 'react';
 import { Project } from '@/data/schema';
-import { ShieldCheck, Palette, Layers, Activity, AlertTriangle } from 'lucide-react';
 import NumberFlow from '@number-flow/react';
 
 interface KpiCardsProps {
@@ -37,7 +36,6 @@ export const KpiCards: React.FC<KpiCardsProps> = ({ project, onNavigatePillar })
           <span className="text-[0.62rem] sm:text-[0.68rem] font-mono font-semibold text-[#A1A1AA] tracking-wider uppercase truncate">
             OVERALL READINESS
           </span>
-          <Activity size={14} className="text-white/80 shrink-0" />
         </div>
 
         <div className="flex items-baseline gap-1.5 sm:gap-2">
@@ -100,7 +98,6 @@ export const KpiCards: React.FC<KpiCardsProps> = ({ project, onNavigatePillar })
           <span className="text-[0.62rem] sm:text-[0.68rem] font-mono font-semibold text-[#A1A1AA] tracking-wider uppercase truncate">
             SECURITY CLEARANCE
           </span>
-          <ShieldCheck size={14} className="text-white/80 group-hover:scale-105 transition-transform shrink-0" />
         </div>
 
         <div className="flex items-baseline gap-1.5 sm:gap-2">
@@ -142,7 +139,6 @@ export const KpiCards: React.FC<KpiCardsProps> = ({ project, onNavigatePillar })
           <span className="text-[0.62rem] sm:text-[0.68rem] font-mono font-semibold text-[#A1A1AA] tracking-wider uppercase truncate">
             UI QUALITY &amp; A11Y
           </span>
-          <Palette size={14} className="text-white/80 group-hover:scale-105 transition-transform shrink-0" />
         </div>
 
         <div className="flex items-baseline gap-1.5 sm:gap-2">
@@ -184,7 +180,6 @@ export const KpiCards: React.FC<KpiCardsProps> = ({ project, onNavigatePillar })
           <span className="text-[0.62rem] sm:text-[0.68rem] font-mono font-semibold text-[#A1A1AA] tracking-wider uppercase truncate">
             QUALITY MATRIX
           </span>
-          <Layers size={14} className="text-white/80 group-hover:scale-105 transition-transform shrink-0" />
         </div>
 
         <div className="flex items-baseline gap-1.5 sm:gap-2">

@@ -5,7 +5,7 @@ import React, { useState, useEffect } from 'react';
 import { useSearchParams } from 'next/navigation';
 import { Project } from '@/data/schema';
 import { MOCK_PROJECTS } from '@/data/demo-data';
-import { FolderGit2, Plus, ArrowRight, Play, ExternalLink, ShieldCheck, Trash2, Layers, Lock, X } from 'lucide-react';
+import { FolderGit2, Trash2, Lock, X } from 'lucide-react';
 import { NewProjectModal } from '@/components/projects/NewProjectModal';
 import { UserProfile } from '@/components/auth/AuthModal';
 import { priceLabel } from '@/data/pricing-plans';
@@ -89,7 +89,6 @@ export const ProjectsView: React.FC<ProjectsViewProps> = ({
             className="inline-flex items-center justify-center gap-2 px-5 py-3 rounded-xl font-semibold text-sm bg-white text-black hover:bg-neutral-200 shadow-lg transition-all duration-200 shrink-0 cursor-pointer"
             onClick={handleConnectClick}
           >
-            <Plus size={18} strokeWidth={2.5} />
             <span>Connect New AI App</span>
           </button>
         </div>
@@ -98,7 +97,6 @@ export const ProjectsView: React.FC<ProjectsViewProps> = ({
       {/* Quick Target Presets Bar */}
       <div className="rounded-xl border border-white/10 bg-[#141414] p-4 flex flex-col sm:flex-row sm:items-center justify-between gap-3 shadow-lg">
         <div className="flex items-center gap-2 text-xs font-mono font-bold text-white tracking-wider uppercase">
-          <Layers size={14} />
           <span>Quick Target Presets:</span>
         </div>
 
@@ -289,7 +287,6 @@ export const ProjectsView: React.FC<ProjectsViewProps> = ({
                     {p.name}
                   </h2>
                   <div className="flex items-center gap-1.5 text-xs font-mono text-[#A1A1AA] truncate mb-4">
-                    <ExternalLink size={12} className="shrink-0 text-white/50" />
                     <span className="truncate">{p.repoUrl}</span>
                   </div>
 
@@ -314,7 +311,6 @@ export const ProjectsView: React.FC<ProjectsViewProps> = ({
                     className="flex-1 py-2 rounded-lg text-xs font-mono font-bold bg-white/5 hover:bg-white/10 border border-white/10 text-white flex items-center justify-center gap-1.5 transition-colors"
                   >
                     <span>View Findings</span>
-                    <ArrowRight size={13} />
                   </button>
 
                   <button
@@ -325,7 +321,6 @@ export const ProjectsView: React.FC<ProjectsViewProps> = ({
                     className="px-3 py-2 rounded-lg text-xs font-mono font-bold bg-white text-black hover:bg-neutral-200 flex items-center justify-center gap-1 transition-colors"
                     title="Run Release Gate Audit"
                   >
-                    <Play size={12} fill="#0A0A0A" />
                     <span>Audit</span>
                   </button>
                 </div>
@@ -386,7 +381,6 @@ export const ProjectsView: React.FC<ProjectsViewProps> = ({
                 }}
                 className="w-full sm:flex-1 py-3 px-4 rounded-xl bg-white text-black font-extrabold text-xs uppercase tracking-wider hover:bg-neutral-200 transition-all flex items-center justify-center gap-2 cursor-pointer font-mono"
               >
-                <ArrowRight size={14} />
                 <span>Upgrade to Pro ({priceLabel('Pro')})</span>
               </button>
               <button

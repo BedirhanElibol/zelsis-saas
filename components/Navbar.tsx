@@ -3,7 +3,7 @@
 
 import React, { useState, useEffect } from 'react';
 import { m, AnimatePresence } from 'framer-motion';
-import { Menu, X, ArrowUpRight } from 'lucide-react';
+import { Menu, X } from 'lucide-react';
 import { ZelsisLogo } from '@/components/ui/ZelsisLogo';
 import { UserProfile } from '@/components/auth/AuthModal';
 
@@ -153,7 +153,6 @@ export const Navbar: React.FC<NavbarProps> = ({ onToggleDashboard, showDashboard
                   className="px-3.5 py-1.5 rounded-md text-xs font-bold tracking-wider uppercase bg-emerald-500 text-black hover:bg-emerald-400 transition-all flex items-center gap-1 shadow-sm cursor-pointer"
                 >
                   <span>Dashboard</span>
-                  <ArrowUpRight size={13} />
                 </button>
               </>
             ) : (
@@ -170,7 +169,6 @@ export const Navbar: React.FC<NavbarProps> = ({ onToggleDashboard, showDashboard
                   className="px-3.5 py-1.5 rounded-md text-xs font-bold tracking-wider uppercase bg-emerald-500 text-black hover:bg-emerald-400 transition-all flex items-center gap-1 shadow-sm cursor-pointer"
                 >
                   <span>Scan Repo</span>
-                  <ArrowUpRight size={13} />
                 </button>
               </>
             )}
@@ -235,7 +233,6 @@ export const Navbar: React.FC<NavbarProps> = ({ onToggleDashboard, showDashboard
                     className="btn btn-primary w-full uppercase tracking-widest text-xs py-3 flex items-center justify-center gap-2"
                   >
                     <span>OPEN DASHBOARD</span>
-                    <ArrowUpRight size={14} />
                   </button>
                 </>
               ) : (
@@ -256,7 +253,6 @@ export const Navbar: React.FC<NavbarProps> = ({ onToggleDashboard, showDashboard
                     className="btn btn-primary w-full uppercase tracking-widest text-xs py-3 flex items-center justify-center gap-2"
                   >
                     <span>SCAN REPOSITORY</span>
-                    <ArrowUpRight size={14} />
                   </button>
                 </>
               )}

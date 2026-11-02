@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { WifiOff, Wifi, RefreshCw, X, CheckCircle2 } from 'lucide-react';
+import { WifiOff, X, CheckCircle2 } from 'lucide-react';
 import { useOnlineStatus } from '@/hooks/useOnlineStatus';
 
 export const OfflineBanner: React.FC = () => {
@@ -79,7 +79,6 @@ export const OfflineBanner: React.FC = () => {
                 aria-label="Check internet connection"
                 className="min-w-[44px] min-h-[44px] px-3.5 py-2 rounded-xl bg-amber-500/20 hover:bg-amber-500/30 border border-amber-500/40 text-amber-200 text-xs font-bold flex items-center justify-center gap-2 transition-colors disabled:opacity-50"
               >
-                <RefreshCw size={14} className={isChecking ? 'animate-spin' : ''} />
                 <span className="hidden sm:inline">
                   {isChecking ? 'Checking...' : 'Check Connection'}
                 </span>

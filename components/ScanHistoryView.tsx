@@ -3,7 +3,7 @@
 import React from 'react';
 import { Project, ScanHistoryItem } from '@/data/schema';
 import { UserTier } from '@/data/schema';
-import { History, Play, CheckCircle2, AlertTriangle, ShieldCheck, Clock, Lock } from 'lucide-react';
+import { History } from 'lucide-react';
 import { filterHistoryByRetention, TIER_CONFIGS } from '@/lib/quota-manager';
 
 interface ScanHistoryViewProps {
@@ -51,7 +51,6 @@ export const ScanHistoryView: React.FC<ScanHistoryViewProps> = ({
           onClick={() => onTriggerScan()}
           className="btn btn-primary text-xs px-5 py-2.5 font-bold uppercase tracking-wider flex items-center gap-2 rounded-lg bg-emerald-500 text-black hover:bg-emerald-400 transition-all shadow-sm"
         >
-          <Play size={14} fill="#0A0A0A" />
           <span>Run New Live Scan</span>
         </button>
       </div>
@@ -73,7 +72,6 @@ export const ScanHistoryView: React.FC<ScanHistoryViewProps> = ({
         {lockedRecords.length > 0 && (
           <div className="flex items-center justify-between gap-4 p-3.5 rounded-xl bg-amber-500/5 border border-amber-500/20">
             <div className="flex items-center gap-2.5">
-              <Lock size={15} className="text-amber-400 shrink-0" />
               <p className="text-xs text-amber-300 leading-relaxed">
                 <span className="font-bold">{lockedRecords.length} older records</span> are hidden.{' '}
                 {typeof retentionDays === 'number'
@@ -96,7 +94,6 @@ export const ScanHistoryView: React.FC<ScanHistoryViewProps> = ({
         <div className="space-y-3">
           {historyRecords.length === 0 && lockedRecords.length === 0 ? (
             <div className="p-8 text-center bg-[#0A0A0A] rounded-xl border border-white/10 text-xs text-[#A1A1AA] flex flex-col items-center justify-center gap-3">
-              <History size={28} className="text-white/20" />
               <div>
                 <p className="font-bold text-white mb-1">No Historical Scan Logs Recorded</p>
                 <p className="text-[#A1A1AA]">Running an audit scan will populate real historical logs, readiness scores, and differential gates.</p>
@@ -105,7 +102,6 @@ export const ScanHistoryView: React.FC<ScanHistoryViewProps> = ({
                 onClick={() => onTriggerScan()}
                 className="btn btn-primary text-xs px-4 py-2 mt-1 font-bold uppercase tracking-wider flex items-center gap-2 rounded-lg bg-emerald-500 text-black hover:bg-emerald-400 transition-all cursor-pointer"
               >
-                <Play size={12} fill="#0A0A0A" />
                 <span>Run First Live Scan</span>
               </button>
             </div>
@@ -125,7 +121,6 @@ export const ScanHistoryView: React.FC<ScanHistoryViewProps> = ({
                       <span className="text-[0.68rem] text-[#A1A1AA] font-mono">{scan.date}</span>
                     </div>
                     <div className="text-[0.68rem] text-white font-mono mt-0.5 flex items-center gap-1.5">
-                      <Clock size={12} />
                       <span>Duration: {scan.duration} / Trigger: {scan.triggeredBy}</span>
                     </div>
                   </div>

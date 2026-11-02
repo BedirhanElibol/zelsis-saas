@@ -2,7 +2,6 @@
 
 import React, { useState } from 'react';
 import { m } from 'framer-motion';
-import { CheckCircle2, CircleAlert, CircleX, ExternalLink } from 'lucide-react';
 import benchmark from '@/data/benchmark-summary.generated.json';
 import { formatCount } from '@/lib/rule-status';
 import { CORPUS_RECALL, corpusPct } from '@/data/corpus-recall';
@@ -95,7 +94,6 @@ export const BenchmarkSection: React.FC<{ compact?: boolean }> = ({ compact = fa
         {compact ? (
           <a href="/benchmark" className="self-center inline-flex items-center gap-2 min-h-11 px-5 rounded-lg border border-white/15 text-sm font-mono text-zinc-200 hover:text-white hover:border-white/30 transition-colors">
             See every project, every finding and every miss
-            <ExternalLink size={13} aria-hidden="true" />
           </a>
         ) : (
         <>
@@ -138,11 +136,11 @@ export const BenchmarkSection: React.FC<{ compact?: boolean }> = ({ compact = fa
                       <td className="py-3 px-4 text-zinc-400">{f.file}</td>
                       <td className="py-3 px-4 text-center whitespace-nowrap">
                         {!f.found ? (
-                          <span className="inline-flex items-center gap-1.5 text-red-300"><CircleX size={12} /> Missed</span>
+                          <span className="inline-flex items-center gap-1.5 text-red-300">Missed</span>
                         ) : f.blocksGate ? (
-                          <span className="inline-flex items-center gap-1.5 text-zinc-200"><CheckCircle2 size={12} className="text-emerald-500" /> Found · blocks</span>
+                          <span className="inline-flex items-center gap-1.5 text-zinc-200">Found · blocks</span>
                         ) : (
-                          <span className="inline-flex items-center gap-1.5 text-zinc-200"><CircleAlert size={12} className="text-amber-400" /> Found · warning</span>
+                          <span className="inline-flex items-center gap-1.5 text-zinc-200">Found · warning</span>
                         )}
                       </td>
                     </tr>
@@ -178,7 +176,7 @@ export const BenchmarkSection: React.FC<{ compact?: boolean }> = ({ compact = fa
                     <tr key={r.repo} className="hover:bg-white/[0.02] transition-colors">
                       <td className="py-3 px-4 whitespace-nowrap">
                         <a href={REPO_URL(r.repo, r.sha)} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-1 text-white hover:underline">
-                          {r.repo} <ExternalLink size={10} className="text-zinc-500" />
+                          {r.repo}
                         </a>
                       </td>
                       <td className="py-3 px-4 text-zinc-400">{r.stack}</td>

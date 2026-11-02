@@ -2,7 +2,7 @@
 
 import React, { useState } from 'react';
 import Image from 'next/image';
-import { Terminal, GitPullRequest, ShieldCheck, Copy, CheckCircle2, Download, Settings2, Sliders, CheckSquare, AlertTriangle, Lock, ArrowRight, FileCode } from 'lucide-react';
+import { Terminal, Copy, CheckCircle2, Lock } from 'lucide-react';
 import { Project, UserTier } from '@/data/schema';
 import { getConfiguredAppUrl, getPublicAppUrl } from '@/lib/app-url';
 import { badgeUrlFor } from '@/lib/badge-url';
@@ -108,14 +108,12 @@ export const CicdAutomationView: React.FC<CicdAutomationViewProps> = ({
               onClick={() => onOpenCheckout?.('Pro')}
               className="flex-1 flex items-center justify-center gap-2 px-5 py-3 rounded-xl bg-white text-black text-sm font-extrabold hover:bg-neutral-200 transition-colors"
             >
-              <ArrowRight size={15} />
               Upgrade to Pro
             </button>
           </div>
           <div className="grid grid-cols-2 sm:grid-cols-3 gap-3 w-full max-w-lg mt-2">
             {['GitHub Actions Workflow', 'Policy-as-Code Config', 'HTTP Gate API', 'Job Summary', 'SARIF Export', 'Zero-Config Setup'].map((feat) => (
               <div key={feat} className="flex items-center gap-2 p-3 rounded-xl bg-[#0A0A0A] border border-white/10 text-left">
-                <ShieldCheck size={13} className="text-emerald-400 shrink-0" />
                 <span className="text-[11px] text-[#A1A1AA] font-mono">{feat}</span>
               </div>
             ))}
@@ -147,7 +145,6 @@ export const CicdAutomationView: React.FC<CicdAutomationViewProps> = ({
         </div>
 
         <div className="flex items-center gap-2 px-4 py-2.5 rounded-xl bg-white/5 border border-white/10 text-zinc-200 text-xs font-mono font-bold">
-          <GitPullRequest size={16} className="text-zinc-400" />
           <span>CI/CD Gate: READY</span>
         </div>
       </div>
@@ -252,14 +249,12 @@ export const CicdAutomationView: React.FC<CicdAutomationViewProps> = ({
               onClick={() => copyToClipboard(generateGithubWorkflow(), setCopiedWorkflow)}
               className="btn btn-secondary btn-sm flex items-center gap-1.5"
             >
-              {copiedWorkflow ? <CheckCircle2 size={13} className="text-emerald-400" /> : <Copy size={13} />}
               <span>{copiedWorkflow ? 'Copied' : 'Copy Workflow'}</span>
             </button>
             <button
               onClick={() => downloadFile('zelsis.yml', generateGithubWorkflow())}
               className="btn btn-secondary btn-sm flex items-center gap-1.5"
             >
-              <Download size={13} />
               <span>Download</span>
             </button>
             {project && (
@@ -268,7 +263,6 @@ export const CicdAutomationView: React.FC<CicdAutomationViewProps> = ({
                 className="btn btn-secondary btn-sm flex items-center gap-1.5"
                 title="Download standard OASIS SARIF v2.1.0 for GitHub Code Scanning"
               >
-                <FileCode size={13} className="text-cyan-400" />
                 <span>Export SARIF</span>
               </button>
             )}
@@ -295,7 +289,6 @@ export const CicdAutomationView: React.FC<CicdAutomationViewProps> = ({
         </div>
         <div className="shrink-0 flex flex-col gap-2 w-full md:w-auto">
           <button className="btn bg-white text-black hover:bg-neutral-200 text-sm font-bold flex items-center justify-center gap-2 px-6 py-2.5 rounded-xl transition-colors">
-            <GitPullRequest size={16} />
             Install GitHub App
           </button>
           <p className="text-[10px] text-zinc-400 text-center font-mono">Requires Repo Admin rights</p>
@@ -371,7 +364,6 @@ export const CicdAutomationView: React.FC<CicdAutomationViewProps> = ({
                 onClick={() => copyToClipboard(generateZelsisConfig(), setCopiedConfig)}
                 className="px-2.5 py-1 rounded-lg bg-white/5 hover:bg-white/10 text-[#EDEDED] text-xs font-mono transition-colors flex items-center gap-1"
               >
-                {copiedConfig ? <CheckCircle2 size={12} className="text-emerald-400" /> : <Copy size={12} />}
                 <span>{copiedConfig ? 'Copied' : 'Copy'}</span>
               </button>
             </div>
@@ -445,7 +437,6 @@ export const CicdAutomationView: React.FC<CicdAutomationViewProps> = ({
           </div>
 
           <div className="text-xs font-mono text-zinc-400 pt-4 mt-4 border-t border-white/5 flex items-center gap-2">
-            <ShieldCheck size={14} className="text-emerald-400 shrink-0" />
             <span>Works with Python (pip), Node (npm), Go, and Ruby (gem).</span>
           </div>
         </div>
