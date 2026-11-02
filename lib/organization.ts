@@ -64,6 +64,12 @@ export async function getEffectivePlanTier(
   userId: string,
   email?: string | null
 ): Promise<PlanTier> {
+  // API-key routes know only the user id. Look the e-mail up so the founder account is recognised there too;
+  // pass null to skip the lookup.
+  if (email === undefined) {
+    const { data } = await admin.auth.admin.getUserById(userId).catch(() => ({ data: null }));
+    email = data?.user?.email ?? null;
+  }
   if (isPlatformAdminEmail(email)) return 'Enterprise';
   const own = await getOwnPlanTier(admin, userId);
   if (own !== 'Free') return own;
