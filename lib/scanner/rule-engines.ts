@@ -114,6 +114,7 @@ import { evaluateLlmCostGovernanceRules } from '../rules/llm-cost-governance-rul
 import { evaluateRubyRailsRules } from '../rules/ruby-rails-rules';
 import { evaluateMissedVulnsRules } from '../rules/missed-vulns-rules';
 import { evaluateInjectionGapRules } from '../rules/injection-gap-rules';
+import { evaluateEolImageRules } from '../rules/eol-image-rules';
 import { evaluatePhpLaravelRules } from '../rules/php-laravel-rules';
 import { evaluateJavaSpringRules } from '../rules/java-spring-rules';
 import { evaluateDotnetCsharpRules } from '../rules/dotnet-csharp-rules';
@@ -455,6 +456,8 @@ export const RULE_ENGINES: ReadonlyArray<{ evaluate: RuleEngine; scanRawContent?
   { evaluate: evaluateMissedVulnsRules },
   // Injection, archive, crypto, Android and framework-setting gaps (IGAP-01.., Rule IDs 31001-31099)
   { evaluate: evaluateInjectionGapRules },
+  // Container base images past their end of life (EOL-01, Rule ID 31101)
+  { evaluate: evaluateEolImageRules },
   // JS/TS framework security (JSF-01.., Rule IDs 28901-28999)
   { evaluate: evaluateJsFrameworksV4Rules },
   // Python framework security (PYF-01.., Rule IDs 29001-29099)

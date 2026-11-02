@@ -1,8 +1,8 @@
 {
  "summary": {
-  "implementedRules": 1335,
-  "testedRules": 1329,
-  "preciseLocationRules": 1333,
+  "implementedRules": 1336,
+  "testedRules": 1330,
+  "preciseLocationRules": 1334,
   "catalogEntries": 1927,
   "catalogOnlyNotImplemented": 1397,
   "catalogPlaceholderMetadata": 1811
@@ -14753,6 +14753,16 @@
    "title": "Django Password Validators Are Empty",
    "severity": "MEDIUM",
    "source": "lib/rules/injection-gap-rules.ts",
+   "preciseLocation": true,
+   "tested": true,
+   "inCatalog": false
+  },
+  {
+   "ruleId": 31101,
+   "code": "EOL-01",
+   "title": "Base Image Uses ${label}, Out of Security Support Since ${end}",
+   "severity": "MEDIUM",
+   "source": "lib/rules/eol-image-rules.ts",
    "preciseLocation": true,
    "tested": true,
    "inCatalog": false
