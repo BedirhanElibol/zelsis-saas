@@ -8,6 +8,12 @@ export interface JiraActionState {
 
 export const initialJiraState: JiraActionState = { status: 'idle', message: '' };
 
+/** Whether the plan includes Jira, and the saved connection if any. */
+export interface JiraAccess {
+  allowed: boolean;
+  connection: JiraConnectionSummary | null;
+}
+
 /** A saved connection as the browser sees it: never the token. */
 export interface JiraConnectionSummary {
   site: string;
