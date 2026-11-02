@@ -69,7 +69,7 @@ export const OnboardingChecklist: React.FC<OnboardingChecklistProps> = ({ projec
     <div className="bg-[#141414] border border-white/10 rounded-xl overflow-hidden flex flex-col font-mono">
       <div className="p-4 border-b border-white/10 bg-white/5 flex items-center justify-between">
         <h3 className="text-white font-bold flex items-center gap-2">
-          <span>🚀</span> Onboarding Checklist
+          Onboarding Checklist
         </h3>
         <div className="flex items-center gap-2 text-xs">
           <span className="text-[#A1A1AA]">{Math.round(progress)}% Complete</span>
