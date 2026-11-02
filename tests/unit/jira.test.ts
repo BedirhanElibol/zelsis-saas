@@ -4,6 +4,14 @@ import crypto from 'node:crypto';
 import { buildIssue, normalizeJiraSite } from '../../lib/jira';
 import { integrationKey, open, seal } from '../../lib/secret-box';
 import { JiraIssueSchema } from '../../lib/validations/api-schemas';
+import { hasIntegrationAccess } from '../../lib/subscription-utils';
+
+test('Jira is a paid-plan feature', () => {
+  assert.equal(hasIntegrationAccess('Free'), false);
+  assert.equal(hasIntegrationAccess(null), false);
+  assert.equal(hasIntegrationAccess('Pro'), true);
+  assert.equal(hasIntegrationAccess('Enterprise'), true);
+});
 
 test('normalizeJiraSite accepts Jira Cloud only', () => {
   assert.equal(normalizeJiraSite('acme'), 'https://acme.atlassian.net');

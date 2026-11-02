@@ -1,24 +1,27 @@
 'use client';
 
 import React, { useActionState, useCallback, useEffect, useState } from 'react';
-import { Loader2, Ticket, Unplug } from 'lucide-react';
-import { deleteJiraConnection, getJiraConnection, saveJiraConnection } from '@/app/actions/jira';
+import { Lock, Loader2, Ticket, Unplug } from 'lucide-react';
+import { deleteJiraConnection, getJiraAccess, saveJiraConnection } from '@/app/actions/jira';
 import { initialJiraState, type JiraConnectionSummary } from '@/lib/jira-state';
 import { getActiveUserAuth } from '@/lib/supabase-client';
 
 const input = 'bg-[#0A0A0A] border border-white/10 rounded-lg px-3 py-2 text-xs text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-400';
 
-/** Connects a Jira Cloud project so findings can be opened as issues. The API token is stored encrypted. */
+/** Connects a Jira Cloud project so findings can be opened as issues (paid plans). The API token is stored encrypted. */
 export function JiraCard() {
   const [accessToken, setAccessToken] = useState<string | null>(null);
   const [connection, setConnection] = useState<JiraConnectionSummary | null>(null);
+  const [allowed, setAllowed] = useState(false);
   const [saveState, saveAction, saving] = useActionState(saveJiraConnection, initialJiraState);
   const [deleteState, deleteAction, deleting] = useActionState(deleteJiraConnection, initialJiraState);
 
   const refresh = useCallback(async () => {
     const { accessToken: token } = await getActiveUserAuth();
     setAccessToken(token);
-    setConnection(token ? await getJiraConnection(token) : null);
+    const access = token ? await getJiraAccess(token) : null;
+    setConnection(access?.connection ?? null);
+    setAllowed(access?.allowed ?? false);
   }, []);
 
   useEffect(() => { void refresh(); }, [refresh, saveState, deleteState]);
@@ -47,6 +50,14 @@ export function JiraCard() {
             </button>
           </form>
         </div>
+      ) : !allowed ? (
+        <p className="text-xs text-zinc-400 leading-relaxed flex items-start gap-2">
+          <Lock size={13} className="text-zinc-500 shrink-0 mt-0.5" aria-hidden="true" />
+          <span>
+            Open a Jira issue from any finding with one click. Included in Zelsis Pro and Team.{' '}
+            <a href="/#pricing" className="text-emerald-400 hover:text-emerald-300 underline underline-offset-2">See plans</a>
+          </span>
+        </p>
       ) : (
         <>
           <p className="text-xs text-zinc-400 leading-relaxed">

@@ -2,12 +2,12 @@
 
 import React, { useActionState, useEffect, useState } from 'react';
 import { ExternalLink, Loader2, Ticket } from 'lucide-react';
-import { createJiraIssue, getJiraConnection } from '@/app/actions/jira';
+import { createJiraIssue, getJiraAccess } from '@/app/actions/jira';
 import { initialJiraState, type JiraConnectionSummary } from '@/lib/jira-state';
 import { getActiveUserAuth } from '@/lib/supabase-client';
 import type { Finding } from '@/data/schema';
 
-/** Opens an issue for the finding in the user's connected Jira project. Hidden until Jira is connected. */
+/** Opens an issue for the finding in the user's connected Jira project. Hidden until Jira is connected on a paid plan. */
 export function JiraIssueButton({ finding, cweId }: { finding: Finding; cweId?: string }) {
   const [accessToken, setAccessToken] = useState<string | null>(null);
   const [connection, setConnection] = useState<JiraConnectionSummary | null>(null);
@@ -17,7 +17,8 @@ export function JiraIssueButton({ finding, cweId }: { finding: Finding; cweId?: 
     void (async () => {
       const { accessToken: token } = await getActiveUserAuth();
       setAccessToken(token);
-      setConnection(token ? await getJiraConnection(token) : null);
+      const access = token ? await getJiraAccess(token) : null;
+      setConnection(access?.allowed ? access.connection : null);
     })();
   }, []);
 

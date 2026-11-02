@@ -44,6 +44,11 @@ export function isPlatformAdminEmail(email?: string | null): boolean {
 /**
  * Copy-paste fix prompts, remediation guidance and diff patches are a paid feature.
  */
+/** Issue tracker integrations (Jira) are part of the paid plans. */
+export function hasIntegrationAccess(tier?: string | null): boolean {
+  return tier === 'Pro' || tier === 'Enterprise';
+}
+
 export function hasFixPromptAccess(tier?: string | null): boolean {
   return tier === 'Pro' || tier === 'Enterprise';
 }

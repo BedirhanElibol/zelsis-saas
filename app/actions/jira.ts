@@ -5,10 +5,15 @@ import { JiraConnectSchema, JiraDisconnectSchema, JiraIssueSchema } from '@/lib/
 import { createJiraIssue as postJiraIssue, normalizeJiraSite, verifyJiraConnection, type JiraConnection } from '@/lib/jira';
 import { integrationKey, open, seal } from '@/lib/secret-box';
 import { logger } from '@/lib/logger';
-import type { JiraActionState, JiraConnectionSummary } from '@/lib/jira-state';
+import { getEffectivePlanTier } from '@/lib/organization';
+import { hasIntegrationAccess } from '@/lib/subscription-utils';
+import type { JiraAccess, JiraActionState } from '@/lib/jira-state';
 
 const fail = (message: string): JiraActionState => ({ status: 'error', message });
 const NOT_CONFIGURED = 'Jira is not set up on this server yet.';
+const PAID_ONLY = 'Jira is included in Zelsis Pro and Team. Upgrade to connect it.';
+
+const planAllows = async (admin: SupabaseClient, user: User) => hasIntegrationAccess(await getEffectivePlanTier(admin, user.id, user.email));
 
 async function authenticate(accessToken: string): Promise<{ admin: SupabaseClient; user: User } | null> {
   const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
@@ -32,12 +37,15 @@ async function loadConnection(admin: SupabaseClient, userId: string): Promise<Co
   return (data as ConnectionRow | null) ?? null;
 }
 
-/** The caller's saved connection without the token, or null. */
-export async function getJiraConnection(accessToken: string): Promise<JiraConnectionSummary | null> {
+/** Whether the caller's plan includes Jira, and their saved connection without the token. */
+export async function getJiraAccess(accessToken: string): Promise<JiraAccess | null> {
   const ctx = typeof accessToken === 'string' ? await authenticate(accessToken) : null;
   if (!ctx) return null;
   const row = await loadConnection(ctx.admin, ctx.user.id);
-  return row ? { site: row.site_url, email: row.email, projectKey: row.project_key, issueType: row.issue_type } : null;
+  return {
+    allowed: await planAllows(ctx.admin, ctx.user),
+    connection: row ? { site: row.site_url, email: row.email, projectKey: row.project_key, issueType: row.issue_type } : null,
+  };
 }
 
 /** Verifies the credentials against Jira, then stores them with the token encrypted. */
@@ -48,6 +56,7 @@ export async function saveJiraConnection(_prev: JiraActionState, formData: FormD
   if (!key) return fail(NOT_CONFIGURED);
   const ctx = await authenticate(parsed.data.accessToken);
   if (!ctx) return fail('Your session expired. Sign in again.');
+  if (!(await planAllows(ctx.admin, ctx.user))) return fail(PAID_ONLY);
 
   const site = normalizeJiraSite(parsed.data.site);
   if (!site) return fail('Enter your Jira Cloud address, for example acme.atlassian.net.');
@@ -96,6 +105,7 @@ export async function createJiraIssue(_prev: JiraActionState, formData: FormData
   const ctx = await authenticate(parsed.data.accessToken);
   if (!ctx) return fail('Your session expired. Sign in again.');
 
+  if (!(await planAllows(ctx.admin, ctx.user))) return fail(PAID_ONLY);
   const row = await loadConnection(ctx.admin, ctx.user.id);
   if (!row) return fail('Connect Jira in Settings first.');
   const token = open(row.token_ciphertext, key);
