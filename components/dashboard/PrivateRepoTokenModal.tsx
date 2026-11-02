@@ -3,7 +3,7 @@
 import { GithubTokenSteps } from '@/components/dashboard/GithubTokenSteps';
 import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Lock, Eye, EyeOff, Key, X } from 'lucide-react';
+import { Eye, EyeOff, X } from 'lucide-react';
 
 export interface PrivateRepoTokenModalProps {
   isOpen: boolean;
@@ -106,9 +106,6 @@ export const PrivateRepoTokenModal: React.FC<PrivateRepoTokenModalProps> = ({
 
           {/* Header */}
           <div className="flex items-start gap-3.5">
-            <div className="w-11 h-11 rounded-xl bg-amber-500/10 border border-amber-500/30 flex items-center justify-center text-amber-400 shrink-0">
-              <Lock size={22} />
-            </div>
             <div className="min-w-0 flex-1">
               <div className="flex items-center gap-2">
                 <span className="text-[10px] font-mono font-bold uppercase tracking-wider text-amber-400 bg-amber-500/10 border border-amber-500/20 px-2 py-0.5 rounded">
@@ -153,9 +150,6 @@ export const PrivateRepoTokenModal: React.FC<PrivateRepoTokenModalProps> = ({
                 <span className="text-[10px] text-[#A1A1AA] lowercase font-normal">starts with ghp_ or github_pat_</span>
               </label>
               <div className="relative flex items-center">
-                <div className="absolute left-3 text-[#A1A1AA]">
-                  <Key size={14} />
-                </div>
                 <input
                   id="modal-github-pat"
                   name="githubPat"

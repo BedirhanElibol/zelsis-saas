@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
-import { Cookie, X } from 'lucide-react';
+import { X } from 'lucide-react';
 import { updateConsentMode } from '@/components/analytics/AnalyticsScripts';
 
 export function reopenConsent() {
@@ -56,9 +56,6 @@ export const CookieBanner: React.FC = () => {
       <div className="bg-[#141414] border border-white/10 p-3 sm:p-5 rounded-2xl shadow-2xl flex flex-col gap-2 sm:gap-3">
         <div className="hidden sm:flex items-start justify-between gap-3">
           <div className="flex items-center gap-2.5">
-            <div className="w-8 h-8 rounded-lg bg-white/5 border border-white/10 flex items-center justify-center text-white shrink-0">
-              <Cookie size={16} />
-            </div>
             <div className="text-xs font-bold text-[#FAFAFA]">
               Cookie Preferences &amp; Privacy
             </div>

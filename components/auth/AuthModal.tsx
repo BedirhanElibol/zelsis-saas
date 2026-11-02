@@ -2,7 +2,7 @@
 
 import React, { useState } from 'react';
 import { m, AnimatePresence } from 'framer-motion';
-import { X, MailCheck, Eye, EyeOff } from 'lucide-react';
+import { X, Eye, EyeOff } from 'lucide-react';
 import { supabaseSignIn, supabaseSignUp, supabaseResendSignupEmail, supabaseResetPassword, supabaseSignInWithOAuth, isSupabaseConfigured } from '@/lib/supabase';
 import { isPwnedPassword } from '@/lib/pwned-password';
 import { ZelsisLogo } from '@/components/ui/ZelsisLogo';
@@ -256,9 +256,6 @@ export const AuthModal: React.FC<AuthModalProps> = ({
 
           {verifyEmail ? (
             <div className="flex flex-col items-center text-center gap-4">
-              <div className="w-14 h-14 rounded-full bg-emerald-500/10 border border-emerald-500/30 flex items-center justify-center">
-                <MailCheck size={26} className="text-emerald-400" />
-              </div>
               <h2 id="auth-modal-title" className="text-xl font-extrabold text-[#EDEDED]">Check your email</h2>
               <p className="text-sm text-[#A1A1AA]">
                 We sent a confirmation link to <strong className="text-white break-all">{verifyEmail}</strong>.

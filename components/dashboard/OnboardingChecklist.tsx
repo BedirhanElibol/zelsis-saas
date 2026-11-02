@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { Project } from '@/data/schema';
-import { CheckCircle2, Circle, Copy, Check } from 'lucide-react';
+import { Copy, Check } from 'lucide-react';
 import { fetchLastGateRunAt } from '@/lib/supabase';
 import { buildGateWorkflow } from '@/lib/ci-gate-snippet';
 import { getConfiguredAppUrl } from '@/lib/app-url';
@@ -105,13 +105,6 @@ export const OnboardingChecklist: React.FC<OnboardingChecklistProps> = ({ projec
         {steps.map((step, index) => (
           <div key={step.id} className="p-4 flex flex-col gap-3">
             <div className="flex items-start gap-3">
-              <div className="mt-0.5">
-                {step.isComplete ? (
-                  <CheckCircle2 size={16} className="text-emerald-500" />
-                ) : (
-                  <Circle size={16} className="text-zinc-600" />
-                )}
-              </div>
               <div className="flex-1 flex flex-col gap-1">
                 <span className={`text-sm font-bold ${step.isComplete ? 'text-[#A1A1AA] line-through' : 'text-white'}`}>
                   {step.title}

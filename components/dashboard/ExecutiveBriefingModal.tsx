@@ -2,7 +2,7 @@
 
 import React, { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { X, Award, ShieldCheck, AlertTriangle } from 'lucide-react';
+import { X } from 'lucide-react';
 import { Project } from '@/data/schema';
 import { UserTier } from '@/data/schema';
 import { exportProjectPdfReport, generateExecutiveMarkdown } from '@/lib/report-exporter';
@@ -89,9 +89,6 @@ export const ExecutiveBriefingModal: React.FC<ExecutiveBriefingModalProps> = ({
           {/* Modal Header */}
           <div className="flex items-center justify-between border-b border-white/10 pb-4">
             <div className="flex items-center gap-3">
-              <div className="w-10 h-10 rounded-xl bg-white/5 border border-white/10 flex items-center justify-center shrink-0">
-                <Award size={20} className="text-white" />
-              </div>
               <div>
                 <h2 id="executive-briefing-title" className="text-base sm:text-lg font-extrabold text-[#EDEDED]">
                   Executive Briefing &amp; CISO Summary
@@ -120,13 +117,6 @@ export const ExecutiveBriefingModal: React.FC<ExecutiveBriefingModalProps> = ({
             }`}
           >
             <div className="flex items-start sm:items-center gap-3.5">
-              <div
-                className={`w-11 h-11 rounded-xl flex items-center justify-center shrink-0 ${
-                  isPassed ? 'bg-emerald-500/20 text-emerald-400' : 'bg-red-500/20 text-red-400'
-                }`}
-              >
-                {isPassed ? <ShieldCheck size={24} /> : <AlertTriangle size={24} />}
-              </div>
               <div>
                 <div className="flex items-center gap-2">
                   <span

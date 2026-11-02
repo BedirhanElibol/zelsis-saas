@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useEffect } from 'react';
-import { AlertTriangle, RefreshCw } from 'lucide-react';
+import { RefreshCw } from 'lucide-react';
 import { isChunkLoadError, handleChunkLoadRecovery, clearChunkReloadCooldown } from '@/lib/chunk-reload';
 
 interface ErrorBoundaryProps {
@@ -109,9 +109,6 @@ export default function GlobalError({ error, reset }: ErrorBoundaryProps) {
       <div className="w-full max-w-xl bg-[#141414] border border-white/15 rounded-2xl p-6 sm:p-8 flex flex-col gap-6 shadow-2xl relative">
         {/* Top Status Header */}
         <div className="flex items-center gap-4">
-          <div className="w-12 h-12 rounded-xl bg-red-500/10 border border-red-500/25 text-red-400 flex items-center justify-center shrink-0">
-            <AlertTriangle size={24} />
-          </div>
           <div>
             <div className="text-[0.68rem] font-mono font-bold uppercase tracking-widest text-[#A1A1AA]">
               Runtime Exception &bull; Release Gate Interrupted

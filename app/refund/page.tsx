@@ -1,7 +1,6 @@
 import React from 'react';
 import type { Metadata } from 'next';
 import Link from 'next/link';
-import { ShieldCheck } from 'lucide-react';
 import { CONTACT_EMAIL } from '@/lib/contact';
 
 export const metadata: Metadata = {
@@ -50,9 +49,6 @@ export default function RefundPage() {
 
         {/* Highlight Guarantee Box */}
         <div className="p-5 rounded-xl bg-emerald-950/20 border border-emerald-500/30 flex flex-col sm:flex-row items-start sm:items-center gap-4">
-          <div className="w-10 h-10 rounded-lg bg-emerald-500/10 border border-emerald-500/30 flex items-center justify-center shrink-0 text-emerald-400">
-            <ShieldCheck size={22} />
-          </div>
           <div className="flex flex-col gap-1">
             <h2 className="text-sm font-bold text-white">14-Day Unconditional Money-Back Guarantee</h2>
             <p className="text-xs text-zinc-300 leading-relaxed">

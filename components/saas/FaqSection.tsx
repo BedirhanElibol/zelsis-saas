@@ -2,7 +2,6 @@
 
 import React, { useState } from 'react';
 import { m, AnimatePresence } from 'framer-motion';
-import { ChevronDown, HelpCircle, ShieldCheck } from 'lucide-react';
 
 interface FaqItem {
   question: string;
@@ -95,9 +94,6 @@ export const FaqSection: React.FC = () => {
               >
                 <span className="text-base sm:text-lg font-bold text-white group-hover:text-zinc-300 transition-colors">
                   {faq.question}
-                </span>
-                <span className={`p-1.5 rounded-md border border-white/10 bg-white/[0.02] text-zinc-400 group-hover:text-white transition-all transform ${openIdx === idx ? 'rotate-180 bg-white/10' : ''}`}>
-                  <ChevronDown size={16} />
                 </span>
               </button>
 

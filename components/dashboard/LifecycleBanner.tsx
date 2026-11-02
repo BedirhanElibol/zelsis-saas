@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState } from 'react';
-import { AlertTriangle, Calendar, X } from 'lucide-react';
+import { X } from 'lucide-react';
 import { UserProfile } from '@/components/auth/AuthModal';
 import { getSubscriptionValidity } from '@/lib/subscription-utils';
 
@@ -38,9 +38,6 @@ export const LifecycleBanner: React.FC<LifecycleBannerProps> = ({ user }) => {
     return (
       <div className="w-full bg-gradient-to-r from-amber-500/15 via-rose-500/10 to-amber-500/15 border border-amber-500/30 rounded-xl p-4 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 shadow-lg">
         <div className="flex items-start gap-3">
-          <div className="w-9 h-9 rounded-lg bg-amber-500/20 border border-amber-500/40 text-amber-300 flex items-center justify-center shrink-0 mt-0.5 sm:mt-0">
-            <AlertTriangle size={18} />
-          </div>
           <div className="flex flex-col gap-0.5">
             <div className="flex items-center gap-2">
               <span className="text-xs font-mono font-bold uppercase tracking-wider text-amber-300">
@@ -77,9 +74,6 @@ export const LifecycleBanner: React.FC<LifecycleBannerProps> = ({ user }) => {
       return (
         <div className="w-full bg-[#141414] border border-white/15 rounded-xl p-3.5 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 shadow-md">
           <div className="flex items-center gap-3">
-            <div className="w-8 h-8 rounded-lg bg-white/5 border border-white/10 text-white flex items-center justify-center shrink-0">
-              <Calendar size={15} />
-            </div>
             <div className="text-xs text-[#CBD5E1]">
               <span className="font-bold text-white">Subscription Renewal: </span>
               Your <span className="font-semibold text-white">{validity.tier} Plan</span> will renew automatically on{' '}

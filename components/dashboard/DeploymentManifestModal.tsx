@@ -2,7 +2,7 @@
 
 import React, { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { X, Server, GitBranch, Terminal, Shield, FileCode, LucideIcon, Lock } from 'lucide-react';
+import { X } from 'lucide-react';
 import { UserTier } from '@/data/schema';
 import { isCicdIntegrationAllowed } from '@/lib/quota-manager';
 import { getPublicAppUrl } from '@/lib/app-url';
@@ -219,12 +219,12 @@ spec:
             cpu: "250m"
             memory: "128Mi"`;
 
-  const TAB_ITEMS: Array<{ id: TabType; label: string; icon: LucideIcon; filename: string; content: string }> = [
-    { id: 'github', label: 'GitHub Actions', icon: GitBranch, filename: 'zelsis-gate.yml', content: githubActionYaml },
-    { id: 'gitlab', label: 'GitLab CI', icon: Server, filename: '.gitlab-ci.yml', content: gitlabCiYaml },
-    { id: 'husky', label: 'Pre-Commit (Husky)', icon: Terminal, filename: 'pre-commit', content: huskyHook },
-    { id: 'docker', label: 'Docker Compose', icon: FileCode, filename: 'docker-compose.yml', content: dockerComposeYaml },
-    { id: 'k8s', label: 'Kubernetes', icon: Shield, filename: 'k8s-deployment.yaml', content: k8sHelmYaml },
+  const TAB_ITEMS: Array<{ id: TabType; label: string; filename: string; content: string }> = [
+    { id: 'github', label: 'GitHub Actions', filename: 'zelsis-gate.yml', content: githubActionYaml },
+    { id: 'gitlab', label: 'GitLab CI', filename: '.gitlab-ci.yml', content: gitlabCiYaml },
+    { id: 'husky', label: 'Pre-Commit (Husky)', filename: 'pre-commit', content: huskyHook },
+    { id: 'docker', label: 'Docker Compose', filename: 'docker-compose.yml', content: dockerComposeYaml },
+    { id: 'k8s', label: 'Kubernetes', filename: 'k8s-deployment.yaml', content: k8sHelmYaml },
   ];
 
   const currentTabItem = TAB_ITEMS.find(t => t.id === activeTab) || TAB_ITEMS[0];
@@ -260,9 +260,6 @@ spec:
           {/* Header */}
           <div className="flex items-center justify-between border-b border-white/10 p-5 sm:p-6 bg-[#0A0A0A]">
             <div className="flex items-center gap-3">
-              <div className="w-10 h-10 rounded-xl bg-white/5 border border-white/10 flex items-center justify-center text-zinc-300">
-                <Server size={20} />
-              </div>
               <div>
                 <h2 className="text-lg font-extrabold text-[#EDEDED] flex items-center gap-2">
                   <span>CI/CD &amp; Pipeline Integration Hub</span>
@@ -287,9 +284,6 @@ spec:
 
           {!isAllowed ? (
             <div className="flex flex-col items-center justify-center gap-6 py-12 px-6 bg-[#0A0A0A] border border-white/10 rounded-2xl text-center m-6">
-              <div className="w-14 h-14 rounded-2xl bg-white/5 border border-white/10 flex items-center justify-center">
-                <Lock size={26} className="text-zinc-400" />
-              </div>
               <div className="max-w-md">
                 <h3 className="text-base font-extrabold text-[#EDEDED] mb-2">
                   CI/CD &amp; Pipeline Manifests is a Pro Feature
@@ -321,7 +315,6 @@ spec:
               {/* Platform Tab Navigation */}
               <div className="flex items-center gap-1.5 px-6 pt-4 border-b border-white/10 bg-[#0E0E0E] overflow-x-auto">
                 {TAB_ITEMS.length === 0 ? null : TAB_ITEMS.map((tab) => {
-                  const Icon = tab.icon;
                   const isActive = activeTab === tab.id;
                   return (
                     <button
@@ -333,7 +326,6 @@ spec:
                           : 'border-transparent text-zinc-400 hover:text-zinc-200 hover:bg-white/[0.02]'
                       }`}
                     >
-                      <Icon size={14} className={isActive ? 'text-white' : 'text-zinc-400'} />
                       <span>{tab.label}</span>
                     </button>
                   );

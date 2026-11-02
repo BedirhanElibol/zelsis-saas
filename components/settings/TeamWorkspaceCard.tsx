@@ -124,9 +124,6 @@ export const TeamWorkspaceCard: React.FC<TeamWorkspaceCardProps> = ({ user, onOp
 
       <div className="flex items-start justify-between flex-wrap gap-4">
         <div className="flex items-center gap-3">
-          <div className="w-10 h-10 rounded-xl bg-white/5 border border-white/10 text-white flex items-center justify-center">
-            <Building2 size={20} />
-          </div>
           <div>
             <div className="flex items-center gap-2">
               <h2 className="text-base sm:text-lg font-extrabold text-white">{org ? org.name : 'Team Workspace'}</h2>

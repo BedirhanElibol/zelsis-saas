@@ -4,7 +4,7 @@ import { GithubTokenSteps } from '@/components/dashboard/GithubTokenSteps';
 import { GithubConnectPanel } from '@/components/dashboard/GithubConnectPanel';
 import React, { useState, useEffect } from 'react';
 import { Project } from '@/data/schema';
-import { FolderGit2, X, Globe, Eye, EyeOff } from 'lucide-react';
+import { X, Eye, EyeOff } from 'lucide-react';
 import { isValidGithubUrl, sanitizeTargetUrl } from '@/lib/github-api';
 import { isValidWebUrl } from '@/lib/website-scanner';
 import { FRAMEWORK_CHOICES, UNDETECTED_FRAMEWORK } from '@/lib/scanner/stack-detect';
@@ -158,9 +158,6 @@ export const ConnectTargetModal: React.FC<ConnectTargetModalProps> = ({
         </button>
 
         <div className="flex items-center gap-3 mb-4">
-          <div className="w-10 h-10 rounded-xl bg-white/5 border border-white/10 flex items-center justify-center shrink-0">
-            {targetType === 'GITHUB' ? <FolderGit2 size={22} className="text-white" /> : <Globe size={22} className="text-[#3B82F6]" />}
-          </div>
           <div>
             <h2 className="text-lg font-extrabold text-[#EDEDED]">
               Connect Target

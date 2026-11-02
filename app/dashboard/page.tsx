@@ -34,7 +34,7 @@ const CheckoutView = dynamic(() => import('@/components/checkout/CheckoutView').
 const ExecutiveBriefingModal = dynamic(() => import('@/components/dashboard/ExecutiveBriefingModal').then(m => m.ExecutiveBriefingModal), { ssr: false });
 
 import { safeSetStorageItem } from '@/lib/storage';
-import { ShieldCheck, Loader2, LogIn } from 'lucide-react';
+import { Loader2 } from 'lucide-react';
 import { LifecycleBanner } from '@/components/dashboard/LifecycleBanner';
 import { normalizeRepoUrl, extractRepoDisplayName } from '@/lib/github-api';
 import { ComponentErrorBoundary } from '@/components/common/ComponentErrorBoundary';
@@ -291,9 +291,6 @@ function DashboardContent() {
           <Loader2 size={28} className="animate-spin text-[#A1A1AA]" aria-label="Verifying session" />
         ) : (
           <div className="max-w-md w-full bg-[#141414] border border-white/10 rounded-2xl p-6 sm:p-8 flex flex-col items-center text-center shadow-2xl">
-            <div className="w-14 h-14 rounded-2xl bg-emerald-500/10 border border-emerald-500/30 flex items-center justify-center text-emerald-400 mb-5">
-              <LogIn size={28} />
-            </div>
             <h2 className="text-xl font-extrabold tracking-tight mb-2">Sign in to continue</h2>
             <p className="text-xs sm:text-sm text-[#A1A1AA] leading-relaxed mb-6">
               Your saved repositories, live sites and scan history are tied to your account. Sign in or create a free account to use Zelsis.
@@ -347,9 +344,6 @@ function DashboardContent() {
     return (
       <div className="min-h-screen bg-[#0A0A0A] text-white flex items-center justify-center p-4 sm:p-6">
         <div className="max-w-md w-full bg-[#141414] border border-white/10 rounded-2xl p-6 sm:p-8 flex flex-col items-center text-center shadow-2xl">
-          <div className="w-14 h-14 rounded-2xl bg-emerald-500/10 border border-emerald-500/30 flex items-center justify-center text-emerald-400 mb-5 shadow-inner">
-            <ShieldCheck size={28} />
-          </div>
 
           <h2 className="text-xl font-extrabold text-white tracking-tight mb-2">
             No Projects Connected

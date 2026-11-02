@@ -3,7 +3,6 @@
 import React from 'react';
 import { Project, ScanHistoryItem } from '@/data/schema';
 import { UserTier } from '@/data/schema';
-import { History } from 'lucide-react';
 import { filterHistoryByRetention, TIER_CONFIGS } from '@/lib/quota-manager';
 
 interface ScanHistoryViewProps {
@@ -33,9 +32,6 @@ export const ScanHistoryView: React.FC<ScanHistoryViewProps> = ({
       <div className="bg-[#141414] border border-white/10 rounded-xl p-6 sm:p-8 bg-[#141414] border-white/10 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
         <div>
           <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-xl bg-white/5 border border-white/10 flex items-center justify-center">
-              <History size={20} className="text-white" />
-            </div>
             <div>
               <h1 className="text-xl font-extrabold text-[#EDEDED]">
                 Release Gate Audit History &amp; Timeline

@@ -1,7 +1,6 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
-import { Settings } from 'lucide-react';
 import { Project } from '@/data/schema';
 import { UserProfile } from '@/components/auth/AuthModal';
 import { SubscriptionCard } from '@/components/settings/SubscriptionCard';
@@ -78,9 +77,6 @@ export const ProjectSettingsView: React.FC<ProjectSettingsViewProps> = ({
       {/* Header */}
       <div className="bg-[#141414] border border-white/10 rounded-xl p-6 sm:p-8 flex items-center justify-between">
         <div className="flex items-center gap-3">
-          <div className="w-10 h-10 rounded-xl bg-white/5 border border-white/10 flex items-center justify-center">
-            <Settings size={20} className="text-white" />
-          </div>
           <div>
             <h1 className="text-xl font-extrabold text-[#EDEDED]">
               Project Configuration &amp; Release Settings

@@ -2,7 +2,7 @@
 
 import React, { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { X, BookOpen } from 'lucide-react';
+import { X } from 'lucide-react';
 import { COMPLIANCE_RULES_CATALOG, INFRA_RULES_CATALOG } from '@/data/mockData';
 
 const INFRA_SNIPPETS: Record<string, { vulnerable: string; remediated: string }> = {
@@ -215,9 +215,6 @@ export const RuleKnowledgeBaseModal: React.FC<RuleKnowledgeBaseModalProps> = ({
           {/* Header */}
           <div className="flex items-center justify-between border-b border-white/10 pb-4">
             <div className="flex items-center gap-3">
-              <div className="w-9 h-9 rounded-xl bg-white/5 border border-white/10 flex items-center justify-center">
-                <BookOpen size={18} className="text-white" />
-              </div>
               <div>
                 <h2 className="text-lg font-extrabold text-[#EDEDED]">
                   Zelsis Rule Knowledge Base &amp; Remediation Encyclopedia

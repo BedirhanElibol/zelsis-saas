@@ -2,7 +2,7 @@
 
 import React, { useState } from 'react';
 import { Project, Finding } from '@/data/schema';
-import { ShieldCheck, Layers, AlertTriangle, Play, X, Loader2 } from 'lucide-react';
+import { Play, X, Loader2 } from 'lucide-react';
 
 export interface DemoShowcaseBannerProps {
   onFocusQuickAudit?: () => void;
@@ -52,9 +52,6 @@ export const DemoShowcaseBanner: React.FC<DemoShowcaseBannerProps> = ({
     <div className="relative overflow-hidden rounded-xl border border-white/10 bg-[#141414] shadow-lg flex flex-col p-0">
       <div className="p-4 sm:p-5 flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
         <div className="flex items-start sm:items-center gap-3.5 min-w-0">
-          <div className="w-10 h-10 rounded-xl bg-white/[0.04] border border-white/10 flex items-center justify-center shrink-0 text-zinc-300">
-            <Layers size={20} />
-          </div>
           <div>
             <div className="flex items-center gap-2 mb-1.5 flex-wrap">
               <span className="px-2.5 py-0.5 rounded text-[10px] font-mono font-semibold bg-white/10 border border-white/15 text-zinc-200 tracking-wider uppercase">
@@ -180,18 +177,6 @@ ${openFindings.map((f, i) => `${i + 1}. [${f.severity}] ${f.title} (${f.filePath
         gap: '20px'
       }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: '20px' }}>
-          <div style={{
-            width: '64px',
-            height: '64px',
-            borderRadius: '16px',
-            background: project.gateStatus === 'FAILED' ? 'rgba(239, 68, 68, 0.2)' : 'rgba(20, 184, 166, 0.2)',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            border: `1px solid ${project.gateStatus === 'FAILED' ? 'rgba(239, 68, 68, 0.4)' : 'rgba(16, 185, 129, 0.4)'}`
-          }}>
-            {project.gateStatus === 'FAILED' ? <AlertTriangle size={32} color="#EF4444" /> : <ShieldCheck size={32} color="#10B981" />}
-          </div>
           <div>
             <div style={{ fontSize: '0.8rem', fontWeight: 700, color: '#A1A1AA', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
               Release Readiness Audit Evaluation

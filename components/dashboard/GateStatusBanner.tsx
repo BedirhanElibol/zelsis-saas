@@ -3,7 +3,6 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { Project, Finding } from '@/data/schema';
 import { generateAuditPdfReport } from '@/lib/pdf-exporter';
-import { AlertTriangle, CheckCircle2 } from 'lucide-react';
 import {
   Server,
   ShieldAlert,
@@ -119,23 +118,6 @@ export const GateStatusBanner: React.FC<GateStatusBannerProps> = ({
     >
       {/* Left: Clearance Status & Metric Scorecard */}
       <div className="flex items-start sm:items-center gap-3.5 sm:gap-5 min-w-0">
-        <div
-          className={`w-12 h-12 sm:w-14 sm:h-14 rounded-xl flex items-center justify-center border font-bold shrink-0 ${
-            gateStatus === 'FAILED'
-              ? 'bg-red-500/10 border-red-500/30 text-red-500'
-              : gateStatus === 'WARNING'
-              ? 'bg-amber-500/10 border-amber-500/30 text-amber-400'
-              : 'bg-emerald-500/10 border-emerald-500/30 text-emerald-400'
-          }`}
-        >
-          {gateStatus === 'FAILED' ? (
-            <AlertTriangle size={24} className="sm:w-7 sm:h-7" />
-          ) : gateStatus === 'WARNING' ? (
-            <AlertTriangle size={24} className="sm:w-7 sm:h-7" />
-          ) : (
-            <CheckCircle2 size={24} className="sm:w-7 sm:h-7 text-emerald-400" />
-          )}
-        </div>
 
         <div className="min-w-0 flex-1">
           <div className="flex items-center gap-2">

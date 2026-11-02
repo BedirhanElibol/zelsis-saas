@@ -2,7 +2,6 @@
 
 import React, { useState } from 'react';
 import Image from 'next/image';
-import { BarChart3 } from 'lucide-react';
 import { Project } from '@/data/schema';
 
 interface QuickChartWidgetProps {
@@ -48,9 +47,6 @@ export const QuickChartWidget: React.FC<QuickChartWidgetProps> = ({ project }) =
     <div className="bg-[#141414] border border-white/10 rounded-xl p-6 flex flex-col gap-4">
       <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 border-b border-white/10 pb-3">
         <div className="flex items-center gap-3">
-          <div className="w-8 h-8 rounded-lg bg-white/5 border border-white/10 flex items-center justify-center">
-            <BarChart3 size={16} className="text-white" />
-          </div>
           <div>
             <h3 className="text-sm font-extrabold text-[#EDEDED]">
               Public API #2: QuickChart Dynamic Image Generator

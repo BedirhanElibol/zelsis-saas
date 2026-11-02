@@ -3,7 +3,6 @@
 import React, { useEffect } from 'react';
 import Image from 'next/image';
 import { UserAvatar } from '@/components/ui/UserAvatar';
-import { LayoutDashboard, ShieldCheck, Palette, Layers, FolderGit2, CheckSquare, CreditCard, Bug } from 'lucide-react';
 import {
   Settings,
   FileText,
@@ -54,28 +53,28 @@ export const Sidebar: React.FC<SidebarProps> = ({
   }, [isMobileOpen, onCloseMobile]);
 
   const mainNav = [
-    { id: 'dashboard', label: 'Overview Dashboard', icon: LayoutDashboard },
-    { id: 'projects', label: 'Connected Projects', icon: FolderGit2 },
-    { id: 'scans', label: 'Scan History', icon: FileText },
-    { id: 'lab-briefing', label: 'Reports & PDF Export', icon: FileText },
+    { id: 'dashboard', label: 'Overview Dashboard' },
+    { id: 'projects', label: 'Connected Projects' },
+    { id: 'scans', label: 'Scan History' },
+    { id: 'lab-briefing', label: 'Reports & PDF Export' },
   ];
 
   const pillarNav = [
-    { id: 'security', label: 'Security Pre-Flight', icon: ShieldCheck },
-    { id: 'compliance', label: 'Legal & Privacy Gate', icon: Scale },
-    { id: 'infra', label: 'Infra & Database Gate', icon: Database },
-    { id: 'vibepolish', label: 'Design & UX Polish', icon: Palette },
+    { id: 'security', label: 'Security Pre-Flight' },
+    { id: 'compliance', label: 'Legal & Privacy Gate' },
+    { id: 'infra', label: 'Infra & Database Gate' },
+    { id: 'vibepolish', label: 'Design & UX Polish' },
     // Opens the user's own logic-bug findings (the other pillars list the rule catalog)
-    { id: 'logicbugs', label: 'Logic Bugs & Broken Features', icon: Bug },
-    { id: 'aimaster', label: 'All Rules (Catalog)', icon: Layers },
+    { id: 'logicbugs', label: 'Logic Bugs & Broken Features' },
+    { id: 'aimaster', label: 'All Rules (Catalog)' },
   ];
 
   const managementNav = [
-    { id: 'cicd', label: 'CI/CD & CLI Automation', icon: Terminal },
-    { id: 'remediation', label: 'Fix Queue', icon: CheckSquare },
-    { id: 'checkout', label: 'Billing & Tiers', icon: CreditCard },
-    { id: 'portal', label: 'Manage Subscription', icon: FileText },
-    { id: 'settings', label: 'Settings & API Keys', icon: Settings },
+    { id: 'cicd', label: 'CI/CD & CLI Automation' },
+    { id: 'remediation', label: 'Fix Queue' },
+    { id: 'checkout', label: 'Billing & Tiers' },
+    { id: 'portal', label: 'Manage Subscription' },
+    { id: 'settings', label: 'Settings & API Keys' },
   ];
 
 
@@ -109,7 +108,6 @@ export const Sidebar: React.FC<SidebarProps> = ({
           CORE MODULES
         </span>
         {mainNav.map((item) => {
-          const Icon = item.icon;
           const isActive = activeNav === item.id;
           return (
             <button
@@ -122,7 +120,6 @@ export const Sidebar: React.FC<SidebarProps> = ({
                   : 'text-[#A1A1AA] hover:text-[#EDEDED] hover:bg-white/[0.04] border border-transparent'
               }`}
             >
-              <Icon size={16} />
               <span>{item.label}</span>
             </button>
           );
@@ -137,7 +134,6 @@ export const Sidebar: React.FC<SidebarProps> = ({
           PRODUCT PILLARS
         </span>
         {pillarNav.map((item) => {
-          const Icon = item.icon;
           const isActive = activeNav === item.id;
           return (
             <button
@@ -151,7 +147,6 @@ export const Sidebar: React.FC<SidebarProps> = ({
               }`}
             >
               <div className="flex items-center gap-3">
-                <Icon size={16} />
                 <span>{item.label}</span>
               </div>
             </button>
@@ -167,7 +162,6 @@ export const Sidebar: React.FC<SidebarProps> = ({
           MANAGEMENT
         </span>
         {managementNav.map((item) => {
-          const Icon = item.icon;
           const isActive = activeNav === item.id;
           return (
             <button
@@ -180,7 +174,6 @@ export const Sidebar: React.FC<SidebarProps> = ({
                   : 'text-[#A1A1AA] hover:text-[#EDEDED] hover:bg-white/[0.04] border border-transparent'
               }`}
             >
-              <Icon size={16} />
               <span>{item.label}</span>
             </button>
           );
