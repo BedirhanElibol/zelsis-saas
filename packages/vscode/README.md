@@ -1,5 +1,7 @@
 # Zelsis for VS Code
 
+Full guide: [zelsis.com/docs/vscode](https://zelsis.com/docs/vscode)
+
 Runs the Zelsis release check on your changed files and shows the findings as problems in the editor, with the fix text and a CWE link where one applies.
 
 ## Use
