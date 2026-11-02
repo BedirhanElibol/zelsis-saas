@@ -2,7 +2,7 @@
 
 import React, { useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { X, ShieldAlert } from 'lucide-react';
+import { X } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import { priceLabel } from '@/data/pricing-plans';
 
@@ -60,9 +60,6 @@ export const QuotaLimitModal: React.FC<QuotaLimitModalProps> = ({
 
           {/* Header Badge & Icon */}
           <div className="flex items-center gap-3.5">
-            <div className="w-12 h-12 rounded-xl bg-amber-500/10 border border-amber-500/30 flex items-center justify-center text-amber-400 shrink-0">
-              <ShieldAlert size={24} />
-            </div>
             <div className="flex flex-col">
               <span className="text-[10px] font-mono font-extrabold uppercase tracking-wider text-amber-400 bg-amber-500/10 border border-amber-500/20 px-2 py-0.5 rounded w-fit mb-1">
                 Free Tier Quota Limit

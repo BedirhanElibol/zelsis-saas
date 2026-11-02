@@ -2,7 +2,7 @@
 
 import React, { useActionState, useCallback, useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { Building2, Loader2, Users } from 'lucide-react';
+import { Loader2, Users } from 'lucide-react';
 import { AuthModal } from '@/components/auth/AuthModal';
 import { acceptInvite } from '@/app/actions/organization';
 import { initialOrgActionState } from '@/lib/org-action-state';
@@ -29,9 +29,6 @@ export function InviteAcceptView({ token }: { token: string }) {
     <main className="min-h-screen bg-[#0A0A0A] flex items-center justify-center px-4">
       <div className="w-full max-w-md bg-[#141414] border border-white/10 rounded-2xl p-6 sm:p-8 flex flex-col gap-5 shadow-2xl">
         <div className="flex items-center gap-3">
-          <div className="w-10 h-10 rounded-xl bg-white/5 border border-white/10 text-white flex items-center justify-center">
-            <Building2 size={20} />
-          </div>
           <div>
             <h1 className="text-lg font-extrabold text-white">Join a team workspace</h1>
             <p className="text-xs text-zinc-400">You were invited to a Zelsis Team workspace.</p>

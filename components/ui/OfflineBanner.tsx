@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { WifiOff, X, CheckCircle2 } from 'lucide-react';
+import { X } from 'lucide-react';
 import { useOnlineStatus } from '@/hooks/useOnlineStatus';
 
 export const OfflineBanner: React.FC = () => {
@@ -55,11 +55,6 @@ export const OfflineBanner: React.FC = () => {
           <div className="max-w-7xl mx-auto flex items-center justify-between gap-3 flex-wrap sm:flex-nowrap">
             {/* Left status badge & message */}
             <div className="flex items-center gap-3 min-w-0">
-              <div className="relative flex items-center justify-center w-8 h-8 rounded-lg bg-amber-500/20 text-amber-400 shrink-0">
-                <WifiOff size={16} />
-                <span className="absolute -top-0.5 -right-0.5 w-2.5 h-2.5 bg-amber-500 rounded-full animate-ping" />
-                <span className="absolute -top-0.5 -right-0.5 w-2.5 h-2.5 bg-amber-500 rounded-full" />
-              </div>
               <div className="text-xs">
                 <span className="font-extrabold text-white tracking-wide mr-1.5 uppercase text-[0.7rem] bg-amber-500/20 px-1.5 py-0.5 rounded border border-amber-500/30">
                   Offline Mode
@@ -110,9 +105,6 @@ export const OfflineBanner: React.FC = () => {
         >
           <div className="max-w-7xl mx-auto flex items-center justify-between gap-3">
             <div className="flex items-center gap-3">
-              <div className="w-8 h-8 rounded-lg bg-emerald-500/20 text-emerald-400 flex items-center justify-center shrink-0">
-                <CheckCircle2 size={16} />
-              </div>
               <div className="text-xs font-medium text-emerald-100">
                 <span className="font-extrabold text-white tracking-wide mr-1.5 uppercase text-[0.7rem] bg-emerald-500/20 px-1.5 py-0.5 rounded border border-emerald-500/30">
                   Connected

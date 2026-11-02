@@ -3,7 +3,7 @@
 import React, { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { motion, AnimatePresence } from 'framer-motion';
-import { AlertTriangle, X, CheckCircle2, ShieldAlert, Loader2 } from 'lucide-react';
+import { X, Loader2 } from 'lucide-react';
 import { Project } from '@/data/schema';
 import { UserProfile } from '@/components/auth/AuthModal';
 import { supabaseSignOut } from '@/lib/supabase';
@@ -121,9 +121,6 @@ export const DangerZoneCard: React.FC<DangerZoneCardProps> = ({
       <div className="bg-[#180a0a]/60 border border-red-500/30 rounded-2xl p-6 sm:p-8 flex flex-col gap-6 shadow-xl">
         <div className="flex items-start justify-between gap-4 flex-wrap sm:flex-nowrap">
           <div className="flex items-start gap-3">
-            <div className="w-10 h-10 rounded-xl bg-red-500/20 border border-red-500/40 text-red-400 flex items-center justify-center shrink-0 mt-0.5">
-              <AlertTriangle size={20} />
-            </div>
             <div>
               <div className="flex items-center gap-2">
                 <h2 className="text-base font-extrabold text-white">
@@ -197,9 +194,6 @@ export const DangerZoneCard: React.FC<DangerZoneCardProps> = ({
 
               {purgeSuccess ? (
                 <div className="py-8 flex flex-col items-center justify-center text-center gap-4">
-                  <div className="w-16 h-16 rounded-full bg-white/5 text-white border border-white/20 flex items-center justify-center">
-                    <CheckCircle2 size={36} />
-                  </div>
                   <h3 className="text-xl font-extrabold text-white">
                     {isAuthenticated ? 'Data Purged Successfully' : 'Local Cache & Scans Cleared'}
                   </h3>
@@ -212,9 +206,6 @@ export const DangerZoneCard: React.FC<DangerZoneCardProps> = ({
               ) : (
                 <>
                   <div className="flex items-center gap-3">
-                    <div className="w-10 h-10 rounded-xl bg-red-500/20 border border-red-500/40 text-red-400 flex items-center justify-center shrink-0">
-                      <ShieldAlert size={20} />
-                    </div>
                     <div>
                       <h3 id="gdpr-delete-modal-title" className="text-lg font-extrabold text-white">
                         {!isAuthenticated ? 'Confirm Local Cache & Scan History Erasure' : 'Confirm Permanent Account & Data Erasure'}

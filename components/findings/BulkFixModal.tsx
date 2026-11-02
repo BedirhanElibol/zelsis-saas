@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { X, Layers } from 'lucide-react';
+import { X } from 'lucide-react';
 import { Finding, UserTier } from '@/data/schema';
 import { isBulkPatchAllowed } from '@/lib/quota-manager';
 
@@ -102,9 +102,6 @@ ${addedComment}
           {/* Header */}
           <div className="flex items-center justify-between border-b border-white/10 pb-4">
             <div className="flex items-center gap-3">
-              <div className="w-9 h-9 rounded-xl bg-white/5 border border-white/10 flex items-center justify-center">
-                <Layers size={18} className="text-white" />
-              </div>
               <div>
                 <h2 className="text-lg font-extrabold text-[#EDEDED]">
                   Bulk Unified Git Patch Generator

@@ -3,7 +3,6 @@
 import React, { useState } from 'react';
 import { Finding, InfraRule } from '@/data/schema';
 import { INFRA_RULES_CATALOG } from '@/data/mockData';
-import { Database } from 'lucide-react';
 
 interface InfraAuditViewProps {
   findings: Finding[];
@@ -54,9 +53,6 @@ export const InfraAuditView: React.FC<InfraAuditViewProps> = ({
       <div className="bg-[#141414] border border-cyan-500/20 rounded-xl p-6 sm:p-8 flex flex-col md:flex-row md:items-center justify-between gap-6">
         <div>
           <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-xl bg-cyan-500/10 border border-cyan-500/20 flex items-center justify-center">
-              <Database size={24} className="text-cyan-400" />
-            </div>
             <div>
               <h1 className="text-xl sm:text-2xl font-extrabold text-[#EDEDED] m-0">
                 Zelsis Infrastructure, Cloud &amp; Universal Database Gate

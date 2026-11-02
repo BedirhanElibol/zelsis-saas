@@ -1,5 +1,4 @@
 import React from 'react';
-import { CheckCircle2 } from 'lucide-react';
 import { ScanResult } from '@/lib/scanner-engine';
 import { Project } from '@/data/schema';
 import { canAccessLocalAudit } from '@/lib/env-config';
@@ -40,9 +39,6 @@ export const ScanRunnerCompleteBanner: React.FC<ScanRunnerCompleteBannerProps> =
       {scanResult ? (
         <>
           <div className="flex items-center gap-4">
-            <div className="w-12 h-12 rounded-xl bg-white/5 border border-white/10 flex items-center justify-center shrink-0">
-              <CheckCircle2 size={24} className="text-white" />
-            </div>
             <div>
               <div className="flex items-center gap-2">
                 <span className="text-xs font-mono font-extrabold text-white uppercase tracking-wider">

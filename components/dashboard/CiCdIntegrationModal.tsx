@@ -2,7 +2,7 @@
 
 import React, { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { X, GitPullRequest, ShieldCheck, Lock } from 'lucide-react';
+import { X } from 'lucide-react';
 import { Project, UserTier } from '@/data/schema';
 import { getPublicAppUrl } from '@/lib/app-url';
 import { isCicdIntegrationAllowed } from '@/lib/quota-manager';
@@ -156,9 +156,6 @@ jobs:
           {/* Header */}
           <div className="flex items-center justify-between border-b border-white/10 pb-4">
             <div className="flex items-center gap-3">
-              <div className="w-10 h-10 rounded-xl bg-white/5 border border-white/10 flex items-center justify-center shrink-0">
-                <GitPullRequest size={20} className="text-white" />
-              </div>
               <div>
                 <h2 id="cicd-modal-title" className="text-base sm:text-lg font-extrabold text-[#EDEDED]">
                   CI/CD &amp; GitHub PR Release Gate
@@ -180,9 +177,6 @@ jobs:
 
           {!isAllowed ? (
             <div className="flex flex-col items-center justify-center gap-6 py-12 px-6 bg-[#0A0A0A] border border-white/10 rounded-2xl text-center my-2">
-              <div className="w-14 h-14 rounded-2xl bg-white/5 border border-white/10 flex items-center justify-center">
-                <Lock size={26} className="text-zinc-400" />
-              </div>
               <div className="max-w-md">
                 <h3 className="text-base font-extrabold text-[#EDEDED] mb-2">
                   CI/CD Integration is a Pro Feature
@@ -214,9 +208,6 @@ jobs:
               {/* Value Prop Banner */}
               <div className="bg-[#0A0A0A] p-4 rounded-xl border border-white/10 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
                 <div className="flex items-center gap-3">
-                  <div className="w-8 h-8 rounded-lg bg-white/5 border border-white/10 flex items-center justify-center text-zinc-300 shrink-0">
-                    <ShieldCheck size={18} />
-                  </div>
                   <div>
                     <div className="text-xs font-bold text-white">Block Vulnerabilities Before They Ship</div>
                     <div className="text-[11px] text-[#A1A1AA]">

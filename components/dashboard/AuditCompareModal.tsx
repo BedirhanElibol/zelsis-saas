@@ -2,7 +2,7 @@
 
 import React from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { X, Layers } from 'lucide-react';
+import { X } from 'lucide-react';
 import { Project, ScanHistoryItem } from '@/data/schema';
 
 interface AuditCompareModalProps {
@@ -95,9 +95,6 @@ export const AuditCompareModal: React.FC<AuditCompareModalProps> = ({
           {/* Header */}
           <div className="flex items-center justify-between border-b border-white/10 pb-4">
             <div className="flex items-center gap-3">
-              <div className="w-9 h-9 rounded-xl bg-white/5 border border-white/10 flex items-center justify-center">
-                <Layers size={18} className="text-white" />
-              </div>
               <div>
                 <h2 className="text-lg font-extrabold text-white">
                   Audit History Side-by-Side Comparison

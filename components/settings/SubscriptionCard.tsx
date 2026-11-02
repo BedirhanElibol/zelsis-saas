@@ -2,7 +2,7 @@
 
 import React, { useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { CreditCard, Loader2 } from 'lucide-react';
+import { Loader2 } from 'lucide-react';
 import { UserProfile } from '@/components/auth/AuthModal';
 import { getSupabase } from '@/lib/supabase';
 import { verifyLicenseKey } from '@/lib/stripe-checkout';
@@ -136,9 +136,6 @@ export const SubscriptionCard: React.FC<SubscriptionCardProps> = ({
       {/* Header */}
       <div className="flex items-start justify-between flex-wrap gap-4">
         <div className="flex items-center gap-3">
-          <div className="w-10 h-10 rounded-xl bg-white/5 border border-white/10 text-white flex items-center justify-center">
-            <CreditCard size={20} />
-          </div>
           <div>
             <h2 className="text-base sm:text-lg font-extrabold text-white">Membership &amp; Subscription Management</h2>
             <p className="text-xs text-[#A1A1AA] mt-0.5">Manage your active plan, included audit rules, and user profile preferences.</p>

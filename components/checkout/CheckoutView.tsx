@@ -5,7 +5,6 @@ import { useRouter } from 'next/navigation';
 import { ZELSIS_PRICING_PLANS, PricingPlanItem, priceLabel } from '@/data/pricing-plans';
 // EmptyState fallback: static pricing plan definitions never yield empty list
 import { generateLicenseKey, activateUserTier, verifyLicenseKey } from '@/lib/stripe-checkout';
-import { ShieldCheck } from 'lucide-react';
 import { Copy, Terminal, ShieldAlert, AlertCircle, ExternalLink, Calendar, Loader2, RefreshCw, ArrowRight } from 'lucide-react';
 import { formatRenewalDate } from '@/lib/subscription-utils';
 import { getAttributionData } from '@/lib/attribution';
@@ -341,9 +340,6 @@ export const CheckoutView: React.FC<CheckoutViewProps> = ({
       {reason === 'quota_exceeded' && (
         <div className="p-5 rounded-xl bg-amber-500/10 border border-amber-500/30 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 shadow-lg animate-fade-in">
           <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-xl bg-amber-500/20 border border-amber-500/40 text-amber-300 flex items-center justify-center shrink-0">
-              <ShieldAlert size={20} />
-            </div>
             <div>
               <div className="text-xs font-mono font-bold text-amber-300 uppercase tracking-wider">
                 Monthly Free Scan Limit Reached (3/3)
@@ -393,9 +389,6 @@ export const CheckoutView: React.FC<CheckoutViewProps> = ({
       {!isAuthenticated && !isSubmitted && (
         <div className="p-6 rounded-2xl bg-amber-500/10 border border-amber-500/30 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-5 shadow-lg">
           <div className="flex items-start gap-4">
-            <div className="w-12 h-12 rounded-xl bg-amber-500/20 border border-amber-500/40 text-amber-300 flex items-center justify-center shrink-0">
-              <ShieldCheck size={24} className="text-amber-300" />
-            </div>
             <div className="flex flex-col gap-1">
               <h2 className="text-sm font-bold text-white tracking-wide">
                 Account required

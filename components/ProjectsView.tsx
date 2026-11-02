@@ -5,7 +5,7 @@ import React, { useState, useEffect } from 'react';
 import { useSearchParams } from 'next/navigation';
 import { Project } from '@/data/schema';
 import { MOCK_PROJECTS } from '@/data/demo-data';
-import { FolderGit2, Trash2, Lock, X } from 'lucide-react';
+import { Trash2, X } from 'lucide-react';
 import { NewProjectModal } from '@/components/projects/NewProjectModal';
 import { UserProfile } from '@/components/auth/AuthModal';
 import { priceLabel } from '@/data/pricing-plans';
@@ -73,9 +73,6 @@ export const ProjectsView: React.FC<ProjectsViewProps> = ({
         <div className="relative z-10 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-6">
           <div>
             <div className="flex items-center gap-3 mb-2">
-              <div className="p-2.5 rounded-xl bg-white/5 border border-white/10 text-white shadow-lg">
-                <FolderGit2 size={22} />
-              </div>
               <h1 className="text-2xl sm:text-3xl font-extrabold tracking-tight text-white">
                 Connected AI Applications
               </h1>
@@ -219,9 +216,6 @@ export const ProjectsView: React.FC<ProjectsViewProps> = ({
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
         {projects.length === 0 ? (
           <div className="col-span-full py-16 px-6 text-center rounded-2xl border border-dashed border-white/15 bg-[#0D0D14] flex flex-col items-center gap-4">
-            <div className="w-12 h-12 rounded-xl bg-white/5 border border-white/10 flex items-center justify-center text-white">
-              <FolderGit2 size={24} />
-            </div>
             <div>
               <h3 className="text-base font-bold text-white mb-1">No AI Applications Connected Yet</h3>
               <p className="text-xs text-[#A1A1AA] max-w-md">
@@ -352,9 +346,6 @@ export const ProjectsView: React.FC<ProjectsViewProps> = ({
               <X size={16} aria-hidden="true" />
             </button>
 
-            <div className="w-12 h-12 rounded-xl bg-amber-500/10 border border-amber-500/30 text-amber-400 flex items-center justify-center">
-              <Lock size={22} />
-            </div>
 
             <div className="flex flex-col gap-1.5">
               <div className="flex items-center gap-2">

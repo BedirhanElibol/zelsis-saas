@@ -3,7 +3,6 @@
 import React, { useState } from 'react';
 import { Finding, ComplianceRule } from '@/data/schema';
 import { COMPLIANCE_RULES_CATALOG } from '@/data/mockData';
-import { Scale } from 'lucide-react';
 
 interface ComplianceAuditViewProps {
   findings: Finding[];
@@ -51,9 +50,6 @@ export const ComplianceAuditView: React.FC<ComplianceAuditViewProps> = ({
       <div className="bg-[#141414] border border-amber-500/20 rounded-xl p-6 sm:p-8 flex flex-col md:flex-row md:items-center justify-between gap-6">
         <div>
           <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-xl bg-amber-500/10 border border-amber-500/20 flex items-center justify-center">
-              <Scale size={24} className="text-amber-400" />
-            </div>
             <div>
               <h1 className="text-xl sm:text-2xl font-extrabold text-[#EDEDED] m-0">
                 Zelsis Legal, Privacy &amp; Regulatory Pre-Flight Gate

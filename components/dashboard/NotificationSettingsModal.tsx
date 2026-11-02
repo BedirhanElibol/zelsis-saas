@@ -2,7 +2,7 @@
 
 import React, { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { X, Bell } from 'lucide-react';
+import { X } from 'lucide-react';
 import { getActiveUserAuth } from '@/lib/supabase-client';
 import { getProjectAlertSettings, updateProjectAlertSettings, type ProjectAlertSettings } from '@/app/actions/project-notifications';
 
@@ -150,9 +150,6 @@ export const NotificationSettingsModal: React.FC<NotificationSettingsModalProps>
           {/* Header */}
           <div className="flex items-center justify-between border-b border-white/10 pb-4">
             <div className="flex items-center gap-3">
-              <div className="w-9 h-9 rounded-xl bg-white/5 border border-white/10 flex items-center justify-center">
-                <Bell size={18} className="text-white" />
-              </div>
               <div>
                 <h2 className="text-lg font-extrabold text-[#EDEDED]">
                   Automated Gate Alerts Configuration

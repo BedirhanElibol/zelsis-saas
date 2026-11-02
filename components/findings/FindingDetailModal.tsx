@@ -6,7 +6,7 @@ import { LockedLocation } from '@/components/findings/LockedLocation';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Finding, PlanUsageQuota } from '@/data/schema';
 import { UserProfile } from '@/components/auth/AuthModal';
-import { X, Lock } from 'lucide-react';
+import { X } from 'lucide-react';
 import { formatFindingForJira } from '@/lib/export-utils';
 import { checkAiPromptQuota } from '@/lib/quota-manager';
 import { hasFixPromptAccess } from '@/lib/subscription-utils';
@@ -524,9 +524,6 @@ export const FindingDetailModal: React.FC<FindingDetailModalProps> = ({
 
                   {fixLocked ? (
                     <div className="bg-[#0A0A0C] p-6 rounded-xl border border-amber-500/30 flex flex-col items-center text-center gap-3">
-                      <div className="w-10 h-10 rounded-xl bg-amber-500/10 border border-amber-500/20 flex items-center justify-center text-amber-400">
-                        <Lock size={20} />
-                      </div>
                       <div>
                         <div className="text-sm font-bold text-white mb-1 font-mono">
                           Trial AI Remediation Limit Reached (1/1)

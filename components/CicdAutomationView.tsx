@@ -2,7 +2,7 @@
 
 import React, { useState } from 'react';
 import Image from 'next/image';
-import { Terminal, Copy, CheckCircle2, Lock } from 'lucide-react';
+import { Copy, CheckCircle2 } from 'lucide-react';
 import { Project, UserTier } from '@/data/schema';
 import { getConfiguredAppUrl, getPublicAppUrl } from '@/lib/app-url';
 import { badgeUrlFor } from '@/lib/badge-url';
@@ -93,9 +93,6 @@ export const CicdAutomationView: React.FC<CicdAutomationViewProps> = ({
       {/* Tier paywall gate — Free users cannot access CI/CD */}
       {!isCicdViewAllowed(userTier) && (
         <div className="flex flex-col items-center justify-center gap-6 py-16 px-6 bg-[#141414] border border-white/10 rounded-2xl text-center">
-          <div className="w-16 h-16 rounded-2xl bg-white/5 border border-white/10 flex items-center justify-center">
-            <Lock size={30} className="text-zinc-400" />
-          </div>
           <div className="max-w-md">
             <h2 className="text-lg font-extrabold text-[#EDEDED] mb-2">CI/CD Integration is a Pro Feature</h2>
             <p className="text-sm text-[#A1A1AA] leading-relaxed">
@@ -127,9 +124,6 @@ export const CicdAutomationView: React.FC<CicdAutomationViewProps> = ({
       <div className="bg-[#141414] border border-white/10 rounded-xl p-6 sm:p-8 flex flex-col md:flex-row md:items-center justify-between gap-6">
         <div>
           <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-xl bg-white/5 border border-white/10 flex items-center justify-center">
-              <Terminal size={22} className="text-white" />
-            </div>
             <div>
               <h1 className="text-xl sm:text-2xl font-extrabold text-[#EDEDED] m-0">
                 Zelsis CI/CD &amp; CLI Automation Hub

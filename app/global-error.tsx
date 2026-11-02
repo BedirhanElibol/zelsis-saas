@@ -1,7 +1,6 @@
 'use client';
 
 import React, { useEffect } from 'react';
-import { ShieldAlert } from 'lucide-react';
 
 interface GlobalErrorProps {
   error: Error & { digest?: string };
@@ -40,9 +39,6 @@ export default function GlobalError({ error, reset }: GlobalErrorProps) {
         >
           {/* Status Header */}
           <div className="flex items-start gap-4">
-            <div className="w-12 h-12 rounded-xl bg-red-500/10 border border-red-500/30 text-red-400 flex items-center justify-center shrink-0 mt-0.5">
-              <ShieldAlert size={26} />
-            </div>
             <div className="flex flex-col gap-1">
               <div className="text-[0.68rem] font-mono font-extrabold uppercase tracking-widest text-emerald-400">
                 Zelsis Security &bull; Root Recovery Active

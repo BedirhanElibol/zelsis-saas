@@ -5,7 +5,7 @@ import { useRouter, useSearchParams } from 'next/navigation';
 import { getSupabase, mapSupabaseUserToProfile, syncUserProfileToSupabase, isPlatformAdminEmail } from '@/lib/supabase';
 import { verifyLicenseKey } from '@/lib/stripe-checkout';
 import { isFounderGrantExpiry } from '@/lib/subscription-utils';
-import { Loader2, CheckCircle2, AlertTriangle } from 'lucide-react';
+import { Loader2 } from 'lucide-react';
 import Link from 'next/link';
 
 function CallbackHandler() {
@@ -255,11 +255,6 @@ function CallbackHandler() {
 
   return (
     <div className="w-full max-w-md bg-neutral-900 border border-neutral-800 rounded-2xl p-8 shadow-2xl backdrop-blur-xl text-center">
-      <div className="w-16 h-16 mx-auto mb-6 rounded-2xl bg-neutral-800/80 border border-neutral-700 flex items-center justify-center">
-        {status === 'loading' && <Loader2 className="w-8 h-8 text-emerald-400 animate-spin" />}
-        {status === 'success' && <CheckCircle2 className="w-8 h-8 text-emerald-400" />}
-        {status === 'error' && <AlertTriangle className="w-8 h-8 text-amber-400" />}
-      </div>
 
       <div className="flex items-center justify-center gap-2 mb-3">
         <span className="text-sm font-mono uppercase tracking-widest text-neutral-400">Zelsis Auth</span>
