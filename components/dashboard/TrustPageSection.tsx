@@ -1,10 +1,11 @@
 'use client';
 
 import React, { useActionState, useState } from 'react';
-import { Check, Copy, Loader2, ShieldCheck } from 'lucide-react';
+import { Check, Copy, Loader2, Share2, ShieldCheck } from 'lucide-react';
 import type { Project } from '@/data/schema';
 import { disableTrustPage, enableTrustPage } from '@/app/actions/trust-page';
 import { initialTrustPageState } from '@/lib/trust-page-state';
+import { trustPageShareLinks } from '@/lib/share-links';
 
 /** Turns the project's public /verified/<slug> page on or off, and shows what still blocks a clear result. */
 export function TrustPageSection({ project, accessToken }: { project: Project; accessToken: string }) {
@@ -13,6 +14,8 @@ export function TrustPageSection({ project, accessToken }: { project: Project; a
   const [name, setName] = useState(project.name ?? '');
   const [copied, setCopied] = useState(false);
   const live = enabled.status === 'success' && disabled.status !== 'success' ? enabled.url : undefined;
+  // Shared only while the page shows a clear result, so a post never advertises open issues.
+  const shareLinks = trustPageShareLinks(live, name || project.name || '', enabled.blockers);
   const embed = live ? `[![Checked by Zelsis](${live.replace(/\/verified\/.*/, '')}/api/v1/badge?projectId=${project.id})](${live})` : '';
 
   const copy = async (text: string) => {
@@ -46,6 +49,17 @@ export function TrustPageSection({ project, accessToken }: { project: Project; a
             </button>
           </div>
           <p role="status" className={`text-xs ${enabled.blockers ? 'text-amber-300' : 'text-emerald-400'}`}>{enabled.message}</p>
+          {shareLinks.length > 0 && (
+            <div className="flex flex-wrap items-center gap-2">
+              <Share2 size={14} className="text-zinc-400" aria-hidden="true" />
+              {shareLinks.map((s) => (
+                <a key={s.label} href={s.href} target="_blank" rel="noopener noreferrer"
+                  className="px-3 py-1.5 rounded-lg border border-white/10 text-xs text-zinc-200 hover:text-white hover:border-white/30 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500">
+                  {s.label}
+                </a>
+              ))}
+            </div>
+          )}
           {project.id && (
             <button type="button" onClick={() => copy(embed)} className="self-start text-xs text-zinc-300 underline underline-offset-4 hover:text-white">
               Copy README badge that links here
