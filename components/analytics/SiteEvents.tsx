@@ -42,6 +42,30 @@ export function SiteEvents() {
     void recordSiteEvent({ kind: 'view', path: pathname || '/', source, label: '' }).catch(() => {});
   }, [pathname]);
 
+  // Which landing sections a visit reaches: each [data-section] counts once per page view, when half of it is on screen.
+  useEffect(() => {
+    const sections = document.querySelectorAll<HTMLElement>('[data-section]');
+    if (!sections.length || typeof IntersectionObserver === 'undefined') return;
+    let source = 'direct';
+    try {
+      source = sessionStorage.getItem(SOURCE_KEY) || 'direct';
+    } catch {
+      /* storage blocked */
+    }
+    const seen = new Set<string>();
+    const observer = new IntersectionObserver((entries) => {
+      for (const entry of entries) {
+        const label = (entry.target as HTMLElement).dataset.section ?? '';
+        if (!entry.isIntersecting || !label || seen.has(label)) continue;
+        seen.add(label);
+        observer.unobserve(entry.target);
+        void recordSiteEvent({ kind: 'section', path: window.location.pathname, source, label }).catch(() => {});
+      }
+    }, { threshold: 0.5 });
+    sections.forEach((s) => observer.observe(s));
+    return () => observer.disconnect();
+  }, [pathname]);
+
   useEffect(() => {
     const onClick = (e: MouseEvent) => {
       const el = (e.target as HTMLElement | null)?.closest('a,button') as HTMLElement | null;
