@@ -1,22 +1,35 @@
-import { test } from 'node:test';
+import { mock, test } from 'node:test';
 import assert from 'node:assert/strict';
 import { TargetChallengedError, createRequestLimiter } from '../../lib/scanner/request-limiter';
 import { botChallengeMessage } from '../../lib/bot-challenge';
 
 const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms));
 
+// Mocked clock: the spacing is checked against the limiter's own timeline, so a busy machine
+// (late timers, Windows clock adjustments) cannot fail it. setImmediate stays real to flush promises.
 test('never more than `concurrency` requests in flight, starts spaced by minIntervalMs', async () => {
-  let inFlight = 0; let peak = 0; const starts: number[] = [];
-  const fetchImpl = (async () => {
-    starts.push(Date.now()); inFlight++; peak = Math.max(peak, inFlight);
-    await sleep(30); inFlight--;
-    return new Response('ok');
-  }) as unknown as typeof fetch;
-  const limiter = createRequestLimiter({ concurrency: 3, minIntervalMs: 20, fetchImpl });
-  await Promise.all(Array.from({ length: 12 }, (_, i) => limiter.fetch(`https://site.example/${i}`)));
-  assert.equal(starts.length, 12);
-  assert.ok(peak <= 3, `peak ${peak}`);
-  for (let i = 1; i < starts.length; i++) assert.ok(starts[i] - starts[i - 1] >= 18, `gap ${starts[i] - starts[i - 1]}ms`);
+  mock.timers.enable({ apis: ['setTimeout', 'Date'], now: 0 });
+  try {
+    let inFlight = 0; let peak = 0; const starts: number[] = [];
+    const fetchImpl = (async () => {
+      starts.push(Date.now()); inFlight++; peak = Math.max(peak, inFlight);
+      await sleep(30); inFlight--;
+      return new Response('ok');
+    }) as unknown as typeof fetch;
+    const limiter = createRequestLimiter({ concurrency: 3, minIntervalMs: 20, fetchImpl });
+    let done = false;
+    const all = Promise.all(Array.from({ length: 12 }, (_, i) => limiter.fetch(`https://site.example/${i}`))).finally(() => { done = true; });
+    for (let ms = 0; ms < 5000 && !done; ms++) {
+      mock.timers.tick(1);
+      await new Promise((r) => setImmediate(r));
+    }
+    await all;
+    assert.equal(starts.length, 12);
+    assert.ok(peak <= 3, `peak ${peak}`);
+    for (let i = 1; i < starts.length; i++) assert.ok(starts[i] - starts[i - 1] >= 20, `gap ${starts[i] - starts[i - 1]}ms`);
+  } finally {
+    mock.timers.reset();
+  }
 });
 
 test('stops sending once the target answers with a challenge', async () => {
