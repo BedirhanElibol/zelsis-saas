@@ -16,6 +16,7 @@ import { ExperimentalBadge, UnprovenBadge } from '@/components/findings/Experime
 import { priceLabel } from '@/data/pricing-plans';
 import { incidentFor } from '@/data/incidents';
 import { cweForFinding, cweUrl } from '@/lib/finding-cwe';
+import { JiraIssueButton } from '@/components/findings/JiraIssueButton';
 
 export interface FindingDetailModalProps {
   isOpen: boolean;
@@ -570,6 +571,7 @@ export const FindingDetailModal: React.FC<FindingDetailModalProps> = ({
               {/* Tab 3: Jira / Linear Ticket Format */}
               {activeTab === 'jira' && (
                 <div className="flex flex-col gap-2">
+                  <JiraIssueButton finding={jiraFinding} cweId={cwe} />
                   <div className="flex items-center justify-between">
                     <span className="text-[0.68rem] font-mono text-zinc-400 uppercase">
                       Markdown for Linear / Jira / GitHub Issue:

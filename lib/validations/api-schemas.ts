@@ -249,6 +249,28 @@ export const ReportShareRevokeSchema = z.object({
   token: z.string().regex(/^[A-Za-z0-9_-]{43}$/, 'Invalid link'),
 });
 
+export const JiraConnectSchema = z.object({
+  accessToken: AccessTokenSchema,
+  site: z.string().trim().min(1, 'Enter your Jira site').max(255),
+  email: z.string().trim().email('Enter the e-mail of the Jira account').max(320),
+  apiToken: z.string().trim().min(10, 'Paste the Jira API token').max(1024),
+  projectKey: z.string().trim().regex(/^[A-Za-z][A-Za-z0-9_]{0,9}$/, 'Enter the project key, for example SEC'),
+  issueType: z.string().trim().min(1).max(60),
+});
+
+export const JiraDisconnectSchema = z.object({ accessToken: AccessTokenSchema });
+
+export const JiraIssueSchema = z.object({
+  accessToken: AccessTokenSchema,
+  title: z.string().trim().min(1).max(500),
+  severity: z.enum(['CRITICAL', 'HIGH', 'MEDIUM', 'LOW']),
+  category: z.string().max(200).optional(),
+  filePath: z.string().max(1024).optional(),
+  lineRange: z.string().max(64).optional(),
+  remediationPrompt: z.string().max(8000).optional(),
+  cweId: z.string().regex(/^(?:CWE-\d{1,5})?$/).optional(),
+});
+
 export const OrgNameSchema = z.object({
   accessToken: AccessTokenSchema,
   name: z.string().trim().min(2, 'Workspace name needs at least 2 characters').max(80),
