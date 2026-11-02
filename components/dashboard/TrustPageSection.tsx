@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useActionState, useState } from 'react';
-import { Check, Copy, Loader2, Share2, ShieldCheck } from 'lucide-react';
+import { Check, Copy, Loader2 } from 'lucide-react';
 import type { Project } from '@/data/schema';
 import { disableTrustPage, enableTrustPage } from '@/app/actions/trust-page';
 import { initialTrustPageState } from '@/lib/trust-page-state';
@@ -31,7 +31,6 @@ export function TrustPageSection({ project, accessToken }: { project: Project; a
   return (
     <section className="border-t border-white/10 pt-5 flex flex-col gap-3" aria-labelledby="trust-page-title">
       <div className="flex items-center gap-2">
-        <ShieldCheck size={18} className="text-emerald-400" aria-hidden="true" />
         <h4 id="trust-page-title" className="text-sm font-bold">Public trust page</h4>
       </div>
       <p className="text-xs text-zinc-400">
@@ -51,7 +50,6 @@ export function TrustPageSection({ project, accessToken }: { project: Project; a
           <p role="status" className={`text-xs ${enabled.blockers ? 'text-amber-300' : 'text-emerald-400'}`}>{enabled.message}</p>
           {shareLinks.length > 0 && (
             <div className="flex flex-wrap items-center gap-2">
-              <Share2 size={14} className="text-zinc-400" aria-hidden="true" />
               {shareLinks.map((s) => (
                 <a key={s.label} href={s.href} target="_blank" rel="noopener noreferrer"
                   className="px-3 py-1.5 rounded-lg border border-white/10 text-xs text-zinc-200 hover:text-white hover:border-white/30 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500">

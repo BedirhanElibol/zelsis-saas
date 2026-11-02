@@ -1,21 +1,7 @@
 'use client';
 
 import React, { useActionState, useCallback, useEffect, useState } from 'react';
-import {
-  AlertTriangle,
-  Building2,
-  Check,
-  Copy,
-  Link2,
-  Loader2,
-  LogOut,
-  Palette,
-  ShieldCheck,
-  Sliders,
-  Trash2,
-  UserMinus,
-  Users,
-} from 'lucide-react';
+import { Building2, Check, Copy, Link2, Loader2, ShieldCheck, UserMinus } from 'lucide-react';
 import type { UserProfile } from '@/components/auth/AuthModal';
 import {
   createInvite,
@@ -155,7 +141,6 @@ export const TeamWorkspaceCard: React.FC<TeamWorkspaceCardProps> = ({ user, onOp
         </div>
         {org && snapshot && (
           <span className="px-3 py-1 rounded-full text-xs font-mono font-bold border border-white/15 bg-white/5 text-zinc-300 flex items-center gap-1.5">
-            <Users size={12} className="text-zinc-400" />
             <span>
               {seatsUsed} / {snapshot.seatLimit} seats
             </span>
@@ -220,7 +205,6 @@ export const TeamWorkspaceCard: React.FC<TeamWorkspaceCardProps> = ({ user, onOp
         <>
           {!org.ownerPlanActive && (
             <div className="flex items-start gap-2 text-xs p-3 rounded-xl border bg-amber-500/10 border-amber-500/30 text-amber-300">
-              <AlertTriangle size={14} className="shrink-0 mt-0.5" />
               <span>The owner&apos;s Team plan is not active, so members are on their own plans until it renews.</span>
             </div>
           )}
@@ -355,7 +339,7 @@ export const TeamWorkspaceCard: React.FC<TeamWorkspaceCardProps> = ({ user, onOp
           {/* Organization policy */}
           <section className="flex flex-col gap-2">
             <h3 className="text-xs font-mono font-bold text-[#EDEDED] uppercase tracking-wider flex items-center gap-2">
-              <Sliders size={13} className="text-zinc-400" /> Organization gate policy
+              Organization gate policy
             </h3>
             <p className="text-[11px] text-zinc-400">
               Same format as <code>.zelsisrc.json</code>. Strategy and minimum score override each repository&apos;s file; ignored rules,
@@ -390,7 +374,7 @@ export const TeamWorkspaceCard: React.FC<TeamWorkspaceCardProps> = ({ user, onOp
           {canManage && (
             <section className="flex flex-col gap-2">
               <h3 className="text-xs font-mono font-bold text-[#EDEDED] uppercase tracking-wider flex items-center gap-2">
-                <Palette size={13} className="text-zinc-400" /> Report branding
+                Report branding
               </h3>
               <p className="text-[11px] text-zinc-400">Shown on PDF audit reports and the SOC 2 control mapping export for every member.</p>
               <ActionForm action={updateOrgBranding} accessToken={accessToken} onDone={handleDone} className="grid grid-cols-1 md:grid-cols-[1fr_1fr_auto] gap-2">
@@ -462,7 +446,7 @@ export const TeamWorkspaceCard: React.FC<TeamWorkspaceCardProps> = ({ user, onOp
               >
                 {(pending) => (
                   <button type="submit" disabled={pending} className="text-xs text-zinc-400 hover:text-red-300 flex items-center gap-1.5">
-                    <Trash2 size={13} /> Delete workspace
+                    Delete workspace
                   </button>
                 )}
               </ActionForm>
@@ -470,7 +454,7 @@ export const TeamWorkspaceCard: React.FC<TeamWorkspaceCardProps> = ({ user, onOp
               <ActionForm action={leaveOrganization} accessToken={accessToken} onDone={handleDone} confirmText="Leave this workspace?">
                 {(pending) => (
                   <button type="submit" disabled={pending} className="text-xs text-zinc-400 hover:text-red-300 flex items-center gap-1.5">
-                    <LogOut size={13} /> Leave workspace
+                    Leave workspace
                   </button>
                 )}
               </ActionForm>

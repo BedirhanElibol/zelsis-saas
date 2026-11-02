@@ -1,6 +1,6 @@
 import type { Metadata } from 'next';
 import Link from 'next/link';
-import { ArrowRight, CircleCheck, CircleAlert, Clock, ShieldCheck } from 'lucide-react';
+import { CircleCheck, CircleAlert, Clock } from 'lucide-react';
 import { getSupabaseAdmin } from '@/lib/supabase-admin';
 import { isTrustSlug, toTrustSummary, TRUST_MAX_AGE_DAYS, type TrustSummary } from '@/lib/trust-page';
 
@@ -56,7 +56,7 @@ function CheckYourOwn() {
         <p className="text-sm text-zinc-400">Zelsis checks every pull request for leaked keys, broken access control and logic bugs.</p>
       </div>
       <Link href="/?ref=trust-page" className="inline-flex items-center justify-center gap-2 px-4 min-h-11 rounded-lg bg-emerald-500 text-black text-sm font-bold hover:bg-emerald-400 focus-visible:ring-2 focus-visible:ring-white focus-visible:outline-none">
-        Check your app <ArrowRight size={14} aria-hidden="true" />
+        Check your app
       </Link>
     </div>
   );
@@ -92,7 +92,7 @@ export default async function TrustPage({ params }: { params: Promise<{ slug: st
     <main className="min-h-screen bg-[#0A0A0A] text-[#EDEDED] px-4 py-16 sm:py-24">
       <div className="max-w-3xl mx-auto">
         <p className="text-xs font-mono uppercase tracking-widest text-zinc-400 mb-3 flex items-center gap-2">
-          <ShieldCheck size={14} aria-hidden="true" /> Checked by Zelsis
+          Checked by Zelsis
         </p>
         <h1 className="text-2xl sm:text-3xl font-bold text-white break-words">{name}</h1>
         <p className="text-sm text-zinc-400 mt-1">Last checked {checked}</p>
@@ -111,7 +111,7 @@ export default async function TrustPage({ params }: { params: Promise<{ slug: st
             <li key={a.kind} className="p-3 rounded-lg border border-white/10 bg-[#121212] flex items-center justify-between gap-3">
               <span className="text-sm text-white">{a.label}</span>
               {a.open === 0 ? (
-                <span className="text-xs font-semibold text-emerald-400 flex items-center gap-1"><CircleCheck size={14} aria-hidden="true" /> Clear</span>
+                <span className="text-xs font-semibold text-emerald-400 flex items-center gap-1">Clear</span>
               ) : (
                 <span className="text-xs font-semibold text-amber-300">{a.open} open</span>
               )}

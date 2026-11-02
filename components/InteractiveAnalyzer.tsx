@@ -2,7 +2,7 @@
 
 import React, { useState } from 'react';
 import { Finding } from '@/data/schema';
-import { Play, CheckCircle2, Copy, Loader2 } from 'lucide-react';
+import { Play, Loader2 } from 'lucide-react';
 
 // Loaded on first use: the rule engine is ~3 MB of JS. It runs in this tab and makes no network
 // calls (the OSV dependency lookup is off unless a caller opts in), so the snippet is never uploaded.
@@ -341,7 +341,6 @@ export const InteractiveAnalyzer: React.FC = () => {
                           onClick={() => void copyPrompt(f)}
                           className="btn btn-secondary btn-sm text-[0.7rem] px-3 py-1 font-mono"
                         >
-                          {copiedPromptId === f.id ? <CheckCircle2 size={12} className="text-emerald-400" /> : <Copy size={12} />}
                           <span>{copiedPromptId === f.id ? 'Copied' : 'Copy fix prompt'}</span>
                         </button>
                       </div>

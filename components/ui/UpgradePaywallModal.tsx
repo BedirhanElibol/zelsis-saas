@@ -2,7 +2,7 @@
 
 import React from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { X, Lock, ArrowRight, ShieldCheck, ExternalLink } from 'lucide-react';
+import { X } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import { UserTier } from '@/data/schema';
 import { ZELSIS_PRICING_PLANS, priceLabel } from '@/data/pricing-plans';
@@ -150,7 +150,6 @@ export const UpgradePaywallModal: React.FC<UpgradePaywallModalProps> = ({
                       className="btn btn-secondary w-full py-2.5 text-xs uppercase tracking-wider font-extrabold rounded-lg flex items-center justify-center gap-1.5 bg-emerald-500/20 hover:bg-emerald-500/30 border border-emerald-500/40 text-emerald-300 transition-all shadow-sm font-mono cursor-pointer text-center"
                     >
                       <span>Manage at Polar</span>
-                      <ExternalLink size={13} />
                     </a>
                   ) : isIncluded ? (
                     <div className="w-full py-2.5 text-xs font-mono font-medium rounded-lg bg-white/5 border border-white/10 text-zinc-400 text-center">
@@ -171,7 +170,6 @@ export const UpgradePaywallModal: React.FC<UpgradePaywallModalProps> = ({
                       }`}
                     >
                       <span>Upgrade to {tier} ({priceLabel(tier)})</span>
-                      {tier === 'Pro' ? <ArrowRight size={13} /> : <ShieldCheck size={13} />}
                     </button>
                   )}
                 </div>

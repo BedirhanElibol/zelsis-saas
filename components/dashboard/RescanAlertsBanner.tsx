@@ -1,7 +1,7 @@
 'use client';
 
 import React from 'react';
-import { AlertTriangle, X } from 'lucide-react';
+import { X } from 'lucide-react';
 import { getActiveUserAuth } from '@/lib/supabase-client';
 import { listUnreadRescanAlerts, markRescanAlertRead, type RescanAlert } from '@/app/actions/project-notifications';
 
@@ -34,7 +34,6 @@ export function RescanAlertsBanner() {
         const total = alert.newCritical + alert.newHigh;
         return (
           <div key={alert.id} className="flex items-start gap-3 rounded-xl border border-red-500/30 bg-red-500/10 p-4">
-            <AlertTriangle size={18} className="mt-0.5 shrink-0 text-red-400" aria-hidden="true" />
             <div className="min-w-0 flex-1 text-sm">
               <p className="font-bold text-[#EDEDED]">
                 Weekly rescan: {total} new finding{total === 1 ? '' : 's'} in {alert.projectName}

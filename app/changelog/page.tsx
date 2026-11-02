@@ -1,7 +1,6 @@
 import React from 'react';
 import type { Metadata } from 'next';
 import Link from 'next/link';
-import { ArrowLeft } from 'lucide-react';
 import { CHANGELOG, type ChangeKind } from '@/data/changelog';
 
 export const metadata: Metadata = {
@@ -23,7 +22,7 @@ export default function ChangelogPage() {
     <div className="min-h-screen bg-[#0A0A0A] text-[#EDEDED] px-4 py-12 sm:py-16 font-sans">
       <div className="max-w-3xl mx-auto">
         <Link href="/" className="inline-flex items-center gap-2 text-xs font-mono text-zinc-400 hover:text-white transition-colors">
-          <ArrowLeft size={14} aria-hidden="true" /> Back to Home
+          Back to Home
         </Link>
         <h1 className="text-3xl sm:text-4xl font-bold text-white mt-8">Changelog</h1>
         <p className="text-zinc-400 mt-3">

@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useEffect } from 'react';
-import { ShieldAlert, RefreshCw, Home } from 'lucide-react';
+import { ShieldAlert } from 'lucide-react';
 
 interface GlobalErrorProps {
   error: Error & { digest?: string };
@@ -95,7 +95,6 @@ export default function GlobalError({ error, reset }: GlobalErrorProps) {
               onClick={handleRetry}
               className="min-h-[44px] px-5 py-2.5 rounded-xl bg-white text-black font-extrabold text-xs hover:bg-neutral-200 transition-all shadow-md flex items-center justify-center gap-2 cursor-pointer font-mono uppercase tracking-wider"
             >
-              <RefreshCw size={14} />
               <span>Try Again / Recover Session</span>
             </button>
 
@@ -104,7 +103,6 @@ export default function GlobalError({ error, reset }: GlobalErrorProps) {
               onClick={handleReturnHome}
               className="min-h-[44px] px-5 py-2.5 rounded-xl bg-white/10 hover:bg-white/15 border border-white/15 text-white font-bold text-xs transition-all flex items-center justify-center gap-2 cursor-pointer font-mono"
             >
-              <Home size={14} />
               <span>Return to Safe Overview</span>
             </button>
           </div>

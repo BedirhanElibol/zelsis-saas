@@ -1,7 +1,6 @@
 'use client';
 
 import React, { useState } from 'react';
-import { Terminal, Check, Copy, Search } from 'lucide-react';
 import { ScanResult } from '@/lib/scanner-engine';
 
 interface TerminalLogWindowProps {
@@ -26,13 +25,11 @@ export const TerminalLogWindow: React.FC<TerminalLogWindowProps> = ({
     <div className="bg-[#0A0A0A] border border-white/10 rounded-xl p-3.5 sm:p-6 w-full max-w-full overflow-hidden">
       <div className="flex flex-col sm:flex-row sm:items-center justify-between mb-4 pb-3 border-b border-white/10 font-mono text-xs text-[#EDEDED] gap-3">
         <div className="flex items-center gap-2.5 min-w-0">
-          <Terminal size={16} className="text-white shrink-0" />
           <span className="truncate text-[11px] sm:text-xs text-[#A1A1AA]">zelsis-security-engine --scan --target {repoUrl}</span>
         </div>
 
         <div className="flex items-center gap-2 w-full sm:w-auto justify-between sm:justify-end">
           <div className="relative flex-1 sm:w-64 max-w-xs">
-            <Search size={12} className="absolute left-2.5 top-2.5 text-[#A1A1AA]" />
             <input
               id="terminal-log-filter-input"
               name="terminalLogFilter"
@@ -60,7 +57,6 @@ export const TerminalLogWindow: React.FC<TerminalLogWindowProps> = ({
             className="flex items-center gap-1.5 px-2.5 py-1 rounded bg-white/5 hover:bg-white/10 border border-white/15 text-[0.7rem] text-gray-300 transition-colors shrink-0"
             title="Copy all terminal log lines to clipboard"
           >
-            {hasCopiedLogs ? <Check size={12} className="text-white" /> : <Copy size={12} />}
             <span className="hidden xs:inline">{hasCopiedLogs ? 'Copied!' : 'Copy Logs'}</span>
           </button>
         </div>

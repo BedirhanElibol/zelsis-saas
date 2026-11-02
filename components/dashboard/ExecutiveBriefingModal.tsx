@@ -2,7 +2,7 @@
 
 import React, { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { X, Award, ShieldCheck, AlertTriangle, Printer, Copy, CheckCircle2, FileText, Check, ExternalLink, Lock } from 'lucide-react';
+import { X, Award, ShieldCheck, AlertTriangle } from 'lucide-react';
 import { Project } from '@/data/schema';
 import { UserTier } from '@/data/schema';
 import { exportProjectPdfReport, generateExecutiveMarkdown } from '@/lib/report-exporter';
@@ -189,13 +189,11 @@ export const ExecutiveBriefingModal: React.FC<ExecutiveBriefingModalProps> = ({
           {/* Strategic Action Points / Top Remediation Blockers */}
           <div className="space-y-3">
             <h4 className="text-xs font-mono font-bold uppercase text-white tracking-wider flex items-center gap-2">
-              <FileText size={13} className="text-zinc-400" />
               <span>Top Remediation Priorities</span>
             </h4>
 
             {topBlockers.length === 0 ? (
               <div className="p-4 rounded-xl bg-[#0A0A0A] border border-white/10 text-xs text-zinc-300 flex items-center gap-2.5">
-                <CheckCircle2 size={16} className="text-emerald-400 shrink-0" />
                 <span>Zero critical or high blockers detected. Safe for automated CI/CD deployment pipeline.</span>
               </div>
             ) : (
@@ -243,7 +241,6 @@ export const ExecutiveBriefingModal: React.FC<ExecutiveBriefingModalProps> = ({
                 className="btn btn-secondary text-xs px-3.5 py-2.5 font-bold flex items-center justify-center gap-2 flex-1 sm:flex-none"
                 title="Copy formatted markdown report for Slack, Jira, or email"
               >
-                {copied ? <Check size={14} className="text-emerald-400" /> : <Copy size={14} />}
                 <span>{copied ? 'Copied!' : 'Copy Markdown'}</span>
               </button>
 
@@ -253,7 +250,6 @@ export const ExecutiveBriefingModal: React.FC<ExecutiveBriefingModalProps> = ({
                   onClick={handleExportPdf}
                   className="btn btn-primary text-xs px-4 py-2.5 font-bold flex items-center justify-center gap-2 bg-emerald-500 text-black hover:bg-emerald-400 rounded-xl transition-all shadow-sm flex-1 sm:flex-none"
                 >
-                  <Printer size={14} />
                   <span>Export PDF Report</span>
                 </button>
               ) : (
@@ -263,7 +259,6 @@ export const ExecutiveBriefingModal: React.FC<ExecutiveBriefingModalProps> = ({
                   className="btn btn-primary text-xs px-4 py-2.5 font-bold flex items-center justify-center gap-2 bg-white/10 text-zinc-400 hover:bg-emerald-500 hover:text-black rounded-xl transition-all border border-white/10 flex-1 sm:flex-none"
                   title="Upgrade to Pro to export PDF reports"
                 >
-                  <Lock size={14} />
                   <span>PDF Export — Pro Only</span>
                 </button>
               )}

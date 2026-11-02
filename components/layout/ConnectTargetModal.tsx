@@ -4,7 +4,7 @@ import { GithubTokenSteps } from '@/components/dashboard/GithubTokenSteps';
 import { GithubConnectPanel } from '@/components/dashboard/GithubConnectPanel';
 import React, { useState, useEffect } from 'react';
 import { Project } from '@/data/schema';
-import { FolderGit2, X, Globe, Eye, EyeOff, Play } from 'lucide-react';
+import { FolderGit2, X, Globe, Eye, EyeOff } from 'lucide-react';
 import { isValidGithubUrl, sanitizeTargetUrl } from '@/lib/github-api';
 import { isValidWebUrl } from '@/lib/website-scanner';
 import { FRAMEWORK_CHOICES, UNDETECTED_FRAMEWORK } from '@/lib/scanner/stack-detect';
@@ -316,7 +316,6 @@ export const ConnectTargetModal: React.FC<ConnectTargetModalProps> = ({
             disabled={isConnecting}
             className="mt-2 btn btn-primary py-3 text-xs uppercase tracking-wider font-extrabold w-full rounded-xl bg-emerald-500 text-black hover:bg-emerald-400 transition-all shadow-sm disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2 cursor-pointer"
           >
-            <Play size={13} fill="currentColor" />
             <span>{isConnecting ? 'Connecting & Auditing...' : 'Connect & Run Audit'}</span>
           </button>
         </form>

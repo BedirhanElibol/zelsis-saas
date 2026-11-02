@@ -2,7 +2,7 @@
 
 import React, { useState } from 'react';
 import Image from 'next/image';
-import { BarChart3, Download, ExternalLink, Copy, CheckCircle2 } from 'lucide-react';
+import { BarChart3 } from 'lucide-react';
 import { Project } from '@/data/schema';
 
 interface QuickChartWidgetProps {
@@ -66,7 +66,6 @@ export const QuickChartWidget: React.FC<QuickChartWidgetProps> = ({ project }) =
             onClick={handleCopyUrl}
             className="btn btn-secondary text-xs px-3 py-1.5 flex items-center gap-1.5 font-mono"
           >
-            {copied ? <CheckCircle2 size={13} className="text-white" /> : <Copy size={13} />}
             <span>{copied ? 'Copied URL!' : 'Copy Chart Image URL'}</span>
           </button>
           <a
@@ -75,7 +74,6 @@ export const QuickChartWidget: React.FC<QuickChartWidgetProps> = ({ project }) =
             rel="noopener noreferrer"
             className="btn btn-secondary text-xs px-3 py-1.5 flex items-center gap-1.5 font-mono"
           >
-            <ExternalLink size={13} />
             <span>Open Image</span>
           </a>
         </div>

@@ -1,6 +1,5 @@
 import type { Metadata } from 'next';
 import Link from 'next/link';
-import { ArrowLeft } from 'lucide-react';
 import { TutorialPlayer } from '@/components/tutorial/TutorialPlayer';
 
 export const metadata: Metadata = {
@@ -15,7 +14,7 @@ export default function TutorialPage() {
     <div className="min-h-screen bg-[#0A0A0A] text-[#EDEDED] font-sans px-4 sm:px-6 lg:px-10 py-10 sm:py-14">
       <div className="max-w-7xl mx-auto">
         <Link href="/" className="inline-flex items-center gap-2 text-xs font-mono text-zinc-400 hover:text-white transition-colors min-h-[24px]">
-          <ArrowLeft size={14} aria-hidden="true" /> Back to Home
+          Back to Home
         </Link>
         <p className="mt-8 text-xs font-mono uppercase tracking-widest text-emerald-400">Tutorial · 3 minutes</p>
         <h1 className="mt-3 text-3xl sm:text-4xl font-extrabold tracking-tight text-white">How to use Zelsis</h1>

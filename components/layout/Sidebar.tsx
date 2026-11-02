@@ -3,14 +3,7 @@
 import React, { useEffect } from 'react';
 import Image from 'next/image';
 import { UserAvatar } from '@/components/ui/UserAvatar';
-import {
-  LayoutDashboard,
-  ShieldCheck,
-  Palette,
-  Layers,
-  FolderGit2,
-  CheckSquare,
-  CreditCard, Bug } from 'lucide-react';
+import { LayoutDashboard, ShieldCheck, Palette, Layers, FolderGit2, CheckSquare, CreditCard, Bug } from 'lucide-react';
 import {
   Settings,
   FileText,
@@ -275,7 +268,6 @@ export const Sidebar: React.FC<SidebarProps> = ({
           }}
           className="w-full flex items-center justify-center gap-2 py-2.5 px-3 rounded-xl bg-white/5 hover:bg-white/10 border border-white/10 hover:border-white/20 text-xs font-mono font-bold text-white transition-all shadow-sm group"
         >
-          <LogIn size={14} className="text-[#A1A1AA] group-hover:text-white transition-colors" />
           <span>Sign In / Register</span>
         </button>
       )}

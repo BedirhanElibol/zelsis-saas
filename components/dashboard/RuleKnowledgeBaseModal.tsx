@@ -2,7 +2,7 @@
 
 import React, { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { X, BookOpen, Search, ShieldCheck, Zap, ExternalLink, AlertTriangle } from 'lucide-react';
+import { X, BookOpen } from 'lucide-react';
 import { COMPLIANCE_RULES_CATALOG, INFRA_RULES_CATALOG } from '@/data/mockData';
 
 const INFRA_SNIPPETS: Record<string, { vulnerable: string; remediated: string }> = {
@@ -239,7 +239,6 @@ export const RuleKnowledgeBaseModal: React.FC<RuleKnowledgeBaseModalProps> = ({
           {/* Search & Category Filter */}
           <div className="flex flex-col sm:flex-row items-center gap-3">
             <div className="flex items-center gap-2 bg-[#0A0A0A] px-3.5 py-2 rounded-xl border border-white/10 flex-1 w-full focus-within:border-white/30 focus-within:ring-1 focus-within:ring-white/20">
-              <Search size={14} className="text-[#94A3B8]" />
               <input
                 id="rule-kb-search-input"
                 name="ruleKbSearch"
@@ -315,12 +314,10 @@ export const RuleKnowledgeBaseModal: React.FC<RuleKnowledgeBaseModalProps> = ({
 
                 <div className="flex flex-wrap items-center gap-2 text-[0.68rem] font-mono text-[#A1A1AA]">
                   <div className="flex items-center gap-1.5 px-2 py-0.5 rounded bg-white/5 border border-white/10 text-zinc-300">
-                    <ShieldCheck size={13} className="text-emerald-400" />
                     <span>Compliance Framework: {rule.compliance}</span>
                   </div>
                   {rule.penaltyExposure && (
                     <div className="flex items-center gap-1.5 px-2 py-0.5 rounded bg-rose-500/10 border border-rose-500/20 text-rose-400 font-bold">
-                      <AlertTriangle size={12} className="text-rose-400" />
                       <span>Statutory Penalty: {rule.penaltyExposure}</span>
                     </div>
                   )}

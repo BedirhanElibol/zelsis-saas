@@ -2,7 +2,7 @@
 
 import React, { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { X, Server, Download, Copy, CheckCircle2, GitBranch, Terminal, Shield, FileCode, Check, LucideIcon, Lock } from 'lucide-react';
+import { X, Server, GitBranch, Terminal, Shield, FileCode, LucideIcon, Lock } from 'lucide-react';
 import { UserTier } from '@/data/schema';
 import { isCicdIntegrationAllowed } from '@/lib/quota-manager';
 import { getPublicAppUrl } from '@/lib/app-url';
@@ -312,7 +312,6 @@ spec:
                   onClick={() => onOpenCheckout?.('Pro')}
                   className="btn btn-primary text-xs px-5 py-2.5 font-bold rounded-xl flex items-center justify-center gap-2 bg-emerald-500 text-black hover:bg-emerald-400 transition-all shadow-sm flex-1 min-h-[44px]"
                 >
-                  <Lock size={13} />
                   <span>Upgrade to Pro</span>
                 </button>
               </div>
@@ -346,7 +345,6 @@ spec:
                 {/* Quick CLI Callout */}
                 <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 p-3.5 rounded-xl bg-white/[0.02] border border-white/10 text-xs font-mono">
                   <div className="flex items-center gap-2 text-zinc-300">
-                    <Terminal size={14} className="text-zinc-400 shrink-0" />
                     <span>Terminal:</span>
                     <code className="text-zinc-200 font-bold bg-black/50 px-2 py-0.5 rounded border border-white/10 break-all">
                       {GATE_CURL}
@@ -356,7 +354,6 @@ spec:
                     onClick={() => handleCopy(GATE_CURL, 'cli')}
                     className="flex items-center gap-1 px-2.5 py-1 rounded bg-white/5 hover:bg-white/10 text-[11px] text-zinc-300 hover:text-white transition-colors cursor-pointer shrink-0"
                   >
-                    {copiedType === 'cli' ? <Check size={12} className="text-emerald-400" /> : <Copy size={12} />}
                     <span>{copiedType === 'cli' ? 'Copied' : 'Copy Command'}</span>
                   </button>
                 </div>
@@ -377,12 +374,10 @@ spec:
                     >
                       {copiedType === currentTabItem.id ? (
                         <>
-                          <CheckCircle2 size={13} className="text-emerald-400" />
                           <span>Copied to Clipboard</span>
                         </>
                       ) : (
                         <>
-                          <Copy size={13} />
                           <span>Copy Workflow</span>
                         </>
                       )}
@@ -391,7 +386,6 @@ spec:
                       onClick={() => handleDownload(currentTabItem.content, currentTabItem.filename)}
                       className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-white/5 hover:bg-white/10 text-xs font-mono text-zinc-200 hover:text-white transition-colors border border-white/10 cursor-pointer"
                     >
-                      <Download size={13} />
                       <span>Download</span>
                     </button>
                   </div>
@@ -408,7 +402,6 @@ spec:
               {/* Footer */}
               <div className="flex items-center justify-between p-4 px-6 border-t border-white/10 bg-[#0A0A0A]">
                 <div className="text-xs text-[#A1A1AA] flex items-center gap-2">
-                  <Shield size={14} className="text-zinc-400" />
                   <span>Zero-Retention Architecture: Source code is analyzed in-memory and never written to disk.</span>
                 </div>
                 <button

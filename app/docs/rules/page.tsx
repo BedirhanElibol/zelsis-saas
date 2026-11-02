@@ -2,7 +2,6 @@ import React from 'react';
 import { RuleSearchClient, CatalogRule } from './RuleSearchClient';
 import rulesData from '@/data/rule-inventory.generated.json';
 import { ruleMaturity } from '@/lib/scanner/rule-maturity';
-import { List } from 'lucide-react';
 
 export const metadata = {
   title: 'Rule Catalog | Zelsis Docs',
@@ -26,7 +25,6 @@ export default function RulesPage() {
     <div className="space-y-6">
       <div>
         <div className="flex items-center gap-2 text-emerald-400 font-mono text-xs uppercase tracking-wider mb-2">
-          <List size={14} />
           <span>Rule Inventory</span>
         </div>
         <h1 className="text-2xl sm:text-3xl font-bold text-white tracking-tight">Static Analysis Rule Catalog</h1>

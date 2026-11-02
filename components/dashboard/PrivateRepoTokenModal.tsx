@@ -3,7 +3,7 @@
 import { GithubTokenSteps } from '@/components/dashboard/GithubTokenSteps';
 import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Lock, Eye, EyeOff, Key, X, ShieldAlert, ArrowRight } from 'lucide-react';
+import { Lock, Eye, EyeOff, Key, X } from 'lucide-react';
 
 export interface PrivateRepoTokenModalProps {
   isOpen: boolean;
@@ -127,7 +127,6 @@ export const PrivateRepoTokenModal: React.FC<PrivateRepoTokenModalProps> = ({
           {/* Explanation Callout */}
           <div className="bg-[#0A0A0A] p-3.5 rounded-xl border border-white/10 flex flex-col gap-2 text-xs">
             <div className="flex items-center gap-2 text-[#EDEDED] font-bold">
-              <ShieldAlert size={14} className="text-amber-400 shrink-0" />
               <span>GitHub Access Blocked (HTTP 404/403)</span>
             </div>
             <p className="text-[#A1A1AA] leading-relaxed text-[11px]">
@@ -139,7 +138,6 @@ export const PrivateRepoTokenModal: React.FC<PrivateRepoTokenModalProps> = ({
           {/* Error notice */}
           {error && (
             <div className="p-3 rounded-xl bg-red-500/10 border border-red-500/20 text-xs font-mono text-red-400 flex items-center gap-2">
-              <ShieldAlert size={14} className="shrink-0" />
               <span>{error}</span>
             </div>
           )}
@@ -199,7 +197,6 @@ export const PrivateRepoTokenModal: React.FC<PrivateRepoTokenModalProps> = ({
                 className="btn btn-primary flex-1 py-2.5 rounded-xl text-xs font-mono font-extrabold uppercase tracking-wider bg-emerald-500 text-black hover:bg-emerald-400 transition-all flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed shadow-lg cursor-pointer"
               >
                 <span>{isSubmitting ? 'Verifying & Scanning...' : 'Save Token & Scan Now'}</span>
-                <ArrowRight size={13} />
               </button>
             </div>
           </form>

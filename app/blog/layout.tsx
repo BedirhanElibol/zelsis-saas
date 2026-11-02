@@ -1,6 +1,5 @@
 import React from 'react';
 import Link from 'next/link';
-import { ArrowLeft, Compass, Newspaper } from 'lucide-react';
 import { ZelsisLogo } from '@/components/ui/ZelsisLogo';
 
 export default function BlogLayout({ children }: { children: React.ReactNode }) {
@@ -13,15 +12,12 @@ export default function BlogLayout({ children }: { children: React.ReactNode }) 
           </Link>
           <nav className="flex flex-wrap items-center gap-2 text-xs font-mono" aria-label="Blog navigation">
             <Link href="/blog" className="flex items-center gap-1.5 text-zinc-400 hover:text-white px-2 py-1 rounded bg-white/5 hover:bg-white/10">
-              <Newspaper size={12} aria-hidden="true" />
               <span>Blog</span>
             </Link>
             <Link href="/guides" className="flex items-center gap-1.5 text-zinc-400 hover:text-white px-2 py-1 rounded bg-white/5 hover:bg-white/10">
-              <Compass size={12} aria-hidden="true" />
               <span>Guides</span>
             </Link>
             <Link href="/dashboard" className="flex items-center gap-1.5 text-zinc-400 hover:text-white px-2 py-1 rounded bg-white/5 hover:bg-white/10">
-              <ArrowLeft size={12} aria-hidden="true" />
               <span>Dashboard</span>
             </Link>
           </nav>

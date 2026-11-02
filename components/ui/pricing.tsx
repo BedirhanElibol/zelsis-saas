@@ -2,7 +2,6 @@
 
 import { m } from 'framer-motion';
 import React, { useState, useEffect } from 'react';
-import { Check, Clock } from 'lucide-react';
 import NumberFlow from '@number-flow/react';
 import { ZELSIS_PRICING_PLANS } from '@/data/pricing-plans';
 
@@ -108,13 +107,11 @@ export function PricingSection({ onSelectPlan }: PricingProps) {
                   <div className="space-y-3 pt-4 border-t border-white/10">
                     {plan.features.map((feature, idx) => (
                       <div key={idx} className="flex items-center gap-2.5 text-xs text-[#EDEDED]">
-                        <Check size={14} className="text-white shrink-0" />
                         <span>{feature}</span>
                       </div>
                     ))}
                     {plan.comingSoon?.map((feature) => (
                       <div key={feature} className="flex items-center gap-2.5 text-xs text-[#A1A1AA]">
-                        <Clock size={14} className="text-[#A1A1AA] shrink-0" />
                         <span>{feature}</span>
                         <span className="px-1.5 py-0.5 rounded bg-white/5 border border-white/10 text-[0.6rem] font-mono uppercase tracking-wider shrink-0">Coming soon</span>
                       </div>

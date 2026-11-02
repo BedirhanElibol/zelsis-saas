@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useActionState, useCallback, useEffect, useState } from 'react';
-import { Check, Copy, KeyRound, Loader2, Trash2 } from 'lucide-react';
+import { Check, Copy, Loader2, Trash2 } from 'lucide-react';
 import { createApiKey, listApiKeys, revokeApiKey } from '@/app/actions/api-keys';
 import { initialApiKeyState, type ApiKeySummary } from '@/lib/api-key-state';
 import { getActiveUserAuth } from '@/lib/supabase-client';
@@ -38,7 +38,6 @@ export function ApiKeysCard() {
   return (
     <section className="bg-[#141414] border border-white/10 rounded-2xl p-5 sm:p-6 flex flex-col gap-4">
       <div className="flex items-center gap-2">
-        <KeyRound size={16} className="text-emerald-400" aria-hidden="true" />
         <h2 className="text-sm font-bold text-white">API keys for the CI release gate</h2>
       </div>
       <p className="text-xs text-zinc-400 leading-relaxed">

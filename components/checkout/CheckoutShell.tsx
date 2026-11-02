@@ -2,7 +2,6 @@
 
 import React from 'react';
 import Link from 'next/link';
-import { ArrowLeft, Lock } from 'lucide-react';
 import { ZelsisLogo } from '@/components/ui/ZelsisLogo';
 import type { UserProfile } from '@/components/auth/AuthModal';
 
@@ -25,13 +24,11 @@ export function CheckoutShell({ user, onOpenAuth, children }: CheckoutShellProps
             href="/#pricing"
             className="hidden sm:inline-flex items-center gap-1.5 text-sm text-zinc-400 hover:text-white transition-colors min-h-11"
           >
-            <ArrowLeft size={15} />
             Back to pricing
           </Link>
         </div>
         <div className="flex items-center gap-3 min-w-0">
           <span className="hidden sm:inline-flex items-center gap-1.5 text-xs text-zinc-400">
-            <Lock size={13} />
             Payments by Polar
           </span>
           {user?.isLoggedIn ? (

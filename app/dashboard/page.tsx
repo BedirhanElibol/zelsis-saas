@@ -34,7 +34,7 @@ const CheckoutView = dynamic(() => import('@/components/checkout/CheckoutView').
 const ExecutiveBriefingModal = dynamic(() => import('@/components/dashboard/ExecutiveBriefingModal').then(m => m.ExecutiveBriefingModal), { ssr: false });
 
 import { safeSetStorageItem } from '@/lib/storage';
-import { ShieldCheck, Plus, Loader2, LogIn } from 'lucide-react';
+import { ShieldCheck, Loader2, LogIn } from 'lucide-react';
 import { LifecycleBanner } from '@/components/dashboard/LifecycleBanner';
 import { normalizeRepoUrl, extractRepoDisplayName } from '@/lib/github-api';
 import { ComponentErrorBoundary } from '@/components/common/ComponentErrorBoundary';
@@ -364,7 +364,6 @@ function DashboardContent() {
               onClick={handleRestoreDemoShowcase}
               className="btn btn-primary flex-1 py-2.5 px-4 rounded-xl text-xs font-bold font-mono bg-emerald-500 text-black hover:bg-emerald-400 transition-all flex items-center justify-center gap-2 shadow-lg"
             >
-              <ShieldCheck size={14} />
               <span>Load Demo Showcase</span>
             </button>
 
@@ -390,7 +389,6 @@ function DashboardContent() {
               }}
               className="btn btn-secondary flex-1 py-2.5 px-4 rounded-xl text-xs font-bold font-mono border-white/10 text-white hover:bg-white/5 transition-all flex items-center justify-center gap-2"
             >
-              <Plus size={14} />
               <span>Connect Your First Project</span>
             </button>
           </div>

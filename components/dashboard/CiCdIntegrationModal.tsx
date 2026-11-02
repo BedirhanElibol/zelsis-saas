@@ -2,7 +2,7 @@
 
 import React, { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { X, GitPullRequest, Copy, Check, Terminal, ExternalLink, ShieldCheck, AlertTriangle, Code, ArrowRight, Lock } from 'lucide-react';
+import { X, GitPullRequest, ShieldCheck, Lock } from 'lucide-react';
 import { Project, UserTier } from '@/data/schema';
 import { getPublicAppUrl } from '@/lib/app-url';
 import { isCicdIntegrationAllowed } from '@/lib/quota-manager';
@@ -205,7 +205,6 @@ jobs:
                   onClick={() => onOpenCheckout?.('Pro')}
                   className="btn btn-primary text-xs px-5 py-2.5 font-bold rounded-xl flex items-center justify-center gap-2 bg-emerald-500 text-black hover:bg-emerald-400 transition-all shadow-sm flex-1 min-h-[44px]"
                 >
-                  <Lock size={13} />
                   <span>Upgrade to Pro</span>
                 </button>
               </div>
@@ -234,7 +233,6 @@ jobs:
               <div className="space-y-2">
                 <div className="flex items-center justify-between">
                   <span className="text-xs font-mono font-bold text-white uppercase tracking-wider flex items-center gap-2">
-                    <Code size={13} className="text-zinc-400" />
                     <span>1. Add Workflow: .github/workflows/zelsis-gate.yml</span>
                   </span>
                   <button
@@ -242,7 +240,6 @@ jobs:
                     onClick={() => copyToClipboard(githubWorkflowYaml, 'yaml')}
                     className="btn btn-secondary text-xs px-2.5 py-1 flex items-center gap-1.5"
                   >
-                    {copiedType === 'yaml' ? <Check size={12} className="text-emerald-400" /> : <Copy size={12} />}
                     <span>{copiedType === 'yaml' ? 'Copied YAML!' : 'Copy Workflow'}</span>
                   </button>
                 </div>
@@ -255,7 +252,6 @@ jobs:
               {/* Step 2: PR Comment Visual Preview */}
               <div className="space-y-2">
                 <span className="text-xs font-mono font-bold text-white uppercase tracking-wider flex items-center gap-2">
-                  <Terminal size={13} className="text-zinc-400" />
                   <span>2. Automated Pull Request Comment Preview</span>
                 </span>
 
@@ -271,7 +267,6 @@ jobs:
 
                   <div className="space-y-1.5 pt-1">
                     <div className="font-bold text-emerald-400 flex items-center gap-1.5">
-                      <ShieldCheck size={15} />
                       <span>Zelsis Release Gate: APPROVED</span>
                     </div>
                     <div className="text-[11px] text-zinc-400">
@@ -288,7 +283,6 @@ jobs:
               <div className="space-y-2">
                 <div className="flex items-center justify-between">
                   <span className="text-xs font-mono font-bold text-white uppercase tracking-wider flex items-center gap-2">
-                    <Terminal size={13} className="text-zinc-400" />
                     <span>3. Or Run via cURL in Custom CI/CD (GitLab, Bitbucket, CircleCI)</span>
                   </span>
                   <button
@@ -296,7 +290,6 @@ jobs:
                     onClick={() => copyToClipboard(curlSnippet, 'curl')}
                     className="btn btn-secondary text-xs px-2.5 py-1 flex items-center gap-1.5"
                   >
-                    {copiedType === 'curl' ? <Check size={12} className="text-emerald-400" /> : <Copy size={12} />}
                     <span>{copiedType === 'curl' ? 'Copied cURL!' : 'Copy cURL'}</span>
                   </button>
                 </div>

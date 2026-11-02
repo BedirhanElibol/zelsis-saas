@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useEffect } from 'react';
-import { AlertTriangle, RefreshCw, Home, ArrowLeft, RotateCcw } from 'lucide-react';
+import { AlertTriangle, RefreshCw } from 'lucide-react';
 import { isChunkLoadError, handleChunkLoadRecovery, clearChunkReloadCooldown } from '@/lib/chunk-reload';
 
 interface ErrorBoundaryProps {
@@ -89,7 +89,6 @@ export default function GlobalError({ error, reset }: ErrorBoundaryProps) {
               onClick={handleRetry}
               className="btn btn-primary py-2.5 px-4 text-xs font-extrabold uppercase tracking-wider flex items-center justify-center gap-2 cursor-pointer bg-emerald-500 hover:bg-emerald-400 text-black border-emerald-400"
             >
-              <RefreshCw size={14} />
               <span>Reload & Apply Updates</span>
             </button>
 
@@ -97,7 +96,6 @@ export default function GlobalError({ error, reset }: ErrorBoundaryProps) {
               href="/dashboard"
               className="btn btn-secondary py-2.5 px-4 text-xs font-bold uppercase tracking-wider flex items-center justify-center gap-2 text-[#A1A1AA] hover:text-white"
             >
-              <Home size={14} />
               <span>Dashboard</span>
             </a>
           </div>
@@ -165,7 +163,6 @@ export default function GlobalError({ error, reset }: ErrorBoundaryProps) {
             onKeyDown={(e) => { if (e.key === 'Enter') handleRetry(); }}
             className="btn btn-primary py-2.5 px-4 text-xs font-extrabold uppercase tracking-wider flex items-center justify-center gap-2 cursor-pointer"
           >
-            <RefreshCw size={14} />
             <span>Try Again</span>
           </button>
 
@@ -174,7 +171,6 @@ export default function GlobalError({ error, reset }: ErrorBoundaryProps) {
             className="btn btn-secondary py-2.5 px-4 text-xs font-bold uppercase tracking-wider flex items-center justify-center gap-2 text-amber-300 border-amber-500/30 hover:bg-amber-500/10 cursor-pointer"
             title="Purge corrupted local data and reset to demo showcase"
           >
-            <RotateCcw size={14} />
             <span>Reset Cache</span>
           </button>
 
@@ -182,7 +178,6 @@ export default function GlobalError({ error, reset }: ErrorBoundaryProps) {
             href="/dashboard"
             className="btn btn-secondary py-2.5 px-4 text-xs font-bold uppercase tracking-wider flex items-center justify-center gap-2"
           >
-            <Home size={14} />
             <span>Dashboard</span>
           </a>
 
@@ -190,7 +185,6 @@ export default function GlobalError({ error, reset }: ErrorBoundaryProps) {
             href="/"
             className="btn btn-secondary py-2.5 px-4 text-xs font-bold uppercase tracking-wider flex items-center justify-center gap-2 text-[#A1A1AA] hover:text-white"
           >
-            <ArrowLeft size={14} />
             <span>Home</span>
           </a>
         </div>

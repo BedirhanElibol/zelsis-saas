@@ -2,7 +2,6 @@
 
 import React, { useEffect, useRef, useState } from 'react';
 import { m, useReducedMotion } from 'framer-motion';
-import { AlertCircle, ShieldCheck } from 'lucide-react';
 import { LANDING_CHECKS, type LandingCategory } from '@/data/landing-checks';
 import { slugForLanding } from '@/data/category-pages';
 
@@ -136,11 +135,11 @@ export function CatchTabs() {
           >
             <div className="text-zinc-500 mb-3 truncate">{check.path}</div>
             <div className="text-red-400 mb-1.5 flex items-center gap-2">
-              <AlertCircle className="w-3 h-3" aria-hidden="true" /> Flagged
+              Flagged
             </div>
             <pre className="text-zinc-400 mb-4 overflow-x-auto [scrollbar-width:thin] [scrollbar-color:#3f3f46_transparent]"><code>{check.bad}</code></pre>
             <div className="text-emerald-400 mb-1.5 flex items-center gap-2">
-              <ShieldCheck className="w-3 h-3" aria-hidden="true" /> Passes
+              Passes
             </div>
             <pre className="text-zinc-200 overflow-x-auto [scrollbar-width:thin] [scrollbar-color:#3f3f46_transparent]"><code>{check.good}</code></pre>
           </m.div>

@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useActionState, useEffect, useState } from 'react';
-import { BadgeCheck, Check, Copy, Globe, Loader2, Trash2 } from 'lucide-react';
+import { Check, Copy, Loader2, Trash2 } from 'lucide-react';
 import { addSiteDomain, listSiteDomains, removeSiteDomain, verifySiteDomain } from '@/app/actions/site-verification';
 import { PROBE_HEADER, initialSiteVerificationState, type SiteDomainSummary } from '@/lib/site-verification-state';
 import { getActiveUserAuth } from '@/lib/supabase-client';
@@ -52,7 +52,6 @@ export function SiteVerificationCard() {
   return (
     <section className="bg-[#141414] border border-white/10 rounded-2xl p-5 sm:p-6 flex flex-col gap-4">
       <div className="flex items-center gap-2">
-        <Globe size={16} className="text-emerald-400" aria-hidden="true" />
         <h2 className="text-sm font-bold text-white">Verified domains for live scans</h2>
       </div>
       <p className="text-xs text-zinc-400 leading-relaxed">
@@ -81,9 +80,6 @@ export function SiteVerificationCard() {
             <li key={d.hostname} className="border border-white/10 rounded-lg p-3 flex flex-col gap-2 text-xs">
               <div className="flex items-center justify-between gap-3">
                 <div className="flex items-center gap-2 min-w-0">
-                  {d.verifiedAt
-                    ? <BadgeCheck size={14} className="text-emerald-400 shrink-0" aria-hidden="true" />
-                    : <Globe size={14} className="text-zinc-500 shrink-0" aria-hidden="true" />}
                   <span className="text-white font-medium truncate">{d.hostname}</span>
                   <span className={d.verifiedAt ? 'text-emerald-400' : 'text-amber-400'}>
                     {d.verifiedAt ? `verified ${new Date(d.verifiedAt).toLocaleDateString()} (${d.verifiedMethod === 'dns' ? 'DNS' : 'file'})` : 'not verified'}

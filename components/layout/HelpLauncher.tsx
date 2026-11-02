@@ -2,7 +2,7 @@
 
 import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { HelpCircle, Search, X, ArrowRight } from 'lucide-react';
+import { X } from 'lucide-react';
 
 interface HelpLauncherProps {
   onNavigate: (nav: string) => void;
@@ -90,7 +90,6 @@ export function HelpLauncher({ onNavigate, onOpenConnect, onFocusScan, onOpenTou
         aria-label="Help: find what you want to do"
         title="Find anything (Ctrl/Cmd + K)"
       >
-        <HelpCircle size={13} />
         <span className="hidden sm:inline">Help</span>
       </button>
 
@@ -98,7 +97,6 @@ export function HelpLauncher({ onNavigate, onOpenConnect, onFocusScan, onOpenTou
         <div className="fixed inset-0 z-[60] bg-black/70 flex items-start justify-center p-4 pt-[12vh]" onClick={(e) => { if (e.target === e.currentTarget) setOpen(false); }}>
           <div role="dialog" aria-modal="true" aria-labelledby="help-launcher-title" className="w-full max-w-lg rounded-2xl border border-white/10 bg-[#141414] shadow-2xl overflow-hidden">
             <div className="flex items-center gap-2 px-4 py-3 border-b border-white/10 focus-within:bg-white/[0.04] focus-within:shadow-[inset_0_-2px_0_0_#10b981]">
-              <Search size={15} className="text-zinc-400 shrink-0" />
               <h2 id="help-launcher-title" className="sr-only">What do you want to do?</h2>
               <input
                 ref={inputRef}
@@ -135,7 +133,6 @@ export function HelpLauncher({ onNavigate, onOpenConnect, onFocusScan, onOpenTou
                       <span className="block text-sm font-semibold text-white">{t.title}</span>
                       <span className="block text-xs text-zinc-400">{t.hint}</span>
                     </span>
-                    <ArrowRight size={14} className="text-zinc-500 mt-1 shrink-0" />
                   </button>
                 </li>
               ))}

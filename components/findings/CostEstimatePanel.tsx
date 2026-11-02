@@ -1,7 +1,6 @@
 'use client';
 
 import React, { useEffect, useState } from 'react';
-import { Calculator } from 'lucide-react';
 import type { Finding } from '@/data/schema';
 import { estimateCost, formatUsd, type CostInputs } from '@/lib/cost-estimate';
 
@@ -50,7 +49,6 @@ export function CostEstimatePanel({ findings, projectId }: { findings: Finding[]
       <button type="button" onClick={() => setOpen(!open)} aria-expanded={open}
         className="w-full flex items-center justify-between gap-2 text-left text-zinc-200 cursor-pointer">
         <span className="flex items-center gap-2">
-          <Calculator className="w-4 h-4 text-emerald-400" aria-hidden="true" />
           <strong className="text-white">What could this cost?</strong>
           {est.perDay !== null && <span className="text-red-300">Up to {formatUsd(est.perDay)} a day of abuse</span>}
           {est.perDay === null && est.usersAtRisk !== null && <span className="text-red-300">Records of up to {est.usersAtRisk.toLocaleString('en-US')} users</span>}

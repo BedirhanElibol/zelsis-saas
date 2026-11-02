@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useActionState, useEffect, useState } from 'react';
-import { ExternalLink, Loader2, Ticket } from 'lucide-react';
+import { Loader2, Ticket } from 'lucide-react';
 import { createJiraIssue, getJiraAccess } from '@/app/actions/jira';
 import { initialJiraState, type JiraConnectionSummary } from '@/lib/jira-state';
 import { getActiveUserAuth } from '@/lib/supabase-client';
@@ -47,7 +47,7 @@ export function JiraIssueButton({ finding, cweId }: { finding: Finding; cweId?: 
           {state.message}{' '}
           {state.issueUrl && (
             <a href={state.issueUrl} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-1 underline underline-offset-2">
-              Open <ExternalLink size={11} aria-hidden="true" />
+              Open
             </a>
           )}
         </span>

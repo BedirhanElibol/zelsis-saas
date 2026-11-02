@@ -5,7 +5,7 @@ import { useRouter } from 'next/navigation';
 import { ZELSIS_PRICING_PLANS, PricingPlanItem, priceLabel } from '@/data/pricing-plans';
 // EmptyState fallback: static pricing plan definitions never yield empty list
 import { generateLicenseKey, activateUserTier, verifyLicenseKey } from '@/lib/stripe-checkout';
-import { ShieldCheck, CreditCard, Lock, CheckCircle2, ArrowLeft, Star, Building2, Mail, User } from 'lucide-react';
+import { ShieldCheck } from 'lucide-react';
 import { Copy, Terminal, ShieldAlert, AlertCircle, ExternalLink, Calendar, Loader2, RefreshCw, ArrowRight } from 'lucide-react';
 import { formatRenewalDate } from '@/lib/subscription-utils';
 import { getAttributionData } from '@/lib/attribution';
@@ -327,7 +327,6 @@ export const CheckoutView: React.FC<CheckoutViewProps> = ({
           onClick={onBackToPricing}
           className="sm:hidden self-start flex items-center gap-2 min-h-11 text-sm text-zinc-400 hover:text-white transition-colors"
         >
-          <ArrowLeft size={16} />
           <span>Back to pricing</span>
         </button>
         <h1 className="text-2xl sm:text-3xl font-extrabold text-white [text-wrap:balance]">
@@ -376,7 +375,6 @@ export const CheckoutView: React.FC<CheckoutViewProps> = ({
       {verificationError && !isSubmitted && (
         <div role="alert" className="p-4 rounded-xl bg-red-500/10 border border-red-500/30 text-xs text-red-200 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 shadow-md">
           <div className="flex items-center gap-2.5">
-            <AlertCircle size={16} className="text-red-400 shrink-0" />
             <span className="leading-relaxed">{verificationError}</span>
           </div>
           {checkoutId && (
@@ -413,7 +411,6 @@ export const CheckoutView: React.FC<CheckoutViewProps> = ({
             onClick={() => handleOpenAuthModal('signup')}
             className="min-h-[44px] px-5 py-2.5 rounded-xl bg-emerald-500 text-black hover:bg-emerald-400 font-extrabold text-xs hover:bg-neutral-200 transition-all shadow-md flex items-center justify-center gap-2 shrink-0 cursor-pointer font-mono"
           >
-            <User size={15} />
             <span>Open Sign In / Sign Up</span>
           </button>
         </div>
@@ -421,7 +418,6 @@ export const CheckoutView: React.FC<CheckoutViewProps> = ({
 
       {isSubmitted ? (
         <div className="bg-[#141414] border border-white/10 rounded-xl p-12 text-center flex flex-col items-center gap-5 border-[#10B981]/40 bg-[#10B981]/10">
-          <CheckCircle2 size={64} className="text-[#10B981]" />
           <h2 className="text-3xl font-extrabold text-white">
             Your {selectedPlan.name} plan is active
           </h2>
@@ -470,7 +466,6 @@ export const CheckoutView: React.FC<CheckoutViewProps> = ({
                         required
                         className="w-full px-3.5 py-2.5 rounded-lg bg-[#0A0A0A] border border-white/10 text-xs text-[#EDEDED] outline-none focus-visible:ring-2 focus-visible:ring-white/70 focus:border-white/30 pl-9"
                       />
-                      <User size={14} className="absolute left-3 top-3 text-[#64748B]" />
                     </div>
                   </div>
 
@@ -490,7 +485,6 @@ export const CheckoutView: React.FC<CheckoutViewProps> = ({
                         required
                         className="w-full px-3.5 py-2.5 rounded-lg bg-[#0A0A0A] border border-white/10 text-xs text-[#EDEDED] outline-none focus-visible:ring-2 focus-visible:ring-white/70 focus:border-white/30 pl-9"
                       />
-                      <Mail size={14} className="absolute left-3 top-3 text-[#64748B]" />
                     </div>
                   </div>
                 </div>
@@ -508,7 +502,6 @@ export const CheckoutView: React.FC<CheckoutViewProps> = ({
                   <div className="p-6 rounded-xl bg-gradient-to-b from-white/[0.08] to-white/[0.02] border border-white/20 flex flex-col gap-4 shadow-xl">
                     <div className="flex items-center justify-between">
                       <div className="flex items-center gap-2">
-                        <CreditCard size={18} className="text-white" />
                         <span className="text-base font-extrabold text-white">Pay with Polar</span>
                       </div>
                       <span className="px-2.5 py-0.5 rounded-full text-[10px] font-mono font-bold bg-white/10 text-white border border-white/20">
@@ -524,7 +517,6 @@ export const CheckoutView: React.FC<CheckoutViewProps> = ({
                       <div className="p-4 rounded-xl bg-white/5 border border-white/15 flex flex-col gap-3">
                         <div className="flex items-center justify-between">
                           <div className="flex items-center gap-2">
-                            <CheckCircle2 size={18} className="text-emerald-400" />
                             <span className="text-sm font-extrabold text-white">Active Plan: {(activePlan ?? selectedPlan).name}</span>
                           </div>
                           <span className="px-2.5 py-0.5 rounded-full text-[10px] font-mono font-bold bg-emerald-500/10 text-emerald-300 border border-emerald-500/30">
@@ -541,7 +533,6 @@ export const CheckoutView: React.FC<CheckoutViewProps> = ({
                             rel="noopener noreferrer"
                             className="w-full sm:w-auto min-h-[40px] px-4 py-2 rounded-xl bg-white/10 hover:bg-white/15 border border-white/20 text-white font-bold text-xs flex items-center justify-center gap-1.5 transition-all cursor-pointer"
                           >
-                            <ExternalLink size={14} />
                             <span>Manage at Polar</span>
                           </a>
                           {isProSubscriber && isSelectedPlanPro && (
@@ -550,7 +541,6 @@ export const CheckoutView: React.FC<CheckoutViewProps> = ({
                               onClick={() => setSelectedPlanId('vibecare')}
                               className="w-full sm:w-auto min-h-[40px] px-4 py-2 rounded-xl bg-gradient-to-r from-amber-400 to-amber-500 hover:from-amber-300 text-black font-extrabold text-xs flex items-center justify-center gap-1.5 transition-all cursor-pointer"
                             >
-                              <ArrowRight size={14} className="text-black" />
                               <span>Upgrade to Team ({priceLabel('Enterprise')})</span>
                             </button>
                           )}
@@ -574,7 +564,6 @@ export const CheckoutView: React.FC<CheckoutViewProps> = ({
                           </>
                         ) : (
                           <>
-                            <Lock size={14} />
                             <span>{isProSubscriber && isSelectedPlanEnterprise ? 'Upgrade to Team' : 'Pay Securely with Polar'} (${selectedPlan.priceMonthly.toFixed(2)}/mo)</span>
                           </>
                         )}
@@ -586,7 +575,6 @@ export const CheckoutView: React.FC<CheckoutViewProps> = ({
                           onClick={() => handleOpenAuthModal('signup')}
                           className="min-h-[44px] py-4 px-4 text-xs font-extrabold uppercase tracking-wider w-full rounded-xl flex items-center justify-center gap-2 bg-white/10 text-[#A1A1AA] hover:bg-white/15 hover:text-white transition-all border border-white/10 font-mono text-center cursor-pointer"
                         >
-                          <Lock size={14} />
                           <span>Sign In to Upgrade (${selectedPlan.priceMonthly.toFixed(2)}/mo)</span>
                         </button>
                         <span className="text-[11px] text-amber-300/80 font-mono text-center">
@@ -608,15 +596,12 @@ export const CheckoutView: React.FC<CheckoutViewProps> = ({
                     {/* High-Converting Guarantee & Security Box */}
                     <div className="p-3.5 rounded-xl bg-white/[0.02] border border-white/10 flex flex-col gap-2 mt-2">
                       <div className="flex items-center gap-2 text-xs font-mono text-zinc-300">
-                        <ShieldCheck size={14} className="text-emerald-400 shrink-0" />
                         <span className="font-bold text-white">14-Day Money-Back Guarantee</span>
                       </div>
                       <div className="flex items-center gap-2 text-[11px] font-mono text-zinc-400">
-                        <Lock size={12} className="text-zinc-400 shrink-0" />
                         <span>Card details are handled by Polar, never by Zelsis</span>
                       </div>
                       <div className="flex items-center gap-2 text-[11px] font-mono text-zinc-400">
-                        <RefreshCw size={12} className="text-zinc-400 shrink-0" />
                         <span>Plan activates on your account after payment / Cancel anytime</span>
                       </div>
                       <div className="pt-1 border-t border-white/5 text-[10px] font-mono text-zinc-400 flex items-center justify-between">
@@ -630,7 +615,6 @@ export const CheckoutView: React.FC<CheckoutViewProps> = ({
                   {process.env.NODE_ENV !== 'production' && (
                     <div className="mt-6 p-5 rounded-xl bg-[#0A0A0A] border border-dashed border-white/20 flex flex-col gap-3">
                       <div className="flex items-center gap-2">
-                        <Terminal size={16} className="text-white" />
                         <span className="text-xs font-mono font-bold uppercase text-white">
                           Developer Demo &amp; Sandbox Simulator
                         </span>
@@ -755,7 +739,6 @@ export const CheckoutView: React.FC<CheckoutViewProps> = ({
 
               {/* Trust Indicators */}
               <div className="p-3 rounded-lg bg-[#0A0A0A] border border-white/10 text-[0.72rem] text-[#A1A1AA] flex items-center gap-2">
-                <Star size={14} className="text-[#F59E0B] shrink-0" />
                 <span>14-Day 100% Money-Back Guarantee. No questions asked.</span>
               </div>
             </div>

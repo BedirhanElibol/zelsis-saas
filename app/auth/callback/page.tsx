@@ -5,7 +5,7 @@ import { useRouter, useSearchParams } from 'next/navigation';
 import { getSupabase, mapSupabaseUserToProfile, syncUserProfileToSupabase, isPlatformAdminEmail } from '@/lib/supabase';
 import { verifyLicenseKey } from '@/lib/stripe-checkout';
 import { isFounderGrantExpiry } from '@/lib/subscription-utils';
-import { Shield, Loader2, CheckCircle2, AlertTriangle, ArrowRight } from 'lucide-react';
+import { Loader2, CheckCircle2, AlertTriangle } from 'lucide-react';
 import Link from 'next/link';
 
 function CallbackHandler() {
@@ -262,7 +262,6 @@ function CallbackHandler() {
       </div>
 
       <div className="flex items-center justify-center gap-2 mb-3">
-        <Shield className="w-5 h-5 text-emerald-400" />
         <span className="text-sm font-mono uppercase tracking-widest text-neutral-400">Zelsis Auth</span>
       </div>
 
@@ -280,7 +279,7 @@ function CallbackHandler() {
             href="/dashboard"
             className="inline-flex items-center justify-center gap-2 w-full py-2.5 px-4 rounded-xl bg-neutral-800 hover:bg-neutral-700 border border-neutral-700 text-white text-sm font-medium transition-colors"
           >
-            Return to Dashboard <ArrowRight className="w-4 h-4" />
+            Return to Dashboard
           </Link>
           <Link
             href="/"

@@ -1,6 +1,5 @@
 import React from 'react';
 import Link from 'next/link';
-import { ArrowLeft, BookOpen, Compass } from 'lucide-react';
 import { ZelsisLogo } from '@/components/ui/ZelsisLogo';
 
 export default function GuidesLayout({ children }: { children: React.ReactNode }) {
@@ -13,15 +12,12 @@ export default function GuidesLayout({ children }: { children: React.ReactNode }
           </Link>
           <nav className="flex flex-wrap items-center gap-2 text-xs font-mono" aria-label="Guides navigation">
             <Link href="/guides" className="flex items-center gap-1.5 text-zinc-400 hover:text-white px-2 py-1 rounded bg-white/5 hover:bg-white/10">
-              <Compass size={12} aria-hidden="true" />
               <span>Guides</span>
             </Link>
             <Link href="/docs" className="flex items-center gap-1.5 text-zinc-400 hover:text-white px-2 py-1 rounded bg-white/5 hover:bg-white/10">
-              <BookOpen size={12} aria-hidden="true" />
               <span>Docs</span>
             </Link>
             <Link href="/dashboard" className="flex items-center gap-1.5 text-zinc-400 hover:text-white px-2 py-1 rounded bg-white/5 hover:bg-white/10">
-              <ArrowLeft size={12} aria-hidden="true" />
               <span>Dashboard</span>
             </Link>
           </nav>

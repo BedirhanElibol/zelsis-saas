@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
-import { ShieldCheck, ArrowRight } from 'lucide-react';
+import { ShieldCheck } from 'lucide-react';
 
 interface StickyMobileCTAProps {
   onOpenAudit: () => void;
@@ -46,7 +46,6 @@ export const StickyMobileCTA: React.FC<StickyMobileCTAProps> = ({ onOpenAudit })
           className="btn btn-primary flex items-center gap-1.5 px-4 py-2 rounded-lg text-xs font-bold uppercase tracking-wider shrink-0 bg-emerald-500 text-black hover:bg-emerald-400 transition-all shadow-sm"
         >
           <span>Run Audit</span>
-          <ArrowRight size={13} />
         </button>
       </div>
     </div>

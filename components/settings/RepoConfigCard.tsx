@@ -1,7 +1,7 @@
 'use client';
 
 import React from 'react';
-import { ShieldCheck, Key, Eye, EyeOff, Save, CheckCircle2 } from 'lucide-react';
+import { Eye, EyeOff } from 'lucide-react';
 
 interface RepoConfigCardProps {
   repoUrl: string;
@@ -28,7 +28,6 @@ export const RepoConfigCard: React.FC<RepoConfigCardProps> = ({
     <form onSubmit={onSaveSettings} className="bg-[#141414] border border-white/10 rounded-xl p-6 flex flex-col gap-6 shadow-xl">
       <div className="flex flex-col gap-2">
         <label htmlFor="settings-repo-url" className="text-xs font-mono font-bold text-[#EDEDED] flex items-center gap-2">
-          <ShieldCheck size={14} className="text-white" />
           <span>Target Repository / Web Deployment URL:</span>
         </label>
         <input
@@ -45,7 +44,6 @@ export const RepoConfigCard: React.FC<RepoConfigCardProps> = ({
 
       <div className="flex flex-col gap-2">
         <label htmlFor="settings-pat-token" className="text-xs font-mono font-bold text-[#EDEDED] flex items-center gap-2">
-          <Key size={14} className="text-white" />
           <span>GitHub Personal Access Token (PAT) (Optional for Private Repos):</span>
         </label>
         <div className="flex items-center gap-2 px-3 py-1 rounded-xl bg-[#0A0A0A] border border-white/10 focus-within:border-emerald-500 focus-within:ring-2 focus-within:ring-emerald-500">
@@ -80,7 +78,6 @@ export const RepoConfigCard: React.FC<RepoConfigCardProps> = ({
           disabled={saved}
           className="min-h-[44px] px-6 py-2.5 text-xs font-bold uppercase tracking-wider rounded-xl flex items-center justify-center gap-2 bg-white text-black hover:bg-neutral-200 transition-all shadow-md disabled:opacity-50 cursor-pointer focus-visible:ring-2 focus-visible:ring-emerald-500 focus-visible:outline-none"
         >
-          {saved ? <CheckCircle2 size={15} /> : <Save size={15} />}
           <span>{saved ? 'Saved!' : 'Save Settings'}</span>
         </button>
       </div>

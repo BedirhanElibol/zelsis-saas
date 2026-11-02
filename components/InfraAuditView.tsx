@@ -3,7 +3,7 @@
 import React, { useState } from 'react';
 import { Finding, InfraRule } from '@/data/schema';
 import { INFRA_RULES_CATALOG } from '@/data/mockData';
-import { Database, Search, Filter, Copy, CheckCircle2, AlertTriangle, ShieldCheck, AlertOctagon, Terminal, Server, Code } from 'lucide-react';
+import { Database } from 'lucide-react';
 
 interface InfraAuditViewProps {
   findings: Finding[];
@@ -73,7 +73,6 @@ export const InfraAuditView: React.FC<InfraAuditViewProps> = ({
 
         <div className="flex flex-col sm:flex-row items-start sm:items-center gap-3">
           <div className="px-4 py-2.5 rounded-xl bg-cyan-500/10 border border-cyan-500/30 text-cyan-400 text-xs font-mono font-bold flex items-center gap-2">
-            <Server size={16} />
             <span>Infra Gate: ENFORCED</span>
           </div>
           {infraFindings.length > 0 && (
@@ -87,7 +86,6 @@ export const InfraAuditView: React.FC<InfraAuditViewProps> = ({
       {/* Filter Bar */}
       <div className="flex gap-4 flex-wrap items-center">
         <div className="flex items-center gap-2.5 bg-[#141414] px-4 py-2.5 rounded-xl border border-white/10 flex-1 min-w-[280px]">
-          <Search size={16} className="text-[#A1A1AA]" />
           <input
             id="infra-rules-search-input"
             name="infraRulesSearch"
@@ -101,7 +99,6 @@ export const InfraAuditView: React.FC<InfraAuditViewProps> = ({
         </div>
 
         <div className="flex items-center gap-2">
-          <Filter size={16} className="text-[#A1A1AA]" />
           <select
             id="infra-category-select"
             name="infraCategory"
@@ -190,12 +187,10 @@ export const InfraAuditView: React.FC<InfraAuditViewProps> = ({
                     onClick={() => onInspectFinding(matchingFindings[0])}
                     className="text-xs font-mono font-bold text-rose-400 hover:text-rose-300 flex items-center gap-1.5 transition-colors"
                   >
-                    <AlertTriangle size={14} />
                     <span>Inspect {matchingFindings.length} Violation(s)</span>
                   </button>
                 ) : (
                   <div className="text-xs font-mono text-emerald-400 flex items-center gap-1.5">
-                    <ShieldCheck size={14} />
                     <span>Control Satisfied</span>
                   </div>
                 )}
@@ -207,12 +202,10 @@ export const InfraAuditView: React.FC<InfraAuditViewProps> = ({
                 >
                   {copiedId === rule.id ? (
                     <>
-                      <CheckCircle2 size={13} className="text-emerald-400" />
                       <span className="text-emerald-400 font-bold">Copied</span>
                     </>
                   ) : (
                     <>
-                      <Copy size={13} className="text-zinc-400" />
                       <span>Copy Fix</span>
                     </>
                   )}

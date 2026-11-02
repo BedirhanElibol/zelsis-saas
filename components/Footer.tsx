@@ -1,7 +1,6 @@
 'use client';
 
 import React from 'react';
-import { ShieldCheck, ArrowUpRight } from 'lucide-react';
 import { ZelsisLogo } from '@/components/ui/ZelsisLogo';
 import { CONTACT_EMAIL } from '@/lib/contact';
 
@@ -21,7 +20,6 @@ export const Footer: React.FC = () => {
             <span className="text-white font-semibold">Zelsis Software Technologies</span>
             <span className="inline-flex items-center gap-1 text-zinc-300">
               <span>{CONTACT_EMAIL}</span>
-              <ArrowUpRight size={12} />
             </span>
             <span>Support: reply within 2 business days</span>
             <span className="text-[11px] text-zinc-400">Istanbul, Türkiye · Data stored in the EU (Ireland)</span>

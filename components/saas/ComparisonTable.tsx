@@ -1,7 +1,6 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
-import { Check, X, Shield, ArrowRight, Lock, ExternalLink, Zap } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import dynamic from 'next/dynamic';
 import type { UserProfile } from '@/components/auth/AuthModal';
@@ -274,12 +273,10 @@ export const ComparisonTable: React.FC = () => {
     if (typeof val === 'boolean') {
       return val ? (
         <span className="inline-flex items-center justify-center w-5 h-5 rounded-full bg-white/10 text-white">
-          <Check size={12} className="stroke-[2.5]" />
           <span className="sr-only">Included</span>
         </span>
       ) : (
         <span className="inline-flex items-center justify-center w-5 h-5 rounded-full bg-white/5 text-zinc-400">
-          <X size={12} className="stroke-[2]" />
           <span className="sr-only">Not included</span>
         </span>
       );
@@ -335,7 +332,6 @@ export const ComparisonTable: React.FC = () => {
                 <ul className="flex flex-col gap-2">
                   {plan.features.map((feature) => (
                     <li key={feature} className="flex items-start gap-2 text-sm text-zinc-200">
-                      <Check size={16} className="text-white shrink-0 mt-0.5" aria-hidden="true" />
                       <span>{feature}</span>
                     </li>
                   ))}
@@ -442,7 +438,6 @@ export const ComparisonTable: React.FC = () => {
                             className="w-full min-h-11 px-3 rounded-lg font-sans bg-white/10 hover:bg-white/15 border border-white/20 text-white text-sm font-semibold transition-colors flex items-center justify-center gap-1.5 shadow cursor-pointer"
                           >
                             <span>Manage at Polar</span>
-                            <ExternalLink size={12} />
                           </a>
                           <span className="text-[10px] text-zinc-400">Active subscription</span>
                         </div>
@@ -460,7 +455,6 @@ export const ComparisonTable: React.FC = () => {
                           className="mt-2 w-full min-h-11 px-3 rounded-lg font-sans bg-emerald-500 text-black hover:bg-emerald-400 text-sm font-semibold transition-colors flex items-center justify-center gap-1.5 shadow cursor-pointer"
                         >
                           <span>Get Pro</span>
-                          <ArrowRight size={13} />
                         </button>
                       )}
                     </div>
@@ -495,7 +489,6 @@ export const ComparisonTable: React.FC = () => {
                             className="w-full min-h-11 px-3 rounded-lg font-sans bg-white/10 hover:bg-white/15 border border-white/20 text-white text-sm font-semibold transition-colors flex items-center justify-center gap-1.5 shadow cursor-pointer"
                           >
                             <span>Manage at Polar</span>
-                            <ExternalLink size={12} />
                           </a>
                           <span className="text-[10px] text-zinc-400">Team plan active</span>
                         </div>
@@ -506,7 +499,6 @@ export const ComparisonTable: React.FC = () => {
                           className="mt-2 w-full min-h-11 px-3 rounded-lg font-sans bg-white/10 hover:bg-white/15 border border-white/20 text-white text-sm font-semibold transition-colors flex items-center justify-center gap-1.5 shadow cursor-pointer"
                         >
                           <span>Upgrade to Team</span>
-                          <ArrowRight size={13} />
                         </button>
                       ) : (
                         <button
@@ -515,7 +507,6 @@ export const ComparisonTable: React.FC = () => {
                           className="mt-2 w-full min-h-11 px-3 rounded-lg font-sans bg-white/10 hover:bg-white/15 border border-white/20 text-white text-sm font-semibold transition-colors flex items-center justify-center gap-1.5 cursor-pointer"
                         >
                           <span>Get Team</span>
-                          <ArrowRight size={13} />
                         </button>
                       )}
                     </div>
@@ -614,7 +605,6 @@ export const ComparisonTable: React.FC = () => {
                   className="px-5 py-2 rounded-lg text-xs font-mono font-bold uppercase tracking-wider bg-white/10 hover:bg-white/15 border border-white/20 text-white transition-all flex items-center gap-2 cursor-pointer"
                 >
                   <span>Manage Team Plan</span>
-                  <ExternalLink size={13} />
                 </a>
               ) : isLoggedIn && currentTier === 'Pro' ? (
                 <button
@@ -623,7 +613,6 @@ export const ComparisonTable: React.FC = () => {
                   className="px-5 py-2 rounded-lg text-xs font-mono font-bold uppercase tracking-wider bg-emerald-500 text-black hover:bg-emerald-400 transition-all flex items-center gap-2 shadow cursor-pointer"
                 >
                   <span>Upgrade to Team ({priceLabel('Enterprise')})</span>
-                  <ArrowRight size={14} />
                 </button>
               ) : (
                 <button
@@ -632,7 +621,6 @@ export const ComparisonTable: React.FC = () => {
                   className="px-5 py-2 rounded-lg text-xs font-mono font-bold uppercase tracking-wider bg-emerald-500 text-black hover:bg-emerald-400 transition-all flex items-center gap-2 shadow cursor-pointer"
                 >
                   <span>Upgrade to Pro ({priceLabel('Pro')})</span>
-                  <ArrowRight size={14} />
                 </button>
               )}
             </div>

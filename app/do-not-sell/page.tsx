@@ -1,7 +1,6 @@
 import React from 'react';
 import type { Metadata } from 'next';
 import Link from 'next/link';
-import { ArrowLeft, ShieldCheck, CheckCircle2 } from 'lucide-react';
 import { CONTACT_EMAIL, contactMailto } from '@/lib/contact';
 
 export const metadata: Metadata = {
@@ -18,7 +17,6 @@ export default function DoNotSellPage() {
             href="/"
             className="inline-flex items-center gap-2 text-xs font-mono text-[#888888] hover:text-[#FFFFFF] transition-colors focus-visible:ring-2 focus-visible:ring-emerald-500 focus-visible:outline-none rounded"
           >
-            <ArrowLeft size={14} />
             <span>Back to Home</span>
           </Link>
           <div className="flex items-center gap-3">
@@ -40,7 +38,6 @@ export default function DoNotSellPage() {
 
         <div>
           <div className="flex items-center gap-2.5 mb-2">
-            <ShieldCheck size={24} className="text-[#10B981]" />
             <h1 className="text-2xl sm:text-3xl font-extrabold text-[#FFFFFF] tracking-tight">
               Notice of Right to Opt-Out
             </h1>
@@ -52,7 +49,6 @@ export default function DoNotSellPage() {
 
         <div className="flex flex-col gap-6 text-xs sm:text-sm text-[#CCCCCC] leading-relaxed border-t border-[#262626] pt-6">
           <div className="bg-[#141414] border border-emerald-500/20 rounded-xl p-4 sm:p-5 flex items-start gap-3.5">
-            <CheckCircle2 size={20} className="text-emerald-400 shrink-0 mt-0.5" />
             <div className="space-y-1">
               <h2 className="text-sm font-bold text-white">Zelsis Zero-Data-Sale Guarantee</h2>
               <p className="text-xs text-[#A1A1AA] leading-relaxed">

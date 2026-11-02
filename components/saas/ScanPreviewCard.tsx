@@ -1,7 +1,6 @@
 'use client';
 
 import React from 'react';
-import { ArrowRight, Lock, ShieldAlert, ShieldCheck } from 'lucide-react';
 
 export interface ScanPreviewResult {
   repoUrl: string;
@@ -42,11 +41,6 @@ export const ScanPreviewCard: React.FC<ScanPreviewCardProps> = ({ result, onUnlo
     <div className="w-full max-w-2xl mb-10 rounded-xl border border-white/10 bg-[#141414] text-left shadow-2xl overflow-hidden" role="region" aria-label="Scan preview">
       <div className="flex flex-wrap items-center justify-between gap-3 px-4 py-3 border-b border-white/10">
         <div className="flex items-center gap-2 min-w-0">
-          {hasFindings ? (
-            <ShieldAlert size={16} className="text-red-400 shrink-0" />
-          ) : (
-            <ShieldCheck size={16} className="text-emerald-400 shrink-0" />
-          )}
           <span className="text-xs font-mono text-[#EDEDED] truncate">{result.repoName}</span>
           <span className="text-[11px] font-mono text-zinc-400 shrink-0">
             {result.totalFiles && result.totalFiles > result.filesScanned
@@ -87,7 +81,6 @@ export const ScanPreviewCard: React.FC<ScanPreviewCardProps> = ({ result, onUnlo
           ))}
           {hiddenCount > 0 && (
             <li className="flex items-center gap-2 text-xs text-zinc-400 font-mono">
-              <Lock size={12} className="shrink-0" />
               <span>+{hiddenCount} more findings, with exact file locations</span>
             </li>
           )}
@@ -108,7 +101,6 @@ export const ScanPreviewCard: React.FC<ScanPreviewCardProps> = ({ result, onUnlo
           className="px-4 py-2 rounded-lg text-xs font-bold font-mono bg-emerald-500 text-black hover:bg-emerald-400 transition-all flex items-center justify-center gap-2 shrink-0 cursor-pointer"
         >
           <span>{hasFindings ? 'See full report' : 'Create free account'}</span>
-          <ArrowRight size={13} />
         </button>
       </div>
     </div>
