@@ -234,7 +234,7 @@ export const ScanRunnerView: React.FC<ScanRunnerViewProps> = ({
         if (!isCancelled) {
           setScanFailureReason('Target repository URL is missing or invalid.');
           setLogs([
-            `[${new Date().toLocaleTimeString()}] [ERROR] ❌ TARGET ERROR: Target repository URL is missing or invalid.`,
+            `[${new Date().toLocaleTimeString()}] [ERROR] TARGET ERROR: Target repository URL is missing or invalid.`,
             `[${new Date().toLocaleTimeString()}] [ACTION] Please select or enter a valid GitHub repository URL in the header bar (e.g. github.com/owner/repo).`
           ]);
           setIsFinished(true);
@@ -390,7 +390,7 @@ export const ScanRunnerView: React.FC<ScanRunnerViewProps> = ({
             setScanFailureReason(quotaErrData.error || 'Monthly scan quota reached. Upgrade to Pro for unlimited audits.');
             setLogs((prev) => [
               ...prev,
-              `[${new Date().toLocaleTimeString()}] [LIMIT] ⚠️ ${quotaErrData.error || 'Monthly scan limit reached.'}`,
+              `[${new Date().toLocaleTimeString()}] [LIMIT] ${quotaErrData.error || 'Monthly scan limit reached.'}`,
               `[${new Date().toLocaleTimeString()}] [UPGRADE] Upgrade to Zelsis Pro (${priceLabel('Pro')}) to unlock unlimited audits.`
             ]);
             setIsFinished(true);
@@ -494,7 +494,7 @@ export const ScanRunnerView: React.FC<ScanRunnerViewProps> = ({
               ...resolvedResult,
               logs: [
                 ...(resolvedResult.logs || []),
-                `[${new Date().toLocaleTimeString()}] [SUCCESS] 🎉 Release Gate Audit Complete: Score ${resolvedResult.score}/100 [GATE: ${resolvedResult.gateStatus}].`,
+                `[${new Date().toLocaleTimeString()}] [SUCCESS] Release Gate Audit Complete: Score ${resolvedResult.score}/100 [GATE: ${resolvedResult.gateStatus}].`,
                 `[${new Date().toLocaleTimeString()}] [REPORT] Preparing full audit report with ${resolvedResult.findings.length} findings...`
               ]
             });
@@ -512,7 +512,7 @@ export const ScanRunnerView: React.FC<ScanRunnerViewProps> = ({
             setScanFailureReason(job.error_message || 'Scan job failed during processing.');
             setLogs((prev) => [
               ...prev,
-              `[${new Date().toLocaleTimeString()}] [ERROR] ❌ ${job.error_message || 'Scan job execution encountered an error.'}`
+              `[${new Date().toLocaleTimeString()}] [ERROR] ${job.error_message || 'Scan job execution encountered an error.'}`
             ]);
             setIsFinished(true);
           }
@@ -608,7 +608,7 @@ export const ScanRunnerView: React.FC<ScanRunnerViewProps> = ({
           setScanFailureReason(reason);
           setLogs((prev) => [
             ...prev,
-            `[${new Date().toLocaleTimeString()}] [ERROR] ❌ ${reason}`
+            `[${new Date().toLocaleTimeString()}] [ERROR] ${reason}`
           ]);
           setIsFinished(true);
         }
@@ -632,7 +632,7 @@ export const ScanRunnerView: React.FC<ScanRunnerViewProps> = ({
             setScanFailureReason(botChallengeMessage(project.repoUrl, webData.challengeProvider));
             setLogs((prev) => [
               ...prev,
-              `[${new Date().toLocaleTimeString()}] [ERROR] 🛡️ BOT PROTECTION: "${project.repoUrl}" returned a ${webData.challengeProvider === 'vercel' ? 'Vercel Security Checkpoint' : 'Cloudflare challenge'} instead of the site.`,
+              `[${new Date().toLocaleTimeString()}] [ERROR] BOT PROTECTION: "${project.repoUrl}" returned a ${webData.challengeProvider === 'vercel' ? 'Vercel Security Checkpoint' : 'Cloudflare challenge'} instead of the site.`,
               `[${new Date().toLocaleTimeString()}] [ACTION] Scan the GitHub repository instead, or allow the Zelsis scanner in your firewall settings.`
             ]);
             setIsFinished(true);
@@ -663,7 +663,7 @@ export const ScanRunnerView: React.FC<ScanRunnerViewProps> = ({
             setLogs((prev) => [
               ...prev,
               isCf
-                ? `[${new Date().toLocaleTimeString()}] [ERROR] 🛡️ CLOUDFLARE BOT PROTECTION: Automated inspection blocked for "${project.repoUrl}".`
+                ? `[${new Date().toLocaleTimeString()}] [ERROR] CLOUDFLARE BOT PROTECTION: Automated inspection blocked for "${project.repoUrl}".`
                 : `[${new Date().toLocaleTimeString()}] [ERROR] Unable to reach target website "${project.repoUrl}".`,
               isCf
                 ? `[${new Date().toLocaleTimeString()}] [INFO] Cloudflare bot defense challenge was returned. Connect the GitHub repository directly for code audit.`
@@ -718,7 +718,7 @@ export const ScanRunnerView: React.FC<ScanRunnerViewProps> = ({
             setScanFailureReason(botChallengeMessage(project.repoUrl, undefined));
             setLogs((prev) => [
               ...prev,
-              `[${new Date().toLocaleTimeString()}] [ERROR] 🛡️ BOT PROTECTION: "${project.repoUrl}" returned a bot-protection challenge instead of the site.`,
+              `[${new Date().toLocaleTimeString()}] [ERROR] BOT PROTECTION: "${project.repoUrl}" returned a bot-protection challenge instead of the site.`,
               `[${new Date().toLocaleTimeString()}] [ACTION] Scan the GitHub repository instead, or allow the Zelsis scanner in your firewall settings.`
             ]);
             setIsFinished(true);
@@ -731,7 +731,7 @@ export const ScanRunnerView: React.FC<ScanRunnerViewProps> = ({
             setScanFailureReason('Repository is empty. No scannable source code files were found.');
             setLogs((prev) => [
               ...prev,
-              `[${new Date().toLocaleTimeString()}] [ERROR] ⚠️ EMPTY REPOSITORY: No scannable code files committed to branch.`,
+              `[${new Date().toLocaleTimeString()}] [ERROR] EMPTY REPOSITORY: No scannable code files committed to branch.`,
               `[${new Date().toLocaleTimeString()}] [ACTION] Push your application source code to run a deployment readiness audit.`
             ]);
             setIsFinished(true);
@@ -744,7 +744,7 @@ export const ScanRunnerView: React.FC<ScanRunnerViewProps> = ({
             setScanFailureReason(`GitHub repository "${project.repoUrl}" was not found (HTTP 404). Check the repository name and owner for typos.`);
             setLogs((prev) => [
               ...prev,
-              `[${new Date().toLocaleTimeString()}] [ERROR] ❌ REPOSITORY NOT FOUND: GitHub returned HTTP 404 for "${project.repoUrl}".`,
+              `[${new Date().toLocaleTimeString()}] [ERROR] REPOSITORY NOT FOUND: GitHub returned HTTP 404 for "${project.repoUrl}".`,
               `[${new Date().toLocaleTimeString()}] [ACTION] Verify the URL syntax (e.g. github.com/owner/repo) or check if the repository was renamed or deleted.`
             ]);
             setIsFinished(true);
@@ -776,7 +776,7 @@ export const ScanRunnerView: React.FC<ScanRunnerViewProps> = ({
               setScanFailureReason(`Private repository audit is a Pro feature. Upgrade to Zelsis Pro (${priceLabel('Pro')}) to inspect private codebases with your GitHub token.`);
               setLogs((prev) => [
                 ...prev,
-                `[${new Date().toLocaleTimeString()}] [ERROR] 🔒 PRIVATE REPOSITORY DETECTED: "${project.repoUrl}".`,
+                `[${new Date().toLocaleTimeString()}] [ERROR] PRIVATE REPOSITORY DETECTED: "${project.repoUrl}".`,
                 `[${new Date().toLocaleTimeString()}] [PAYWALL] Private codebase audits require an active Zelsis Pro subscription (${priceLabel('Pro')}).`,
                 `[${new Date().toLocaleTimeString()}] [ACTION] Upgrade to Pro below to audit private repositories and proprietary code.`
               ]);
@@ -787,7 +787,7 @@ export const ScanRunnerView: React.FC<ScanRunnerViewProps> = ({
             setScanFailureReason(`Private repository access restricted. A GitHub Personal Access Token (PAT) with 'repo' scope is required to scan "${project.repoUrl}".`);
             setLogs((prev) => [
               ...prev,
-              `[${new Date().toLocaleTimeString()}] [ERROR] 🔒 ACCESS RESTRICTED: Private or unauthenticated GitHub repository detected.`,
+              `[${new Date().toLocaleTimeString()}] [ERROR] ACCESS RESTRICTED: Private or unauthenticated GitHub repository detected.`,
               `[${new Date().toLocaleTimeString()}] [AUTH] GitHub blocked access to repository "${project.repoUrl}" (HTTP 404/403).`,
               `[${new Date().toLocaleTimeString()}] [ACTION] Please provide a GitHub Personal Access Token (PAT) to inspect this private codebase.`
             ]);
@@ -814,7 +814,7 @@ export const ScanRunnerView: React.FC<ScanRunnerViewProps> = ({
               setScanFailureReason('GitHub anonymous API rate limit (60 req/hr) reached on server IP. Add a free GitHub Personal Access Token (PAT) to unlock 5,000 requests/hour.');
               setLogs((prev) => [
                 ...prev,
-                `[${new Date().toLocaleTimeString()}] [LIMIT] ⚠️ RATE LIMIT EXCEEDED: GitHub anonymous API rate limit (60 req/hr) reached on server IP.`,
+                `[${new Date().toLocaleTimeString()}] [LIMIT] RATE LIMIT EXCEEDED: GitHub anonymous API rate limit (60 req/hr) reached on server IP.`,
                 `[${new Date().toLocaleTimeString()}] [ACTION] Adding a free GitHub Personal Access Token (PAT) unlocks 5,000 req/hr immediately without upgrading.`
               ]);
               setIsPrivateTokenModalOpen(true);
@@ -822,7 +822,7 @@ export const ScanRunnerView: React.FC<ScanRunnerViewProps> = ({
               setScanFailureReason('Repository is empty. No scannable source code files were found.');
               setLogs((prev) => [
                 ...prev,
-                `[${new Date().toLocaleTimeString()}] [ERROR] ⚠️ EMPTY REPOSITORY: No scannable code files committed to branch.`,
+                `[${new Date().toLocaleTimeString()}] [ERROR] EMPTY REPOSITORY: No scannable code files committed to branch.`,
                 `[${new Date().toLocaleTimeString()}] [ACTION] Push your application source code to run a deployment readiness audit.`
               ]);
             } else {
@@ -836,7 +836,7 @@ export const ScanRunnerView: React.FC<ScanRunnerViewProps> = ({
                   setScanFailureReason(`Private repository audit is a Pro feature. Upgrade to Zelsis Pro (${priceLabel('Pro')}) to inspect private codebases.`);
                   setLogs((prev) => [
                     ...prev,
-                    `[${new Date().toLocaleTimeString()}] [ERROR] 🔒 Unable to fetch files from private GitHub repository "${targetRepoUrl}".`,
+                    `[${new Date().toLocaleTimeString()}] [ERROR] Unable to fetch files from private GitHub repository "${targetRepoUrl}".`,
                     `[${new Date().toLocaleTimeString()}] [PAYWALL] If this is a private repository, private audits require a Zelsis Pro subscription (${priceLabel('Pro')}).`
                   ]);
                   setIsFinished(true);
@@ -846,7 +846,7 @@ export const ScanRunnerView: React.FC<ScanRunnerViewProps> = ({
                 setScanFailureReason(`Private repository access restricted. A GitHub Personal Access Token (PAT) with 'repo' scope is required to scan "${targetRepoUrl}".`);
                 setLogs((prev) => [
                   ...prev,
-                  `[${new Date().toLocaleTimeString()}] [ERROR] 🔒 ACCESS RESTRICTED: Private or unauthenticated repository "${targetRepoUrl}".`,
+                  `[${new Date().toLocaleTimeString()}] [ERROR] ACCESS RESTRICTED: Private or unauthenticated repository "${targetRepoUrl}".`,
                   `[${new Date().toLocaleTimeString()}] [AUTH] If this is a private repository, please add your GitHub Personal Access Token (PAT).`
                 ]);
                 setIsPrivateTokenModalOpen(true);
@@ -857,7 +857,7 @@ export const ScanRunnerView: React.FC<ScanRunnerViewProps> = ({
                 setScanFailureReason(fetchErrMsg);
                 setLogs((prev) => [
                   ...prev,
-                  `[${new Date().toLocaleTimeString()}] [ERROR] ❌ FETCH FAILURE: ${fetchErrMsg}`,
+                  `[${new Date().toLocaleTimeString()}] [ERROR] FETCH FAILURE: ${fetchErrMsg}`,
                   `[${new Date().toLocaleTimeString()}] [INFO] Please verify the repository exists on GitHub, is publicly accessible, and try again.`
                 ]);
                 setIsPrivateTokenModalOpen(false);

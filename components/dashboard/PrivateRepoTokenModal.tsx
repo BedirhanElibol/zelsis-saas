@@ -173,7 +173,7 @@ export const PrivateRepoTokenModal: React.FC<PrivateRepoTokenModalProps> = ({
                 </button>
               </div>
               <p className="text-[10px] text-[#A1A1AA] font-mono">
-                🔒 Your token stays encrypted in your browser’s local storage and is never persisted on our servers.
+                Your token stays encrypted in your browser’s local storage and is never persisted on our servers.
               </p>
             </div>
 
