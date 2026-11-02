@@ -6,6 +6,7 @@ import { WorkflowSteps } from '@/components/saas/WorkflowSteps';
 import { WhyZelsis } from '@/components/saas/WhyZelsis';
 import { ProductCapabilities } from '@/components/saas/ProductCapabilities';
 import { WorksWhereYouWork } from '@/components/saas/WorksWhereYouWork';
+import { CaughtInOurCode } from '@/components/saas/CaughtInOurCode';
 import { CatchTabs } from '@/components/saas/CatchTabs';
 import { FixPromptsDemo } from '@/components/saas/FixPromptsDemo';
 import { BenchmarkSection } from '@/components/saas/BenchmarkSection';
@@ -32,6 +33,9 @@ export default function Home() {
 
         {/* Real-bug examples across stacks; every example is scanned by tests/unit/landing-checks.test.ts */}
         <div data-section="examples"><CatchTabs /></div>
+
+        {/* Real findings from scanning this codebase; only things that happened and were fixed */}
+        <div data-section="own-code"><CaughtInOurCode /></div>
 
         {/* Where the check runs: PR, CLI and agents, VS Code, Jira (each tested end to end) */}
         <div data-section="integrations"><WorksWhereYouWork /></div>
