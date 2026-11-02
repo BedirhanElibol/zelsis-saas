@@ -223,8 +223,8 @@ export const ComparisonTable: React.FC = () => {
           name: 'Issue Tracker Export',
           description: 'Direct export to team tracking systems (Jira, Linear, GitHub Issues)',
           free: 'Manual Markdown Copy',
-          pro: '1-Click Jira & Linear Markdown',
-          enterprise: '1-Click Jira & Linear Markdown'
+          pro: '1-Click Jira issue + Linear Markdown',
+          enterprise: '1-Click Jira issue + Linear Markdown'
         },
         {
           name: 'Scan History',
