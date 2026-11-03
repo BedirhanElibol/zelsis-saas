@@ -126,11 +126,10 @@ export function proxy(req: NextRequest) {
     return applyCanonicalSecurityHeaders(response);
   }
 
-  // Non-API routes (HTML pages, layouts, SSR documents)
-  const response = NextResponse.next({ request: { headers: requestHeaders } });
-  return applyCanonicalSecurityHeaders(response);
+  return NextResponse.next({ request: { headers: requestHeaders } });
 }
 
+// Only API routes: pages and static files get the same headers from next.config.mjs without running a function
 export const config = {
-  matcher: ['/((?!_next/static|_next/image|favicon.ico).*)']
+  matcher: ['/api/:path*']
 };
