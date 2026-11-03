@@ -38,5 +38,6 @@ Zelsis works with JavaScript and TypeScript, Python, Go, Ruby, PHP, Java, C#, Ru
 - [Stripe amounts in cents](https://zelsis.com/guides/stripe-amount-cents)
 - [N+1 queries](https://zelsis.com/guides/n-plus-one-queries)
 - [Postgres migration locks](https://zelsis.com/guides/postgres-migration-locks)
+- [Stripe webhook signature errors](https://zelsis.com/guides/stripe-webhook-signature)
 - [NEXT_PUBLIC_ secrets](https://zelsis.com/guides/next-public-secrets)
 - [Code due diligence](https://zelsis.com/guides/code-due-diligence)
