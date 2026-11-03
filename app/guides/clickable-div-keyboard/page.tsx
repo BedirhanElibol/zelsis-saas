@@ -30,7 +30,7 @@ export default function ClickableDivKeyboardPage() {
           tone="bad"
           label="Bad: mouse only"
           code={`<div className="pay-button" onClick={handlePay}>
-  Pay $49
+  Pay now
 </div>`}
         />
         <p className="text-zinc-300">
@@ -50,7 +50,7 @@ export default function ClickableDivKeyboardPage() {
           tone="good"
           label="Good: native button"
           code={`<button type="button" className="pay-button" onClick={handlePay}>
-  Pay $49
+  Pay now
 </button>
 
 /* CSS */
@@ -83,7 +83,7 @@ export default function ClickableDivKeyboardPage() {
     }
   }}
 >
-  Pay $49
+  Pay now
 </div>`}
         />
       </section>
