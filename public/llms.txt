@@ -40,4 +40,5 @@ Zelsis works with JavaScript and TypeScript, Python, Go, Ruby, PHP, Java, C#, Ru
 - [Postgres migration locks](https://zelsis.com/guides/postgres-migration-locks)
 - [Stripe webhook signature errors](https://zelsis.com/guides/stripe-webhook-signature)
 - [NEXT_PUBLIC_ secrets](https://zelsis.com/guides/next-public-secrets)
+- [Clickable div keyboard access](https://zelsis.com/guides/clickable-div-keyboard)
 - [Code due diligence](https://zelsis.com/guides/code-due-diligence)

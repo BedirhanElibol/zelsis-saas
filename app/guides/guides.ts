@@ -2,6 +2,7 @@ export const GUIDE_CATEGORIES = [
   { value: 'payments', label: 'Payments' },
   { value: 'database', label: 'Database' },
   { value: 'security', label: 'Security' },
+  { value: 'accessibility', label: 'Accessibility' },
   { value: 'comparisons', label: 'Comparisons' },
   { value: 'buying', label: 'Buying a SaaS' },
 ] as const;
@@ -106,6 +107,13 @@ export const GUIDES: GuideEntry[] = [
     title: 'A NEXT_PUBLIC_ variable is not a secret',
     summary:
       'Next.js, Vite and Expo copy public-prefixed variables into the browser bundle. Which keys are safe there, how to move a secret to the server and rotate it.',
+  },
+  {
+    slug: 'clickable-div-keyboard',
+    category: 'accessibility',
+    title: 'A div with onClick is not a button',
+    summary:
+      'Keyboard and screen reader users cannot reach or press a clickable div. The <button> fix, the role="button" fallback and a keyboard-only test.',
   },
   {
     slug: 'code-due-diligence',
