@@ -278,7 +278,7 @@ export const Hero: React.FC<HeroProps> = ({ onOpenDashboard }) => {
                     GATE EVALUATION
                   </span>
                   <span
-                    className={`text-[10px] font-mono font-bold px-2 py-0.5 rounded border ${
+                    className={`text-[10px] font-bold px-2 py-0.5 rounded border ${
                       isFailed
                         ? 'bg-red-500/10 text-red-400 border-red-500/30'
                         : isWarning

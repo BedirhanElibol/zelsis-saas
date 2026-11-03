@@ -512,7 +512,7 @@ export const CheckoutView: React.FC<CheckoutViewProps> = ({
                           <div className="flex items-center gap-2">
                             <span className="text-sm font-extrabold text-white">Active Plan: {(activePlan ?? selectedPlan).name}</span>
                           </div>
-                          <span className="px-2.5 py-0.5 rounded-full text-[10px] font-mono font-bold bg-emerald-500/10 text-emerald-300 border border-emerald-500/30">
+                          <span className="px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-emerald-500/10 text-emerald-300 border border-emerald-500/30">
                             CURRENT TIER
                           </span>
                         </div>

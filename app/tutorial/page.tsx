@@ -16,7 +16,7 @@ export default function TutorialPage() {
         <Link href="/" className="inline-flex items-center gap-2 text-xs font-mono text-zinc-400 hover:text-white transition-colors min-h-[24px]">
           Back to Home
         </Link>
-        <p className="mt-8 text-xs font-mono uppercase tracking-widest text-emerald-400">Tutorial · 3 minutes</p>
+        <p className="mt-8 text-xs uppercase tracking-widest text-emerald-400">Tutorial · 3 minutes</p>
         <h1 className="mt-3 text-3xl sm:text-4xl font-extrabold tracking-tight text-white">How to use Zelsis</h1>
         <p className="mt-4 max-w-3xl text-zinc-400 leading-relaxed">
           Part one walks through every section of the dashboard. Part two runs one full check on a public repository: connect it, run

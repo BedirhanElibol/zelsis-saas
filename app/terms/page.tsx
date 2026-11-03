@@ -22,14 +22,14 @@ export default function TermsPage() {
           <div className="flex items-center gap-3">
             <Link
               href="/cookies"
-              className="text-xs font-mono text-emerald-400 hover:underline"
+              className="text-xs text-emerald-400 hover:underline"
             >
               Cookie Policy
             </Link>
             <span className="text-[#333]">/</span>
             <Link
               href="/privacy"
-              className="text-xs font-mono text-emerald-400 hover:underline"
+              className="text-xs text-emerald-400 hover:underline"
             >
               Privacy Policy
             </Link>
@@ -110,7 +110,7 @@ export default function TermsPage() {
 
           <section className="flex flex-col gap-2">
             <h2 className="text-base font-bold text-[#FFFFFF]">8. Contact &amp; Notices</h2>
-            <p className="font-mono text-xs text-emerald-400">
+            <p className=" text-xs text-emerald-400">
               Legal &amp; Support: {CONTACT_EMAIL}
             </p>
           </section>

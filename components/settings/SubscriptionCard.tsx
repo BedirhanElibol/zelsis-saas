@@ -296,7 +296,7 @@ export const SubscriptionCard: React.FC<SubscriptionCardProps> = ({
             </div>
           </div>
           {syncFeedback.message && (
-            <div className={`text-xs font-mono p-3 rounded-xl border ${syncFeedback.status === 'success' ? 'bg-emerald-500/10 border-emerald-500/30 text-emerald-300' : 'bg-amber-500/10 border-amber-500/30 text-amber-300'}`}>
+            <div className={`text-xs p-3 rounded-xl border ${syncFeedback.status === 'success' ? 'bg-emerald-500/10 border-emerald-500/30 text-emerald-300' : 'bg-amber-500/10 border-amber-500/30 text-amber-300'}`}>
               {syncFeedback.message}
             </div>
           )}

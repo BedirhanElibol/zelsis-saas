@@ -254,7 +254,7 @@ export const FindingDetailModal: React.FC<FindingDetailModalProps> = ({
                 <button
                   type="button"
                   onClick={() => onToggleResolve(finding.id)}
-                  className={`px-3 py-1.5 rounded-lg text-xs font-bold font-mono transition-all cursor-pointer ${
+                  className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer ${
                     finding.status === 'RESOLVED'
                       ? 'bg-zinc-800 text-zinc-300 hover:bg-zinc-700'
                       : 'bg-emerald-500/15 hover:bg-emerald-500/25 border border-emerald-500/30 text-emerald-300'
@@ -503,7 +503,7 @@ export const FindingDetailModal: React.FC<FindingDetailModalProps> = ({
                         type="button"
                         onClick={copyPrompt}
                         disabled={revealStatus === 'loading'}
-                        className="px-3 py-1 rounded bg-emerald-500/10 hover:bg-emerald-500/20 border border-emerald-500/30 text-emerald-400 text-xs font-bold font-mono flex items-center gap-1.5 transition-all cursor-pointer"
+                        className="px-3 py-1 rounded bg-emerald-500/10 hover:bg-emerald-500/20 border border-emerald-500/30 text-emerald-400 text-xs font-bold flex items-center gap-1.5 transition-all cursor-pointer"
                       >
                         <span>
                           {needsReveal

@@ -40,7 +40,7 @@ export default function GlobalError({ error, reset }: GlobalErrorProps) {
           {/* Status Header */}
           <div className="flex items-start gap-4">
             <div className="flex flex-col gap-1">
-              <div className="text-[0.68rem] font-mono font-extrabold uppercase tracking-widest text-emerald-400">
+              <div className="text-[0.68rem] font-extrabold uppercase tracking-widest text-emerald-400">
                 Zelsis Security &bull; Root Recovery Active
               </div>
               <h1 className="text-xl sm:text-2xl font-extrabold text-[#EDEDED] tracking-tight leading-snug">
@@ -72,7 +72,7 @@ export default function GlobalError({ error, reset }: GlobalErrorProps) {
               {error?.digest && (
                 <div className="flex items-center justify-between gap-2 pt-2 border-t border-white/10 text-[11px]">
                   <span className="text-[#A1A1AA]">Digest Signature:</span>
-                  <span className="font-mono text-emerald-400 bg-emerald-500/10 px-2 py-0.5 rounded border border-emerald-500/20">
+                  <span className=" text-emerald-400 bg-emerald-500/10 px-2 py-0.5 rounded border border-emerald-500/20">
                     {error.digest}
                   </span>
                 </div>

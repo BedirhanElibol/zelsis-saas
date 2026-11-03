@@ -148,7 +148,7 @@ export const TeamWorkspaceCard: React.FC<TeamWorkspaceCardProps> = ({ user, onOp
       {feedback && feedback.status !== 'idle' && (
         <div
           role="status"
-          className={`text-xs font-mono p-3 rounded-xl border ${
+          className={`text-xs p-3 rounded-xl border ${
             feedback.status === 'success'
               ? 'bg-emerald-500/10 border-emerald-500/30 text-emerald-300'
               : 'bg-red-500/10 border-red-500/30 text-red-300'

@@ -22,14 +22,14 @@ export default function DoNotSellPage() {
           <div className="flex items-center gap-3">
             <Link
               href="/privacy"
-              className="text-xs font-mono text-emerald-400 hover:underline focus-visible:ring-2 focus-visible:ring-emerald-500 focus-visible:outline-none rounded"
+              className="text-xs text-emerald-400 hover:underline focus-visible:ring-2 focus-visible:ring-emerald-500 focus-visible:outline-none rounded"
             >
               Privacy Policy
             </Link>
             <span className="text-[#333]">/</span>
             <Link
               href="/cookies"
-              className="text-xs font-mono text-emerald-400 hover:underline focus-visible:ring-2 focus-visible:ring-emerald-500 focus-visible:outline-none rounded"
+              className="text-xs text-emerald-400 hover:underline focus-visible:ring-2 focus-visible:ring-emerald-500 focus-visible:outline-none rounded"
             >
               Cookie Policy
             </Link>
@@ -84,7 +84,7 @@ export default function DoNotSellPage() {
             <ul className="list-disc list-inside space-y-1.5 text-[#AAAAAA]">
               <li>
                 <strong>Email Request:</strong> Send an email to{' '}
-                <a href={contactMailto()} className="text-emerald-400 font-mono underline focus-visible:ring-1 focus-visible:ring-emerald-500 rounded">
+                <a href={contactMailto()} className="text-emerald-400 underline focus-visible:ring-1 focus-visible:ring-emerald-500 rounded">
                   {CONTACT_EMAIL}
                 </a>{' '}
                 with the subject line <span className="font-mono text-zinc-300">&quot;CCPA Opt-Out / Data Erasure&quot;</span>.

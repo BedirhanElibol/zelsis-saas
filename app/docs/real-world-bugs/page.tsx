@@ -102,7 +102,7 @@ export default function RealWorldBugsPage() {
           <pre className="bg-black/40 border border-white/10 rounded-lg p-4 text-xs overflow-x-auto"><code>{bug.code}</code></pre>
           <p className="text-zinc-300"><strong className="text-white">Why it breaks:</strong> {bug.why}</p>
           <p className="text-zinc-300"><strong className="text-white">Fix:</strong> {bug.fix}</p>
-          <a href={bug.url} target="_blank" rel="noopener noreferrer" className="inline-block text-xs font-mono text-emerald-400 hover:text-emerald-300 underline break-all">
+          <a href={bug.url} target="_blank" rel="noopener noreferrer" className="inline-block text-xs text-emerald-400 hover:text-emerald-300 underline break-all">
             {bug.file}
           </a>
         </section>

@@ -27,7 +27,7 @@ export default async function CategoryPage({ params }: { params: Promise<{ slug:
         <Link href="/" className="inline-flex items-center gap-2 text-xs font-mono text-zinc-400 hover:text-white transition-colors min-h-[24px]">
           Back to Home
         </Link>
-        <p className="mt-8 text-xs font-mono uppercase tracking-widest text-emerald-400">What Zelsis checks · {c.name}</p>
+        <p className="mt-8 text-xs uppercase tracking-widest text-emerald-400">What Zelsis checks · {c.name}</p>
         <h1 className="mt-3 text-3xl sm:text-4xl font-extrabold tracking-tight text-white">{c.title}</h1>
         <p className="mt-4 text-zinc-400 leading-relaxed">{c.lead}</p>
 

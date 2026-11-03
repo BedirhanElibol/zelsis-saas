@@ -66,7 +66,7 @@ export default function GlobalError({ error, reset }: ErrorBoundaryProps) {
               <RefreshCw size={22} />
             </div>
             <div>
-              <div className="text-[0.68rem] font-mono font-bold uppercase tracking-widest text-emerald-400">
+              <div className="text-[0.68rem] font-bold uppercase tracking-widest text-emerald-400">
                 Release Gate Live Update
               </div>
               <h2 className="text-xl sm:text-2xl font-extrabold text-[#F5F3EF] mt-0.5">
@@ -143,7 +143,7 @@ export default function GlobalError({ error, reset }: ErrorBoundaryProps) {
             )}
             {error.digest && (
               <p className="text-[0.7rem] text-[#A1A1AA] mt-2 border-t border-white/10 pt-2">
-                Incident Reference: <span className="text-emerald-400 font-mono">{error.digest}</span>
+                Incident Reference: <span className="text-emerald-400">{error.digest}</span>
               </p>
             )}
           </div>
