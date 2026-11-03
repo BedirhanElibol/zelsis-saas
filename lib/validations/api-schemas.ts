@@ -272,6 +272,12 @@ export const TestimonialSchema = z.object({
   consent: z.literal('on', { message: 'Tick the box so we may show it' }),
 });
 
+export const TestimonialReviewSchema = z.object({
+  accessToken: AccessTokenSchema,
+  userId: z.string().uuid(),
+  status: z.enum(['approved', 'rejected', 'pending']),
+});
+
 export const JiraIssueSchema = z.object({
   accessToken: AccessTokenSchema,
   title: z.string().trim().min(1).max(500),

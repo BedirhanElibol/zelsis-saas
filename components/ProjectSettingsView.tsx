@@ -8,6 +8,7 @@ import { TeamWorkspaceCard } from '@/components/settings/TeamWorkspaceCard';
 import { ApiKeysCard } from '@/components/settings/ApiKeysCard';
 import { SiteVerificationCard } from '@/components/settings/SiteVerificationCard';
 import { JiraCard } from '@/components/settings/JiraCard';
+import { TestimonialReviewCard } from '@/components/settings/TestimonialReviewCard';
 import { RepoConfigCard } from '@/components/settings/RepoConfigCard';
 import { DangerZoneCard } from '@/components/settings/DangerZoneCard';
 
@@ -103,6 +104,7 @@ export const ProjectSettingsView: React.FC<ProjectSettingsViewProps> = ({
       <ApiKeysCard />
       <SiteVerificationCard />
       <JiraCard />
+      <TestimonialReviewCard />
 
       {/* Target Repo & GitHub PAT Configuration */}
       <RepoConfigCard
