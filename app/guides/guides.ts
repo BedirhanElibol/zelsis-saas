@@ -94,6 +94,13 @@ export const GUIDES: GuideEntry[] = [
       'Stripe amounts are integers in the smallest currency unit. How to convert prices safely and which currencies have no decimals.',
   },
   {
+    slug: 'stripe-webhook-signature',
+    category: 'payments',
+    title: 'Stripe webhook: "No signatures found matching the expected signature"',
+    summary:
+      'Signature checks fail when the body was parsed first or the secret is wrong. The raw-body fix for Next.js and Express, and why skipping the check lets anyone fake a payment.',
+  },
+  {
     slug: 'next-public-secrets',
     category: 'security',
     title: 'A NEXT_PUBLIC_ variable is not a secret',
