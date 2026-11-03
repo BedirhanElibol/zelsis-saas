@@ -1,6 +1,7 @@
 export const GUIDE_CATEGORIES = [
   { value: 'payments', label: 'Payments' },
   { value: 'database', label: 'Database' },
+  { value: 'security', label: 'Security' },
   { value: 'comparisons', label: 'Comparisons' },
   { value: 'buying', label: 'Buying a SaaS' },
 ] as const;
@@ -91,6 +92,13 @@ export const GUIDES: GuideEntry[] = [
     title: 'Stripe charges 100x less: amount must be in cents',
     summary:
       'Stripe amounts are integers in the smallest currency unit. How to convert prices safely and which currencies have no decimals.',
+  },
+  {
+    slug: 'next-public-secrets',
+    category: 'security',
+    title: 'A NEXT_PUBLIC_ variable is not a secret',
+    summary:
+      'Next.js, Vite and Expo copy public-prefixed variables into the browser bundle. Which keys are safe there, how to move a secret to the server and rotate it.',
   },
   {
     slug: 'code-due-diligence',
