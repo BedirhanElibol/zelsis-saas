@@ -22,14 +22,14 @@ export default function RefundPage() {
           <div className="flex items-center gap-3">
             <Link
               href="/terms"
-              className="text-xs font-mono text-emerald-400 hover:underline"
+              className="text-xs text-emerald-400 hover:underline"
             >
               Terms of Service
             </Link>
             <span className="text-[#333]">/</span>
             <Link
               href="/privacy"
-              className="text-xs font-mono text-emerald-400 hover:underline"
+              className="text-xs text-emerald-400 hover:underline"
             >
               Privacy Policy
             </Link>

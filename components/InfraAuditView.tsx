@@ -186,7 +186,7 @@ export const InfraAuditView: React.FC<InfraAuditViewProps> = ({
                     <span>Inspect {matchingFindings.length} Violation(s)</span>
                   </button>
                 ) : (
-                  <div className="text-xs font-mono text-emerald-400 flex items-center gap-1.5">
+                  <div className="text-xs text-emerald-400 flex items-center gap-1.5">
                     <span>Control Satisfied</span>
                   </div>
                 )}

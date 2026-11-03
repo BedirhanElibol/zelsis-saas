@@ -71,7 +71,7 @@ export const FaqSection: React.FC = () => {
       <div className="max-w-4xl mx-auto flex flex-col gap-12">
         {/* Section Header */}
         <div className="flex flex-col gap-4 text-center">
-          <div className="inline-flex items-center justify-center text-xs font-mono uppercase tracking-widest text-emerald-400">
+          <div className="inline-flex items-center justify-center text-xs uppercase tracking-widest text-emerald-400">
             <span>BEFORE YOU CONNECT A REPO</span>
           </div>
           <h2 className="text-3xl sm:text-5xl font-extrabold text-[#EDEDED] tracking-tight">

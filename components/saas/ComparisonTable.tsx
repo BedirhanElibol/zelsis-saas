@@ -301,7 +301,7 @@ export const ComparisonTable: React.FC = () => {
       <div className="max-w-7xl mx-auto flex flex-col gap-10">
         {/* Section Header */}
         <div className="flex flex-col gap-4 text-center max-w-3xl mx-auto">
-          <div className="inline-flex items-center justify-center text-xs font-mono uppercase tracking-widest text-emerald-400 bg-white/5 px-3 py-1 rounded-full border border-white/10 self-center">
+          <div className="inline-flex items-center justify-center text-xs uppercase tracking-widest text-emerald-400 bg-white/5 px-3 py-1 rounded-full border border-white/10 self-center">
             <span>Pricing</span>
           </div>
           <h2 className="text-3xl sm:text-5xl font-extrabold text-[#EDEDED] tracking-tight [text-wrap:balance]">

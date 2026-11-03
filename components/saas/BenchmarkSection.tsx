@@ -56,7 +56,7 @@ export const BenchmarkSection: React.FC<{ compact?: boolean }> = ({ compact = fa
     <section id="benchmark" className="py-12 sm:py-14 px-4 sm:px-6 lg:px-12 bg-[#0A0A0A] border-b border-white/10 font-sans relative">
       <div className="max-w-6xl mx-auto flex flex-col gap-12">
         <div className="flex flex-col gap-3 text-center max-w-3xl mx-auto">
-          <div className="inline-flex items-center gap-2 justify-center text-xs font-mono uppercase tracking-wider text-emerald-400 bg-emerald-500/10 border border-emerald-500/30 px-3 py-1 rounded-full self-center">
+          <div className="inline-flex items-center gap-2 justify-center text-xs uppercase tracking-wider text-emerald-400 bg-emerald-500/10 border border-emerald-500/30 px-3 py-1 rounded-full self-center">
             <span>Measured benchmark · {benchmark.generatedAt}</span>
           </div>
           <h2 className="text-3xl sm:text-4xl lg:text-5xl font-extrabold text-white tracking-tight">

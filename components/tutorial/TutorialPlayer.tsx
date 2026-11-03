@@ -54,7 +54,7 @@ export function TutorialPlayer() {
       <nav aria-label="Chapters" className="rounded-xl border border-white/10 bg-[#111113] p-3 max-h-[560px] overflow-y-auto">
         {[1, 2].map((part) => (
           <div key={part} className="mb-3">
-            <p className="px-2 py-1.5 text-xs font-mono uppercase tracking-widest text-emerald-400">
+            <p className="px-2 py-1.5 text-xs uppercase tracking-widest text-emerald-400">
               {part === 1 ? '1 · The dashboard' : '2 · One full check'}
             </p>
             <ul>

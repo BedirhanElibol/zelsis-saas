@@ -29,7 +29,7 @@ export async function Testimonials() {
     <section id="testimonials" className="py-12 sm:py-14 px-4 sm:px-6 lg:px-12 bg-[#0A0A0A] border-b border-white/10">
       <div className="max-w-7xl mx-auto flex flex-col gap-10">
         <div className="flex flex-col gap-4 text-center max-w-3xl mx-auto">
-          <div className="text-xs font-mono uppercase tracking-widest text-emerald-400">From people who ship with it</div>
+          <div className="text-xs uppercase tracking-widest text-emerald-400">From people who ship with it</div>
           <h2 className="text-3xl sm:text-5xl font-extrabold text-[#EDEDED] tracking-tight">What it caught for them</h2>
         </div>
         <ul className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 list-none p-0 m-0">

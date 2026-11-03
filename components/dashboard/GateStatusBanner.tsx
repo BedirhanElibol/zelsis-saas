@@ -125,7 +125,7 @@ export const GateStatusBanner: React.FC<GateStatusBannerProps> = ({
               RELEASE GATE EVALUATION
             </span>
             <span
-              className={`px-2 py-0.5 rounded text-[10px] font-mono font-extrabold ${
+              className={`px-2 py-0.5 rounded text-[10px] font-extrabold ${
                 gateStatus === 'FAILED'
                   ? 'bg-red-500/10 border border-red-500/30 text-red-400'
                   : gateStatus === 'WARNING'

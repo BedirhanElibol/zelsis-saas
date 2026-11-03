@@ -45,7 +45,7 @@ export function CatchTabs() {
       <div className="max-w-7xl mx-auto">
         <div className="flex flex-col lg:flex-row lg:items-end lg:justify-between gap-4 mb-8">
           <div className="max-w-2xl">
-            <p className="text-xs font-mono uppercase tracking-widest text-emerald-400 mb-3">What it catches</p>
+            <p className="text-xs uppercase tracking-widest text-emerald-400 mb-3">What it catches</p>
             <h2 className="text-3xl sm:text-4xl font-bold tracking-tight text-white">Real bugs, caught in real code.</h2>
           </div>
           <p className="text-sm text-zinc-400 max-w-md">

@@ -23,14 +23,14 @@ export default function PrivacyPolicyPage() {
           <div className="flex items-center gap-3">
             <Link
               href="/cookies"
-              className="text-xs font-mono text-emerald-400 hover:underline"
+              className="text-xs text-emerald-400 hover:underline"
             >
               Cookie Policy
             </Link>
             <span className="text-[#333]">/</span>
             <Link
               href="/terms"
-              className="text-xs font-mono text-emerald-400 hover:underline"
+              className="text-xs text-emerald-400 hover:underline"
             >
               Terms of Service
             </Link>
@@ -160,7 +160,7 @@ export default function PrivacyPolicyPage() {
 
           <section className="flex flex-col gap-2">
             <h2 className="text-base font-bold text-[#FFFFFF]">8. Contact &amp; Inquiries</h2>
-            <p className="font-mono text-xs text-emerald-400">
+            <p className=" text-xs text-emerald-400">
               {CONTACT_EMAIL} // Attn: Data Protection Desk
             </p>
           </section>

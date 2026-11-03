@@ -141,7 +141,7 @@ export const ProductCapabilities: React.FC = () => {
       <div className="max-w-7xl mx-auto flex flex-col gap-12">
         {/* Section Title */}
         <div className="flex flex-col gap-4 text-center max-w-3xl mx-auto">
-          <div className="inline-flex items-center justify-center text-xs font-mono uppercase tracking-widest text-emerald-400">
+          <div className="inline-flex items-center justify-center text-xs uppercase tracking-widest text-emerald-400">
             <span>What it checks</span>
           </div>
           <h2 className="text-3xl sm:text-5xl font-extrabold text-[#EDEDED] tracking-tight">

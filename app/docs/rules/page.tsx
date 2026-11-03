@@ -24,7 +24,7 @@ export default function RulesPage() {
   return (
     <div className="space-y-6">
       <div>
-        <div className="flex items-center gap-2 text-emerald-400 font-mono text-xs uppercase tracking-wider mb-2">
+        <div className="flex items-center gap-2 text-emerald-400 text-xs uppercase tracking-wider mb-2">
           <span>Rule Inventory</span>
         </div>
         <h1 className="text-2xl sm:text-3xl font-bold text-white tracking-tight">Static Analysis Rule Catalog</h1>

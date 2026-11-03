@@ -200,7 +200,7 @@ export const Header: React.FC<HeaderProps> = ({
                 {user?.tier === 'Enterprise' ? `${user.name?.split(' ')[0] || 'Enterprise'} Workspace` : 'Personal Workspace'}
               </span>
               {user?.tier === 'Enterprise' && (
-                <span className="text-[11px] font-mono font-extrabold uppercase px-1.5 py-0.5 rounded bg-emerald-500/10 text-emerald-400 border border-emerald-500/30 ml-0.5">
+                <span className="text-[11px] font-extrabold uppercase px-1.5 py-0.5 rounded bg-emerald-500/10 text-emerald-400 border border-emerald-500/30 ml-0.5">
                   ADMIN
                 </span>
               )}

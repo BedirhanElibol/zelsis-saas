@@ -22,14 +22,14 @@ export default function CookiePolicyPage() {
           <div className="flex items-center gap-3">
             <Link
               href="/privacy"
-              className="text-xs font-mono text-emerald-400 hover:underline"
+              className="text-xs text-emerald-400 hover:underline"
             >
               Privacy Policy
             </Link>
             <span className="text-[#333]">/</span>
             <Link
               href="/terms"
-              className="text-xs font-mono text-emerald-400 hover:underline"
+              className="text-xs text-emerald-400 hover:underline"
             >
               Terms of Service
             </Link>
@@ -102,7 +102,7 @@ export default function CookiePolicyPage() {
             <h2 className="text-base font-bold text-[#FFFFFF]">4. Contact</h2>
             <p>
               For inquiries regarding our technical cookies or data handling practices, please contact our privacy desk at{' '}
-              <a href={contactMailto()} className="text-emerald-400 underline font-mono">
+              <a href={contactMailto()} className="text-emerald-400 underline">
                 {CONTACT_EMAIL}
               </a>.
             </p>

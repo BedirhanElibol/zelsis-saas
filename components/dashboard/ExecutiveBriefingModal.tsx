@@ -120,7 +120,7 @@ export const ExecutiveBriefingModal: React.FC<ExecutiveBriefingModalProps> = ({
               <div>
                 <div className="flex items-center gap-2">
                   <span
-                    className={`font-mono text-[10px] font-extrabold uppercase px-2 py-0.5 rounded border ${
+                    className={` text-[10px] font-extrabold uppercase px-2 py-0.5 rounded border ${
                       isPassed
                         ? 'bg-emerald-500/20 text-emerald-400 border-emerald-500/40'
                         : 'bg-red-500/20 text-red-400 border-red-500/40'
@@ -147,7 +147,7 @@ export const ExecutiveBriefingModal: React.FC<ExecutiveBriefingModalProps> = ({
             {/* Score Pill */}
             <div className="bg-[#0A0A0A] border border-white/10 rounded-xl px-4 py-2.5 text-center shrink-0 w-full sm:w-auto">
               <div
-                className={`text-2xl font-extrabold font-mono leading-none ${
+                className={`text-2xl font-extrabold leading-none ${
                   isPassed ? 'text-emerald-400' : 'text-red-400'
                 }`}
               >

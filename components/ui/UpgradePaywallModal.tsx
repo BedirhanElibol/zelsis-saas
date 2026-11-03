@@ -147,7 +147,7 @@ export const UpgradePaywallModal: React.FC<UpgradePaywallModalProps> = ({
                       href="https://polar.sh/purchases"
                       target="_blank"
                       rel="noopener noreferrer"
-                      className="btn btn-secondary w-full py-2.5 text-xs uppercase tracking-wider font-extrabold rounded-lg flex items-center justify-center gap-1.5 bg-emerald-500/20 hover:bg-emerald-500/30 border border-emerald-500/40 text-emerald-300 transition-all shadow-sm font-mono cursor-pointer text-center"
+                      className="btn btn-secondary w-full py-2.5 text-xs uppercase tracking-wider font-extrabold rounded-lg flex items-center justify-center gap-1.5 bg-emerald-500/20 hover:bg-emerald-500/30 border border-emerald-500/40 text-emerald-300 transition-all shadow-sm cursor-pointer text-center"
                     >
                       <span>Manage at Polar</span>
                     </a>

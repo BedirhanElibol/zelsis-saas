@@ -109,7 +109,7 @@ export const ClipboardToastBadge: React.FC<ClipboardToastBadgeProps> = ({
       aria-live="polite"
       className="fixed bottom-5 right-5 z-50 flex items-center gap-2.5 px-3.5 py-2.5 rounded-xl bg-[#0A0A0A] border border-white/20 text-white shadow-2xl shadow-black/80 backdrop-blur-md pointer-events-auto transition-all duration-150 animate-in fade-in slide-in-from-bottom-2"
     >
-      <span className="px-1.5 py-0.5 rounded bg-emerald-500/15 text-emerald-400 font-mono font-bold text-[10px] tracking-wider border border-emerald-500/30">
+      <span className="px-1.5 py-0.5 rounded bg-emerald-500/15 text-emerald-400 font-bold text-[10px] tracking-wider border border-emerald-500/30">
         {badge}
       </span>
       <span className="text-xs font-mono text-zinc-200">
