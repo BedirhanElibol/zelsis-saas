@@ -35,6 +35,8 @@ export function JiraCard() {
   const currentType = connection
     ? issueTypes.types.find((t) => t.id === connection.issueType || t.name === connection.issueType)
     : undefined;
+  // An older connection may store a type name the site no longer lists; still show it.
+  const storedTypeName = currentType?.name ?? (connection && !/^\d+$/.test(connection.issueType) ? connection.issueType : null);
 
   return (
     <section className="bg-[#141414] border border-white/10 rounded-2xl p-5 sm:p-6 flex flex-col gap-4">
@@ -47,7 +49,7 @@ export function JiraCard() {
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
           <p className="text-xs text-zinc-300">
             Connected to <span className="font-mono">{connection.site.replace('https://', '')}</span> as {connection.email}. New issues go to{' '}
-            <span className="font-mono">{connection.projectKey}</span>{currentType ? <> as {currentType.name}</> : null}.
+            <span className="font-mono">{connection.projectKey}</span>{storedTypeName ? <> as {storedTypeName}</> : null}.
           </p>
           <form action={deleteAction}>
             <input type="hidden" name="accessToken" value={accessToken} />
@@ -62,7 +64,8 @@ export function JiraCard() {
             <input type="hidden" name="accessToken" value={accessToken} />
             <label className="flex flex-col gap-1 text-xs text-zinc-400 sm:w-64">
               Create issues as
-              <select key={currentType?.id ?? 'none'} name="issueTypeId" defaultValue={currentType?.id ?? issueTypes.types[0].id} className={input}>
+              <select key={currentType?.id ?? 'none'} name="issueTypeId" defaultValue={currentType?.id ?? ''} required className={input}>
+                {!currentType && <option value="" disabled>Choose a type</option>}
                 {issueTypes.types.map((t) => <option key={t.id} value={t.id}>{t.name}</option>)}
               </select>
             </label>
