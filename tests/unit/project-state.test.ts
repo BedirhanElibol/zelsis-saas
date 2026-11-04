@@ -84,6 +84,7 @@ describe('normalizeProject', () => {
 
 describe('serializeProjectsForStorage', () => {
   const long = 'x'.repeat(200);
+  const many = Array.from({ length: 150 }, (_, i) => finding({ id: 'f' + i }));
   const projects = [
     project({ id: 'p1', githubToken: 'ghs_secret', findings: [finding({ snippet: long })] }),
     project({ id: 'proj-zelsis-self', repoUrl: 'local' })
@@ -93,8 +94,14 @@ describe('serializeProjectsForStorage', () => {
     const stored = JSON.parse(serializeProjectsForStorage(projects, false, false));
     assert.equal(stored.length, 1);
     assert.equal('githubToken' in stored[0], false);
-    assert.equal(stored[0].findings[0].snippet.length, 153);
-    assert.deepEqual(stored[0].findings[0].reproductionSteps, ['r1']);
+    // Snippets and findings are kept whole (a 200-character snippet is not cut)
+    assert.equal(stored[0].findings[0].snippet.length, 200);
+    assert.deepEqual(stored[0].findings[0].reproductionSteps, ['r1', 'r2']);
+  });
+
+  it('keeps every finding of a scan, not the first 60', () => {
+    const stored = JSON.parse(serializeProjectsForStorage([project({ id: 'p2', findings: many })], false, false));
+    assert.equal(stored[0].findings.length, 150);
   });
 
   it('keeps only essential finding fields in compact mode', () => {
