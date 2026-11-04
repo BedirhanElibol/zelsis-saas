@@ -64,6 +64,7 @@ export const FindingsTable: React.FC<FindingsTableProps> = ({
   const [isBulkOpen, setIsBulkOpen] = useState(false);
   const [dismissFindingItem, setDismissFindingItem] = useState<Finding | null>(null);
   const [expandedCardIds, setExpandedCardIds] = useState<Set<string>>(new Set());
+  const [openRuleGroups, setOpenRuleGroups] = useState<Set<number>>(new Set());
   const [showAdvisory, setShowAdvisory] = useState(false);
   const tableRef = React.useRef<HTMLDivElement>(null);
 
@@ -207,6 +208,37 @@ export const FindingsTable: React.FC<FindingsTableProps> = ({
 
     return matchesSearch && matchesSeverity && matchesStatus && matchesPillar && matchesPatch;
   });
+
+  // A rule that fires in many files (a theme script in every page) shows its first places, then one line to open the rest
+  const GROUP_AFTER = 2;
+  const perRule = new Map<number, number>();
+  for (const f of filtered) perRule.set(f.ruleId, (perRule.get(f.ruleId) ?? 0) + 1);
+  const seenPerRule = new Map<number, number>();
+  const visible: Finding[] = [];
+  const moreAfter = new Map<string, { ruleId: number; hidden: number }>();
+  for (const f of filtered) {
+    const n = (seenPerRule.get(f.ruleId) ?? 0) + 1;
+    seenPerRule.set(f.ruleId, n);
+    const total = perRule.get(f.ruleId) ?? 0;
+    const grouped = total > GROUP_AFTER + 1 && !openRuleGroups.has(f.ruleId);
+    if (grouped && n > GROUP_AFTER) continue;
+    visible.push(f);
+    if (grouped && n === GROUP_AFTER) moreAfter.set(f.id, { ruleId: f.ruleId, hidden: total - GROUP_AFTER });
+  }
+  const renderMore = (id: string, asRow: boolean) => {
+    const more = moreAfter.get(id);
+    if (!more) return null;
+    const button = (
+      <button
+        type="button"
+        onClick={(e) => { e.stopPropagation(); setOpenRuleGroups((prev) => new Set(prev).add(more.ruleId)); }}
+        className="text-xs font-mono text-zinc-400 hover:text-white underline-offset-2 hover:underline"
+      >
+        + {more.hidden} more from this rule in other files
+      </button>
+    );
+    return asRow ? <tr><td colSpan={99} className="px-4 py-2">{button}</td></tr> : <div className="px-1">{button}</div>;
+  };
 
   return (
     <div ref={tableRef} data-tour="findings" className="scroll-mt-20 bg-[#141414] border border-white/10 rounded-xl p-4 sm:p-6 flex flex-col gap-5">
@@ -594,11 +626,11 @@ export const FindingsTable: React.FC<FindingsTableProps> = ({
             </div>
           )
         ) : (
-          filtered.map((item) => {
+          visible.map((item) => {
             const isExpanded = expandedCardIds.has(item.id);
             return (
+              <React.Fragment key={item.id}>
               <div
-                key={item.id}
                 className="p-3.5 sm:p-4 rounded-xl bg-[#0A0A0A] border border-white/10 hover:border-white/20 transition-all flex flex-col gap-3"
               >
                 {/* Top Row: Severity & Pillar & Status */}
@@ -800,6 +832,8 @@ export const FindingsTable: React.FC<FindingsTableProps> = ({
                   </button>
                 </div>
               </div>
+              {renderMore(item.id, false)}
+              </React.Fragment>
             );
           })
         )}
@@ -878,9 +912,9 @@ export const FindingsTable: React.FC<FindingsTableProps> = ({
                 </td>
               </tr>
             ) : (
-              filtered.map((item) => (
+              visible.map((item) => (
+                <React.Fragment key={item.id}>
                 <tr
-                  key={item.id}
                   className="hover:bg-white/[0.04] transition-colors cursor-pointer"
                   onClick={() => onInspectFinding(item)}
                 >
@@ -976,6 +1010,8 @@ export const FindingsTable: React.FC<FindingsTableProps> = ({
                     </div>
                   </td>
                 </tr>
+                {renderMore(item.id, true)}
+                </React.Fragment>
               ))
             )}
           </tbody>
