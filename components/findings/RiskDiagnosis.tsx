@@ -1,6 +1,7 @@
 import React from 'react';
 import type { Finding } from '@/data/schema';
 import { RISK_LABEL, type RiskKind } from '@/lib/scanner/risk-kind';
+import { verifiedFindings } from '@/lib/finding-counts';
 
 const ORDER: RiskKind[] = ['DATA_LEAK', 'FINANCIAL', 'ACCOUNT_TAKEOVER', 'CODE_EXECUTION', 'DOWNTIME'];
 const NOUN: Record<RiskKind, [string, string]> = {
@@ -13,10 +14,10 @@ const NOUN: Record<RiskKind, [string, string]> = {
 
 /**
  * One-line diagnosis above the findings: what this project is open to if it ships as is, counted from open
- * CRITICAL / HIGH findings by risk kind. Plain counts from the scan; nothing is estimated.
+ * verified CRITICAL / HIGH findings by risk kind (suggestions are not risks). Plain counts from the scan.
  */
 export function RiskDiagnosis({ findings }: { findings: Finding[] }) {
-  const serious = findings.filter((f) => f.status === 'OPEN' && (f.severity === 'CRITICAL' || f.severity === 'HIGH') && f.risk);
+  const serious = verifiedFindings(findings).filter((f) => (f.severity === 'CRITICAL' || f.severity === 'HIGH') && f.risk);
   if (serious.length === 0) return null;
   const counts = new Map<RiskKind, number>();
   for (const f of serious) counts.set(f.risk!, (counts.get(f.risk!) ?? 0) + 1);

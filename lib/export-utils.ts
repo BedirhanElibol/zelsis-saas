@@ -1,3 +1,4 @@
+import { isSuggestion, summarizeFindings } from './finding-counts';
 import { Finding, Project } from '@/data/schema';
 
 /**
@@ -36,6 +37,7 @@ export function exportFindingsToCsv(findings: Finding[], projectName: string = '
   const headers = [
     'ID',
     'Severity',
+    'Confidence',
     'Pillar',
     'Category',
     'Title',
@@ -50,6 +52,7 @@ export function exportFindingsToCsv(findings: Finding[], projectName: string = '
   const rows = findings.map((f) => [
     escapeCsvField(f.id),
     escapeCsvField(f.severity),
+    escapeCsvField(isSuggestion(f) ? 'Suggestion' : 'Verified'),
     escapeCsvField(f.type),
     escapeCsvField(f.category),
     escapeCsvField(f.title),
@@ -71,6 +74,7 @@ export function exportFindingsToCsv(findings: Finding[], projectName: string = '
  * Exports the complete audit scorecard as a structured JSON artifact for SOC2 / CI auditing.
  */
 export function exportScorecardToJson(project: Project): void {
+  const summary = summarizeFindings(project.findings);
   const auditReport = {
     schemaVersion: '3.0.0',
     generatedAt: new Date().toISOString(),
@@ -90,22 +94,25 @@ export function exportScorecardToJson(project: Project): void {
         project.gateStatus === 'PASSED'
           ? 'Production Audit PASSED. All security and design compliance checks cleared.'
           : project.gateStatus === 'WARNING'
-          ? `Release WARNING. Detected ${project.highCount} High and ${project.mediumCount} Medium findings. Review recommended.`
-          : `Release BLOCKED. Detected ${project.criticalCount} Critical blocker(s) requiring immediate remediation.`,
+          ? `Release WARNING. Detected ${summary.verified.high} High and ${summary.verified.medium} Medium findings. Review recommended.`
+          : `Release BLOCKED. Detected ${summary.verified.critical} Critical blocker(s) requiring immediate remediation.`,
+      // Counted from the findings with lib/finding-counts, like the dashboard: verified ones, suggestions apart
       metrics: {
         score: project.readinessScore,
-        criticalCount: project.criticalCount,
-        highCount: project.highCount,
-        mediumCount: project.mediumCount,
-        lowCount: project.lowCount,
-        uiClicheCount: project.uiClicheCount,
-        openFindingsCount: project.findings.filter((f) => f.status === 'OPEN').length
+        criticalCount: summary.verified.critical,
+        highCount: summary.verified.high,
+        mediumCount: summary.verified.medium,
+        lowCount: summary.verified.low,
+        uiClicheCount: summary.verifiedUi,
+        openFindingsCount: summary.verified.total,
+        suggestionsCount: summary.suggestions.total
       }
     },
     findings: project.findings.map((f) => ({
       id: f.id,
       ruleId: f.ruleId,
       severity: f.severity,
+      confidence: isSuggestion(f) ? 'suggestion' : 'verified',
       pillar: f.type,
       category: f.category,
       title: f.title,

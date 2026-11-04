@@ -2,28 +2,23 @@
 
 import React from 'react';
 import { Project } from '@/data/schema';
+import { summarizeFindings } from '@/lib/finding-counts';
 
 interface SeverityChartProps {
   project: Project;
 }
 
 export const SeverityChart: React.FC<SeverityChartProps> = ({ project }) => {
-  const safeFindings = Array.isArray(project?.findings) ? project.findings : [];
-  const openFindings = safeFindings.filter(f => f && f.status === 'OPEN');
-  const critical = openFindings.filter(f => f && f.severity === 'CRITICAL').length;
-  const high = openFindings.filter(f => f && f.severity === 'HIGH').length;
-  const medium = openFindings.filter(f => f && f.severity === 'MEDIUM').length;
-  const low = openFindings.filter(f => f && f.severity === 'LOW').length;
-  const totalFindings = critical + high + medium + low;
-  const passed = Math.max(0, Math.max(20, totalFindings + 5) - totalFindings);
-
-  const total = Math.max(1, critical + high + medium + low + passed);
+  // Verified findings only, the same counts as the header and the API; suggestions are listed beside them
+  const summary = summarizeFindings(project?.findings);
+  const { critical, high, medium, low, total: verifiedTotal } = summary.verified;
+  const suggestions = summary.suggestions.total;
+  const total = Math.max(1, verifiedTotal);
 
   const pctCritical = (critical / total) * 100;
   const pctHigh = (high / total) * 100;
   const pctMedium = (medium / total) * 100;
   const pctLow = (low / total) * 100;
-  const pctPassed = (passed / total) * 100;
   const readiness = typeof project?.readinessScore === 'number' ? project.readinessScore : 100;
 
   return (
@@ -34,7 +29,7 @@ export const SeverityChart: React.FC<SeverityChartProps> = ({ project }) => {
             Severity &amp; Risk Distribution
           </h3>
           <div className="text-xs text-[#94A3B8] mt-0.5">
-            Audit breakdown across security pre-flight checks
+            Verified findings by severity
           </div>
         </div>
 
@@ -73,13 +68,7 @@ export const SeverityChart: React.FC<SeverityChartProps> = ({ project }) => {
             title={`Low: ${low}`}
           />
         )}
-        {pctPassed > 0 && (
-          <div
-            style={{ width: `${pctPassed}%` }}
-            className="bg-white h-full transition-all duration-500"
-            title={`Passed: ${passed}`}
-          />
-        )}
+        {verifiedTotal === 0 && <div className="bg-white h-full w-full" title="No verified findings" />}
       </div>
 
       {/* Legend Row */}
@@ -100,10 +89,11 @@ export const SeverityChart: React.FC<SeverityChartProps> = ({ project }) => {
           <span className="w-2.5 h-2.5 rounded-full bg-white/40" />
           <span>Low ({low})</span>
         </div>
-        <div className="flex items-center gap-1.5">
-          <span className="w-2.5 h-2.5 rounded-full bg-white" />
-          <span>Passed ({passed})</span>
-        </div>
+        {suggestions > 0 && (
+          <div className="flex items-center gap-1.5 text-[#71717A]">
+            <span>+ {suggestions} {suggestions === 1 ? 'suggestion' : 'suggestions'}, not counted</span>
+          </div>
+        )}
       </div>
     </div>
   );

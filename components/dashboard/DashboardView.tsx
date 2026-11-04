@@ -11,7 +11,7 @@ import { VulnerabilityPlayground } from './VulnerabilityPlayground';
 import { QuickChartWidget } from './QuickChartWidget';
 import { DashboardModals, ActiveModalType } from './DashboardModals';
 import { GateStatusBanner } from './GateStatusBanner';
-import { gateSeverity, gatingFindings } from '@/lib/scanner/scoring';
+import { verifiedFindings } from '@/lib/finding-counts';
 import { withLiveStatus } from '@/lib/project-status';
 import { isScanOutdated, RULES_UPDATED_AT } from '@/lib/rules-version';
 import { OnboardingChecklist } from './OnboardingChecklist';
@@ -96,26 +96,23 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
     [safeProject.findings]
   );
 
-  // Same basis as the gate and the findings table: proven rules only, at the severity the gate uses.
+  // Same basis as the gate, the findings table, exports and the API: verified findings (lib/finding-counts).
   // Counting unproven suggestions here showed "PASSED · 2 Critical" side by side.
-  const gateFindings = useMemo(
-    () => gatingFindings(openFindings.filter(Boolean)).filter((f) => f.maturity !== 'unproven'),
-    [openFindings]
-  );
+  const gateFindings = useMemo(() => verifiedFindings(openFindings), [openFindings]);
 
   const criticals = useMemo(
-    () => gateFindings.filter((f) => gateSeverity(f) === 'CRITICAL'),
+    () => gateFindings.filter((f) => f.severity === 'CRITICAL'),
     [gateFindings]
   );
 
   const highs = useMemo(
-    () => gateFindings.filter((f) => gateSeverity(f) === 'HIGH'),
+    () => gateFindings.filter((f) => f.severity === 'HIGH'),
     [gateFindings]
   );
 
   const uiCliches = useMemo(
-    () => openFindings.filter((f) => f && f.type === 'VIBEPOLISH'),
-    [openFindings]
+    () => gateFindings.filter((f) => f.type === 'VIBEPOLISH'),
+    [gateFindings]
   );
 
   const copyMasterPrompt = () => {

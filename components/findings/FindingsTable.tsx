@@ -29,6 +29,20 @@ interface FindingsTableProps {
 }
 
 /** Findings from rules without evidence (unproven) or proven noisy (experimental): shown on request as suggestions. */
+const isScaFinding = (f: Finding) =>
+  Boolean(
+    f && (
+      f.category?.includes('Software Composition Analysis') ||
+      f.category?.includes('Open Source License') ||
+      f.category?.includes('Dependency Vulnerabilities') ||
+      // DEP-01 (OSV.dev) and the offline SCA rules (27211-27214)
+      f.ruleId === 26001 ||
+      (f.ruleId >= 27211 && f.ruleId <= 27214)
+    )
+  );
+/** One pillar test for the filter, the tab counts and the pillar cards, so a card never shows 6 and its tab 0. */
+const inPillar = (f: Finding, pillar: string) =>
+  pillar === 'ALL' || (pillar === 'SCA_DEPS' ? isScaFinding(f) : f.type === pillar);
 const isAdvisoryFinding = (f: Finding | null | undefined) => f?.maturity === 'experimental' || f?.maturity === 'unproven';
 
 export const FindingsTable: React.FC<FindingsTableProps> = ({
@@ -108,17 +122,6 @@ export const FindingsTable: React.FC<FindingsTableProps> = ({
 
   const safeFindings = Array.isArray(findings) ? findings : [];
 
-  const isScaFinding = (f: Finding) =>
-    Boolean(
-      f && (
-        f.category?.includes('Software Composition Analysis') ||
-        f.category?.includes('Open Source License') ||
-        f.category?.includes('Dependency Vulnerabilities') ||
-        // DEP-01 (OSV.dev) and the offline SCA rules (27211-27214)
-        f.ruleId === 26001 ||
-        (f.ruleId >= 27211 && f.ruleId <= 27214)
-      )
-    );
 
   const scaFindingsCount = safeFindings.filter(isScaFinding).length;
 
@@ -198,9 +201,7 @@ export const FindingsTable: React.FC<FindingsTableProps> = ({
 
     const matchesSeverity = severityFilter === 'ALL' || f.severity === severityFilter;
     const matchesStatus = statusFilter === 'ALL' || f.status === statusFilter;
-    const matchesPillar =
-      pillarFilter === 'ALL' ||
-      (pillarFilter === 'SCA_DEPS' ? isScaFinding(f) : f.type === pillarFilter);
+    const matchesPillar = inPillar(f, pillarFilter);
 
     const matchesPatch = !hasDiffOnly || Boolean(f.diffPatch);
 
@@ -262,7 +263,7 @@ export const FindingsTable: React.FC<FindingsTableProps> = ({
           </div>
           <div className="flex items-baseline justify-between">
             <span className="text-xl sm:text-2xl font-extrabold font-mono text-white">
-              {findings.filter(f => f.type === 'INFRA_DATABASE' || safeLower(f.category).includes('sql') || safeLower(f.category).includes('rls') || safeLower(f.category).includes('database')).length}
+              {findings.filter((f) => inPillar(f, 'INFRA_DATABASE')).length}
             </span>
             <span className="text-[10px] text-zinc-400 font-mono">
               Postgres &amp; SQL
@@ -513,7 +514,7 @@ export const FindingsTable: React.FC<FindingsTableProps> = ({
           const count =
             tab.id === 'ALL'
               ? findings.length
-              : findings.filter((f) => f.type === tab.id).length;
+              : findings.filter((f) => inPillar(f, tab.id)).length;
           return (
             <button
               key={tab.id}

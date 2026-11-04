@@ -4,6 +4,7 @@ import React, { useState } from 'react';
 import { Project, Finding } from '@/data/schema';
 import { UserTier } from '@/data/schema';
 import { hasFixPromptAccess } from '@/lib/subscription-utils';
+import { suggestionFindings, verifiedFindings } from '@/lib/finding-counts';
 
 interface RemediationQueueViewProps {
   projects: Project[];
@@ -23,10 +24,12 @@ export const RemediationQueueView: React.FC<RemediationQueueViewProps> = ({
   const [copiedBatch, setCopiedBatch] = useState(false);
 
   const allFindings = projects.flatMap(p => p.findings.map(f => ({ ...f, projectName: p.name })));
-  const openFindings = allFindings.filter(f => f.status === 'OPEN');
+  // The selected project's verified findings, the same list the findings table shows by default
+  const openFindings = verifiedFindings(allFindings).map((f) => ({ ...f, projectName: (f as typeof allFindings[number]).projectName }));
+  const suggestionCount = suggestionFindings(allFindings).length;
   const resolvedFindings = allFindings.filter(f => f.status === 'RESOLVED');
 
-  const batchPromptText = `Act as Senior Lead Architect. Here are the ${openFindings.length} open security & release blocker tasks across our projects. Refactor code to solve all items:
+  const batchPromptText = `Act as Senior Lead Architect. Here are the ${openFindings.length} open security & release blocker tasks in this project. Refactor code to solve all items:
 
 ${openFindings.map((f, idx) => `Task ${idx + 1}: [${f.severity}] ${f.title} (${f.projectName} -> ${f.filePath})
 Remediation: ${f.remediationPrompt}`).join('\n\n')}`;
@@ -83,6 +86,9 @@ Remediation: ${f.remediationPrompt}`).join('\n\n')}`;
       <div>
         <h2 style={{ fontSize: '1.1rem', fontWeight: 800, color: '#EDEDED', margin: '0 0 16px 0', display: 'flex', alignItems: 'center', gap: '8px' }}>
           <span>Open Findings ({openFindings.length})</span>
+          {suggestionCount > 0 && (
+            <span style={{ fontSize: '0.75rem', fontWeight: 500, color: '#71717A' }}>+ {suggestionCount} suggestions in the findings table</span>
+          )}
         </h2>
 
         <div style={{ display: 'flex', flexDirection: 'column', gap: '14px' }}>
