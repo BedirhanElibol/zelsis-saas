@@ -123,6 +123,9 @@ for (const m of src.matchAll(/const pattern\d+ = (\/.+\/[a-z]*);\r?\n/g)) {
   const ok = (s: string) => regex.test(s) && !/placeholder|EXAMPLE|dummy|x{10,}|00000000/i.test(s);
   let sample = '';
   for (let attempt = 0; attempt < 50 && !ok(sample); attempt++) sample = generate(regex.source);
+  // A key header alone is not a key (pemHeaderWithoutKey): give it a body and its END line
+  const pem = /^-----BEGIN ([A-Z0-9 ]*)PRIVATE KEY-----$/.exec(sample);
+  if (pem) sample = `${sample}\nMIIEpAIBAAKCAQEA7Qm9nUmFuZG9t\n-----END ${pem[1]}PRIVATE KEY-----`;
   if (ruleId && ok(sample)) samples.push([ruleId, sample]);
   else { skipped.push(ruleId); if (process.env.DEBUG_SAMPLES) console.log(ruleId, JSON.stringify(sample)); }
 }

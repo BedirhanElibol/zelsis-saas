@@ -11,6 +11,7 @@
  *
  * Classification: 100% Native English Only
  */
+import { fixedSqlResolver, normalizePlaceholderLists } from './sql-fixed-fragments';
 import type { Finding } from '@/data/schema';
 import type { CodeFile } from '../scanner-engine';
 import { databaseExposedAt, emptyRepoContext, normalizeSqlName, RepoContext } from '../scanner/repo-context';
@@ -721,7 +722,13 @@ export function evaluateInfraRules(file: CodeFile, lines: string[], cleanContent
         }
         const keyofGeneric = /<\s*(\w+)\s+extends\s+keyof\b/.exec(cleanContent);
         if (keyofGeneric) for (const m of cleanContent.matchAll(new RegExp(String.raw`\b(\w+)\s*:\s*${keyofGeneric[1]}\b`, 'g'))) fixedSqlVars.add(m[1]);
-        const cleanContentForSql = normalizeSqlInterpolations(cleanContent)
+        // SQL text built only from constant fragments, placeholder lists and helpers that return them; resolved
+        // at the use site first, while offsets still match cleanContent
+        const isFixedSql = fixedSqlResolver(cleanContent);
+        const withFixedFragments = cleanContent
+            .replace(/\$\{\s*([A-Za-z_$][\w$]*)\s*\}/g, (whole, name: string, at: number) => isFixedSql(name, at) ? 'IDENT' : whole)
+            .replace(/\$\{\s*([A-Za-z_$][\w$]*)\s*\([^()\n]*(?:\([^()\n]*\)[^()\n]*)*\)\s*\}/g, (whole, name: string, at: number) => isFixedSql(name, at) ? 'IDENT' : whole);
+        const cleanContentForSql = normalizePlaceholderLists(normalizeSqlInterpolations(withFixedFragments))
             .replace(new RegExp(String.raw`\$\{\s*[\w.!]+\s*\?\s*${literal}\s*:\s*${literal}\s*\}`, 'g'), 'CONST')
             .replace(/\$\{\s*(\w+)(?:\.join\([^)]*\))?\s*\}/g, (whole, name: string) => fixedSqlVars.has(name) ? 'IDENT' : whole);
         const sqlVars = [...cleanContentForSql.matchAll(new RegExp(String.raw`(?:const|let|var)\s+(\w+)\s*=\s*` + dynamicSql, 'gi'))].map((m) => m[1]);
@@ -729,7 +736,8 @@ export function evaluateInfraRules(file: CodeFile, lines: string[], cleanContent
         const sqlConcatMatch = rawSqlConcatRegex.exec(cleanContentForSql);
         if (sqlConcatMatch) {
             // Multi-line template literals never match a single line: locate the call from the match offset
-            const lineNum = cleanContent.slice(0, sqlConcatMatch.index).split('\n').length;
+            // The offset is in the normalized text; its replacements keep every newline, so count lines there
+            const lineNum = cleanContentForSql.slice(0, sqlConcatMatch.index).split('\n').length;
             const snippet = extractSnippet(lines, lineNum);
             findings.push({
                 id: `real-find-${Date.now()}-${findingCounter.count++}`,

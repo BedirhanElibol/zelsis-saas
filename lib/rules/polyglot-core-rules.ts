@@ -91,6 +91,12 @@ export function evaluatePolyglotCoreRules(file: CodeFile, lines: string[], clean
     // almost always the app's own constant or model ("SELECT COUNT(*) FROM $TABLE", f"FROM {model.__tablename__}");
     // values in WHERE / VALUES still count.
     .replace(/\b(FROM|INTO|UPDATE|JOIN|TABLE)(\s+[`"']?)(?:\$\{\s*[\w.:()]+\s*\}|\$[\w.:]+|\\\(\s*[\w.:()]+\s*\)|#\{\s*[\w.:()]+\s*\}|\{[\w.:()]+\})/gi, '$1$2IDENT')
+    // Python: `"SELECT x FROM %s" % quote_ident(table)` (or a tuple of only such calls). An identifier-quoting
+    // helper makes the name safe whatever the file calls it (_sqlite.quote_ident, quote_identifier, sql.Identifier)
+    .replace(/\s*%\s*(?:\(\s*)?(?:(?:[\w.]+\.)?(?:_?quote_\w+|escape_identifier|Identifier)\s*\([^()]*\)\s*,?\s*)+\)?/g, '')
+    // Python: `"... %s FROM part p %s" % ("m.data" if joined else "NULL", "LEFT JOIN ..." if joined else "")`:
+    // every value is a literal, or a choice between literals
+    .replace(/\s*%\s*\(\s*(?:(?:"[^"\n]*"|'[^'\n]*')(?:\s+if\s+[\w.]+\s+else\s+(?:"[^"\n]*"|'[^'\n]*'))?\s*,?\s*)+\)/g, '')
     // A dynamic SET clause built from column names is safe when the query uses bind placeholders
     // (%s, ?, $1, :name) and passes a parameters argument. Values in quotes or unparameterized queries still count.
     .replace(/\bSET(\s+)(?:\{[a-zA-Z_]\w*\}|\$\{[a-zA-Z_]\w*\})(?=[^\n]*(?:%s|\?|\$\d|:\w+)[^"'\n]*["']\s*,\s*[\w([{])/gi, 'SET$1IDENT');

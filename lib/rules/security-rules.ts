@@ -13,6 +13,12 @@ export function innerHtmlIsAppOwned(lines: string[], idx: number): boolean {
     if (/__html\s*:\s*[A-Z][A-Z0-9_]{2,}\s*\}/.test(line)) return true;
     // __html: faceSvg(...) / renderIconSvg(...): a function that makes the app's own SVG
     if (/__html\s*:\s*\w*(?:svg|icon)\w*\s*\(/i.test(line)) return true;
+    // Markup the page already had (`var LABEL = button.innerHTML` saved at load) put back later, alone or as one
+    // branch of a choice between literals: `button.innerHTML = on ? "Subscribing&hellip;" : LABEL`
+    const saved = new Set(lines.flatMap((l) => [...l.matchAll(/\b(?:const|let|var)\s+(\w+)\s*=\s*[\w.$[\]'"]+\.innerHTML\s*;/g)].map((m) => m[1])));
+    const own = (e: string) => /^(['"])(?:\\.|(?!\1).)*\1$|^`[^`$]*`$|^[A-Z][A-Z0-9_]{2,}$/.test(e) || saved.has(e);
+    const choice = /\.innerHTML\s*=\s*(?:[^?;=]+?\s*\?\s*((['"])(?:\\.|(?!\2).)*\2|`[^`$]*`|\w+)\s*:\s*((['"])(?:\\.|(?!\4).)*\4|`[^`$]*`|\w+)|(\w+))\s*;?\s*$/.exec(line);
+    if (choice && (choice[5] ? own(choice[5]) : own(choice[1]) && own(choice[3]))) return true;
     // 'a' + / 'b' +: fixed strings joined from the first line on
     if (/\.innerHTML\s*=\s*(['"])(?:\\.|(?!\1).)*\1\s*\+\s*$/.test(line)) {
         for (const next of lines.slice(idx + 1, idx + 40)) {
@@ -1255,7 +1261,14 @@ export function evaluateSecurityRules(file: CodeFile, lines: string[], cleanCont
         );
         // Explicit same-origin helpers mark the redirect as validated
         const redirectGuardRegex = /isSafeRedirect|isRelativeUrl|allowedRedirect|isSameOrigin/i;
-        if (openRedirectRegex.test(cleanContent) && !redirectGuardRegex.test(cleanContent)) {
+        // `const next = nextPath(url.searchParams.get("next"))`: every value of the target went through the app's
+        // own check (often an allowlist in another file); raw readers and decoders are not checks
+        const redirectedNames = new Set([...cleanContent.matchAll(/\bredirect\s*\(\s*([A-Za-z_$][\w$]*)\s*[),]/g)].map((m) => m[1]));
+        const targetAssignments = [...cleanContent.matchAll(new RegExp(String.raw`\b(?:const|let|var)\s+(next|url|redirectUrl|redirectTo|target|targetUrl|returnTo|returnUrl|callbackUrl)\s*=\s*([^;\n]+)`, 'gi'))]
+            .filter((m) => redirectedNames.has(m[1])).map((m) => m[2].trim());
+        const targetsChecked = targetAssignments.length > 0 && targetAssignments.every((rhs) =>
+            /^(?:await\s+)?[A-Za-z_$][\w$]*\s*\(/.test(rhs) && !/^(?:await\s+)?(?:decodeURI\w*|String|encodeURI\w*|URL|unescape|atob)\s*\(/.test(rhs));
+        if (openRedirectRegex.test(cleanContent) && !redirectGuardRegex.test(cleanContent) && !targetsChecked) {
             const matchLineIdx = lines.findIndex(l => !l.trim().startsWith('//') && !l.trim().startsWith('*') && openRedirectRegex.test(l));
             const lineNum = matchLineIdx !== -1 ? matchLineIdx + 1 : 1;
             const snippet = lines.slice(Math.max(0, lineNum - 2), Math.min(lines.length, lineNum + 2)).join('\n');

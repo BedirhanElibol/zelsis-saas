@@ -224,7 +224,8 @@ export function evaluateAiClicheRules(file: CodeFile, lines: string[], cleanCont
                 `Remove the rating in ${file.path}, or show the review count and link the review site it comes from.`);
         }
         // CLICHE-28: an "active now" / "12 people viewing" indicator that is not wired to real presence data.
-        const activeIdx = firstLine(/\b(?:online now|active now|live now)\b|\b\d+\s+(?:people|users|visitors|others)\s+(?:are\s+)?(?:online|viewing|active|watching|looking at this)\b/i);
+        // "Live now" alone is availability copy ("Live now at €12 a month"); it counts only before a viewer count
+        const activeIdx = firstLine(/\b(?:online now|active now)\b|\blive now\b[^.\n]{0,20}\b\d+\s+(?:viewers|watching|people|users)\b|\b\d+\s+(?:people|users|visitors|others)\s+(?:are\s+)?(?:online|viewing|active|watching|looking at this)\b/i);
         if (activeIdx !== -1 && !liveData) {
             pushTell(228, 'CLICHE-28: Fabricated "Active Now" Indicator', "AI Cliché & Trust", activeIdx,
                 'Detected an "active now" or "N people viewing" message typed into the page instead of read from live presence data.',

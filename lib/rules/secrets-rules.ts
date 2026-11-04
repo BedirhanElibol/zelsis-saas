@@ -47,7 +47,27 @@ export function maskSecretInLine(line: string, pattern: RegExp): string {
 }
 
 /** A key header used as a pattern or prefix check (scrubbers, key-type detection), not a key. */
-const KEY_HEADER_AS_PATTERN = /(?:startswith|startsWith|endswith|includes|indexOf|re\.compile|new\s+RegExp|regex\s*[:=]|\.test|\.match)\s*\(?\s*(?:r|b|rb)?["'`/][^"'`\n]*-----BEGIN|[=(:,]\s*\/-----BEGIN/;
+/**
+ * A private key header with no key behind it: a real RSA / OpenSSH / EC key block ends in an END line after its
+ * base64 body. A bare header, or one with a few bytes of filler ("b3Blbg=="), is test input for a masker.
+ */
+export function pemHeaderWithoutKey(lines: string[], idx: number): boolean {
+    const rest = lines.slice(idx, idx + 80).join('\n');
+    const head = /-----BEGIN ([A-Z0-9 ]*)PRIVATE KEY-----/.exec(rest);
+    if (!head) return false;
+    const after = rest.slice(head.index + head[0].length);
+    const end = after.indexOf(`-----END ${head[1]}PRIVATE KEY-----`);
+    // No matching END line nearby, or another key starts first: just the header text
+    if (end === -1 || /-----BEGIN /.test(after.slice(0, end))) return true;
+    const body = after.slice(0, end).replace(/\\n|\\r|["'`+,;()\s]/g, '');
+    return (body.match(/[A-Za-z0-9+/=]/g) ?? []).length < 16;
+}
+/** Test and fixture files: secrets there are test input unless they look real (judged per rule). */
+export const TEST_FILE_PATH = /(?:^|\/)(?:tests?|__tests__|spec|specs|fixtures?|testdata|__fixtures__)\/|(?:^|\/)(?:test_[^/]+|[^/]+_test\.\w+|[^/]+\.(?:test|spec)\.\w+|fixtures?\.\w+|conftest\.py)$/i;
+/** Keys typed by hand: AWS's documented examples and runs like 1234567890 / ABCDEF. */
+const SYNTHETIC_KEY = /EXAMPLE|1234567890|ABCDEFGH|0123456789|(?:TRUE|FAKE|TEST|DUMMY|SAMPLE)(?:\d|KEY|[A-Z]{0,3}\d)/;
+
+const KEY_HEADER_AS_PATTERN =/(?:startswith|startsWith|endswith|includes|indexOf|re\.compile|new\s+RegExp|regex\s*[:=]|\.test|\.match)\s*\(?\s*(?:r|b|rb)?["'`/][^"'`\n]*-----BEGIN|[=(:,]\s*\/-----BEGIN/;
 export function evaluateSecretRules(file: CodeFile, lines: string[], rawContentOrClean: string, findingCounter: {
     count: number;
 }): SecretRuleResult {
@@ -63,7 +83,9 @@ export function evaluateSecretRules(file: CodeFile, lines: string[], rawContentO
     // SEC-SECRET-01: AWS Access Key ID Exposure
     const pattern01 = /\bAKIA[0-9A-Z]{16}\b/i;
     if (pattern01.test(contentToScan)) {
-        const matchLineIdx = lines.findIndex(l => pattern01.test(l) && !isDummyPlaceholder(l));
+        // A hand-typed key (AKIA1234567890ABCDEF, AKIA4TRUE7KEY...) in a test or fixture file is test input
+        const isTestFile = TEST_FILE_PATH.test(lowerPath);
+        const matchLineIdx = lines.findIndex(l => pattern01.test(l) && !isDummyPlaceholder(l) && !(isTestFile && SYNTHETIC_KEY.test(l.match(/AKIA[0-9A-Z]{16}/i)?.[0] ?? '')));
         if (matchLineIdx !== -1) {
             const lineNum = matchLineIdx + 1;
             findings.push({
@@ -1296,7 +1318,7 @@ export function evaluateSecretRules(file: CodeFile, lines: string[], rawContentO
     // SEC-SECRET-45: RSA Private Key Block Exposure
     const pattern45 = /-----BEGIN RSA PRIVATE KEY-----/i;
     if (pattern45.test(contentToScan)) {
-        const matchLineIdx = lines.findIndex(l => pattern45.test(l) && !isDummyPlaceholder(l) && !KEY_HEADER_AS_PATTERN.test(l));
+        const matchLineIdx = lines.findIndex((l, i) => pattern45.test(l) && !isDummyPlaceholder(l) && !KEY_HEADER_AS_PATTERN.test(l) && !pemHeaderWithoutKey(lines, i));
         if (matchLineIdx !== -1) {
             const lineNum = matchLineIdx + 1;
             findings.push({
@@ -1324,7 +1346,7 @@ export function evaluateSecretRules(file: CodeFile, lines: string[], rawContentO
     // SEC-SECRET-46: OpenSSH Private Key Block Exposure
     const pattern46 = /-----BEGIN OPENSSH PRIVATE KEY-----/i;
     if (pattern46.test(contentToScan)) {
-        const matchLineIdx = lines.findIndex(l => pattern46.test(l) && !isDummyPlaceholder(l) && !KEY_HEADER_AS_PATTERN.test(l));
+        const matchLineIdx = lines.findIndex((l, i) => pattern46.test(l) && !isDummyPlaceholder(l) && !KEY_HEADER_AS_PATTERN.test(l) && !pemHeaderWithoutKey(lines, i));
         if (matchLineIdx !== -1) {
             const lineNum = matchLineIdx + 1;
             findings.push({
