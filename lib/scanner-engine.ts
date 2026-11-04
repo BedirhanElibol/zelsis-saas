@@ -42,6 +42,7 @@ const SAME_ISSUE_RULES: ReadonlyArray<readonly [number, number]> = [
   [29623, 1208], [29632, 7135], [29636, 1211], // React logic rules prove the line: typeof window render, index key, double submit
 ];
 import { RULE_ENGINES, SKIPS_DATA_FILES } from './scanner/rule-engines';
+import { alignPatches } from './scanner/patches';
 import { evaluateBuiltinRules } from './scanner/builtin-rules';
 import { detectProjectDatabases } from './rules/multi-database-rules';
 import { detectAppStack } from './scanner/stack-detect';
@@ -358,6 +359,9 @@ export async function runStaticCodeScan(inputFiles: CodeFile[], repoName: string
       logs.push(`[${new Date().toLocaleTimeString()}]   [VERIFIED] ${file.path}: dropped "${findings[k].title}" (${reason}).`);
       findings.splice(k, 1);
     }
+
+    // Patches must match this file: drop sample patches written for other code, add real one-line diffs
+    alignPatches(findings.slice(startFindingsCount).filter((f) => f.filePath === file.path), file.path, rawContent);
 
     const fileFindingsCount = findings.length - startFindingsCount;
     if (fileFindingsCount === 0) {
