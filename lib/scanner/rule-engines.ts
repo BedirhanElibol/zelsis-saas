@@ -158,6 +158,7 @@ import { evaluateCategoryExpansionRules } from '../rules/category-expansion-rule
 import { evaluateLiveBundleRules } from '../rules/live-bundle-rules';
 
 import { evaluateAstFlowRules } from '../rules/ast-flow-rules';
+import { evaluateMoneyPyGoRules } from '../rules/money-py-go-rules';
 
 export type RuleEngine = (
   file: CodeFile,
@@ -510,6 +511,8 @@ export const RULE_ENGINES: ReadonlyArray<{ evaluate: RuleEngine; scanRawContent?
   { evaluate: evaluateLiveBundleRules },
   // AST analysis (Babel): route auth/ownership flow and taint for JS/TS (AST-01.., Rule IDs 29301-29399)
   { evaluate: evaluateAstFlowRules },
+  // Payment integrity for Python and Go: unsigned payment webhooks, client-set amounts (MONEY-01..04, Rule IDs 33001-33004)
+  { evaluate: evaluateMoneyPyGoRules },
 ];
 
 /**
@@ -617,4 +620,5 @@ export const SKIPS_DATA_FILES: ReadonlySet<RuleEngine> = new Set<RuleEngine>([
   evaluateWebsocketRealtimeRules,
   evaluateZeroTrustNetworkRules,
   evaluateZeroTrustRules,
+  evaluateMoneyPyGoRules,
 ]);

@@ -1,8 +1,8 @@
 {
  "summary": {
-  "implementedRules": 1336,
-  "testedRules": 1330,
-  "preciseLocationRules": 1334,
+  "implementedRules": 1340,
+  "testedRules": 1334,
+  "preciseLocationRules": 1338,
   "catalogEntries": 1927,
   "catalogOnlyNotImplemented": 1397,
   "catalogPlaceholderMetadata": 1811
@@ -14763,6 +14763,46 @@
    "title": "Base Image Uses ${label}, Out of Security Support Since ${end}",
    "severity": "MEDIUM",
    "source": "lib/rules/eol-image-rules.ts",
+   "preciseLocation": true,
+   "tested": true,
+   "inCatalog": false
+  },
+  {
+   "ruleId": 33001,
+   "code": "RULE-33001",
+   "title": "Payment Webhook Processed Without Signature Verification (Python)",
+   "severity": "UNKNOWN",
+   "source": "lib/rules/money-py-go-rules.ts",
+   "preciseLocation": true,
+   "tested": true,
+   "inCatalog": false
+  },
+  {
+   "ruleId": 33002,
+   "code": "RULE-33002",
+   "title": "Payment Webhook Processed Without Signature Verification (Go)",
+   "severity": "UNKNOWN",
+   "source": "lib/rules/money-py-go-rules.ts",
+   "preciseLocation": true,
+   "tested": true,
+   "inCatalog": false
+  },
+  {
+   "ruleId": 33003,
+   "code": "RULE-33003",
+   "title": "Payment Amount Controlled by the Client (Python)",
+   "severity": "UNKNOWN",
+   "source": "lib/rules/money-py-go-rules.ts",
+   "preciseLocation": true,
+   "tested": true,
+   "inCatalog": false
+  },
+  {
+   "ruleId": 33004,
+   "code": "RULE-33004",
+   "title": "Payment Amount Controlled by the Client (Go)",
+   "severity": "UNKNOWN",
+   "source": "lib/rules/money-py-go-rules.ts",
    "preciseLocation": true,
    "tested": true,
    "inCatalog": false
