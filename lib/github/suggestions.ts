@@ -20,6 +20,14 @@ const LINE_FIXES: Readonly<Record<number, (line: string) => string>> = {
   8818: (l) => l.replace(/\bverify(\s*=\s*)False\b/, 'verify$1True'),
   // CLOUD-V2-17: container allows privilege escalation
   28517: (l) => l.replace(/\ballowPrivilegeEscalation(\s*:\s*)true\b/, 'allowPrivilegeEscalation$1false'),
+  // JS-SEC-02: XML parser with entity expansion turned on
+  24002: (l) => l.replace(/\b(noent|replaceEntities|processEntities)(\s*:\s*)true\b/g, '$1$2false'),
+  // CORE-04: XXE in Python (lxml/sax) and .NET parsers
+  24104: (l) =>
+    l
+      .replace(/\b(resolve_entities|load_dtd)(\s*=\s*)True\b/g, '$1$2False')
+      .replace(/(feature_external_ges\s*,\s*)True\b/, '$1False')
+      .replace(/(DtdProcessing\s*=\s*DtdProcessing\.)Parse\b/, '$1Prohibit'),
   // Viewport meta that blocks pinch zoom
   1244: (l) =>
     l
