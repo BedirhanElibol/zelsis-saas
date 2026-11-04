@@ -92,3 +92,36 @@ test('lockfiles are recognised; package.json ranges are not versions', () => {
   assert.ok(!isDependencyLockfile('package.json'));
   assert.equal(extractDependencies([{ path: 'package.json', content: '{"dependencies":{"lodash":"^4.17.15"}}' }]).length, 0);
 });
+
+test('bun.lock text format keeps exact versions, skips workspace refs', () => {
+  const lock = '{\n  "lockfileVersion": 1,\n  "packages": {\n    "react": ["react@18.3.1", "", {}, "sha512-x"],\n    "@types/node": ["@types/node@20.11.5", "", {}, "sha512-y"],\n    "app": ["app@workspace:packages/app"],\n  }\n}';
+  assert.deepEqual(deps('bun.lock', lock), ['npm:react@18.3.1#4', 'npm:@types/node@20.11.5#5']);
+});
+
+test('pubspec.lock lists hosted packages and marks direct dev ones', () => {
+  const lock = 'packages:\n  http:\n    dependency: "direct main"\n    description:\n      name: http\n    source: hosted\n    version: "0.13.5"\n  flutter_lints:\n    dependency: "direct dev"\n    source: hosted\n    version: "2.0.1"\n  flutter:\n    dependency: "direct main"\n    source: sdk\n    version: "0.0.0"\nsdks:\n  dart: ">=3.0.0"\n';
+  assert.deepEqual(deps('app/pubspec.lock', lock), ['Pub:http@0.13.5#2', 'Pub:flutter_lints@2.0.1:dev#8']);
+});
+
+test('NuGet packages.lock.json, csproj and packages.config', () => {
+  const lock = '{"version":1,"dependencies":{"net8.0":{"Newtonsoft.Json":{"type":"Direct","requested":"[13.0.1, )","resolved":"13.0.1"},"MyLib":{"type":"Project"}}}}';
+  assert.deepEqual(deps('src/packages.lock.json', lock), ['NuGet:Newtonsoft.Json@13.0.1#1']);
+  const csproj = '<Project>\n  <ItemGroup>\n    <PackageReference Include="Serilog" Version="3.1.1" />\n    <PackageReference Include="Floating" Version="3.*" />\n    <PackageReference Include="Dapper">\n      <Version>2.1.24</Version>\n    </PackageReference>\n  </ItemGroup>\n</Project>';
+  assert.deepEqual(deps('src/Api/Api.csproj', csproj), ['NuGet:Serilog@3.1.1#3', 'NuGet:Dapper@2.1.24#5']);
+  assert.deepEqual(deps('packages.config', '<packages>\n  <package id="jQuery" version="3.4.1" targetFramework="net48" />\n</packages>'), ['NuGet:jQuery@3.4.1#2']);
+  assert.deepEqual(deps('Directory.Packages.props', '<Project>\n  <ItemGroup>\n    <PackageVersion Include="Ardalis.ApiEndpoints" Version="4.1.0" />\n  </ItemGroup>\n</Project>'), ['NuGet:Ardalis.ApiEndpoints@4.1.0#3']);
+});
+
+test('gradle.lockfile and version catalog', () => {
+  const lock = '# comment\ncom.squareup.okhttp3:okhttp:4.9.0=debugRuntimeClasspath,releaseRuntimeClasspath\njunit:junit:4.13.2=testRuntimeClasspath\nempty=annotationProcessor\n';
+  assert.deepEqual(deps('app/gradle.lockfile', lock), ['Maven:com.squareup.okhttp3:okhttp@4.9.0#2', 'Maven:junit:junit@4.13.2:dev#3']);
+  const toml = '[versions]\nretrofit = "2.9.0"\n\n[libraries]\nretrofit = { module = "com.squareup.retrofit2:retrofit", version.ref = "retrofit" }\ngson = { group = "com.google.code.gson", name = "gson", version = "2.10.1" }\ncoil = "io.coil-kt:coil:2.5.0"\ndynamic = { module = "a.b:c", version.ref = "missing" }\n';
+  assert.deepEqual(deps('gradle/libs.versions.toml', toml), ['Maven:com.squareup.retrofit2:retrofit@2.9.0#5', 'Maven:com.google.code.gson:gson@2.10.1#6', 'Maven:io.coil-kt:coil@2.5.0#7']);
+});
+
+test('SwiftPM Package.resolved v2 and v1 use the repository URL as the name', () => {
+  const v2 = '{\n  "pins" : [\n    {\n      "identity" : "swift-nio",\n      "kind" : "remoteSourceControl",\n      "location" : "https://github.com/apple/swift-nio.git",\n      "state" : { "revision" : "abc", "version" : "2.58.0" }\n    },\n    {\n      "identity" : "branchy",\n      "location" : "https://github.com/a/branchy.git",\n      "state" : { "branch" : "main", "revision" : "def" }\n    }\n  ],\n  "version" : 2\n}';
+  assert.deepEqual(deps('App.xcodeproj/project.xcworkspace/xcshareddata/swiftpm/Package.resolved', v2), ['SwiftURL:github.com/apple/swift-nio@2.58.0#6']);
+  const v1 = '{"object":{"pins":[{"package":"Alamofire","repositoryURL":"https://github.com/Alamofire/Alamofire.git","state":{"version":"5.6.4"}}]},"version":1}';
+  assert.deepEqual(deps('Package.resolved', v1), ['SwiftURL:github.com/Alamofire/Alamofire@5.6.4#1']);
+});

@@ -11,6 +11,9 @@ const PURL_TYPE: Record<OsvEcosystem, string> = {
   Packagist: 'composer',
   'crates.io': 'cargo',
   Maven: 'maven',
+  NuGet: 'nuget',
+  Pub: 'pub',
+  SwiftURL: 'swift',
 };
 
 /** Package URL for a dependency. Name segments are encoded, the slashes between them are not. */
