@@ -4,6 +4,7 @@ import React, { useState } from 'react';
 import { UserTier, PlanUsageQuota } from '@/data/schema';
 import { TierDetailsModal } from '@/components/pricing/TierDetailsModal';
 import { priceLabel } from '@/data/pricing-plans';
+import { TIER_CONFIGS } from '@/lib/quota-manager';
 
 interface UsageGaugeProps {
   tier: UserTier;
@@ -24,13 +25,19 @@ export const UsageGauge: React.FC<UsageGaugeProps> = ({
   const isPro = tier === 'Pro';
   const isEnterprise = tier === 'Enterprise';
 
+  // Limits come from the plan config the quota checks use, so this panel cannot disagree with them
+  const plan = TIER_CONFIGS[tier] ?? TIER_CONFIGS.Free;
+  const limitOf = (v: number | 'Unlimited') => (v === 'Unlimited' ? Infinity : v);
   const scansUsed = quota?.scansUsed || 0;
-  const scansLimit = isFree ? 3 : Infinity;
-  const scansRemaining = isFree ? Math.max(0, 3 - scansUsed) : Infinity;
-  const scanPercentage = isFree ? Math.min(100, Math.round((scansUsed / 3) * 100)) : 100;
+  const scansLimit = limitOf(plan.scanLimit);
+  const scansRemaining = Math.max(0, scansLimit - scansUsed);
+  const scanPercentage = Number.isFinite(scansLimit) ? Math.min(100, Math.round((scansUsed / scansLimit) * 100)) : 0;
+  const scansFull = scansRemaining === 0;
+  const projectLimit = limitOf(plan.projectLimit);
 
   const aiPromptsUsed = quota?.aiPromptsUsed || 0;
-  const aiPromptsLimit = isFree ? 1 : Infinity;
+  const aiPromptsLimit = limitOf(plan.aiPromptLimit);
+  const aiPromptsLeft = Math.max(0, aiPromptsLimit - aiPromptsUsed);
 
   return (
     <>
@@ -59,16 +66,16 @@ export const UsageGauge: React.FC<UsageGaugeProps> = ({
             <div className="flex flex-col gap-1.5 bg-[#0A0A0E] p-2.5 rounded-lg border border-white/10">
               <div className="flex items-center justify-between text-[11px]">
                 <span className="text-zinc-400 font-medium">Monthly Audits</span>
-                <span className={`font-bold tabular-nums ${scansUsed >= 3 ? 'text-rose-400' : 'text-white'}`}>
-                  {scansUsed} / 3 Used
+                <span className={`font-bold tabular-nums ${scansFull ? 'text-rose-400' : 'text-white'}`}>
+                  {Number.isFinite(scansLimit) ? `${scansUsed} / ${scansLimit} used` : `${scansUsed} run, unlimited`}
                 </span>
               </div>
               <div className="w-full h-2 rounded-full bg-white/10 overflow-hidden">
                 <div
                   className={`h-full transition-all duration-300 rounded-full ${
-                    scansUsed >= 3
+                    scansFull
                       ? 'bg-rose-500'
-                      : scansUsed === 2
+                      : scanPercentage >= 66
                       ? 'bg-amber-500'
                       : 'bg-white'
                   }`}
@@ -76,8 +83,12 @@ export const UsageGauge: React.FC<UsageGaugeProps> = ({
                 />
               </div>
               <div className="flex items-center justify-between text-[10px] text-zinc-400 pt-0.5">
-                <span>{scansRemaining} audits left this cycle</span>
-                {scansUsed >= 3 && (
+                <span>
+                  {Number.isFinite(scansRemaining)
+                    ? `${scansRemaining} ${scansRemaining === 1 ? 'audit' : 'audits'} left this cycle`
+                    : 'No audit limit on this plan'}
+                </span>
+                {scansFull && (
                   <span className="text-rose-400 font-bold">Quota Full</span>
                 )}
               </div>
@@ -87,15 +98,15 @@ export const UsageGauge: React.FC<UsageGaugeProps> = ({
             <div className="flex flex-col gap-2 text-[11px] text-zinc-400">
               <div className="flex items-center justify-between py-1 border-b border-white/5">
                 <span>Connected Repos</span>
-                <span className={`font-bold tabular-nums ${projectsCount > 1 ? 'text-amber-400' : 'text-white'}`}>
-                  {projectsCount} / 1 Project
+                <span className={`font-bold tabular-nums ${projectsCount >= projectLimit ? 'text-amber-400' : 'text-white'}`}>
+                  {projectsCount} / {projectLimit} {projectLimit === 1 ? 'project' : 'projects'}
                 </span>
               </div>
 
               <div className="flex items-center justify-between py-1 border-b border-white/5">
                 <span>AI Fix Prompts</span>
                 <span className="font-bold text-white tabular-nums">
-                  {aiPromptsUsed} / {aiPromptsLimit} Trial
+                  {aiPromptsLeft} of {aiPromptsLimit} left
                 </span>
               </div>
 
@@ -103,18 +114,26 @@ export const UsageGauge: React.FC<UsageGaugeProps> = ({
                 <span className="flex items-center gap-1.5">
                   <span>Private Repos</span>
                 </span>
-                <span className="text-[11px] text-amber-400/90 font-bold bg-amber-500/10 px-1.5 py-0.5 rounded border border-amber-500/20">
-                  Pro Feature
-                </span>
+                {plan.privateRepoAccess ? (
+                  <span className="text-[11px] text-white font-bold">Included</span>
+                ) : (
+                  <span className="text-[11px] text-amber-400/90 font-bold bg-amber-500/10 px-1.5 py-0.5 rounded border border-amber-500/20">
+                    Pro Feature
+                  </span>
+                )}
               </div>
 
               <div className="flex items-center justify-between py-1">
                 <span className="flex items-center gap-1.5">
                   <span>PDF Certificates</span>
                 </span>
-                <span className="text-[11px] text-amber-400/90 font-bold bg-amber-500/10 px-1.5 py-0.5 rounded border border-amber-500/20">
-                  Pro Feature
-                </span>
+                {plan.pdfExportAccess ? (
+                  <span className="text-[11px] text-white font-bold">Included</span>
+                ) : (
+                  <span className="text-[11px] text-amber-400/90 font-bold bg-amber-500/10 px-1.5 py-0.5 rounded border border-amber-500/20">
+                    Pro Feature
+                  </span>
+                )}
               </div>
             </div>
 
