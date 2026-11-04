@@ -25,6 +25,7 @@ const InfraAuditView = dynamic(() => import('@/components/InfraAuditView').then(
 const CicdAutomationView = dynamic(() => import('@/components/CicdAutomationView').then(m => m.CicdAutomationView), { ssr: false });
 const VibePolishView = dynamic(() => import('@/components/VibePolishView').then(m => m.VibePolishView), { ssr: false });
 const RemediationQueueView = dynamic(() => import('@/components/RemediationQueueView').then(m => m.RemediationQueueView), { ssr: false });
+const RuleCatalogView = dynamic(() => import('@/components/dashboard/RuleCatalogView').then(m => m.RuleCatalogView), { ssr: false });
 const ProjectsView = dynamic(() => import('@/components/ProjectsView').then(m => m.ProjectsView), { ssr: false });
 const ScanHistoryView = dynamic(() => import('@/components/ScanHistoryView').then(m => m.ScanHistoryView), { ssr: false });
 const ProjectSettingsView = dynamic(() => import('@/components/ProjectSettingsView').then(m => m.ProjectSettingsView), { ssr: false });
@@ -553,12 +554,8 @@ function DashboardContent() {
             )}
 
             {activeNav === 'aimaster' && (
-              <ComponentErrorBoundary componentName="AiMasterView">
-                <VibePolishView
-                  catalog="all"
-                  title="Master Quality & Resilience Matrix"
-                  description="Full-stack architecture audit covering OWASP top vulnerabilities, RAG retrieval leakage, agent execution boundaries, token cost governance, and production SLA metrics."
-                />
+              <ComponentErrorBoundary componentName="RuleCatalogView">
+                <RuleCatalogView />
               </ComponentErrorBoundary>
             )}
 
