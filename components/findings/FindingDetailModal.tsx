@@ -17,6 +17,7 @@ import { priceLabel } from '@/data/pricing-plans';
 import { incidentFor } from '@/data/incidents';
 import { cweForFinding, cweUrl } from '@/lib/finding-cwe';
 import { JiraIssueButton } from '@/components/findings/JiraIssueButton';
+import { isSuggestion } from '@/lib/finding-counts';
 
 export interface FindingDetailModalProps {
   isOpen: boolean;
@@ -137,6 +138,8 @@ export const FindingDetailModal: React.FC<FindingDetailModalProps> = ({
     ? (revealStatus === 'loading' ? '// Loading fix...' : '// Reveal this fix to view it.')
     : cleanPrompt;
   const visiblePatch = fixLocked || needsReveal ? undefined : fixSource.diffPatch;
+  // Most rules give fix guidance, not a patch: say so instead of labelling a sentence as a patched diff
+  const hasPatch = Boolean(fixSource.diffPatch) || withheld;
   const jiraFinding = fixLocked || needsReveal
     ? { ...finding, remediationPrompt: 'Included in Zelsis Pro.', diffPatch: undefined }
     : fixSource;
@@ -285,7 +288,7 @@ export const FindingDetailModal: React.FC<FindingDetailModalProps> = ({
               </h2>
               {(finding.risk || finding.impact) && (
                 <p className="text-sm text-amber-200/90 flex flex-wrap items-center gap-2">
-                  <RiskBadge risk={finding.risk} />
+                  <RiskBadge risk={finding.risk} possible={isSuggestion(finding)} />
                   {finding.impact}
                 </p>
               )}
@@ -333,7 +336,7 @@ export const FindingDetailModal: React.FC<FindingDetailModalProps> = ({
                         : 'text-zinc-400 hover:text-white'
                     }`}
                   >
-                    <span>Diff Patch</span>
+                    <span>{hasPatch ? 'Diff Patch' : 'Fix'}</span>
                   </button>
 
                   <button
@@ -421,7 +424,7 @@ export const FindingDetailModal: React.FC<FindingDetailModalProps> = ({
                     {/* Left: Vulnerable Code (Red) */}
                     <div className="bg-[#0A0A0C] border border-red-500/20 rounded-xl p-3 flex flex-col gap-2">
                       <div className="flex items-center justify-between text-[0.68rem] font-bold text-red-400 uppercase tracking-wider border-b border-red-500/10 pb-1.5">
-                        <span>Current Vulnerable Code</span>
+                        <span>{isSuggestion(finding) ? 'Flagged code' : 'Current vulnerable code'}</span>
                         <span className="text-zinc-400">Line {finding.lineRange}</span>
                       </div>
                       <pre className="m-0 text-[0.72rem] text-red-200/90 whitespace-pre-wrap leading-relaxed overflow-x-auto">
@@ -432,8 +435,7 @@ export const FindingDetailModal: React.FC<FindingDetailModalProps> = ({
                     {/* Right: Remediated Fix (Green) */}
                     <div className="bg-[#0A0A0C] border border-emerald-500/25 rounded-xl p-3 flex flex-col gap-2">
                       <div className="flex items-center justify-between text-[0.68rem] font-bold text-emerald-400 uppercase tracking-wider border-b border-emerald-500/10 pb-1.5">
-                        <span>Zelsis Remediated Fix</span>
-                        <span className="text-emerald-500">Patched</span>
+                        <span>{hasPatch ? 'Suggested change' : 'How to fix'}</span>
                       </div>
                       <pre className="m-0 text-[0.72rem] text-emerald-300 whitespace-pre-wrap leading-relaxed overflow-x-auto">
                         {visiblePrompt}
@@ -468,21 +470,12 @@ export const FindingDetailModal: React.FC<FindingDetailModalProps> = ({
                         })
                       ) : (
                         <>
-                          <div className="text-zinc-400 select-none">--- a/{finding.filePath}</div>
-                          <div className="text-zinc-400 select-none">+++ b/{finding.filePath}</div>
-                          <div className="text-zinc-600 select-none">@@ -{finding.lineRange} +{finding.lineRange} @@</div>
-                          {cleanSnippet.split('\n').map((line: string, idx: number) => (
-                            <div
-                              key={`del-${idx}`}
-                              className="bg-red-500/15 text-red-300 px-2 py-0.5 rounded border-l-2 border-red-500 flex items-start gap-2 font-mono"
-                            >
-                              <span className="text-red-400 select-none">-</span>
-                              <span className="whitespace-pre">{line}</span>
-                            </div>
-                          ))}
-                          <div className="bg-emerald-500/15 text-emerald-300 px-2 py-0.5 rounded border-l-2 border-emerald-500 flex items-start gap-2 font-mono">
-                            <span className="text-emerald-400 select-none">+</span>
-                            <span className="whitespace-pre">{visiblePrompt}</span>
+                          {/* No patch for this rule: the flagged lines as they are, then the guidance (no invented diff) */}
+                          <div className="text-zinc-400 select-none">{finding.filePath} · {finding.lineRange}</div>
+                          <pre className="m-0 px-2 py-1 text-zinc-300 whitespace-pre-wrap">{cleanSnippet}</pre>
+                          <div className="mt-2 text-emerald-300 px-2 py-1 whitespace-pre-wrap font-sans">
+                            <span className="text-emerald-400 font-bold">How to fix: </span>
+                            {visiblePrompt}
                           </div>
                         </>
                       )}
@@ -625,7 +618,7 @@ export const FindingDetailModal: React.FC<FindingDetailModalProps> = ({
           {/* Sticky Drawer Footer */}
           <div className="px-6 py-4 border-t border-white/10 bg-[#121214] flex items-center justify-between shrink-0">
             <div className="flex items-center gap-2 text-xs text-zinc-400 font-mono">
-              <span>Owner: {finding.owner || 'Unassigned'}</span>
+              <span>{isSuggestion(finding) ? 'Suggestion: check it before you fix it' : 'Verified rule'}</span>
             </div>
 
             <div className="flex items-center gap-2.5">
