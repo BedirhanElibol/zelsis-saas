@@ -8,7 +8,6 @@ import { SeverityChart } from './SeverityChart';
 import { FindingsTable } from '../findings/FindingsTable';
 import { InteractiveAnalyzer } from '../InteractiveAnalyzer';
 import { VulnerabilityPlayground } from './VulnerabilityPlayground';
-import { QuickChartWidget } from './QuickChartWidget';
 import { DashboardModals, ActiveModalType } from './DashboardModals';
 import { GateStatusBanner } from './GateStatusBanner';
 import { verifiedFindings } from '@/lib/finding-counts';
@@ -50,7 +49,7 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
   const [copiedMaster, setCopiedMaster] = useState(false);
   const [isConnectTargetOpen, setIsConnectTargetOpen] = useState(false);
   const [activeModal, setActiveModal] = useState<ActiveModalType>(null);
-  const [activeTab, setActiveTab] = useState<'findings' | 'sandbox' | 'diagnostics'>('findings');
+  const [activeTab, setActiveTab] = useState<'findings' | 'sandbox'>('findings');
   const {
     showToast,
     isVisible: isToastVisible,
@@ -201,8 +200,9 @@ Enforce strict OWASP Top 10 compliance, fix the listed UI quality and accessibil
             className={`swiss-tab ${activeTab === 'findings' ? 'swiss-tab-active' : ''}`}
           >
             <span>Audit &amp; Findings</span>
+            {/* Verified findings, like the header and the table's default view */}
             <span className="ml-1 px-1.5 py-0.5 rounded text-[10px] font-mono font-bold bg-white/10 text-white">
-              {openFindings.length}
+              {gateFindings.length}
             </span>
           </button>
 
@@ -213,15 +213,6 @@ Enforce strict OWASP Top 10 compliance, fix the listed UI quality and accessibil
             <span>Code Inspector &amp; Sandbox</span>
           </button>
 
-          <button
-            onClick={() => setActiveTab('diagnostics')}
-            className={`swiss-tab ${activeTab === 'diagnostics' ? 'swiss-tab-active' : ''}`}
-          >
-            <span>Diagnostics &amp; Telemetry</span>
-            <span className="ml-1 px-1.5 py-0.5 rounded text-[10px] font-mono font-bold bg-white/10 text-[#A1A1AA]">
-              4 Tools
-            </span>
-          </button>
         </div>
 
         <div className="flex flex-wrap items-center gap-4 text-xs text-[#A1A1AA] font-mono">
@@ -272,12 +263,6 @@ Enforce strict OWASP Top 10 compliance, fix the listed UI quality and accessibil
         </div>
       )}
 
-      {/* Tab 3: Deep Diagnostics, Performance & Telemetry */}
-      {activeTab === 'diagnostics' && (
-        <div className="flex flex-col gap-6">
-          <QuickChartWidget project={safeProject} />
-        </div>
-      )}
 
       {/* Extracted Dashboard Modals */}
       <DashboardModals
