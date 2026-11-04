@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { Project, Finding } from '@/data/schema';
 import { MOCK_PROJECTS } from '@/data/demo-data';
-import { dedupeProjects, findUpdatedProject, isLocalAuditProject, normalizeProject, refreshFromCloud, repoKey, serializeProjectsForStorage, updateMatchingFindings } from '@/lib/dashboard/project-state';
+import { dedupeProjects, findUpdatedProject, isLocalAuditProject, normalizeProject, refreshFromCloud, repoKey, serializeProjectsForStorage, updateMatchingFindings, withMutedRules, withRecalculatedFindings } from '@/lib/dashboard/project-state';
 import { useScanQuota } from '@/hooks/dashboard/useScanQuota';
 import { UserProfile } from '@/components/auth/AuthModal';
 import { supabaseSignIn, supabaseSignUp, supabaseSignOut, resolveVerifiedSession, fetchCloudProjects, getSupabase, mapSupabaseUserToProfile, syncUserProfileToSupabase, isPlatformAdminEmail } from '@/lib/supabase';
@@ -977,13 +977,20 @@ export function useDashboardState() {
   /**
    * F-43 Remediation: Ignore entire rule across the project.
    */
+  // Mutes a rule in the selected project only, and remembers it so rescans keep its findings accepted.
+  // A second call unmutes it and reopens its accepted findings.
   const handleIgnoreRule = (ruleId: number) => {
     setProjects((prevProjects) => {
-      const updatedList = updateMatchingFindings(
-        prevProjects,
-        (f) => f.ruleId === ruleId,
-        (f) => ({ ...f, status: 'ACCEPTED_RISK' as Finding['status'] })
-      );
+      const updatedList = prevProjects.map((p) => {
+        if (p.id !== selectedProject.id) return p;
+        if (p.mutedRules?.includes(ruleId)) {
+          const mutedRules = p.mutedRules.filter((id) => id !== ruleId);
+          const reopened = (p.findings ?? []).map((f) => (f.ruleId === ruleId && f.status === 'ACCEPTED_RISK' ? { ...f, status: 'OPEN' as Finding['status'] } : f));
+          return withRecalculatedFindings({ ...p, mutedRules }, reopened);
+        }
+        const mutedRules = [...new Set([...(p.mutedRules ?? []), ruleId])];
+        return withRecalculatedFindings({ ...p, mutedRules }, withMutedRules({ mutedRules }, p.findings ?? []));
+      });
       const updatedSelected = findUpdatedProject(prevProjects, updatedList, selectedProject.id);
       if (updatedSelected) {
         setSelectedProject(updatedSelected);

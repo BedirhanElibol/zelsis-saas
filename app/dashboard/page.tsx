@@ -4,6 +4,7 @@ import React, { Suspense, useState, useEffect } from 'react';
 import { RescanAlertsBanner } from '@/components/dashboard/RescanAlertsBanner';
 import dynamic from 'next/dynamic';
 import { Project, Finding, ScanHistoryItem, UserTier } from '@/data/schema';
+import { withMutedRules, withRecalculatedFindings } from '@/lib/dashboard/project-state';
 import { MOCK_PROJECTS } from '@/data/demo-data';
 import { AppShell } from '@/components/layout/AppShell';
 import { DashboardView } from '@/components/dashboard/DashboardView';
@@ -460,7 +461,7 @@ function DashboardContent() {
                     duration: typeof result.durationMs === 'number' ? `${(result.durationMs / 1000).toFixed(1)}s` : 'n/a',
                     triggeredBy: 'Manual Dashboard Audit'
                   };
-                  const updatedProject: Project = {
+                  const scanned: Project = {
                     ...currentTarget,
                     readinessScore: result.score,
                     gateStatus: result.gateStatus,
@@ -476,6 +477,10 @@ function DashboardContent() {
                     lastScanIso: new Date().toISOString(),
                     scanHistory: [newScanHistoryItem, ...(currentTarget.scanHistory || [])].slice(0, 20)
                   };
+                  // Muted rules stay accepted; score, gate and counts follow from what is left open
+                  const updatedProject = currentTarget.mutedRules?.length
+                    ? withRecalculatedFindings(scanned, withMutedRules(currentTarget, result.findings))
+                    : scanned;
                   setSelectedProject(updatedProject);
                   setProjects((prev) => {
                     const exists = prev.some((p) => p.id === currentTarget.id);
@@ -688,6 +693,7 @@ function DashboardContent() {
         onToggleResolve={handleToggleResolveFinding}
         onMarkFalsePositive={handleMarkFalsePositive}
         onIgnoreRule={handleIgnoreRule}
+        ruleMuted={Boolean(inspectingFinding && safeSelectedProject?.mutedRules?.includes(inspectingFinding.ruleId))}
         user={user}
         quota={quota}
         onRecordAiPrompt={recordAiPromptUsage}

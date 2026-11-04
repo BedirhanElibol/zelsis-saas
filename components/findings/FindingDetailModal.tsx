@@ -26,6 +26,7 @@ export interface FindingDetailModalProps {
   onToggleResolve?: (id: string) => void;
   onMarkFalsePositive?: (id: string) => void;
   onIgnoreRule?: (ruleId: number) => void;
+  ruleMuted?: boolean;
   user?: UserProfile | null;
   quota?: PlanUsageQuota;
   onRecordAiPrompt?: () => void;
@@ -51,6 +52,7 @@ export const FindingDetailModal: React.FC<FindingDetailModalProps> = ({
   onToggleResolve,
   onMarkFalsePositive,
   onIgnoreRule,
+  ruleMuted = false,
   user,
   quota,
   onRecordAiPrompt,
@@ -627,9 +629,9 @@ export const FindingDetailModal: React.FC<FindingDetailModalProps> = ({
                   type="button"
                   onClick={() => onIgnoreRule(finding.ruleId)}
                   className="px-3 py-2 rounded-lg text-xs font-bold font-mono text-zinc-400 bg-white/5 border border-white/10 hover:bg-white/10 hover:text-white transition-all cursor-pointer"
-                  title={`Mute rule #${finding.ruleId} across project`}
+                  title={ruleMuted ? 'Show this rule again in this project' : 'Known and intentional: hide this rule in this project, now and on every rescan'}
                 >
-                  Mute Rule #{finding.ruleId}
+                  {ruleMuted ? 'Unmute rule' : 'Intentional, mute rule'}
                 </button>
               )}
               <button

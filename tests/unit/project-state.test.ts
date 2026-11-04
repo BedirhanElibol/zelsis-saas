@@ -6,6 +6,7 @@ import {
   normalizeProject,
   refreshFromCloud,
   serializeProjectsForStorage,
+  withMutedRules,
   updateMatchingFindings,
   withRecalculatedFindings
 } from '../../lib/dashboard/project-state';
@@ -136,5 +137,16 @@ describe('refreshFromCloud', () => {
     const p = refreshFromCloud(local, cloud({}));
     assert.equal(p.findings[0].status, 'RESOLVED');
     assert.equal(p.highCount, 0);
+  });
+});
+
+describe('muted rules', () => {
+  it('keep a muted rule accepted when a rescan or a cloud copy brings it back', () => {
+    const local = project({ id: 'm1', lastScanIso: '2026-10-05T10:00:00.000Z', mutedRules: [7], findings: [] });
+    const cloud = project({ lastScanIso: '2026-10-06T10:00:00.000Z', findings: [finding({ id: 'a', ruleId: 7, severity: 'HIGH' }), finding({ id: 'b', ruleId: 8, severity: 'LOW' })] });
+    const merged = refreshFromCloud(local, cloud);
+    assert.deepEqual(merged.findings.map((f) => f.status), ['ACCEPTED_RISK', 'OPEN']);
+    assert.equal(merged.highCount, 0);
+    assert.deepEqual(withMutedRules({ mutedRules: [8] }, cloud.findings).map((f) => f.status), ['OPEN', 'ACCEPTED_RISK']);
   });
 });

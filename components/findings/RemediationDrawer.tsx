@@ -11,6 +11,8 @@ export interface RemediationDrawerProps {
   onToggleResolve: (id: string) => void;
   onMarkFalsePositive?: (id: string) => void;
   onIgnoreRule?: (ruleId: number) => void;
+  /** The finding's rule is muted in this project: the button offers to unmute it. */
+  ruleMuted?: boolean;
   user?: UserProfile | null;
   quota?: PlanUsageQuota;
   onRecordAiPrompt?: () => void;
@@ -23,6 +25,7 @@ export const RemediationDrawer: React.FC<RemediationDrawerProps> = ({
   onToggleResolve,
   onMarkFalsePositive,
   onIgnoreRule,
+  ruleMuted,
   user,
   quota,
   onRecordAiPrompt,
@@ -36,6 +39,7 @@ export const RemediationDrawer: React.FC<RemediationDrawerProps> = ({
       onToggleResolve={onToggleResolve}
       onMarkFalsePositive={onMarkFalsePositive}
       onIgnoreRule={onIgnoreRule}
+      ruleMuted={ruleMuted}
       user={user}
       quota={quota}
       onRecordAiPrompt={onRecordAiPrompt}

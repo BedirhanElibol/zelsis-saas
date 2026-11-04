@@ -69,6 +69,8 @@ export const ProjectSchema = z.object({
   scanHistory: z.array(z.any()).optional(),
   organizationId: z.string().optional(),
   isPrivate: z.boolean().optional(),
+  /** Rules the owner marked "known, intentional" for this project: their findings stay accepted on every rescan. */
+  mutedRules: z.array(z.number()).optional(),
 });
 
 
