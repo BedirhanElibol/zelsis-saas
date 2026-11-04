@@ -825,6 +825,85 @@ export const RULE_CASES: RuleCase[] = [
     name: 'Live target down and without CSP',
     detects: f('live-deployment/security-headers.json', JSON.stringify({ targetUrl: 'https://app.example', statusCode: 503, isHealthy: false, missingSecurityHeaders: ['Content-Security-Policy'], headers: {} })),
     ignores: f('live-deployment/security-headers.json', JSON.stringify({ targetUrl: 'https://app.example', statusCode: 200, isHealthy: true, missingSecurityHeaders: [], headers: { 'content-security-policy': "default-src 'self'" } }))
+  },
+  // From a user's report on a real repo (ranwhat, 2026-11-03): each pattern below was safe code reported as a finding
+  {
+    ruleIds: [3021],
+    name: 'SQL text built only from constant fragments, ? lists and helpers that return them is not injection',
+    detects: f('worker/src/users.js', "export async function byName(env, name) {\n  return env.DB.prepare(`SELECT id FROM users WHERE name = '${name}'`).all();\n}\n"),
+    ignores: f('worker/src/members.js', [
+      'const IS = "EXISTS (SELECT 1 FROM memberships WHERE org_id = ? AND user_id = ? AND role = ?)";',
+      'const IS_ONE_OF = (roles) =>',
+      '  `EXISTS (SELECT 1 FROM memberships WHERE org_id = ? AND user_id = ? AND role IN (${roles.map(() => "?").join(", ")}))`;',
+      'const eventIf = (db, { org, user }, where, binds) =>',
+      '  db.prepare(`INSERT INTO auth_events (org_id, user_id) SELECT ?, ? WHERE ${where}`).bind(org, user, ...binds);',
+      'function departure(db, { org, user, guard = "1", binds = [] }) {',
+      '  const where = `${IS} AND ${guard}`;',
+      '  return [eventIf(db, { org, user }, where, binds), db.prepare(`DELETE FROM memberships WHERE org_id = ? AND ${guard}`).bind(org, ...binds)];',
+      '}',
+      'export function remove(db, org, user, by) {',
+      '  const live = [...by];',
+      '  const inForce = "org_id = ? AND starts_at <= ?";',
+      '  db.prepare(`SELECT 1 FROM grants WHERE ${inForce} AND status IN (${live.map(() => "?").join(", ")})`).bind(org, 1, ...live);',
+      '  return departure(db, { org, user, guard: IS_ONE_OF(by), binds: by });',
+      '}',
+      '',
+    ].join('\n')),
+  },
+  {
+    ruleIds: [24101],
+    name: 'Python table names through quote_ident, or a choice between literals, are not injection',
+    detects: f('app/sources/store.py', 'def load(conn, table):\n    return conn.execute("SELECT id FROM %s WHERE kind = 1" % table).fetchall()\n'),
+    ignores: f('app/sources/store.py', [
+      'def load(conn, table, joined):',
+      '    ids = conn.execute("SELECT id FROM %s" % _sqlite.quote_ident(table)).fetchall()',
+      '    sql = ("SELECT p.id, %s FROM "',
+      '           "part p %s" % (',
+      '               "m.data" if joined else "NULL",',
+      '               "LEFT JOIN message m ON m.id = p.message_id" if joined else ""))',
+      '    return ids, conn.execute(sql).fetchall()',
+      '',
+    ].join('\n')),
+  },
+  {
+    ruleIds: [16],
+    name: 'innerHTML set back to the markup the element had, or to a literal, is not XSS',
+    detects: f('site/subscribe.js', 'var button = document.querySelector("button");\nbutton.innerHTML = location.hash.slice(1);\n'),
+    ignores: f('site/subscribe.js', 'var button = document.querySelector("button");\nvar LABEL = button.innerHTML;\nfunction busy(on) {\n  button.innerHTML = on ? "Subscribing&hellip;" : LABEL;\n}\n'),
+  },
+  {
+    ruleIds: [41],
+    name: 'A redirect target that went through the app\'s own check (nextPath) is not an open redirect',
+    detects: f('worker/src/dashboard.js', 'export async function signin(request) {\n  const url = new URL(request.url);\n  const next = url.searchParams.get("next");\n  return redirect(next);\n}\n'),
+    ignores: f('worker/src/dashboard.js', 'import { nextPath } from "./session.js";\nexport async function signin(request) {\n  const url = new URL(request.url);\n  const next = nextPath(url.searchParams.get("next"));\n  return redirect(next);\n}\n'),
+  },
+  {
+    ruleIds: [5001],
+    name: 'A hand-typed AWS key id in a test file is test input; a real-looking one in app code is a leak',
+    detects: f('src/config.ts', `export const AWS_KEY = '${'AKIA' + 'Q7XJ2M4K9P1R5T8W'}';\n`),
+    ignores: f('tests/test_clean.py', `KEYS = ["${'AKIA' + '1234567890ABCDEF'}", "${'AKIA' + '4TRUE7KEYX9QZ2WB'}"]\n`),
+  },
+  {
+    ruleIds: [5045, 5046],
+    name: 'A private key header with no key body is test input for a masker',
+    detects: f('deploy/keys.txt', [
+      '-----BEGIN ' + 'RSA PRIVATE KEY-----', ...Array.from({ length: 6 }, (_, i) => 'Qm9nUmFuZG9tS2V5Qm9keUxpbmU' + i + 'zRXlKaGJHY2lPaUpJVXpJMU5pSjk'),
+      '-----END ' + 'RSA PRIVATE KEY-----',
+      '-----BEGIN ' + 'OPENSSH PRIVATE KEY-----', ...Array.from({ length: 6 }, (_, i) => 'b3BlbnNzaC1rZXktdjEAAAAABG5vbmU' + i + 'AAAAEbm9uZQAAAAAAAAABAAAAMwAA'),
+      '-----END ' + 'OPENSSH PRIVATE KEY-----', '',
+    ].join('\n')),
+    ignores: f('tests/test_reach.py', [
+      'def test_masks_headers(self):',
+      `    self.assertEqual(hits("cat <<EOF\\n-----BEGIN ${'RSA PRIVATE KEY'}-----\\nEOF"), [])`,
+      `    write(path, "-----BEGIN ${'OPENSSH PRIVATE KEY'}-----\\nb3Blbg==\\n-----END ${'OPENSSH PRIVATE KEY'}-----\\n")`,
+      '',
+    ].join('\n')),
+  },
+  {
+    ruleIds: [228],
+    name: 'CLICHE-28: "live now" as availability copy is not a fake presence indicator',
+    detects: f('site/index.html', '<section><span class="dot"></span> 23 people online now</section>\n'),
+    ignores: f('site/pricing.html', '<p>The team plan is live now at &euro;12 a month per organisation.</p>\n<p class="state">Live now: the catalogue feed, CI tokens and badges.</p>\n'),
   }
 ];
 
