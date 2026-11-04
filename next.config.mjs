@@ -63,6 +63,11 @@ const nextConfig = {
           {
             key: 'X-Permitted-Cross-Domain-Policies',
             value: 'none'
+          },
+          {
+            // Same policy as CSP_DIRECTIVES in lib/security-headers.ts; pages get it here so the proxy only runs for /api
+            key: 'Content-Security-Policy',
+            value: "default-src 'self'; script-src 'self' 'unsafe-inline'; worker-src 'self' blob:; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob: https://avatars.githubusercontent.com https://raw.githubusercontent.com https://images.unsplash.com https://lh3.googleusercontent.com https://*.googleusercontent.com; font-src 'self' data:; connect-src 'self' https://*.supabase.co wss://*.supabase.co https://api.polar.sh https://api.github.com https://raw.githubusercontent.com https://api.pwnedpasswords.com; frame-ancestors 'none'; base-uri 'self'; form-action 'self'; object-src 'none'"
           }
         ]
       }
