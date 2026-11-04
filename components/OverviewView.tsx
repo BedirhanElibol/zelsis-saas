@@ -3,6 +3,7 @@
 import React, { useState } from 'react';
 import { Project, Finding } from '@/data/schema';
 import { Play, X, Loader2 } from 'lucide-react';
+import { verifiedFindings } from '@/lib/finding-counts';
 
 export interface DemoShowcaseBannerProps {
   onFocusQuickAudit?: () => void;
@@ -136,7 +137,8 @@ export const OverviewView: React.FC<OverviewViewProps> = ({
 
   const isGuest = !user || !user.isLoggedIn;
 
-  const openFindings = project.findings.filter(f => f.status === 'OPEN');
+  // Verified findings, the same counts as the dashboard header and the API
+  const openFindings = verifiedFindings(project.findings);
   const criticals = openFindings.filter(f => f.severity === 'CRITICAL');
   const highs = openFindings.filter(f => f.severity === 'HIGH');
 

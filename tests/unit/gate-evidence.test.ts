@@ -14,13 +14,12 @@ test('evidence-backed CRITICAL fails the gate', () => {
   assert.equal(calculateGateStatus([finding({ maturity: 'verified' })]), 'FAILED');
 });
 
-test('unproven CRITICAL only warns and scores as advisory', () => {
+test('an unproven CRITICAL is a suggestion: it neither moves the gate nor costs score', () => {
   const f = finding({ maturity: 'unproven' });
   assert.equal(gateSeverity(f), 'HIGH');
-  assert.equal(calculateGateStatus([f]), 'WARNING');
-  // Advisory: costs less than a proven HIGH, and no amount of unproven findings costs more than 10 points
-  assert.ok(calculateReadinessScore([f]) > calculateReadinessScore([finding({ severity: 'HIGH', maturity: 'verified' })]));
-  assert.ok(calculateReadinessScore(Array.from({ length: 50 }, () => finding({ maturity: 'unproven' }))) >= 90);
+  assert.equal(calculateGateStatus([f]), 'PASSED');
+  assert.equal(calculateReadinessScore(Array.from({ length: 50 }, () => finding({ maturity: 'unproven' }))), 100);
+  assert.ok(calculateReadinessScore([finding({ severity: 'HIGH', maturity: 'verified' })]) < 100);
 });
 
 test('findings stored before the policy (no maturity) keep their severity', () => {

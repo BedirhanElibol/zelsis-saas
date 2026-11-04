@@ -3,6 +3,7 @@
 import React from 'react';
 import { Project } from '@/data/schema';
 import NumberFlow from '@number-flow/react';
+import { summarizeFindings, verifiedFindings } from '@/lib/finding-counts';
 
 interface KpiCardsProps {
   project: Project;
@@ -10,22 +11,10 @@ interface KpiCardsProps {
 }
 
 export const KpiCards: React.FC<KpiCardsProps> = ({ project, onNavigatePillar }) => {
-  const safeFindings = Array.isArray(project?.findings) ? project.findings : [];
-  const openFindings = safeFindings.filter((f) => f && f.status === 'OPEN');
-  const criticals = openFindings.filter((f) => f && f.severity === 'CRITICAL').length;
-  const highs = openFindings.filter((f) => f && f.severity === 'HIGH').length;
-
-  // Real count of open UI quality / accessibility findings; no invented "rules passed" baseline.
-  const openUiIssues = openFindings.filter(
-    (f) => f && (f.type === 'VIBEPOLISH' || f.category?.includes('UI') || f.category?.includes('Visual'))
-  ).length;
-
-  const openSlop = openFindings.filter(
-    (f) => f && (f.category?.includes('Architecture') || f.category?.includes('Slop') || f.category?.includes('Code'))
-  ).length;
-  const totalSlopBaseline = Math.max(200, openSlop);
-  const clearedSlopRules = Math.max(0, totalSlopBaseline - openSlop);
-  const slopPercent = Math.round((clearedSlopRules / totalSlopBaseline) * 100);
+  // Same counts as the header, the table, exports and the API (lib/finding-counts): verified findings only
+  const summary = summarizeFindings(project?.findings);
+  const { openRisks, verifiedUi, suggestionUi } = summary;
+  const logicBugs = verifiedFindings(project?.findings).filter((f) => f.type === 'VIBECARE').length;
   const readiness = typeof project?.readinessScore === 'number' ? project.readinessScore : 100;
 
   return (
@@ -101,21 +90,21 @@ export const KpiCards: React.FC<KpiCardsProps> = ({ project, onNavigatePillar })
         </div>
 
         <div className="flex items-baseline gap-1.5 sm:gap-2">
-          <span className="text-2xl sm:text-3xl font-extrabold text-white font-mono">
-            <NumberFlow value={Math.max(0, Math.round(((23 - Math.min(23, criticals + highs)) / 23) * 100))} />
+          <span className={`text-2xl sm:text-3xl font-extrabold font-mono ${openRisks > 0 ? 'text-[#EF4444]' : 'text-white'}`}>
+            <NumberFlow value={openRisks} />
           </span>
-          <span className="text-[10px] sm:text-xs font-mono text-[#A1A1AA]">%</span>
+          <span className="text-[10px] sm:text-xs font-mono text-[#A1A1AA]">to fix</span>
         </div>
 
         <div className="w-full h-1 bg-white/[0.06] rounded-full mt-2 sm:mt-3 overflow-hidden">
           <div
-            className="h-full bg-white transition-all duration-700 rounded-full"
-            style={{ width: `${Math.max(0, Math.round(((23 - Math.min(23, criticals + highs)) / 23) * 100))}%` }}
+            className={`h-full transition-all duration-700 rounded-full ${openRisks > 0 ? 'bg-[#EF4444]' : 'bg-white'}`}
+            style={{ width: '100%' }}
           />
         </div>
 
-        <div className="text-[0.68rem] sm:text-[0.72rem] text-[#EF4444] font-bold mt-2 sm:mt-3 flex items-center justify-between font-mono">
-          <span className="truncate">{criticals + highs} Open Risks</span>
+        <div className={`text-[0.68rem] sm:text-[0.72rem] font-bold mt-2 sm:mt-3 flex items-center justify-between font-mono ${openRisks > 0 ? 'text-[#EF4444]' : 'text-zinc-400'}`}>
+          <span className="truncate">{openRisks > 0 ? `${openRisks} critical or high ${openRisks === 1 ? 'risk' : 'risks'}` : 'No open risks'}</span>
           <span className="text-[0.68rem] text-white/80 opacity-0 group-hover:opacity-100 transition-opacity hidden sm:inline">
             Inspect &rarr;
           </span>
@@ -142,21 +131,21 @@ export const KpiCards: React.FC<KpiCardsProps> = ({ project, onNavigatePillar })
         </div>
 
         <div className="flex items-baseline gap-1.5 sm:gap-2">
-          <span className={`text-2xl sm:text-3xl font-extrabold font-mono ${openUiIssues > 0 ? 'text-[#F59E0B]' : 'text-white'}`}>
-            <NumberFlow value={openUiIssues} />
+          <span className={`text-2xl sm:text-3xl font-extrabold font-mono ${verifiedUi > 0 ? 'text-[#F59E0B]' : 'text-white'}`}>
+            <NumberFlow value={verifiedUi} />
           </span>
           <span className="text-[10px] sm:text-xs font-mono text-[#A1A1AA]">open</span>
         </div>
 
         <div className="w-full h-1 bg-white/[0.06] rounded-full mt-2 sm:mt-3 overflow-hidden">
           <div
-            className={`h-full transition-all duration-700 rounded-full ${openUiIssues > 0 ? 'bg-[#F59E0B]' : 'bg-white'}`}
+            className={`h-full transition-all duration-700 rounded-full ${verifiedUi > 0 ? 'bg-[#F59E0B]' : 'bg-white'}`}
             style={{ width: '100%' }}
           />
         </div>
 
-        <div className={`text-[0.68rem] sm:text-[0.72rem] font-bold mt-2 sm:mt-3 flex items-center justify-between font-mono ${openUiIssues > 0 ? 'text-[#F59E0B]' : 'text-zinc-400'}`}>
-          <span className="truncate">{openUiIssues > 0 ? `${openUiIssues} UI ${openUiIssues === 1 ? 'issue' : 'issues'}` : 'No open UI issues'}</span>
+        <div className={`text-[0.68rem] sm:text-[0.72rem] font-bold mt-2 sm:mt-3 flex items-center justify-between font-mono ${verifiedUi > 0 ? 'text-[#F59E0B]' : 'text-zinc-400'}`}>
+          <span className="truncate">{verifiedUi > 0 ? `${verifiedUi} UI ${verifiedUi === 1 ? 'issue' : 'issues'}` : 'No open UI issues'}{suggestionUi > 0 ? ` · ${suggestionUi} suggestions` : ''}</span>
           <span className="text-[0.68rem] text-white/80 opacity-0 group-hover:opacity-100 transition-opacity hidden sm:inline">
             Inspect &rarr;
           </span>
@@ -167,37 +156,37 @@ export const KpiCards: React.FC<KpiCardsProps> = ({ project, onNavigatePillar })
       <div
         role="button"
         tabIndex={0}
-        onClick={() => onNavigatePillar('aimaster')}
+        onClick={() => onNavigatePillar('logicbugs')}
         onKeyDown={(e) => {
           if (e.key === 'Enter' || e.key === ' ') {
             e.preventDefault();
-            onNavigatePillar('aimaster');
+            onNavigatePillar('logicbugs');
           }
         }}
         className="bg-[#141414] border border-white/10 rounded-xl hover:border-white/20 p-3.5 sm:p-5 flex flex-col justify-between cursor-pointer transition-all duration-200 group focus-visible:ring-2 focus-visible:ring-emerald-500 focus-visible:outline-none"
       >
         <div className="flex items-center justify-between mb-2 sm:mb-3">
           <span className="text-[0.62rem] sm:text-[0.68rem] font-mono font-semibold text-[#A1A1AA] tracking-wider uppercase truncate">
-            QUALITY MATRIX
+            LOGIC BUGS
           </span>
         </div>
 
         <div className="flex items-baseline gap-1.5 sm:gap-2">
-          <span className="text-2xl sm:text-3xl font-extrabold text-white font-mono">
-            <NumberFlow value={slopPercent} />
+          <span className={`text-2xl sm:text-3xl font-extrabold font-mono ${logicBugs > 0 ? 'text-[#F59E0B]' : 'text-white'}`}>
+            <NumberFlow value={logicBugs} />
           </span>
-          <span className="text-[10px] sm:text-xs font-mono text-[#A1A1AA]">%</span>
+          <span className="text-[10px] sm:text-xs font-mono text-[#A1A1AA]">open</span>
         </div>
 
         <div className="w-full h-1 bg-white/[0.06] rounded-full mt-2 sm:mt-3 overflow-hidden">
           <div
-            className="h-full bg-white transition-all duration-700 rounded-full"
-            style={{ width: `${slopPercent}%` }}
+            className={`h-full transition-all duration-700 rounded-full ${logicBugs > 0 ? 'bg-[#F59E0B]' : 'bg-white'}`}
+            style={{ width: '100%' }}
           />
         </div>
 
-        <div className={`text-[0.68rem] sm:text-[0.72rem] font-bold mt-2 sm:mt-3 flex items-center justify-between font-mono ${openSlop > 0 ? 'text-[#F59E0B]' : 'text-zinc-400'}`}>
-          <span className="truncate">{openSlop > 0 ? `${openSlop} Slop Rules` : 'Cleared'}</span>
+        <div className={`text-[0.68rem] sm:text-[0.72rem] font-bold mt-2 sm:mt-3 flex items-center justify-between font-mono ${logicBugs > 0 ? 'text-[#F59E0B]' : 'text-zinc-400'}`}>
+          <span className="truncate">{logicBugs > 0 ? `${logicBugs} broken ${logicBugs === 1 ? 'feature' : 'features'}` : 'No logic bugs found'}</span>
           <span className="text-[0.68rem] text-white/80 opacity-0 group-hover:opacity-100 transition-opacity hidden sm:inline">
             Inspect &rarr;
           </span>

@@ -9,6 +9,7 @@ import { exportProjectPdfReport, generateExecutiveMarkdown } from '@/lib/report-
 import { ClipboardToastBadge, useClipboardToast } from '../ui/Toast';
 import { isPdfExportAllowed } from '@/lib/quota-manager';
 import { fetchOrgBranding } from '@/lib/supabase';
+import { verifiedFindings } from '@/lib/finding-counts';
 
 interface ExecutiveBriefingModalProps {
   isOpen: boolean;
@@ -41,7 +42,8 @@ export const ExecutiveBriefingModal: React.FC<ExecutiveBriefingModalProps> = ({
   if (!isOpen) return null;
 
   const isPassed = project.gateStatus === 'PASSED';
-  const openFindings = project.findings.filter((f) => f.status === 'OPEN');
+  // Verified findings, the same counts as the dashboard header and the API
+  const openFindings = verifiedFindings(project.findings);
   const criticals = openFindings.filter((f) => f.severity === 'CRITICAL');
   const highs = openFindings.filter((f) => f.severity === 'HIGH');
   const mediums = openFindings.filter((f) => f.severity === 'MEDIUM');

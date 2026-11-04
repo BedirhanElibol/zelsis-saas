@@ -576,7 +576,7 @@ function DashboardContent() {
             {activeNav === 'remediation' && (
               <ComponentErrorBoundary componentName="RemediationQueueView">
                 <RemediationQueueView
-                  projects={projects}
+                  projects={safeSelectedProject ? [safeSelectedProject] : []}
                   onInspectFinding={(f) => setInspectingFinding(f)}
                   onToggleResolveFinding={handleToggleResolveFinding}
                   userTier={user?.tier}

@@ -4,6 +4,7 @@ import { buildSoc2Mapping } from '@/lib/soc2-mapping';
 import { FIX_SIZE_NOTE, fixSize } from '@/lib/fix-size';
 import { computeSha256 } from '@/lib/crypto-digest';
 import { SECURITY_RULES_CATALOG } from '@/data/mockData';
+import { verifiedFindings } from './finding-counts';
 
 /**
  * Safe HTML Entity Escaping to eradicate Stored / DOM XSS in generated audit reports
@@ -175,7 +176,8 @@ export function generateAuditPdfReport(project: Project, options: AuditReportOpt
   const commitStr = options.commitSha || options.commit || (project as any)?.commitSha || (project as any)?.commit || 'Working tree HEAD';
   const fileCountStr = options.fileCount ? `${options.fileCount} files` : 'Full repository snapshot';
 
-  const openFindings = (project?.findings || []).filter(f => f?.status === 'OPEN');
+  // Verified findings, the same counts as the dashboard header and the API
+  const openFindings = verifiedFindings(project?.findings);
   const criticals = openFindings.filter(f => f?.severity === 'CRITICAL');
   const highs = openFindings.filter(f => f?.severity === 'HIGH');
   const projectNameEscaped = escapeHtml(project?.name ?? 'Target Repository');
