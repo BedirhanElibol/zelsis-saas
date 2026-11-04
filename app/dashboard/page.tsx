@@ -693,6 +693,7 @@ function DashboardContent() {
         onToggleResolve={handleToggleResolveFinding}
         onMarkFalsePositive={handleMarkFalsePositive}
         onIgnoreRule={handleIgnoreRule}
+        ruleMuted={Boolean(inspectingFinding && safeSelectedProject?.mutedRules?.includes(inspectingFinding.ruleId))}
         user={user}
         quota={quota}
         onRecordAiPrompt={recordAiPromptUsage}
