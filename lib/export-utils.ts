@@ -44,7 +44,6 @@ export function exportFindingsToCsv(findings: Finding[], projectName: string = '
     'File Path',
     'Line Range',
     'Status',
-    'Owner',
     'Snippet',
     'Remediation Directive'
   ];
@@ -59,7 +58,6 @@ export function exportFindingsToCsv(findings: Finding[], projectName: string = '
     escapeCsvField(f.filePath),
     escapeCsvField(f.lineRange),
     escapeCsvField(f.status),
-    escapeCsvField(f.owner || 'Security Team'),
     escapeCsvField(f.snippet),
     escapeCsvField(f.remediationPrompt)
   ]);
@@ -124,8 +122,7 @@ export function exportScorecardToJson(project: Project): void {
       reproductionSteps: f.reproductionSteps,
       remediationDirective: f.remediationPrompt,
       diffPatch: f.diffPatch || null,
-      status: f.status,
-      owner: f.owner || 'Security Architect'
+      status: f.status
     }))
   };
 

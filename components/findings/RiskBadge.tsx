@@ -9,13 +9,16 @@ const STYLE: Record<RiskKind, { className: string }> = {
   DOWNTIME: { className: 'bg-sky-500/15 text-sky-300 border-sky-500/30' },
 };
 
-/** Small label saying what kind of damage a finding leads to (money, data, accounts, server, uptime). */
-export function RiskBadge({ risk, className = '' }: { risk?: RiskKind; className?: string }) {
+/**
+ * Small label saying what kind of damage a finding leads to (money, data, accounts, server, uptime).
+ * possible: the finding is a suggestion, so the damage is not established.
+ */
+export function RiskBadge({ risk, className = '', possible = false }: { risk?: RiskKind; className?: string; possible?: boolean }) {
   if (!risk) return null;
   const { className: tone } = STYLE[risk];
   return (
     <span className={`inline-flex items-center gap-1 px-1.5 py-0.5 rounded border text-[10px] font-bold uppercase tracking-wide ${tone} ${className}`}>
-      {RISK_LABEL[risk]}
+      {possible ? 'Possible ' : ''}{RISK_LABEL[risk]}
     </span>
   );
 }
