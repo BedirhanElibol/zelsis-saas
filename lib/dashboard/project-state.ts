@@ -116,6 +116,11 @@ export function normalizeProject(p: Project, fallback: Project): Project {
   };
 }
 
+/** A scan's findings as stored: every one, so counts after a reload match the scan (60 used to be the cap). */
+const STORED_FINDINGS_MAX = 1000;
+/** Long enough for the flagged lines with their context; a user had to read cut snippets in the repo instead. */
+const STORED_SNIPPET_MAX = 2000;
+
 /**
  * Strips tokens and trims findings so the project list fits in localStorage.
  * `compact` keeps only the fields the dashboard needs, for when the full form exceeds the quota.
@@ -135,10 +140,10 @@ export function serializeProjectsForStorage(projects: Project[], allowLocalAudit
           filePath: f.filePath,
           status: f.status
         }))
-      : (p.findings ?? []).slice(0, 60).map((f) => ({
+      : (p.findings ?? []).slice(0, STORED_FINDINGS_MAX).map((f) => ({
           ...f,
-          snippet: typeof f.snippet === 'string' && f.snippet.length > 150 ? f.snippet.slice(0, 150) + '...' : f.snippet,
-          reproductionSteps: Array.isArray(f.reproductionSteps) ? f.reproductionSteps.slice(0, 1) : []
+          snippet: typeof f.snippet === 'string' && f.snippet.length > STORED_SNIPPET_MAX ? f.snippet.slice(0, STORED_SNIPPET_MAX) + '...' : f.snippet,
+          reproductionSteps: Array.isArray(f.reproductionSteps) ? f.reproductionSteps.slice(0, 3) : []
         }));
     return { ...safeProject, findings };
   });
