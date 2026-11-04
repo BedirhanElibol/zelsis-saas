@@ -627,9 +627,9 @@ export const FindingDetailModal: React.FC<FindingDetailModalProps> = ({
                   type="button"
                   onClick={() => onIgnoreRule(finding.ruleId)}
                   className="px-3 py-2 rounded-lg text-xs font-bold font-mono text-zinc-400 bg-white/5 border border-white/10 hover:bg-white/10 hover:text-white transition-all cursor-pointer"
-                  title={`Mute rule #${finding.ruleId} across project`}
+                  title="Known and intentional: hide this rule in this project, now and on every rescan"
                 >
-                  Mute Rule #{finding.ruleId}
+                  Intentional, mute rule
                 </button>
               )}
               <button

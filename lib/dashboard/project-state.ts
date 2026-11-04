@@ -8,6 +8,13 @@ export const isLocalAuditProject = (p: Pick<Project, 'id' | 'repoUrl'>): boolean
   p.repoUrl === 'local' || LOCAL_AUDIT_PROJECT_IDS.has(p.id);
 
 /** Returns the project with its findings replaced and gate, score and open counts recomputed. */
+/** A new scan's findings with the project's muted rules applied, so a muted rule does not come back as open. */
+export function withMutedRules(proj: Pick<Project, 'mutedRules'>, findings: Finding[]): Finding[] {
+  const muted = new Set(proj.mutedRules ?? []);
+  if (muted.size === 0) return findings;
+  return findings.map((f) => (muted.has(f.ruleId) && f.status === 'OPEN' ? { ...f, status: 'ACCEPTED_RISK' as Finding['status'] } : f));
+}
+
 export function withRecalculatedFindings(proj: Project, findings: Finding[]): Project {
   // Same basis as the scanner: open findings from gating (non-experimental) rules
   const gating = gatingFindings(findings);
@@ -58,10 +65,10 @@ export function refreshFromCloud(local: Project, cloud: Project): Project {
   if (cloud.findings.length === 0 && cloudOpen > 0) return local;
 
   const triaged = new Map(local.findings.filter((f) => f.status !== 'OPEN').map((f) => [findingKey(f), f.status] as const));
-  const findings = cloud.findings.map((f) => {
+  const findings = withMutedRules(local, cloud.findings.map((f) => {
     const status = triaged.get(findingKey(f));
     return status ? { ...f, status } : f;
-  });
+  }));
   const merged: Project = {
     ...local,
     lastScanAt: cloud.lastScanAt,
@@ -76,7 +83,7 @@ export function refreshFromCloud(local: Project, cloud: Project): Project {
     uiClicheCount: cloud.uiClicheCount,
     findings,
   };
-  return findings.some((f) => triaged.has(findingKey(f))) ? withRecalculatedFindings(merged, findings) : merged;
+  return findings.some((f) => f.status !== 'OPEN') ? withRecalculatedFindings(merged, findings) : merged;
 }
 
 /** Last project in `next` that changed relative to `prev` and has the given id. */
