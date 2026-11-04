@@ -3,7 +3,7 @@
  * Only exact versions are extracted: ranges in package.json and similar are not versions.
  */
 
-export type OsvEcosystem = 'npm' | 'PyPI' | 'Go' | 'RubyGems' | 'Packagist' | 'crates.io' | 'Maven';
+export type OsvEcosystem = 'npm' | 'PyPI' | 'Go' | 'RubyGems' | 'Packagist' | 'crates.io' | 'Maven' | 'NuGet' | 'Pub' | 'SwiftURL';
 
 export interface Dependency {
   ecosystem: OsvEcosystem;
@@ -18,9 +18,9 @@ export interface Dependency {
 }
 
 /** Pure lockfiles: dependency data only, never evaluated by pattern rules. */
-const LOCKFILE_RE = /(?:^|\/)(?:package-lock\.json|npm-shrinkwrap\.json|yarn\.lock|pnpm-lock\.yaml|poetry\.lock|pipfile\.lock|uv\.lock|gemfile\.lock|composer\.lock|cargo\.lock|go\.sum)$/i;
+const LOCKFILE_RE = /(?:^|\/)(?:package-lock\.json|npm-shrinkwrap\.json|yarn\.lock|pnpm-lock\.yaml|poetry\.lock|pipfile\.lock|uv\.lock|gemfile\.lock|composer\.lock|cargo\.lock|go\.sum|bun\.lock|pubspec\.lock|packages\.lock\.json|gradle\.lockfile|package\.resolved)$/i;
 /** Manifests that may pin exact versions (also evaluated by pattern rules). */
-const PINNED_MANIFEST_RE = /(?:^|\/)(?:requirements[\w.-]*\.txt|go\.mod|pom\.xml)$/i;
+const PINNED_MANIFEST_RE = /(?:^|\/)(?:requirements[\w.-]*\.txt|go\.mod|pom\.xml|[^/]+\.csproj|packages\.config|directory\.packages\.props|libs\.versions\.toml)$/i;
 
 export const isDependencyLockfile = (path: string): boolean => LOCKFILE_RE.test(path);
 export const isDependencyFile = (path: string): boolean => LOCKFILE_RE.test(path) || PINNED_MANIFEST_RE.test(path);
@@ -277,6 +277,121 @@ function parsePom(path: string, content: string, lines: string[]): Dependency[] 
   return out;
 }
 
+/** An exact release version (no ranges, wildcards, workspace or git references). */
+const EXACT = /^\d+(?:\.\d+)*(?:[-+.][0-9A-Za-z.-]+)?$/;
+
+/** bun.lock (text format): "name": ["name@version", ...] entries under "packages". */
+function parseBunLock(path: string, lines: string[]): Dependency[] {
+  const out: Dependency[] = [];
+  lines.forEach((l, i) => {
+    const m = l.match(/^\s*"[^"]+"\s*:\s*\[\s*"((?:@[^@"/]+\/)?[^@"]+)@([^"]+)"/);
+    if (m && EXACT.test(m[2])) out.push({ ecosystem: 'npm', name: m[1], version: m[2], file: path, line: i + 1, dev: false });
+  });
+  return out;
+}
+
+/** pubspec.lock (Dart/Flutter): hosted packages with their resolved version. */
+function parsePubspecLock(path: string, lines: string[]): Dependency[] {
+  const out: Dependency[] = [];
+  let cur: { name: string; line: number; version?: string; hosted?: boolean; dev?: boolean } | null = null;
+  const flush = () => {
+    if (cur?.version && cur.hosted && EXACT.test(cur.version)) out.push({ ecosystem: 'Pub', name: cur.name, version: cur.version, file: path, line: cur.line, dev: Boolean(cur.dev) });
+  };
+  lines.forEach((l, i) => {
+    const pkg = l.match(/^ {2}([A-Za-z0-9_]+):\s*$/);
+    if (pkg) { flush(); cur = { name: pkg[1], line: i + 1 }; return; }
+    if (/^\S/.test(l)) { flush(); cur = null; return; }
+    if (!cur) return;
+    const v = l.match(/^ {4}version:\s*"?([^"\s]+)"?/);
+    if (v) cur.version = v[1];
+    if (/^ {4}source:\s*hosted\b/.test(l)) cur.hosted = true;
+    if (/^ {4}dependency:\s*"?direct dev/.test(l)) cur.dev = true;
+  });
+  flush();
+  return out;
+}
+
+/** NuGet packages.lock.json: resolved versions per target framework. */
+function parseNugetLock(path: string, content: string, lines: string[]): Dependency[] {
+  const out: Dependency[] = [];
+  let json: { dependencies?: Record<string, Record<string, { type?: string; resolved?: string }>> };
+  try { json = JSON.parse(content); } catch { return out; }
+  for (const deps of Object.values(json.dependencies ?? {})) {
+    for (const [name, d] of Object.entries(deps ?? {})) {
+      if (d?.type === 'Project' || !d?.resolved || !EXACT.test(d.resolved)) continue;
+      out.push({ ecosystem: 'NuGet', name, version: d.resolved, file: path, line: lineOf(lines, `"${name}"`), dev: false });
+    }
+  }
+  return out;
+}
+
+/** .csproj PackageReference and packages.config entries with an exact version. */
+function parseNugetManifest(path: string, content: string, lines: string[]): Dependency[] {
+  const out: Dependency[] = [];
+  const add = (name: string, version: string) => {
+    if (EXACT.test(version)) out.push({ ecosystem: 'NuGet', name, version, file: path, line: lineOf(lines, `"${name}"`), dev: false });
+  };
+  for (const m of content.matchAll(/<PackageReference\s+Include="([^"]+)"\s+Version="([^"]+)"/gi)) add(m[1], m[2]);
+  for (const m of content.matchAll(/<PackageReference\s+Include="([^"]+)"\s*>\s*<Version>\s*([^<\s]+)\s*<\/Version>/gi)) add(m[1], m[2]);
+  for (const m of content.matchAll(/<package\s+id="([^"]+)"\s+version="([^"]+)"/gi)) add(m[1], m[2]);
+  // Central package management (Directory.Packages.props)
+  for (const m of content.matchAll(/<PackageVersion\s+Include="([^"]+)"\s+Version="([^"]+)"/gi)) add(m[1], m[2]);
+  return out;
+}
+
+/** gradle.lockfile: group:artifact:version=configurations, one per line. */
+function parseGradleLock(path: string, lines: string[]): Dependency[] {
+  const out: Dependency[] = [];
+  lines.forEach((l, i) => {
+    const m = l.match(/^([\w.-]+):([\w.-]+):([^=\s]+)=(.*)$/);
+    if (m && EXACT.test(m[3])) out.push({ ecosystem: 'Maven', name: `${m[1]}:${m[2]}`, version: m[3], file: path, line: i + 1, dev: m[4].split(',').every((c) => /test/i.test(c)) });
+  });
+  return out;
+}
+
+/** Gradle version catalog (libs.versions.toml): libraries with a literal or [versions] version. */
+function parseVersionCatalog(path: string, lines: string[]): Dependency[] {
+  const out: Dependency[] = [];
+  const versions = new Map<string, string>();
+  let section = '';
+  for (const l of lines) {
+    const s = l.match(/^\s*\[([\w-]+)\]/);
+    if (s) { section = s[1]; continue; }
+    const v = section === 'versions' && l.match(/^\s*([\w.-]+)\s*=\s*"([^"]+)"/);
+    if (v) versions.set(v[1], v[2]);
+  }
+  section = '';
+  lines.forEach((l, i) => {
+    const s = l.match(/^\s*\[([\w-]+)\]/);
+    if (s) { section = s[1]; return; }
+    if (section !== 'libraries') return;
+    const short = l.match(/^\s*[\w.-]+\s*=\s*"([\w.-]+):([\w.-]+):([^"]+)"/);
+    const mod = l.match(/module\s*=\s*"([\w.-]+):([\w.-]+)"/) ?? l.match(/group\s*=\s*"([\w.-]+)"\s*,\s*name\s*=\s*"([\w.-]+)"/);
+    const ref = l.match(/version\.ref\s*=\s*"([\w.-]+)"/)?.[1];
+    const version = short?.[3] ?? (ref ? versions.get(ref) : l.match(/[^.]version\s*=\s*"([^"]+)"/)?.[1]);
+    const group = short?.[1] ?? mod?.[1];
+    const artifact = short?.[2] ?? mod?.[2];
+    if (group && artifact && version && EXACT.test(version)) out.push({ ecosystem: 'Maven', name: `${group}:${artifact}`, version, file: path, line: i + 1, dev: false });
+  });
+  return out;
+}
+
+/** SwiftPM Package.resolved (v1 and v2): pinned remote packages, named by repository URL as OSV's SwiftURL expects. */
+function parsePackageResolved(path: string, content: string, lines: string[]): Dependency[] {
+  const out: Dependency[] = [];
+  type Pin = { location?: string; repositoryURL?: string; state?: { version?: string | null } };
+  let json: { pins?: Pin[]; object?: { pins?: Pin[] } };
+  try { json = JSON.parse(content); } catch { return out; }
+  for (const pin of json.pins ?? json.object?.pins ?? []) {
+    const url = pin.location ?? pin.repositoryURL;
+    const version = pin.state?.version;
+    if (!url || !version || !EXACT.test(version)) continue;
+    const name = url.replace(/^[a-z+]+:\/\//i, '').replace(/^git@([^:]+):/, '$1/').replace(/\.git$/i, '');
+    out.push({ ecosystem: 'SwiftURL', name, version, file: path, line: lineOf(lines, url), dev: false });
+  }
+  return out;
+}
+
 function parseFile(path: string, content: string): Dependency[] {
   const lower = path.toLowerCase();
   const base = lower.slice(lower.lastIndexOf('/') + 1);
@@ -293,6 +408,13 @@ function parseFile(path: string, content: string): Dependency[] {
   if (base === 'go.mod') return parseGoMod(path, lines);
   if (base === 'go.sum') return parseGoSum(path, lines);
   if (base === 'pom.xml') return parsePom(path, content, lines);
+  if (base === 'bun.lock') return parseBunLock(path, lines);
+  if (base === 'pubspec.lock') return parsePubspecLock(path, lines);
+  if (base === 'packages.lock.json') return parseNugetLock(path, content, lines);
+  if (base.endsWith('.csproj') || base === 'packages.config' || base === 'directory.packages.props') return parseNugetManifest(path, content, lines);
+  if (base === 'gradle.lockfile') return parseGradleLock(path, lines);
+  if (base === 'libs.versions.toml') return parseVersionCatalog(path, lines);
+  if (base === 'package.resolved') return parsePackageResolved(path, content, lines);
   return [];
 }
 
