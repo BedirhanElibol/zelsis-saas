@@ -41,7 +41,7 @@ const SAME_ISSUE_RULES: ReadonlyArray<readonly [number, number]> = [
   [9502, 12605], // unpinned third-party GitHub Action
   [29623, 1208], [29632, 7135], [29636, 1211], // React logic rules prove the line: typeof window render, index key, double submit
 ];
-import { RULE_ENGINES } from './scanner/rule-engines';
+import { RULE_ENGINES, SKIPS_DATA_FILES } from './scanner/rule-engines';
 import { evaluateBuiltinRules } from './scanner/builtin-rules';
 import { detectProjectDatabases } from './rules/multi-database-rules';
 import { detectAppStack } from './scanner/stack-detect';
@@ -338,7 +338,9 @@ export async function runStaticCodeScan(inputFiles: CodeFile[], repoName: string
     findingCounter = builtinCounter.count;
 
     // Modular rule engines (see lib/scanner/rule-engines.ts for the ordered registry)
+    const isDataFile = /\.(?:json|xml)$/i.test(file.path);
     for (const engine of RULE_ENGINES) {
+      if (isDataFile && SKIPS_DATA_FILES.has(engine.evaluate)) continue;
       const engineCounter = { count: findingCounter };
       const engineResult = engine.evaluate(file, lines, engine.scanRawContent ? rawContent : cleanContent, engineCounter, repoContext);
       findingCounter = engineCounter.count;
