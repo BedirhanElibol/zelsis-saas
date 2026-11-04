@@ -148,12 +148,13 @@ export function evaluatePolyglotCoreRules(file: CodeFile, lines: string[], clean
     const statements = [...content.matchAll(new RegExp(sqlHit.source, sqlHit.flags.includes('g') ? sqlHit.flags : sqlHit.flags + 'g'))]
       .map((m) => content.slice(m.index!, m.index! + m[0].length + 120));
     const valueStmt = statements.find((s) => SQL_VALUE_POSITION.test(s));
-    if (valueStmt) {
-      // Map the statement back to its first raw line (statements may span several lines)
-      const head = (/(?:SELECT|INSERT|UPDATE|DELETE)\b[^"'\n]{0,30}/i.exec(valueStmt)?.[0] ?? '').trim();
-      const at = head ? lines.findIndex((l) => l.includes(head)) : -1;
-      if (at !== -1) h.lineIdx = at;
-    } else {
+    // Map the reported statement back to its first raw line (statements may span several lines): the per-line
+    // guess above can land on another, safe query in the same file
+    const reported = valueStmt ?? statements[0];
+    const head = reported ? (/(?:SELECT|INSERT|UPDATE|DELETE)\b[^"'\n]{0,30}/i.exec(reported)?.[0] ?? '').trim() : '';
+    const at = head ? lines.findIndex((l) => l.includes(head)) : -1;
+    if (at !== -1) h.lineIdx = at;
+    if (!valueStmt) {
       h.severity = 'MEDIUM';
       h.why = 'The SQL text is assembled from pieces (column lists, table names, conditions). No value is placed directly into it here, but if any piece can come from a request, the query can be changed.';
       h.fix = 'Build the pieces only from fixed allow-lists (column and table names) and pass every value as a bind parameter.';
