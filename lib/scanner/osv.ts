@@ -203,7 +203,30 @@ export const isBuildTool = (dep: Dependency): boolean => dep.ecosystem === 'npm'
 export function buildDependencyFindings(deps: Dependency[], advisories: OsvAdvisory[][], fileLines: Map<string, string[]>, imports?: ImportIndex): Finding[] {
   const findings: Finding[] = [];
   deps.forEach((dep, i) => {
-    const list = advisories[i] ?? [];
+    const all = advisories[i] ?? [];
+    // OpenSSF malicious-package reports (MAL-...): no safe version exists and the install itself is the attack
+    const malicious = all.filter((a) => a.id.startsWith('MAL-'));
+    if (malicious.length > 0) {
+      findings.push({
+        id: `osv-mal-${dep.ecosystem}-${dep.name}-${dep.version}-${i}`,
+        ruleId: 26002,
+        type: 'SECURITY',
+        title: `DEP-02: ${dep.name}@${dep.version} is a known malicious package (${malicious.map((a) => a.id).slice(0, 3).join(', ')})`,
+        severity: 'CRITICAL',
+        category: 'Malicious Dependency (OSV.dev)',
+        filePath: dep.file,
+        lineRange: `L${dep.line}`,
+        snippet: (fileLines.get(dep.file)?.[dep.line - 1] ?? `${dep.name}@${dep.version}`).trim().slice(0, 300),
+        reproductionSteps: [
+          `${dep.ecosystem} package ${dep.name} resolves to ${dep.version} in ${dep.file}:${dep.line}${dep.dev ? ' (development dependency: it still runs on developer machines and CI when installed)' : ''}.`,
+          ...malicious.slice(0, 5).map((a) => `${a.id}: ${a.summary} https://osv.dev/vulnerability/${a.id}`),
+        ],
+        remediationPrompt: `Remove ${dep.name}@${dep.version} (check the name for a typo of the package you meant), reinstall from a clean lockfile, and rotate every secret the machines that installed it could read: CI tokens, cloud keys, npm/PyPI tokens and .env values.`,
+        status: 'OPEN',
+        falsePositive: false
+      });
+    }
+    const list = all.filter((a) => !a.id.startsWith('MAL-'));
     if (list.length === 0) return;
     const usage = imports ? describeUsage(dep, imports) : undefined;
     const worst = list.reduce<Severity>((s, a) => (SEVERITY_RANK[a.severity] > SEVERITY_RANK[s] ? a.severity : s), 'LOW');

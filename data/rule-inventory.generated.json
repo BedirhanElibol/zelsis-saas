@@ -1,8 +1,8 @@
 {
  "summary": {
-  "implementedRules": 1348,
+  "implementedRules": 1349,
   "testedRules": 1342,
-  "preciseLocationRules": 1346,
+  "preciseLocationRules": 1347,
   "catalogEntries": 1927,
   "catalogOnlyNotImplemented": 1397,
   "catalogPlaceholderMetadata": 1811
@@ -8005,6 +8005,16 @@
    "source": "lib/scanner/osv.ts",
    "preciseLocation": true,
    "tested": true,
+   "inCatalog": false
+  },
+  {
+   "ruleId": 26002,
+   "code": "DEP-02",
+   "title": "${dep.name}@${dep.version} is a known malicious package (${malicious.map((a) => a.id).slice(0, 3).join(",
+   "severity": "CRITICAL",
+   "source": "lib/scanner/osv.ts",
+   "preciseLocation": true,
+   "tested": false,
    "inCatalog": false
   },
   {
