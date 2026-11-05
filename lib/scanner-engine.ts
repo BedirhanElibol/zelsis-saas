@@ -20,7 +20,8 @@ const NEXT_MIDDLEWARE_CVE_RULE_ID = 23008;
 function withImpact(f: Finding): Finding {
   const risk = f.risk ?? riskKind(f);
   const fallback = risk && (f.severity === 'CRITICAL' || f.severity === 'HIGH') ? RISK_FALLBACK_IMPACT[risk] : undefined;
-  return { ...f, maturity: ruleMaturity(f.ruleId), risk, impact: f.impact ?? ruleImpact(f.ruleId) ?? fallback };
+  // Rules hard-code role names ("Frontend Team", "Security Architect") that say nothing about the customer's team
+  return { ...f, owner: undefined, maturity: ruleMaturity(f.ruleId), risk, impact: f.impact ?? ruleImpact(f.ruleId) ?? fallback };
 }
 
 const SAME_ISSUE_RULES: ReadonlyArray<readonly [number, number]> = [
