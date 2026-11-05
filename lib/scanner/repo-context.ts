@@ -40,6 +40,8 @@ export interface RepoContext {
   sensitiveColumnsByModel: Map<string, string[]>;
   /** Exported auth helpers and the routes middleware.ts authenticates, for the AST flow rules. */
   crossFileAuth: CrossFileAuth;
+  /** Rails ApplicationController requires a signed-in user for every action (before_action :authenticate_user! and the like). */
+  railsAuthenticatedBase?: boolean;
   /** Deploy, proxy and database declarations for the cross-layer rules (infra-facts.ts). */
   infra: InfraFacts;
   /** Every scanned path (forward slashes, exact case), for import / route / segment lookups. */
@@ -73,6 +75,9 @@ export interface NextConfigFacts {
   /** rewrites() / redirects() / i18n / basePath change which paths exist, so link checks stay quiet. */
   remapsRoutes: boolean;
 }
+
+/** A before_action in ApplicationController that signs the user in for every controller. */
+const RAILS_AUTH_FILTER = /before_action\s+(?:[^\n]*?)(?::authenticate\w*!?|:authenticated|:require_(?:login|user|signin|sign_in)|:logged_in\w*|:ensure_signed_in)\b/;
 
 /** Normalises `"public"."fn"` / `public.fn` / `fn` to `fn`. */
 export const normalizeSqlName = (name: string): string => name.replace(/"/g, '').toLowerCase().split('.').pop() ?? '';
@@ -134,9 +139,11 @@ export function buildRepoContext(files: CodeFile[]): RepoContext {
   const uniqueDirs = [...new Set(supabaseWorkspaceDirs)];
   const dbExposedDirs = uniqueDirs.length > 0 ? uniqueDirs : (strongDbExposure ? ['supabase'] : []);
   const exposesDatabaseToClients = strongDbExposure || dbExposedDirs.length > 0;
+  const railsAuthenticatedBase = files.some((f) => /(?:^|\/)app\/controllers\/application_controller\.rb$/.test(f.path.replace(/\\/g, '/')) && RAILS_AUTH_FILTER.test(f.content || ''));
   return {
     hardenedSqlFunctions, revokedSqlFunctions, rlsEnabledTables, exposesDatabaseToClients, dbExposedDirs, hasHealthEndpoint, nextMajorVersion,
-    ...collectServerClientFacts(files), crossFileAuth: buildCrossFileAuth(files), infra: collectInfraFacts(files), ...collectProjectFacts(files)
+    ...collectServerClientFacts(files), crossFileAuth: buildCrossFileAuth(files), infra: collectInfraFacts(files), ...collectProjectFacts(files),
+    railsAuthenticatedBase
   };
 }
 

@@ -1,16 +1,16 @@
 {
- "generatedAt": "2026-10-24",
+ "generatedAt": "2026-11-05",
  "summary": {
   "cleanRepos": 17,
-  "cleanReposGateFailed": 3,
-  "cleanHighCriticalFindings": 34,
-  "cleanGatingHighCriticalFindings": 34,
-  "documentedFlaws": 43,
-  "documentedFlawsDetected": 43,
+  "cleanReposGateFailed": 2,
+  "cleanHighCriticalFindings": 33,
+  "cleanGatingHighCriticalFindings": 32,
+  "documentedFlaws": 44,
+  "documentedFlawsDetected": 44,
   "recall": 1,
-  "documentedFlawsBlockingGate": 41,
-  "rulesFiringOnClean": 77,
-  "experimentalRules": 0
+  "documentedFlawsBlockingGate": 42,
+  "rulesFiringOnClean": 87,
+  "experimentalRules": 1
  },
  "repos": [
   {
@@ -19,7 +19,7 @@
    "kind": "clean",
    "stack": "Next.js + Supabase + Stripe",
    "files": 68,
-   "scanMs": 1379,
+   "scanMs": 613,
    "gate": "WARNING",
    "critical": 0,
    "high": 3
@@ -30,7 +30,7 @@
    "kind": "clean",
    "stack": "Next.js + Prisma + Stripe + NextAuth",
    "files": 140,
-   "scanMs": 1359,
+   "scanMs": 1275,
    "gate": "WARNING",
    "critical": 0,
    "high": 1
@@ -41,7 +41,7 @@
    "kind": "clean",
    "stack": "FastAPI + React",
    "files": 206,
-   "scanMs": 2094,
+   "scanMs": 2089,
    "gate": "WARNING",
    "critical": 0,
    "high": 1
@@ -52,7 +52,7 @@
    "kind": "clean",
    "stack": "Express + Prisma",
    "files": 58,
-   "scanMs": 356,
+   "scanMs": 337,
    "gate": "FAILED",
    "critical": 2,
    "high": 1,
@@ -70,7 +70,7 @@
    "kind": "clean",
    "stack": "Go + Gin",
    "files": 27,
-   "scanMs": 338,
+   "scanMs": 328,
    "gate": "PASSED",
    "critical": 0,
    "high": 0
@@ -81,7 +81,7 @@
    "kind": "clean",
    "stack": "Laravel",
    "files": 40,
-   "scanMs": 184,
+   "scanMs": 186,
    "gate": "PASSED",
    "critical": 0,
    "high": 0
@@ -92,7 +92,7 @@
    "kind": "clean",
    "stack": "Remix/React Router + Prisma + tRPC (production SaaS)",
    "files": 2481,
-   "scanMs": 40655,
+   "scanMs": 39404,
    "gate": "WARNING",
    "critical": 0,
    "high": 4
@@ -103,17 +103,10 @@
    "kind": "clean",
    "stack": "TypeScript SDK",
    "files": 474,
-   "scanMs": 8223,
-   "gate": "FAILED",
-   "critical": 1,
-   "high": 1,
-   "blockers": [
-    {
-     "ruleId": 3,
-     "title": "Permissive Row Level Security (RLS) Policy (USING true)",
-     "reviewed": "USING (true) policy in supabase-js example migration: genuinely public table"
-    }
-   ]
+   "scanMs": 8380,
+   "gate": "PASSED",
+   "critical": 0,
+   "high": 0
   },
   {
    "repo": "OWASP/NodeGoat",
@@ -121,10 +114,10 @@
    "kind": "vulnerable",
    "stack": "Express + MongoDB",
    "files": 87,
-   "scanMs": 583,
+   "scanMs": 592,
    "gate": "FAILED",
    "critical": 3,
-   "high": 5
+   "high": 4
   },
   {
    "repo": "appsecco/dvna",
@@ -132,10 +125,10 @@
    "kind": "vulnerable",
    "stack": "Express + Sequelize",
    "files": 21,
-   "scanMs": 215,
+   "scanMs": 186,
    "gate": "FAILED",
    "critical": 4,
-   "high": 5
+   "high": 2
   },
   {
    "repo": "juice-shop/juice-shop",
@@ -143,10 +136,10 @@
    "kind": "vulnerable",
    "stack": "Express + Angular + Sequelize",
    "files": 965,
-   "scanMs": 14320,
+   "scanMs": 12972,
    "gate": "FAILED",
    "critical": 14,
-   "high": 66
+   "high": 7
   },
   {
    "repo": "spring-projects/spring-petclinic",
@@ -154,7 +147,7 @@
    "kind": "clean",
    "stack": "Java + Spring Boot",
    "files": 84,
-   "scanMs": 363,
+   "scanMs": 329,
    "gate": "WARNING",
    "critical": 0,
    "high": 1
@@ -165,7 +158,7 @@
    "kind": "clean",
    "stack": "C# + ASP.NET Core",
    "files": 350,
-   "scanMs": 1066,
+   "scanMs": 1044,
    "gate": "WARNING",
    "critical": 0,
    "high": 2
@@ -176,7 +169,7 @@
    "kind": "clean",
    "stack": "Ruby on Rails (production service)",
    "files": 1698,
-   "scanMs": 6957,
+   "scanMs": 7012,
    "gate": "WARNING",
    "critical": 0,
    "high": 4
@@ -187,7 +180,7 @@
    "kind": "clean",
    "stack": "Python + Django (production site)",
    "files": 434,
-   "scanMs": 4203,
+   "scanMs": 4689,
    "gate": "WARNING",
    "critical": 0,
    "high": 1
@@ -198,10 +191,10 @@
    "kind": "vulnerable",
    "stack": "Java + Spring",
    "files": 635,
-   "scanMs": 3805,
+   "scanMs": 3637,
    "gate": "FAILED",
    "critical": 12,
-   "high": 9
+   "high": 4
   },
   {
    "repo": "OWASP/railsgoat",
@@ -209,10 +202,10 @@
    "kind": "vulnerable",
    "stack": "Ruby on Rails",
    "files": 187,
-   "scanMs": 1758,
+   "scanMs": 1809,
    "gate": "FAILED",
    "critical": 4,
-   "high": 12
+   "high": 9
   },
   {
    "repo": "digininja/DVWA",
@@ -220,10 +213,10 @@
    "kind": "vulnerable",
    "stack": "PHP",
    "files": 195,
-   "scanMs": 1057,
+   "scanMs": 833,
    "gate": "FAILED",
    "critical": 50,
-   "high": 31
+   "high": 26
   },
   {
    "repo": "adeyosemanputra/pygoat",
@@ -231,10 +224,10 @@
    "kind": "vulnerable",
    "stack": "Python + Django",
    "files": 217,
-   "scanMs": 1205,
+   "scanMs": 1167,
    "gate": "FAILED",
-   "critical": 10,
-   "high": 28
+   "critical": 12,
+   "high": 11
   },
   {
    "repo": "anxolerd/dvpwa",
@@ -242,7 +235,7 @@
    "kind": "vulnerable",
    "stack": "Python + aiohttp",
    "files": 30,
-   "scanMs": 1606,
+   "scanMs": 1865,
    "gate": "FAILED",
    "critical": 2,
    "high": 3
@@ -253,7 +246,7 @@
    "kind": "clean",
    "stack": "Android (Java + Kotlin)",
    "files": 1161,
-   "scanMs": 9152,
+   "scanMs": 8430,
    "gate": "FAILED",
    "critical": 1,
    "high": 0,
@@ -271,7 +264,7 @@
    "kind": "clean",
    "stack": "Android (Java)",
    "files": 1143,
-   "scanMs": 7592,
+   "scanMs": 7101,
    "gate": "WARNING",
    "critical": 0,
    "high": 6
@@ -282,7 +275,7 @@
    "kind": "clean",
    "stack": "iOS (Swift)",
    "files": 932,
-   "scanMs": 4437,
+   "scanMs": 4772,
    "gate": "PASSED",
    "critical": 0,
    "high": 0
@@ -293,7 +286,7 @@
    "kind": "vulnerable",
    "stack": "Android (Java)",
    "files": 59,
-   "scanMs": 187,
+   "scanMs": 149,
    "gate": "FAILED",
    "critical": 2,
    "high": 4
@@ -304,7 +297,7 @@
    "kind": "vulnerable",
    "stack": "Android (Java)",
    "files": 90,
-   "scanMs": 292,
+   "scanMs": 253,
    "gate": "WARNING",
    "critical": 0,
    "high": 3
@@ -315,7 +308,7 @@
    "kind": "vulnerable",
    "stack": "iOS (Swift)",
    "files": 129,
-   "scanMs": 682,
+   "scanMs": 805,
    "gate": "WARNING",
    "critical": 0,
    "high": 2
@@ -326,7 +319,7 @@
    "kind": "clean",
    "stack": "Flutter (Dart) + Rust",
    "files": 734,
-   "scanMs": 7812,
+   "scanMs": 7656,
    "gate": "WARNING",
    "critical": 0,
    "high": 3
@@ -337,7 +330,7 @@
    "kind": "clean",
    "stack": "Rust + Actix + Diesel + Postgres (production service)",
    "files": 1442,
-   "scanMs": 6259,
+   "scanMs": 6114,
    "gate": "WARNING",
    "critical": 0,
    "high": 2
@@ -516,6 +509,13 @@
    "repo": "OWASP/railsgoat",
    "file": "app/views/layouts/shared/_header.html.erb",
    "flaw": "Stored XSS via html_safe on user first name",
+   "found": true,
+   "blocksGate": true
+  },
+  {
+   "repo": "OWASP/railsgoat",
+   "file": "app/controllers/work_info_controller.rb",
+   "flaw": "IDOR: work info loaded by params[:user_id] for any signed-in user",
    "found": true,
    "blocksGate": true
   },

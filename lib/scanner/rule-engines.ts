@@ -160,6 +160,7 @@ import { evaluateLiveBundleRules } from '../rules/live-bundle-rules';
 import { evaluateAstFlowRules } from '../rules/ast-flow-rules';
 import { evaluateMoneyPyGoRules } from '../rules/money-py-go-rules';
 import { evaluateMoneyPolyglotRules } from '../rules/money-polyglot-rules';
+import { evaluateIdorPolyglotRules } from '../rules/idor-polyglot-rules';
 
 export type RuleEngine = (
   file: CodeFile,
@@ -516,6 +517,8 @@ export const RULE_ENGINES: ReadonlyArray<{ evaluate: RuleEngine; scanRawContent?
   { evaluate: evaluateMoneyPyGoRules },
   // Same money bugs for Java/Kotlin, C#, PHP and Ruby (MONEY-05..12, Rule IDs 33005-33012)
   { evaluate: evaluateMoneyPolyglotRules },
+  // IDOR for Rails, Laravel, Spring and ASP.NET: record loaded by URL id without an ownership check (FLOW-08..11, Rule IDs 33013-33016)
+  { evaluate: evaluateIdorPolyglotRules },
 ];
 
 /**
@@ -625,4 +628,5 @@ export const SKIPS_DATA_FILES: ReadonlySet<RuleEngine> = new Set<RuleEngine>([
   evaluateZeroTrustRules,
   evaluateMoneyPyGoRules,
   evaluateMoneyPolyglotRules,
+  evaluateIdorPolyglotRules,
 ]);
