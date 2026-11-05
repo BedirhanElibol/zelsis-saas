@@ -42,6 +42,7 @@ export const EXPECTED_FLAWS: ExpectedFlaw[] = [
   { repo: 'OWASP/railsgoat', file: 'app/models/benefits.rb', flaw: 'Command injection: system() with interpolated file name', match: CMD },
   { repo: 'OWASP/railsgoat', file: 'app/controllers/password_resets_controller.rb', flaw: 'Insecure deserialization: Marshal.load(params[:user])', match: DESER },
   { repo: 'OWASP/railsgoat', file: 'app/views/layouts/shared/_header.html.erb', flaw: 'Stored XSS via html_safe on user first name', match: XSS },
+  { repo: 'OWASP/railsgoat', file: 'app/controllers/work_info_controller.rb', flaw: 'IDOR: work info loaded by params[:user_id] for any signed-in user', match: /Ownership Check|IDOR/i },
   { repo: 'digininja/DVWA', file: 'vulnerabilities/sqli/source/low.php', flaw: 'SQL injection: $id interpolated into query', match: SQLI },
   { repo: 'digininja/DVWA', file: 'vulnerabilities/exec/source/low.php', flaw: "Command injection: shell_exec('ping ' . $target)", match: CMD },
   { repo: 'digininja/DVWA', file: 'vulnerabilities/fi/index.php', flaw: 'File inclusion: include($file) from request', match: /Inclusion|Include|Path Traversal|LFI|RFI/i },

@@ -1,8 +1,8 @@
 {
  "summary": {
-  "implementedRules": 1351,
-  "testedRules": 1342,
-  "preciseLocationRules": 1349,
+  "implementedRules": 1355,
+  "testedRules": 1346,
+  "preciseLocationRules": 1353,
   "catalogEntries": 1927,
   "catalogOnlyNotImplemented": 1397,
   "catalogPlaceholderMetadata": 1811
@@ -14913,6 +14913,46 @@
    "title": "Payment Amount Controlled by the Client (Ruby)",
    "severity": "HIGH",
    "source": "lib/rules/money-polyglot-rules.ts",
+   "preciseLocation": true,
+   "tested": true,
+   "inCatalog": false
+  },
+  {
+   "ruleId": 33013,
+   "code": "FLOW-08",
+   "title": "Record Loaded by the Id in the URL Without an Ownership Check (Rails)",
+   "severity": "HIGH",
+   "source": "lib/rules/idor-polyglot-rules.ts",
+   "preciseLocation": true,
+   "tested": true,
+   "inCatalog": false
+  },
+  {
+   "ruleId": 33014,
+   "code": "FLOW-09",
+   "title": "Record Loaded by the Id in the URL Without an Ownership Check (Laravel)",
+   "severity": "HIGH",
+   "source": "lib/rules/idor-polyglot-rules.ts",
+   "preciseLocation": true,
+   "tested": true,
+   "inCatalog": false
+  },
+  {
+   "ruleId": 33015,
+   "code": "FLOW-10",
+   "title": "Record Loaded by the Id in the URL Without an Ownership Check (Spring)",
+   "severity": "HIGH",
+   "source": "lib/rules/idor-polyglot-rules.ts",
+   "preciseLocation": true,
+   "tested": true,
+   "inCatalog": false
+  },
+  {
+   "ruleId": 33016,
+   "code": "FLOW-11",
+   "title": "Record Loaded by the Id in the URL Without an Ownership Check (ASP.NET)",
+   "severity": "HIGH",
+   "source": "lib/rules/idor-polyglot-rules.ts",
    "preciseLocation": true,
    "tested": true,
    "inCatalog": false

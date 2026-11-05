@@ -1,7 +1,15 @@
 {
- "generatedAt": "2026-10-24",
+ "generatedAt": "2026-11-05",
  "cleanRepos": 17,
- "experimental": [],
+ "experimental": [
+  {
+   "ruleId": 31006,
+   "title": "IGAP-06: JavaScript WebView Loads a URL from the Intent",
+   "severity": "HIGH",
+   "cleanRepos": 1,
+   "cleanFindings": 1
+  }
+ ],
  "benchmarkProven": [
   25,
   32,
@@ -40,6 +48,7 @@
   27101,
   29303,
   29306,
-  29307
+  29307,
+  33013
  ]
 }
