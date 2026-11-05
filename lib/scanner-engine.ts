@@ -44,6 +44,7 @@ const SAME_ISSUE_RULES: ReadonlyArray<readonly [number, number]> = [
 ];
 import { RULE_ENGINES, SKIPS_DATA_FILES } from './scanner/rule-engines';
 import { alignPatches } from './scanner/patches';
+import { LICENSE_COPYLEFT_RULE_ID, LICENSE_NETWORK_RULE_ID, buildLicenseFindings } from './scanner/licenses';
 import { evaluateBuiltinRules } from './scanner/builtin-rules';
 import { detectProjectDatabases } from './rules/multi-database-rules';
 import { detectAppStack } from './scanner/stack-detect';
@@ -390,6 +391,12 @@ export async function runStaticCodeScan(inputFiles: CodeFile[], repoName: string
     vulnerablePackages: 0,
     advisories: 0
   };
+  // Licenses come from the lockfiles themselves (no network call), so they are checked even without the OSV audit
+  if (!ignoredRuleIds.has(LICENSE_NETWORK_RULE_ID) || !ignoredRuleIds.has(LICENSE_COPYLEFT_RULE_ID)) {
+    for (const f of buildLicenseFindings(dependencies, dependencyFileLines)) {
+      if (!ignoredRuleIds.has(f.ruleId)) findings.push(withImpact(f));
+    }
+  }
   if (osvPromise) {
     const osv = await osvPromise;
     if (osv.ok) {

@@ -15,6 +15,8 @@ export interface Dependency {
   line: number;
   /** Development-only dependency (not shipped to production) when the lockfile says so. */
   dev: boolean;
+  /** SPDX license expression, only where the lockfile records it (package-lock v2/v3, composer.lock). */
+  license?: string;
 }
 
 /** Pure lockfiles: dependency data only, never evaluated by pattern rules. */
@@ -27,6 +29,17 @@ export const isDependencyFile = (path: string): boolean => LOCKFILE_RE.test(path
 
 export const MAX_DEPENDENCIES = 5000;
 
+/** A lockfile license field as one SPDX expression: "MIT", ["MIT", "GPL-2.0"] (composer: either applies), or { type }. */
+function licenseText(raw: unknown): string | undefined {
+  if (typeof raw === 'string') return raw.trim() || undefined;
+  if (Array.isArray(raw)) {
+    const parts = raw.filter((x): x is string => typeof x === 'string' && x.trim() !== '');
+    return parts.length === 0 ? undefined : parts.length === 1 ? parts[0] : `(${parts.join(' OR ')})`;
+  }
+  if (raw && typeof raw === 'object' && typeof (raw as { type?: unknown }).type === 'string') return (raw as { type: string }).type;
+  return undefined;
+}
+
 function lineOf(lines: string[], ...needles: string[]): number {
   const idx = lines.findIndex((l) => needles.every((n) => l.includes(n)));
   if (idx !== -1) return idx + 1;
@@ -36,14 +49,15 @@ function lineOf(lines: string[], ...needles: string[]): number {
 
 function parsePackageLock(path: string, content: string, lines: string[]): Dependency[] {
   const out: Dependency[] = [];
-  let json: { packages?: Record<string, { name?: string; version?: string; dev?: boolean; link?: boolean }>; dependencies?: Record<string, unknown> };
+  let json: { packages?: Record<string, { name?: string; version?: string; dev?: boolean; link?: boolean; license?: unknown }>; dependencies?: Record<string, unknown> };
   try { json = JSON.parse(content); } catch { return out; }
   if (json.packages) {
     for (const [key, pkg] of Object.entries(json.packages)) {
       if (!key || pkg.link || !pkg.version) continue;
       const name = pkg.name ?? key.slice(key.lastIndexOf('node_modules/') + 'node_modules/'.length);
       if (!name || !/^\d/.test(pkg.version)) continue;
-      out.push({ ecosystem: 'npm', name, version: pkg.version, file: path, line: lineOf(lines, `"${key}"`), dev: Boolean(pkg.dev) });
+      const license = licenseText(pkg.license);
+      out.push({ ecosystem: 'npm', name, version: pkg.version, file: path, line: lineOf(lines, `"${key}"`), dev: Boolean(pkg.dev), ...(license ? { license } : {}) });
     }
     return out;
   }
@@ -226,13 +240,14 @@ function parseGemfileLock(path: string, lines: string[]): Dependency[] {
 
 function parseComposerLock(path: string, content: string, lines: string[]): Dependency[] {
   const out: Dependency[] = [];
-  let json: Record<string, Array<{ name?: string; version?: string }>>;
+  let json: Record<string, Array<{ name?: string; version?: string; license?: unknown }>>;
   try { json = JSON.parse(content); } catch { return out; }
   for (const section of ['packages', 'packages-dev']) {
     for (const pkg of json[section] ?? []) {
       const version = pkg.version?.replace(/^v/, '');
       if (pkg.name && version && /^\d/.test(version)) {
-        out.push({ ecosystem: 'Packagist', name: pkg.name, version, file: path, line: lineOf(lines, `"${pkg.name}"`), dev: section === 'packages-dev' });
+        const license = licenseText(pkg.license);
+        out.push({ ecosystem: 'Packagist', name: pkg.name, version, file: path, line: lineOf(lines, `"${pkg.name}"`), dev: section === 'packages-dev', ...(license ? { license } : {}) });
       }
     }
   }
