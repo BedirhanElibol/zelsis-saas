@@ -1,15 +1,15 @@
 {
  "generatedAt": "2026-11-05",
  "summary": {
-  "cleanRepos": 17,
+  "cleanRepos": 19,
   "cleanReposGateFailed": 2,
   "cleanHighCriticalFindings": 33,
   "cleanGatingHighCriticalFindings": 32,
-  "documentedFlaws": 44,
-  "documentedFlawsDetected": 44,
+  "documentedFlaws": 62,
+  "documentedFlawsDetected": 62,
   "recall": 1,
-  "documentedFlawsBlockingGate": 42,
-  "rulesFiringOnClean": 87,
+  "documentedFlawsBlockingGate": 58,
+  "rulesFiringOnClean": 88,
   "experimentalRules": 1
  },
  "repos": [
@@ -19,7 +19,7 @@
    "kind": "clean",
    "stack": "Next.js + Supabase + Stripe",
    "files": 68,
-   "scanMs": 613,
+   "scanMs": 822,
    "gate": "WARNING",
    "critical": 0,
    "high": 3
@@ -30,7 +30,7 @@
    "kind": "clean",
    "stack": "Next.js + Prisma + Stripe + NextAuth",
    "files": 140,
-   "scanMs": 1275,
+   "scanMs": 1314,
    "gate": "WARNING",
    "critical": 0,
    "high": 1
@@ -41,7 +41,7 @@
    "kind": "clean",
    "stack": "FastAPI + React",
    "files": 206,
-   "scanMs": 2089,
+   "scanMs": 2038,
    "gate": "WARNING",
    "critical": 0,
    "high": 1
@@ -52,7 +52,7 @@
    "kind": "clean",
    "stack": "Express + Prisma",
    "files": 58,
-   "scanMs": 337,
+   "scanMs": 364,
    "gate": "FAILED",
    "critical": 2,
    "high": 1,
@@ -70,7 +70,7 @@
    "kind": "clean",
    "stack": "Go + Gin",
    "files": 27,
-   "scanMs": 328,
+   "scanMs": 331,
    "gate": "PASSED",
    "critical": 0,
    "high": 0
@@ -81,7 +81,7 @@
    "kind": "clean",
    "stack": "Laravel",
    "files": 40,
-   "scanMs": 186,
+   "scanMs": 169,
    "gate": "PASSED",
    "critical": 0,
    "high": 0
@@ -92,7 +92,7 @@
    "kind": "clean",
    "stack": "Remix/React Router + Prisma + tRPC (production SaaS)",
    "files": 2481,
-   "scanMs": 39404,
+   "scanMs": 36143,
    "gate": "WARNING",
    "critical": 0,
    "high": 4
@@ -103,7 +103,7 @@
    "kind": "clean",
    "stack": "TypeScript SDK",
    "files": 474,
-   "scanMs": 8380,
+   "scanMs": 7367,
    "gate": "PASSED",
    "critical": 0,
    "high": 0
@@ -114,7 +114,7 @@
    "kind": "vulnerable",
    "stack": "Express + MongoDB",
    "files": 87,
-   "scanMs": 592,
+   "scanMs": 538,
    "gate": "FAILED",
    "critical": 3,
    "high": 4
@@ -125,7 +125,7 @@
    "kind": "vulnerable",
    "stack": "Express + Sequelize",
    "files": 21,
-   "scanMs": 186,
+   "scanMs": 95,
    "gate": "FAILED",
    "critical": 4,
    "high": 2
@@ -136,7 +136,7 @@
    "kind": "vulnerable",
    "stack": "Express + Angular + Sequelize",
    "files": 965,
-   "scanMs": 12972,
+   "scanMs": 11971,
    "gate": "FAILED",
    "critical": 14,
    "high": 7
@@ -147,7 +147,7 @@
    "kind": "clean",
    "stack": "Java + Spring Boot",
    "files": 84,
-   "scanMs": 329,
+   "scanMs": 309,
    "gate": "WARNING",
    "critical": 0,
    "high": 1
@@ -158,7 +158,7 @@
    "kind": "clean",
    "stack": "C# + ASP.NET Core",
    "files": 350,
-   "scanMs": 1044,
+   "scanMs": 1130,
    "gate": "WARNING",
    "critical": 0,
    "high": 2
@@ -169,7 +169,7 @@
    "kind": "clean",
    "stack": "Ruby on Rails (production service)",
    "files": 1698,
-   "scanMs": 7012,
+   "scanMs": 6367,
    "gate": "WARNING",
    "critical": 0,
    "high": 4
@@ -180,7 +180,7 @@
    "kind": "clean",
    "stack": "Python + Django (production site)",
    "files": 434,
-   "scanMs": 4689,
+   "scanMs": 4177,
    "gate": "WARNING",
    "critical": 0,
    "high": 1
@@ -191,7 +191,7 @@
    "kind": "vulnerable",
    "stack": "Java + Spring",
    "files": 635,
-   "scanMs": 3637,
+   "scanMs": 3584,
    "gate": "FAILED",
    "critical": 12,
    "high": 4
@@ -202,10 +202,10 @@
    "kind": "vulnerable",
    "stack": "Ruby on Rails",
    "files": 187,
-   "scanMs": 1809,
+   "scanMs": 1694,
    "gate": "FAILED",
    "critical": 4,
-   "high": 9
+   "high": 10
   },
   {
    "repo": "digininja/DVWA",
@@ -213,7 +213,7 @@
    "kind": "vulnerable",
    "stack": "PHP",
    "files": 195,
-   "scanMs": 833,
+   "scanMs": 888,
    "gate": "FAILED",
    "critical": 50,
    "high": 26
@@ -224,7 +224,7 @@
    "kind": "vulnerable",
    "stack": "Python + Django",
    "files": 217,
-   "scanMs": 1167,
+   "scanMs": 1087,
    "gate": "FAILED",
    "critical": 12,
    "high": 11
@@ -235,7 +235,7 @@
    "kind": "vulnerable",
    "stack": "Python + aiohttp",
    "files": 30,
-   "scanMs": 1865,
+   "scanMs": 1822,
    "gate": "FAILED",
    "critical": 2,
    "high": 3
@@ -246,7 +246,7 @@
    "kind": "clean",
    "stack": "Android (Java + Kotlin)",
    "files": 1161,
-   "scanMs": 8430,
+   "scanMs": 7633,
    "gate": "FAILED",
    "critical": 1,
    "high": 0,
@@ -264,7 +264,7 @@
    "kind": "clean",
    "stack": "Android (Java)",
    "files": 1143,
-   "scanMs": 7101,
+   "scanMs": 7048,
    "gate": "WARNING",
    "critical": 0,
    "high": 6
@@ -275,7 +275,7 @@
    "kind": "clean",
    "stack": "iOS (Swift)",
    "files": 932,
-   "scanMs": 4772,
+   "scanMs": 3944,
    "gate": "PASSED",
    "critical": 0,
    "high": 0
@@ -286,7 +286,7 @@
    "kind": "vulnerable",
    "stack": "Android (Java)",
    "files": 59,
-   "scanMs": 149,
+   "scanMs": 119,
    "gate": "FAILED",
    "critical": 2,
    "high": 4
@@ -297,7 +297,7 @@
    "kind": "vulnerable",
    "stack": "Android (Java)",
    "files": 90,
-   "scanMs": 253,
+   "scanMs": 222,
    "gate": "WARNING",
    "critical": 0,
    "high": 3
@@ -308,7 +308,7 @@
    "kind": "vulnerable",
    "stack": "iOS (Swift)",
    "files": 129,
-   "scanMs": 805,
+   "scanMs": 842,
    "gate": "WARNING",
    "critical": 0,
    "high": 2
@@ -319,7 +319,7 @@
    "kind": "clean",
    "stack": "Flutter (Dart) + Rust",
    "files": 734,
-   "scanMs": 7656,
+   "scanMs": 7447,
    "gate": "WARNING",
    "critical": 0,
    "high": 3
@@ -330,10 +330,54 @@
    "kind": "clean",
    "stack": "Rust + Actix + Diesel + Postgres (production service)",
    "files": 1442,
-   "scanMs": 6114,
+   "scanMs": 6011,
    "gate": "WARNING",
    "critical": 0,
    "high": 2
+  },
+  {
+   "repo": "bridgecrewio/terragoat",
+   "sha": "729f8da",
+   "kind": "vulnerable",
+   "stack": "Terraform (AWS, Azure, GCP), intentionally misconfigured",
+   "files": 56,
+   "scanMs": 177,
+   "gate": "WARNING",
+   "critical": 0,
+   "high": 1
+  },
+  {
+   "repo": "madhuakula/kubernetes-goat",
+   "sha": "723a0db",
+   "kind": "vulnerable",
+   "stack": "Kubernetes manifests and Helm, intentionally insecure",
+   "files": 84,
+   "scanMs": 1001,
+   "gate": "WARNING",
+   "critical": 0,
+   "high": 14
+  },
+  {
+   "repo": "terraform-aws-modules/terraform-aws-vpc",
+   "sha": "b3abd6d",
+   "kind": "clean",
+   "stack": "Terraform module (AWS VPC), widely used",
+   "files": 84,
+   "scanMs": 451,
+   "gate": "PASSED",
+   "critical": 0,
+   "high": 0
+  },
+  {
+   "repo": "terraform-aws-modules/terraform-aws-eks",
+   "sha": "91b8a8d",
+   "kind": "clean",
+   "stack": "Terraform module (AWS EKS), widely used",
+   "files": 114,
+   "scanMs": 589,
+   "gate": "PASSED",
+   "critical": 0,
+   "high": 0
   }
  ],
  "flaws": [
@@ -642,6 +686,132 @@
    "repo": "prateek147/DVIA-v2",
    "file": "DVIA-v2/DVIA-v2/Vulnerabilities/Insecure Data Storage/Controller/PListViewController.swift",
    "flaw": "Password saved to a plist in Documents",
+   "found": true,
+   "blocksGate": true
+  },
+  {
+   "repo": "bridgecrewio/terragoat",
+   "file": "terraform/aws/db-app.tf",
+   "flaw": "RDS instance publicly_accessible = true",
+   "found": true,
+   "blocksGate": true
+  },
+  {
+   "repo": "bridgecrewio/terragoat",
+   "file": "terraform/aws/db-app.tf",
+   "flaw": "RDS storage_encrypted = false",
+   "found": true,
+   "blocksGate": false
+  },
+  {
+   "repo": "bridgecrewio/terragoat",
+   "file": "terraform/aws/neptune.tf",
+   "flaw": "Neptune cluster storage_encrypted = false",
+   "found": true,
+   "blocksGate": false
+  },
+  {
+   "repo": "bridgecrewio/terragoat",
+   "file": "terraform/aws/ec2.tf",
+   "flaw": "Security group allows SSH from 0.0.0.0/0",
+   "found": true,
+   "blocksGate": true
+  },
+  {
+   "repo": "bridgecrewio/terragoat",
+   "file": "terraform/aws/ec2.tf",
+   "flaw": "AWS access key hard-coded in EC2 user_data",
+   "found": true,
+   "blocksGate": true
+  },
+  {
+   "repo": "bridgecrewio/terragoat",
+   "file": "terraform/azure/mssql.tf",
+   "flaw": "MSSQL administrator password hard-coded",
+   "found": true,
+   "blocksGate": true
+  },
+  {
+   "repo": "bridgecrewio/terragoat",
+   "file": "terraform/azure/roles.tf",
+   "flaw": "Custom role with actions = [\"*\"]",
+   "found": true,
+   "blocksGate": true
+  },
+  {
+   "repo": "bridgecrewio/terragoat",
+   "file": "terraform/gcp/big_data.tf",
+   "flaw": "Cloud SQL authorized network 0.0.0.0/0",
+   "found": true,
+   "blocksGate": true
+  },
+  {
+   "repo": "bridgecrewio/terragoat",
+   "file": "terraform/gcp/gke.tf",
+   "flaw": "GKE enable_legacy_abac = true",
+   "found": true,
+   "blocksGate": true
+  },
+  {
+   "repo": "bridgecrewio/terragoat",
+   "file": "terraform/gcp/networks.tf",
+   "flaw": "Firewall allows SSH/RDP from 0.0.0.0/0",
+   "found": true,
+   "blocksGate": true
+  },
+  {
+   "repo": "bridgecrewio/terragoat",
+   "file": "terraform/alicloud/bucket.tf",
+   "flaw": "OSS bucket acl = public-read-write",
+   "found": true,
+   "blocksGate": true
+  },
+  {
+   "repo": "madhuakula/kubernetes-goat",
+   "file": "scenarios/docker-bench-security/deployment.yaml",
+   "flaw": "Privileged container",
+   "found": true,
+   "blocksGate": true
+  },
+  {
+   "repo": "madhuakula/kubernetes-goat",
+   "file": "scenarios/docker-bench-security/deployment.yaml",
+   "flaw": "hostPID / hostIPC namespace",
+   "found": true,
+   "blocksGate": true
+  },
+  {
+   "repo": "madhuakula/kubernetes-goat",
+   "file": "scenarios/docker-bench-security/deployment.yaml",
+   "flaw": "hostNetwork enabled",
+   "found": true,
+   "blocksGate": true
+  },
+  {
+   "repo": "madhuakula/kubernetes-goat",
+   "file": "scenarios/docker-bench-security/deployment.yaml",
+   "flaw": "hostPath mount of / or the Docker socket",
+   "found": true,
+   "blocksGate": true
+  },
+  {
+   "repo": "madhuakula/kubernetes-goat",
+   "file": "scenarios/insecure-rbac/setup.yaml",
+   "flaw": "cluster-admin bound to a workload ServiceAccount",
+   "found": true,
+   "blocksGate": true
+  },
+  {
+   "repo": "madhuakula/kubernetes-goat",
+   "file": "infrastructure/helm-tiller/pwnchart/templates/clusterrole.yaml",
+   "flaw": "ClusterRole with all verbs on all resources",
+   "found": true,
+   "blocksGate": true
+  },
+  {
+   "repo": "madhuakula/kubernetes-goat",
+   "file": "infrastructure/users-repo/Dockerfile",
+   "flaw": "API key baked into a Docker image layer",
    "found": true,
    "blocksGate": true
   }

@@ -168,6 +168,30 @@
       "sha": "fc640cf86a130bc897d83dbd06d84c3c7d9b16e3",
       "kind": "clean",
       "stack": "Rust + Actix + Diesel + Postgres (production service)"
+    },
+    {
+      "name": "bridgecrewio/terragoat",
+      "sha": "729f8da62c6a85ce4af5ad3d123de97776d954c4",
+      "kind": "vulnerable",
+      "stack": "Terraform (AWS, Azure, GCP), intentionally misconfigured"
+    },
+    {
+      "name": "madhuakula/kubernetes-goat",
+      "sha": "723a0db478f050d173d23b4ce5044b65bce0bdd0",
+      "kind": "vulnerable",
+      "stack": "Kubernetes manifests and Helm, intentionally insecure"
+    },
+    {
+      "name": "terraform-aws-modules/terraform-aws-vpc",
+      "sha": "b3abd6df2ecf052451a361ed55b8f06f8742a795",
+      "kind": "clean",
+      "stack": "Terraform module (AWS VPC), widely used"
+    },
+    {
+      "name": "terraform-aws-modules/terraform-aws-eks",
+      "sha": "91b8a8d944e3cf169483108acd12d5b1e47856f7",
+      "kind": "clean",
+      "stack": "Terraform module (AWS EKS), widely used"
     }
   ]
 }
