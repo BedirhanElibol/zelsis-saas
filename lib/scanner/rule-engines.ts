@@ -159,6 +159,7 @@ import { evaluateLiveBundleRules } from '../rules/live-bundle-rules';
 
 import { evaluateAstFlowRules } from '../rules/ast-flow-rules';
 import { evaluateMoneyPyGoRules } from '../rules/money-py-go-rules';
+import { evaluateMoneyPolyglotRules } from '../rules/money-polyglot-rules';
 
 export type RuleEngine = (
   file: CodeFile,
@@ -513,6 +514,8 @@ export const RULE_ENGINES: ReadonlyArray<{ evaluate: RuleEngine; scanRawContent?
   { evaluate: evaluateAstFlowRules },
   // Payment integrity for Python and Go: unsigned payment webhooks, client-set amounts (MONEY-01..04, Rule IDs 33001-33004)
   { evaluate: evaluateMoneyPyGoRules },
+  // Same money bugs for Java/Kotlin, C#, PHP and Ruby (MONEY-05..12, Rule IDs 33005-33012)
+  { evaluate: evaluateMoneyPolyglotRules },
 ];
 
 /**
@@ -621,4 +624,5 @@ export const SKIPS_DATA_FILES: ReadonlySet<RuleEngine> = new Set<RuleEngine>([
   evaluateZeroTrustNetworkRules,
   evaluateZeroTrustRules,
   evaluateMoneyPyGoRules,
+  evaluateMoneyPolyglotRules,
 ]);

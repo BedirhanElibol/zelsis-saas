@@ -1,8 +1,8 @@
 {
  "summary": {
-  "implementedRules": 1340,
-  "testedRules": 1334,
-  "preciseLocationRules": 1338,
+  "implementedRules": 1348,
+  "testedRules": 1342,
+  "preciseLocationRules": 1346,
   "catalogEntries": 1927,
   "catalogOnlyNotImplemented": 1397,
   "catalogPlaceholderMetadata": 1811
@@ -14803,6 +14803,86 @@
    "title": "Payment Amount Controlled by the Client (Go)",
    "severity": "UNKNOWN",
    "source": "lib/rules/money-py-go-rules.ts",
+   "preciseLocation": true,
+   "tested": true,
+   "inCatalog": false
+  },
+  {
+   "ruleId": 33005,
+   "code": "MONEY-05",
+   "title": "Payment Webhook Processed Without Signature Verification (Java/Kotlin)",
+   "severity": "HIGH",
+   "source": "lib/rules/money-polyglot-rules.ts",
+   "preciseLocation": true,
+   "tested": true,
+   "inCatalog": false
+  },
+  {
+   "ruleId": 33006,
+   "code": "MONEY-06",
+   "title": "Payment Amount Controlled by the Client (Java/Kotlin)",
+   "severity": "HIGH",
+   "source": "lib/rules/money-polyglot-rules.ts",
+   "preciseLocation": true,
+   "tested": true,
+   "inCatalog": false
+  },
+  {
+   "ruleId": 33007,
+   "code": "MONEY-07",
+   "title": "Payment Webhook Processed Without Signature Verification (C#)",
+   "severity": "HIGH",
+   "source": "lib/rules/money-polyglot-rules.ts",
+   "preciseLocation": true,
+   "tested": true,
+   "inCatalog": false
+  },
+  {
+   "ruleId": 33008,
+   "code": "MONEY-08",
+   "title": "Payment Amount Controlled by the Client (C#)",
+   "severity": "HIGH",
+   "source": "lib/rules/money-polyglot-rules.ts",
+   "preciseLocation": true,
+   "tested": true,
+   "inCatalog": false
+  },
+  {
+   "ruleId": 33009,
+   "code": "MONEY-09",
+   "title": "Payment Webhook Processed Without Signature Verification (PHP)",
+   "severity": "HIGH",
+   "source": "lib/rules/money-polyglot-rules.ts",
+   "preciseLocation": true,
+   "tested": true,
+   "inCatalog": false
+  },
+  {
+   "ruleId": 33010,
+   "code": "MONEY-10",
+   "title": "Payment Amount Controlled by the Client (PHP)",
+   "severity": "HIGH",
+   "source": "lib/rules/money-polyglot-rules.ts",
+   "preciseLocation": true,
+   "tested": true,
+   "inCatalog": false
+  },
+  {
+   "ruleId": 33011,
+   "code": "MONEY-11",
+   "title": "Payment Webhook Processed Without Signature Verification (Ruby)",
+   "severity": "HIGH",
+   "source": "lib/rules/money-polyglot-rules.ts",
+   "preciseLocation": true,
+   "tested": true,
+   "inCatalog": false
+  },
+  {
+   "ruleId": 33012,
+   "code": "MONEY-12",
+   "title": "Payment Amount Controlled by the Client (Ruby)",
+   "severity": "HIGH",
+   "source": "lib/rules/money-polyglot-rules.ts",
    "preciseLocation": true,
    "tested": true,
    "inCatalog": false
