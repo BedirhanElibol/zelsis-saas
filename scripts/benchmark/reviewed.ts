@@ -29,5 +29,7 @@ export const REVIEWED_TRUE_POSITIVES: Record<number, string> = {
   30401: 'review-bench-app PR 3: parseToken decodes the token by hand and never checks the signature, so anyone can claim role: admin',
   9704: 'review-bench-app PR 4: Stripe webhook grants credits without verifying the signature',
   // Not a heuristic: the finding is a published advisory for the exact version in the lockfile
-  26001: 'Known vulnerable dependency version from the OSV.dev advisory database'
+  26001: 'Known vulnerable dependency version from the OSV.dev advisory database',
+  // Same source: OSV carries the OpenSSF malicious-packages reports for the exact package version
+  26002: 'Known malicious package version (OpenSSF MAL- report) from the OSV.dev database'
 };
