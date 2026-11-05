@@ -1,8 +1,8 @@
 {
  "summary": {
-  "implementedRules": 1349,
+  "implementedRules": 1351,
   "testedRules": 1342,
-  "preciseLocationRules": 1347,
+  "preciseLocationRules": 1349,
   "catalogEntries": 1927,
   "catalogOnlyNotImplemented": 1397,
   "catalogPlaceholderMetadata": 1811
@@ -8013,6 +8013,26 @@
    "title": "${dep.name}@${dep.version} is a known malicious package (${malicious.map((a) => a.id).slice(0, 3).join(",
    "severity": "CRITICAL",
    "source": "lib/scanner/osv.ts",
+   "preciseLocation": true,
+   "tested": false,
+   "inCatalog": false
+  },
+  {
+   "ruleId": 26003,
+   "code": "LIC-01",
+   "title": "Production Dependency Under a Network Copyleft License (AGPL / SSPL)",
+   "severity": "MEDIUM",
+   "source": "lib/scanner/licenses.ts",
+   "preciseLocation": true,
+   "tested": false,
+   "inCatalog": false
+  },
+  {
+   "ruleId": 26004,
+   "code": "LIC-02",
+   "title": "Production Dependency Under a Strong Copyleft License (GPL)",
+   "severity": "LOW",
+   "source": "lib/scanner/licenses.ts",
    "preciseLocation": true,
    "tested": false,
    "inCatalog": false

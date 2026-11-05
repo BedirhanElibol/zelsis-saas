@@ -36,7 +36,16 @@ function uniqueSorted(deps: Dependency[]): (Dependency & { purl: string })[] {
   return [...byPurl.values()].sort((a, b) => a.purl.localeCompare(b.purl));
 }
 
-/** License fields stay out or NOASSERTION: lockfiles do not record licenses and Zelsis does not guess them. */
+/** The lockfile's own license value when it reads as an SPDX expression ("SEE LICENSE IN ..." and the like do not). */
+function spdxLicense(dep: Dependency): string | undefined {
+  const l = dep.license?.trim();
+  return l && /^[A-Za-z0-9.+\-() ]+$/.test(l) && !/^see\b|^unlicensed$/i.test(l) ? l : undefined;
+}
+
+/**
+ * Licenses appear only where the lockfile records them (package-lock v2/v3, composer.lock); elsewhere they
+ * stay out or NOASSERTION, because Zelsis does not guess them.
+ */
 export function buildSbom(deps: Dependency[], { format, projectName, now = new Date() }: { format: SbomFormat; projectName?: string; now?: Date }) {
   const name = projectName || 'project';
   const components = uniqueSorted(deps);
@@ -60,6 +69,7 @@ export function buildSbom(deps: Dependency[], { format, projectName, now = new D
         version: c.version,
         purl: c.purl,
         scope: c.dev ? 'excluded' : 'required',
+        ...(spdxLicense(c) ? { licenses: [{ expression: spdxLicense(c) }] } : {}),
       })),
     };
   }
@@ -72,7 +82,7 @@ export function buildSbom(deps: Dependency[], { format, projectName, now = new D
     downloadLocation: 'NOASSERTION',
     filesAnalyzed: false,
     licenseConcluded: 'NOASSERTION',
-    licenseDeclared: 'NOASSERTION',
+    licenseDeclared: spdxLicense(c) ?? 'NOASSERTION',
     copyrightText: 'NOASSERTION',
     externalRefs: [{ referenceCategory: 'PACKAGE-MANAGER', referenceType: 'purl', referenceLocator: c.purl }],
   }));

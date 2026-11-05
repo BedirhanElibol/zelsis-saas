@@ -53,6 +53,7 @@ const ruleSources = [
   ...readdirSync(join(root, 'lib/rules')).filter((f) => f.endsWith('.ts')).map((f) => `lib/rules/${f}`),
   'lib/scanner/builtin-rules.ts',
   'lib/scanner/osv.ts',
+  'lib/scanner/licenses.ts',
   'lib/scanner/live-checks.ts'
 ];
 
