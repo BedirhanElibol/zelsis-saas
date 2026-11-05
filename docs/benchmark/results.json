@@ -168,18 +168,42 @@
    "sha": "fc640cf86a130bc897d83dbd06d84c3c7d9b16e3",
    "kind": "clean",
    "stack": "Rust + Actix + Diesel + Postgres (production service)"
+  },
+  {
+   "name": "bridgecrewio/terragoat",
+   "sha": "729f8da62c6a85ce4af5ad3d123de97776d954c4",
+   "kind": "vulnerable",
+   "stack": "Terraform (AWS, Azure, GCP), intentionally misconfigured"
+  },
+  {
+   "name": "madhuakula/kubernetes-goat",
+   "sha": "723a0db478f050d173d23b4ce5044b65bce0bdd0",
+   "kind": "vulnerable",
+   "stack": "Kubernetes manifests and Helm, intentionally insecure"
+  },
+  {
+   "name": "terraform-aws-modules/terraform-aws-vpc",
+   "sha": "b3abd6df2ecf052451a361ed55b8f06f8742a795",
+   "kind": "clean",
+   "stack": "Terraform module (AWS VPC), widely used"
+  },
+  {
+   "name": "terraform-aws-modules/terraform-aws-eks",
+   "sha": "91b8a8d944e3cf169483108acd12d5b1e47856f7",
+   "kind": "clean",
+   "stack": "Terraform module (AWS EKS), widely used"
   }
  ],
  "summary": {
-  "cleanRepos": 17,
+  "cleanRepos": 19,
   "cleanReposGateFailed": 2,
   "cleanHighCriticalFindings": 33,
   "cleanGatingHighCriticalFindings": 32,
-  "documentedFlaws": 44,
-  "documentedFlawsDetected": 44,
+  "documentedFlaws": 62,
+  "documentedFlawsDetected": 62,
   "recall": 1,
-  "documentedFlawsBlockingGate": 42,
-  "rulesFiringOnClean": 87,
+  "documentedFlawsBlockingGate": 58,
+  "rulesFiringOnClean": 88,
   "experimentalRules": 1
  },
  "repos": [
@@ -189,7 +213,7 @@
    "kind": "clean",
    "stack": "Next.js + Supabase + Stripe",
    "files": 68,
-   "scanMs": 613,
+   "scanMs": 822,
    "gate": "WARNING",
    "score": 79,
    "critical": 0,
@@ -207,7 +231,7 @@
    "kind": "clean",
    "stack": "Next.js + Prisma + Stripe + NextAuth",
    "files": 140,
-   "scanMs": 1275,
+   "scanMs": 1314,
    "gate": "WARNING",
    "score": 93,
    "critical": 0,
@@ -225,7 +249,7 @@
    "kind": "clean",
    "stack": "FastAPI + React",
    "files": 206,
-   "scanMs": 2089,
+   "scanMs": 2038,
    "gate": "WARNING",
    "score": 93,
    "critical": 0,
@@ -243,7 +267,7 @@
    "kind": "clean",
    "stack": "Express + Prisma",
    "files": 58,
-   "scanMs": 337,
+   "scanMs": 364,
    "gate": "FAILED",
    "score": 43,
    "critical": 2,
@@ -267,7 +291,7 @@
    "kind": "clean",
    "stack": "Go + Gin",
    "files": 27,
-   "scanMs": 328,
+   "scanMs": 331,
    "gate": "PASSED",
    "score": 98,
    "critical": 0,
@@ -285,7 +309,7 @@
    "kind": "clean",
    "stack": "Laravel",
    "files": 40,
-   "scanMs": 186,
+   "scanMs": 169,
    "gate": "PASSED",
    "score": 100,
    "critical": 0,
@@ -303,7 +327,7 @@
    "kind": "clean",
    "stack": "Remix/React Router + Prisma + tRPC (production SaaS)",
    "files": 2481,
-   "scanMs": 39404,
+   "scanMs": 36143,
    "gate": "WARNING",
    "score": 47,
    "critical": 0,
@@ -321,7 +345,7 @@
    "kind": "clean",
    "stack": "TypeScript SDK",
    "files": 474,
-   "scanMs": 8380,
+   "scanMs": 7367,
    "gate": "PASSED",
    "score": 98,
    "critical": 0,
@@ -339,7 +363,7 @@
    "kind": "vulnerable",
    "stack": "Express + MongoDB",
    "files": 87,
-   "scanMs": 592,
+   "scanMs": 538,
    "gate": "FAILED",
    "score": 1,
    "critical": 3,
@@ -373,7 +397,7 @@
    "kind": "vulnerable",
    "stack": "Express + Sequelize",
    "files": 21,
-   "scanMs": 186,
+   "scanMs": 95,
    "gate": "FAILED",
    "score": 0,
    "critical": 4,
@@ -412,7 +436,7 @@
    "kind": "vulnerable",
    "stack": "Express + Angular + Sequelize",
    "files": 965,
-   "scanMs": 12972,
+   "scanMs": 11971,
    "gate": "FAILED",
    "score": 0,
    "critical": 14,
@@ -456,7 +480,7 @@
    "kind": "clean",
    "stack": "Java + Spring Boot",
    "files": 84,
-   "scanMs": 329,
+   "scanMs": 309,
    "gate": "WARNING",
    "score": 87,
    "critical": 0,
@@ -474,7 +498,7 @@
    "kind": "clean",
    "stack": "C# + ASP.NET Core",
    "files": 350,
-   "scanMs": 1044,
+   "scanMs": 1130,
    "gate": "WARNING",
    "score": 84,
    "critical": 0,
@@ -492,7 +516,7 @@
    "kind": "clean",
    "stack": "Ruby on Rails (production service)",
    "files": 1698,
-   "scanMs": 7012,
+   "scanMs": 6367,
    "gate": "WARNING",
    "score": 72,
    "critical": 0,
@@ -510,7 +534,7 @@
    "kind": "clean",
    "stack": "Python + Django (production site)",
    "files": 434,
-   "scanMs": 4689,
+   "scanMs": 4177,
    "gate": "WARNING",
    "score": 83,
    "critical": 0,
@@ -528,7 +552,7 @@
    "kind": "vulnerable",
    "stack": "Java + Spring",
    "files": 635,
-   "scanMs": 3637,
+   "scanMs": 3584,
    "gate": "FAILED",
    "score": 0,
    "critical": 12,
@@ -562,11 +586,11 @@
    "kind": "vulnerable",
    "stack": "Ruby on Rails",
    "files": 187,
-   "scanMs": 1809,
+   "scanMs": 1694,
    "gate": "FAILED",
    "score": 0,
    "critical": 4,
-   "high": 9,
+   "high": 10,
    "medium": 1,
    "low": 0,
    "experimental": 0,
@@ -601,7 +625,7 @@
    "kind": "vulnerable",
    "stack": "PHP",
    "files": 195,
-   "scanMs": 833,
+   "scanMs": 888,
    "gate": "FAILED",
    "score": 0,
    "critical": 50,
@@ -650,7 +674,7 @@
    "kind": "vulnerable",
    "stack": "Python + Django",
    "files": 217,
-   "scanMs": 1167,
+   "scanMs": 1087,
    "gate": "FAILED",
    "score": 0,
    "critical": 12,
@@ -704,7 +728,7 @@
    "kind": "vulnerable",
    "stack": "Python + aiohttp",
    "files": 30,
-   "scanMs": 1865,
+   "scanMs": 1822,
    "gate": "FAILED",
    "score": 33,
    "critical": 2,
@@ -733,14 +757,14 @@
    "kind": "clean",
    "stack": "Android (Java + Kotlin)",
    "files": 1161,
-   "scanMs": 8430,
+   "scanMs": 7633,
    "gate": "FAILED",
    "score": 67,
    "critical": 1,
    "high": 0,
    "medium": 4,
    "low": 0,
-   "experimental": 0,
+   "experimental": 1,
    "allHighCritical": 2,
    "detectedFramework": null,
    "blockers": [
@@ -757,7 +781,7 @@
    "kind": "clean",
    "stack": "Android (Java)",
    "files": 1143,
-   "scanMs": 7101,
+   "scanMs": 7048,
    "gate": "WARNING",
    "score": 58,
    "critical": 0,
@@ -775,7 +799,7 @@
    "kind": "clean",
    "stack": "iOS (Swift)",
    "files": 932,
-   "scanMs": 4772,
+   "scanMs": 3944,
    "gate": "PASSED",
    "score": 94,
    "critical": 0,
@@ -793,7 +817,7 @@
    "kind": "vulnerable",
    "stack": "Android (Java)",
    "files": 59,
-   "scanMs": 149,
+   "scanMs": 119,
    "gate": "FAILED",
    "score": 28,
    "critical": 2,
@@ -817,14 +841,14 @@
    "kind": "vulnerable",
    "stack": "Android (Java)",
    "files": 90,
-   "scanMs": 253,
+   "scanMs": 222,
    "gate": "WARNING",
    "score": 77,
    "critical": 0,
    "high": 3,
    "medium": 1,
    "low": 0,
-   "experimental": 0,
+   "experimental": 1,
    "allHighCritical": 4,
    "detectedFramework": "Android (Kotlin/Java)",
    "blockers": []
@@ -835,7 +859,7 @@
    "kind": "vulnerable",
    "stack": "iOS (Swift)",
    "files": 129,
-   "scanMs": 805,
+   "scanMs": 842,
    "gate": "WARNING",
    "score": 86,
    "critical": 0,
@@ -853,7 +877,7 @@
    "kind": "clean",
    "stack": "Flutter (Dart) + Rust",
    "files": 734,
-   "scanMs": 7656,
+   "scanMs": 7447,
    "gate": "WARNING",
    "score": 54,
    "critical": 0,
@@ -871,7 +895,7 @@
    "kind": "clean",
    "stack": "Rust + Actix + Diesel + Postgres (production service)",
    "files": 1442,
-   "scanMs": 6114,
+   "scanMs": 6011,
    "gate": "WARNING",
    "score": 61,
    "critical": 0,
@@ -881,6 +905,78 @@
    "experimental": 0,
    "allHighCritical": 2,
    "detectedFramework": "Rust (web)",
+   "blockers": []
+  },
+  {
+   "repo": "bridgecrewio/terragoat",
+   "sha": "729f8da62c6a85ce4af5ad3d123de97776d954c4",
+   "kind": "vulnerable",
+   "stack": "Terraform (AWS, Azure, GCP), intentionally misconfigured",
+   "files": 56,
+   "scanMs": 177,
+   "gate": "WARNING",
+   "score": 87,
+   "critical": 0,
+   "high": 1,
+   "medium": 3,
+   "low": 0,
+   "experimental": 0,
+   "allHighCritical": 14,
+   "detectedFramework": null,
+   "blockers": []
+  },
+  {
+   "repo": "madhuakula/kubernetes-goat",
+   "sha": "723a0db478f050d173d23b4ce5044b65bce0bdd0",
+   "kind": "vulnerable",
+   "stack": "Kubernetes manifests and Helm, intentionally insecure",
+   "files": 84,
+   "scanMs": 1001,
+   "gate": "WARNING",
+   "score": 60,
+   "critical": 0,
+   "high": 14,
+   "medium": 0,
+   "low": 0,
+   "experimental": 0,
+   "allHighCritical": 39,
+   "detectedFramework": "React",
+   "blockers": []
+  },
+  {
+   "repo": "terraform-aws-modules/terraform-aws-vpc",
+   "sha": "b3abd6df2ecf052451a361ed55b8f06f8742a795",
+   "kind": "clean",
+   "stack": "Terraform module (AWS VPC), widely used",
+   "files": 84,
+   "scanMs": 451,
+   "gate": "PASSED",
+   "score": 92,
+   "critical": 0,
+   "high": 0,
+   "medium": 4,
+   "low": 0,
+   "experimental": 0,
+   "allHighCritical": 0,
+   "detectedFramework": null,
+   "blockers": []
+  },
+  {
+   "repo": "terraform-aws-modules/terraform-aws-eks",
+   "sha": "91b8a8d944e3cf169483108acd12d5b1e47856f7",
+   "kind": "clean",
+   "stack": "Terraform module (AWS EKS), widely used",
+   "files": 114,
+   "scanMs": 589,
+   "gate": "PASSED",
+   "score": 92,
+   "critical": 0,
+   "high": 0,
+   "medium": 4,
+   "low": 0,
+   "experimental": 0,
+   "allHighCritical": 0,
+   "detectedFramework": null,
    "blockers": []
   }
  ],
@@ -1340,6 +1436,189 @@
    "matchedBy": [
     "MOB-SEC-18: Credentials Saved to a Plain File"
    ]
+  },
+  {
+   "repo": "bridgecrewio/terragoat",
+   "flaw": "RDS instance publicly_accessible = true",
+   "file": "terraform/aws/db-app.tf",
+   "found": true,
+   "blocksGate": true,
+   "matchedBy": [
+    "IAC-10: RDS Database Instance Publicly Accessible (publicly_accessible = true)"
+   ]
+  },
+  {
+   "repo": "bridgecrewio/terragoat",
+   "flaw": "RDS storage_encrypted = false",
+   "file": "terraform/aws/db-app.tf",
+   "found": true,
+   "blocksGate": false,
+   "matchedBy": [
+    "CLOUD-V2-01: Database or File Storage Encryption Explicitly Disabled"
+   ]
+  },
+  {
+   "repo": "bridgecrewio/terragoat",
+   "flaw": "Neptune cluster storage_encrypted = false",
+   "file": "terraform/aws/neptune.tf",
+   "found": true,
+   "blocksGate": false,
+   "matchedBy": [
+    "CLOUD-V2-01: Database or File Storage Encryption Explicitly Disabled"
+   ]
+  },
+  {
+   "repo": "bridgecrewio/terragoat",
+   "flaw": "Security group allows SSH from 0.0.0.0/0",
+   "file": "terraform/aws/ec2.tf",
+   "found": true,
+   "blocksGate": true,
+   "matchedBy": [
+    "IAC-01: Security Group Ingress Open to World on SSH Port 22",
+    "CLOUD-SEC-04: Security Group Ingress Open to 0.0.0.0/0 on Management Ports"
+   ]
+  },
+  {
+   "repo": "bridgecrewio/terragoat",
+   "flaw": "AWS access key hard-coded in EC2 user_data",
+   "file": "terraform/aws/ec2.tf",
+   "found": true,
+   "blocksGate": true,
+   "matchedBy": [
+    "SEC-SECRET-01: AWS Access Key ID Exposure"
+   ]
+  },
+  {
+   "repo": "bridgecrewio/terragoat",
+   "flaw": "MSSQL administrator password hard-coded",
+   "file": "terraform/azure/mssql.tf",
+   "found": true,
+   "blocksGate": true,
+   "matchedBy": [
+    "IAC-22: Terraform Resource Using Hardcoded Plaintext Passwords"
+   ]
+  },
+  {
+   "repo": "bridgecrewio/terragoat",
+   "flaw": "Custom role with actions = [\"*\"]",
+   "file": "terraform/azure/roles.tf",
+   "found": true,
+   "blocksGate": true,
+   "matchedBy": [
+    "CSPM-02: Overprivileged Cloud IAM Roles with Wildcard Actions (*:*)"
+   ]
+  },
+  {
+   "repo": "bridgecrewio/terragoat",
+   "flaw": "Cloud SQL authorized network 0.0.0.0/0",
+   "file": "terraform/gcp/big_data.tf",
+   "found": true,
+   "blocksGate": true,
+   "matchedBy": [
+    "CLOUD-V2-08: Cloud SQL Instance Authorizes Connections From Any IP (0.0.0.0/0)"
+   ]
+  },
+  {
+   "repo": "bridgecrewio/terragoat",
+   "flaw": "GKE enable_legacy_abac = true",
+   "file": "terraform/gcp/gke.tf",
+   "found": true,
+   "blocksGate": true,
+   "matchedBy": [
+    "CLOUD-V2-13: Managed Kubernetes Cluster With RBAC Disabled or Legacy ABAC Enabled"
+   ]
+  },
+  {
+   "repo": "bridgecrewio/terragoat",
+   "flaw": "Firewall allows SSH/RDP from 0.0.0.0/0",
+   "file": "terraform/gcp/networks.tf",
+   "found": true,
+   "blocksGate": true,
+   "matchedBy": [
+    "CLOUD-V2-06: GCP Firewall Allows SSH or RDP From the Internet (0.0.0.0/0)"
+   ]
+  },
+  {
+   "repo": "bridgecrewio/terragoat",
+   "flaw": "OSS bucket acl = public-read-write",
+   "file": "terraform/alicloud/bucket.tf",
+   "found": true,
+   "blocksGate": true,
+   "matchedBy": [
+    "Public Read ACL Detected on Cloud Storage Bucket Configuration",
+    "CSPM-01: Unrestricted Cloud Storage Bucket Public Read/Write Access"
+   ]
+  },
+  {
+   "repo": "madhuakula/kubernetes-goat",
+   "flaw": "Privileged container",
+   "file": "scenarios/docker-bench-security/deployment.yaml",
+   "found": true,
+   "blocksGate": true,
+   "matchedBy": [
+    "K8S-01: Privileged Container Execution (privileged: true)"
+   ]
+  },
+  {
+   "repo": "madhuakula/kubernetes-goat",
+   "flaw": "hostPID / hostIPC namespace",
+   "file": "scenarios/docker-bench-security/deployment.yaml",
+   "found": true,
+   "blocksGate": true,
+   "matchedBy": [
+    "IAC-12: Kubernetes Container Running with Host PID or IPC Namespace"
+   ]
+  },
+  {
+   "repo": "madhuakula/kubernetes-goat",
+   "flaw": "hostNetwork enabled",
+   "file": "scenarios/docker-bench-security/deployment.yaml",
+   "found": true,
+   "blocksGate": true,
+   "matchedBy": [
+    "IAC-21: Container Running with hostNetwork Enabled"
+   ]
+  },
+  {
+   "repo": "madhuakula/kubernetes-goat",
+   "flaw": "hostPath mount of / or the Docker socket",
+   "file": "scenarios/docker-bench-security/deployment.yaml",
+   "found": true,
+   "blocksGate": true,
+   "matchedBy": [
+    "K8S-04: Dangerous Host Path Volume Mount (/ or /etc or /var/run)"
+   ]
+  },
+  {
+   "repo": "madhuakula/kubernetes-goat",
+   "flaw": "cluster-admin bound to a workload ServiceAccount",
+   "file": "scenarios/insecure-rbac/setup.yaml",
+   "found": true,
+   "blocksGate": true,
+   "matchedBy": [
+    "CLOUD-V2-16: cluster-admin Bound to a Workload ServiceAccount"
+   ]
+  },
+  {
+   "repo": "madhuakula/kubernetes-goat",
+   "flaw": "ClusterRole with all verbs on all resources",
+   "file": "infrastructure/helm-tiller/pwnchart/templates/clusterrole.yaml",
+   "found": true,
+   "blocksGate": true,
+   "matchedBy": [
+    "CLOUD-V2-14: Kubernetes RBAC Role Grants All Verbs on All Resources (*)"
+   ]
+  },
+  {
+   "repo": "madhuakula/kubernetes-goat",
+   "flaw": "API key baked into a Docker image layer",
+   "file": "infrastructure/users-repo/Dockerfile",
+   "found": true,
+   "blocksGate": true,
+   "matchedBy": [
+    "CLOUD-06: Docker Secret Leak via Build ARG or ENV",
+    "GAP-29: Secret API_KEY Stored in a Docker Image Layer"
+   ]
   }
  ],
  "rules": [
@@ -1355,14 +1634,17 @@
     "django/djangoproject.com",
     "TeamNewPipe/NewPipe",
     "mastodon/mastodon-ios",
-    "localsend/localsend"
+    "localsend/localsend",
+    "terraform-aws-modules/terraform-aws-vpc",
+    "terraform-aws-modules/terraform-aws-eks"
    ],
-   "cleanFindings": 37,
+   "cleanFindings": 45,
    "vulnerableRepos": [
     "juice-shop/juice-shop",
     "WebGoat/WebGoat",
     "OWASP/railsgoat",
-    "digininja/DVWA"
+    "digininja/DVWA",
+    "bridgecrewio/terragoat"
    ]
   },
   {
@@ -1386,7 +1668,9 @@
     "juice-shop/juice-shop",
     "OWASP/railsgoat",
     "digininja/DVWA",
-    "adeyosemanputra/pygoat"
+    "adeyosemanputra/pygoat",
+    "bridgecrewio/terragoat",
+    "madhuakula/kubernetes-goat"
    ]
   },
   {
@@ -1406,7 +1690,8 @@
    "vulnerableRepos": [
     "juice-shop/juice-shop",
     "WebGoat/WebGoat",
-    "adeyosemanputra/pygoat"
+    "adeyosemanputra/pygoat",
+    "madhuakula/kubernetes-goat"
    ]
   },
   {
@@ -1425,7 +1710,9 @@
     "appsecco/dvna",
     "OWASP/railsgoat",
     "digininja/DVWA",
-    "adeyosemanputra/pygoat"
+    "adeyosemanputra/pygoat",
+    "bridgecrewio/terragoat",
+    "madhuakula/kubernetes-goat"
    ]
   },
   {
@@ -1797,6 +2084,17 @@
    "vulnerableRepos": []
   },
   {
+   "ruleId": 7029,
+   "title": "CLOUD-29: Indefinite CloudWatch Log Retention Period",
+   "severity": "LOW",
+   "cleanRepos": [
+    "terraform-aws-modules/terraform-aws-vpc",
+    "terraform-aws-modules/terraform-aws-eks"
+   ],
+   "cleanFindings": 3,
+   "vulnerableRepos": []
+  },
+  {
    "ruleId": 1211,
    "title": "UI-INTERACT-11: Double-Click Duplicate Mutation Hazard",
    "severity": "LOW",
@@ -1831,7 +2129,8 @@
    ],
    "cleanFindings": 2,
    "vulnerableRepos": [
-    "adeyosemanputra/pygoat"
+    "adeyosemanputra/pygoat",
+    "madhuakula/kubernetes-goat"
    ]
   },
   {
@@ -2053,7 +2352,9 @@
     "spring-projects/spring-petclinic"
    ],
    "cleanFindings": 2,
-   "vulnerableRepos": []
+   "vulnerableRepos": [
+    "madhuakula/kubernetes-goat"
+   ]
   },
   {
    "ruleId": 29956,
@@ -2186,7 +2487,9 @@
     "fastapi/full-stack-fastapi-template"
    ],
    "cleanFindings": 1,
-   "vulnerableRepos": []
+   "vulnerableRepos": [
+    "madhuakula/kubernetes-goat"
+   ]
   },
   {
    "ruleId": 20,
@@ -2432,7 +2735,8 @@
    "vulnerableRepos": [
     "OWASP/NodeGoat",
     "juice-shop/juice-shop",
-    "adeyosemanputra/pygoat"
+    "adeyosemanputra/pygoat",
+    "bridgecrewio/terragoat"
    ]
   },
   {
@@ -2554,7 +2858,8 @@
    "cleanFindings": 0,
    "vulnerableRepos": [
     "OWASP/NodeGoat",
-    "appsecco/dvna"
+    "appsecco/dvna",
+    "madhuakula/kubernetes-goat"
    ]
   },
   {
@@ -2676,7 +2981,8 @@
    "cleanRepos": [],
    "cleanFindings": 0,
    "vulnerableRepos": [
-    "juice-shop/juice-shop"
+    "juice-shop/juice-shop",
+    "bridgecrewio/terragoat"
    ]
   },
   {
@@ -3127,7 +3433,8 @@
    "cleanRepos": [],
    "cleanFindings": 0,
    "vulnerableRepos": [
-    "adeyosemanputra/pygoat"
+    "adeyosemanputra/pygoat",
+    "madhuakula/kubernetes-goat"
    ]
   },
   {
@@ -3379,6 +3686,356 @@
    "cleanFindings": 0,
    "vulnerableRepos": [
     "prateek147/DVIA-v2"
+   ]
+  },
+  {
+   "ruleId": 3012,
+   "title": "Public Read ACL Detected on Cloud Storage Bucket Configuration",
+   "severity": "HIGH",
+   "cleanRepos": [],
+   "cleanFindings": 0,
+   "vulnerableRepos": [
+    "bridgecrewio/terragoat"
+   ]
+  },
+  {
+   "ruleId": 14801,
+   "title": "CSPM-01: Unrestricted Cloud Storage Bucket Public Read/Write Access",
+   "severity": "CRITICAL",
+   "cleanRepos": [],
+   "cleanFindings": 0,
+   "vulnerableRepos": [
+    "bridgecrewio/terragoat"
+   ]
+  },
+  {
+   "ruleId": 8309,
+   "title": "IAC-09: RDS Database Instance Missing Automated Backup Retention",
+   "severity": "MEDIUM",
+   "cleanRepos": [],
+   "cleanFindings": 0,
+   "vulnerableRepos": [
+    "bridgecrewio/terragoat"
+   ]
+  },
+  {
+   "ruleId": 8310,
+   "title": "IAC-10: RDS Database Instance Publicly Accessible (publicly_accessible = true)",
+   "severity": "CRITICAL",
+   "cleanRepos": [],
+   "cleanFindings": 0,
+   "vulnerableRepos": [
+    "bridgecrewio/terragoat"
+   ]
+  },
+  {
+   "ruleId": 8332,
+   "title": "IAC-32: AWS RDS Instance Missing Deletion Protection",
+   "severity": "MEDIUM",
+   "cleanRepos": [],
+   "cleanFindings": 0,
+   "vulnerableRepos": [
+    "bridgecrewio/terragoat"
+   ]
+  },
+  {
+   "ruleId": 28501,
+   "title": "CLOUD-V2-01: Database or File Storage Encryption Explicitly Disabled",
+   "severity": "MEDIUM",
+   "cleanRepos": [],
+   "cleanFindings": 0,
+   "vulnerableRepos": [
+    "bridgecrewio/terragoat"
+   ]
+  },
+  {
+   "ruleId": 5001,
+   "title": "SEC-SECRET-01: AWS Access Key ID Exposure",
+   "severity": "CRITICAL",
+   "cleanRepos": [],
+   "cleanFindings": 0,
+   "vulnerableRepos": [
+    "bridgecrewio/terragoat"
+   ]
+  },
+  {
+   "ruleId": 8301,
+   "title": "IAC-01: Security Group Ingress Open to World on SSH Port 22",
+   "severity": "CRITICAL",
+   "cleanRepos": [],
+   "cleanFindings": 0,
+   "vulnerableRepos": [
+    "bridgecrewio/terragoat"
+   ]
+  },
+  {
+   "ruleId": 8304,
+   "title": "IAC-04: AWS EBS Storage Volume Missing Default Encryption",
+   "severity": "MEDIUM",
+   "cleanRepos": [],
+   "cleanFindings": 0,
+   "vulnerableRepos": [
+    "bridgecrewio/terragoat"
+   ]
+  },
+  {
+   "ruleId": 9204,
+   "title": "CLOUD-SEC-04: Security Group Ingress Open to 0.0.0.0/0 on Management Ports",
+   "severity": "CRITICAL",
+   "cleanRepos": [],
+   "cleanFindings": 0,
+   "vulnerableRepos": [
+    "bridgecrewio/terragoat"
+   ]
+  },
+  {
+   "ruleId": 7038,
+   "title": "CLOUD-38: ECR Container Repository Tag Mutability Enabled",
+   "severity": "LOW",
+   "cleanRepos": [],
+   "cleanFindings": 0,
+   "vulnerableRepos": [
+    "bridgecrewio/terragoat"
+   ]
+  },
+  {
+   "ruleId": 7030,
+   "title": "CLOUD-30: Terraform / OpenTofu Plaintext Secret in Output",
+   "severity": "MEDIUM",
+   "cleanRepos": [],
+   "cleanFindings": 0,
+   "vulnerableRepos": [
+    "bridgecrewio/terragoat"
+   ]
+  },
+  {
+   "ruleId": 13302,
+   "title": "CRYPTO-02: Missing Automated Master Key Rotation Schedule Exceeding 90 Days",
+   "severity": "LOW",
+   "cleanRepos": [],
+   "cleanFindings": 0,
+   "vulnerableRepos": [
+    "bridgecrewio/terragoat"
+   ]
+  },
+  {
+   "ruleId": 8342,
+   "title": "IAC-42: AWS Lambda Function Runtime Using Deprecated Node.js or Python",
+   "severity": "MEDIUM",
+   "cleanRepos": [],
+   "cleanFindings": 0,
+   "vulnerableRepos": [
+    "bridgecrewio/terragoat"
+   ]
+  },
+  {
+   "ruleId": 11002,
+   "title": "TF-02: Missing State Locking on Distributed Terraform Backend (DynamoDB Table)",
+   "severity": "MEDIUM",
+   "cleanRepos": [],
+   "cleanFindings": 0,
+   "vulnerableRepos": [
+    "bridgecrewio/terragoat"
+   ]
+  },
+  {
+   "ruleId": 28512,
+   "title": "CLOUD-V2-12: Cloud Resource Accepts Deprecated TLS 1.0 / 1.1 Connections",
+   "severity": "MEDIUM",
+   "cleanRepos": [],
+   "cleanFindings": 0,
+   "vulnerableRepos": [
+    "bridgecrewio/terragoat"
+   ]
+  },
+  {
+   "ruleId": 8322,
+   "title": "IAC-22: Terraform Resource Using Hardcoded Plaintext Passwords",
+   "severity": "CRITICAL",
+   "cleanRepos": [],
+   "cleanFindings": 0,
+   "vulnerableRepos": [
+    "bridgecrewio/terragoat"
+   ]
+  },
+  {
+   "ruleId": 14802,
+   "title": "CSPM-02: Overprivileged Cloud IAM Roles with Wildcard Actions (*:*)",
+   "severity": "CRITICAL",
+   "cleanRepos": [],
+   "cleanFindings": 0,
+   "vulnerableRepos": [
+    "bridgecrewio/terragoat"
+   ]
+  },
+  {
+   "ruleId": 28508,
+   "title": "CLOUD-V2-08: Cloud SQL Instance Authorizes Connections From Any IP (0.0.0.0/0)",
+   "severity": "HIGH",
+   "cleanRepos": [],
+   "cleanFindings": 0,
+   "vulnerableRepos": [
+    "bridgecrewio/terragoat"
+   ]
+  },
+  {
+   "ruleId": 28513,
+   "title": "CLOUD-V2-13: Managed Kubernetes Cluster With RBAC Disabled or Legacy ABAC Enabled",
+   "severity": "HIGH",
+   "cleanRepos": [],
+   "cleanFindings": 0,
+   "vulnerableRepos": [
+    "bridgecrewio/terragoat"
+   ]
+  },
+  {
+   "ruleId": 28506,
+   "title": "CLOUD-V2-06: GCP Firewall Allows SSH or RDP From the Internet (0.0.0.0/0)",
+   "severity": "HIGH",
+   "cleanRepos": [],
+   "cleanFindings": 0,
+   "vulnerableRepos": [
+    "bridgecrewio/terragoat"
+   ]
+  },
+  {
+   "ruleId": 7005,
+   "title": "CLOUD-05: Docker Base Image Using Mutable 'latest' Tag",
+   "severity": "MEDIUM",
+   "cleanRepos": [],
+   "cleanFindings": 0,
+   "vulnerableRepos": [
+    "madhuakula/kubernetes-goat"
+   ]
+  },
+  {
+   "ruleId": 9001,
+   "title": "GO-01: Command Injection via Unsanitized exec.Command Input",
+   "severity": "CRITICAL",
+   "cleanRepos": [],
+   "cleanFindings": 0,
+   "vulnerableRepos": [
+    "madhuakula/kubernetes-goat"
+   ]
+  },
+  {
+   "ruleId": 28514,
+   "title": "CLOUD-V2-14: Kubernetes RBAC Role Grants All Verbs on All Resources (*)",
+   "severity": "HIGH",
+   "cleanRepos": [],
+   "cleanFindings": 0,
+   "vulnerableRepos": [
+    "madhuakula/kubernetes-goat"
+   ]
+  },
+  {
+   "ruleId": 30518,
+   "title": "CAT-18: Go HTTP Server Without Read Timeouts",
+   "severity": "MEDIUM",
+   "cleanRepos": [],
+   "cleanFindings": 0,
+   "vulnerableRepos": [
+    "madhuakula/kubernetes-goat"
+   ]
+  },
+  {
+   "ruleId": 7006,
+   "title": "CLOUD-06: Docker Secret Leak via Build ARG or ENV",
+   "severity": "HIGH",
+   "cleanRepos": [],
+   "cleanFindings": 0,
+   "vulnerableRepos": [
+    "madhuakula/kubernetes-goat"
+   ]
+  },
+  {
+   "ruleId": 28829,
+   "title": "GAP-29: Secret API_KEY Stored in a Docker Image Layer",
+   "severity": "HIGH",
+   "cleanRepos": [],
+   "cleanFindings": 0,
+   "vulnerableRepos": [
+    "madhuakula/kubernetes-goat"
+   ]
+  },
+  {
+   "ruleId": 8312,
+   "title": "IAC-12: Kubernetes Container Running with Host PID or IPC Namespace",
+   "severity": "CRITICAL",
+   "cleanRepos": [],
+   "cleanFindings": 0,
+   "vulnerableRepos": [
+    "madhuakula/kubernetes-goat"
+   ]
+  },
+  {
+   "ruleId": 8321,
+   "title": "IAC-21: Container Running with hostNetwork Enabled",
+   "severity": "CRITICAL",
+   "cleanRepos": [],
+   "cleanFindings": 0,
+   "vulnerableRepos": [
+    "madhuakula/kubernetes-goat"
+   ]
+  },
+  {
+   "ruleId": 8901,
+   "title": "K8S-01: Privileged Container Execution (privileged: true)",
+   "severity": "HIGH",
+   "cleanRepos": [],
+   "cleanFindings": 0,
+   "vulnerableRepos": [
+    "madhuakula/kubernetes-goat"
+   ]
+  },
+  {
+   "ruleId": 8902,
+   "title": "K8S-02: Container Allowed to Run as Root User",
+   "severity": "MEDIUM",
+   "cleanRepos": [],
+   "cleanFindings": 0,
+   "vulnerableRepos": [
+    "madhuakula/kubernetes-goat"
+   ]
+  },
+  {
+   "ruleId": 8904,
+   "title": "K8S-04: Dangerous Host Path Volume Mount (/ or /etc or /var/run)",
+   "severity": "CRITICAL",
+   "cleanRepos": [],
+   "cleanFindings": 0,
+   "vulnerableRepos": [
+    "madhuakula/kubernetes-goat"
+   ]
+  },
+  {
+   "ruleId": 15701,
+   "title": "KERN-SEC-01: Unrestricted Linux Root Capabilities (CAP_SYS_ADMIN) Retained in Container Workloads",
+   "severity": "HIGH",
+   "cleanRepos": [],
+   "cleanFindings": 0,
+   "vulnerableRepos": [
+    "madhuakula/kubernetes-goat"
+   ]
+  },
+  {
+   "ruleId": 28516,
+   "title": "CLOUD-V2-16: cluster-admin Bound to a Workload ServiceAccount",
+   "severity": "HIGH",
+   "cleanRepos": [],
+   "cleanFindings": 0,
+   "vulnerableRepos": [
+    "madhuakula/kubernetes-goat"
+   ]
+  },
+  {
+   "ruleId": 28517,
+   "title": "CLOUD-V2-17: Container Explicitly Allows Privilege Escalation (allowPrivilegeEscalation: true)",
+   "severity": "MEDIUM",
+   "cleanRepos": [],
+   "cleanFindings": 0,
+   "vulnerableRepos": [
+    "madhuakula/kubernetes-goat"
    ]
   }
  ]
