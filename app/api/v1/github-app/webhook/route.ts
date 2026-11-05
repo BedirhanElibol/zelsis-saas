@@ -10,6 +10,7 @@ import { runStaticCodeScan } from '@/lib/scanner-engine';
 import { calculateGateStatus, gatingFindings, calculateReadinessScore } from '@/lib/scanner/scoring';
 import { getOrgPolicy } from '@/lib/organization';
 import { addedLines, buildSuggestionComments } from '@/lib/github/suggestions';
+import { scanBaseVersions, splitByBaseline, type BaselineFinding } from '@/lib/github/pr-baseline';
 import { RISK_LABEL, type RiskKind } from '@/lib/scanner/risk-kind';
 
 export const maxDuration = 300; // Allow 5 minutes for scan processing
@@ -195,7 +196,18 @@ async function handlePullRequest(payload: any, supabase: any) {
       });
       const scanMs = Date.now() - scanStartedAt;
 
-      const split = splitFindings(scanResult.findings, changedFiles);
+      // Scan the base versions of the changed files, so issues that were already there are not reported as new
+      let baseFindings: BaselineFinding[] | null = null;
+      try {
+        baseFindings = await scanBaseVersions([...changedContent.keys()], async (path) => {
+          const { data } = await octokit.rest.repos.getContent({ owner, repo, path, ref: baseSha });
+          return !Array.isArray(data) && 'content' in data && data.content ? Buffer.from(data.content, 'base64').toString('utf8') : null;
+        }, repository.full_name, { orgPolicy, dismissals });
+      } catch {
+        baseFindings = null; // fall back to "every finding in a changed file is new"
+      }
+
+      const split = splitFindings(scanResult.findings, changedFiles, baseFindings);
       const { existingFindings } = split;
       const newFindings = split.newFindings;
 
@@ -302,10 +314,8 @@ async function postSuggestedFixes(
   });
 }
 
-export function splitFindings(findings: any[], changedFiles: string[]) {
-  const newFindings = findings.filter(f => changedFiles.includes(f.filePath));
-  const existingFindings = findings.filter(f => !changedFiles.includes(f.filePath));
-  return { newFindings, existingFindings };
+export function splitFindings(findings: any[], changedFiles: string[], baseFindings?: BaselineFinding[] | null) {
+  return splitByBaseline(findings, changedFiles, baseFindings);
 }
 
 /** Route findings in this PR that Zelsis dropped after finding the auth check in another file. */
