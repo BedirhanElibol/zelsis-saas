@@ -9,6 +9,7 @@ import { scanUploadedFiles } from '@/lib/scan-files';
 import { extractDependencies, MAX_DEPENDENCIES } from '@/lib/scanner/dependencies';
 import { buildSbom } from '@/lib/scanner/sbom';
 import { logger } from '@/lib/logger';
+import { DISMISSAL_COLUMNS, activeDismissals } from '@/lib/dismissals';
 
 export const maxDuration = 60;
 export const dynamic = 'force-dynamic';
@@ -58,7 +59,7 @@ export async function POST(req: NextRequest) {
     const orgPolicy = await getOrgPolicy(admin, userId);
     const { data: dismissalRows } = await admin
       .from('finding_dismissals')
-      .select('rule_id, file_path')
+      .select(DISMISSAL_COLUMNS)
       .eq('user_id', userId)
       .eq('status', 'ACTIVE');
 
@@ -67,7 +68,7 @@ export async function POST(req: NextRequest) {
       changed: validation.data.changed,
       canSeeFixes: hasFixPromptAccess(tier),
       orgPolicy,
-      dismissals: (dismissalRows ?? []).map((d: { rule_id: number; file_path: string }) => ({ ruleId: d.rule_id, filePath: d.file_path })),
+      dismissals: activeDismissals(dismissalRows),
     });
 
     return NextResponse.json(result);

@@ -17,6 +17,7 @@ import { LOCKED_FIX_TEXT } from '@/lib/fix-gate';
 import { buildWorkflowAnnotations } from '@/lib/ci-annotations';
 import { calculateGateStatus, gatingFindings } from '@/lib/scanner/scoring';
 import { botChallengeMessage } from '@/lib/bot-challenge';
+import { DISMISSAL_COLUMNS, activeDismissals } from '@/lib/dismissals';
 
 // F-31: Bounded execution duration for static code scans (bounded to 30s for serverless SLA)
 export const maxDuration = 90; // live scans pace exposure probes (~40 s) to avoid scanner-pattern blocking
@@ -452,12 +453,10 @@ export async function POST(req: NextRequest) {
         if (existingProj?.id) {
           const { data: dismissalsData } = await adminClient
             .from('finding_dismissals')
-            .select('rule_id, file_path')
-            .eq('project_id', existingProj.id);
-          if (dismissalsData) {
-            // eslint-disable-next-line @typescript-eslint/no-explicit-any
-            dismissals = dismissalsData.map((d: any) => ({ ruleId: d.rule_id, filePath: d.file_path }));
-          }
+            .select(DISMISSAL_COLUMNS)
+            .eq('project_id', existingProj.id)
+            .eq('status', 'ACTIVE');
+          dismissals = activeDismissals(dismissalsData);
         }
       } catch (err) {
         logger.warn('[Gate Check] Error fetching dismissals:', err);
