@@ -24,6 +24,8 @@ export const DismissFindingModal: React.FC<DismissFindingModalProps> = ({
 }) => {
   const [reason, setReason] = useState<'false_positive' | 'accepted_risk' | 'test_code'>('false_positive');
   const [note, setNote] = useState('');
+  const [expires, setExpires] = useState<'30' | '90' | '180' | 'never'>('90');
+  const needsReason = reason === 'accepted_risk';
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [copied, setCopied] = useState(false);
@@ -69,6 +71,7 @@ export const DismissFindingModal: React.FC<DismissFindingModalProps> = ({
       if (note.trim()) {
         formData.append('note', note.trim());
       }
+      if (needsReason) formData.append('expiresInDays', expires);
 
       const result = await dismissFinding({ status: 'idle', message: '' }, formData);
 
@@ -158,15 +161,40 @@ export const DismissFindingModal: React.FC<DismissFindingModalProps> = ({
               </select>
             </div>
 
+            {needsReason && (
+              <div className="flex flex-col gap-2">
+                <label htmlFor="expires" className="text-sm font-bold text-[#EDEDED]">
+                  Accept for
+                </label>
+                <select
+                  id="expires"
+                  value={expires}
+                  onChange={(e) => setExpires(e.target.value as typeof expires)}
+                  className="bg-[#0A0A0A] border border-white/10 rounded-xl px-4 py-2.5 text-sm text-white focus:outline-none focus:border-white/30 transition-colors"
+                  disabled={isSubmitting}
+                >
+                  <option value="30">30 days</option>
+                  <option value="90">90 days</option>
+                  <option value="180">180 days</option>
+                  <option value="never">No end date</option>
+                </select>
+                <p className="text-xs text-[#A1A1AA]">When the time is up, the finding opens again on the next scan.</p>
+              </div>
+            )}
+
             <div className="flex flex-col gap-2">
               <label htmlFor="note" className="text-sm font-bold text-[#EDEDED]">
-                Additional Note <span className="text-[#A1A1AA] font-normal">(Optional)</span>
+                {needsReason ? 'Why is this risk accepted?' : 'Additional Note'}{' '}
+                <span className="text-[#A1A1AA] font-normal">{needsReason ? '(Required)' : '(Optional)'}</span>
               </label>
               <textarea
                 id="note"
                 value={note}
                 onChange={(e) => setNote(e.target.value)}
-                placeholder="Briefly explain why this is being dismissed..."
+                required={needsReason}
+                minLength={needsReason ? 3 : undefined}
+                maxLength={500}
+                placeholder={needsReason ? 'For example: internal admin tool, only reachable over VPN' : 'Briefly explain why this is being dismissed...'}
                 className="bg-[#0A0A0A] border border-white/10 rounded-xl px-4 py-3 text-sm text-white focus:outline-none focus:border-white/30 transition-colors min-h-[80px] resize-y"
                 disabled={isSubmitting}
               />

@@ -3,6 +3,7 @@
 import { createClient, type SupabaseClient, type User } from '@supabase/supabase-js';
 import { z } from 'zod';
 import { logger } from '@/lib/logger';
+import { dismissalExpiry } from '@/lib/dismissals';
 
 export interface ActionState {
   status: 'idle' | 'success' | 'error';
@@ -43,7 +44,11 @@ const DismissFindingSchema = z.object({
   ruleId: z.string(), // We will parse to int if needed
   filePath: z.string().min(1),
   reason: z.enum(['false_positive', 'accepted_risk', 'test_code']),
-  note: z.string().optional(),
+  note: z.string().max(500).optional(),
+  // Days until an accepted risk opens again; "never" keeps it accepted. Omitted: 90 days for accepted risks.
+  expiresInDays: z.enum(['30', '90', '180', 'never']).optional(),
+}).refine((v) => v.reason !== 'accepted_risk' || (v.note ?? '').trim().length >= 3, {
+  message: 'Say why the risk is accepted.',
 });
 
 export async function dismissFinding(_prev: ActionState, formData: FormData): Promise<ActionState> {
@@ -69,6 +74,11 @@ export async function dismissFinding(_prev: ActionState, formData: FormData): Pr
     return fail('You do not have permission to modify this project.');
   }
 
+  const expiresAt = dismissalExpiry(
+    input.reason,
+    input.expiresInDays === undefined ? undefined : input.expiresInDays === 'never' ? null : Number(input.expiresInDays),
+  );
+
   // Insert dismissal
   const { error } = await ctx.admin
     .from('finding_dismissals')
@@ -79,6 +89,7 @@ export async function dismissFinding(_prev: ActionState, formData: FormData): Pr
       file_path: input.filePath,
       reason: input.reason,
       note: input.note || null,
+      expires_at: expiresAt,
     });
 
   if (error) {
@@ -89,5 +100,7 @@ export async function dismissFinding(_prev: ActionState, formData: FormData): Pr
     return fail('Failed to dismiss finding. Please try again.');
   }
 
-  return ok('Finding dismissed successfully. It will be excluded from future scans.');
+  return ok(expiresAt
+    ? `Accepted until ${expiresAt.slice(0, 10)}. The finding opens again on the first scan after that date.`
+    : 'Finding dismissed. It will be excluded from future scans.');
 }

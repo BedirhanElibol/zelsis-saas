@@ -11,6 +11,7 @@ import { calculateGateStatus, gatingFindings, calculateReadinessScore } from '@/
 import { getOrgPolicy } from '@/lib/organization';
 import { addedLines, buildSuggestionComments } from '@/lib/github/suggestions';
 import { scanBaseVersions, splitByBaseline, type BaselineFinding } from '@/lib/github/pr-baseline';
+import { DISMISSAL_COLUMNS, activeDismissals } from '@/lib/dismissals';
 import { RISK_LABEL, type RiskKind } from '@/lib/scanner/risk-kind';
 
 export const maxDuration = 300; // Allow 5 minutes for scan processing
@@ -151,18 +152,16 @@ async function handlePullRequest(payload: any, supabase: any) {
         
       const userId = installData?.user_id;
       let orgPolicy = null;
-      let dismissals = [];
+      let dismissals: { ruleId: number; filePath: string }[] = [];
 
       if (userId) {
         orgPolicy = await getOrgPolicy(supabase, userId);
         const { data: dbDismissals } = await supabase
           .from('finding_dismissals')
-          .select('rule_id, file_path')
+          .select(DISMISSAL_COLUMNS)
           .eq('user_id', userId)
           .eq('status', 'ACTIVE');
-        if (dbDismissals) {
-          dismissals = dbDismissals.map((d: any) => ({ ruleId: d.rule_id, filePath: d.file_path }));
-        }
+        dismissals = activeDismissals(dbDismissals);
       }
 
       // Fetch repo contents including changedFiles list

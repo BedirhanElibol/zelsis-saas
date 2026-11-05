@@ -14,6 +14,7 @@ import { FREE_PROJECT_LIMIT } from '@/lib/quota-manager';
 import { recordRescanAlert } from '@/lib/rescan-alerts';
 import { getVerifiedSite } from '@/lib/site-verification';
 import { botChallengeMessage } from '@/lib/bot-challenge';
+import { DISMISSAL_COLUMNS, activeDismissals } from '@/lib/dismissals';
 
 export interface ExecuteScanJobOptions {
   jobId: string;
@@ -274,11 +275,10 @@ export async function executeScanJob(options: ExecuteScanJobOptions): Promise<Sc
       if (existingProj?.id) {
         const { data: dismissalsData } = await adminClient
           .from('finding_dismissals')
-          .select('rule_id, file_path')
-          .eq('project_id', existingProj.id);
-        if (dismissalsData) {
-          dismissals = dismissalsData.map((d: any) => ({ ruleId: d.rule_id, filePath: d.file_path }));
-        }
+          .select(DISMISSAL_COLUMNS)
+          .eq('project_id', existingProj.id)
+          .eq('status', 'ACTIVE');
+        dismissals = activeDismissals(dismissalsData);
       }
     }
 
