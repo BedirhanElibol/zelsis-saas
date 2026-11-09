@@ -5,6 +5,24 @@ const f = (path: string, content: string): CodeFile[] => [{ path, content }];
 
 export const CASES: RuleCase[] = [
   {
+    ruleIds: [29301], name: 'AST-01 owner scoped by a prefixed account id (emailAccountId) is not IDOR',
+    detects: f('app/api/v1/rules/[id]/route.ts', `import { prisma } from '@/lib/prisma';
+
+export const GET = withAccountApiKey('v1/rules/detail', ['RULES_READ'], async (request, { params }) => {
+  const rule = await prisma.rule.findUnique({ where: { id: (await params).id } });
+  return Response.json(rule);
+});
+`),
+    ignores: f('app/api/v1/rules/[id]/route.ts', `import { prisma } from '@/lib/prisma';
+
+export const GET = withAccountApiKey('v1/rules/detail', ['RULES_READ'], async (request, { params }) => {
+  const { emailAccountId } = request.apiAuth;
+  const rule = await prisma.rule.findFirst({ where: { id: (await params).id, emailAccountId } });
+  return Response.json(rule);
+});
+`)
+  },
+  {
     ruleIds: [29301], name: 'AST-01 IDOR: signed-in route loads invoice by URL id through a helper',
     detects: f('app/api/invoices/[id]/route.ts', `import { auth } from '@/auth';
 import { prisma } from '@/lib/prisma';
