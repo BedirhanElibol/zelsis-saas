@@ -5,6 +5,83 @@ const f = (path: string, content: string): CodeFile[] => [{ path, content }];
 
 export const CASES: RuleCase[] = [
   {
+    ruleIds: [29301], name: 'AST-01 route that verifies an HMAC signature is a trusted caller',
+    detects: f('app/api/invoices/[id]/route.ts', `import { auth } from '@/auth';
+import { prisma } from '@/lib/prisma';
+
+export async function POST(req: Request, { params }: { params: Promise<{ id: string }> }) {
+  const session = await auth();
+  if (!session) return new Response('no', { status: 401 });
+  const { id } = await params;
+  await prisma.invoice.update({ where: { id }, data: { paid: true } });
+  return Response.json({ ok: true });
+}
+`),
+    ignores: f('app/api/invoices/[id]/route.ts', `import { auth } from '@/auth';
+import { createHmac, timingSafeEqual } from 'crypto';
+import { prisma } from '@/lib/prisma';
+
+export async function POST(req: Request, { params }: { params: Promise<{ id: string }> }) {
+  const session = await auth();
+  if (!session) return new Response('no', { status: 401 });
+  const text = await req.text();
+  const digest = createHmac('sha256', process.env.WEBHOOK_SECRET!).update(text).digest('hex');
+  if (!timingSafeEqual(Buffer.from(digest), Buffer.from(req.headers.get('x-signature') ?? ''))) return new Response('no', { status: 401 });
+  const { id } = await params;
+  await prisma.invoice.update({ where: { id }, data: { paid: true } });
+  return Response.json({ ok: true });
+}
+`)
+  },
+  {
+    ruleIds: [29301], name: 'AST-01 server action reads the caller account from ctx, not from input',
+    detects: f('app/actions/docs.ts', `'use server';
+import { actionClient } from '@/lib/safe-action';
+import { prisma } from '@/lib/prisma';
+
+export const readDocAction = actionClient
+  .metadata({ actionName: 'read_doc' })
+  .action(async ({ parsedInput }) => {
+    return prisma.document.findUnique({ where: { id: parsedInput.docId } });
+  });
+`),
+    ignores: f('app/actions/docs.ts', `'use server';
+import { actionClient } from '@/lib/safe-action';
+import { prisma } from '@/lib/prisma';
+
+export const readAccountAction = actionClient
+  .metadata({ actionName: 'read_account' })
+  .action(async ({ ctx: { emailAccountId } }) => {
+    return prisma.emailAccount.findUnique({ where: { id: emailAccountId } });
+  });
+`)
+  },
+  {
+    ruleIds: [29301], name: 'AST-01 admin-only safe action is not IDOR',
+    detects: f('app/actions/docs.ts', `'use server';
+import { userActionClient } from '@/lib/safe-action';
+import { prisma } from '@/lib/prisma';
+
+export const deleteDocAction = userActionClient
+  .metadata({ actionName: 'delete_doc' })
+  .inputSchema(z.object({ docId: z.string() }))
+  .action(async ({ parsedInput }) => {
+    await prisma.document.delete({ where: { id: parsedInput.docId } });
+  });
+`),
+    ignores: f('app/actions/docs.ts', `'use server';
+import { adminActionClient } from '@/lib/safe-action';
+import { prisma } from '@/lib/prisma';
+
+export const deleteDocAction = adminActionClient
+  .metadata({ actionName: 'delete_doc' })
+  .inputSchema(z.object({ docId: z.string() }))
+  .action(async ({ parsedInput }) => {
+    await prisma.document.delete({ where: { id: parsedInput.docId } });
+  });
+`)
+  },
+  {
     ruleIds: [29301], name: 'AST-01 owner scoped by a prefixed account id (emailAccountId) is not IDOR',
     detects: f('app/api/v1/rules/[id]/route.ts', `import { prisma } from '@/lib/prisma';
 
