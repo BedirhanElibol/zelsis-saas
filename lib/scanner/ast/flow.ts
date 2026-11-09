@@ -82,6 +82,9 @@ interface Binding {
   ctx?: boolean;
   req?: 'next' | 'express' | 'hono';
   authCtx?: boolean;
+  /** First argument of a server action: `ctx` is built from the caller's session by the action client. */
+  actionArgs?: boolean;
+  actionCtx?: boolean;
   trpcOpts?: boolean;
   client?: 'rls' | 'admin';
   row?: boolean;
@@ -120,6 +123,8 @@ const SECRET_VALUE = /token|secret|code|nonce|otp|hash|signature|key|challenge|c
 const LOGGING_CALL = /^(?:log|info|debug|warn|error|trace|track|capture\w*|identify|emit|json|stringify|send|set|push|add|fireAndForget)$/;
 const GUARD_FN = /^(?:constructEvent|constructEventAsync|verifyWebhook\w*|verifySignature|validateSignature|checkSignature|isValidSignature|verify|timingSafeEqual|createHmac|verifyRequest\w*|verifyKey|verifyApiKey|validateApiKey|checkApiKey|isValidApiKey|requireApiKey|verifyCronSecret|verifyToken|isAuthorized|authorize\w*)$/;
 const ADMIN_FN = /admin|role|permission|isStaff|superuser/i;
+const INTERNAL_CALLER_FN = /^(?:is|require|assert|verify|check|validate|authorize)\w*(?:Cron|InternalRequest|InternalApiKey)\w*$/;
+const SIGNED_CALLER_FN = /^(?:createHmac|timingSafeEqual|secureCompare|verifyWebhookSignature|verifySignature|constructEvent)$/;
 const MIX_FN = /auth|owner|access|permission|member|^can[A-Z]?|assert|check|verify|ensure|guard|policy|require|belong|allow|authori|isOwn/i;
 const ARRAY_MEMBERSHIP = new Set(['includes', 'some', 'find', 'every', 'has', 'indexOf', 'findIndex']);
 const ADMIN_PROP = /^(?:role|roles|isAdmin|admin|isSuperAdmin|superAdmin|isSuperuser|permissions|isStaff|isOwner|platformRole|userRole)$/;
@@ -496,6 +501,8 @@ export function analyzeProgram(program: AstNode, path: string, source: string, c
           else if (b.req === 'express' && (k === 'params' || k === 'query' || k === 'body')) sub = { t: 2 };
           else if (b.req && USER_PROP.test(k)) sub = { t: 0, user: true };
           else if (b.authCtx && USER_PROP.test(k)) sub = { t: 0, user: true };
+          else if (b.actionArgs && k === 'ctx') sub = { t: 0, actionCtx: true };
+          else if (b.actionCtx) sub = { t: 0, user: true };
           else if (b.req === 'next' && k === 'nextUrl') sub = { t: 0, url: true };
           else sub = { t: b.t, user: b.user, row: b.row, h: b.h };
           bindPattern(p.value, sub, scope, assign);
@@ -810,7 +817,7 @@ export function analyzeProgram(program: AstNode, path: string, source: string, c
       case 'action': return (fn.params || []).map((p: AstNode) => {
         const id = p.type === 'AssignmentPattern' ? p.left : p;
         const typeName = id?.typeAnnotation?.typeAnnotation?.typeName?.name;
-        return { t: typeName === 'FormData' || (id?.type === 'Identifier' && /form/i.test(id.name)) ? 2 : 1 };
+        return { t: typeName === 'FormData' || (id?.type === 'Identifier' && /form/i.test(id.name)) ? 2 : 1, actionArgs: true };
       });
       case 'express': case 'controller': return [{ t: 0, req: 'express' }];
       case 'hono': return [{ t: 0, req: 'hono' }];
@@ -961,6 +968,10 @@ export function analyzeProgram(program: AstNode, path: string, source: string, c
       if (GUARD_FN.test(name)) ctx.guarded = true;
       if (/^(?:cookies|headers)$/.test(name) || (name === 'get' && call.arguments[0] && /^(?:authorization|x-api-key|x-cron-secret|x-webhook-secret|cookie|x-signature)$/i.test(stringValue(call.arguments[0]) || ''))) ctx.guarded = true;
       if (ADMIN_FN.test(name) && /^(?:require|assert|ensure|check|is|has|verify|get)/.test(name)) ctx.adminCheck = true;
+      // Cron or internal-key guards: the caller is a scheduler or a service, not the signed-in user, so user-scoped IDOR does not apply.
+      if (INTERNAL_CALLER_FN.test(name)) ctx.adminCheck = true;
+      // Signed webhook: the payload is authenticated by the provider's HMAC, so the caller is trusted, not a signed-in user.
+      if (SIGNED_CALLER_FN.test(name)) ctx.adminCheck = true;
       if (name === 'startsWith' || (name === 'includes' && stringValue(call.arguments[0]) === '..') || /^isPathInside|^isSubPath|^isWithin/.test(name)) ctx.pathGuard = true;
       // /^[\w-]+$/.test(input): input validated against a pattern
       if (name === 'test' && isMember(callee) && unwrap(callee.object).type === 'RegExpLiteral' && taintOf(call.arguments[0], scope) > 0) { ctx.pathGuard = true; ctx.redirectGuard = true; }
@@ -1071,27 +1082,31 @@ function findHandlers(program: AstNode, path: string, imports: Map<string, strin
   const pageFile = PAGE_FILE.test(path);
   const pagesApi = PAGES_API.test(path);
 
-  const fnFromInit = (init: AstNode | null | undefined): { fn: AstNode | null; wrapped: boolean } => {
+  const fnFromInit = (init: AstNode | null | undefined): { fn: AstNode | null; wrapped: boolean; admin: boolean } => {
     const u = init ? unwrap(init) : null;
-    if (!u) return { fn: null, wrapped: false };
-    if (isFunction(u)) return { fn: u, wrapped: false };
+    if (!u) return { fn: null, wrapped: false, admin: false };
+    if (isFunction(u)) return { fn: u, wrapped: false, admin: false };
     if (isCall(u)) {
       const inner = (u.arguments || []).map((a: AstNode) => unwrap(a)).find((a: AstNode) => isFunction(a));
-      return { fn: inner ?? null, wrapped: true };
+      // Safe-action chains such as adminActionClient.metadata(...).action(fn): the root name says the caller must be an admin.
+      let root: AstNode = u;
+      while (isCall(root) && isMember(unwrap(root.callee))) root = unwrap(unwrap(root.callee).object);
+      const admin = root.type === 'Identifier' && /admin/i.test(root.name);
+      return { fn: inner ?? null, wrapped: true, admin };
     }
-    return { fn: null, wrapped: false };
+    return { fn: null, wrapped: false, admin: false };
   };
 
   for (const s of program.body) {
     if (s.type === 'ExportNamedDeclaration' && s.declaration) {
       const d = s.declaration;
-      const entries: { name: string; fn: AstNode | null; wrapped: boolean }[] = [];
-      if (d.type === 'FunctionDeclaration' && d.id) entries.push({ name: d.id.name, fn: d, wrapped: false });
+      const entries: { name: string; fn: AstNode | null; wrapped: boolean; admin: boolean }[] = [];
+      if (d.type === 'FunctionDeclaration' && d.id) entries.push({ name: d.id.name, fn: d, wrapped: false, admin: false });
       if (d.type === 'VariableDeclaration') for (const dec of d.declarations) if (dec.id.type === 'Identifier') entries.push({ name: dec.id.name, ...fnFromInit(dec.init) });
       for (const e of entries) {
         if (!e.fn) continue;
-        if (routeFile && HTTP_METHODS.has(e.name)) specs.set(e.fn, { kind: 'route', name: e.name, method: e.name, wrapped: e.wrapped });
-        else if ((useServerFile || hasUseDirective(e.fn.body)) && e.fn.async) specs.set(e.fn, { kind: 'action', name: e.name, method: 'POST', wrapped: e.wrapped });
+        if (routeFile && HTTP_METHODS.has(e.name)) specs.set(e.fn, { kind: 'route', name: e.name, method: e.name, wrapped: e.wrapped, adminProc: e.admin });
+        else if ((useServerFile || hasUseDirective(e.fn.body)) && e.fn.async) specs.set(e.fn, { kind: 'action', name: e.name, method: 'POST', wrapped: e.wrapped, adminProc: e.admin });
       }
     } else if (s.type === 'FunctionDeclaration' && s.id && hasUseDirective(s.body)) {
       specs.set(s, { kind: 'action', name: s.id.name, method: 'POST' });
