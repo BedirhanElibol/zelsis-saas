@@ -191,8 +191,8 @@ async function handlePullRequest(payload: any, supabase: any) {
       const scanStartedAt = Date.now();
       // Keys are read from file contents, which the scanner empties: keep only files that contain a provider key
       const keyFiles = filesToScan
-        .filter((f: any) => /(?:sk|rk)_live_|\bgh[pousr]_|github_pat_|\bsk-/.test(f.content || ''))
-        .map((f: any) => ({ path: f.path, content: f.content as string }));
+        .filter((f: { content?: string }) => /(?:sk|rk)_live_|\bgh[pousr]_|github_pat_|\bsk-/.test(f.content || ''))
+        .map((f: { path: string; content?: string }) => ({ path: f.path, content: f.content ?? '' }));
       const scanResult = await runStaticCodeScan(filesToScan, repository.full_name, {
         dependencyAudit: false,
         orgPolicy,
