@@ -159,7 +159,13 @@ export function evaluateSaasCoreRules(file: CodeFile, lines: string[], cleanCont
     // SAAS-06: cron endpoint callable by anyone (file-based routes or router.get('/cron/...'))
     const isCronRoute = /(?:^|\/)(?:app|pages|src\/routes|routes)\/(?:api\/)?(?:.*\/)?cron\/.*\.[cm]?[jt]s$|(?:^|\/)app\/routes\/[^/]*\bcron\b[^/]*\.[jt]sx?$/i.test(lowerPath) ||
       /\b(?:app|router|server|fastify)\.(?:get|post|all)\s*\(\s*['"`]\/(?:api\/)?cron\b/i.test(cleanContent);
-    if (isCronRoute && !/CRON_SECRET|authorization|x-vercel-signature|verifySignature|Receiver\(|upstash-signature|qstash|\b(?:check|verify|require|validate|assert|authenticate)Cron\w*\s*\(/i.test(cleanContent)) {
+    // Only files that export an HTTP handler are routes. Helpers under cron/ are checked through the route that calls them.
+    const isHandlerFile = /export\s+(?:async\s+)?function\s+(?:GET|POST|PUT|PATCH|DELETE|loader|action)\b|export\s+const\s+(?:GET|POST|PUT|PATCH|DELETE)\b|export\s+default\b/.test(cleanContent) ||
+      /\b(?:app|router|server|fastify)\.(?:get|post|all)\s*\(/i.test(cleanContent);
+    // Known guards: CRON_SECRET, signature checks, the withCron wrapper, and any Cron-named auth helper such as isAuthorizedCronOrInternalRequest(req).
+    const hasCronGuard = /CRON_SECRET|authorization|x-vercel-signature|verifySignature|Receiver\(|upstash-signature|qstash/i.test(cleanContent) ||
+      /\b(?:withCron|(?:is|check|verify|require|assert|authenticate)\w*Cron\w*|\w*(?:Authorized|Authorised|Secret)\w*Cron\w*)\s*\(/i.test(cleanContent);
+    if (isCronRoute && isHandlerFile && !hasCronGuard) {
       hits.push({
         ruleId: 23006, code: 'SAAS-06', severity: 'HIGH', type: 'SECURITY', category: 'Access Control',
         title: 'Cron Endpoint Without a Secret Check',

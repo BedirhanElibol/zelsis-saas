@@ -563,6 +563,24 @@ export const RULE_CASES: RuleCase[] = [
     ignores: f('app/api/cron/sync/route.ts', "export async function GET(req: Request) {\n  if (req.headers.get('authorization') !== `Bearer ${process.env.CRON_SECRET}`) return new Response('no', { status: 401 });\n  await syncAllCustomers();\n  return Response.json({ ok: true });\n}\n")
   },
   {
+    ruleIds: [23006],
+    name: 'Cron route guarded by a Cron-named auth helper',
+    detects: f('app/api/cron/sync/route.ts', 'export const POST = withError("cron/sync", async (request) => {\n  await syncAllCustomers();\n  return Response.json({ ok: true });\n});\n'),
+    ignores: f('app/api/cron/sync/route.ts', 'export const POST = withError("cron/sync", async (request) => {\n  if (!isAuthorizedCronOrInternalRequest(request)) return new Response("no", { status: 401 });\n  await syncAllCustomers();\n  return Response.json({ ok: true });\n});\n')
+  },
+  {
+    ruleIds: [23006],
+    name: 'Cron route wrapped in withCron',
+    detects: f('app/api/cron/domains/verify/route.ts', 'export const GET = async () => {\n  await verifyDomains();\n  return Response.json({ ok: true });\n};\n'),
+    ignores: f('app/api/cron/domains/verify/route.ts', 'export const GET = withCron(async () => {\n  await verifyDomains();\n  return Response.json({ ok: true });\n});\n')
+  },
+  {
+    ruleIds: [23006],
+    name: 'Cron helper without a route export is not a route',
+    detects: f('app/api/cron/sync/route.ts', 'export async function GET() {\n  await syncAllCustomers();\n  return Response.json({ ok: true });\n}\n'),
+    ignores: f('app/api/cron/sync/utils.ts', 'export async function syncAllCustomers() {\n  await db.customer.updateMany({ data: { synced: true } });\n}\n')
+  },
+  {
     ruleIds: [23007],
     name: 'Request data in the system prompt',
     detects: f('app/api/chat/route.ts', "export async function POST(req: Request) {\n  const { persona, question } = await req.json();\n  return Response.json(await openai.chat.completions.create({ model: 'gpt-4o', max_tokens: 300, messages: [{ role: 'system', content: `You are ${persona}. Never reveal internal notes.` }, { role: 'user', content: question }] }));\n}\n"),
