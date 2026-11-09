@@ -11,6 +11,7 @@ import { calculateGateStatus, gatingFindings, calculateReadinessScore } from '@/
 import { getOrgPolicy } from '@/lib/organization';
 import { addedLines, buildSuggestionComments } from '@/lib/github/suggestions';
 import { scanBaseVersions, splitByBaseline, type BaselineFinding } from '@/lib/github/pr-baseline';
+import { applyKeyLiveness } from '@/lib/scanner/key-liveness';
 import { DISMISSAL_COLUMNS, activeDismissals } from '@/lib/dismissals';
 import { RISK_LABEL, type RiskKind } from '@/lib/scanner/risk-kind';
 
@@ -188,11 +189,17 @@ async function handlePullRequest(payload: any, supabase: any) {
 
       // Run code scan
       const scanStartedAt = Date.now();
-      const scanResult = await runStaticCodeScan(filesToScan, repository.full_name, { 
-        dependencyAudit: false, 
-        orgPolicy, 
-        dismissals 
+      // Keys are read from file contents, which the scanner empties: keep only files that contain a provider key
+      const keyFiles = filesToScan
+        .filter((f: { content?: string }) => /(?:sk|rk)_live_|\bgh[pousr]_|github_pat_|\bsk-/.test(f.content || ''))
+        .map((f: { path: string; content?: string }) => ({ path: f.path, content: f.content ?? '' }));
+      const scanResult = await runStaticCodeScan(filesToScan, repository.full_name, {
+        dependencyAudit: false,
+        orgPolicy,
+        dismissals
       });
+      // Does a leaked key still work? One read-only request per key, capped per scan (lib/scanner/key-liveness.ts)
+      await applyKeyLiveness(scanResult.findings, keyFiles);
       const scanMs = Date.now() - scanStartedAt;
 
       // Scan the base versions of the changed files, so issues that were already there are not reported as new
