@@ -1,6 +1,7 @@
 'use server';
 
 import { createGitHubAppClient } from '@/lib/github/app';
+import { manifestForLockfile, parseUpgradeTarget, upgradeManifest } from '@/lib/github/manifest-upgrade';
 import { createClient } from '@supabase/supabase-js';
 import { Finding } from '@/data/schema';
 import { revalidatePath } from 'next/cache';
@@ -80,6 +81,11 @@ export async function createFixPR(projectId: string, finding: Finding, accessTok
 
   const originalContent = Buffer.from(fileData.content, 'base64').toString('utf8');
   let newContent = originalContent;
+  // Dependency upgrades write the package.json beside the lockfile, so the write target can differ from filePath.
+  let baseContent = originalContent;
+  let writePath = filePath;
+  let writeSha = fileData.sha;
+  let isUpgrade = false;
 
   // Apply deterministic fix
   if (finding.ruleId === 101 || finding.ruleId === 102 || finding.ruleId === 103 || finding.ruleId === 104) {
@@ -138,24 +144,28 @@ export async function createFixPR(projectId: string, finding: Finding, accessTok
       newContent = originalContent + `\n\nALTER TABLE "${tableName}" ENABLE ROW LEVEL SECURITY;\n`;
     }
   } else if (finding.category?.toLowerCase().includes('dependency') || finding.type === 'SECURITY') {
-    // Assuming OSV finding ID mapping, or ruleId matches OSV.
-    if (filePath.endsWith('package.json')) {
-      // e.g. "Upgrade `lodash` to version `4.17.21`"
-      const match = finding.remediationPrompt?.match(/Upgrade `([^`]+)` to version `([^`]+)`/);
-      if (match) {
-        const pkgName = match[1];
-        const safeVersion = match[2];
-        const parsed = JSON.parse(originalContent);
-        if (parsed.dependencies && parsed.dependencies[pkgName]) parsed.dependencies[pkgName] = `^${safeVersion}`;
-        if (parsed.devDependencies && parsed.devDependencies[pkgName]) parsed.devDependencies[pkgName] = `^${safeVersion}`;
-        newContent = JSON.stringify(parsed, null, 2) + '\n';
-      } else {
-        throw new Error('Could not parse target version from finding.');
-      }
+    // OSV dependency finding: bump the direct dependency in the package.json beside its npm lockfile.
+    const manifestPath = manifestForLockfile(filePath);
+    const upgrade = parseUpgradeTarget(finding.remediationPrompt);
+    if (!manifestPath || !upgrade) {
+      throw new Error('Only a direct npm dependency upgrade can be opened as a PR. Upgrade it by hand.');
     }
+    const { data: manifest } = await octokit.rest.repos.getContent({ owner, repo, path: manifestPath, ref: branchName });
+    if (Array.isArray(manifest) || manifest.type !== 'file' || !manifest.content) {
+      throw new Error('Target file is not valid');
+    }
+    baseContent = Buffer.from(manifest.content, 'base64').toString('utf8');
+    writePath = manifestPath;
+    writeSha = manifest.sha;
+    const upgraded = upgradeManifest(baseContent, upgrade.name, upgrade.to);
+    if (!upgraded) {
+      throw new Error(`${upgrade.name} is not a direct dependency with a registry version in ${manifestPath}. Upgrade the package that depends on it.`);
+    }
+    newContent = upgraded;
+    isUpgrade = true;
   }
 
-  if (newContent === originalContent) {
+  if (newContent === baseContent) {
     throw new Error('No changes were made. The file might already be fixed or fix format unrecognized.');
   }
 
@@ -163,10 +173,10 @@ export async function createFixPR(projectId: string, finding: Finding, accessTok
   await octokit.rest.repos.createOrUpdateFileContents({
     owner,
     repo,
-    path: filePath,
+    path: writePath,
     message: `fix: auto-remediate Zelsis finding ${finding.ruleId}`,
     content: Buffer.from(newContent).toString('base64'),
-    sha: fileData.sha,
+    sha: writeSha,
     branch: branchName
   });
 
@@ -178,7 +188,8 @@ export async function createFixPR(projectId: string, finding: Finding, accessTok
 ${finding.category}
 
 ### Fix Applied
-Deterministic patch applied for \`${filePath}\`.
+Deterministic patch applied for \`${writePath}\`.
+${isUpgrade ? `\nThe lockfile was not changed. Run your package manager (for example \`npm install\`) on this branch and commit the updated lockfile, or \`npm ci\` will fail.\n` : ''}
 
 > **Risk Note:** Please review the changes before merging. Automated fixes should be verified in your CI/CD pipeline.
 `;
