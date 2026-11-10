@@ -104,6 +104,50 @@ No account yet? Paste a public repository at https://zelsis.com to see a result 
 /** Shown under a terminal report, never in CI, JSON, SARIF or MCP output. */
 export const PR_GATE_HINT = 'Run this check on every pull request: https://zelsis.com/docs/ci-gate';
 
+/** `https://github.com/owner/repo` for a GitHub remote URL (https or ssh), or null for anything else. */
+export function parseGithubRemote(remote) {
+  const m = /github\.com[:/]([^/\s]+)\/([^/\s]+?)(?:\.git)?\/?$/.exec((remote || '').trim());
+  return m ? `https://github.com/${m[1]}/${m[2]}` : null;
+}
+
+/** The public GitHub URL of this repo's origin remote, or null when there is none. */
+export function publicRepoUrl(cwd) {
+  try {
+    return parseGithubRemote(git(cwd, ['remote', 'get-url', 'origin']));
+  } catch {
+    return null;
+  }
+}
+
+/**
+ * Keyless summary through the public preview endpoint (public GitHub repos only, a few per day).
+ * Returns null when the repo has no public GitHub origin, so the caller can explain the key.
+ */
+export async function runPreview({ cwd, url = DEFAULT_URL, fetchImpl = fetch }) {
+  const repoUrl = publicRepoUrl(cwd);
+  if (!repoUrl) return null;
+  const res = await fetchImpl(`${url}/api/v1/scans/preview`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ repoUrl }),
+  });
+  if (res.status === 429) throw new Error('The free keyless preview is used up for today. Set ZELSIS_API_KEY for more checks.');
+  if (!res.ok) throw new Error(`Preview failed (HTTP ${res.status}).`);
+  return res.json();
+}
+
+/** Text for a keyless preview: summary and top titles only, the rest needs a free key. */
+export function formatPreview(p) {
+  const counts = p.counts || {};
+  const lines = [
+    `Zelsis preview for ${p.repoName || p.repoUrl}: ${p.gateStatus}, score ${p.score}/100`,
+    `Critical ${counts.critical ?? 0} · High ${counts.high ?? 0} · Medium ${counts.medium ?? 0} · Low ${counts.low ?? 0}`,
+  ];
+  for (const f of p.topFindings ?? []) lines.push(`  ${f.severity}  ${f.title}`);
+  lines.push('', 'Keyless preview: summary only. For file locations and fix prompts, create a free key at https://zelsis.com/dashboard.');
+  return lines.join('\n');
+}
+
 /** Runs a check in `cwd` and returns the API result. Used by both the CLI and the MCP tool. */
 export async function runCheck({ cwd, all = false, base, url, apiKey }) {
   if (!apiKey) throw new Error(MISSING_KEY_HELP);

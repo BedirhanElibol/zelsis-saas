@@ -118,3 +118,37 @@ test('the pull request hint shows only when asked for, and the missing-key help 
 test('formatReport says when nothing changed', () => {
   assert.match(formatReport({ nothingChanged: true, findings: [] }), /--all/);
 });
+
+test('GitHub remotes map to a public repo URL, anything else maps to null', async () => {
+  const { parseGithubRemote } = await import('../../packages/cli/lib.mjs');
+  assert.equal(parseGithubRemote('https://github.com/acme/app.git'), 'https://github.com/acme/app');
+  assert.equal(parseGithubRemote('git@github.com:acme/app.git'), 'https://github.com/acme/app');
+  assert.equal(parseGithubRemote('https://gitlab.com/acme/app.git'), null);
+  assert.equal(parseGithubRemote(''), null);
+});
+
+test('keyless preview: summary text, a clear message when the daily limit is hit', async () => {
+  const { formatPreview, runPreview } = await import('../../packages/cli/lib.mjs');
+  const text = formatPreview({
+    repoName: 'acme/app', gateStatus: 'FAILED', score: 62,
+    counts: { critical: 1, high: 2, medium: 0, low: 0 },
+    topFindings: [{ severity: 'CRITICAL', title: 'Webhook accepts unsigned events' }],
+  });
+  assert.match(text, /acme\/app: FAILED, score 62\/100/);
+  assert.match(text, /CRITICAL  Webhook accepts unsigned events/);
+  assert.match(text, /free key at https:\/\/zelsis\.com\/dashboard/);
+  const dir = mkdtempSync(join(tmpdir(), 'zelsis-preview-'));
+  try {
+    execFileSync('git', ['init', '-q'], { cwd: dir });
+    execFileSync('git', ['remote', 'add', 'origin', 'https://github.com/acme/app.git'], { cwd: dir });
+    const limited = (async () => ({ status: 429, ok: false, json: async () => ({}) })) as unknown as typeof fetch;
+    await assert.rejects(runPreview({ cwd: dir, url: 'https://zelsis.test', fetchImpl: limited }), /used up for today/);
+    let sent: { url: string; body: { repoUrl: string } } | undefined;
+    const ok = (async (url: string, init: RequestInit) => { sent = { url, body: JSON.parse(String(init.body)) }; return { status: 200, ok: true, json: async () => ({ repoName: 'acme/app' }) }; }) as unknown as typeof fetch;
+    await runPreview({ cwd: dir, url: 'https://zelsis.test', fetchImpl: ok });
+    assert.equal(sent?.url, 'https://zelsis.test/api/v1/scans/preview');
+    assert.deepEqual(sent?.body, { repoUrl: 'https://github.com/acme/app' });
+  } finally {
+    rmSync(dir, { recursive: true, force: true });
+  }
+});
