@@ -80,7 +80,7 @@ async function main() {
   });
   if (sarifFile) writeFileSync(sarifFile, JSON.stringify(toSarif(result), null, 2));
   if (has('--sarif')) console.log(JSON.stringify(toSarif(result), null, 2));
-  else console.log(has('--json') ? JSON.stringify(result, null, 2) : formatReport(result, { colors: process.stdout.isTTY && !process.env.NO_COLOR }));
+  else console.log(has('--json') ? JSON.stringify(result, null, 2) : formatReport(result, { colors: process.stdout.isTTY && !process.env.NO_COLOR, hint: !process.env.CI }));
   if (threshold) return meetsThreshold(result, threshold) ? 1 : 0;
   if (result.gateStatus === 'FAILED') return 1;
   if (has('--strict') && result.gateStatus === 'WARNING') return 1;

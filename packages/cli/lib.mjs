@@ -88,13 +88,21 @@ export async function scanFiles({ url = DEFAULT_URL, apiKey, files, changed, pro
   return body;
 }
 
-export const MISSING_KEY_HELP = `ZELSIS_API_KEY is not set.
+export const MISSING_KEY_HELP = `ZELSIS_API_KEY is not set. The check needs a free key (no credit card):
 
-Create a key at https://zelsis.com/dashboard under Settings & API Keys, then set it:
+  1. Sign in at https://zelsis.com/dashboard
+  2. Open Settings & API Keys and create a key
+  3. Set it and run the command again:
+
   PowerShell (this window):  $env:ZELSIS_API_KEY = "your-key"
   PowerShell (permanent):    [Environment]::SetEnvironmentVariable("ZELSIS_API_KEY", "your-key", "User")
   bash / zsh:                export ZELSIS_API_KEY=your-key
-After the permanent setting, open a new terminal.`;
+After the permanent setting, open a new terminal.
+
+No account yet? Paste a public repository at https://zelsis.com to see a result first.`;
+
+/** Shown under a terminal report, never in CI, JSON, SARIF or MCP output. */
+export const PR_GATE_HINT = 'Run this check on every pull request: https://zelsis.com/docs/ci-gate';
 
 /** Runs a check in `cwd` and returns the API result. Used by both the CLI and the MCP tool. */
 export async function runCheck({ cwd, all = false, base, url, apiKey }) {
@@ -152,7 +160,7 @@ export function toSarif(result) {
 }
 
 /** Human-readable report. `limit` caps how many findings are listed. */
-export function formatReport(result, { colors = false, limit = 50 } = {}) {
+export function formatReport(result, { colors = false, limit = 50, hint = false } = {}) {
   const c = color(colors);
   if (result.nothingChanged) return 'No changed files. Run `zelsis check --all` to scan the whole repository.';
   const sev = { CRITICAL: (s) => c('1;31', s), HIGH: (s) => c('31', s), MEDIUM: (s) => c('33', s), LOW: (s) => c('2', s) };
@@ -171,5 +179,6 @@ export function formatReport(result, { colors = false, limit = 50 } = {}) {
     out.push(c('2', `Checked across files: ${v.filePath} is not flagged because ${v.reason}.`));
   }
   if (result.otherFindings) out.push(c('2', `${result.otherFindings} more finding(s) in files you did not change. Run with --all to see them.`));
+  if (hint) out.push('', c('2', PR_GATE_HINT));
   return out.join('\n');
 }
