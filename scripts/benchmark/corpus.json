@@ -192,6 +192,42 @@
       "sha": "91b8a8d944e3cf169483108acd12d5b1e47856f7",
       "kind": "clean",
       "stack": "Terraform module (AWS EKS), widely used"
+    },
+    {
+      "name": "mfts/papermark",
+      "sha": "ed19717ec02a1ac79aecf5569159aa9d2d869312",
+      "kind": "clean",
+      "stack": "Next.js + Prisma + Stripe"
+    },
+    {
+      "name": "formbricks/formbricks",
+      "sha": "2f76787a887de9f46db1254134ccc93a1acd57be",
+      "kind": "clean",
+      "stack": "Next.js + Prisma (monorepo)"
+    },
+    {
+      "name": "dubinc/dub",
+      "sha": "6b463b4bdd9ed2fd9aa416f67b5b77d317b1471e",
+      "kind": "clean",
+      "stack": "Next.js + Prisma + Stripe (monorepo)"
+    },
+    {
+      "name": "openstatusHQ/openstatus",
+      "sha": "bba13ddc9e304695547f039cff849ed7e9826c58",
+      "kind": "clean",
+      "stack": "Next.js + Hono + Drizzle (monorepo)"
+    },
+    {
+      "name": "elie222/inbox-zero",
+      "sha": "e040fb7eb8778dc85112ad4cd087f88dac5b8640",
+      "kind": "clean",
+      "stack": "Next.js + Prisma + Lemon Squeezy"
+    },
+    {
+      "name": "lukevella/rallly",
+      "sha": "094054fa36f89dff6f7ab9d328ef4e6119cf51b3",
+      "kind": "clean",
+      "stack": "Next.js + Prisma"
     }
   ]
 }

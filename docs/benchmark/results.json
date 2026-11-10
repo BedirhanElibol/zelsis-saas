@@ -1,5 +1,5 @@
 {
- "generatedAt": "2026-11-05",
+ "generatedAt": "2026-11-10",
  "corpus": [
   {
    "name": "vercel/nextjs-subscription-payments",
@@ -192,19 +192,55 @@
    "sha": "91b8a8d944e3cf169483108acd12d5b1e47856f7",
    "kind": "clean",
    "stack": "Terraform module (AWS EKS), widely used"
+  },
+  {
+   "name": "mfts/papermark",
+   "sha": "ed19717ec02a1ac79aecf5569159aa9d2d869312",
+   "kind": "clean",
+   "stack": "Next.js + Prisma + Stripe"
+  },
+  {
+   "name": "formbricks/formbricks",
+   "sha": "2f76787a887de9f46db1254134ccc93a1acd57be",
+   "kind": "clean",
+   "stack": "Next.js + Prisma (monorepo)"
+  },
+  {
+   "name": "dubinc/dub",
+   "sha": "6b463b4bdd9ed2fd9aa416f67b5b77d317b1471e",
+   "kind": "clean",
+   "stack": "Next.js + Prisma + Stripe (monorepo)"
+  },
+  {
+   "name": "openstatusHQ/openstatus",
+   "sha": "bba13ddc9e304695547f039cff849ed7e9826c58",
+   "kind": "clean",
+   "stack": "Next.js + Hono + Drizzle (monorepo)"
+  },
+  {
+   "name": "elie222/inbox-zero",
+   "sha": "e040fb7eb8778dc85112ad4cd087f88dac5b8640",
+   "kind": "clean",
+   "stack": "Next.js + Prisma + Lemon Squeezy"
+  },
+  {
+   "name": "lukevella/rallly",
+   "sha": "094054fa36f89dff6f7ab9d328ef4e6119cf51b3",
+   "kind": "clean",
+   "stack": "Next.js + Prisma"
   }
  ],
  "summary": {
-  "cleanRepos": 19,
-  "cleanReposGateFailed": 2,
-  "cleanHighCriticalFindings": 33,
-  "cleanGatingHighCriticalFindings": 32,
+  "cleanRepos": 25,
+  "cleanReposGateFailed": 3,
+  "cleanHighCriticalFindings": 221,
+  "cleanGatingHighCriticalFindings": 58,
   "documentedFlaws": 62,
   "documentedFlawsDetected": 62,
   "recall": 1,
   "documentedFlawsBlockingGate": 58,
-  "rulesFiringOnClean": 88,
-  "experimentalRules": 1
+  "rulesFiringOnClean": 211,
+  "experimentalRules": 51
  },
  "repos": [
   {
@@ -213,7 +249,7 @@
    "kind": "clean",
    "stack": "Next.js + Supabase + Stripe",
    "files": 68,
-   "scanMs": 822,
+   "scanMs": 622,
    "gate": "WARNING",
    "score": 79,
    "critical": 0,
@@ -231,7 +267,7 @@
    "kind": "clean",
    "stack": "Next.js + Prisma + Stripe + NextAuth",
    "files": 140,
-   "scanMs": 1314,
+   "scanMs": 1439,
    "gate": "WARNING",
    "score": 93,
    "critical": 0,
@@ -249,7 +285,7 @@
    "kind": "clean",
    "stack": "FastAPI + React",
    "files": 206,
-   "scanMs": 2038,
+   "scanMs": 2137,
    "gate": "WARNING",
    "score": 93,
    "critical": 0,
@@ -267,7 +303,7 @@
    "kind": "clean",
    "stack": "Express + Prisma",
    "files": 58,
-   "scanMs": 364,
+   "scanMs": 339,
    "gate": "FAILED",
    "score": 43,
    "critical": 2,
@@ -291,7 +327,7 @@
    "kind": "clean",
    "stack": "Go + Gin",
    "files": 27,
-   "scanMs": 331,
+   "scanMs": 452,
    "gate": "PASSED",
    "score": 98,
    "critical": 0,
@@ -309,7 +345,7 @@
    "kind": "clean",
    "stack": "Laravel",
    "files": 40,
-   "scanMs": 169,
+   "scanMs": 255,
    "gate": "PASSED",
    "score": 100,
    "critical": 0,
@@ -327,7 +363,7 @@
    "kind": "clean",
    "stack": "Remix/React Router + Prisma + tRPC (production SaaS)",
    "files": 2481,
-   "scanMs": 36143,
+   "scanMs": 40848,
    "gate": "WARNING",
    "score": 47,
    "critical": 0,
@@ -345,7 +381,7 @@
    "kind": "clean",
    "stack": "TypeScript SDK",
    "files": 474,
-   "scanMs": 7367,
+   "scanMs": 8179,
    "gate": "PASSED",
    "score": 98,
    "critical": 0,
@@ -363,7 +399,7 @@
    "kind": "vulnerable",
    "stack": "Express + MongoDB",
    "files": 87,
-   "scanMs": 538,
+   "scanMs": 601,
    "gate": "FAILED",
    "score": 1,
    "critical": 3,
@@ -397,7 +433,7 @@
    "kind": "vulnerable",
    "stack": "Express + Sequelize",
    "files": 21,
-   "scanMs": 95,
+   "scanMs": 222,
    "gate": "FAILED",
    "score": 0,
    "critical": 4,
@@ -436,14 +472,14 @@
    "kind": "vulnerable",
    "stack": "Express + Angular + Sequelize",
    "files": 965,
-   "scanMs": 11971,
+   "scanMs": 12548,
    "gate": "FAILED",
    "score": 0,
-   "critical": 14,
+   "critical": 21,
    "high": 7,
    "medium": 4,
    "low": 0,
-   "experimental": 0,
+   "experimental": 9,
    "allHighCritical": 79,
    "detectedFramework": "Express",
    "blockers": [
@@ -451,6 +487,11 @@
      "ruleId": 29303,
      "title": "AST-03: SQL Injection: Request Input Reaches a Raw Query Through Variables (CWE-89)",
      "reviewed": null
+    },
+    {
+     "ruleId": 3021,
+     "title": "SQL Injection: String Concatenation in Node.js Database Client Query",
+     "reviewed": "dub get-analytics builds `SUM(${event}) as ${event}` from the event parameter; safe only while every caller validates event against the enum in another file, nothing in the query stops a new caller"
     },
     {
      "ruleId": 5045,
@@ -480,7 +521,7 @@
    "kind": "clean",
    "stack": "Java + Spring Boot",
    "files": 84,
-   "scanMs": 309,
+   "scanMs": 295,
    "gate": "WARNING",
    "score": 87,
    "critical": 0,
@@ -498,7 +539,7 @@
    "kind": "clean",
    "stack": "C# + ASP.NET Core",
    "files": 350,
-   "scanMs": 1130,
+   "scanMs": 1143,
    "gate": "WARNING",
    "score": 84,
    "critical": 0,
@@ -516,7 +557,7 @@
    "kind": "clean",
    "stack": "Ruby on Rails (production service)",
    "files": 1698,
-   "scanMs": 6367,
+   "scanMs": 7159,
    "gate": "WARNING",
    "score": 72,
    "critical": 0,
@@ -534,7 +575,7 @@
    "kind": "clean",
    "stack": "Python + Django (production site)",
    "files": 434,
-   "scanMs": 4177,
+   "scanMs": 4459,
    "gate": "WARNING",
    "score": 83,
    "critical": 0,
@@ -552,7 +593,7 @@
    "kind": "vulnerable",
    "stack": "Java + Spring",
    "files": 635,
-   "scanMs": 3584,
+   "scanMs": 3860,
    "gate": "FAILED",
    "score": 0,
    "critical": 12,
@@ -586,7 +627,7 @@
    "kind": "vulnerable",
    "stack": "Ruby on Rails",
    "files": 187,
-   "scanMs": 1694,
+   "scanMs": 1728,
    "gate": "FAILED",
    "score": 0,
    "critical": 4,
@@ -625,7 +666,7 @@
    "kind": "vulnerable",
    "stack": "PHP",
    "files": 195,
-   "scanMs": 888,
+   "scanMs": 947,
    "gate": "FAILED",
    "score": 0,
    "critical": 50,
@@ -674,14 +715,14 @@
    "kind": "vulnerable",
    "stack": "Python + Django",
    "files": 217,
-   "scanMs": 1087,
+   "scanMs": 1232,
    "gate": "FAILED",
    "score": 0,
    "critical": 12,
    "high": 11,
    "medium": 3,
    "low": 0,
-   "experimental": 0,
+   "experimental": 4,
    "allHighCritical": 38,
    "detectedFramework": null,
    "blockers": [
@@ -728,7 +769,7 @@
    "kind": "vulnerable",
    "stack": "Python + aiohttp",
    "files": 30,
-   "scanMs": 1822,
+   "scanMs": 1835,
    "gate": "FAILED",
    "score": 33,
    "critical": 2,
@@ -757,7 +798,7 @@
    "kind": "clean",
    "stack": "Android (Java + Kotlin)",
    "files": 1161,
-   "scanMs": 7633,
+   "scanMs": 8023,
    "gate": "FAILED",
    "score": 67,
    "critical": 1,
@@ -781,7 +822,7 @@
    "kind": "clean",
    "stack": "Android (Java)",
    "files": 1143,
-   "scanMs": 7048,
+   "scanMs": 6943,
    "gate": "WARNING",
    "score": 58,
    "critical": 0,
@@ -799,7 +840,7 @@
    "kind": "clean",
    "stack": "iOS (Swift)",
    "files": 932,
-   "scanMs": 3944,
+   "scanMs": 4312,
    "gate": "PASSED",
    "score": 94,
    "critical": 0,
@@ -817,7 +858,7 @@
    "kind": "vulnerable",
    "stack": "Android (Java)",
    "files": 59,
-   "scanMs": 119,
+   "scanMs": 110,
    "gate": "FAILED",
    "score": 28,
    "critical": 2,
@@ -841,7 +882,7 @@
    "kind": "vulnerable",
    "stack": "Android (Java)",
    "files": 90,
-   "scanMs": 222,
+   "scanMs": 251,
    "gate": "WARNING",
    "score": 77,
    "critical": 0,
@@ -859,7 +900,7 @@
    "kind": "vulnerable",
    "stack": "iOS (Swift)",
    "files": 129,
-   "scanMs": 842,
+   "scanMs": 771,
    "gate": "WARNING",
    "score": 86,
    "critical": 0,
@@ -877,7 +918,7 @@
    "kind": "clean",
    "stack": "Flutter (Dart) + Rust",
    "files": 734,
-   "scanMs": 7447,
+   "scanMs": 8104,
    "gate": "WARNING",
    "score": 54,
    "critical": 0,
@@ -895,7 +936,7 @@
    "kind": "clean",
    "stack": "Rust + Actix + Diesel + Postgres (production service)",
    "files": 1442,
-   "scanMs": 6011,
+   "scanMs": 6751,
    "gate": "WARNING",
    "score": 61,
    "critical": 0,
@@ -913,17 +954,53 @@
    "kind": "vulnerable",
    "stack": "Terraform (AWS, Azure, GCP), intentionally misconfigured",
    "files": 56,
-   "scanMs": 177,
-   "gate": "WARNING",
-   "score": 87,
-   "critical": 0,
-   "high": 1,
-   "medium": 3,
+   "scanMs": 180,
+   "gate": "FAILED",
+   "score": 0,
+   "critical": 8,
+   "high": 5,
+   "medium": 5,
    "low": 0,
    "experimental": 0,
    "allHighCritical": 14,
    "detectedFramework": null,
-   "blockers": []
+   "blockers": [
+    {
+     "ruleId": 14801,
+     "title": "CSPM-01: Unrestricted Cloud Storage Bucket Public Read/Write Access",
+     "reviewed": null
+    },
+    {
+     "ruleId": 8310,
+     "title": "IAC-10: RDS Database Instance Publicly Accessible (publicly_accessible = true)",
+     "reviewed": null
+    },
+    {
+     "ruleId": 5001,
+     "title": "SEC-SECRET-01: AWS Access Key ID Exposure",
+     "reviewed": null
+    },
+    {
+     "ruleId": 8301,
+     "title": "IAC-01: Security Group Ingress Open to World on SSH Port 22",
+     "reviewed": null
+    },
+    {
+     "ruleId": 9204,
+     "title": "CLOUD-SEC-04: Security Group Ingress Open to 0.0.0.0/0 on Management Ports",
+     "reviewed": null
+    },
+    {
+     "ruleId": 8322,
+     "title": "IAC-22: Terraform Resource Using Hardcoded Plaintext Passwords",
+     "reviewed": null
+    },
+    {
+     "ruleId": 14802,
+     "title": "CSPM-02: Overprivileged Cloud IAM Roles with Wildcard Actions (*:*)",
+     "reviewed": null
+    }
+   ]
   },
   {
    "repo": "madhuakula/kubernetes-goat",
@@ -931,17 +1008,33 @@
    "kind": "vulnerable",
    "stack": "Kubernetes manifests and Helm, intentionally insecure",
    "files": 84,
-   "scanMs": 1001,
-   "gate": "WARNING",
-   "score": 60,
-   "critical": 0,
-   "high": 14,
+   "scanMs": 982,
+   "gate": "FAILED",
+   "score": 0,
+   "critical": 11,
+   "high": 22,
    "medium": 0,
    "low": 0,
    "experimental": 0,
    "allHighCritical": 39,
    "detectedFramework": "React",
-   "blockers": []
+   "blockers": [
+    {
+     "ruleId": 8312,
+     "title": "IAC-12: Kubernetes Container Running with Host PID or IPC Namespace",
+     "reviewed": null
+    },
+    {
+     "ruleId": 8321,
+     "title": "IAC-21: Container Running with hostNetwork Enabled",
+     "reviewed": null
+    },
+    {
+     "ruleId": 8904,
+     "title": "K8S-04: Dangerous Host Path Volume Mount (/ or /etc or /var/run)",
+     "reviewed": null
+    }
+   ]
   },
   {
    "repo": "terraform-aws-modules/terraform-aws-vpc",
@@ -949,7 +1042,7 @@
    "kind": "clean",
    "stack": "Terraform module (AWS VPC), widely used",
    "files": 84,
-   "scanMs": 451,
+   "scanMs": 531,
    "gate": "PASSED",
    "score": 92,
    "critical": 0,
@@ -967,7 +1060,7 @@
    "kind": "clean",
    "stack": "Terraform module (AWS EKS), widely used",
    "files": 114,
-   "scanMs": 589,
+   "scanMs": 658,
    "gate": "PASSED",
    "score": 92,
    "critical": 0,
@@ -977,6 +1070,120 @@
    "experimental": 0,
    "allHighCritical": 0,
    "detectedFramework": null,
+   "blockers": []
+  },
+  {
+   "repo": "mfts/papermark",
+   "sha": "ed19717ec02a1ac79aecf5569159aa9d2d869312",
+   "kind": "clean",
+   "stack": "Next.js + Prisma + Stripe",
+   "files": 1567,
+   "scanMs": 1376991,
+   "gate": "WARNING",
+   "score": 54,
+   "critical": 0,
+   "high": 3,
+   "medium": 24,
+   "low": 0,
+   "experimental": 33,
+   "allHighCritical": 36,
+   "detectedFramework": "Next.js",
+   "blockers": []
+  },
+  {
+   "repo": "formbricks/formbricks",
+   "sha": "2f76787a887de9f46db1254134ccc93a1acd57be",
+   "kind": "clean",
+   "stack": "Next.js + Prisma (monorepo)",
+   "files": 6879,
+   "scanMs": 133320,
+   "gate": "WARNING",
+   "score": 35,
+   "critical": 0,
+   "high": 7,
+   "medium": 35,
+   "low": 0,
+   "experimental": 28,
+   "allHighCritical": 34,
+   "detectedFramework": "Next.js",
+   "blockers": []
+  },
+  {
+   "repo": "dubinc/dub",
+   "sha": "6b463b4bdd9ed2fd9aa416f67b5b77d317b1471e",
+   "kind": "clean",
+   "stack": "Next.js + Prisma + Stripe (monorepo)",
+   "files": 2271,
+   "scanMs": 32336,
+   "gate": "FAILED",
+   "score": 57,
+   "critical": 1,
+   "high": 2,
+   "medium": 4,
+   "low": 0,
+   "experimental": 19,
+   "allHighCritical": 22,
+   "detectedFramework": "Next.js",
+   "blockers": [
+    {
+     "ruleId": 3021,
+     "title": "SQL Injection: String Concatenation in Node.js Database Client Query",
+     "reviewed": "dub get-analytics builds `SUM(${event}) as ${event}` from the event parameter; safe only while every caller validates event against the enum in another file, nothing in the query stops a new caller"
+    }
+   ]
+  },
+  {
+   "repo": "openstatusHQ/openstatus",
+   "sha": "bba13ddc9e304695547f039cff849ed7e9826c58",
+   "kind": "clean",
+   "stack": "Next.js + Hono + Drizzle (monorepo)",
+   "files": 3648,
+   "scanMs": 59676,
+   "gate": "WARNING",
+   "score": 35,
+   "critical": 0,
+   "high": 8,
+   "medium": 19,
+   "low": 0,
+   "experimental": 19,
+   "allHighCritical": 30,
+   "detectedFramework": "Next.js",
+   "blockers": []
+  },
+  {
+   "repo": "elie222/inbox-zero",
+   "sha": "e040fb7eb8778dc85112ad4cd087f88dac5b8640",
+   "kind": "clean",
+   "stack": "Next.js + Prisma + Lemon Squeezy",
+   "files": 4533,
+   "scanMs": 82067,
+   "gate": "WARNING",
+   "score": 47,
+   "critical": 0,
+   "high": 4,
+   "medium": 64,
+   "low": 0,
+   "experimental": 53,
+   "allHighCritical": 59,
+   "detectedFramework": "React",
+   "blockers": []
+  },
+  {
+   "repo": "lukevella/rallly",
+   "sha": "094054fa36f89dff6f7ab9d328ef4e6119cf51b3",
+   "kind": "clean",
+   "stack": "Next.js + Prisma",
+   "files": 1575,
+   "scanMs": 21487,
+   "gate": "WARNING",
+   "score": 68,
+   "critical": 0,
+   "high": 1,
+   "medium": 36,
+   "low": 0,
+   "experimental": 6,
+   "allHighCritical": 7,
+   "detectedFramework": "Next.js",
    "blockers": []
   }
  ],
@@ -1636,15 +1843,47 @@
     "mastodon/mastodon-ios",
     "localsend/localsend",
     "terraform-aws-modules/terraform-aws-vpc",
-    "terraform-aws-modules/terraform-aws-eks"
+    "terraform-aws-modules/terraform-aws-eks",
+    "mfts/papermark",
+    "dubinc/dub",
+    "openstatusHQ/openstatus",
+    "elie222/inbox-zero",
+    "lukevella/rallly"
    ],
-   "cleanFindings": 45,
+   "cleanFindings": 78,
    "vulnerableRepos": [
     "juice-shop/juice-shop",
     "WebGoat/WebGoat",
     "OWASP/railsgoat",
     "digininja/DVWA",
     "bridgecrewio/terragoat"
+   ]
+  },
+  {
+   "ruleId": 1027,
+   "title": "Unoptimized Raster <img> Tag or Heavy Inline Data URI (Performance Optimization)",
+   "severity": "LOW",
+   "cleanRepos": [
+    "shadcn-ui/taxonomy",
+    "fastapi/full-stack-fastapi-template",
+    "documenso/documenso",
+    "spring-projects/spring-petclinic",
+    "rubygems/rubygems.org",
+    "django/djangoproject.com",
+    "AntennaPod/AntennaPod",
+    "mfts/papermark",
+    "formbricks/formbricks",
+    "dubinc/dub",
+    "openstatusHQ/openstatus",
+    "elie222/inbox-zero",
+    "lukevella/rallly"
+   ],
+   "cleanFindings": 179,
+   "vulnerableRepos": [
+    "juice-shop/juice-shop",
+    "WebGoat/WebGoat",
+    "adeyosemanputra/pygoat",
+    "madhuakula/kubernetes-goat"
    ]
   },
   {
@@ -1659,9 +1898,12 @@
     "dotnet-architecture/eShopOnWeb",
     "rubygems/rubygems.org",
     "django/djangoproject.com",
-    "localsend/localsend"
+    "localsend/localsend",
+    "formbricks/formbricks",
+    "openstatusHQ/openstatus",
+    "elie222/inbox-zero"
    ],
-   "cleanFindings": 10,
+   "cleanFindings": 20,
    "vulnerableRepos": [
     "OWASP/NodeGoat",
     "appsecco/dvna",
@@ -1671,67 +1913,6 @@
     "adeyosemanputra/pygoat",
     "bridgecrewio/terragoat",
     "madhuakula/kubernetes-goat"
-   ]
-  },
-  {
-   "ruleId": 1027,
-   "title": "Unoptimized Raster <img> Tag or Heavy Inline Data URI (Performance Optimization)",
-   "severity": "LOW",
-   "cleanRepos": [
-    "shadcn-ui/taxonomy",
-    "fastapi/full-stack-fastapi-template",
-    "documenso/documenso",
-    "spring-projects/spring-petclinic",
-    "rubygems/rubygems.org",
-    "django/djangoproject.com",
-    "AntennaPod/AntennaPod"
-   ],
-   "cleanFindings": 44,
-   "vulnerableRepos": [
-    "juice-shop/juice-shop",
-    "WebGoat/WebGoat",
-    "adeyosemanputra/pygoat",
-    "madhuakula/kubernetes-goat"
-   ]
-  },
-  {
-   "ruleId": 7004,
-   "title": "CLOUD-04: Docker Container Running as Default Root User",
-   "severity": "HIGH",
-   "cleanRepos": [
-    "fastapi/full-stack-fastapi-template",
-    "dotnet-architecture/eShopOnWeb",
-    "rubygems/rubygems.org",
-    "django/djangoproject.com",
-    "localsend/localsend"
-   ],
-   "cleanFindings": 6,
-   "vulnerableRepos": [
-    "appsecco/dvna",
-    "OWASP/railsgoat",
-    "digininja/DVWA",
-    "adeyosemanputra/pygoat",
-    "bridgecrewio/terragoat",
-    "madhuakula/kubernetes-goat"
-   ]
-  },
-  {
-   "ruleId": 7138,
-   "title": "WEB-PERF-38: Missing HTML Lang Attribute Delaying Accessibility Tree",
-   "severity": "LOW",
-   "cleanRepos": [
-    "spring-projects/spring-petclinic",
-    "django/djangoproject.com",
-    "AntennaPod/AntennaPod",
-    "localsend/localsend"
-   ],
-   "cleanFindings": 18,
-   "vulnerableRepos": [
-    "OWASP/NodeGoat",
-    "juice-shop/juice-shop",
-    "WebGoat/WebGoat",
-    "OWASP/railsgoat",
-    "adeyosemanputra/pygoat"
    ]
   },
   {
@@ -1742,14 +1923,83 @@
     "vercel/nextjs-subscription-payments",
     "documenso/documenso",
     "spring-projects/spring-petclinic",
-    "django/djangoproject.com"
+    "django/djangoproject.com",
+    "mfts/papermark",
+    "formbricks/formbricks",
+    "dubinc/dub",
+    "openstatusHQ/openstatus",
+    "elie222/inbox-zero",
+    "lukevella/rallly"
    ],
-   "cleanFindings": 14,
+   "cleanFindings": 66,
    "vulnerableRepos": [
     "OWASP/NodeGoat",
     "juice-shop/juice-shop",
     "WebGoat/WebGoat",
     "adeyosemanputra/pygoat"
+   ]
+  },
+  {
+   "ruleId": 16,
+   "title": "Unsanitized Direct InnerHTML DOM Mutation (XSS Risk)",
+   "severity": "MEDIUM",
+   "cleanRepos": [
+    "documenso/documenso",
+    "rubygems/rubygems.org",
+    "localsend/localsend",
+    "mfts/papermark",
+    "formbricks/formbricks",
+    "dubinc/dub",
+    "openstatusHQ/openstatus",
+    "elie222/inbox-zero",
+    "lukevella/rallly"
+   ],
+   "cleanFindings": 24,
+   "vulnerableRepos": [
+    "juice-shop/juice-shop",
+    "WebGoat/WebGoat",
+    "OWASP/railsgoat",
+    "digininja/DVWA",
+    "adeyosemanputra/pygoat",
+    "anxolerd/dvpwa"
+   ]
+  },
+  {
+   "ruleId": 1204,
+   "title": "UI-INTERACT-04: Disruptive autoFocus Input Hijacking",
+   "severity": "LOW",
+   "cleanRepos": [
+    "shadcn-ui/taxonomy",
+    "documenso/documenso",
+    "mfts/papermark",
+    "formbricks/formbricks",
+    "dubinc/dub",
+    "openstatusHQ/openstatus",
+    "elie222/inbox-zero",
+    "lukevella/rallly"
+   ],
+   "cleanFindings": 166,
+   "vulnerableRepos": [
+    "WebGoat/WebGoat"
+   ]
+  },
+  {
+   "ruleId": 28602,
+   "title": "A11Y-02: Button or Link Without an Accessible Name (Icon-Only or Empty)",
+   "severity": "MEDIUM",
+   "cleanRepos": [
+    "fastapi/full-stack-fastapi-template",
+    "documenso/documenso",
+    "mfts/papermark",
+    "formbricks/formbricks",
+    "dubinc/dub",
+    "openstatusHQ/openstatus",
+    "elie222/inbox-zero",
+    "lukevella/rallly"
+   ],
+   "cleanFindings": 156,
+   "vulnerableRepos": [
+    "juice-shop/juice-shop"
    ]
   },
   {
@@ -1760,9 +2010,13 @@
     "spring-projects/spring-petclinic",
     "rubygems/rubygems.org",
     "django/djangoproject.com",
-    "AntennaPod/AntennaPod"
+    "AntennaPod/AntennaPod",
+    "mfts/papermark",
+    "dubinc/dub",
+    "openstatusHQ/openstatus",
+    "lukevella/rallly"
    ],
-   "cleanFindings": 14,
+   "cleanFindings": 23,
    "vulnerableRepos": [
     "juice-shop/juice-shop",
     "WebGoat/WebGoat",
@@ -1777,9 +2031,13 @@
     "supabase/supabase-js",
     "spring-projects/spring-petclinic",
     "django/djangoproject.com",
-    "LemmyNet/lemmy"
+    "LemmyNet/lemmy",
+    "formbricks/formbricks",
+    "dubinc/dub",
+    "elie222/inbox-zero",
+    "lukevella/rallly"
    ],
-   "cleanFindings": 5,
+   "cleanFindings": 11,
    "vulnerableRepos": [
     "anxolerd/dvpwa"
    ]
@@ -1791,9 +2049,185 @@
    "cleanRepos": [
     "gothinkster/node-express-realworld-example-app",
     "documenso/documenso",
-    "LemmyNet/lemmy"
+    "LemmyNet/lemmy",
+    "mfts/papermark",
+    "formbricks/formbricks",
+    "elie222/inbox-zero",
+    "lukevella/rallly"
    ],
-   "cleanFindings": 146,
+   "cleanFindings": 289,
+   "vulnerableRepos": []
+  },
+  {
+   "ruleId": 1223,
+   "title": "UI-INTERACT-23: Nested Button Invalid HTML Hierarchy",
+   "severity": "LOW",
+   "cleanRepos": [
+    "documenso/documenso",
+    "mfts/papermark",
+    "formbricks/formbricks",
+    "dubinc/dub",
+    "openstatusHQ/openstatus",
+    "elie222/inbox-zero",
+    "lukevella/rallly"
+   ],
+   "cleanFindings": 154,
+   "vulnerableRepos": [
+    "juice-shop/juice-shop",
+    "WebGoat/WebGoat"
+   ]
+  },
+  {
+   "ruleId": 106,
+   "title": "UI-106: Empty Silent Catch Block",
+   "severity": "LOW",
+   "cleanRepos": [
+    "supabase/supabase-js",
+    "rubygems/rubygems.org",
+    "mfts/papermark",
+    "formbricks/formbricks",
+    "dubinc/dub",
+    "elie222/inbox-zero",
+    "lukevella/rallly"
+   ],
+   "cleanFindings": 40,
+   "vulnerableRepos": [
+    "WebGoat/WebGoat",
+    "OWASP/railsgoat",
+    "anxolerd/dvpwa"
+   ]
+  },
+  {
+   "ruleId": 1211,
+   "title": "UI-INTERACT-11: Double-Click Duplicate Mutation Hazard",
+   "severity": "LOW",
+   "cleanRepos": [
+    "vercel/nextjs-subscription-payments",
+    "documenso/documenso",
+    "mfts/papermark",
+    "formbricks/formbricks",
+    "dubinc/dub",
+    "openstatusHQ/openstatus",
+    "elie222/inbox-zero"
+   ],
+   "cleanFindings": 24,
+   "vulnerableRepos": [
+    "WebGoat/WebGoat",
+    "adeyosemanputra/pygoat"
+   ]
+  },
+  {
+   "ruleId": 41,
+   "title": "Unvalidated Open Redirection Vulnerability (Open Redirect)",
+   "severity": "MEDIUM",
+   "cleanRepos": [
+    "documenso/documenso",
+    "mfts/papermark",
+    "formbricks/formbricks",
+    "dubinc/dub",
+    "openstatusHQ/openstatus",
+    "elie222/inbox-zero",
+    "lukevella/rallly"
+   ],
+   "cleanFindings": 14,
+   "vulnerableRepos": []
+  },
+  {
+   "ruleId": 7004,
+   "title": "CLOUD-04: Docker Container Running as Default Root User",
+   "severity": "HIGH",
+   "cleanRepos": [
+    "fastapi/full-stack-fastapi-template",
+    "dotnet-architecture/eShopOnWeb",
+    "rubygems/rubygems.org",
+    "django/djangoproject.com",
+    "localsend/localsend",
+    "formbricks/formbricks",
+    "openstatusHQ/openstatus"
+   ],
+   "cleanFindings": 11,
+   "vulnerableRepos": [
+    "appsecco/dvna",
+    "OWASP/railsgoat",
+    "digininja/DVWA",
+    "adeyosemanputra/pygoat",
+    "bridgecrewio/terragoat",
+    "madhuakula/kubernetes-goat"
+   ]
+  },
+  {
+   "ruleId": 30502,
+   "title": "CAT-02: Column or Table Renamed in Place",
+   "severity": "MEDIUM",
+   "cleanRepos": [
+    "LemmyNet/lemmy",
+    "mfts/papermark",
+    "formbricks/formbricks",
+    "openstatusHQ/openstatus",
+    "elie222/inbox-zero",
+    "lukevella/rallly"
+   ],
+   "cleanFindings": 563,
+   "vulnerableRepos": []
+  },
+  {
+   "ruleId": 30301,
+   "title": "XL-01: NEXT_PUBLIC_GTM_ID Is Read by the Code but Declared in No Env Template or Deploy Config",
+   "severity": "MEDIUM",
+   "cleanRepos": [
+    "mfts/papermark",
+    "formbricks/formbricks",
+    "dubinc/dub",
+    "openstatusHQ/openstatus",
+    "elie222/inbox-zero",
+    "lukevella/rallly"
+   ],
+   "cleanFindings": 312,
+   "vulnerableRepos": []
+  },
+  {
+   "ruleId": 30315,
+   "title": "XL-15: article.authorid Cascades on Delete but No Migration Indexes It",
+   "severity": "LOW",
+   "cleanRepos": [
+    "gothinkster/node-express-realworld-example-app",
+    "documenso/documenso",
+    "mfts/papermark",
+    "formbricks/formbricks",
+    "elie222/inbox-zero",
+    "lukevella/rallly"
+   ],
+   "cleanFindings": 71,
+   "vulnerableRepos": []
+  },
+  {
+   "ruleId": 248,
+   "title": "CLICHE-48: Unlabeled Toggle Switch Interactive Ambiguity",
+   "severity": "LOW",
+   "cleanRepos": [
+    "documenso/documenso",
+    "mfts/papermark",
+    "formbricks/formbricks",
+    "dubinc/dub",
+    "elie222/inbox-zero",
+    "lukevella/rallly"
+   ],
+   "cleanFindings": 52,
+   "vulnerableRepos": []
+  },
+  {
+   "ruleId": 1029,
+   "title": "WCAG 2.2 AA: Non-Semantic Clickable Container Missing Keyboard Accessibility",
+   "severity": "MEDIUM",
+   "cleanRepos": [
+    "documenso/documenso",
+    "mfts/papermark",
+    "formbricks/formbricks",
+    "dubinc/dub",
+    "openstatusHQ/openstatus",
+    "elie222/inbox-zero"
+   ],
+   "cleanFindings": 49,
    "vulnerableRepos": []
   },
   {
@@ -1803,12 +2237,371 @@
    "cleanRepos": [
     "fastapi/full-stack-fastapi-template",
     "gothinkster/node-express-realworld-example-app",
-    "supabase/supabase-js"
+    "supabase/supabase-js",
+    "mfts/papermark",
+    "dubinc/dub",
+    "elie222/inbox-zero"
    ],
-   "cleanFindings": 11,
+   "cleanFindings": 29,
    "vulnerableRepos": [
     "juice-shop/juice-shop"
    ]
+  },
+  {
+   "ruleId": 7135,
+   "title": "WEB-PERF-35: List Keyed by Array Index",
+   "severity": "LOW",
+   "cleanRepos": [
+    "documenso/documenso",
+    "mfts/papermark",
+    "formbricks/formbricks",
+    "dubinc/dub",
+    "openstatusHQ/openstatus",
+    "elie222/inbox-zero"
+   ],
+   "cleanFindings": 27,
+   "vulnerableRepos": []
+  },
+  {
+   "ruleId": 6001,
+   "title": "DB-PERF-01: Prisma / ORM N+1 Query in Loop",
+   "severity": "MEDIUM",
+   "cleanRepos": [
+    "documenso/documenso",
+    "mfts/papermark",
+    "formbricks/formbricks",
+    "dubinc/dub",
+    "elie222/inbox-zero",
+    "lukevella/rallly"
+   ],
+   "cleanFindings": 25,
+   "vulnerableRepos": []
+  },
+  {
+   "ruleId": 29742,
+   "title": "BUG-109: Form Field Uses text-xs on Mobile: iOS Zooms In on Focus",
+   "severity": "LOW",
+   "cleanRepos": [
+    "documenso/documenso",
+    "mfts/papermark",
+    "formbricks/formbricks",
+    "dubinc/dub",
+    "openstatusHQ/openstatus",
+    "elie222/inbox-zero"
+   ],
+   "cleanFindings": 22,
+   "vulnerableRepos": []
+  },
+  {
+   "ruleId": 7138,
+   "title": "WEB-PERF-38: Missing HTML Lang Attribute Delaying Accessibility Tree",
+   "severity": "LOW",
+   "cleanRepos": [
+    "spring-projects/spring-petclinic",
+    "django/djangoproject.com",
+    "AntennaPod/AntennaPod",
+    "localsend/localsend",
+    "formbricks/formbricks",
+    "elie222/inbox-zero"
+   ],
+   "cleanFindings": 21,
+   "vulnerableRepos": [
+    "OWASP/NodeGoat",
+    "juice-shop/juice-shop",
+    "WebGoat/WebGoat",
+    "OWASP/railsgoat",
+    "adeyosemanputra/pygoat"
+   ]
+  },
+  {
+   "ruleId": 29747,
+   "title": "BUG-114: Element Only Appears on Hover (group-hover:opacity-100)",
+   "severity": "LOW",
+   "cleanRepos": [
+    "fastapi/full-stack-fastapi-template",
+    "documenso/documenso",
+    "mfts/papermark",
+    "formbricks/formbricks",
+    "dubinc/dub",
+    "openstatusHQ/openstatus"
+   ],
+   "cleanFindings": 16,
+   "vulnerableRepos": []
+  },
+  {
+   "ruleId": 12603,
+   "title": "SBOM-03: SLSA Level 3 Provenance Attestation Missing in CI/CD Build Pipeline",
+   "severity": "LOW",
+   "cleanRepos": [
+    "fastapi/full-stack-fastapi-template",
+    "documenso/documenso",
+    "django/djangoproject.com",
+    "formbricks/formbricks",
+    "openstatusHQ/openstatus",
+    "elie222/inbox-zero"
+   ],
+   "cleanFindings": 11,
+   "vulnerableRepos": [
+    "juice-shop/juice-shop",
+    "WebGoat/WebGoat"
+   ]
+  },
+  {
+   "ruleId": 30508,
+   "title": "CAT-08: Column Type Changed in Place",
+   "severity": "MEDIUM",
+   "cleanRepos": [
+    "LemmyNet/lemmy",
+    "mfts/papermark",
+    "formbricks/formbricks",
+    "elie222/inbox-zero",
+    "lukevella/rallly"
+   ],
+   "cleanFindings": 247,
+   "vulnerableRepos": []
+  },
+  {
+   "ruleId": 30513,
+   "title": "CAT-13: Independent Awaits Run One After the Other",
+   "severity": "LOW",
+   "cleanRepos": [
+    "documenso/documenso",
+    "formbricks/formbricks",
+    "openstatusHQ/openstatus",
+    "elie222/inbox-zero",
+    "lukevella/rallly"
+   ],
+   "cleanFindings": 39,
+   "vulnerableRepos": [
+    "juice-shop/juice-shop"
+   ]
+  },
+  {
+   "ruleId": 30510,
+   "title": "CAT-10: UPDATE Without WHERE in a Migration",
+   "severity": "LOW",
+   "cleanRepos": [
+    "documenso/documenso",
+    "LemmyNet/lemmy",
+    "formbricks/formbricks",
+    "elie222/inbox-zero",
+    "lukevella/rallly"
+   ],
+   "cleanFindings": 36,
+   "vulnerableRepos": []
+  },
+  {
+   "ruleId": 29744,
+   "title": "BUG-111: SheetContent Has No Title",
+   "severity": "LOW",
+   "cleanRepos": [
+    "documenso/documenso",
+    "mfts/papermark",
+    "formbricks/formbricks",
+    "elie222/inbox-zero",
+    "lukevella/rallly"
+   ],
+   "cleanFindings": 31,
+   "vulnerableRepos": []
+  },
+  {
+   "ruleId": 28612,
+   "title": "A11Y-12: <label> Not Associated With a Form Control",
+   "severity": "LOW",
+   "cleanRepos": [
+    "documenso/documenso",
+    "spring-projects/spring-petclinic",
+    "mfts/papermark",
+    "formbricks/formbricks",
+    "dubinc/dub"
+   ],
+   "cleanFindings": 29,
+   "vulnerableRepos": [
+    "juice-shop/juice-shop",
+    "WebGoat/WebGoat",
+    "adeyosemanputra/pygoat"
+   ]
+  },
+  {
+   "ruleId": 1247,
+   "title": "UI-INTERACT-47: Animated Counter Freezing on Rapid Page Scroll",
+   "severity": "LOW",
+   "cleanRepos": [
+    "documenso/documenso",
+    "formbricks/formbricks",
+    "dubinc/dub",
+    "elie222/inbox-zero",
+    "lukevella/rallly"
+   ],
+   "cleanFindings": 15,
+   "vulnerableRepos": []
+  },
+  {
+   "ruleId": 6017,
+   "title": "DB-PERF-17: Redundant Duplicate Indexes on Same Column Prefix",
+   "severity": "LOW",
+   "cleanRepos": [
+    "supabase/supabase-js",
+    "LemmyNet/lemmy",
+    "mfts/papermark",
+    "formbricks/formbricks",
+    "elie222/inbox-zero"
+   ],
+   "cleanFindings": 10,
+   "vulnerableRepos": []
+  },
+  {
+   "ruleId": 1030,
+   "title": "Unkeyed React Array Mapping Reconciliation Hazard",
+   "severity": "MEDIUM",
+   "cleanRepos": [
+    "documenso/documenso",
+    "mfts/papermark",
+    "formbricks/formbricks",
+    "dubinc/dub",
+    "elie222/inbox-zero"
+   ],
+   "cleanFindings": 9,
+   "vulnerableRepos": []
+  },
+  {
+   "ruleId": 29981,
+   "title": "DBG-02: NOT IN (SELECT …) Returns No Rows When the Subquery Has a NULL",
+   "severity": "MEDIUM",
+   "cleanRepos": [
+    "documenso/documenso",
+    "LemmyNet/lemmy",
+    "openstatusHQ/openstatus",
+    "elie222/inbox-zero",
+    "lukevella/rallly"
+   ],
+   "cleanFindings": 7,
+   "vulnerableRepos": []
+  },
+  {
+   "ruleId": 1207,
+   "title": "UI-INTERACT-07: Viewport Horizontal Overflow from w-screen",
+   "severity": "LOW",
+   "cleanRepos": [
+    "documenso/documenso",
+    "formbricks/formbricks",
+    "dubinc/dub",
+    "elie222/inbox-zero"
+   ],
+   "cleanFindings": 77,
+   "vulnerableRepos": []
+  },
+  {
+   "ruleId": 274,
+   "title": "CLICHE-74: Unannounced External Link Navigation",
+   "severity": "LOW",
+   "cleanRepos": [
+    "django/djangoproject.com",
+    "AntennaPod/AntennaPod",
+    "mfts/papermark",
+    "dubinc/dub"
+   ],
+   "cleanFindings": 40,
+   "vulnerableRepos": [
+    "OWASP/NodeGoat",
+    "juice-shop/juice-shop",
+    "adeyosemanputra/pygoat"
+   ]
+  },
+  {
+   "ruleId": 29661,
+   "title": "BUG-61: Promise Returned Without await Inside try: catch Never Runs",
+   "severity": "MEDIUM",
+   "cleanRepos": [
+    "mfts/papermark",
+    "formbricks/formbricks",
+    "openstatusHQ/openstatus",
+    "elie222/inbox-zero"
+   ],
+   "cleanFindings": 24,
+   "vulnerableRepos": []
+  },
+  {
+   "ruleId": 29648,
+   "title": "BUG-48: <Image fill> Without sizes Downloads a Full-Viewport-Width Image",
+   "severity": "LOW",
+   "cleanRepos": [
+    "formbricks/formbricks",
+    "dubinc/dub",
+    "openstatusHQ/openstatus",
+    "lukevella/rallly"
+   ],
+   "cleanFindings": 23,
+   "vulnerableRepos": []
+  },
+  {
+   "ruleId": 29701,
+   "title": "SHIP-01: Hardcoded localhost URL (http://localhost:3000) Breaks in Production",
+   "severity": "MEDIUM",
+   "cleanRepos": [
+    "formbricks/formbricks",
+    "dubinc/dub",
+    "openstatusHQ/openstatus",
+    "elie222/inbox-zero"
+   ],
+   "cleanFindings": 22,
+   "vulnerableRepos": [
+    "juice-shop/juice-shop"
+   ]
+  },
+  {
+   "ruleId": 1240,
+   "title": "UI-INTERACT-40: Interactive Chart Missing Keyboard Accessible Data Table",
+   "severity": "LOW",
+   "cleanRepos": [
+    "documenso/documenso",
+    "mfts/papermark",
+    "formbricks/formbricks",
+    "elie222/inbox-zero"
+   ],
+   "cleanFindings": 20,
+   "vulnerableRepos": []
+  },
+  {
+   "ruleId": 29301,
+   "title": "AST-01: IDOR: Record Accessed by Request ID Without an Ownership Check",
+   "severity": "HIGH",
+   "cleanRepos": [
+    "mfts/papermark",
+    "dubinc/dub",
+    "elie222/inbox-zero",
+    "lukevella/rallly"
+   ],
+   "cleanFindings": 19,
+   "vulnerableRepos": []
+  },
+  {
+   "ruleId": 1212,
+   "title": "UI-INTERACT-12: Missing aria-expanded on Collapsible Accordion Triggers",
+   "severity": "LOW",
+   "cleanRepos": [
+    "documenso/documenso",
+    "formbricks/formbricks",
+    "openstatusHQ/openstatus",
+    "lukevella/rallly"
+   ],
+   "cleanFindings": 15,
+   "vulnerableRepos": [
+    "WebGoat/WebGoat"
+   ]
+  },
+  {
+   "ruleId": 10705,
+   "title": "CACHE-05: Unpartitioned Large Cache Key Degradation (>1MB Payload Blob)",
+   "severity": "MEDIUM",
+   "cleanRepos": [
+    "mfts/papermark",
+    "dubinc/dub",
+    "openstatusHQ/openstatus",
+    "elie222/inbox-zero"
+   ],
+   "cleanFindings": 14,
+   "vulnerableRepos": []
   },
   {
    "ruleId": 27223,
@@ -1817,30 +2610,56 @@
    "cleanRepos": [
     "shadcn-ui/taxonomy",
     "TeamNewPipe/NewPipe",
-    "mastodon/mastodon-ios"
+    "mastodon/mastodon-ios",
+    "openstatusHQ/openstatus"
    ],
-   "cleanFindings": 8,
+   "cleanFindings": 9,
    "vulnerableRepos": [
     "WebGoat/WebGoat"
    ]
   },
   {
-   "ruleId": 16,
-   "title": "Unsanitized Direct InnerHTML DOM Mutation (XSS Risk)",
-   "severity": "MEDIUM",
+   "ruleId": 1216,
+   "title": "UI-INTERACT-16: Dropdown Menu Leaking on Outside Document Click",
+   "severity": "LOW",
    "cleanRepos": [
     "documenso/documenso",
-    "rubygems/rubygems.org",
-    "localsend/localsend"
+    "formbricks/formbricks",
+    "dubinc/dub",
+    "lukevella/rallly"
+   ],
+   "cleanFindings": 8,
+   "vulnerableRepos": []
+  },
+  {
+   "ruleId": 28608,
+   "title": "A11Y-08: iframe Missing title",
+   "severity": "MEDIUM",
+   "cleanRepos": [
+    "django/djangoproject.com",
+    "mfts/papermark",
+    "formbricks/formbricks",
+    "dubinc/dub"
    ],
    "cleanFindings": 8,
    "vulnerableRepos": [
-    "juice-shop/juice-shop",
-    "WebGoat/WebGoat",
-    "OWASP/railsgoat",
-    "digininja/DVWA",
-    "adeyosemanputra/pygoat",
-    "anxolerd/dvpwa"
+    "OWASP/NodeGoat"
+   ]
+  },
+  {
+   "ruleId": 28619,
+   "title": "A11Y-19: Ambiguous Link Text (\"click here\")",
+   "severity": "LOW",
+   "cleanRepos": [
+    "documenso/documenso",
+    "mfts/papermark",
+    "dubinc/dub",
+    "elie222/inbox-zero"
+   ],
+   "cleanFindings": 7,
+   "vulnerableRepos": [
+    "OWASP/NodeGoat",
+    "adeyosemanputra/pygoat"
    ]
   },
   {
@@ -1850,9 +2669,10 @@
    "cleanRepos": [
     "spring-projects/spring-petclinic",
     "django/djangoproject.com",
-    "localsend/localsend"
+    "localsend/localsend",
+    "elie222/inbox-zero"
    ],
-   "cleanFindings": 6,
+   "cleanFindings": 7,
    "vulnerableRepos": [
     "OWASP/NodeGoat",
     "juice-shop/juice-shop",
@@ -1867,9 +2687,10 @@
    "cleanRepos": [
     "spring-projects/spring-petclinic",
     "django/djangoproject.com",
-    "AntennaPod/AntennaPod"
+    "AntennaPod/AntennaPod",
+    "dubinc/dub"
    ],
-   "cleanFindings": 6,
+   "cleanFindings": 7,
    "vulnerableRepos": [
     "OWASP/NodeGoat",
     "juice-shop/juice-shop",
@@ -1878,19 +2699,58 @@
    ]
   },
   {
-   "ruleId": 12603,
-   "title": "SBOM-03: SLSA Level 3 Provenance Attestation Missing in CI/CD Build Pipeline",
+   "ruleId": 28620,
+   "title": "A11Y-20: aria-label on a Generic Element Is Ignored",
    "severity": "LOW",
    "cleanRepos": [
-    "fastapi/full-stack-fastapi-template",
-    "documenso/documenso",
-    "django/djangoproject.com"
+    "mfts/papermark",
+    "formbricks/formbricks",
+    "dubinc/dub",
+    "openstatusHQ/openstatus"
+   ],
+   "cleanFindings": 7,
+   "vulnerableRepos": [
+    "juice-shop/juice-shop"
+   ]
+  },
+  {
+   "ruleId": 8433,
+   "title": "CHAOS-33: Insecure Fast-Fail Bypass Causing Silent Data Corruption",
+   "severity": "MEDIUM",
+   "cleanRepos": [
+    "mfts/papermark",
+    "formbricks/formbricks",
+    "openstatusHQ/openstatus",
+    "elie222/inbox-zero"
+   ],
+   "cleanFindings": 6,
+   "vulnerableRepos": []
+  },
+  {
+   "ruleId": 15,
+   "title": "Unauthenticated API Mutation Route Handler (Missing Session / Auth Guard)",
+   "severity": "HIGH",
+   "cleanRepos": [
+    "mfts/papermark",
+    "dubinc/dub",
+    "openstatusHQ/openstatus",
+    "lukevella/rallly"
    ],
    "cleanFindings": 5,
-   "vulnerableRepos": [
-    "juice-shop/juice-shop",
-    "WebGoat/WebGoat"
-   ]
+   "vulnerableRepos": []
+  },
+  {
+   "ruleId": 28934,
+   "title": "JSF-34: Content-Security-Policy script-src Allows 'unsafe-inline' Without a Nonce or Hash",
+   "severity": "LOW",
+   "cleanRepos": [
+    "mfts/papermark",
+    "formbricks/formbricks",
+    "openstatusHQ/openstatus",
+    "elie222/inbox-zero"
+   ],
+   "cleanFindings": 5,
+   "vulnerableRepos": []
   },
   {
    "ruleId": 3002,
@@ -1899,9 +2759,124 @@
    "cleanRepos": [
     "gothinkster/node-express-realworld-example-app",
     "spring-projects/spring-petclinic",
-    "rubygems/rubygems.org"
+    "rubygems/rubygems.org",
+    "formbricks/formbricks"
    ],
-   "cleanFindings": 3,
+   "cleanFindings": 4,
+   "vulnerableRepos": []
+  },
+  {
+   "ruleId": 29750,
+   "title": "BUG-117: <Collapsible asChild> Has 3 Children",
+   "severity": "HIGH",
+   "cleanRepos": [
+    "mfts/papermark",
+    "formbricks/formbricks",
+    "openstatusHQ/openstatus"
+   ],
+   "cleanFindings": 15,
+   "vulnerableRepos": []
+  },
+  {
+   "ruleId": 229,
+   "title": "CLICHE-29: Testimonial From a Placeholder Person or Company",
+   "severity": "MEDIUM",
+   "cleanRepos": [
+    "documenso/documenso",
+    "elie222/inbox-zero",
+    "lukevella/rallly"
+   ],
+   "cleanFindings": 14,
+   "vulnerableRepos": [
+    "WebGoat/WebGoat"
+   ]
+  },
+  {
+   "ruleId": 28819,
+   "title": "GAP-19: OAuth Account Linked to an Existing User by E-mail Alone (allowDangerousEmailAccountLinking)",
+   "severity": "MEDIUM",
+   "cleanRepos": [
+    "mfts/papermark",
+    "dubinc/dub",
+    "openstatusHQ/openstatus"
+   ],
+   "cleanFindings": 9,
+   "vulnerableRepos": []
+  },
+  {
+   "ruleId": 1205,
+   "title": "UI-INTERACT-05: Arbitrary Z-Index Escalation War (z-[99999])",
+   "severity": "LOW",
+   "cleanRepos": [
+    "documenso/documenso",
+    "mfts/papermark",
+    "openstatusHQ/openstatus"
+   ],
+   "cleanFindings": 7,
+   "vulnerableRepos": []
+  },
+  {
+   "ruleId": 3007,
+   "title": "Kubernetes Workload Manifest Missing CPU/Memory Resource Limits (DoS Risk)",
+   "severity": "LOW",
+   "cleanRepos": [
+    "spring-projects/spring-petclinic",
+    "formbricks/formbricks",
+    "openstatusHQ/openstatus"
+   ],
+   "cleanFindings": 7,
+   "vulnerableRepos": [
+    "madhuakula/kubernetes-goat"
+   ]
+  },
+  {
+   "ruleId": 21,
+   "title": "Potential Secret or PII Log Leakage in Application Telemetry",
+   "severity": "HIGH",
+   "cleanRepos": [
+    "formbricks/formbricks",
+    "dubinc/dub",
+    "elie222/inbox-zero"
+   ],
+   "cleanFindings": 7,
+   "vulnerableRepos": [
+    "adeyosemanputra/pygoat"
+   ]
+  },
+  {
+   "ruleId": 8143,
+   "title": "ZERO-AUTH-43: Missing Identity Verification on Webhook Receiver Endpoints",
+   "severity": "HIGH",
+   "cleanRepos": [
+    "mfts/papermark",
+    "dubinc/dub",
+    "elie222/inbox-zero"
+   ],
+   "cleanFindings": 6,
+   "vulnerableRepos": []
+  },
+  {
+   "ruleId": 1210,
+   "title": "UI-INTERACT-10: Scroll Lock without Scrollbar Width Compensation",
+   "severity": "LOW",
+   "cleanRepos": [
+    "mfts/papermark",
+    "dubinc/dub",
+    "lukevella/rallly"
+   ],
+   "cleanFindings": 5,
+   "vulnerableRepos": []
+  },
+  {
+   "ruleId": 29887,
+   "title": "BUG-210: setMonth(getMonth() ± n) Skips Short Months",
+   "severity": "MEDIUM",
+   "cleanRepos": [
+    "mfts/papermark",
+    "formbricks/formbricks",
+    "openstatusHQ/openstatus"
+   ],
+   "cleanFindings": 4,
    "vulnerableRepos": []
   },
   {
@@ -1920,17 +2895,42 @@
    ]
   },
   {
-   "ruleId": 28602,
-   "title": "A11Y-02: Button or Link Without an Accessible Name (Icon-Only or Empty)",
+   "ruleId": 1225,
+   "title": "UI-INTERACT-25: Unchecked File Upload Size and Type Traps",
+   "severity": "LOW",
+   "cleanRepos": [
+    "localsend/localsend",
+    "mfts/papermark",
+    "elie222/inbox-zero"
+   ],
+   "cleanFindings": 3,
+   "vulnerableRepos": [
+    "juice-shop/juice-shop",
+    "WebGoat/WebGoat",
+    "adeyosemanputra/pygoat"
+   ]
+  },
+  {
+   "ruleId": 30012,
+   "title": "UXG-13: Data List With No Error or Empty State",
    "severity": "MEDIUM",
    "cleanRepos": [
-    "fastapi/full-stack-fastapi-template",
-    "documenso/documenso"
+    "documenso/documenso",
+    "openstatusHQ/openstatus"
    ],
-   "cleanFindings": 35,
-   "vulnerableRepos": [
-    "juice-shop/juice-shop"
-   ]
+   "cleanFindings": 31,
+   "vulnerableRepos": []
+  },
+  {
+   "ruleId": 3006,
+   "title": "Next.js Server Action Executes Database Mutation Without Schema Validation Guard",
+   "severity": "HIGH",
+   "cleanRepos": [
+    "elie222/inbox-zero",
+    "lukevella/rallly"
+   ],
+   "cleanFindings": 27,
+   "vulnerableRepos": []
   },
   {
    "ruleId": 30523,
@@ -1946,25 +2946,25 @@
    ]
   },
   {
-   "ruleId": 30315,
-   "title": "XL-15: article.authorid Cascades on Delete but No Migration Indexes It",
-   "severity": "LOW",
+   "ruleId": 23005,
+   "title": "SAAS-05: Secret Compared With === Instead of a Constant-Time Check",
+   "severity": "MEDIUM",
    "cleanRepos": [
-    "gothinkster/node-express-realworld-example-app",
-    "documenso/documenso"
+    "mfts/papermark",
+    "dubinc/dub"
    ],
-   "cleanFindings": 25,
+   "cleanFindings": 13,
    "vulnerableRepos": []
   },
   {
-   "ruleId": 30510,
-   "title": "CAT-10: UPDATE Without WHERE in a Migration",
-   "severity": "LOW",
+   "ruleId": 23006,
+   "title": "SAAS-06: Cron Endpoint Without a Secret Check",
+   "severity": "HIGH",
    "cleanRepos": [
-    "documenso/documenso",
-    "LemmyNet/lemmy"
+    "openstatusHQ/openstatus",
+    "elie222/inbox-zero"
    ],
-   "cleanFindings": 24,
+   "cleanFindings": 10,
    "vulnerableRepos": []
   },
   {
@@ -1974,6 +2974,17 @@
    "cleanRepos": [
     "vercel/nextjs-subscription-payments",
     "supabase/supabase-js"
+   ],
+   "cleanFindings": 7,
+   "vulnerableRepos": []
+  },
+  {
+   "ruleId": 29601,
+   "title": "BUG-01: Database Write Is Never Awaited, So It Never Runs (Prisma/ORM)",
+   "severity": "HIGH",
+   "cleanRepos": [
+    "mfts/papermark",
+    "dubinc/dub"
    ],
    "cleanFindings": 7,
    "vulnerableRepos": []
@@ -1993,95 +3004,124 @@
    ]
   },
   {
-   "ruleId": 29747,
-   "title": "BUG-114: Element Only Appears on Hover (group-hover:opacity-100)",
-   "severity": "LOW",
+   "ruleId": 29791,
+   "title": "FAKE-01: OPENSTATUS_API_TOKEN Is Still a Placeholder (\"<your-api-token>\")",
+   "severity": "HIGH",
    "cleanRepos": [
-    "fastapi/full-stack-fastapi-template",
-    "documenso/documenso"
+    "openstatusHQ/openstatus",
+    "elie222/inbox-zero"
+   ],
+   "cleanFindings": 6,
+   "vulnerableRepos": []
+  },
+  {
+   "ruleId": 30010,
+   "title": "UXG-11: new Intl.NumberFormat() Created for Every Item",
+   "severity": "MEDIUM",
+   "cleanRepos": [
+    "vercel/nextjs-subscription-payments",
+    "openstatusHQ/openstatus"
    ],
    "cleanFindings": 5,
    "vulnerableRepos": []
   },
   {
-   "ruleId": 28612,
-   "title": "A11Y-12: <label> Not Associated With a Form Control",
+   "ruleId": 30009,
+   "title": "UXG-10: Content Revealed Only on Mouse Hover",
+   "severity": "MEDIUM",
+   "cleanRepos": [
+    "mfts/papermark",
+    "formbricks/formbricks"
+   ],
+   "cleanFindings": 5,
+   "vulnerableRepos": []
+  },
+  {
+   "ruleId": 3021,
+   "title": "SQL Injection: String Concatenation in Node.js Database Client Query",
+   "severity": "CRITICAL",
+   "cleanRepos": [
+    "dubinc/dub",
+    "elie222/inbox-zero"
+   ],
+   "cleanFindings": 4,
+   "vulnerableRepos": [
+    "juice-shop/juice-shop"
+   ]
+  },
+  {
+   "ruleId": 29916,
+   "title": "SECG-17: JWT Signed Without an Expiry",
+   "severity": "MEDIUM",
+   "cleanRepos": [
+    "mfts/papermark",
+    "elie222/inbox-zero"
+   ],
+   "cleanFindings": 4,
+   "vulnerableRepos": []
+  },
+  {
+   "ruleId": 29702,
+   "title": "SHIP-02: VERCEL_URL Used as a Full URL (No https://, Changes Every Deployment)",
+   "severity": "MEDIUM",
+   "cleanRepos": [
+    "openstatusHQ/openstatus",
+    "elie222/inbox-zero"
+   ],
+   "cleanFindings": 4,
+   "vulnerableRepos": []
+  },
+  {
+   "ruleId": 1229,
+   "title": "UI-INTERACT-29: Tab Component Lacking Arrow Key Keyboard Navigation",
    "severity": "LOW",
    "cleanRepos": [
     "documenso/documenso",
-    "spring-projects/spring-petclinic"
+    "formbricks/formbricks"
    ],
-   "cleanFindings": 5,
-   "vulnerableRepos": [
-    "juice-shop/juice-shop",
-    "WebGoat/WebGoat",
-    "adeyosemanputra/pygoat"
-   ]
-  },
-  {
-   "ruleId": 106,
-   "title": "UI-106: Empty Silent Catch Block",
-   "severity": "LOW",
-   "cleanRepos": [
-    "supabase/supabase-js",
-    "rubygems/rubygems.org"
-   ],
-   "cleanFindings": 5,
-   "vulnerableRepos": [
-    "WebGoat/WebGoat",
-    "OWASP/railsgoat",
-    "anxolerd/dvpwa"
-   ]
-  },
-  {
-   "ruleId": 274,
-   "title": "CLICHE-74: Unannounced External Link Navigation",
-   "severity": "LOW",
-   "cleanRepos": [
-    "django/djangoproject.com",
-    "AntennaPod/AntennaPod"
-   ],
-   "cleanFindings": 5,
-   "vulnerableRepos": [
-    "OWASP/NodeGoat",
-    "juice-shop/juice-shop",
-    "adeyosemanputra/pygoat"
-   ]
-  },
-  {
-   "ruleId": 1204,
-   "title": "UI-INTERACT-04: Disruptive autoFocus Input Hijacking",
-   "severity": "LOW",
-   "cleanRepos": [
-    "shadcn-ui/taxonomy",
-    "documenso/documenso"
-   ],
-   "cleanFindings": 4,
+   "cleanFindings": 3,
    "vulnerableRepos": [
     "WebGoat/WebGoat"
    ]
   },
   {
-   "ruleId": 29981,
-   "title": "DBG-02: NOT IN (SELECT …) Returns No Rows When the Subquery Has a NULL",
+   "ruleId": 276,
+   "title": "CLICHE-76: Placeholder Copy or Default Template Metadata Left in the UI",
    "severity": "MEDIUM",
    "cleanRepos": [
-    "documenso/documenso",
-    "LemmyNet/lemmy"
+    "django/djangoproject.com",
+    "formbricks/formbricks"
    ],
-   "cleanFindings": 4,
-   "vulnerableRepos": []
+   "cleanFindings": 3,
+   "vulnerableRepos": [
+    "juice-shop/juice-shop"
+   ]
   },
   {
-   "ruleId": 6017,
-   "title": "DB-PERF-17: Redundant Duplicate Indexes on Same Column Prefix",
-   "severity": "LOW",
+   "ruleId": 28604,
+   "title": "A11Y-04: aria-hidden on a Focusable Element",
+   "severity": "MEDIUM",
    "cleanRepos": [
-    "supabase/supabase-js",
-    "LemmyNet/lemmy"
+    "mfts/papermark",
+    "formbricks/formbricks"
    ],
-   "cleanFindings": 4,
-   "vulnerableRepos": []
+   "cleanFindings": 3,
+   "vulnerableRepos": [
+    "WebGoat/WebGoat"
+   ]
+  },
+  {
+   "ruleId": 7104,
+   "title": "WEB-PERF-04: Non-Passive Touch or Wheel Event Listener",
+   "severity": "MEDIUM",
+   "cleanRepos": [
+    "formbricks/formbricks",
+    "dubinc/dub"
+   ],
+   "cleanFindings": 3,
+   "vulnerableRepos": [
+    "anxolerd/dvpwa"
+   ]
   },
   {
    "ruleId": 7029,
@@ -2095,18 +3135,103 @@
    "vulnerableRepos": []
   },
   {
-   "ruleId": 1211,
-   "title": "UI-INTERACT-11: Double-Click Duplicate Mutation Hazard",
+   "ruleId": 1241,
+   "title": "UI-INTERACT-41: Draggable Kanban / List Lacking Keyboard Reordering",
    "severity": "LOW",
    "cleanRepos": [
-    "vercel/nextjs-subscription-payments",
-    "documenso/documenso"
+    "mfts/papermark",
+    "formbricks/formbricks"
    ],
-   "cleanFindings": 2,
-   "vulnerableRepos": [
-    "WebGoat/WebGoat",
-    "adeyosemanputra/pygoat"
-   ]
+   "cleanFindings": 3,
+   "vulnerableRepos": []
+  },
+  {
+   "ruleId": 1202,
+   "title": "UI-INTERACT-02: Modal Dialog Missing Keyboard Escape Listener",
+   "severity": "LOW",
+   "cleanRepos": [
+    "mfts/papermark",
+    "lukevella/rallly"
+   ],
+   "cleanFindings": 3,
+   "vulnerableRepos": []
+  },
+  {
+   "ruleId": 30517,
+   "title": "CAT-17: 429 Response Without Retry-After",
+   "severity": "LOW",
+   "cleanRepos": [
+    "mfts/papermark",
+    "formbricks/formbricks"
+   ],
+   "cleanFindings": 3,
+   "vulnerableRepos": []
+  },
+  {
+   "ruleId": 28,
+   "title": "JWT Algorithm Confusion Vulnerability (Missing Algorithms Whitelist)",
+   "severity": "CRITICAL",
+   "cleanRepos": [
+    "mfts/papermark",
+    "formbricks/formbricks"
+   ],
+   "cleanFindings": 3,
+   "vulnerableRepos": []
+  },
+  {
+   "ruleId": 29800,
+   "title": "BUG-146: setTimeout of 1 min in a Serverless Function Never Fires",
+   "severity": "HIGH",
+   "cleanRepos": [
+    "mfts/papermark",
+    "elie222/inbox-zero"
+   ],
+   "cleanFindings": 3,
+   "vulnerableRepos": []
+  },
+  {
+   "ruleId": 30313,
+   "title": "XL-13: This workspace Query Skips the Tenant Filter the Other workspace Queries in This File Use",
+   "severity": "HIGH",
+   "cleanRepos": [
+    "formbricks/formbricks",
+    "elie222/inbox-zero"
+   ],
+   "cleanFindings": 3,
+   "vulnerableRepos": []
+  },
+  {
+   "ruleId": 29604,
+   "title": "BUG-04: useEffect Without a Dependency Array Sets State (Infinite Render Loop)",
+   "severity": "HIGH",
+   "cleanRepos": [
+    "formbricks/formbricks",
+    "dubinc/dub"
+   ],
+   "cleanFindings": 3,
+   "vulnerableRepos": []
+  },
+  {
+   "ruleId": 29746,
+   "title": "BUG-113: <Image fill> Inside a Parent Without position: relative",
+   "severity": "MEDIUM",
+   "cleanRepos": [
+    "formbricks/formbricks",
+    "elie222/inbox-zero"
+   ],
+   "cleanFindings": 3,
+   "vulnerableRepos": []
+  },
+  {
+   "ruleId": 12304,
+   "title": "TLS-04: TLS Certificate Verification Disabled (rejectUnauthorized: false)",
+   "severity": "HIGH",
+   "cleanRepos": [
+    "formbricks/formbricks",
+    "dubinc/dub"
+   ],
+   "cleanFindings": 3,
+   "vulnerableRepos": []
   },
   {
    "ruleId": 23008,
@@ -2115,6 +3240,41 @@
    "cleanRepos": [
     "vercel/nextjs-subscription-payments",
     "shadcn-ui/taxonomy"
+   ],
+   "cleanFindings": 2,
+   "vulnerableRepos": []
+  },
+  {
+   "ruleId": 30505,
+   "title": "CAT-05: Subscription Webhook Never Handles Cancellation or Failed Payment",
+   "severity": "MEDIUM",
+   "cleanRepos": [
+    "shadcn-ui/taxonomy",
+    "formbricks/formbricks"
+   ],
+   "cleanFindings": 2,
+   "vulnerableRepos": []
+  },
+  {
+   "ruleId": 12205,
+   "title": "CONTAINER-05: Exposed Docker Daemon Unix Socket Inside Container",
+   "severity": "MEDIUM",
+   "cleanRepos": [
+    "fastapi/full-stack-fastapi-template",
+    "formbricks/formbricks"
+   ],
+   "cleanFindings": 2,
+   "vulnerableRepos": [
+    "madhuakula/kubernetes-goat"
+   ]
+  },
+  {
+   "ruleId": 29628,
+   "title": "BUG-28: useEffect Dependency handleAutoSave Is Recreated Every Render",
+   "severity": "MEDIUM",
+   "cleanRepos": [
+    "documenso/documenso",
+    "mfts/papermark"
    ],
    "cleanFindings": 2,
    "vulnerableRepos": []
@@ -2147,137 +3307,211 @@
    ]
   },
   {
-   "ruleId": 30502,
-   "title": "CAT-02: Column or Table Renamed in Place",
+   "ruleId": 28614,
+   "title": "A11Y-14: Widget Role on an Element That Cannot Receive Focus",
    "severity": "MEDIUM",
    "cleanRepos": [
-    "LemmyNet/lemmy"
+    "mfts/papermark",
+    "dubinc/dub"
    ],
-   "cleanFindings": 468,
+   "cleanFindings": 2,
    "vulnerableRepos": []
   },
   {
-   "ruleId": 30508,
-   "title": "CAT-08: Column Type Changed in Place",
+   "ruleId": 30007,
+   "title": "UXG-08: <a> Nested Inside <button>",
    "severity": "MEDIUM",
    "cleanRepos": [
-    "LemmyNet/lemmy"
+    "mfts/papermark",
+    "dubinc/dub"
    ],
-   "cleanFindings": 218,
+   "cleanFindings": 2,
    "vulnerableRepos": []
   },
   {
-   "ruleId": 1207,
-   "title": "UI-INTERACT-07: Viewport Horizontal Overflow from w-screen",
+   "ruleId": 5017,
+   "title": "SEC-SECRET-17: Google Cloud OAuth Client Secret",
+   "severity": "CRITICAL",
+   "cleanRepos": [
+    "formbricks/formbricks",
+    "elie222/inbox-zero"
+   ],
+   "cleanFindings": 2,
+   "vulnerableRepos": []
+  },
+  {
+   "ruleId": 10305,
+   "title": "PG-05: Deadlock Risk from Non-Deterministic Lock Acquisition Order",
    "severity": "LOW",
    "cleanRepos": [
-    "documenso/documenso"
+    "formbricks/formbricks",
+    "elie222/inbox-zero"
    ],
-   "cleanFindings": 44,
+   "cleanFindings": 2,
    "vulnerableRepos": []
   },
   {
-   "ruleId": 248,
-   "title": "CLICHE-48: Unlabeled Toggle Switch Interactive Ambiguity",
-   "severity": "LOW",
-   "cleanRepos": [
-    "documenso/documenso"
-   ],
-   "cleanFindings": 9,
-   "vulnerableRepos": []
-  },
-  {
-   "ruleId": 7135,
-   "title": "WEB-PERF-35: List Keyed by Array Index",
-   "severity": "LOW",
-   "cleanRepos": [
-    "documenso/documenso"
-   ],
-   "cleanFindings": 8,
-   "vulnerableRepos": []
-  },
-  {
-   "ruleId": 229,
-   "title": "CLICHE-29: Testimonial From a Placeholder Person or Company",
+   "ruleId": 29798,
+   "title": "BUG-144: removeEventListener(\"beforeunload\") Gets a New Function, So Nothing Is Removed",
    "severity": "MEDIUM",
    "cleanRepos": [
-    "documenso/documenso"
+    "formbricks/formbricks",
+    "dubinc/dub"
    ],
-   "cleanFindings": 7,
-   "vulnerableRepos": [
-    "WebGoat/WebGoat"
-   ]
+   "cleanFindings": 2,
+   "vulnerableRepos": []
   },
   {
-   "ruleId": 30012,
-   "title": "UXG-13: Data List With No Error or Empty State",
+   "ruleId": 29659,
+   "title": "BUG-59: useRouterStuff() Called After an Early Return (Rules of Hooks)",
+   "severity": "HIGH",
+   "cleanRepos": [
+    "dubinc/dub",
+    "openstatusHQ/openstatus"
+   ],
+   "cleanFindings": 2,
+   "vulnerableRepos": []
+  },
+  {
+   "ruleId": 30509,
+   "title": "CAT-09: Column Added With a Volatile Default",
    "severity": "MEDIUM",
    "cleanRepos": [
-    "documenso/documenso"
+    "elie222/inbox-zero",
+    "lukevella/rallly"
+   ],
+   "cleanFindings": 2,
+   "vulnerableRepos": []
+  },
+  {
+   "ruleId": 7223,
+   "title": "API-23: Webhook Delivery Missing Cryptographic HMAC Signature",
+   "severity": "MEDIUM",
+   "cleanRepos": [
+    "elie222/inbox-zero",
+    "lukevella/rallly"
+   ],
+   "cleanFindings": 2,
+   "vulnerableRepos": []
+  },
+  {
+   "ruleId": 2005,
+   "title": "PII or Sensitive Authentication Secret Leaked in URL Query Parameters",
+   "severity": "MEDIUM",
+   "cleanRepos": [
+    "mfts/papermark"
+   ],
+   "cleanFindings": 15,
+   "vulnerableRepos": []
+  },
+  {
+   "ruleId": 29753,
+   "title": "BUG-120: useMutation Never Invalidates the Queries This File Shows",
+   "severity": "LOW",
+   "cleanRepos": [
+    "openstatusHQ/openstatus"
+   ],
+   "cleanFindings": 11,
+   "vulnerableRepos": []
+  },
+  {
+   "ruleId": 29740,
+   "title": "BUG-107: Tailwind Class Built at Runtime (bg-${...}) Is Never Generated",
+   "severity": "MEDIUM",
+   "cleanRepos": [
+    "mfts/papermark"
    ],
    "cleanFindings": 6,
    "vulnerableRepos": []
   },
   {
-   "ruleId": 1205,
-   "title": "UI-INTERACT-05: Arbitrary Z-Index Escalation War (z-[99999])",
-   "severity": "LOW",
+   "ruleId": 29801,
+   "title": "BUG-147: Both Branches of the Ternary Are \"Dataroom successfully created! 🎉\"",
+   "severity": "MEDIUM",
    "cleanRepos": [
-    "documenso/documenso"
+    "mfts/papermark"
+   ],
+   "cleanFindings": 6,
+   "vulnerableRepos": []
+  },
+  {
+   "ruleId": 29835,
+   "title": "BUG-164: new Promise() With an async Executor",
+   "severity": "MEDIUM",
+   "cleanRepos": [
+    "mfts/papermark"
    ],
    "cleanFindings": 5,
    "vulnerableRepos": []
   },
   {
-   "ruleId": 1212,
-   "title": "UI-INTERACT-12: Missing aria-expanded on Collapsible Accordion Triggers",
-   "severity": "LOW",
-   "cleanRepos": [
-    "documenso/documenso"
-   ],
-   "cleanFindings": 5,
-   "vulnerableRepos": [
-    "WebGoat/WebGoat"
-   ]
-  },
-  {
-   "ruleId": 29744,
-   "title": "BUG-111: SheetContent Has No Title",
-   "severity": "LOW",
-   "cleanRepos": [
-    "documenso/documenso"
-   ],
-   "cleanFindings": 4,
-   "vulnerableRepos": []
-  },
-  {
-   "ruleId": 1240,
-   "title": "UI-INTERACT-40: Interactive Chart Missing Keyboard Accessible Data Table",
-   "severity": "LOW",
-   "cleanRepos": [
-    "documenso/documenso"
-   ],
-   "cleanFindings": 4,
-   "vulnerableRepos": []
-  },
-  {
-   "ruleId": 1029,
-   "title": "WCAG 2.2 AA: Non-Semantic Clickable Container Missing Keyboard Accessibility",
+   "ruleId": 29974,
+   "title": "PRV-01: Raw email Sent in an Analytics Event",
    "severity": "MEDIUM",
    "cleanRepos": [
-    "documenso/documenso"
+    "mfts/papermark"
    ],
    "cleanFindings": 4,
    "vulnerableRepos": []
   },
   {
-   "ruleId": 6001,
-   "title": "DB-PERF-01: Prisma / ORM N+1 Query in Loop",
+   "ruleId": 29681,
+   "title": "BUG-81: Date Mutated In Place, Then Used Again",
    "severity": "MEDIUM",
    "cleanRepos": [
-    "documenso/documenso"
+    "openstatusHQ/openstatus"
    ],
    "cleanFindings": 4,
+   "vulnerableRepos": []
+  },
+  {
+   "ruleId": 29683,
+   "title": "BUG-83: Email Stored Lowercased but Looked Up Case-Sensitively",
+   "severity": "MEDIUM",
+   "cleanRepos": [
+    "elie222/inbox-zero"
+   ],
+   "cleanFindings": 4,
+   "vulnerableRepos": []
+  },
+  {
+   "ruleId": 29831,
+   "title": "BUG-160: indexResponse.text() Read After indexResponse.json() Consumed the Body",
+   "severity": "MEDIUM",
+   "cleanRepos": [
+    "mfts/papermark"
+   ],
+   "cleanFindings": 3,
+   "vulnerableRepos": []
+  },
+  {
+   "ruleId": 30506,
+   "title": "CAT-06: Email Address Used as the Analytics User ID",
+   "severity": "MEDIUM",
+   "cleanRepos": [
+    "mfts/papermark"
+   ],
+   "cleanFindings": 3,
+   "vulnerableRepos": []
+  },
+  {
+   "ruleId": 29886,
+   "title": "BUG-209: Caught error Copied With Spread / JSON.stringify",
+   "severity": "MEDIUM",
+   "cleanRepos": [
+    "formbricks/formbricks"
+   ],
+   "cleanFindings": 3,
+   "vulnerableRepos": []
+  },
+  {
+   "ruleId": 3005,
+   "title": "Unprotected Debug / Profiler Endpoint Exposed in Production Build",
+   "severity": "MEDIUM",
+   "cleanRepos": [
+    "elie222/inbox-zero"
+   ],
+   "cleanFindings": 3,
    "vulnerableRepos": []
   },
   {
@@ -2299,62 +3533,6 @@
    ],
    "cleanFindings": 2,
    "vulnerableRepos": []
-  },
-  {
-   "ruleId": 29742,
-   "title": "BUG-109: Form Field Uses text-xs on Mobile: iOS Zooms In on Focus",
-   "severity": "LOW",
-   "cleanRepos": [
-    "documenso/documenso"
-   ],
-   "cleanFindings": 2,
-   "vulnerableRepos": []
-  },
-  {
-   "ruleId": 1216,
-   "title": "UI-INTERACT-16: Dropdown Menu Leaking on Outside Document Click",
-   "severity": "LOW",
-   "cleanRepos": [
-    "documenso/documenso"
-   ],
-   "cleanFindings": 2,
-   "vulnerableRepos": []
-  },
-  {
-   "ruleId": 1229,
-   "title": "UI-INTERACT-29: Tab Component Lacking Arrow Key Keyboard Navigation",
-   "severity": "LOW",
-   "cleanRepos": [
-    "documenso/documenso"
-   ],
-   "cleanFindings": 2,
-   "vulnerableRepos": [
-    "WebGoat/WebGoat"
-   ]
-  },
-  {
-   "ruleId": 276,
-   "title": "CLICHE-76: Placeholder Copy or Default Template Metadata Left in the UI",
-   "severity": "MEDIUM",
-   "cleanRepos": [
-    "django/djangoproject.com"
-   ],
-   "cleanFindings": 2,
-   "vulnerableRepos": [
-    "juice-shop/juice-shop"
-   ]
-  },
-  {
-   "ruleId": 3007,
-   "title": "Kubernetes Workload Manifest Missing CPU/Memory Resource Limits (DoS Risk)",
-   "severity": "LOW",
-   "cleanRepos": [
-    "spring-projects/spring-petclinic"
-   ],
-   "cleanFindings": 2,
-   "vulnerableRepos": [
-    "madhuakula/kubernetes-goat"
-   ]
   },
   {
    "ruleId": 29956,
@@ -2430,13 +3608,83 @@
    "vulnerableRepos": []
   },
   {
-   "ruleId": 30010,
-   "title": "UXG-11: new Intl.NumberFormat() Created for Every Item",
+   "ruleId": 40,
+   "title": "Insecure Session Cookie Configuration (Missing HttpOnly or Secure Flag)",
+   "severity": "HIGH",
+   "cleanRepos": [
+    "mfts/papermark"
+   ],
+   "cleanFindings": 2,
+   "vulnerableRepos": []
+  },
+  {
+   "ruleId": 1201,
+   "title": "UI-INTERACT-01: Modal Overlay Missing Backdrop Click Dismissal",
+   "severity": "LOW",
+   "cleanRepos": [
+    "mfts/papermark"
+   ],
+   "cleanFindings": 2,
+   "vulnerableRepos": []
+  },
+  {
+   "ruleId": 25002,
+   "title": "SEC-SSRF-01: Server-Side Request Forgery (SSRF) via Dynamic Fetch",
+   "severity": "HIGH",
+   "cleanRepos": [
+    "mfts/papermark"
+   ],
+   "cleanFindings": 2,
+   "vulnerableRepos": []
+  },
+  {
+   "ruleId": 8438,
+   "title": "CHAOS-38: Missing Backoff on Database Connection Reconnection",
    "severity": "MEDIUM",
    "cleanRepos": [
-    "vercel/nextjs-subscription-payments"
+    "formbricks/formbricks"
    ],
-   "cleanFindings": 1,
+   "cleanFindings": 2,
+   "vulnerableRepos": []
+  },
+  {
+   "ruleId": 28009,
+   "title": "NEXT-SB-09: Image Optimizer Allows Any Remote Host (remotePatterns hostname '**')",
+   "severity": "MEDIUM",
+   "cleanRepos": [
+    "openstatusHQ/openstatus"
+   ],
+   "cleanFindings": 2,
+   "vulnerableRepos": []
+  },
+  {
+   "ruleId": 29796,
+   "title": "FAKE-06: Link Points to \"#\" and Goes Nowhere",
+   "severity": "LOW",
+   "cleanRepos": [
+    "openstatusHQ/openstatus"
+   ],
+   "cleanFindings": 2,
+   "vulnerableRepos": []
+  },
+  {
+   "ruleId": 29634,
+   "title": "BUG-34: Form onSubmit Sends a Request Without preventDefault (Page Reloads)",
+   "severity": "HIGH",
+   "cleanRepos": [
+    "elie222/inbox-zero"
+   ],
+   "cleanFindings": 2,
+   "vulnerableRepos": []
+  },
+  {
+   "ruleId": 29403,
+   "title": "SAAS5-03: Production Browser Source Maps Enabled",
+   "severity": "MEDIUM",
+   "cleanRepos": [
+    "lukevella/rallly"
+   ],
+   "cleanFindings": 2,
    "vulnerableRepos": []
   },
   {
@@ -2460,16 +3708,6 @@
    "vulnerableRepos": []
   },
   {
-   "ruleId": 30505,
-   "title": "CAT-05: Subscription Webhook Never Handles Cancellation or Failed Payment",
-   "severity": "MEDIUM",
-   "cleanRepos": [
-    "shadcn-ui/taxonomy"
-   ],
-   "cleanFindings": 1,
-   "vulnerableRepos": []
-  },
-  {
    "ruleId": 29970,
    "title": "CIG-28: Container Shares the Host IPC Namespace",
    "severity": "MEDIUM",
@@ -2478,18 +3716,6 @@
    ],
    "cleanFindings": 1,
    "vulnerableRepos": []
-  },
-  {
-   "ruleId": 12205,
-   "title": "CONTAINER-05: Exposed Docker Daemon Unix Socket Inside Container",
-   "severity": "MEDIUM",
-   "cleanRepos": [
-    "fastapi/full-stack-fastapi-template"
-   ],
-   "cleanFindings": 1,
-   "vulnerableRepos": [
-    "madhuakula/kubernetes-goat"
-   ]
   },
   {
    "ruleId": 20,
@@ -2537,84 +3763,6 @@
    "vulnerableRepos": []
   },
   {
-   "ruleId": 1030,
-   "title": "Unkeyed React Array Mapping Reconciliation Hazard",
-   "severity": "MEDIUM",
-   "cleanRepos": [
-    "documenso/documenso"
-   ],
-   "cleanFindings": 1,
-   "vulnerableRepos": []
-  },
-  {
-   "ruleId": 1223,
-   "title": "UI-INTERACT-23: Nested Button Invalid HTML Hierarchy",
-   "severity": "LOW",
-   "cleanRepos": [
-    "documenso/documenso"
-   ],
-   "cleanFindings": 1,
-   "vulnerableRepos": [
-    "juice-shop/juice-shop",
-    "WebGoat/WebGoat"
-   ]
-  },
-  {
-   "ruleId": 1247,
-   "title": "UI-INTERACT-47: Animated Counter Freezing on Rapid Page Scroll",
-   "severity": "LOW",
-   "cleanRepos": [
-    "documenso/documenso"
-   ],
-   "cleanFindings": 1,
-   "vulnerableRepos": []
-  },
-  {
-   "ruleId": 30513,
-   "title": "CAT-13: Independent Awaits Run One After the Other",
-   "severity": "LOW",
-   "cleanRepos": [
-    "documenso/documenso"
-   ],
-   "cleanFindings": 1,
-   "vulnerableRepos": [
-    "juice-shop/juice-shop"
-   ]
-  },
-  {
-   "ruleId": 41,
-   "title": "Unvalidated Open Redirection Vulnerability (Open Redirect)",
-   "severity": "MEDIUM",
-   "cleanRepos": [
-    "documenso/documenso"
-   ],
-   "cleanFindings": 1,
-   "vulnerableRepos": []
-  },
-  {
-   "ruleId": 28619,
-   "title": "A11Y-19: Ambiguous Link Text (\"click here\")",
-   "severity": "LOW",
-   "cleanRepos": [
-    "documenso/documenso"
-   ],
-   "cleanFindings": 1,
-   "vulnerableRepos": [
-    "OWASP/NodeGoat",
-    "adeyosemanputra/pygoat"
-   ]
-  },
-  {
-   "ruleId": 29628,
-   "title": "BUG-28: useEffect Dependency handleAutoSave Is Recreated Every Render",
-   "severity": "MEDIUM",
-   "cleanRepos": [
-    "documenso/documenso"
-   ],
-   "cleanFindings": 1,
-   "vulnerableRepos": []
-  },
-  {
    "ruleId": 10905,
    "title": "OAUTH-05: Use of Deprecated Resource Owner Password Credentials (ROPC) Grant",
    "severity": "MEDIUM",
@@ -2625,11 +3773,26 @@
    "vulnerableRepos": []
   },
   {
-   "ruleId": 28608,
-   "title": "A11Y-08: iframe Missing title",
+   "ruleId": 31101,
+   "title": "EOL-01: Base Image Uses Node.js 12, Out of Security Support Since 2022-04-30",
    "severity": "MEDIUM",
    "cleanRepos": [
-    "django/djangoproject.com"
+    "openstatusHQ/openstatus"
+   ],
+   "cleanFindings": 1,
+   "vulnerableRepos": [
+    "OWASP/NodeGoat",
+    "juice-shop/juice-shop",
+    "adeyosemanputra/pygoat",
+    "bridgecrewio/terragoat"
+   ]
+  },
+  {
+   "ruleId": 30511,
+   "title": "CAT-11: YouTube Embed Sets Cookies Before Consent",
+   "severity": "LOW",
+   "cleanRepos": [
+    "mfts/papermark"
    ],
    "cleanFindings": 1,
    "vulnerableRepos": [
@@ -2637,17 +3800,39 @@
    ]
   },
   {
-   "ruleId": 1225,
-   "title": "UI-INTERACT-25: Unchecked File Upload Size and Type Traps",
-   "severity": "LOW",
+   "ruleId": 29745,
+   "title": "BUG-112: JSON.parse(localStorage...) Without try/catch",
+   "severity": "MEDIUM",
    "cleanRepos": [
-    "localsend/localsend"
+    "openstatusHQ/openstatus"
    ],
    "cleanFindings": 1,
    "vulnerableRepos": [
-    "juice-shop/juice-shop",
-    "WebGoat/WebGoat",
-    "adeyosemanputra/pygoat"
+    "juice-shop/juice-shop"
+   ]
+  },
+  {
+   "ruleId": 29797,
+   "title": "FAKE-07: Login Checks a Hard-Coded Password",
+   "severity": "CRITICAL",
+   "cleanRepos": [
+    "mfts/papermark"
+   ],
+   "cleanFindings": 1,
+   "vulnerableRepos": [
+    "juice-shop/juice-shop"
+   ]
+  },
+  {
+   "ruleId": 35,
+   "title": "Path Traversal Vulnerability via User-Controlled File Path",
+   "severity": "HIGH",
+   "cleanRepos": [
+    "formbricks/formbricks"
+   ],
+   "cleanFindings": 1,
+   "vulnerableRepos": [
+    "juice-shop/juice-shop"
    ]
   },
   {
@@ -2727,17 +3912,546 @@
    "vulnerableRepos": []
   },
   {
-   "ruleId": 31101,
-   "title": "EOL-01: Base Image Uses Node.js 12, Out of Security Support Since 2022-04-30",
+   "ruleId": 30518,
+   "title": "CAT-18: Go HTTP Server Without Read Timeouts",
    "severity": "MEDIUM",
-   "cleanRepos": [],
-   "cleanFindings": 0,
+   "cleanRepos": [
+    "openstatusHQ/openstatus"
+   ],
+   "cleanFindings": 1,
    "vulnerableRepos": [
-    "OWASP/NodeGoat",
-    "juice-shop/juice-shop",
-    "adeyosemanputra/pygoat",
-    "bridgecrewio/terragoat"
+    "madhuakula/kubernetes-goat"
    ]
+  },
+  {
+   "ruleId": 1220,
+   "title": "UI-INTERACT-20: Unannounced Dynamic Toast / Alert Notifications",
+   "severity": "LOW",
+   "cleanRepos": [
+    "mfts/papermark"
+   ],
+   "cleanFindings": 1,
+   "vulnerableRepos": []
+  },
+  {
+   "ruleId": 29650,
+   "title": "BUG-50: text-white on bg-white: Invisible Text",
+   "severity": "MEDIUM",
+   "cleanRepos": [
+    "mfts/papermark"
+   ],
+   "cleanFindings": 1,
+   "vulnerableRepos": []
+  },
+  {
+   "ruleId": 29675,
+   "title": "BUG-75: Stripe Timestamp created (Seconds) Used as Milliseconds",
+   "severity": "HIGH",
+   "cleanRepos": [
+    "mfts/papermark"
+   ],
+   "cleanFindings": 1,
+   "vulnerableRepos": []
+  },
+  {
+   "ruleId": 29852,
+   "title": "BUG-181: abortController.abort() Cancels Nothing (signal Never Passed)",
+   "severity": "MEDIUM",
+   "cleanRepos": [
+    "mfts/papermark"
+   ],
+   "cleanFindings": 1,
+   "vulnerableRepos": []
+  },
+  {
+   "ruleId": 28901,
+   "title": "JSF-01: Open Redirect: Framework Redirect Helper Sends Users to a Request-Supplied URL (CWE-601)",
+   "severity": "MEDIUM",
+   "cleanRepos": [
+    "mfts/papermark"
+   ],
+   "cleanFindings": 1,
+   "vulnerableRepos": []
+  },
+  {
+   "ruleId": 29879,
+   "title": "BUG-202: flatMap() With an async Callback",
+   "severity": "HIGH",
+   "cleanRepos": [
+    "mfts/papermark"
+   ],
+   "cleanFindings": 1,
+   "vulnerableRepos": []
+  },
+  {
+   "ruleId": 3004,
+   "title": "Permissive CORS (\"*\" or Reflected Origin) Combined With Credentials",
+   "severity": "HIGH",
+   "cleanRepos": [
+    "mfts/papermark"
+   ],
+   "cleanFindings": 1,
+   "vulnerableRepos": []
+  },
+  {
+   "ruleId": 28122,
+   "title": "NODE-WEB-22: CORS Reflects Any Origin With Credentials Allowed (CWE-942)",
+   "severity": "HIGH",
+   "cleanRepos": [
+    "mfts/papermark"
+   ],
+   "cleanFindings": 1,
+   "vulnerableRepos": []
+  },
+  {
+   "ruleId": 6009,
+   "title": "DB-PERF-09: Long-Running External API Call Inside DB Transaction",
+   "severity": "HIGH",
+   "cleanRepos": [
+    "mfts/papermark"
+   ],
+   "cleanFindings": 1,
+   "vulnerableRepos": []
+  },
+  {
+   "ruleId": 3011,
+   "title": "Unencrypted Cache Connection URI (Missing rediss:// TLS Protocol)",
+   "severity": "HIGH",
+   "cleanRepos": [
+    "formbricks/formbricks"
+   ],
+   "cleanFindings": 1,
+   "vulnerableRepos": []
+  },
+  {
+   "ruleId": 39,
+   "title": "Unverified JWT Token Decoding without Cryptographic Signature Verification",
+   "severity": "HIGH",
+   "cleanRepos": [
+    "formbricks/formbricks"
+   ],
+   "cleanFindings": 1,
+   "vulnerableRepos": []
+  },
+  {
+   "ruleId": 29890,
+   "title": "BUG-213: JSON.stringify(observedKeys) on a Set Sends {}",
+   "severity": "HIGH",
+   "cleanRepos": [
+    "formbricks/formbricks"
+   ],
+   "cleanFindings": 1,
+   "vulnerableRepos": []
+  },
+  {
+   "ruleId": 8120,
+   "title": "ZERO-AUTH-20: Missing OAuth State Parameter (CSRF in OAuth Flow)",
+   "severity": "HIGH",
+   "cleanRepos": [
+    "formbricks/formbricks"
+   ],
+   "cleanFindings": 1,
+   "vulnerableRepos": []
+  },
+  {
+   "ruleId": 29842,
+   "title": "BUG-171: while (… .exec()) Loop Never Advances",
+   "severity": "HIGH",
+   "cleanRepos": [
+    "formbricks/formbricks"
+   ],
+   "cleanFindings": 1,
+   "vulnerableRepos": []
+  },
+  {
+   "ruleId": 29602,
+   "title": "BUG-02: redirect() Inside try/catch Is Swallowed by the catch Block",
+   "severity": "HIGH",
+   "cleanRepos": [
+    "formbricks/formbricks"
+   ],
+   "cleanFindings": 1,
+   "vulnerableRepos": []
+  },
+  {
+   "ruleId": 10902,
+   "title": "OAUTH-02: Permissive Wildcard Redirect URI in OAuth Client Configuration",
+   "severity": "HIGH",
+   "cleanRepos": [
+    "formbricks/formbricks"
+   ],
+   "cleanFindings": 1,
+   "vulnerableRepos": []
+  },
+  {
+   "ruleId": 29627,
+   "title": "BUG-27: Prop settings Copied Into State openedWith That Never Updates",
+   "severity": "MEDIUM",
+   "cleanRepos": [
+    "formbricks/formbricks"
+   ],
+   "cleanFindings": 1,
+   "vulnerableRepos": []
+  },
+  {
+   "ruleId": 29861,
+   "title": "FAKE-10: handleRemoveMember() Only Changes Local State",
+   "severity": "HIGH",
+   "cleanRepos": [
+    "formbricks/formbricks"
+   ],
+   "cleanFindings": 1,
+   "vulnerableRepos": []
+  },
+  {
+   "ruleId": 28010,
+   "title": "NEXT-SB-10: dangerouslyAllowSVG Enabled Without an Image Content-Security-Policy",
+   "severity": "MEDIUM",
+   "cleanRepos": [
+    "formbricks/formbricks"
+   ],
+   "cleanFindings": 1,
+   "vulnerableRepos": []
+  },
+  {
+   "ruleId": 13304,
+   "title": "CRYPTO-04: Cryptographic Nonce Reuse in Galois/Counter Mode (GCM) Encryption",
+   "severity": "CRITICAL",
+   "cleanRepos": [
+    "formbricks/formbricks"
+   ],
+   "cleanFindings": 1,
+   "vulnerableRepos": []
+  },
+  {
+   "ruleId": 28519,
+   "title": "CLOUD-V2-19: Plaintext Credential in Kubernetes Container env Value",
+   "severity": "MEDIUM",
+   "cleanRepos": [
+    "formbricks/formbricks"
+   ],
+   "cleanFindings": 1,
+   "vulnerableRepos": []
+  },
+  {
+   "ruleId": 5066,
+   "title": "SEC-SECRET-66: Kubernetes Service Account Token",
+   "severity": "CRITICAL",
+   "cleanRepos": [
+    "formbricks/formbricks"
+   ],
+   "cleanFindings": 1,
+   "vulnerableRepos": []
+  },
+  {
+   "ruleId": 8905,
+   "title": "K8S-05: AutomountServiceAccountToken Enabled by Default",
+   "severity": "MEDIUM",
+   "cleanRepos": [
+    "formbricks/formbricks"
+   ],
+   "cleanFindings": 1,
+   "vulnerableRepos": []
+  },
+  {
+   "ruleId": 12101,
+   "title": "AUDIT-01: Plaintext Credentials or PII Leaked in Application Logs",
+   "severity": "CRITICAL",
+   "cleanRepos": [
+    "formbricks/formbricks"
+   ],
+   "cleanFindings": 1,
+   "vulnerableRepos": []
+  },
+  {
+   "ruleId": 18104,
+   "title": "ORM-RAW-01: ORM Raw Query Injection via Unsafe String Interpolation",
+   "severity": "HIGH",
+   "cleanRepos": [
+    "formbricks/formbricks"
+   ],
+   "cleanFindings": 1,
+   "vulnerableRepos": []
+  },
+  {
+   "ruleId": 10405,
+   "title": "WAF-05: Unchecked HTTP Request Body Size Exceeding Edge WAF Inspection Buffer",
+   "severity": "LOW",
+   "cleanRepos": [
+    "formbricks/formbricks"
+   ],
+   "cleanFindings": 1,
+   "vulnerableRepos": []
+  },
+  {
+   "ruleId": 9106,
+   "title": "TENANT-06: IDOR - Record Loaded by Request ID Without Owner Scoping",
+   "severity": "CRITICAL",
+   "cleanRepos": [
+    "dubinc/dub"
+   ],
+   "cleanFindings": 1,
+   "vulnerableRepos": []
+  },
+  {
+   "ruleId": 5100,
+   "title": "SEC-SECRET-100: Generic High-Entropy Hex/Base64 API Key",
+   "severity": "HIGH",
+   "cleanRepos": [
+    "dubinc/dub"
+   ],
+   "cleanFindings": 1,
+   "vulnerableRepos": []
+  },
+  {
+   "ruleId": 29652,
+   "title": "BUG-52: {methods.length && ...} Renders \"0\" When the List Is Empty",
+   "severity": "MEDIUM",
+   "cleanRepos": [
+    "dubinc/dub"
+   ],
+   "cleanFindings": 1,
+   "vulnerableRepos": []
+  },
+  {
+   "ruleId": 28610,
+   "title": "A11Y-10: Paste Blocked on Input Field",
+   "severity": "MEDIUM",
+   "cleanRepos": [
+    "dubinc/dub"
+   ],
+   "cleanFindings": 1,
+   "vulnerableRepos": []
+  },
+  {
+   "ruleId": 7101,
+   "title": "WEB-PERF-01: Above-The-Fold Hero Image Missing Priority Attribute",
+   "severity": "MEDIUM",
+   "cleanRepos": [
+    "dubinc/dub"
+   ],
+   "cleanFindings": 1,
+   "vulnerableRepos": []
+  },
+  {
+   "ruleId": 29953,
+   "title": "CIG-11: Dispatch Input Interpolated Into a run: Script",
+   "severity": "MEDIUM",
+   "cleanRepos": [
+    "openstatusHQ/openstatus"
+   ],
+   "cleanFindings": 1,
+   "vulnerableRepos": []
+  },
+  {
+   "ruleId": 9010,
+   "title": "GO-10: Insecure TLS Configuration with InsecureSkipVerify: true",
+   "severity": "CRITICAL",
+   "cleanRepos": [
+    "openstatusHQ/openstatus"
+   ],
+   "cleanFindings": 1,
+   "vulnerableRepos": []
+  },
+  {
+   "ruleId": 14701,
+   "title": "GRPCSEC-01: Insecure Plaintext gRPC Channel Instantiation in Production",
+   "severity": "MEDIUM",
+   "cleanRepos": [
+    "openstatusHQ/openstatus"
+   ],
+   "cleanFindings": 1,
+   "vulnerableRepos": []
+  },
+  {
+   "ruleId": 9020,
+   "title": "GO-20: Missing Read/Write Timeout on http.Server (Slowloris DoS)",
+   "severity": "MEDIUM",
+   "cleanRepos": [
+    "openstatusHQ/openstatus"
+   ],
+   "cleanFindings": 1,
+   "vulnerableRepos": []
+  },
+  {
+   "ruleId": 30519,
+   "title": "CAT-19: defer Inside a Loop",
+   "severity": "MEDIUM",
+   "cleanRepos": [
+    "openstatusHQ/openstatus"
+   ],
+   "cleanFindings": 1,
+   "vulnerableRepos": []
+  },
+  {
+   "ruleId": 30011,
+   "title": "UXG-12: Error Stack Trace Rendered in the UI",
+   "severity": "MEDIUM",
+   "cleanRepos": [
+    "openstatusHQ/openstatus"
+   ],
+   "cleanFindings": 1,
+   "vulnerableRepos": []
+  },
+  {
+   "ruleId": 29703,
+   "title": "SHIP-03: Whole Site Marked noindex / Disallowed for Search Engines",
+   "severity": "HIGH",
+   "cleanRepos": [
+    "openstatusHQ/openstatus"
+   ],
+   "cleanFindings": 1,
+   "vulnerableRepos": []
+  },
+  {
+   "ruleId": 29605,
+   "title": "BUG-05: setInterval Started in useEffect Without Cleanup",
+   "severity": "MEDIUM",
+   "cleanRepos": [
+    "openstatusHQ/openstatus"
+   ],
+   "cleanFindings": 1,
+   "vulnerableRepos": []
+  },
+  {
+   "ruleId": 9014,
+   "title": "GO-14: Unbounded Request Body Read (DoS Memory Exhaustion)",
+   "severity": "MEDIUM",
+   "cleanRepos": [
+    "openstatusHQ/openstatus"
+   ],
+   "cleanFindings": 1,
+   "vulnerableRepos": []
+  },
+  {
+   "ruleId": 28827,
+   "title": "GAP-27: Rewrite Destination Host Taken From the Request Path (Open Proxy)",
+   "severity": "HIGH",
+   "cleanRepos": [
+    "openstatusHQ/openstatus"
+   ],
+   "cleanFindings": 1,
+   "vulnerableRepos": []
+  },
+  {
+   "ruleId": 1244,
+   "title": "UI-INTERACT-44: Viewport Blocks Zoom (WCAG 1.4.4 Resize Text)",
+   "severity": "HIGH",
+   "cleanRepos": [
+    "elie222/inbox-zero"
+   ],
+   "cleanFindings": 1,
+   "vulnerableRepos": []
+  },
+  {
+   "ruleId": 2003,
+   "title": "Cookie Consent Banner Dark Pattern: Missing Symmetric Reject / Decline Action",
+   "severity": "MEDIUM",
+   "cleanRepos": [
+    "elie222/inbox-zero"
+   ],
+   "cleanFindings": 1,
+   "vulnerableRepos": []
+  },
+  {
+   "ruleId": 5049,
+   "title": "SEC-SECRET-49: Generic Private Key Block Exposure",
+   "severity": "CRITICAL",
+   "cleanRepos": [
+    "elie222/inbox-zero"
+   ],
+   "cleanFindings": 1,
+   "vulnerableRepos": []
+  },
+  {
+   "ruleId": 30151,
+   "title": "FAKE-16: Export Downloads an Empty File",
+   "severity": "HIGH",
+   "cleanRepos": [
+    "elie222/inbox-zero"
+   ],
+   "cleanFindings": 1,
+   "vulnerableRepos": []
+  },
+  {
+   "ruleId": 29926,
+   "title": "SECG-27: Access Token Sent in the URL Query String",
+   "severity": "MEDIUM",
+   "cleanRepos": [
+    "elie222/inbox-zero"
+   ],
+   "cleanFindings": 1,
+   "vulnerableRepos": []
+  },
+  {
+   "ruleId": 10402,
+   "title": "WAF-02: Missing Edge Rate Limiting on High-Cost AI Inference Endpoints",
+   "severity": "HIGH",
+   "cleanRepos": [
+    "elie222/inbox-zero"
+   ],
+   "cleanFindings": 1,
+   "vulnerableRepos": []
+  },
+  {
+   "ruleId": 10704,
+   "title": "CACHE-04: Unsafe Lua Script Execution Susceptible to Injection or Infinite Loops",
+   "severity": "HIGH",
+   "cleanRepos": [
+    "elie222/inbox-zero"
+   ],
+   "cleanFindings": 1,
+   "vulnerableRepos": []
+  },
+  {
+   "ruleId": 29843,
+   "title": "BUG-172: return Inside finally Overrides the try/catch Result",
+   "severity": "MEDIUM",
+   "cleanRepos": [
+    "elie222/inbox-zero"
+   ],
+   "cleanFindings": 1,
+   "vulnerableRepos": []
+  },
+  {
+   "ruleId": 29894,
+   "title": "BUG-217: timingSafeEqual Without a Length Check",
+   "severity": "MEDIUM",
+   "cleanRepos": [
+    "elie222/inbox-zero"
+   ],
+   "cleanFindings": 1,
+   "vulnerableRepos": []
+  },
+  {
+   "ruleId": 29760,
+   "title": "BUG-127: next/image Loads d39ixtfgglw55o.cloudfront.net, Which next.config Does Not Allow",
+   "severity": "HIGH",
+   "cleanRepos": [
+    "lukevella/rallly"
+   ],
+   "cleanFindings": 1,
+   "vulnerableRepos": []
+  },
+  {
+   "ruleId": 7215,
+   "title": "API-15: GET Endpoint Performing State-Mutating Actions",
+   "severity": "HIGH",
+   "cleanRepos": [
+    "lukevella/rallly"
+   ],
+   "cleanFindings": 1,
+   "vulnerableRepos": []
+  },
+  {
+   "ruleId": 1208,
+   "title": "UI-INTERACT-08: Hydration Mismatch from Client-Only Window Checks",
+   "severity": "LOW",
+   "cleanRepos": [
+    "lukevella/rallly"
+   ],
+   "cleanFindings": 1,
+   "vulnerableRepos": []
   },
   {
    "ruleId": 3020,
@@ -2831,16 +4545,6 @@
    ]
   },
   {
-   "ruleId": 30511,
-   "title": "CAT-11: YouTube Embed Sets Cookies Before Consent",
-   "severity": "LOW",
-   "cleanRepos": [],
-   "cleanFindings": 0,
-   "vulnerableRepos": [
-    "OWASP/NodeGoat"
-   ]
-  },
-  {
    "ruleId": 43,
    "title": "Hardcoded Session or Crypto Secret Key in Application Configuration",
    "severity": "HIGH",
@@ -2925,16 +4629,6 @@
    ]
   },
   {
-   "ruleId": 29701,
-   "title": "SHIP-01: Hardcoded localhost URL (http://localhost:3000) Breaks in Production",
-   "severity": "MEDIUM",
-   "cleanRepos": [],
-   "cleanFindings": 0,
-   "vulnerableRepos": [
-    "juice-shop/juice-shop"
-   ]
-  },
-  {
    "ruleId": 29922,
    "title": "SECG-23: Directory Listing Enabled With serve-index",
    "severity": "MEDIUM",
@@ -2986,16 +4680,6 @@
    ]
   },
   {
-   "ruleId": 3021,
-   "title": "SQL Injection: String Concatenation in Node.js Database Client Query",
-   "severity": "CRITICAL",
-   "cleanRepos": [],
-   "cleanFindings": 0,
-   "vulnerableRepos": [
-    "juice-shop/juice-shop"
-   ]
-  },
-  {
    "ruleId": 29618,
    "title": "BUG-18: Response Sent Without return; Handler Continues and Responds Again",
    "severity": "HIGH",
@@ -3009,26 +4693,6 @@
    "ruleId": 28911,
    "title": "JSF-11: Every Proxy Hop Trusted: Client Can Spoof req.ip via X-Forwarded-For (CWE-348)",
    "severity": "MEDIUM",
-   "cleanRepos": [],
-   "cleanFindings": 0,
-   "vulnerableRepos": [
-    "juice-shop/juice-shop"
-   ]
-  },
-  {
-   "ruleId": 29745,
-   "title": "BUG-112: JSON.parse(localStorage...) Without try/catch",
-   "severity": "MEDIUM",
-   "cleanRepos": [],
-   "cleanFindings": 0,
-   "vulnerableRepos": [
-    "juice-shop/juice-shop"
-   ]
-  },
-  {
-   "ruleId": 28620,
-   "title": "A11Y-20: aria-label on a Generic Element Is Ignored",
-   "severity": "LOW",
    "cleanRepos": [],
    "cleanFindings": 0,
    "vulnerableRepos": [
@@ -3108,29 +4772,9 @@
    ]
   },
   {
-   "ruleId": 29797,
-   "title": "FAKE-07: Login Checks a Hard-Coded Password",
-   "severity": "CRITICAL",
-   "cleanRepos": [],
-   "cleanFindings": 0,
-   "vulnerableRepos": [
-    "juice-shop/juice-shop"
-   ]
-  },
-  {
    "ruleId": 27101,
    "title": "SEC-SSRF-01: Server-Side Request Forgery (SSRF) in Outbound Fetch / Webhook Dispatch",
    "severity": "CRITICAL",
-   "cleanRepos": [],
-   "cleanFindings": 0,
-   "vulnerableRepos": [
-    "juice-shop/juice-shop"
-   ]
-  },
-  {
-   "ruleId": 35,
-   "title": "Path Traversal Vulnerability via User-Controlled File Path",
-   "severity": "HIGH",
    "cleanRepos": [],
    "cleanFindings": 0,
    "vulnerableRepos": [
@@ -3232,16 +4876,6 @@
   {
    "ruleId": 2001,
    "title": "Accessible Privacy Policy & Terms of Service Routes & Links Missing or Inactive",
-   "severity": "MEDIUM",
-   "cleanRepos": [],
-   "cleanFindings": 0,
-   "vulnerableRepos": [
-    "WebGoat/WebGoat"
-   ]
-  },
-  {
-   "ruleId": 28604,
-   "title": "A11Y-04: aria-hidden on a Focusable Element",
    "severity": "MEDIUM",
    "cleanRepos": [],
    "cleanFindings": 0,
@@ -3558,16 +5192,6 @@
    ]
   },
   {
-   "ruleId": 21,
-   "title": "Potential Secret or PII Log Leakage in Application Telemetry",
-   "severity": "HIGH",
-   "cleanRepos": [],
-   "cleanFindings": 0,
-   "vulnerableRepos": [
-    "adeyosemanputra/pygoat"
-   ]
-  },
-  {
    "ruleId": 8801,
    "title": "PY-SEC-01: Unsafe Pickle Deserialization (Remote Code Execution)",
    "severity": "CRITICAL",
@@ -3615,16 +5239,6 @@
    "cleanFindings": 0,
    "vulnerableRepos": [
     "adeyosemanputra/pygoat"
-   ]
-  },
-  {
-   "ruleId": 7104,
-   "title": "WEB-PERF-04: Non-Passive Touch or Wheel Event Listener",
-   "severity": "MEDIUM",
-   "cleanRepos": [],
-   "cleanFindings": 0,
-   "vulnerableRepos": [
-    "anxolerd/dvpwa"
    ]
   },
   {
@@ -3922,16 +5536,6 @@
    "ruleId": 28514,
    "title": "CLOUD-V2-14: Kubernetes RBAC Role Grants All Verbs on All Resources (*)",
    "severity": "HIGH",
-   "cleanRepos": [],
-   "cleanFindings": 0,
-   "vulnerableRepos": [
-    "madhuakula/kubernetes-goat"
-   ]
-  },
-  {
-   "ruleId": 30518,
-   "title": "CAT-18: Go HTTP Server Without Read Timeouts",
-   "severity": "MEDIUM",
    "cleanRepos": [],
    "cleanFindings": 0,
    "vulnerableRepos": [

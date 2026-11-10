@@ -10,7 +10,12 @@
  */
 
 /** `${list.map(() => "?").join(", ")}` and `${Array(n).fill("?").join(",")}`: placeholders only. */
-const PLACEHOLDER_LIST = /\$\{\s*(?:[\w.]+\.map\(\s*\(\s*\w*\s*\)\s*=>\s*(['"])\?\1\s*\)|(?:new\s+)?Array\(\s*[\w.]+\s*\)\.fill\(\s*(['"])\?\2\s*\))\.join\(\s*(['"])[^'"]*\3\s*\)\s*\}/g;
+// Also row tuples such as "(?, ?, ?)" and an empty-list fallback: `${ids.map(() => "?").join(",") || "NULL"}`.
+const PLACEHOLDERS = String.raw`\(?\s*\?(?:\s*,\s*\?)*\s*\)?`;
+const PLACEHOLDER_LIST = new RegExp(
+  String.raw`\$\{\s*(?:[\w.]+\.map\(\s*\(\s*\w*\s*\)\s*=>\s*(['"])` + PLACEHOLDERS + String.raw`\1\s*\)|(?:new\s+)?Array\(\s*[\w.]+\s*\)\.fill\(\s*(['"])` + PLACEHOLDERS + String.raw`\2\s*\))\.join\(\s*(['"])[^'"]*\3\s*\)(?:\s*\|\|\s*(['"])(?:NULL)?\4)?\s*\}`,
+  'g'
+);
 
 export function normalizePlaceholderLists(s: string): string {
   return s.replace(PLACEHOLDER_LIST, 'CONST');
@@ -92,6 +97,10 @@ export function fixedSqlResolver(content: string): (name: string, offset: number
   for (const m of content.matchAll(new RegExp(String.raw`\b(?:const|let|var)\s+(${NAME})\s*=\s*(?:\([^)]*\)|${NAME})\s*=>\s*\x60([^\x60\\]*)\x60`, 'g'))) {
     add({ name: m[1], index: m.index + m[0].indexOf(m[1]), kind: 'fn', body: m[2] });
   }
+  // function name(table: string) { return `UPDATE ${table} ...`; }: a helper whose whole body returns one template
+  for (const m of content.matchAll(new RegExp(String.raw`\bfunction\s+(${NAME})\s*\([^)]*\)\s*(?::\s*[^{]+)?\{\s*return\s*\x60([^\x60\\]*)\x60\s*;?\s*\}`, 'g'))) {
+    add({ name: m[1], index: m.index + m[0].indexOf(m[1]), kind: 'fn', body: m[2] });
+  }
   const params: { fn: string; index: number; slot?: number; raw: string; pos: number; field?: string; dflt?: string }[] = [];
   const paramLists: [number, number][] = [];
   const fnDecls = [...content.matchAll(new RegExp(String.raw`(?:function\s+(${NAME})\s*\(([^)]*)\)|\b(?:const|let)\s+(${NAME})\s*=\s*(?:async\s*)?\(([^)]*)\)\s*=>)`, 'g'))];
@@ -104,7 +113,8 @@ export function fixedSqlResolver(content: string): (name: string, offset: number
   for (const m of fnDecls) {
     const fn = m[1] ?? m[3];
     splitTopLevel(m[2] ?? m[4]).forEach((raw, pos) => {
-      const plain = new RegExp(String.raw`^(${NAME})(?:\s*=\s*([\s\S]+))?$`).exec(raw);
+      // TypeScript parameters carry a type (`table: string`, `limit?: number`); the type never changes the value
+      const plain = new RegExp(String.raw`^(${NAME})\??(?:\s*:\s*[^=]+?)?(?:\s*=\s*([\s\S]+))?$`).exec(raw.trim());
       if (plain) { params.push({ fn, index: m.index, raw: plain[1], pos, dflt: plain[2]?.trim() }); return; }
       const pattern = /^\{([\s\S]*)\}$/.exec(raw.trim());
       if (!pattern) return;
