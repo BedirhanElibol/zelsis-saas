@@ -4,7 +4,7 @@ import { mkdtempSync, writeFileSync, mkdirSync, rmSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { execFileSync } from 'node:child_process';
-import { isScannablePath, changedPaths, collectFiles, formatReport } from '../../packages/cli/lib.mjs';
+import { isScannablePath, changedPaths, collectFiles, formatReport, MISSING_KEY_HELP } from '../../packages/cli/lib.mjs';
 import { handleMessage as rawHandleMessage, agentNote } from '../../packages/cli/mcp.mjs';
 import { scanUploadedFiles } from '@/lib/scan-files';
 import { ScanFilesRequestSchema } from '@/lib/validations/api-schemas';
@@ -105,6 +105,14 @@ test('MCP server: initialize, tools/list, tools/call and unknown methods', async
 test('agentNote tells the agent to fix blocking findings and ignores experimental ones', () => {
   assert.match(agentNote({ findings: [{ severity: 'HIGH' }] }), /Fix the 1 critical\/high finding/);
   assert.match(agentNote({ findings: [{ severity: 'HIGH', experimental: true }, { severity: 'MEDIUM' }] }), /You can finish/);
+});
+
+test('the pull request hint shows only when asked for, and the missing-key help says the key is free', () => {
+  const result = { findings: [], gateStatus: 'PASSED', scope: 'changed', filesScanned: 3 };
+  assert.match(formatReport(result, { hint: true }), /every pull request: https:\/\/zelsis\.com\/docs\/ci-gate/);
+  assert.doesNotMatch(formatReport(result), /every pull request/);
+  assert.match(MISSING_KEY_HELP, /free key/);
+  assert.match(MISSING_KEY_HELP, /export ZELSIS_API_KEY=/);
 });
 
 test('formatReport says when nothing changed', () => {
