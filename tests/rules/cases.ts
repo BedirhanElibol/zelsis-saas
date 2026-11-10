@@ -410,6 +410,12 @@ export const RULE_CASES: RuleCase[] = [
   },
   {
     ruleIds: [33],
+    name: 'shell helper called only with string literals is not command injection',
+    detects: f('lib/release/report.ts', "import { execSync } from 'node:child_process';\nfunction git(command: string): string {\n  return execSync(`git ${command}`).toString().trim();\n}\nexport function report(req: Request) {\n  return git(new URL(req.url).searchParams.get('cmd')!);\n}\n"),
+    ignores: f('lib/release/report.ts', "import { execSync } from 'node:child_process';\nfunction git(command: string): string {\n  return execSync(`git ${command}`).toString().trim();\n}\nexport function report() {\n  return { commit: git(\"rev-parse --short HEAD\"), dirty: git(\"status --porcelain\") !== '' };\n}\n")
+  },
+  {
+    ruleIds: [33],
     name: 'Command injection via shell exec',
     detects: f('app/api/ping/route.ts', "import { exec } from 'child_process';\nexport async function GET(req: Request) {\n  const host = new URL(req.url).searchParams.get('host');\n  exec(`ping -c 1 ${host}`);\n  return new Response('ok');\n}\n"),
     ignores: f('app/api/ping/route.ts', "import { execFile } from 'child_process';\nexport async function GET(req: Request) {\n  const host = new URL(req.url).searchParams.get('host') ?? '';\n  if (!/^[a-z0-9.-]+$/i.test(host)) return new Response('bad', { status: 400 });\n  execFile('ping', ['-c', '1', host]);\n  return new Response('ok');\n}\n")

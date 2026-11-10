@@ -961,6 +961,13 @@ export function evaluateSecurityRules(file: CodeFile, lines: string[], cleanCont
                 if (!cmdRequestVars.has(m[1])) literalAssignedVars.add(m[1]);
             }
         }
+        // A private helper (not exported) whose every call in this file passes a string literal: its parameter is a constant.
+        const literalHelperParams = new Set<string>();
+        for (const m of cleanContent.matchAll(/(?<!export\s+)function\s+(\w+)\s*\(\s*(\w+)\s*:\s*string\s*\)/g)) {
+            const [, fn, param] = m;
+            const calls = [...cleanContent.matchAll(new RegExp(String.raw`(?<!function\s)(?<![.\w])` + fn + String.raw`\s*\(\s*([^)]*?)\s*\)`, 'g'))].map((c) => c[1].trim());
+            if (calls.length > 0 && calls.every((a) => /^(['"])[^'"]*\1$/.test(a) || /^`[^`$]*`$/.test(a))) literalHelperParams.add(param);
+        }
         const dynamicShell = String.raw`\x60[^\x60]*\$\{[^}]+\}|['"][^'"]*['"]\s*\+|[a-zA-Z0-9_.]+\s*\+|`;
         const cmdInjRegex = new RegExp(String.raw`(?:\b(?:child_process|cp|childProcess)\.(?:exec|execSync)\s*\(|(?<![.\w])exec\s*\(|(?<![.\w])execSync\s*\()\s*(?:` + (isDevTooling ? '' : dynamicShell) + cmdRequestRef + ')');
         const requestOnLine = new RegExp(cmdRequestRef);
@@ -981,7 +988,7 @@ export function evaluateSecurityRules(file: CodeFile, lines: string[], cleanCont
                 }
                 const exprs = [...cmdStr.matchAll(/\$\{\s*([^}]+?)\s*\}/g)].map((m) => m[1].trim());
                 if (exprs.length === 0) return false;
-                return exprs.every((e) => /^[A-Z][A-Z0-9_]*$/.test(e) || (isCliPackagePath && literalAssignedVars.has(e)) || /^(?:base|head|repoName|pkg\.name|agent|agentExec)$/.test(e));
+                return exprs.every((e) => /^[A-Z][A-Z0-9_]*$/.test(e) || (isCliPackagePath && literalAssignedVars.has(e)) || literalHelperParams.has(e) || /^(?:base|head|repoName|pkg\.name|agent|agentExec)$/.test(e));
             }
             // String concatenation command (e.g. 'taskkill /pid ' + pid)
             if (/['"]taskkill\s+\/pid\s+['"]\s*\+\s*\w+|['"]ps\s+['"]\s*\+\s*\w+/i.test(line)) {
