@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 import { writeFileSync } from 'node:fs';
-import { VERSION, runCheck, formatReport, toSarif, parseSeverity, meetsThreshold, runSbom } from '../lib.mjs';
+import { VERSION, runCheck, formatReport, toSarif, parseSeverity, meetsThreshold, runSbom, runPreview, formatPreview, MISSING_KEY_HELP, DEFAULT_URL } from '../lib.mjs';
 import { serveMcp } from '../mcp.mjs';
 import { planInit, applyInit, describePlan, MCP_HELP } from '../init.mjs';
 
@@ -70,6 +70,22 @@ async function main() {
   if (thresholdValue !== undefined && !threshold) { console.error('zelsis: --severity-threshold must be low, medium, high or critical'); return 2; }
   const sarifFile = valueOf('--sarif-file-output');
   if (has('--sarif-file-output') && !sarifFile) { console.error('zelsis: --sarif-file-output needs a file path'); return 2; }
+
+  // No key: try the keyless preview for a public GitHub origin, so a first run shows a real result.
+  if (!process.env.ZELSIS_API_KEY) {
+    try {
+      const preview = await runPreview({ cwd: process.cwd(), url: process.env.ZELSIS_URL || DEFAULT_URL });
+      if (preview) {
+        console.log(formatPreview(preview));
+        return 0;
+      }
+    } catch (err) {
+      console.error(`zelsis: ${err.message}`);
+      return 2;
+    }
+    console.error(MISSING_KEY_HELP);
+    return 2;
+  }
 
   const result = await runCheck({
     cwd: process.cwd(),
