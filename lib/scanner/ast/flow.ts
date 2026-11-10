@@ -906,8 +906,10 @@ export function analyzeProgram(program: AstNode, path: string, source: string, c
         if (COMPARE_OPS.has(node.operator)) {
           recordMix(node, [node.left, node.right], scope, ctx);
           if (ctx.spec || ctx !== moduleCtx) {
-            const envSide = [node.left, node.right].some((s) => { const p = memberPath(s); return !!p && p[0] === 'process' && p[1] === 'env'; });
-            if (envSide) ctx.guarded = true;
+            const envPaths = [node.left, node.right].map((s) => memberPath(s)).filter((p): p is string[] => !!p && p[0] === 'process' && p[1] === 'env');
+            if (envPaths.length) ctx.guarded = true;
+            // Compared with an internal or cron secret: only trusted services reach the code below, so the request does not choose the URL or the record.
+            if (envPaths.some((p) => /^(?:INTERNAL|CRON|SERVICE)_(?:API_)?(?:KEY|SECRET|TOKEN)$/.test(p[2] || ''))) { ctx.urlGuard = true; ctx.adminCheck = true; }
           }
         }
         return;

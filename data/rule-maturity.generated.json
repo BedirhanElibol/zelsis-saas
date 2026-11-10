@@ -1,7 +1,357 @@
 {
- "generatedAt": "2026-11-05",
- "cleanRepos": 19,
+ "generatedAt": "2026-11-10",
+ "cleanRepos": 25,
  "experimental": [
+  {
+   "ruleId": 15,
+   "title": "Unauthenticated API Mutation Route Handler (Missing Session / Auth Guard)",
+   "severity": "HIGH",
+   "cleanRepos": 4,
+   "cleanFindings": 5
+  },
+  {
+   "ruleId": 21,
+   "title": "Potential Secret or PII Log Leakage in Application Telemetry",
+   "severity": "HIGH",
+   "cleanRepos": 3,
+   "cleanFindings": 7
+  },
+  {
+   "ruleId": 28,
+   "title": "JWT Algorithm Confusion Vulnerability (Missing Algorithms Whitelist)",
+   "severity": "CRITICAL",
+   "cleanRepos": 2,
+   "cleanFindings": 3
+  },
+  {
+   "ruleId": 35,
+   "title": "Path Traversal Vulnerability via User-Controlled File Path",
+   "severity": "HIGH",
+   "cleanRepos": 1,
+   "cleanFindings": 1
+  },
+  {
+   "ruleId": 39,
+   "title": "Unverified JWT Token Decoding without Cryptographic Signature Verification",
+   "severity": "HIGH",
+   "cleanRepos": 1,
+   "cleanFindings": 1
+  },
+  {
+   "ruleId": 40,
+   "title": "Insecure Session Cookie Configuration (Missing HttpOnly or Secure Flag)",
+   "severity": "HIGH",
+   "cleanRepos": 1,
+   "cleanFindings": 2
+  },
+  {
+   "ruleId": 1244,
+   "title": "UI-INTERACT-44: Viewport Blocks Zoom (WCAG 1.4.4 Resize Text)",
+   "severity": "HIGH",
+   "cleanRepos": 1,
+   "cleanFindings": 1
+  },
+  {
+   "ruleId": 3004,
+   "title": "Permissive CORS (\"*\" or Reflected Origin) Combined With Credentials",
+   "severity": "HIGH",
+   "cleanRepos": 1,
+   "cleanFindings": 1
+  },
+  {
+   "ruleId": 3006,
+   "title": "Next.js Server Action Executes Database Mutation Without Schema Validation Guard",
+   "severity": "HIGH",
+   "cleanRepos": 2,
+   "cleanFindings": 27
+  },
+  {
+   "ruleId": 3011,
+   "title": "Unencrypted Cache Connection URI (Missing rediss:// TLS Protocol)",
+   "severity": "HIGH",
+   "cleanRepos": 1,
+   "cleanFindings": 1
+  },
+  {
+   "ruleId": 5017,
+   "title": "SEC-SECRET-17: Google Cloud OAuth Client Secret",
+   "severity": "CRITICAL",
+   "cleanRepos": 2,
+   "cleanFindings": 2
+  },
+  {
+   "ruleId": 5049,
+   "title": "SEC-SECRET-49: Generic Private Key Block Exposure",
+   "severity": "CRITICAL",
+   "cleanRepos": 1,
+   "cleanFindings": 1
+  },
+  {
+   "ruleId": 5066,
+   "title": "SEC-SECRET-66: Kubernetes Service Account Token",
+   "severity": "CRITICAL",
+   "cleanRepos": 1,
+   "cleanFindings": 1
+  },
+  {
+   "ruleId": 5100,
+   "title": "SEC-SECRET-100: Generic High-Entropy Hex/Base64 API Key",
+   "severity": "HIGH",
+   "cleanRepos": 1,
+   "cleanFindings": 1
+  },
+  {
+   "ruleId": 6009,
+   "title": "DB-PERF-09: Long-Running External API Call Inside DB Transaction",
+   "severity": "HIGH",
+   "cleanRepos": 1,
+   "cleanFindings": 1
+  },
+  {
+   "ruleId": 7215,
+   "title": "API-15: GET Endpoint Performing State-Mutating Actions",
+   "severity": "HIGH",
+   "cleanRepos": 1,
+   "cleanFindings": 1
+  },
+  {
+   "ruleId": 8120,
+   "title": "ZERO-AUTH-20: Missing OAuth State Parameter (CSRF in OAuth Flow)",
+   "severity": "HIGH",
+   "cleanRepos": 1,
+   "cleanFindings": 1
+  },
+  {
+   "ruleId": 8143,
+   "title": "ZERO-AUTH-43: Missing Identity Verification on Webhook Receiver Endpoints",
+   "severity": "HIGH",
+   "cleanRepos": 3,
+   "cleanFindings": 6
+  },
+  {
+   "ruleId": 9010,
+   "title": "GO-10: Insecure TLS Configuration with InsecureSkipVerify: true",
+   "severity": "CRITICAL",
+   "cleanRepos": 1,
+   "cleanFindings": 1
+  },
+  {
+   "ruleId": 9106,
+   "title": "TENANT-06: IDOR - Record Loaded by Request ID Without Owner Scoping",
+   "severity": "CRITICAL",
+   "cleanRepos": 1,
+   "cleanFindings": 1
+  },
+  {
+   "ruleId": 10402,
+   "title": "WAF-02: Missing Edge Rate Limiting on High-Cost AI Inference Endpoints",
+   "severity": "HIGH",
+   "cleanRepos": 1,
+   "cleanFindings": 1
+  },
+  {
+   "ruleId": 10704,
+   "title": "CACHE-04: Unsafe Lua Script Execution Susceptible to Injection or Infinite Loops",
+   "severity": "HIGH",
+   "cleanRepos": 1,
+   "cleanFindings": 1
+  },
+  {
+   "ruleId": 10902,
+   "title": "OAUTH-02: Permissive Wildcard Redirect URI in OAuth Client Configuration",
+   "severity": "HIGH",
+   "cleanRepos": 1,
+   "cleanFindings": 1
+  },
+  {
+   "ruleId": 12101,
+   "title": "AUDIT-01: Plaintext Credentials or PII Leaked in Application Logs",
+   "severity": "CRITICAL",
+   "cleanRepos": 1,
+   "cleanFindings": 1
+  },
+  {
+   "ruleId": 12304,
+   "title": "TLS-04: TLS Certificate Verification Disabled (rejectUnauthorized: false)",
+   "severity": "HIGH",
+   "cleanRepos": 2,
+   "cleanFindings": 3
+  },
+  {
+   "ruleId": 13304,
+   "title": "CRYPTO-04: Cryptographic Nonce Reuse in Galois/Counter Mode (GCM) Encryption",
+   "severity": "CRITICAL",
+   "cleanRepos": 1,
+   "cleanFindings": 1
+  },
+  {
+   "ruleId": 18104,
+   "title": "ORM-RAW-01: ORM Raw Query Injection via Unsafe String Interpolation",
+   "severity": "HIGH",
+   "cleanRepos": 1,
+   "cleanFindings": 1
+  },
+  {
+   "ruleId": 23006,
+   "title": "SAAS-06: Cron Endpoint Without a Secret Check",
+   "severity": "HIGH",
+   "cleanRepos": 2,
+   "cleanFindings": 10
+  },
+  {
+   "ruleId": 25002,
+   "title": "SEC-SSRF-01: Server-Side Request Forgery (SSRF) via Dynamic Fetch",
+   "severity": "HIGH",
+   "cleanRepos": 1,
+   "cleanFindings": 2
+  },
+  {
+   "ruleId": 28122,
+   "title": "NODE-WEB-22: CORS Reflects Any Origin With Credentials Allowed (CWE-942)",
+   "severity": "HIGH",
+   "cleanRepos": 1,
+   "cleanFindings": 1
+  },
+  {
+   "ruleId": 28827,
+   "title": "GAP-27: Rewrite Destination Host Taken From the Request Path (Open Proxy)",
+   "severity": "HIGH",
+   "cleanRepos": 1,
+   "cleanFindings": 1
+  },
+  {
+   "ruleId": 29301,
+   "title": "AST-01: IDOR: Record Accessed by Request ID Without an Ownership Check",
+   "severity": "HIGH",
+   "cleanRepos": 4,
+   "cleanFindings": 19
+  },
+  {
+   "ruleId": 29601,
+   "title": "BUG-01: Database Write Is Never Awaited, So It Never Runs (Prisma/ORM)",
+   "severity": "HIGH",
+   "cleanRepos": 2,
+   "cleanFindings": 7
+  },
+  {
+   "ruleId": 29602,
+   "title": "BUG-02: redirect() Inside try/catch Is Swallowed by the catch Block",
+   "severity": "HIGH",
+   "cleanRepos": 1,
+   "cleanFindings": 1
+  },
+  {
+   "ruleId": 29604,
+   "title": "BUG-04: useEffect Without a Dependency Array Sets State (Infinite Render Loop)",
+   "severity": "HIGH",
+   "cleanRepos": 2,
+   "cleanFindings": 3
+  },
+  {
+   "ruleId": 29634,
+   "title": "BUG-34: Form onSubmit Sends a Request Without preventDefault (Page Reloads)",
+   "severity": "HIGH",
+   "cleanRepos": 1,
+   "cleanFindings": 2
+  },
+  {
+   "ruleId": 29659,
+   "title": "BUG-59: useRouterStuff() Called After an Early Return (Rules of Hooks)",
+   "severity": "HIGH",
+   "cleanRepos": 2,
+   "cleanFindings": 2
+  },
+  {
+   "ruleId": 29675,
+   "title": "BUG-75: Stripe Timestamp created (Seconds) Used as Milliseconds",
+   "severity": "HIGH",
+   "cleanRepos": 1,
+   "cleanFindings": 1
+  },
+  {
+   "ruleId": 29703,
+   "title": "SHIP-03: Whole Site Marked noindex / Disallowed for Search Engines",
+   "severity": "HIGH",
+   "cleanRepos": 1,
+   "cleanFindings": 1
+  },
+  {
+   "ruleId": 29750,
+   "title": "BUG-117: <Collapsible asChild> Has 3 Children",
+   "severity": "HIGH",
+   "cleanRepos": 3,
+   "cleanFindings": 15
+  },
+  {
+   "ruleId": 29760,
+   "title": "BUG-127: next/image Loads d39ixtfgglw55o.cloudfront.net, Which next.config Does Not Allow",
+   "severity": "HIGH",
+   "cleanRepos": 1,
+   "cleanFindings": 1
+  },
+  {
+   "ruleId": 29791,
+   "title": "FAKE-01: OPENSTATUS_API_TOKEN Is Still a Placeholder (\"<your-api-token>\")",
+   "severity": "HIGH",
+   "cleanRepos": 2,
+   "cleanFindings": 6
+  },
+  {
+   "ruleId": 29797,
+   "title": "FAKE-07: Login Checks a Hard-Coded Password",
+   "severity": "CRITICAL",
+   "cleanRepos": 1,
+   "cleanFindings": 1
+  },
+  {
+   "ruleId": 29800,
+   "title": "BUG-146: setTimeout of 1 min in a Serverless Function Never Fires",
+   "severity": "HIGH",
+   "cleanRepos": 2,
+   "cleanFindings": 3
+  },
+  {
+   "ruleId": 29842,
+   "title": "BUG-171: while (… .exec()) Loop Never Advances",
+   "severity": "HIGH",
+   "cleanRepos": 1,
+   "cleanFindings": 1
+  },
+  {
+   "ruleId": 29861,
+   "title": "FAKE-10: handleRemoveMember() Only Changes Local State",
+   "severity": "HIGH",
+   "cleanRepos": 1,
+   "cleanFindings": 1
+  },
+  {
+   "ruleId": 29879,
+   "title": "BUG-202: flatMap() With an async Callback",
+   "severity": "HIGH",
+   "cleanRepos": 1,
+   "cleanFindings": 1
+  },
+  {
+   "ruleId": 29890,
+   "title": "BUG-213: JSON.stringify(observedKeys) on a Set Sends {}",
+   "severity": "HIGH",
+   "cleanRepos": 1,
+   "cleanFindings": 1
+  },
+  {
+   "ruleId": 30151,
+   "title": "FAKE-16: Export Downloads an Empty File",
+   "severity": "HIGH",
+   "cleanRepos": 1,
+   "cleanFindings": 1
+  },
+  {
+   "ruleId": 30313,
+   "title": "XL-13: This workspace Query Skips the Tenant Filter the Other workspace Queries in This File Use",
+   "severity": "HIGH",
+   "cleanRepos": 2,
+   "cleanFindings": 3
+  },
   {
    "ruleId": 31006,
    "title": "IGAP-06: JavaScript WebView Loads a URL from the Intent",

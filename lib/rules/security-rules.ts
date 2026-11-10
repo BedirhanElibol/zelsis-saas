@@ -7,6 +7,16 @@ import { isVendoredPath } from '../scanner/text';
 
 /** A real innerHTML write or React prop; the bare word in prose (a changelog line, a comment string) is not a sink. */
 export const INNER_HTML_SINK = /dangerouslySetInnerHTML\s*=|\.innerHTML\s*\+?=(?!=)/;
+// The sink value is sanitized inline, or is a "safe" / "sanitized" prefixed name (the convention for sanitizer output).
+export const SANITIZED_HTML_SINK =/__html\s*:\s*(?:[\w.]*(?:sanitize|DOMPurify)\w*\s*\(|(?:safe|sanitized)[A-Z]?\w*\b)/i;
+// The file calls a sanitizer, so a "safe" / "sanitized" prefixed name came from one.
+// The handler checks an internal or cron secret before it reads the URL: only trusted services call it, so the URL is not attacker-chosen.
+const INTERNAL_ONLY_GUARD = /(?:INTERNAL|CRON|SERVICE)_(?:API_)?(?:KEY|SECRET|TOKEN)\b/;
+// Code that runs in the browser ('use client' or React client hooks, which server components cannot call) cannot be SSRF.
+const BROWSER_COMPONENT = /^\s*['"]use client['"]|\buse(?:State|Effect|SWR|Router|Callback|Reducer|Transition)\s*[<(]/m;
+// A translation looked up by a literal key (t("setup.intro.paragraph_1")): the markup is the app's own locale file.
+export const TRANSLATED_HTML_SINK = /__html\s*:\s*(?:t|i18n\.t|intl\.formatMessage|formatMessage)\s*\(\s*['"]/;
+export const SANITIZER_CALL =/DOMPurify\.sanitize\s*\(|\bsanitize\w*\s*\(/;
 /** Markup the app owns: an UPPER_CASE constant, or a template (one or many lines) that interpolates only UPPER_CASE constants. */
 export function innerHtmlIsAppOwned(lines: string[], idx: number): boolean {
     const line = lines[idx];
@@ -159,7 +169,10 @@ export function evaluateSecurityRules(file: CodeFile, lines: string[], cleanCont
     const innerHtmlLineIdx = escapesInterpolations ? -1 : lines.findIndex(l => !l.trim().startsWith('//') && !l.trim().startsWith('/*') && INNER_HTML_SINK.test(l)
         && !/innerHTML\s*=\s*(?:(['"])(?:\\.|(?!\1).)*\1|`[^`$]*`)\s*;?\s*$/.test(l)
         && !/innerHTML\s*=\s*[\w.]*(?:icon|svg|spinner|logo|glyph)\w*(?:\s*\([^)]*\))?\s*;?\s*$/i.test(l)
-        && !innerHtmlIsAppOwned(lines, lines.indexOf(l)));
+        && !innerHtmlIsAppOwned(lines, lines.indexOf(l))
+        // Value sanitized at the sink (DOMPurify.sanitize(...)) or a safe*/sanitized* variable in a file that runs a sanitizer.
+        && !(SANITIZED_HTML_SINK.test(l) && SANITIZER_CALL.test(cleanContent))
+        && !TRANSLATED_HTML_SINK.test(l));
     if (!isSafeMdxOrJsonLd && (cleanContent.includes('dangerouslySetInnerHTML') || cleanContent.includes('innerHTML =')) && innerHtmlLineIdx !== -1) {
         const matchLineIdx = innerHtmlLineIdx;
         const lineNum = matchLineIdx !== -1 ? matchLineIdx + 1 : 1;
@@ -445,7 +458,8 @@ export function evaluateSecurityRules(file: CodeFile, lines: string[], cleanCont
             String.raw`|\{[^}]*\b(?:url|targetUrl|webhookUrl|callbackUrl)\b[^}]*\}\s*=\s*${REQUEST_INPUT}`,
             'i'
         ).test(cleanContent);
-        if (outboundFetchRegex.test(cleanContent) && (directRequestFetch || urlFromRequest) && !ssrfGuardRegex.test(cleanContent)) {
+        if (outboundFetchRegex.test(cleanContent) && (directRequestFetch || urlFromRequest) && !ssrfGuardRegex.test(cleanContent)
+            && !INTERNAL_ONLY_GUARD.test(cleanContent) && !BROWSER_COMPONENT.test(cleanContent)) {
             const matchLineIdx = lines.findIndex(l => !l.trim().startsWith('//') && outboundFetchRegex.test(l));
             const lineNum = matchLineIdx !== -1 ? matchLineIdx + 1 : 1;
             const snippet = lines.slice(Math.max(0, lineNum - 2), Math.min(lines.length, lineNum + 2)).join('\n');
@@ -1017,7 +1031,7 @@ export function evaluateSecurityRules(file: CodeFile, lines: string[], cleanCont
         // A fetch whose URL starts with a fixed origin from config/env (`${STORAGE_URL}/tickets/...`) and only
         // appends a path is not SSRF. Only when the host/origin is variable or the entire URL is from the request:
         const ssrfRegex = new RegExp(httpClient + String.raw`\s*\(\s*(?:\x60(?!\s*(?:https?:\/\/|\$\{\s*(?:process\.env\.|[A-Z0-9_]*(?:URL|HOST|ORIGIN|ENDPOINT|BASE|API)|config\.)[^\x60}]*\})\/)[^\x60]*\$\{\s*` + requestUrl + String.raw`|new\s+URL\(\s*` + requestUrl + '|' + requestUrl + ')');
-        if (ssrfRegex.test(cleanContent) && !/validateSafeTargetUrl|isAllowedWebhookUrl|\b(?:ALLOWED|allowed|ALLOW|allow)\w*\.(?:has|includes)\(\s*\w+\.(?:hostname|host|origin)|\.(?:hostname|host|origin)\s*(?:===|!==)|isAllowed\w*\(|validate\w*Url\(|(?:assert|ensure|is)Safe\w*Url\(|ssrfGuard|ssrf-?(?:req-)?filter/i.test(cleanContent)) {
+        if (ssrfRegex.test(cleanContent) && !INTERNAL_ONLY_GUARD.test(cleanContent) && !BROWSER_COMPONENT.test(cleanContent) && !/validateSafeTargetUrl|isAllowedWebhookUrl|\b(?:ALLOWED|allowed|ALLOW|allow)\w*\.(?:has|includes)\(\s*\w+\.(?:hostname|host|origin)|\.(?:hostname|host|origin)\s*(?:===|!==)|isAllowed\w*\(|validate\w*Url\(|(?:assert|ensure|is)Safe\w*Url\(|ssrfGuard|ssrf-?(?:req-)?filter/i.test(cleanContent)) {
             const matchLineIdx = lines.findIndex(l => !l.trim().startsWith('//') && !l.trim().startsWith('*') && ssrfRegex.test(l));
             const lineNum = matchLineIdx !== -1 ? matchLineIdx + 1 : 1;
             const snippet = lines.slice(Math.max(0, lineNum - 2), Math.min(lines.length, lineNum + 2)).join('\n');
@@ -1120,7 +1134,9 @@ export function evaluateSecurityRules(file: CodeFile, lines: string[], cleanCont
         const protectsSomething = (i: number) => {
             const around = lines.slice(Math.max(0, i - 5), i + 6).join('\n');
             return /passw|pwd|token|secret|signature|\bsign|hmac|auth|session|otp|api_?key|credential|salt/i.test(around)
-                && !/etag|cache_?key|cacheKey|checksum|info_?hash|fingerprint|dedup|content_?hash|258EAFA5-E914-47DA-95CA-C5AB0DC85B11|sec-websocket/i.test(lines[i]);
+                && !/etag|cache_?key|cacheKey|checksum|info_?hash|fingerprint|dedup|content_?hash|258EAFA5-E914-47DA-95CA-C5AB0DC85B11|sec-websocket/i.test(lines[i])
+                // SHA-1 is what the HaveIBeenPwned range API requires; only a 5-char prefix leaves the process
+                && !(/sha1/i.test(lines[i]) && /pwnedpasswords\.com|haveibeenpwned/i.test(cleanContent));
         };
         const matchLineIdx = weakHashRegex.test(cleanContent)
             ? lines.findIndex((l, i) => !l.trim().startsWith('//') && !l.trim().startsWith('*') && weakHashRegex.test(l) && protectsSomething(i))

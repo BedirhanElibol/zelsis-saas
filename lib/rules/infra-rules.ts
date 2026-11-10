@@ -722,6 +722,15 @@ export function evaluateInfraRules(file: CodeFile, lines: string[], cleanContent
         }
         const keyofGeneric = /<\s*(\w+)\s+extends\s+keyof\b/.exec(cleanContent);
         if (keyofGeneric) for (const m of cleanContent.matchAll(new RegExp(String.raw`\b(\w+)\s*:\s*${keyofGeneric[1]}\b`, 'g'))) fixedSqlVars.add(m[1]);
+        // `for (const table of TABLES)` over a constant array of literals: the loop variable is a fixed identifier
+        for (const m of cleanContent.matchAll(/\bfor\s*\(\s*(?:const|let)\s+(\w+)\s+of\s+(\w+)\s*\)/g)) {
+            const constArray = new RegExp(String.raw`\b(?:const|let|var)\s+` + m[2] + String.raw`\s*(?::[^=\n]+)?=\s*\[\s*` + literal + String.raw`(?:\s*,\s*` + literal + String.raw`)*\s*,?\s*\]`);
+            if (constArray.test(cleanContent)) fixedSqlVars.add(m[1]);
+        }
+        // `for (const table of ["a", "b"])`: the same with the literal list written inline
+        for (const m of cleanContent.matchAll(new RegExp(String.raw`\bfor\s*\(\s*(?:const|let)\s+(\w+)\s+of\s+\[\s*` + literal + String.raw`(?:\s*,\s*` + literal + String.raw`)*\s*,?\s*\]\s*\)`, 'g'))) fixedSqlVars.add(m[1]);
+        // `const cursorSql = cursor ? \`WHERE ...\` : ""` spread over several lines: a choice between fixed SQL and nothing
+        for (const m of cleanContent.matchAll(/\b(?:const|let)\s+(\w+)\s*=\s*[\w.!]+\s*\?\s*`[^`$]*`\s*:\s*(?:''|""|``)/g)) fixedSqlVars.add(m[1]);
         // SQL text built only from constant fragments, placeholder lists and helpers that return them; resolved
         // at the use site first, while offsets still match cleanContent
         const isFixedSql = fixedSqlResolver(cleanContent);

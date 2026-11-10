@@ -38,7 +38,8 @@ export function isTestFixturePath(path: string): boolean {
     // *.setup.ts alone is too broad (db.setup.ts, passport.setup.js are app code); only test runner setups
     /\.(?:test|spec|e2e|global-setup)\.[cm]?[jt]sx?$|(?:^|\/)(?:vitest|jest|playwright|test)\.setup\.[cm]?[jt]sx?$/.test(p) ||
     /(?:^|\/)(?:vitest|jest|playwright)\.config\.[cm]?[jt]sx?$/.test(p) ||
-    /(?:^|\/)(?:global-setup|test-setup)\.[cm]?[jt]sx?$/.test(p) ||
+    // camelCase runner setups too: vitestSetup.ts, jestSetup.js, setupTests.ts (CRA convention)
+    /(?:^|\/)(?:global-setup|test-setup|vitestsetup|jestsetup|setuptests|testsetup)\.[cm]?[jt]sx?$/.test(p) ||
     /(?:^|\/)[^/]*fixture[s]?\.(?:sql|[cm]?[jt]sx?|py|rb|json)$/i.test(p) ||
     /(?:^|\/)\.env\.(?:test|testing)\b/i.test(p) ||
     /(?:^|\/)(?:test_[^/]+|tests|conftest)\.py$|_test\.(?:py|go)$|_spec\.rb$|Tests?\.(?:java|cs|kt)$/.test(p);

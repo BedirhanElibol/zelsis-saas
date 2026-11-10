@@ -21,6 +21,7 @@ export const REVIEWED_TRUE_POSITIVES: Record<number, string> = {
   5015: 'NewPipe PoTokenWebView hardcodes a Google API key (AIza…, the YouTube web key, marked NOSONAR)',
   9303: 'AntennaPod sets usesCleartextTraffic="true" so podcast feeds and media can load over plain HTTP',
   9305: 'AntennaPod MediaButtonReceiver and PlayerWidget are exported with the app\'s own custom actions (NOTIFY_BUTTON_RECEIVER, FORCE_WIDGET_UPDATE) that any app can send',
+  3021: 'dub get-analytics builds `SUM(${event}) as ${event}` from the event parameter; safe only while every caller validates event against the enum in another file, nothing in the query stops a new caller',
   24101: 'AntennaPod DBUpgrader concatenates a media file path into UPDATE … WHERE file_url=\'…\', so a quote in the path breaks the query',
   9605: 'Lemmy builds SQL with format! (sql_query in scheduled_tasks, batch_execute in schema_setup) from interpolated table names, clauses and intervals; internal callers today, but nothing stops user input reaching them (flagged for review by design)',
   24104:'AntennaPod FeedHandler parses remote podcast feeds with a default SAXParserFactory and no DTD / external-entity hardening',

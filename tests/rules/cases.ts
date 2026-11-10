@@ -416,6 +416,18 @@ export const RULE_CASES: RuleCase[] = [
   },
   {
     ruleIds: [34],
+    name: 'fetch from a browser component or an internal-key route is not SSRF',
+    detects: f('app/api/fetch/route.ts', "export async function GET(req: Request) {\n  const url = new URL(req.url).searchParams.get('url')!;\n  const r = await fetch(url);\n  return new Response(await r.text());\n}\n"),
+    ignores: f('app/api/fetch/route.ts', "export async function GET(req: Request) {\n  if (req.headers.get('authorization') !== `Bearer ${process.env.INTERNAL_API_KEY}`) return new Response('no', { status: 401 });\n  const url = new URL(req.url).searchParams.get('url')!;\n  const r = await fetch(url);\n  return new Response(await r.text());\n}\n")
+  },
+  {
+    ruleIds: [34],
+    name: 'fetch in a client component runs in the browser, not on the server',
+    detects: f('app/api/fetch/route.ts', "export async function GET(req: Request) {\n  const url = new URL(req.url).searchParams.get('url')!;\n  const r = await fetch(url);\n  return new Response(await r.text());\n}\n"),
+    ignores: f('components/Preview.tsx', "'use client';\nimport { useState } from 'react';\nexport function Preview({ req }: { req: Request }) {\n  const [html, setHtml] = useState('');\n  const url = new URL(req.url).searchParams.get('url')!;\n  fetch(url).then((r) => r.text()).then(setHtml);\n  return <div>{html}</div>;\n}\n")
+  },
+  {
+    ruleIds: [34],
     name: 'SSRF via user-controlled fetch URL',
     detects: f('app/api/fetch/route.ts', "export async function GET(req: Request) {\n  const url = new URL(req.url).searchParams.get('url')!;\n  const r = await fetch(url);\n  return new Response(await r.text());\n}\n"),
     ignores: f('app/api/fetch/route.ts', "const ALLOWED = new Set(['api.github.com']);\nexport async function GET(req: Request) {\n  const target = new URL(new URL(req.url).searchParams.get('url')!);\n  if (!ALLOWED.has(target.hostname)) return new Response('forbidden', { status: 403 });\n  const r = await fetch(target, { signal: AbortSignal.timeout(5000) });\n  return new Response(await r.text());\n}\n")
@@ -431,6 +443,24 @@ export const RULE_CASES: RuleCase[] = [
     name: 'Open redirect to user-supplied URL',
     detects: f('app/api/redirect/route.ts', "import { redirect } from 'next/navigation';\nexport async function GET(req: Request) {\n  const next = new URL(req.url).searchParams.get('next')!;\n  redirect(next);\n}\n"),
     ignores: f('app/api/redirect/route.ts', "import { redirect } from 'next/navigation';\nexport async function GET(req: Request) {\n  const next = new URL(req.url).searchParams.get('next') ?? '/';\n  redirect(next.startsWith('/') && !next.startsWith('//') ? next : '/');\n}\n")
+  },
+  {
+    ruleIds: [16],
+    name: 'innerHTML from a translation looked up by a literal key is not flagged',
+    detects: f('app/intro/page.tsx', 'export default function Intro({ html }: { html: string }) {\n  return <p dangerouslySetInnerHTML={{ __html: html }} />;\n}\n'),
+    ignores: f('app/intro/page.tsx', "export default function Intro({ t }: { t: (k: string) => string }) {\n  return <p dangerouslySetInnerHTML={{ __html: t(\"setup.intro.paragraph_1\") }} />;\n}\n")
+  },
+  {
+    ruleIds: [16],
+    name: 'innerHTML sanitized at the sink with DOMPurify is not flagged',
+    detects: f('components/Note.tsx', 'export const Note = ({ text }: { text: string }) => <div dangerouslySetInnerHTML={{ __html: text }} />;\n'),
+    ignores: f('components/Note.tsx', "import DOMPurify from 'dompurify';\nexport const Note = ({ text }: { text: string }) => <div dangerouslySetInnerHTML={{ __html: DOMPurify.sanitize(text) }} />;\n")
+  },
+  {
+    ruleIds: [16],
+    name: 'innerHTML from a safeHtml value produced by a sanitizer is not flagged',
+    detects: f('components/Note.tsx', 'export const Note = ({ text }: { text: string }) => {\n  const html = text;\n  return <div dangerouslySetInnerHTML={{ __html: html }} />;\n};\n'),
+    ignores: f('components/Note.tsx', "import { sanitizeSurveyHtml } from '@/lib/html';\nexport const Note = ({ text }: { text: string }) => {\n  const safeHtml = sanitizeSurveyHtml(text);\n  return <div dangerouslySetInnerHTML={{ __html: safeHtml }} />;\n};\n")
   },
   {
     ruleIds: [16],
@@ -457,6 +487,12 @@ export const RULE_CASES: RuleCase[] = [
     name: "JWT verify accepting alg 'none'",
     detects: f('lib/auth.ts', "import jwt from 'jsonwebtoken';\nexport const verify = (t: string) => jwt.verify(t, process.env.JWT_SECRET!, { algorithms: ['none'] });\n"),
     ignores: f('lib/auth.ts', "import jwt from 'jsonwebtoken';\nexport const verify = (t: string) => jwt.verify(t, process.env.JWT_SECRET!, { algorithms: ['HS256'] });\n")
+  },
+  {
+    ruleIds: [37],
+    name: 'SHA-1 for the HaveIBeenPwned range API is not password storage',
+    detects: f('lib/hash.ts', "import { createHash } from 'crypto';\nexport const hashPassword = (password: string) => createHash('sha1').update(password).digest('hex');\n"),
+    ignores: f('lib/hibp.ts', "import { createHash } from 'crypto';\nexport async function isPwned(password: string) {\n  const sha1 = createHash('sha1').update(password).digest('hex').toUpperCase();\n  const res = await fetch(`https://api.pwnedpasswords.com/range/${sha1.slice(0, 5)}`);\n  return (await res.text()).includes(sha1.slice(5));\n}\n")
   },
   {
     ruleIds: [37],
@@ -845,6 +881,18 @@ export const RULE_CASES: RuleCase[] = [
     ignores: f('live-deployment/security-headers.json', JSON.stringify({ targetUrl: 'https://app.example', statusCode: 200, isHealthy: true, missingSecurityHeaders: [], headers: { 'content-security-policy': "default-src 'self'" } }))
   },
   // From a user's report on a real repo (ranwhat, 2026-11-03): each pattern below was safe code reported as a finding
+  {
+    ruleIds: [3021],
+    name: 'SQL from typed helpers called with literals, placeholder tuples and fixed cursor clauses is not injection',
+    detects: f('src/index.ts', "function clearRole(table: string) {\n  return `UPDATE ${table} SET in_inbox = 0 WHERE id = ?`;\n}\nexport async function run(tx: any, req: any) {\n  await tx.exec(`${clearRole(req.body.table)}`);\n  await tx.execute(`DELETE FROM ${req.body.table} WHERE id = ?`, [1]);\n}\n"),
+    ignores: f('src/index.ts', "function clearRole(table: string) {\n  return `UPDATE ${table} SET in_inbox = 0 WHERE id = ?`;\n}\nexport async function run(tx: any, rows: string[], batch: unknown[], after?: string) {\n  await tx.exec(`\n    ${clearRole(\"messages\")}\n    ${clearRole(\"effective_messages\")}\n  `);\n  await tx.query(`SELECT id FROM message_content WHERE id IN (${rows.map(() => \"?\").join(\",\") || \"NULL\"})`, rows);\n  await tx.execute(`INSERT INTO message_fts(rowid, subject) VALUES ${batch.map(() => \"(?, ?)\").join(\", \")}`, batch);\n  const cursorSql = after\n    ? `WHERE latest < ?\n       OR (latest = ? AND id > ?)`\n    : \"\";\n  await tx.query(`SELECT id FROM grouped ${cursorSql}`, [after]);\n}\n")
+  },
+  {
+    ruleIds: [3021],
+    name: 'SQL built from a loop over a constant table list is not injection',
+    detects: f('src/store.ts', "export async function purge(db: any, req: any) {\n  for (const table of req.body.tables) {\n    await db.execute(`DELETE FROM ${table} WHERE account_id = ?`, [req.body.id]);\n  }\n}\n"),
+    ignores: f('src/store.ts', "const TABLES = ['messages', 'threads'];\nexport async function purge(db: any, accountId: string) {\n  for (const table of TABLES) {\n    await db.execute(`DELETE FROM ${table} WHERE account_id = ?`, [accountId]);\n  }\n}\n")
+  },
   {
     ruleIds: [3021],
     name: 'SQL text built only from constant fragments, ? lists and helpers that return them is not injection',

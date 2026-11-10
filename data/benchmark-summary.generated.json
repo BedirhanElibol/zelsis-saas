@@ -1,16 +1,16 @@
 {
- "generatedAt": "2026-11-05",
+ "generatedAt": "2026-11-10",
  "summary": {
-  "cleanRepos": 19,
-  "cleanReposGateFailed": 2,
-  "cleanHighCriticalFindings": 33,
-  "cleanGatingHighCriticalFindings": 32,
+  "cleanRepos": 25,
+  "cleanReposGateFailed": 3,
+  "cleanHighCriticalFindings": 221,
+  "cleanGatingHighCriticalFindings": 58,
   "documentedFlaws": 62,
   "documentedFlawsDetected": 62,
   "recall": 1,
   "documentedFlawsBlockingGate": 58,
-  "rulesFiringOnClean": 88,
-  "experimentalRules": 1
+  "rulesFiringOnClean": 211,
+  "experimentalRules": 51
  },
  "repos": [
   {
@@ -19,7 +19,7 @@
    "kind": "clean",
    "stack": "Next.js + Supabase + Stripe",
    "files": 68,
-   "scanMs": 822,
+   "scanMs": 622,
    "gate": "WARNING",
    "critical": 0,
    "high": 3
@@ -30,7 +30,7 @@
    "kind": "clean",
    "stack": "Next.js + Prisma + Stripe + NextAuth",
    "files": 140,
-   "scanMs": 1314,
+   "scanMs": 1439,
    "gate": "WARNING",
    "critical": 0,
    "high": 1
@@ -41,7 +41,7 @@
    "kind": "clean",
    "stack": "FastAPI + React",
    "files": 206,
-   "scanMs": 2038,
+   "scanMs": 2137,
    "gate": "WARNING",
    "critical": 0,
    "high": 1
@@ -52,7 +52,7 @@
    "kind": "clean",
    "stack": "Express + Prisma",
    "files": 58,
-   "scanMs": 364,
+   "scanMs": 339,
    "gate": "FAILED",
    "critical": 2,
    "high": 1,
@@ -70,7 +70,7 @@
    "kind": "clean",
    "stack": "Go + Gin",
    "files": 27,
-   "scanMs": 331,
+   "scanMs": 452,
    "gate": "PASSED",
    "critical": 0,
    "high": 0
@@ -81,7 +81,7 @@
    "kind": "clean",
    "stack": "Laravel",
    "files": 40,
-   "scanMs": 169,
+   "scanMs": 255,
    "gate": "PASSED",
    "critical": 0,
    "high": 0
@@ -92,7 +92,7 @@
    "kind": "clean",
    "stack": "Remix/React Router + Prisma + tRPC (production SaaS)",
    "files": 2481,
-   "scanMs": 36143,
+   "scanMs": 40848,
    "gate": "WARNING",
    "critical": 0,
    "high": 4
@@ -103,7 +103,7 @@
    "kind": "clean",
    "stack": "TypeScript SDK",
    "files": 474,
-   "scanMs": 7367,
+   "scanMs": 8179,
    "gate": "PASSED",
    "critical": 0,
    "high": 0
@@ -114,7 +114,7 @@
    "kind": "vulnerable",
    "stack": "Express + MongoDB",
    "files": 87,
-   "scanMs": 538,
+   "scanMs": 601,
    "gate": "FAILED",
    "critical": 3,
    "high": 4
@@ -125,7 +125,7 @@
    "kind": "vulnerable",
    "stack": "Express + Sequelize",
    "files": 21,
-   "scanMs": 95,
+   "scanMs": 222,
    "gate": "FAILED",
    "critical": 4,
    "high": 2
@@ -136,9 +136,9 @@
    "kind": "vulnerable",
    "stack": "Express + Angular + Sequelize",
    "files": 965,
-   "scanMs": 11971,
+   "scanMs": 12548,
    "gate": "FAILED",
-   "critical": 14,
+   "critical": 21,
    "high": 7
   },
   {
@@ -147,7 +147,7 @@
    "kind": "clean",
    "stack": "Java + Spring Boot",
    "files": 84,
-   "scanMs": 309,
+   "scanMs": 295,
    "gate": "WARNING",
    "critical": 0,
    "high": 1
@@ -158,7 +158,7 @@
    "kind": "clean",
    "stack": "C# + ASP.NET Core",
    "files": 350,
-   "scanMs": 1130,
+   "scanMs": 1143,
    "gate": "WARNING",
    "critical": 0,
    "high": 2
@@ -169,7 +169,7 @@
    "kind": "clean",
    "stack": "Ruby on Rails (production service)",
    "files": 1698,
-   "scanMs": 6367,
+   "scanMs": 7159,
    "gate": "WARNING",
    "critical": 0,
    "high": 4
@@ -180,7 +180,7 @@
    "kind": "clean",
    "stack": "Python + Django (production site)",
    "files": 434,
-   "scanMs": 4177,
+   "scanMs": 4459,
    "gate": "WARNING",
    "critical": 0,
    "high": 1
@@ -191,7 +191,7 @@
    "kind": "vulnerable",
    "stack": "Java + Spring",
    "files": 635,
-   "scanMs": 3584,
+   "scanMs": 3860,
    "gate": "FAILED",
    "critical": 12,
    "high": 4
@@ -202,7 +202,7 @@
    "kind": "vulnerable",
    "stack": "Ruby on Rails",
    "files": 187,
-   "scanMs": 1694,
+   "scanMs": 1728,
    "gate": "FAILED",
    "critical": 4,
    "high": 10
@@ -213,7 +213,7 @@
    "kind": "vulnerable",
    "stack": "PHP",
    "files": 195,
-   "scanMs": 888,
+   "scanMs": 947,
    "gate": "FAILED",
    "critical": 50,
    "high": 26
@@ -224,7 +224,7 @@
    "kind": "vulnerable",
    "stack": "Python + Django",
    "files": 217,
-   "scanMs": 1087,
+   "scanMs": 1232,
    "gate": "FAILED",
    "critical": 12,
    "high": 11
@@ -235,7 +235,7 @@
    "kind": "vulnerable",
    "stack": "Python + aiohttp",
    "files": 30,
-   "scanMs": 1822,
+   "scanMs": 1835,
    "gate": "FAILED",
    "critical": 2,
    "high": 3
@@ -246,7 +246,7 @@
    "kind": "clean",
    "stack": "Android (Java + Kotlin)",
    "files": 1161,
-   "scanMs": 7633,
+   "scanMs": 8023,
    "gate": "FAILED",
    "critical": 1,
    "high": 0,
@@ -264,7 +264,7 @@
    "kind": "clean",
    "stack": "Android (Java)",
    "files": 1143,
-   "scanMs": 7048,
+   "scanMs": 6943,
    "gate": "WARNING",
    "critical": 0,
    "high": 6
@@ -275,7 +275,7 @@
    "kind": "clean",
    "stack": "iOS (Swift)",
    "files": 932,
-   "scanMs": 3944,
+   "scanMs": 4312,
    "gate": "PASSED",
    "critical": 0,
    "high": 0
@@ -286,7 +286,7 @@
    "kind": "vulnerable",
    "stack": "Android (Java)",
    "files": 59,
-   "scanMs": 119,
+   "scanMs": 110,
    "gate": "FAILED",
    "critical": 2,
    "high": 4
@@ -297,7 +297,7 @@
    "kind": "vulnerable",
    "stack": "Android (Java)",
    "files": 90,
-   "scanMs": 222,
+   "scanMs": 251,
    "gate": "WARNING",
    "critical": 0,
    "high": 3
@@ -308,7 +308,7 @@
    "kind": "vulnerable",
    "stack": "iOS (Swift)",
    "files": 129,
-   "scanMs": 842,
+   "scanMs": 771,
    "gate": "WARNING",
    "critical": 0,
    "high": 2
@@ -319,7 +319,7 @@
    "kind": "clean",
    "stack": "Flutter (Dart) + Rust",
    "files": 734,
-   "scanMs": 7447,
+   "scanMs": 8104,
    "gate": "WARNING",
    "critical": 0,
    "high": 3
@@ -330,7 +330,7 @@
    "kind": "clean",
    "stack": "Rust + Actix + Diesel + Postgres (production service)",
    "files": 1442,
-   "scanMs": 6011,
+   "scanMs": 6751,
    "gate": "WARNING",
    "critical": 0,
    "high": 2
@@ -341,10 +341,10 @@
    "kind": "vulnerable",
    "stack": "Terraform (AWS, Azure, GCP), intentionally misconfigured",
    "files": 56,
-   "scanMs": 177,
-   "gate": "WARNING",
-   "critical": 0,
-   "high": 1
+   "scanMs": 180,
+   "gate": "FAILED",
+   "critical": 8,
+   "high": 5
   },
   {
    "repo": "madhuakula/kubernetes-goat",
@@ -352,10 +352,10 @@
    "kind": "vulnerable",
    "stack": "Kubernetes manifests and Helm, intentionally insecure",
    "files": 84,
-   "scanMs": 1001,
-   "gate": "WARNING",
-   "critical": 0,
-   "high": 14
+   "scanMs": 982,
+   "gate": "FAILED",
+   "critical": 11,
+   "high": 22
   },
   {
    "repo": "terraform-aws-modules/terraform-aws-vpc",
@@ -363,7 +363,7 @@
    "kind": "clean",
    "stack": "Terraform module (AWS VPC), widely used",
    "files": 84,
-   "scanMs": 451,
+   "scanMs": 531,
    "gate": "PASSED",
    "critical": 0,
    "high": 0
@@ -374,10 +374,83 @@
    "kind": "clean",
    "stack": "Terraform module (AWS EKS), widely used",
    "files": 114,
-   "scanMs": 589,
+   "scanMs": 658,
    "gate": "PASSED",
    "critical": 0,
    "high": 0
+  },
+  {
+   "repo": "mfts/papermark",
+   "sha": "ed19717",
+   "kind": "clean",
+   "stack": "Next.js + Prisma + Stripe",
+   "files": 1567,
+   "scanMs": 1376991,
+   "gate": "WARNING",
+   "critical": 0,
+   "high": 3
+  },
+  {
+   "repo": "formbricks/formbricks",
+   "sha": "2f76787",
+   "kind": "clean",
+   "stack": "Next.js + Prisma (monorepo)",
+   "files": 6879,
+   "scanMs": 133320,
+   "gate": "WARNING",
+   "critical": 0,
+   "high": 7
+  },
+  {
+   "repo": "dubinc/dub",
+   "sha": "6b463b4",
+   "kind": "clean",
+   "stack": "Next.js + Prisma + Stripe (monorepo)",
+   "files": 2271,
+   "scanMs": 32336,
+   "gate": "FAILED",
+   "critical": 1,
+   "high": 2,
+   "blockers": [
+    {
+     "ruleId": 3021,
+     "title": "SQL Injection: String Concatenation in Node.js Database Client Query",
+     "reviewed": "dub get-analytics builds `SUM(${event}) as ${event}` from the event parameter; safe only while every caller validates event against the enum in another file, nothing in the query stops a new caller"
+    }
+   ]
+  },
+  {
+   "repo": "openstatusHQ/openstatus",
+   "sha": "bba13dd",
+   "kind": "clean",
+   "stack": "Next.js + Hono + Drizzle (monorepo)",
+   "files": 3648,
+   "scanMs": 59676,
+   "gate": "WARNING",
+   "critical": 0,
+   "high": 8
+  },
+  {
+   "repo": "elie222/inbox-zero",
+   "sha": "e040fb7",
+   "kind": "clean",
+   "stack": "Next.js + Prisma + Lemon Squeezy",
+   "files": 4533,
+   "scanMs": 82067,
+   "gate": "WARNING",
+   "critical": 0,
+   "high": 4
+  },
+  {
+   "repo": "lukevella/rallly",
+   "sha": "094054f",
+   "kind": "clean",
+   "stack": "Next.js + Prisma",
+   "files": 1575,
+   "scanMs": 21487,
+   "gate": "WARNING",
+   "critical": 0,
+   "high": 1
   }
  ],
  "flaws": [
