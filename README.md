@@ -38,6 +38,10 @@ Inputs: `api-key`, `app-url`, `fail-open`, `fail-on-failed`, `github-token`, `up
 
 Payments (double charges, missing idempotency keys, webhooks that never revoke access), security (leaked keys, open database policies, missing auth checks), performance (N+1 queries, blocking migrations), privacy (cookie banners, session replay), and accessibility (checkouts a keyboard cannot use). The rules and their fixtures are in this repository.
 
+## Zelsis checks itself
+
+Every pull request to this repository runs the same release gate from [`.github/workflows/zelsis-gate.yml`](.github/workflows/zelsis-gate.yml). When a change gets a failed gate status, this workflow fails the pull request, the same check you would run in your own repository. Release quality is measured against pinned open-source projects, and the results, misses included, are on the [benchmark page](https://zelsis.com/benchmark).
+
 ## About this repository
 
 This is the source of the Zelsis product. It is public so you can read how the scanner decides, and the code is proprietary: see [LICENSE](LICENSE). Found a false alarm or a miss? Open an issue; every false alarm we fix becomes a test that keeps it from coming back.
