@@ -3,6 +3,8 @@ import { priceLabel, SUPPORT_TERMS } from '@/data/pricing-plans';
 
 export const FREE_SCAN_LIMIT = Infinity;
 export const FREE_PROJECT_LIMIT = 3;
+/** Free accounts can keep this many private repositories. Public repositories are not limited. */
+export const PRIVATE_FREE_LIMIT = 1;
 export const FREE_AI_PROMPT_LIMIT = 5;
 
 export interface TierFeatureConfig {

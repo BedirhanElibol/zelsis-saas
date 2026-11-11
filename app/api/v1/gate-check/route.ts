@@ -18,6 +18,7 @@ import { buildWorkflowAnnotations } from '@/lib/ci-annotations';
 import { calculateGateStatus, gatingFindings } from '@/lib/scanner/scoring';
 import { botChallengeMessage } from '@/lib/bot-challenge';
 import { DISMISSAL_COLUMNS, activeDismissals } from '@/lib/dismissals';
+import { PRIVATE_FREE_LIMIT } from '@/lib/quota-manager';
 
 // F-31: Bounded execution duration for static code scans (bounded to 30s for serverless SLA)
 export const maxDuration = 90; // live scans pace exposure probes (~40 s) to avoid scanner-pattern blocking
@@ -392,13 +393,13 @@ export async function POST(req: NextRequest) {
                 .eq('user_id', authenticatedUserId)
                 .eq('is_private', true);
 
-              if (count !== null && count >= 3) {
+              if (count !== null && count >= PRIVATE_FREE_LIMIT) {
                 return NextResponse.json(
                   {
                     status: 'ERROR',
                     gateStatus: 'FAILED',
                     readinessScore: 0,
-                    error: 'Free tier limit reached: You can only have up to 3 private repositories. Upgrade to Zelsis Pro for unlimited private repositories.',
+                    error: `Free tier limit reached: You can only have up to ${PRIVATE_FREE_LIMIT} private repository. Upgrade to Zelsis Pro for unlimited private repositories.`,
                     timestamp: new Date().toISOString()
                   },
                   { status: 402 }

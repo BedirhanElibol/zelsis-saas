@@ -10,7 +10,7 @@ import { hasFixPromptAccess } from '@/lib/subscription-utils';
 import { getEffectivePlanTier, getOrgPolicy } from '@/lib/organization';
 import { redactScanResultFixes, lockFindingLocations } from '@/lib/fix-gate';
 import { getSupabaseAdmin } from '@/lib/supabase-admin';
-import { FREE_PROJECT_LIMIT } from '@/lib/quota-manager';
+import { PRIVATE_FREE_LIMIT } from '@/lib/quota-manager';
 import { recordRescanAlert } from '@/lib/rescan-alerts';
 import { getVerifiedSite } from '@/lib/site-verification';
 import { botChallengeMessage } from '@/lib/bot-challenge';
@@ -49,7 +49,7 @@ export class ScanJobError extends Error {
   }
 }
 
-/** True when a Free user already has FREE_PROJECT_LIMIT other private projects saved. */
+/** True when a Free user already has PRIVATE_FREE_LIMIT other private projects saved. */
 async function freePrivateLimitReached(
   adminClient: ReturnType<typeof getSupabaseAdmin>,
   userId: string | null | undefined,
@@ -68,7 +68,7 @@ async function freePrivateLimitReached(
     .select('id', { count: 'exact', head: true })
     .eq('user_id', userId)
     .eq('is_private', true);
-  return (count ?? 0) >= FREE_PROJECT_LIMIT;
+  return (count ?? 0) >= PRIVATE_FREE_LIMIT;
 }
 
 export async function executeScanJob(options: ExecuteScanJobOptions): Promise<ScanJobExecutionResult> {
@@ -228,7 +228,7 @@ export async function executeScanJob(options: ExecuteScanJobOptions): Promise<Sc
         await updateJobState({
           status: 'FAILED',
           progress_percent: 0,
-          error_message: `Free plan includes ${FREE_PROJECT_LIMIT} private repositories. Upgrade to Zelsis Pro for unlimited private repositories.`
+          error_message: `Free plan includes ${PRIVATE_FREE_LIMIT} private repository. Upgrade to Zelsis Pro for unlimited private repositories.`
         });
         throw new ScanJobError('PLAN_REQUIRED', 402);
       }
