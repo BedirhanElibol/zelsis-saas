@@ -11,7 +11,13 @@ export interface ScanPreviewResult {
   gateStatus: 'PASSED' | 'WARNING' | 'FAILED';
   counts: { critical: number; high: number; medium: number; low: number };
   totalFindings: number;
-  topFindings: { title: string; severity: string; category: string }[];
+  topFindings: {
+    title: string;
+    severity: string;
+    category: string;
+    /** Only on the first finding: where it is and how to fix it. Public repos only. */
+    detail?: { filePath: string; line?: number; impact?: string; fix: string };
+  }[];
   remaining: number;
 }
 
@@ -76,7 +82,19 @@ export const ScanPreviewCard: React.FC<ScanPreviewCardProps> = ({ result, onUnlo
               <span className={`text-[10px] font-mono font-bold px-1.5 py-0.5 rounded border shrink-0 ${SEVERITY_STYLES[f.severity] || SEVERITY_STYLES.LOW}`}>
                 {f.severity}
               </span>
-              <span className="text-xs text-[#EDEDED] leading-relaxed">{f.title}</span>
+              <div className="min-w-0">
+                <span className="text-xs text-[#EDEDED] leading-relaxed">{f.title}</span>
+                {f.detail && (
+                  <div className="mt-2 rounded-md border border-white/10 bg-black/40 p-2.5 space-y-1.5">
+                    <div className="text-[11px] font-mono text-zinc-300 break-all">
+                      {f.detail.filePath}
+                      {f.detail.line ? `:${f.detail.line}` : ''}
+                    </div>
+                    {f.detail.impact && <div className="text-[11px] text-zinc-400 leading-relaxed">{f.detail.impact}</div>}
+                    <div className="text-[11px] text-emerald-300 leading-relaxed">Fix: {f.detail.fix}</div>
+                  </div>
+                )}
+              </div>
             </li>
           ))}
           {hiddenCount > 0 && (

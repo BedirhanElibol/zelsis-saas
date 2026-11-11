@@ -5,6 +5,7 @@ import { gatingFindings, gateSeverity } from '@/lib/scanner/scoring';
 import { fetchGithubRepositoryData, normalizeRepoUrl, parseGithubUrl } from '@/lib/github-api';
 import { checkRateLimit, createRateLimitResponse } from '@/lib/rate-limiter';
 import { logger } from '@/lib/logger';
+import { previewDetail } from '@/lib/scanner/preview-detail';
 
 export const maxDuration = 30;
 
@@ -114,7 +115,15 @@ export async function POST(req: NextRequest) {
         Number(b.maturity === 'verified') - Number(a.maturity === 'verified'))
       .filter((f) => !seenRules.has(f.ruleId) && seenRules.add(f.ruleId))
       .slice(0, PREVIEW_FINDING_LIMIT)
-      .map((f) => ({ title: f.title, severity: gateSeverity(f), category: f.category, ...(f.cweId ? { cweId: f.cweId } : {}) }));
+      .map((f, i) => ({
+        title: f.title,
+        severity: gateSeverity(f),
+        category: f.category,
+        ...(f.cweId ? { cweId: f.cweId } : {}),
+        // The top finding is shown in full (public repos only), so a visitor sees what a real finding looks
+        // like. The rest stay summary-only behind sign-in.
+        ...(i === 0 ? { detail: previewDetail(f) } : {}),
+      }));
 
     return NextResponse.json({
       repoUrl,
