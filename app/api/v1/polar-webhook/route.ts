@@ -307,7 +307,25 @@ export async function POST(req: NextRequest) {
         }
         logger.info(`[Polar Webhook] Upserted subscriptions record for ${normalizedEmail} (tier: ${formattedTier}, status: ${status})`);
       } else {
-        logger.warn(`[Polar Webhook] No registered user found for email: ${normalizedEmail}. Pending account registration.`);
+        // Paid before signing up: keep the entitlement by email. The signup trigger applies it when the
+        // account is created. A revoke or refund removes it. A failed write returns 500 so Polar retries.
+        const pendingResult = tier === 'Free'
+          ? await adminClient.from('pending_entitlements').delete().eq('email', normalizedEmail)
+          : await adminClient.from('pending_entitlements').upsert({
+              email: normalizedEmail,
+              plan_tier: tier,
+              status,
+              current_period_end: effectiveCurrentPeriodEnd,
+              billing_cycle: billingCycle,
+              polar_subscription_id: polarSubscriptionId,
+              source_event: eventType,
+              updated_at: new Date().toISOString(),
+            }, { onConflict: 'email' });
+        if (pendingResult.error) {
+          logger.error('[Polar Webhook] Pending entitlement write failed:', pendingResult.error.message);
+          return NextResponse.json({ error: 'Persistence error' }, { status: 500 });
+        }
+        logger.warn(`[Polar Webhook] No registered user for ${normalizedEmail}: ${tier === 'Free' ? 'cleared' : 'stored'} pending entitlement (${tier}).`);
       }
     } else {
       logger.error('[Polar Webhook] SUPABASE_SERVICE_ROLE_KEY not configured - cannot update tier server-side');
