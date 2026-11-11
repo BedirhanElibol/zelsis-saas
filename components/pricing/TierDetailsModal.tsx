@@ -34,7 +34,7 @@ export const TierDetailsModal: React.FC<TierDetailsModalProps> = ({
       category: 'Scan Volume & Code Access',
       items: [
         { label: 'Monthly Live Audits', free: 'Unlimited', pro: 'Unlimited', enterprise: 'Unlimited' },
-        { label: 'Private Repositories', free: 'Included', pro: 'Included', enterprise: 'Included' },
+        { label: 'Private Repositories', free: '1 private repo', pro: 'Included', enterprise: 'Included' },
         { label: 'Connected Projects', free: '3 Projects', pro: 'Unlimited Projects', enterprise: 'Unlimited Projects' }
       ]
     },
