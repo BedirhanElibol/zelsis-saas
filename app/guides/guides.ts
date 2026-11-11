@@ -74,6 +74,13 @@ export const GUIDES: GuideEntry[] = [
       'Both tools reviewed the same five pull requests, each with one flaw written down in advance. What each found, what each missed, and how a reviewer differs from a release check.',
   },
   {
+    slug: 'zelsis-vs-snyk',
+    category: 'comparisons',
+    title: 'Zelsis vs Snyk: what each checks before a pull request merges',
+    summary:
+      'Snyk covers dependencies, containers, infrastructure and code. Zelsis is a deterministic release check for payment and access mistakes. Where each one fits.',
+  },
+  {
     slug: 'supabase-rls-testing',
     category: 'database',
     title: 'How to test Supabase RLS before you ship',
