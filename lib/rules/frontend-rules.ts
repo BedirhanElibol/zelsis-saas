@@ -167,7 +167,9 @@ export function evaluateFrontendRules(file: CodeFile, lines: string[], cleanCont
         // Per element (multi-line tags included): a static element with onClick and no role, tabIndex or key handler.
         // aria-hidden elements, {...spread} props and handlers that only stop event propagation are skipped, and so are
         // modal backdrops (click outside to dismiss: e.target === e.currentTarget), a mouse shortcut for Escape.
+        // Markup written as text inside a backtick string (a docs example) is not rendered, so it is skipped.
         const clickableTag = Array.from(cleanContent.matchAll(/<(?:div|span|section|article|li|p|img)\b[\s\S]*?(?:\/>|(?<!=)>)/g)).find((m) =>
+            !insideTemplateString(m.index ?? 0) &&
             /\sonClick\s*=/.test(m[0]) &&
             !/\s(?:role|tabIndex|onKeyDown|onKeyUp|onKeyPress|aria-hidden)\s*=|\{\s*\.\.\./.test(m[0]) &&
             !/onClick\s*=\s*\{\s*\(?\s*(\w+)\s*\)?\s*=>\s*\{?\s*\1\.stopPropagation\(\)\s*;?\s*\}?\s*\}/.test(m[0]) &&
