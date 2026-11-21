@@ -44,5 +44,11 @@ public class CommentParser {
     name: 'outline-none input is fine when its wrapper draws a focus-within ring',
     detects: f('components/SearchBox.tsx', 'export function SearchBox() {\n  return (\n    <div className="flex items-center border rounded">\n      <input id="q" className="w-full bg-transparent outline-none" />\n    </div>\n  );\n}\n'),
     ignores: f('components/SearchBox.tsx', 'export function SearchBox() {\n  return (\n    <div className="flex items-center border rounded focus-within:ring-2 focus-within:ring-emerald-500">\n      <input id="q" className="w-full bg-transparent outline-none" />\n    </div>\n  );\n}\n')
+  },
+  {
+    ruleIds: [1026],
+    name: 'unlabelled input in markup is flagged; the same markup in a backtick docs string is not',
+    detects: f('components/Subscribe.tsx', 'export function Subscribe() {\n  return (\n    <form>\n      <input type="email" placeholder="Enter email" required />\n    </form>\n  );\n}\n'),
+    ignores: f('components/docs/Example.tsx', 'export const example = {\n  vulnerable: `<form>\\n  <input type="email" placeholder="Enter email" required />\\n</form>`,\n};\n')
   }
 ];
