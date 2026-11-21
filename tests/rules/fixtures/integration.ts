@@ -50,5 +50,11 @@ public class CommentParser {
     name: 'unlabelled input in markup is flagged; the same markup in a backtick docs string is not',
     detects: f('components/Subscribe.tsx', 'export function Subscribe() {\n  return (\n    <form>\n      <input type="email" placeholder="Enter email" required />\n    </form>\n  );\n}\n'),
     ignores: f('components/docs/Example.tsx', 'export const example = {\n  vulnerable: `<form>\\n  <input type="email" placeholder="Enter email" required />\\n</form>`,\n};\n')
+  },
+  {
+    ruleIds: [1029],
+    name: 'clickable div in markup is flagged; the same markup in a backtick docs string is not',
+    detects: f('components/PayButton.tsx', 'export function PayButton({ pay }: { pay: () => void }) {\n  return <div className="pay-button" onClick={pay}>Pay now</div>;\n}\n'),
+    ignores: f('components/docs/ClickExample.tsx', 'export const example = {\n  bad: `<div className="pay-button" onClick={pay}>Pay now</div>`,\n};\n')
   }
 ];
