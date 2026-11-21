@@ -40,8 +40,11 @@ export function evaluateFrontendRules(file: CodeFile, lines: string[], cleanCont
     //   <label htmlFor>) that is not nested inside a <label>. {...props} spreads may carry either, so they are skipped.
     // Tags end at /> or a > that is not part of => (JSX arrow handlers).
     const offsetLine = (offset: number) => cleanContent.slice(0, offset).split('\n').length - 1;
+    // Markup written as text inside a backtick string (a docs or help-text example) is not rendered, so a tag whose
+    // start sits after an odd number of unescaped backticks is skipped.
+    const insideTemplateString = (offset: number) => (cleanContent.slice(0, offset).match(/(?<!\\)`/g) ?? []).length % 2 === 1;
     const focusableTags = Array.from(cleanContent.matchAll(/<(input|textarea|select|button|a)\b[\s\S]*?(?:\/>|(?<!=)>)/g))
-        .filter((m) => !/\{\s*\.\.\./.test(m[0]));
+        .filter((m) => !/\{\s*\.\.\./.test(m[0]) && !insideTemplateString(m.index ?? 0));
     const replacementFocus = /\b(?:focus|focus-visible|focus-within):(?:ring|border|shadow|outline-(?!none)|bg-|underline)|(?:^|[\s"'`])ring-\d/;
     // Input groups draw the focus ring on a wrapper (focus-within:) and strip the inner outline: the three nearest
     // still-open ancestor tags count (an input inside a <label> inside a styled <form>).
