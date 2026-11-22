@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { m } from 'framer-motion';
 import { Loader2 } from 'lucide-react';
 import { useRouter } from 'next/navigation';
@@ -43,6 +43,14 @@ export const SaasHero: React.FC<SaasHeroProps> = ({ onOpenDashboard }) => {
 
   const [preview, setPreview] = useState<ScanPreviewResult | null>(null);
   const [previewError, setPreviewError] = useState<string | null>(null);
+  const resultRef = useRef<HTMLDivElement>(null);
+
+  // On a phone the result sits below the fold; bring it into view once the scan finishes
+  useEffect(() => {
+    if (!preview) return;
+    const reduce = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+    resultRef.current?.scrollIntoView({ behavior: reduce ? 'auto' : 'smooth', block: 'start' });
+  }, [preview]);
 
   // Signup-free teaser: summary only; full report needs an account
   const runPreview = async (val: string) => {
@@ -223,7 +231,7 @@ export const SaasHero: React.FC<SaasHeroProps> = ({ onOpenDashboard }) => {
         </div>
 
         {preview && (
-          <div className="mt-10 flex justify-center">
+          <div ref={resultRef} className="mt-10 flex justify-center scroll-mt-20">
             <ScanPreviewCard result={preview} onUnlock={handleUnlockFullReport} />
           </div>
         )}
