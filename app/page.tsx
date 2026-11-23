@@ -16,6 +16,7 @@ import { ComparisonTable } from '@/components/saas/ComparisonTable';
 import { FaqSection } from '@/components/saas/FaqSection';
 import { FinalCta } from '@/components/saas/FinalCta';
 import { Footer } from '@/components/Footer';
+import { ProductJsonLd } from '@/components/saas/ProductJsonLd';
 
 // Approved testimonials are read at most once an hour; the page itself stays static.
 export const revalidate = 3600;
@@ -25,6 +26,7 @@ export default function Home() {
   return (
     <SmoothScroll>
       <div className="bg-[#0A0A0A] text-[#EDEDED] min-h-full font-sans selection:bg-white selection:text-black">
+        <ProductJsonLd />
         <Navbar />
 
         {/* Hero with the repo scan box and an example failing gate */}
