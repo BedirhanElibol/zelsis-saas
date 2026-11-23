@@ -1,6 +1,7 @@
 import React from 'react';
 import Link from 'next/link';
 import { ZelsisLogo } from '@/components/ui/ZelsisLogo';
+import { GuideJsonLd } from './GuideJsonLd';
 
 export default function GuidesLayout({ children }: { children: React.ReactNode }) {
   return (
@@ -24,6 +25,7 @@ export default function GuidesLayout({ children }: { children: React.ReactNode }
         </header>
 
         <main className="min-w-0 bg-[#141414] border border-white/10 rounded-xl p-5 sm:p-10 text-sm leading-relaxed break-words shadow-xl shadow-black/40">
+          <GuideJsonLd />
           {children}
         </main>
       </div>

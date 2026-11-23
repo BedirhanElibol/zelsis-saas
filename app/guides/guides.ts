@@ -14,11 +14,17 @@ export interface GuideEntry {
   category: GuideCategory;
   title: string;
   summary: string;
+  /** ISO date the guide first shipped (from git history); omitted when not known. */
+  published?: string;
+  /** ISO date of the last content change (from git history). */
+  updated?: string;
 }
 
 export const GUIDES: GuideEntry[] = [
   {
     slug: 'stripe-double-charge',
+    published: '2026-10-26',
+    updated: '2026-10-26',
     category: 'payments',
     title: 'How to stop charging customers twice with Stripe',
     summary:
@@ -26,6 +32,8 @@ export const GUIDES: GuideEntry[] = [
   },
   {
     slug: 'n-plus-one-queries',
+    published: '2026-10-26',
+    updated: '2026-10-26',
     category: 'database',
     title: 'How to find and fix N+1 queries',
     summary:
@@ -33,6 +41,8 @@ export const GUIDES: GuideEntry[] = [
   },
   {
     slug: 'postgres-migration-locks',
+    published: '2026-10-26',
+    updated: '2026-10-26',
     category: 'database',
     title: 'Postgres migrations that lock your tables',
     summary:
@@ -68,6 +78,8 @@ export const GUIDES: GuideEntry[] = [
   },
   {
     slug: 'zelsis-vs-coderabbit',
+    published: '2026-10-23',
+    updated: '2026-10-23',
     category: 'comparisons',
     title: 'Zelsis vs CodeRabbit: five pull requests with planted flaws',
     summary:
@@ -75,6 +87,8 @@ export const GUIDES: GuideEntry[] = [
   },
   {
     slug: 'zelsis-vs-snyk',
+    published: '2026-11-11',
+    updated: '2026-11-11',
     category: 'comparisons',
     title: 'Zelsis vs Snyk: what each checks before a pull request merges',
     summary:
@@ -82,6 +96,8 @@ export const GUIDES: GuideEntry[] = [
   },
   {
     slug: 'supabase-rls-testing',
+    published: '2026-10-09',
+    updated: '2026-10-09',
     category: 'database',
     title: 'How to test Supabase RLS before you ship',
     summary:
@@ -89,6 +105,8 @@ export const GUIDES: GuideEntry[] = [
   },
   {
     slug: 'supabase-user-delete-foreign-key',
+    published: '2026-10-09',
+    updated: '2026-10-09',
     category: 'database',
     title: "Supabase: can't delete user (foreign key violation)",
     summary:
@@ -96,6 +114,8 @@ export const GUIDES: GuideEntry[] = [
   },
   {
     slug: 'stripe-amount-cents',
+    published: '2026-10-09',
+    updated: '2026-10-09',
     category: 'payments',
     title: 'Stripe charges 100x less: amount must be in cents',
     summary:
@@ -103,6 +123,8 @@ export const GUIDES: GuideEntry[] = [
   },
   {
     slug: 'stripe-webhook-signature',
+    published: '2026-11-03',
+    updated: '2026-11-03',
     category: 'payments',
     title: 'Stripe webhook: "No signatures found matching the expected signature"',
     summary:
@@ -110,6 +132,8 @@ export const GUIDES: GuideEntry[] = [
   },
   {
     slug: 'next-public-secrets',
+    published: '2026-11-03',
+    updated: '2026-11-03',
     category: 'security',
     title: 'A NEXT_PUBLIC_ variable is not a secret',
     summary:
@@ -117,6 +141,8 @@ export const GUIDES: GuideEntry[] = [
   },
   {
     slug: 'clickable-div-keyboard',
+    published: '2026-11-03',
+    updated: '2026-11-03',
     category: 'accessibility',
     title: 'A div with onClick is not a button',
     summary:
@@ -124,6 +150,8 @@ export const GUIDES: GuideEntry[] = [
   },
   {
     slug: 'code-due-diligence',
+    published: '2026-10-19',
+    updated: '2026-10-19',
     category: 'buying',
     title: 'Check the code before you buy a SaaS app',
     summary:
