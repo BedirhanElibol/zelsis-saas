@@ -140,7 +140,7 @@ export const SaasHero: React.FC<SaasHeroProps> = ({ onOpenDashboard }) => {
                   className="px-5 min-h-11 rounded-lg text-xs font-bold font-mono uppercase tracking-wider bg-emerald-500 text-black hover:bg-emerald-400 transition-all flex items-center justify-center gap-2 shrink-0 shadow-sm active:scale-[0.98] disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer"
                 >
                   {isScanning ? <Loader2 size={13} className="animate-spin" /> : null}
-                  <span>{isScanning ? 'Scanning…' : 'See what’s in your repo'}</span>
+                  <span>{isScanning ? 'Scanning…' : 'Scan my repo free'}</span>
                 </button>
               </form>
 

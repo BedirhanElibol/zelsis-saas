@@ -11,8 +11,6 @@ Zelsis works with JavaScript and TypeScript, Python, Go, Ruby, PHP, Java, C#, Ru
 - [Free site check](https://zelsis.com/site-check): enter a URL, no account; checks a live page for what a first visitor notices
 - [Benchmark](https://zelsis.com/benchmark): every pinned open-source project scanned, what Zelsis finds and what it misses
 - [Docs](https://zelsis.com/docs): setup for the GitHub App, CI and the API
-- [Changelog](https://zelsis.com/changelog): what changed in what Zelsis finds
-- [About](https://zelsis.com/about): who builds Zelsis and how results are measured
 
 ## What Zelsis checks
 
@@ -30,6 +28,7 @@ Zelsis works with JavaScript and TypeScript, Python, Go, Ruby, PHP, Java, C#, Ru
 - [Semgrep alternative](https://zelsis.com/guides/semgrep-alternative)
 - [Aikido alternative](https://zelsis.com/guides/aikido-alternative)
 - [GitHub Advanced Security alternative](https://zelsis.com/guides/github-advanced-security-alternative)
+- [Zelsis vs Snyk](https://zelsis.com/guides/zelsis-vs-snyk): what each checks before a pull request merges
 - [Zelsis vs CodeRabbit](https://zelsis.com/guides/zelsis-vs-coderabbit): five pull requests with planted flaws, both tools' comments public
 
 ## Guides
@@ -42,3 +41,10 @@ Zelsis works with JavaScript and TypeScript, Python, Go, Ruby, PHP, Java, C#, Ru
 - [NEXT_PUBLIC_ secrets](https://zelsis.com/guides/next-public-secrets)
 - [Clickable div keyboard access](https://zelsis.com/guides/clickable-div-keyboard)
 - [Code due diligence](https://zelsis.com/guides/code-due-diligence)
+- [Supabase RLS testing](https://zelsis.com/guides/supabase-rls-testing)
+- [Supabase: can't delete user (foreign key)](https://zelsis.com/guides/supabase-user-delete-foreign-key)
+
+## Optional
+
+- [Changelog](https://zelsis.com/changelog): what changed in what Zelsis finds
+- [About](https://zelsis.com/about): who builds Zelsis and how results are measured
