@@ -34,6 +34,22 @@ const GATE_STYLES: Record<ScanPreviewResult['gateStatus'], string> = {
   FAILED: 'text-red-400',
 };
 
+/** Severities of the findings behind the gate: total counts minus the ones already shown. */
+function lockedSeverities(result: ScanPreviewResult, hidden: number): string[] {
+  const left: Record<string, number> = {
+    CRITICAL: result.counts.critical,
+    HIGH: result.counts.high,
+    MEDIUM: result.counts.medium,
+    LOW: result.counts.low,
+  };
+  for (const f of result.topFindings) if (left[f.severity] > 0) left[f.severity] -= 1;
+  const out: string[] = [];
+  for (const sev of ['CRITICAL', 'HIGH', 'MEDIUM', 'LOW']) {
+    for (let n = 0; n < left[sev] && out.length < Math.min(hidden, 3); n++) out.push(sev);
+  }
+  return out;
+}
+
 interface ScanPreviewCardProps {
   result: ScanPreviewResult;
   onUnlock: () => void;
@@ -98,8 +114,16 @@ export const ScanPreviewCard: React.FC<ScanPreviewCardProps> = ({ result, onUnlo
             </li>
           ))}
           {hiddenCount > 0 && (
-            <li className="flex items-center gap-2 text-xs text-zinc-400 font-mono">
-              <span>+{hiddenCount} more findings, with exact file locations</span>
+            <li className="pt-1 space-y-1.5" aria-label={`${hiddenCount} more findings, locked`}>
+              {lockedSeverities(result, hiddenCount).map((sev, i) => (
+                <div key={i} className="flex items-center gap-2 select-none" aria-hidden="true">
+                  <span className={`text-[10px] font-mono font-bold px-1.5 py-0.5 rounded border shrink-0 ${SEVERITY_STYLES[sev]}`}>{sev}</span>
+                  <span className="h-2.5 rounded bg-white/15 blur-[3px]" style={{ width: `${55 + ((i * 17) % 35)}%` }} />
+                </div>
+              ))}
+              <span className="block text-xs text-zinc-400 font-mono">
+                +{hiddenCount} more findings, with exact file locations, in the free report
+              </span>
             </li>
           )}
         </ul>
