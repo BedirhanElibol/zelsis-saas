@@ -52,3 +52,4 @@ app/docs/real-world-bugs/
 
 # Language-coverage probes are deliberately vulnerable snippets
 scripts/language-coverage.ts
+data/rule-pages.ts
