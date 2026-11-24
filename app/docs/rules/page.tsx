@@ -1,4 +1,6 @@
 import React from 'react';
+import Link from 'next/link';
+import { RULE_PAGES } from '@/data/rule-pages';
 import { RuleSearchClient, CatalogRule } from './RuleSearchClient';
 import rulesData from '@/data/rule-inventory.generated.json';
 import { ruleMaturity } from '@/lib/scanner/rule-maturity';
@@ -35,6 +37,12 @@ export default function RulesPage() {
       </div>
 
       <div className="border-t border-white/10 pt-6">
+        <h2 className="text-sm font-semibold text-white mb-3">Rules explained with code</h2>
+        <ul className="flex flex-wrap gap-x-5 gap-y-2 text-sm mb-6">
+          {RULE_PAGES.map((r) => (
+            <li key={r.slug}><Link href={`/rules/${r.slug}`} className="text-zinc-400 hover:text-white">{r.title}</Link></li>
+          ))}
+        </ul>
         <RuleSearchClient rules={rules} />
       </div>
     </div>

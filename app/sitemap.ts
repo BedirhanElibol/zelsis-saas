@@ -1,10 +1,18 @@
 import { MetadataRoute } from 'next';
 import { getConfiguredAppUrl } from '@/lib/app-url';
+import { RULE_PAGES } from '@/data/rule-pages';
 
 export default function sitemap(): MetadataRoute.Sitemap {
   const baseUrl = getConfiguredAppUrl();
 
+  const rulePages = RULE_PAGES.map((r) => ({
+    url: `${baseUrl}/rules/${r.slug}`,
+    changeFrequency: 'monthly' as const,
+    priority: 0.6,
+  }));
+
   return [
+    ...rulePages,
     {
       url: `${baseUrl}`,
       changeFrequency: 'daily',
