@@ -20,7 +20,22 @@ export const FaqSection: React.FC = () => {
     {
       question: 'Does Zelsis work with private GitHub repositories?',
       answer:
-        'Yes. Provide a GitHub token with read access to the repository. The token is used only to fetch files for the scan, and the files are scanned in memory.'
+        'Yes. Connect the Zelsis GitHub app and pick only the repositories you want scanned, or paste a read-only fine-grained token for one repository. Either way Zelsis can read the code and nothing else: it cannot push, open pull requests or change settings. A pasted token is sent with the scan request and is not saved in our database. Files are scanned in memory and not stored.'
+    },
+    {
+      question: 'We already use Dependabot or another scanner. Why add Zelsis?',
+      answer:
+        'Dependency alerts cover the versions you install. Zelsis also reads the code a pull request changes: leaked keys, tables with no access rules, migrations that lock a live table, and the double charges and broken screens your users notice first. Keep your current tools. The free scan takes one repository URL, so you can see what it finds that they did not.'
+    },
+    {
+      question: 'Will it block merges on false alarms?',
+      answer:
+        'By default only a proven critical finding can fail the gate. Everything else is reported as a warning and does not stop the merge. You can start in advisory mode, ignore any rule or path in .zelsisrc.json, and let the check pass when Zelsis is unreachable (fail-open). On a pull request it reports only findings in the files that pull request changes.'
+    },
+    {
+      question: 'What does Zelsis miss?',
+      answer:
+        'Rule-based scanning finds the documented patterns; it does not reason about every business rule in your app. The benchmark lists the flaws Zelsis found, the ones it missed and how noisy it is on maintained projects, so you can judge it before you pay.'
     },
     {
       question: 'How does Zelsis integrate into our existing CI/CD pipelines?',
