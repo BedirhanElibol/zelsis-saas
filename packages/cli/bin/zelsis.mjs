@@ -10,6 +10,7 @@ Usage:
   zelsis check            Scan uncommitted changes (the rest of the repo is sent as context)
   zelsis verify           Same as check (for agent instructions: "run zelsis verify before finishing")
   zelsis check --all      Scan and gate on every file
+  zelsis check --local    Run the scan on this machine: no key, no network, nothing leaves your computer
   zelsis check --base origin/main   Also count commits since origin/main as changed
   zelsis sbom             Print an SBOM from your lockfiles. --format=cyclonedx|spdx, --output=<path>. Only lockfiles are sent
   zelsis mcp              Start the MCP server (tool: zelsis_check) for AI coding agents
@@ -27,10 +28,10 @@ Options:
 Exit codes: 0 passed, 1 issues found, 2 the check could not run
 
 Environment:
-  ZELSIS_API_KEY   Required. Create one at https://zelsis.com/dashboard under Settings & API Keys
+  ZELSIS_API_KEY   Required unless you use --local. Create one at https://zelsis.com/dashboard under Settings & API Keys
   ZELSIS_URL       Defaults to https://zelsis.com
 
-Files are scanned in memory on the Zelsis server and not stored.`;
+Without --local, files are scanned in memory on the Zelsis server and not stored.`;
 
 const args = process.argv.slice(2);
 const has = (flag) => args.includes(flag);
@@ -72,7 +73,7 @@ async function main() {
   if (has('--sarif-file-output') && !sarifFile) { console.error('zelsis: --sarif-file-output needs a file path'); return 2; }
 
   // No key: try the keyless preview for a public GitHub origin, so a first run shows a real result.
-  if (!process.env.ZELSIS_API_KEY) {
+  if (!process.env.ZELSIS_API_KEY && !has('--local')) {
     try {
       const preview = await runPreview({ cwd: process.cwd(), url: process.env.ZELSIS_URL || DEFAULT_URL });
       if (preview) {
@@ -93,6 +94,7 @@ async function main() {
     base: valueOf('--base'),
     url: process.env.ZELSIS_URL,
     apiKey: process.env.ZELSIS_API_KEY,
+    local: has('--local'),
   });
   if (sarifFile) writeFileSync(sarifFile, JSON.stringify(toSarif(result), null, 2));
   if (has('--sarif')) console.log(JSON.stringify(toSarif(result), null, 2));

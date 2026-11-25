@@ -7,6 +7,7 @@ export default defineConfig([
   ...nextTs,
   globalIgnores([
     '.next/**',
+    'packages/cli/engine.mjs',
     'node_modules/**',
     'dist/**',
     '.cache/**',
