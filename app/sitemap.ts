@@ -229,6 +229,11 @@ export default function sitemap(): MetadataRoute.Sitemap {
       priority: 0.7,
     },
     {
+      url: `${baseUrl}/guides/ai-code-merge-checklist`,
+      changeFrequency: 'monthly',
+      priority: 0.7,
+    },
+    {
       url: `${baseUrl}/guides/postgres-migration-locks`,
       changeFrequency: 'monthly',
       priority: 0.7,
