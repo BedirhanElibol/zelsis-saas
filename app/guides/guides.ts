@@ -22,6 +22,15 @@ export interface GuideEntry {
 
 export const GUIDES: GuideEntry[] = [
   {
+    slug: 'ai-code-merge-checklist',
+    published: '2026-11-25',
+    updated: '2026-11-25',
+    category: 'security',
+    title: '5 checks before you merge code an AI wrote',
+    summary:
+      'Exposed secrets, open tables, raw SQL, table-locking migrations and open CORS. What to look for in a pull request, with the flagged code and the fix for each.',
+  },
+  {
     slug: 'stripe-double-charge',
     published: '2026-10-26',
     updated: '2026-10-26',
