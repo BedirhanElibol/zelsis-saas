@@ -19,6 +19,7 @@ On Windows PowerShell, set it with `$env:ZELSIS_API_KEY = "your-key"` for the cu
 
 Options:
 
+- `--local` runs the same rules on your machine: no key, no network, nothing leaves your computer. Fix guidance stays a Pro feature
 - `--all` scans and gates on every file
 - `--base origin/main` also counts commits since that ref as changed
 - `--json` prints the raw result
@@ -29,7 +30,7 @@ Options:
 
 Exit code 2 means the check could not run (for example a missing API key or an invalid option).
 
-Files are scanned in memory on the Zelsis server and are not stored. Build folders, binaries, lockfiles and files over 512 KB are not sent.
+Without `--local`, files are scanned in memory on the Zelsis server and are not stored. Build folders, binaries, lockfiles and files over 512 KB are not sent.
 
 ## Make your AI agent check its own work
 

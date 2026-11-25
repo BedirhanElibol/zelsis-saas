@@ -66,3 +66,4 @@ walkthrough.md
 
 # Benchmark corpus clones
 /.cache/
+packages/cli/engine.mjs

@@ -3,7 +3,7 @@ import { execFileSync } from 'node:child_process';
 import { existsSync, readFileSync, statSync } from 'node:fs';
 import { join } from 'node:path';
 
-export const VERSION = '0.3.3';
+export const VERSION = '0.4.0';
 export const DEFAULT_URL = 'https://zelsis.com';
 const MAX_FILE_BYTES = 512 * 1024;
 const MAX_TOTAL_BYTES = 3.5 * 1024 * 1024; // stays under the API's 4 MB limit with JSON overhead
@@ -149,14 +149,28 @@ export function formatPreview(p) {
 }
 
 /** Runs a check in `cwd` and returns the API result. Used by both the CLI and the MCP tool. */
-export async function runCheck({ cwd, all = false, base, url, apiKey }) {
-  if (!apiKey) throw new Error(MISSING_KEY_HELP);
+export async function runCheck({ cwd, all = false, base, url, apiKey, local = false }) {
+  if (!apiKey && !local) throw new Error(MISSING_KEY_HELP);
   const changed = all ? undefined : changedPaths(cwd, base);
   if (changed && changed.length === 0) return { gateStatus: 'PASSED', findings: [], filesScanned: 0, scope: 'changed', nothingChanged: true };
   const { files, skipped } = collectFiles(cwd, { changed: changed ?? [] });
   const projectName = cwd.replace(/\\/g, '/').split('/').filter(Boolean).pop();
-  const result = await scanFiles({ url, apiKey, files, changed, projectName });
+  const result = local ? await scanLocally({ files, changed, projectName }) : await scanFiles({ url, apiKey, files, changed, projectName });
   return { ...result, skippedFiles: skipped };
+}
+
+/**
+ * Same rules and gate as the server, run in this process. Nothing is sent anywhere and no key is needed.
+ * Fix prompts stay a paid feature, so they show the same locked text the free plan sees.
+ */
+export async function scanLocally({ files, changed, projectName }) {
+  let engine;
+  try {
+    engine = await import('./engine.mjs');
+  } catch {
+    throw new Error('The local engine is not part of this install. Reinstall the zelsis package, or run the check without --local.');
+  }
+  return engine.scanUploadedFiles(files, { projectName, changed, canSeeFixes: false });
 }
 
 const color = (on) => (code, s) => (on ? `\u001b[${code}m${s}\u001b[0m` : s);
