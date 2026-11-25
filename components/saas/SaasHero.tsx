@@ -182,7 +182,7 @@ export const SaasHero: React.FC<SaasHeroProps> = ({ onOpenDashboard }) => {
               </li>
               <li className="flex items-center gap-2">
                 <span className="w-1.5 h-1.5 rounded-full bg-emerald-400/70" />
-                <span>No account needed · one flat price, not per developer</span>
+                <span>Public repos need no account · private repos read-only, only the ones you pick</span>
               </li>
             </ul>
           </div>
