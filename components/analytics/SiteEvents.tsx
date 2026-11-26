@@ -4,10 +4,12 @@ import { useEffect } from 'react';
 import { usePathname } from 'next/navigation';
 import { recordSiteEvent } from '@/actions/site-events';
 
-/** Where the visit came from: utm_source, else the referring site's hostname, else "direct". */
+/** Where the visit came from: utm_source, else the badge link (?ref=badge), else the referring site's hostname, else "direct". */
 function visitSource(): string {
   try {
-    const utm = new URLSearchParams(window.location.search).get('utm_source');
+    const params = new URLSearchParams(window.location.search);
+    // The README badge links to /?ref=badge; GitHub's referrer alone would count those visits as github.com
+    const utm = params.get('utm_source') || (params.get('ref') === 'badge' ? 'badge' : null);
     if (utm) return utm.toLowerCase().replace(/[^a-z0-9.\-_]/g, '').slice(0, 60) || 'direct';
     if (document.referrer) {
       const host = new URL(document.referrer).hostname.replace(/^www\./, '').toLowerCase();
